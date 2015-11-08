@@ -1,4 +1,8 @@
-Traveltime
+Kibrary
 ==========
 
-Computation of travel time
+Library for waveform inversion.
+
+
+
+
