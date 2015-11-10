@@ -1,6 +1,5 @@
 package manhattan.gmt;
 
-import com.sun.xml.internal.ws.dump.LoggingDumpTube.Position;
 
 import manhattan.template.HorizontalPosition;
 import manhattan.template.Location;
