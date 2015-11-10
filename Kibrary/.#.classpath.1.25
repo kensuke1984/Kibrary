@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="testcodes"/>
+	<classpathentry kind="src" path="mathtool"/>
+	<classpathentry excluding="manhattan/waveform/RecordSectionGraph.java" kind="src" path="manhattan"/>
+	<classpathentry kind="src" path="lib"/>
+	<classpathentry kind="src" path="externalprogram"/>
+	<classpathentry kind="src" path="javagui"/>
+	<classpathentry kind="src" path="threed"/>
+	<classpathentry kind="src" path="traveltime"/>
+	<classpathentry kind="src" path="mainuse"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="filehandling"/>
+	<classpathentry kind="lib" path="lib/commons-math-2.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math-2.2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math-2.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.1-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-email-1.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-email-1.2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-email-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.1-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-net-3.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/taup.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/jcommon-1.0.17.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart-1.0.14.jar"/>
+	<classpathentry kind="lib" path="lib/Jama-1.0.2.jar"/>
+	<classpathentry kind="con" path="org.dyno.visual.swing.VS_LIBRARY/layoutext"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
