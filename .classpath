@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="manhattan"/>
 	<classpathentry kind="src" path="mathtool"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="lib" path="lib/commons-email-1.4.jar" sourcepath="lib/commons-email-1.4-src.zip">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:platform:/resource/Kibrary/lib/commons-email-1.4-javadoc.jar!/"/>

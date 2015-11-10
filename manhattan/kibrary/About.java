@@ -6,10 +6,15 @@ import java.awt.GraphicsEnvironment;
 /**
  * About Kibrary (this library).
  * 
+ * Library for waveform inversion.
+ * 
+ * <br>
+ * Shared in <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
+ * 
  * @since 2015/1/28
  * 
  * 
- * @version 0.2
+ * @version 0.2 
  * 
  * 
  */
