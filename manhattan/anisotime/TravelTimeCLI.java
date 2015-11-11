@@ -92,12 +92,8 @@ final class TravelTimeCLI {
 	 *            [commands]
 	 */
 	public static void main(String[] args) {
-		if (args.length == 0) {
-			About.printLicense();
-			return;
-		}
-		if (Arrays.stream(args).anyMatch(arg -> arg.equals("-version"))) {
-			About.printLicense();
+		if (args.length == 0 || Arrays.stream(args).anyMatch(arg -> arg.equals("-version"))) {
+			About.main(null);
 			return;
 		}
 		// add options
