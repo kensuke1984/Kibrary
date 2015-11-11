@@ -1,6 +1,8 @@
 package kibrary;
 
 import java.awt.GraphicsEnvironment;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * About Kibrary (this library).
@@ -10,6 +12,7 @@ import java.awt.GraphicsEnvironment;
  * <br>
  * Shared in <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
  * 
+ * @author kensuke
  * @since 2015/1/28
  * 
  * 
@@ -19,9 +22,6 @@ import java.awt.GraphicsEnvironment;
  */
 final class About extends javax.swing.JFrame {
 	private static final long serialVersionUID = -2485772755944862822L;
-
-	private static final String codeName = "Goblin";
-	private static final String version = "0.2.4.1rc";
 
 	private About() {
 		initComponents();
@@ -60,13 +60,16 @@ final class About extends javax.swing.JFrame {
 		java.awt.EventQueue.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
 	}// </editor-fold>
 
-	private static final String line = "Kibrary " + version + " (" + codeName + ") Copyright © 2015 Kensuke Konishi\n\n"
-			+ "Licensed under the Apache License, Version 2.0 (the \"License\")\n"
-			+ "You may not use this file except in compliance with the License.\n"
-			+ "You may obtain a copy of the License at\n\n" + "\thttp://www.apache.org/licenses/LICENSE-2.0\n\n"
-			+ "Unless required by applicable law or agreed to in writing, "
-			+ "software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
-			+ "See the License for the specific language governing permissions and limitations under the License.";
+	private static final String line;
+
+	static {
+		try {
+			line = String.join("\n", Files
+					.readAllLines(Paths.get(ClassLoader.getSystemClassLoader().getResource("LICENSE.txt").getPath())));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/**
 	 * @param args
@@ -99,7 +102,6 @@ final class About extends javax.swing.JFrame {
 			java.util.logging.Logger.getLogger(About.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 		}
 		// </editor-fold>
-
 		/* Create and display the form */
 		if (!GraphicsEnvironment.isHeadless())
 			java.awt.EventQueue.invokeLater(() -> new About().setVisible(true));
