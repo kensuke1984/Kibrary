@@ -21,17 +21,9 @@ import manhattan.template.Utilities;
  * It makes a data requesting mail. Information: {@link parameter.DataRequestor}
  * 
  * @since 2015/02/09
- * @version 0.0.1
  * @author kensuke
  * 
- * @version 0.0.2
- * @since 2015/9/8
- * 
- * @version 0.0.3
- * @since 2015/9/11 TODO IRIS now. send and receive are separated.
- * 
  * @version 0.0.4
- * @since 2015/9/12 Receiving is in DataTransfer now.
  * 
  *
  */
