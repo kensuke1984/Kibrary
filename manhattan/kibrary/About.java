@@ -21,7 +21,7 @@ final class About extends javax.swing.JFrame {
 	private static final long serialVersionUID = -2485772755944862822L;
 
 	private static final String codeName = "Goblin";
-	private static final String version = "0.2.4rc";
+	private static final String version = "0.2.4.1rc";
 
 	private About() {
 		initComponents();
