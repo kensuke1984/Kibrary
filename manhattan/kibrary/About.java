@@ -1,8 +1,8 @@
 package kibrary;
 
 import java.awt.GraphicsEnvironment;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * About Kibrary (this library).
@@ -64,8 +64,8 @@ final class About extends javax.swing.JFrame {
 
 	static {
 		try {
-			line = String.join("\n", Files
-					.readAllLines(Paths.get(ClassLoader.getSystemClassLoader().getResource("LICENSE.txt").getPath())));
+			line = String.join("\n",
+					IOUtils.readLines(About.class.getClassLoader().getResourceAsStream("LICENSE.txt")));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
