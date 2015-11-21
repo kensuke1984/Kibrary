@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+
 import filehandling.sac.SACComponent;
 import filehandling.sac.SACData;
 import filehandling.sac.SACFileName;
@@ -32,35 +33,9 @@ import manhattan.template.Utilities;
  * 
  * SacFileのdelta準拠のタイムウインドウにする
  * 
- * @version 0.0.2
  * @since 2013/9/6
  * 
- * @version 0.1.0
- * @since 2014/5/19 大幅に変更 TODO どの窓がどのフェーズかのファイル
- * 
- * @version 0.1.1 to Java 8
- * @since 2014/9/11
- * 
- * @version 0.1.2
- * @since 2015/1/23 using Set
- * 
- * @version 0.1.3
- * @since 2015/2/23 Finding a taup path is modified
- * 
- * @version 0.1.3.1
- * @since 2015/8/6 {@link IOException}
- * 
- * @version 0.1.4
- * @since 2015/8/8 {@link Path} base
- * 
- * @version 0.1.4.1
- * @since 2015/8/13
- * 
- * @version 0.1.5
- * @since 2015/9/12 SACData now
- * 
- * @version 0.1.6
- * @since 2015/9/14 timewindow information, Utilities
+ * @version 0.1.7
  * 
  * 
  * @author Kensuke
@@ -212,7 +187,7 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	}
 
 	/**
-	 * @param useTimeWindow
+	 * @param useTimeWindow 
 	 * @param exTimeWindow
 	 * @return useTimeWindowからexTimeWindowの重なっている部分を取り除く 何もなくなってしまったらnullを返す
 	 */
@@ -229,20 +204,14 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 
 	/**
 	 * 
-	 * TODO
-	 * 
-	 * what if useWindow [t1, t2] exWindow [t3, t4] and t1&lt;t3&lt;t4&lt;t2.
-	 * Now [t4,t2] will disappear
-	 * 
 	 * eliminate exTimeWindows from useTimeWindows
 	 * 
-	 * @param useTimeWindows
-	 * @param exTimeWindows
-	 * @return
+	 * @param useTimeWindows must be in order by start time
+	 * @param exTimeWindows must be in order by start time
+	 * @return timewindows to use
 	 */
 	private static Timewindow[] considerExPhase(Timewindow[] useTimeWindows, Timewindow[] exTimeWindows) {
 		List<Timewindow> usable = new ArrayList<>();
-
 		for (Timewindow window : useTimeWindows) {
 			for (Timewindow ex : exTimeWindows) {
 				window = cutWindow(window, ex);
@@ -260,8 +229,8 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	 * if there are any overlapping timeWindows, merge them. the start times
 	 * must be in order.
 	 * 
-	 * @param windows
-	 * @return
+	 * @param windows to be merged
+	 * @return windows containing all the input windows in order
 	 */
 	private static Timewindow[] mergeWindow(Timewindow[] windows) {
 		if (windows.length == 1)
@@ -274,20 +243,18 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 				windowA = windowA.merge(windowB);
 				if (i == windows.length - 1)
 					windowList.add(windowA);
-
 			} else {
 				windowList.add(windowA);
 				windowA = windows[i];
 				if (i == windows.length - 1)
 					windowList.add(windows[i]);
-
 			}
 		}
 		return windowList.toArray(new Timewindow[windowList.size()]);
 	}
 
 	/**
-	 * @param phases
+	 * @param phases Set of TauPPhases
 	 * @return travel times in {@link TauPPhase}
 	 */
 	private static double[] toTravelTime(Set<TauPPhase> phases) {

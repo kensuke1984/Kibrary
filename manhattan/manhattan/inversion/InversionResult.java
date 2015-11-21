@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.HorizontalPosition;
 import manhattan.template.Station;
 import manhattan.template.Trace;
+import manhattan.template.Utilities;
 import manhattan.waveformdata.BasicID;
 
 /**
@@ -42,14 +44,22 @@ public class InversionResult {
 	private Path rootPath;
 
 	/**
-	 * variance of all traces(obs vs syn) for an event.
+	 * variance of all traces (obs vs syn) for an event.
 	 * 
 	 */
 	private Map<GlobalCMTID, Double> eventVarianceMap;
+
 	/**
-	 * variance of all traces(obs vs syn) for a station.
+	 * variance of all traces (obs vs syn) for a station.
 	 */
 	private Map<Station, Double> stationVarianceMap;
+
+	/**
+	 * variance of all traces (obs vs born) using answer Each array of each
+	 * method has variances for the answers. array[0] is the variance between
+	 * obs vs initial model.
+	 */
+	private Map<InverseMethodEnum, Double[]> answerVarianceMap = new EnumMap<>(InverseMethodEnum.class);
 
 	/**
 	 * 
@@ -92,7 +102,8 @@ public class InversionResult {
 	 * @return id
 	 */
 	private static BasicID toBasicID(String[] parts) {
-		Station station = new Station(parts[1], new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
+		Station station = new Station(parts[1],
+				new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
 		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
 				Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
 				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), Long.parseLong(parts[13]), true);
@@ -131,12 +142,51 @@ public class InversionResult {
 		IntStream.range(0, n).forEach(i -> {
 			String[] parts = orderLines.get(i + 1).split("\\s+");
 			basicIDList.add(toBasicID(parts));
+			npts += Integer.parseInt(parts[9]);
 			startPointOrder[i] = Integer.parseInt(parts[12]);
 			synStartTimeOrder[i] = Double.parseDouble(parts[13]);
 			weightingOrder[i] = Double.parseDouble(parts[14]);
 		});
-
 	}
+
+	/**
+	 * @param inverse
+	 *            the method for the inverse problem
+	 * @param n
+	 *            the index for the answer 1 &le; n
+	 * @return the variance between obs and born with the answer of the n
+	 */
+	public double varianceOf(InverseMethodEnum inverse, int n) {
+		if (n < 1)
+			throw new IllegalArgumentException("n must be 1 or more.");
+		return answerVarianceMap.get(inverse)[n];
+	}
+
+	/**
+	 * @param a
+	 *            assumed redundancy in data points. It is used as n/a, where n
+	 *            is the number of data points.
+	 * @param inverse
+	 *            the method for the inverse problem
+	 * @param n
+	 *            the index for the answer 1 &le; n
+	 * @return the Akaike Information criterion for the answer
+	 */
+	public double aicOf(double a, InverseMethodEnum inverse, int n) {
+		return Utilities.computeAIC(varianceOf(inverse, n), npts / a, n);
+	}
+
+	/**
+	 * @return the number of datapoints;
+	 */
+	public int getNumberOfDatapoints() {
+		return npts;
+	}
+
+	/**
+	 * the number of data points
+	 */
+	private int npts;
 
 	/**
 	 * @param id
@@ -288,6 +338,11 @@ public class InversionResult {
 												Double.parseDouble(parts[3])),
 										parts[1]),
 								parts -> Double.parseDouble(parts[4]))));
+		for (InverseMethodEnum inverse : InverseMethodEnum.values()) {
+			Path path = rootPath.resolve(inverse.name() + "/variance.txt");
+			answerVarianceMap.put(inverse,
+					Files.lines(path).mapToDouble(Double::parseDouble).boxed().toArray(n -> new Double[n]));
+		}
 	}
 
 	public Set<Station> stationSet() {
@@ -427,6 +482,13 @@ public class InversionResult {
 	 */
 	public Map<GlobalCMTID, Double> getEventVariance() {
 		return eventVarianceMap;
+	}
+
+	/**
+	 * @return the variance between obs and syn (initial model)
+	 */
+	public double getVariance() {
+		return answerVarianceMap.get(InverseMethodEnum.CG)[0];
 	}
 
 }

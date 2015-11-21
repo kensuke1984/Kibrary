@@ -6,8 +6,6 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.Calendar;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -23,63 +21,12 @@ import manhattan.template.EventFolder;
 import manhattan.template.Utilities;
 
 /**
- * ある一つのシードファイルに対して読み込みSacまで解凍する SeedSac will open a seed file and creates sac
- * files included in the seed file.
+ * Class for extracting a seed file. It creates SAC files from the seed file.
  * 
- * @since 2014/1/7
- * @version 0.0.1
- * 
- *          seedのデータは日付を、またいでいないこととする 確認済み １ rdseed -rfd hogeによるRESP.*の出力は全く同じ
- *          *.SACはSCALEの値だけ異なる しかしIRIS HPによると現在は使われていないので無視 確認済み ２
- *          古いsacのバージョンと新しいsacのバージョンで rtrend やinterpolate 後のsacの値が多少違う
- * 
- *          seed解凍後 channelがBH[ENZ]のものだけから読み込む BH[123]は今のところ使わない TODO
- *          output先にすでに解凍済みのイベントがあったら走らない TODO NPTSで合わないものを捨てる？
- * 
- * @version 0.0.2 日付をまたげるようにした
- * 
- * 
- * @version 0.0.3
- * @since 2014/1/15 回転できた場合と回転できなかった場合で出力先を変更 delta cmpaz cmpincを調整
- * 
- * 
- *        TODO つなぎあわせ nptsを設定したらそれを超えた時点でつなぎ合わせストップ
- * 
- * 
- * @version 0.0.4
- * @since 2014/1/15 {@link #setEvalresp(File)} installed
- * 
- * @version 0.0.5
- * @since 2014/2/5 {@link #hadRun()} installed
- * 
- * @version 0.0.6
- * @since 2014/4/29 {@link #deconvolute()}においてevalRespの失敗に対応
- * 
- * 
- * @since 2014/9/7
- * @version 0.0.7 to Java 8
- * 
- * @version 0.0.8
- * @since 2014/10/2 Evalresp MUST be in PATH
- * 
- * @version 0.1.0
- * @since 2015/2/3 BLE BLN BLZ
- * 
- * @version 0.1.5
- * @since 2015/2/12 {@link Calendar} &rarr; {@link LocalDateTime}
- * 
- * @version 0.1.5.1
- * @since 2015/8/15 {@link IOException}
- * 
- * @version 0.1.6
- * @since 2015/8/19 {@link Path} base
- * 
- * @version 0.1.6.1
- * @since 2015/9/11 noSpectraOrInvalidMOD bug fixed
+ * This class assumes that rdseed, evalresp and sac exists in your PATH. The
+ * software can be found in IRIS.
  * 
  * @version 0.1.7
- * @since 2015/9/17 Only N E
- * 
  * 
  * @author kensuke
  * 
@@ -164,10 +111,11 @@ class SeedSac implements Runnable {
 	/**
 	 * 
 	 * @param seedPath
-	 *            解凍するseedファイル
+	 *            to be extracted from
 	 * @param outputDirectoryPath
-	 *            解凍先 ここにイベントのフォルダを作りその下に解凍 must exist
+	 *            Path where extracted files are placed (<b>must exist</b>)
 	 * @throws IOException
+	 *             if the outputDirectoryPath does not exist or an error occurs
 	 */
 	SeedSac(Path seedPath, Path outputDirectoryPath) throws IOException {
 		this(seedPath, outputDirectoryPath, null);

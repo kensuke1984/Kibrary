@@ -80,7 +80,9 @@ public class Timewindow implements Comparable<Timewindow> {
 	}
 
 	/**
-	 * TODO
+	 * Creates a new Timewindow from this and the input timewindow.
+	 * If the two windows do not overlap, then the interval between them is also included. 
+	 *  
 	 * 
 	 * @param timeWindow
 	 *            timewindow to merge
