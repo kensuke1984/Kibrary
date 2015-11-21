@@ -35,8 +35,6 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
 
-[license]: /src/License.txt
-
 [ANISOtime]:http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
