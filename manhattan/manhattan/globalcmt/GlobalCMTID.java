@@ -14,25 +14,9 @@ import filehandling.sac.SACHeaderEnum;
  * 
  * globalCMT のデータベース内の識別子
  * 
- * @version 0.0.2
  * @since 2013/9/19
  * 
- * @version 0.0.3
- * @since 2013/12/1 a-zにも対応 {@link #equals(Object)}実装
- * 
- * @version 0.0.4
- * @since 2014/1/13 fix regular expression
- * 
- * @version 0.0.5
- * @since 2014/1/21 equals hashcodeを変更 idのみでの判断
- * 
- * @version 0.0.6
- * @since 2015/3/18
- * 
- *        {@link #equals(Object)} modified.
- * 
  * @version 0.0.7
- * @since 2015/9/14 toBinaryData eliminated 15
  * 
  * 
  * @author kensuke

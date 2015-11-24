@@ -35,6 +35,11 @@ import manhattan.template.Utilities;
  * 
  */
 public final class BasicIDFile {
+	/**
+	 * File size for an ID
+	 */
+	public static final int oneIDbyte = 70;
+
 	private BasicIDFile() {
 	}
 
@@ -128,12 +133,12 @@ public final class BasicIDFile {
 	 */
 	public static BasicID[] readBasicIDFile(Path idPath) throws IOException {
 		long fileSize = Files.size(idPath);
-		if (fileSize % BasicID.oneIDbyte != 0)
+		if (fileSize % oneIDbyte != 0)
 			throw new RuntimeException(idPath + " is not valid..");
 		long t = System.nanoTime();
-		int nid = (int) (fileSize / BasicID.oneIDbyte);
+		int nid = (int) (fileSize / oneIDbyte);
 		BasicID[] ids = new BasicID[nid];
-		byte[][] bytes = new byte[nid][BasicID.oneIDbyte];
+		byte[][] bytes = new byte[nid][oneIDbyte];
 		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(idPath))) {
 			for (int i = 0; i < nid; i++)
 				bis.read(bytes[i]);
