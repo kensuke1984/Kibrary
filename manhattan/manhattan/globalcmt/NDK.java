@@ -77,21 +77,8 @@ import manhattan.template.Location;
  * 
  * 
  * @since 2013/11/30
- * @version 0.0.1
- * 
- * @since 2014/1/12
- * @version 0.0.2 implements {@link #fulfill(GlobalCMTSearch)}
- * 
- * 
- * @since 2014/1/17 If {@link Eventdepre} is once created, it will be returned
- *        later.
- * 
- * @since 2014/2/5 when {@link #createEvent()}, Ms and mb are set.
- * 
- * 
+
  * @version 0.0.5
- * @since 2015/2/12 {@link Calendar} &rarr; {@link LocalDateTime}
- * 
  * 
  * @author kensuke
  * 

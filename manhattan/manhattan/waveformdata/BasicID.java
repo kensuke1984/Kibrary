@@ -14,23 +14,19 @@ import manhattan.template.Station;
  * Double values will be rounded off to 3rd decimal places. <br>
  * (Those are stored as Float in the file)<br>
  * 
- * type: String(s), Float(f), Integer(i), Long(l), Boolean(b)<br>
  * =Contents of information for one ID= <br>
- * If one is observed(true) or synthetic(false) 1Byte<br>
- * Name of station (must be 8 or less letters) 8Byte(s)<br>
- * Name of network (must be 8 or less letters) 8Byte(s)<br>
- * Horizontal position of station (latitude longitude) 4Byte*2(f*2)<br>
- * Global CMT ID 15Byte(s)<br>
- * Component (ZRT) 1Byte<br>
- * Period minimum and maximum 4Byte*2(f*2) <br>
- * Start time 4Byte(f)<br>
- * Number of points 4Byte(i)<br>
- * Sampling Hz 4Byte(f)<br>
- * If one is convoluted or observed, true 1Byte(b)<br>
- * Position of a waveform for the ID 8Byte(l)<br>
- * <p>
- * One ID volume {@link #oneIDbyte}: {@value #oneIDbyte}
- * </p>
+ * If one is observed(true) or synthetic(false)<br>
+ * Name of station<br>
+ * Name of network<br>
+ * Horizontal position of station (latitude longitude)<br>
+ * Global CMT ID<br>
+ * Component (ZRT)<br>
+ * Period minimum and maximum<br>
+ * Start time<br>
+ * Number of points<br>
+ * Sampling Hz<br>
+ * If one is convoluted or observed, true<br>
+ * Position of a waveform for the ID<br>
  * 
  * @since 2013/11/13
  * 
@@ -40,10 +36,6 @@ import manhattan.template.Station;
  */
 public class BasicID {
 
-	/**
-	 * File size for an ID
-	 */
-	public static final int oneIDbyte = 70;
 
 	/**
 	 * waveformData

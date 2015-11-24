@@ -23,27 +23,8 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * 
  * 
  * @since 2013/12/1
- * @version 0.0.1
- * 
- * 
- * @version 0.0.2
- * @since 2014/1/16 if there is no catalogFile at the default location, you can
- *        put file path.
- * 
- * @version 0.0.3
- * @since 2014/6/3 {@link #read()}{@link #read(File)} installed
- * 
- * @version 0.0.4
- * @since 2015/3/18 {@link #getNDK(GlobalCMTID)} modified.
- * 
- * @version 0.0.4.1
- * @since 2015/4/9
- * 
- * @version 0.0.5
- * @since 2015/8/3 The path of catalog is changed.
  * 
  * @version 0.1.0
- * @since 2015/9/15 static..
  * 
  * @author kensuke
  * 
