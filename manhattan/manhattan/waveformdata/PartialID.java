@@ -13,21 +13,20 @@ import manhattan.template.Station;
  * </p>
  * <b>This class is IMMUTABLE</b> <br>
  * 
- * type: String(s), Float(f), Integer(i), Long(l), Boolean(b)<br>
  * =Contents of information for one ID=<br>
- * Name of station (must be 8 or less letters) 8Byte(s)<br>
- * Name of network (must be 8 or less letters) 8Byte(s)<br>
- * Horizontal position of station (latitude longitude) 4Byte*2(f*2)<br>
- * Global CMT ID 15Byte(s)<br>
- * Component (ZRT) 1Byte<br>
- * Period minimum and maximum 4Byte*2(f*2) <br>
- * Start time 4Byte(f)<br>
- * Number of points 4Byte(i)<br>
- * Sampling Hz 4Byte(f)<br>
- * If one is convoluted or observed, true 1Byte(b)<br>
- * Position of a waveform for the ID 8Byte(l)<br>
- * partial type 1Byte<br>
- * Location of a perturbation point: latitude, longitude, radius 4Byte*3(f*3)
+ * Name of station<br>
+ * Name of network<br>
+ * Horizontal position of station (latitude longitude)<br>
+ * Global CMT ID<br>
+ * Component (ZRT)<br>
+ * Period minimum and maximum<br>
+ * Start time<br>
+ * Number of points<br>
+ * Sampling Hz<br>
+ * If one is convoluted or observed, true<br>
+ * Position of a waveform for the ID<br>
+ * partial type<br>
+ * Location of a perturbation point: latitude, longitude, radius
  * 
  * 
  * 
