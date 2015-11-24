@@ -15,7 +15,7 @@ It bundles [ANISOtime][ANISOtime] package.
 You just need [Java SE Runtime Environment(JRE) 8][JRE8] and set appropriate CLASSPATH.
 
 ##Usage
-Please see [Wiki][wiki]
+Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
 ##Contact me
 If you have any comments or questions, please feel free to contact me by [E-mail][email].
@@ -43,3 +43,4 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 
 [wiki]:https://github.com/kensuke1984/Kibrary/wiki
 [email]:mailto:kensuke@earth.sinica.edu.tw
+[javadoc]:https://kensuke1984.github.io/Kibrary
