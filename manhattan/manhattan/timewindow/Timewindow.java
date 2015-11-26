@@ -7,7 +7,7 @@ package manhattan.timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
- * @since 2014/5/19  
+ * @since 2014/5/19
  * 
  * @author Kensuke
  *
@@ -16,16 +16,10 @@ public class Timewindow implements Comparable<Timewindow> {
 
 	@Override
 	public int compareTo(Timewindow o) {
-
 		if (startTime < o.startTime)
 			return -1;
 		else if (startTime == o.startTime)
-			if (endTime < o.endTime)
-				return -1;
-			else if (endTime == o.endTime)
-				return 0;
-			else
-				return 1;
+			return Double.compare(endTime, o.endTime);
 		else
 			return 1;
 	}
@@ -80,9 +74,9 @@ public class Timewindow implements Comparable<Timewindow> {
 	}
 
 	/**
-	 * Creates a new Timewindow from this and the input timewindow.
-	 * If the two windows do not overlap, then the interval between them is also included. 
-	 *  
+	 * Creates a new Timewindow from this and the input timewindow. If the two
+	 * windows do not overlap, then the interval between them is also included.
+	 * 
 	 * 
 	 * @param timeWindow
 	 *            timewindow to merge

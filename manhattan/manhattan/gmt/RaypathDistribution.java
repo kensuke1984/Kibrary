@@ -28,25 +28,11 @@ import manhattan.template.Utilities;
  * 
  * event and station are necessary.
  * 
+ * <b>Assume that there are no stations with the same name but different networks in an event</b>
+ * 
+ * 
  * @author kensuke
- * @since 2015/01/22
- * @version 0.0.1
- * 
- * 
- * @version 0.0.1.1
- * @since 2015/8/7 {@link IOException}
- * 
- * @version 0.0.1
- * @since 2015/8/8 {@link Path} base
- * 
- * @version 0.0.2
- * @since 2015/9/2 Map is clear now.
- * 
- * @version 0.0.3
- * @since 2015/9/12 SacHeaderData now
- * 
  * @version 0.0.4
- * @since 2015/9/14 Timewindow information, Station information, Utilities
  * 
  */
 final class RaypathDistribution extends parameter.RaypathDistribution {
@@ -123,12 +109,16 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 		}
 	}
 
+	/**
+	 * @param name Sacfile
+	 * @return if the path of Sacfile should be drawn
+	 */
 	private boolean inTimeWindow(SACFileName name) {
 		return timeWindowInformationFile == null ? true
 				: timeWindowInformationFile.stream()
 						.anyMatch(tw -> tw.getComponent() == name.getComponent()
 								&& tw.getGlobalCMTID().equals(name.getGlobalCMTID())
-								&& tw.getStationName().equals(name.getStationName()));
+								&& tw.getStation().getStationName().equals(name.getStationName()));
 	}
 
 	private void outputRaypath() throws IOException {

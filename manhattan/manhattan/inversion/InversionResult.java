@@ -31,8 +31,8 @@ import manhattan.waveformdata.BasicID;
  * @author kensuke
  * @since 2015/08/27
  * 
- * @version 0.1
- * s
+ * @version 0.1.0.1
+ * 
  * 
  * 
  */
@@ -140,9 +140,9 @@ public class InversionResult {
 			String[] parts = orderLines.get(i + 1).split("\\s+");
 			basicIDList.add(toBasicID(parts));
 			npts += Integer.parseInt(parts[9]);
-			startPointOrder[i] = Integer.parseInt(parts[12]);
-			synStartTimeOrder[i] = Double.parseDouble(parts[13]);
-			weightingOrder[i] = Double.parseDouble(parts[14]);
+			startPointOrder[i] = Integer.parseInt(parts[15]);
+			synStartTimeOrder[i] = Double.parseDouble(parts[16]);
+			weightingOrder[i] = Double.parseDouble(parts[17]);
 		});
 	}
 

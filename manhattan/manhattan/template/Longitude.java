@@ -3,31 +3,23 @@ package manhattan.template;
 import org.apache.commons.math3.util.FastMath;
 
 /**
- * 経度 (-180, 180]
+ * Longitude (-180, 180]
  * 
- * This class is IMMUTABLE
+ * If you input 200, then the value is considered -160. The value is rounded off
+ * to the 4th decimal position.
+ * 
+ * <p>
+ * This class is <b>IMMUTABLE</b>
+ * </p>
  * 
  * 
  * @author Kensuke
- * @version 0.0.1 経度 (-180, 180] + [0, 360) => (-180, 360) ただし保管は(-180, 180]で行う
- *          小数点5桁目を四捨五入
  * 
- * @version 0.0.2
- * @since 2013/12/1 -180にも対応 [-180, 360)
- * 
- * @version 0.0.3
- * @since 2014/8/12 defaultに
- * 
- * @version 0.0.5
- * @since 2014/11/14 Math -> FastMath
- * 
- * @version 0.0.6
- * @since 2015/8/18 {@link IllegalArgumentException}
+ * @version 0.1.0
  * 
  * 
  */
-class Longitude {
-
+class Longitude implements Comparable<Longitude> {
 	/**
 	 * inputされた値 [-180, 360)
 	 */
@@ -124,11 +116,13 @@ class Longitude {
 	}
 
 	private void adjust() {
-		// System.out.println(longitude);
 		longitude = FastMath.round(longitude * 10000) / 10000.0;
-		// System.out.println(longitude);
 		phi = FastMath.round(phi * 10000) / 10000.0;
+	}
 
+	@Override
+	public int compareTo(Longitude o) {
+		return Double.compare(longitude, o.longitude);
 	}
 
 }

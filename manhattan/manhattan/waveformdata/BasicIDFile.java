@@ -1,6 +1,7 @@
 package manhattan.waveformdata;
 
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -17,13 +18,24 @@ import org.apache.commons.io.FilenameUtils;
 import filehandling.sac.SACComponent;
 import filehandling.sac.WaveformType;
 import manhattan.globalcmt.GlobalCMTID;
-import manhattan.template.HorizontalPosition;
 import manhattan.template.Station;
 import manhattan.template.Utilities;
 
 /**
  * Utilities for a pair of an ID file and a waveform file. The files are for
- * observed and synthetic waveforms (NOT partial)
+ * observed and synthetic waveforms (NOT partial)<br>
+ * 
+ * The file contains<br>
+ * Numbers of stations, events and period ranges <br>
+ * Each station information <br>
+ * - name, network, position <br>
+ * Each event <br>
+ * - Global CMT ID Each period<br>
+ * Each period range<br>
+ * - min period, max period<br>
+ * Each BasicID information<br>
+ * - see in {@link #readBasicIDFile(Path)}<br>
+ * 
  * 
  * @see {@link BasicID}
  * 
@@ -38,7 +50,7 @@ public final class BasicIDFile {
 	/**
 	 * File size for an ID
 	 */
-	public static final int oneIDbyte = 70;
+	public static final int oneIDByte = 28;
 
 	private BasicIDFile() {
 	}
@@ -132,65 +144,79 @@ public final class BasicIDFile {
 	 *             if an I/O error occurs
 	 */
 	public static BasicID[] readBasicIDFile(Path idPath) throws IOException {
-		long fileSize = Files.size(idPath);
-		if (fileSize % oneIDbyte != 0)
-			throw new RuntimeException(idPath + " is not valid..");
-		long t = System.nanoTime();
-		int nid = (int) (fileSize / oneIDbyte);
-		BasicID[] ids = new BasicID[nid];
-		byte[][] bytes = new byte[nid][oneIDbyte];
-		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(idPath))) {
+		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
+			long t = System.nanoTime();
+			long fileSize = Files.size(idPath);
+			// Read header
+			Station[] stations = new Station[dis.readShort()];
+			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
+			double[][] periodRanges = new double[dis.readShort()][2];
+			int headerBytes = 2 * 3 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
+					+ 4 * 2 * periodRanges.length;
+			long idParts = fileSize - headerBytes;
+			if (idParts % oneIDByte != 0)
+				throw new RuntimeException(idPath + " is not valid..");
+			// name(8),network(8),position(4*2)
+			byte[] stationBytes = new byte[24];
+			for (int i = 0; i < stations.length; i++) {
+				dis.read(stationBytes);
+				stations[i] = Station.createStation(stationBytes);
+			}
+			byte[] cmtIDBytes = new byte[15];
+			for (int i = 0; i < cmtIDs.length; i++) {
+				dis.read(cmtIDBytes);
+				cmtIDs[i] = new GlobalCMTID(new String(cmtIDBytes).trim());
+			}
+			for (int i = 0; i < periodRanges.length; i++) {
+				periodRanges[i][0] = dis.readFloat();
+				periodRanges[i][1] = dis.readFloat();
+			}
+
+			int nid = (int) (idParts / oneIDByte);
+			BasicID[] ids = new BasicID[nid];
+			byte[][] bytes = new byte[nid][oneIDByte];
 			for (int i = 0; i < nid; i++)
-				bis.read(bytes[i]);
+				dis.read(bytes[i]);
+			IntStream.range(0, nid).parallel().forEach(i -> {
+				ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges);
+			});
+			System.err.println(
+					"Reading " + ids.length + " basic IDs done in " + Utilities.toTimeString(System.nanoTime() - t));
+			return ids;
 		}
-		IntStream.range(0, nid).parallel().forEach(i -> {
-			ids[i] = createID(bytes[i]);
-		});
-		System.err.println(
-				"Reading " + ids.length + " basic IDs done in " + Utilities.toTimeString(System.nanoTime() - t));
-		return ids;
 	}
 
-	private static BasicID createID(byte[] bytes) {
+	/**
+	 * An ID information contains<br>
+	 * obs or syn(1)<br>
+	 * station number(2)<br>
+	 * event number(2)<br>
+	 * component(1)<br>
+	 * period range(1) <br>
+	 * start time(4)<br>
+	 * number of points(4)<br>
+	 * sampling hz(4) <br>
+	 * convoluted(or observed) or not(1)<br>
+	 * position of a waveform for the ID in the datafile(8)
+	 * 
+	 * @param bytes
+	 *            for one ID
+	 * @return an ID written in the bytes
+	 */
+	private static BasicID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		WaveformType type = 0 < bb.get() ? WaveformType.OBS : WaveformType.SYN;
-
-		byte[] stationName = new byte[8];
-		bb.get(stationName);
-		byte[] networkName = new byte[8];
-		bb.get(networkName);
-		String sta = new String(stationName).trim();
-		String network = new String(networkName).trim();
-		double latitude = bb.getFloat();
-		double longitude = bb.getFloat();
-		Station station = new Station(sta, new HorizontalPosition(latitude, longitude), network);
-		byte[] eventNameByte = new byte[15];
-		bb.get(eventNameByte);
-		GlobalCMTID eventName = new GlobalCMTID(new String(eventNameByte).trim());
-		SACComponent component = null;
-		switch (bb.get()) {
-		case 0:
-			component = SACComponent.Z;
-			break;
-		case 1:
-			component = SACComponent.R;
-			break;
-		case 2:
-			component = SACComponent.T;
-			break;
-		default:
-			throw new RuntimeException("Error occured in reading");
-		}
-		double minPeriod = bb.getFloat(); // minimum period
-		double maxPeriod = bb.getFloat(); // max period
+		Station station = stations[bb.getShort()];
+		GlobalCMTID id = ids[bb.getShort()];
+		SACComponent component = SACComponent.getComponent(bb.get());
+		double[] period = periodRanges[bb.get()];
 		double startTime = bb.getFloat(); // starting time
 		int npts = bb.getInt(); // データポイント数
 		double samplingHz = bb.getFloat();
 		boolean isConvolved = 0 < bb.get();
 		long startByte = bb.getLong();
-		BasicID bid = new BasicID(type, samplingHz, startTime, npts, station, eventName, component, minPeriod,
-				maxPeriod, startByte, isConvolved);
+		BasicID bid = new BasicID(type, samplingHz, startTime, npts, station, id, component, period[0], period[1],
+				startByte, isConvolved);
 		return bid;
 	}
-
 }

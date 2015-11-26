@@ -7,9 +7,13 @@ import mathtool.geometry.RThetaPhi;
 import mathtool.geometry.XYZ;
 
 /**
- * <p>Position</p> 
+ * <p>
+ * Position
+ * </p>
  * Latitude Longitude
- * <p>This class is <b>immutable</b>.</p>
+ * <p>
+ * This class is <b>immutable</b>.
+ * </p>
  * 
  * @since 2014/1/12
  * @author Kensuke
@@ -17,16 +21,27 @@ import mathtool.geometry.XYZ;
  * @version 0.1.0
  * 
  */
-public class HorizontalPosition {
+public class HorizontalPosition implements Comparable<HorizontalPosition> {
+
+	/**
+	 * 
+	 * Latitude &rarr; Longitude
+	 * 
+	 */
+	@Override
+	public int compareTo(HorizontalPosition o) {
+		int lat = latitude.compareTo(o.latitude);
+		if (lat != 0)
+			return lat;
+		return longitude.compareTo(o.longitude);
+	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((latitude == null) ? 0 : latitude.hashCode());
-		result = prime * result
-				+ ((longitude == null) ? 0 : longitude.hashCode());
+		result = prime * result + ((latitude == null) ? 0 : latitude.hashCode());
+		result = prime * result + ((longitude == null) ? 0 : longitude.hashCode());
 		return result;
 	}
 
@@ -53,8 +68,8 @@ public class HorizontalPosition {
 	}
 
 	/**
-	 * @param r [km]
-	 *            radius
+	 * @param r
+	 *            [km] radius
 	 * @return rの情報を含めたLocation(新しく作る deep copy)
 	 */
 	public Location toLocation(double r) {
@@ -92,6 +107,7 @@ public class HorizontalPosition {
 
 	/**
 	 * (-180:180]
+	 * 
 	 * @return geographic longitude [deg]
 	 */
 	public double getLongitude() {
@@ -99,7 +115,8 @@ public class HorizontalPosition {
 	}
 
 	/**
-	 * 極座標でのθ 
+	 * 極座標でのθ
+	 * 
 	 * @return theta [rad] in sperical coordinate.
 	 */
 	public double getTheta() {
@@ -109,7 +126,7 @@ public class HorizontalPosition {
 	/**
 	 * 極座標でのφ
 	 * 
-	 * @return phi [rad[ in sperical coordinate. 
+	 * @return phi [rad[ in sperical coordinate.
 	 */
 	public double getPhi() {
 		return longitude.getPhi();
@@ -126,7 +143,7 @@ public class HorizontalPosition {
 	}
 
 	/**
-	 * 元点loc0と入力locとの大円上の中点を求める　半径は考慮しない locとloc0のなす震央距離を⊿
+	 * 元点loc0と入力locとの大円上の中点を求める 半径は考慮しない locとloc0のなす震央距離を⊿
 	 * loc0を北極に持って行ったときのlocの経度をphi1 とすると、点(r, ⊿/2, 0)
 	 * をｚ軸周りにphi１回転して、loc0を北極から元の位置に戻す作業をすればいい
 	 * 
@@ -138,7 +155,7 @@ public class HorizontalPosition {
 	public HorizontalPosition getMidpoint(HorizontalPosition position) {
 		double delta = getEpicentralDistance(position); // locとthis との震央距離
 		// System.out.println("delta: " + delta);
-		// theta = ⊿/2の　zx平面上の点
+		// theta = ⊿/2の zx平面上の点
 		XYZ midXYZ = new RThetaPhi(1, delta * 0.5, 0).toCartesian();
 		// locの点
 		XYZ locXYZ = position.toXYZ(Earth.EARTH_RADIUS);
@@ -147,7 +164,7 @@ public class HorizontalPosition {
 		// loc0を北極に
 		locXYZ = locXYZ.rotateaboutY(-1 * getTheta());
 		RThetaPhi locRTP = locXYZ.toSphericalCoordinate();
-		// その時の　　phi1
+		// その時の phi1
 		double phi1 = locRTP.getPhi();
 		// System.out.println("phi1 " + phi1);
 		midXYZ = midXYZ.rotateaboutZ(phi1);
@@ -155,8 +172,7 @@ public class HorizontalPosition {
 		midXYZ = midXYZ.rotateaboutZ(getPhi());
 		RThetaPhi midRTP = midXYZ.toSphericalCoordinate();
 		// System.out.println(midRTP);
-		return new HorizontalPosition(Latitude.toLatitude(midRTP.getTheta()),
-				FastMath.toDegrees(midRTP.getPhi()));
+		return new HorizontalPosition(Latitude.toLatitude(midRTP.getTheta()), FastMath.toDegrees(midRTP.getPhi()));
 		// System.out.println(midLoc);
 	}
 
@@ -168,8 +184,6 @@ public class HorizontalPosition {
 	public XYZ toXYZ(double r) {
 		return RThetaPhi.toCartesian(r, getTheta(), getPhi());
 	}
-
-	
 
 	/**
 	 * 地理緯度、経度でのコンストラクト
@@ -202,7 +216,7 @@ public class HorizontalPosition {
 	 * ここに， 地点1の緯度φ1，経度λ1，地点2の緯度φ2，経度λ2のときの直交座標地を それぞれ （x1，y1，z1），（x2，y2，z2）
 	 * とすると2地点間の直距離 Rn は
 	 * 
-	 * A = 6378140m（地球赤道半径），B = 6356755m（地球極半径），ｅ**2 = (A**2 - B**2)/A**2　e：離心率
+	 * A = 6378140m（地球赤道半径），B = 6356755m（地球極半径），ｅ**2 = (A**2 - B**2)/A**2 e：離心率
 	 * 
 	 * N1 = A/sqrt(1 - e**2・sin**2φ1)， N_2 = A/sqrt(1 - e2・sin**2φ2) x1 =
 	 * N_1・cosφ1cosλ_1， x2 = N_2・cosφ_2cosλ_2 y1 = N_1・cosφ1sinλ_1， y2 =
@@ -232,19 +246,12 @@ public class HorizontalPosition {
 		// System.out.println(xyz0+" \n"+xyz);
 		double r = xyz.getDistance(xyz0);
 
-		double n1 = Earth.EQUATORIAL_RADIUS
-				/ FastMath.sqrt(1 - Earth.E * Earth.E
-						* FastMath.sin(FastMath.toRadians(getLatitude()))
-						* FastMath.sin(FastMath.toRadians(getLatitude())));
+		double n1 = Earth.EQUATORIAL_RADIUS / FastMath.sqrt(1 - Earth.E * Earth.E
+				* FastMath.sin(FastMath.toRadians(getLatitude())) * FastMath.sin(FastMath.toRadians(getLatitude())));
 		// System.out.println(n1 + " " + N1);
 		double n2 = Earth.EQUATORIAL_RADIUS
-				/ FastMath.sqrt(1
-						- Earth.E
-						* Earth.E
-						* FastMath.sin(FastMath.toRadians(position
-								.getLatitude()))
-						* FastMath.sin(FastMath.toRadians(position
-								.getLatitude())));
+				/ FastMath.sqrt(1 - Earth.E * Earth.E * FastMath.sin(FastMath.toRadians(position.getLatitude()))
+						* FastMath.sin(FastMath.toRadians(position.getLatitude())));
 		double n = (n1 + n2) / 2;
 		double kai = FastMath.asin(r / 2 / n);
 		distance = 2 * kai * n;

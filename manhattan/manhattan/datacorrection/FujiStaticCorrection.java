@@ -22,6 +22,7 @@ import filehandling.sac.SACFileName;
 import filehandling.sac.SACHeaderEnum;
 import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.EventFolder;
+import manhattan.template.Station;
 import manhattan.template.Trace;
 import manhattan.template.Utilities;
 import manhattan.timewindow.Timewindow;
@@ -142,8 +143,7 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 					continue;
 				}
 
-				String stationName = obsName.getStationName();
-
+				Station station = obsSac.getStation();
 				double delta = 1 / sacSamplingHz;
 				if (delta != obsSac.getValue(SACHeaderEnum.DELTA) || delta != synSac.getValue(SACHeaderEnum.DELTA)) {
 					System.out.println("Deltas are invalid. " + obsSac + " " + obsSac.getValue(SACHeaderEnum.DELTA)
@@ -152,7 +152,7 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 				}
 				// Pickup time windows of obsName
 				Set<TimewindowInformation> windows = timewindowInformation.stream()
-						.filter(info -> info.getStationName().equals(stationName))
+						.filter(info -> info.getStation().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(eventID))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
@@ -161,7 +161,7 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 						try {
 							double shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
 							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
-							StaticCorrection t = new StaticCorrection(stationName, eventID, component,
+							StaticCorrection t = new StaticCorrection(station, eventID, component,
 									window.getStartTime(), shift, ratio);
 							staticCorrectionSet.add(t);
 						} catch (Exception e) {
