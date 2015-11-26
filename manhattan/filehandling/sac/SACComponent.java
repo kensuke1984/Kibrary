@@ -29,7 +29,7 @@ public enum SACComponent {
 	}
 
 	/**
-	 * @return 1, 2 and 3 for Z, R and T, respectively
+	 * @return 1(Z), 2(R), 3(T)
 	 */
 	public int valueOf() {
 		return value;
@@ -38,8 +38,9 @@ public enum SACComponent {
 	/**
 	 * @param n
 	 *            index 1, 2, 3
-	 * @return Z(1) R(2) T(3) or throws {@link IllegalArgumentException} for any
-	 *         other indices
+	 * @return Z(1) R(2) T(3)
+	 * @throws IllegalArgumentException
+	 *             if the input n is not 1,2,3
 	 */
 	public static SACComponent getComponent(int n) {
 		return Arrays.stream(SACComponent.values()).filter(component -> component.valueOf() == n).findAny()

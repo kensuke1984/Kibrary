@@ -3,32 +3,30 @@ package manhattan.timewindow;
 
 import filehandling.sac.SACComponent;
 import manhattan.globalcmt.GlobalCMTID;
+import manhattan.template.Station;
 
 /**
- * ある震源観測点成分組み合わせのタイムウインドウ
+ * Timewindow for a raypath (a pair of a source and a receiver).
+ * <p>This class is <b>IMMUTABLE</b></p>
  * 
- * @version 0.1.0
- * @since 2013/12/17 {@link GlobalCMTID}を用いる
+ * The information contains a component, a station and a global CMT ID.
  * 
- * 
- * @version 0.1.1
- * @since 2015/8/24 slim up <b>This class is IMMUTABLE</b>
- * @author Kensuke
- * 
+ * @since 2013/12/17 
  * 
  * @version 0.1.2
- * @since 2015/9/14 stationName must be 8 or less than 8 letters.s
  * 
+ * @author Kensuke
  */
 public class TimewindowInformation extends Timewindow {
 
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((component == null) ? 0 : component.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
+		result = prime * result + ((station == null) ? 0 : station.hashCode());
 		return result;
 	}
 
@@ -48,18 +46,18 @@ public class TimewindowInformation extends Timewindow {
 				return false;
 		} else if (!id.equals(other.id))
 			return false;
-		if (stationName == null) {
-			if (other.stationName != null)
+		if (station == null) {
+			if (other.station != null)
 				return false;
-		} else if (!stationName.equals(other.stationName))
+		} else if (!station.equals(other.station))
 			return false;
 		return true;
 	}
 
 	/**
-	 * station name
+	 * station 
 	 */
-	private final String stationName;
+	private final Station station;
 
 	/**
 	 * event ID
@@ -71,20 +69,19 @@ public class TimewindowInformation extends Timewindow {
 	 */
 	private final SACComponent component;
 
-	public TimewindowInformation(double startTime, double endTime, String stationName, GlobalCMTID id,
+	public TimewindowInformation(double startTime, double endTime, Station station, GlobalCMTID id,
 			SACComponent component) {
 		super(startTime, endTime);
-		if (8 < stationName.length())
-			throw new IllegalArgumentException("the length of a station name " + stationName + " must be 8 or shorter");
-		this.stationName = stationName;
 		this.id = id;
 		this.component = component;
+		this.station = station;
 	}
 
-	public String getStationName() {
-		return stationName;
+	public Station getStation(){
+		return station;
 	}
-
+	
+	
 	public GlobalCMTID getGlobalCMTID() {
 		return id;
 	}
@@ -95,7 +92,7 @@ public class TimewindowInformation extends Timewindow {
 
 	@Override
 	public String toString() {
-		return stationName + " " + id + " " + component + " " + startTime + " " + endTime;
+		return station + " " + id + " " + component + " " + startTime + " " + endTime;
 	}
 
 }

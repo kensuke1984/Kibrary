@@ -6,15 +6,19 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import manhattan.butterworth.BandPassFilter;
 import manhattan.butterworth.ButterworthFilter;
+import manhattan.globalcmt.GlobalCMTID;
+import manhattan.template.Station;
 import manhattan.template.Utilities;
 import manhattan.waveformdata.BasicID;
 import manhattan.waveformdata.BasicIDFile;
@@ -46,10 +50,34 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 		super(parameterPath);
 		// System.out.println("hi");
 		set();
+		readIDs();
 	}
 
 	public CheckerBoardTest(ObservationEquation equation) {
 		this.eq = equation;
+		readIDs();
+	}
+
+	private Set<Station> stationSet;
+	private double[][] ranges;
+	private Set<GlobalCMTID> idSet;
+
+	private void readIDs() {
+		List<double[]> ranges = new ArrayList<>();
+		for (BasicID id : eq.getDVector().getObsIDs()) {
+			stationSet.add(id.getStation());
+			idSet.add(id.getGlobalCMTID());
+			double[] range = new double[] { id.getMinPeriod(), id.getMaxPeriod() };
+			if (ranges.size() == 0)
+				ranges.add(range);
+			boolean exists = false;
+			for (int i = 0; !exists && i < ranges.size(); i++)
+				if (Arrays.equals(range, ranges.get(i)))
+					exists = true;
+			if(!exists)
+				ranges.add(range);
+		}
+		this.ranges = ranges.toArray(new double[ranges.size()][]);
 	}
 
 	private void set() throws IOException {
@@ -80,7 +108,7 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 		Dvector dVector = eq.getDVector();
 		RealVector[] bornPart = dVector.separate(bornVec);
 		System.out.println("outputting " + outIDPath + " " + outDataPath);
-		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath)) {
+		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
 			// RealVector[] addVec = dVector.addSyn(pseudoD);
@@ -111,7 +139,7 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 		Dvector dVector = eq.getDVector();
 		RealVector[] bornPart = dVector.separate(bornVec);
 		System.out.println("outputting " + outIDPath + " " + outDataPath);
-		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath)) {
+		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
 			// RealVector[] addVec = dVector.addSyn(pseudoD);

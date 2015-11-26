@@ -2,10 +2,11 @@ package manhattan.datacorrection;
 
 import filehandling.sac.SACComponent;
 import manhattan.globalcmt.GlobalCMTID;
+import manhattan.template.Station;
 
 /**
  * 
- * Time shift for static correction.<br>
+ * Static correction data for a raypath.<br>
  * <p>
  * <b> This class is IMMUTABlE.</b>
  * </p>
@@ -20,28 +21,38 @@ import manhattan.globalcmt.GlobalCMTID;
  * 
  * To identify which time window for a waveform, synStartTime is also used.
  * 
- * @version 0.0.2
- * @since 2013/12/17 {@link GlobalCMTID}に
- * 
- * @version 0.0.5
- * @since 2014/10/13 {@link #synStartTime} installed.
- * 
- * @version 0.1.0
- * @since 2015/5/31 Amplitude ratio (observed / synthetic)
- * 
  * @version 0.1.1
- * @since 2015/9/14 station name must be now only 8 or less than 8 letters
  * 
  * 
  * @author kensuke
  *
  */
-public class StaticCorrection {
+public class StaticCorrection implements Comparable<StaticCorrection> {
+
+	@Override
+	public int compareTo(StaticCorrection o) {
+		int sta = station.compareTo(o.station);
+		if (sta != 0)
+			return sta;
+		int id = eventID.compareTo(o.eventID);
+		if (id != 0)
+			return id;
+		int comp = component.compareTo(o.component);
+		if (comp != 0)
+			return comp;
+		int start = Double.compare(synStartTime, o.synStartTime);
+		if (start != 0)
+			return start;
+		int shift = Double.compare(timeShift, o.timeShift);
+		if (shift != 0)
+			return shift;
+		return Double.compare(amplitudeRatio, o.amplitudeRatio);
+	}
 
 	/**
-	 * station name
+	 * station
 	 */
-	private final String stationName;
+	private final Station station;
 
 	/**
 	 * event ID
@@ -93,12 +104,9 @@ public class StaticCorrection {
 	 * @param amplitudeRatio
 	 *            Observed / Synthetic
 	 */
-	public StaticCorrection(String stationName, GlobalCMTID eventID, SACComponent component, double synStartTime,
+	public StaticCorrection(Station station, GlobalCMTID eventID, SACComponent component, double synStartTime,
 			double timeShift, double amplitudeRatio) {
-		if (8 < stationName.length())
-			throw new IllegalArgumentException("The station name" + stationName + "must be 8 or shorter");
-		else
-			this.stationName = stationName;
+		this.station = station;
 		this.eventID = eventID;
 		this.component = component;
 		this.synStartTime = Math.round(synStartTime * 100) / 100.0;
@@ -106,8 +114,8 @@ public class StaticCorrection {
 		this.amplitudeRatio = Math.round(amplitudeRatio * 100) / 100.0;
 	}
 
-	public String getStationName() {
-		return stationName;
+	public Station getStation() {
+		return station;
 	}
 
 	public GlobalCMTID getGlobalCMTID() {
@@ -139,9 +147,9 @@ public class StaticCorrection {
 		return synStartTime;
 	}
 
+	@Override
 	public String toString() {
-		return stationName + ' ' + eventID + ' ' + component + ' ' + synStartTime + ' ' + timeShift + ' '
-				+ amplitudeRatio;
+		return station + " " + eventID + " " + component + " " + synStartTime + " " + timeShift + " " + amplitudeRatio;
 	}
 
 }

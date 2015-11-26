@@ -78,10 +78,11 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 	}
 
 	private Trace createTrace(SACData sacFile) {
-		String stationName = Station.of(sacFile).getStationName();
+		Station station = sacFile.getStation();
 		GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
 		SACComponent component = SACComponent.of(sacFile);
-		TimewindowInformation window = timewindow.stream().filter(info -> info.getStationName().equals(stationName))
+		
+		TimewindowInformation window = timewindow.stream().filter(info -> info.getStation().equals(station))
 				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
 				.findAny().get();
 

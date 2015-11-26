@@ -18,31 +18,7 @@ import filehandling.sac.SACComponent;
  * 
  * Information for {@link manhattan.waveformdata.ObservedSyntheticDatasetMaker}
  * 
- * @version 0.0.2
- * @since 2013/11/12
- * 
- * @since 2014/8/19
- * @version 0.0.3 Constructors changed.
- * 
- * @since 2014/9/7
- * @version 0.0.4 to Java 8
- * 
- * @since 2014/9/11
- * @version 0.0.5 {@link #checkElements()} installed.
- * 
- * @since 2014/10/19
- * @version 0.0.6 Output files are now automatically named.
- * 
- * @since 2015/1/9
- * @version 0.0.7 slightly modified.
- * 
- *          workDir=. ok
- * 
- * @since 2015/5/31
- * @version 0.0.8 amplitude correction
- * 
  * @version 0.0.8.1
- * @since 2015/8/6 {@link IOException}
  * 
  * @author kensuke
  * 

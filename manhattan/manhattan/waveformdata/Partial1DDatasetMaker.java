@@ -28,6 +28,7 @@ import manhattan.datacorrection.SourceTimeFunction;
 import manhattan.datacorrection.TriangleSourceTimeFunction;
 import manhattan.dsminformation.PolynomialStructure;
 import manhattan.globalcmt.GlobalCMTID;
+import manhattan.inversion.StationInformationFile;
 import manhattan.template.EventFolder;
 import manhattan.template.Location;
 import manhattan.template.Station;
@@ -36,17 +37,17 @@ import manhattan.timewindow.TimewindowInformation;
 import manhattan.timewindow.TimewindowInformationFile;
 
 /**
- * Creates dataset containing 1-D partial derivatives
- * １次元偏微分係数波形のデータセットを作る
- * 
+ * Creates a pair of files containing 1-D partial derivatives
  * 
  * TODO shとpsvの曖昧さ 両方ある場合ない場合等 現状では combineして対処している
  * 
- * time length and np in DSM software must be same. Those values are set in a
- * parameter file.
+ * Time length (tlen) and the number of step in frequency domain (np) in DSM
+ * software must be same. Those values are set in a parameter file.
  * 
+ * Only partials for radius written in a parameter file are computed.
  * 
- * @since 2013/11/8 
+ * <b>Assume there are no station with the same name but different networks in
+ * same events</b> TODO
  * 
  * @version 0.2
  * 
@@ -210,7 +211,6 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 				return;
 			}
 
-			
 			String stationName = spcname.getObserverID();
 			Station station = new Station(stationName, spectrum.getObserverPosition(), "DSM");
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
@@ -220,10 +220,10 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 				process(qSpectrum);
 			}
 			process(spectrum);
-			
+
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = timewindowInformationSet.stream()
-						.filter(info -> info.getStationName().equals(stationName))
+						.filter(info -> info.getStation().getStationName().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
@@ -231,19 +231,33 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 					continue;
 
 				for (int k = 0; k < spectrum.nbody(); k++) {
+					double bodyR = spectrum.getBodyR()[k];
+					boolean exists = false;
+					for (double r : Partial1DDatasetMaker.super.bodyR)
+						if (r == bodyR)
+							exists = true;
+					if (!exists)
+						continue;
 					double[] ut = spectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
 					// applying the filter
 					double[] filteredUt = filter.applyFilter(ut);
 					for (TimewindowInformation t : tw)
-						cutAndWrite(station,filteredUt, t, spectrum.getBodyR()[k], partialType);
+						cutAndWrite(station, filteredUt, t, bodyR, partialType);
 				}
 				if (qSpectrum != null)
 					for (int k = 0; k < spectrum.nbody(); k++) {
+						double bodyR = spectrum.getBodyR()[k];
+						boolean exists = false;
+						for (double r : Partial1DDatasetMaker.super.bodyR)
+							if (r == bodyR)
+								exists = true;
+						if (!exists)
+							continue;
 						double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
 						// applying the filter
 						double[] filteredUt = filter.applyFilter(ut);
 						for (TimewindowInformation t : tw)
-							cutAndWrite(station, filteredUt, t, spectrum.getBodyR()[k], PartialType.PARQ);
+							cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ);
 					}
 			}
 		}
@@ -336,9 +350,21 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 		if (!pdm.canGO())
 			System.exit(0);
 
+		pdm.run();
+	}
+
+	private Set<GlobalCMTID> idSet;
+	private Set<Station> stationSet;
+	private Set<Location> perturbationLocationSet;
+
+	private void setPerturbationLocation() {
+		perturbationLocationSet = Arrays.stream(bodyR).mapToObj(r -> new Location(0, 0, r)).collect(Collectors.toSet());
+	}
+
+	public void run() throws IOException {
 		String dateString = Utilities.getTemporaryString();
 
-		pdm.logPath = pdm.workPath.resolve("partial1D" + dateString + ".log");
+		logPath = workPath.resolve("partial1D" + dateString + ".log");
 		// System.exit(0);
 
 		System.err.println("Patial1DDatasetMaker is going.");
@@ -347,49 +373,52 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 		// pdm.createStreams();
 		int N_THREADS = Runtime.getRuntime().availableProcessors();
 		// N_THREADS = 2;
-		pdm.writeLog("going with " + N_THREADS + " threads");
+		writeLog("going with " + N_THREADS + " threads");
 
-		if (pdm.partialTypes.contains(PartialType.PARQ))
-			pdm.fujiConversion = new FujiConversion(PolynomialStructure.PREM);
+		if (partialTypes.contains(PartialType.PARQ))
+			fujiConversion = new FujiConversion(PolynomialStructure.PREM);
 
-		pdm.setLsmooth();
-		pdm.writeLog("Set lsmooth " + pdm.lsmooth);
+		setLsmooth();
+		writeLog("Set lsmooth " + lsmooth);
 
 		// タイムウインドウの情報を読み取る。
 		System.err.print("Reading timewindow information ");
-		pdm.timewindowInformationSet = TimewindowInformationFile.read(pdm.timewindowPath);
+		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
 		System.err.println("done");
 
-		if (pdm.sourceTimeFunction == -1)
-			pdm.readSourceTimeFunctions();
+		if (sourceTimeFunction == -1)
+			readSourceTimeFunctions();
 
 		// filter設計
 		System.out.println("Designing filter.");
-		pdm.setBandPassFilter();
-		pdm.writeLog(pdm.filter.toString());
-
+		setBandPassFilter();
+		writeLog(filter.toString());
+		setPerturbationLocation();
+		stationSet = StationInformationFile.read(stationInformationFilePath);
+		idSet = Utilities.globalCMTIDSet(workPath);
 		// information about output partial types
-		pdm.writeLog(pdm.partialTypes.stream().map(type -> type.toString())
+		writeLog(partialTypes.stream().map(type -> type.toString())
 				.collect(Collectors.joining(" ", "Computing for ", "")));
 
 		// sacdataを何ポイントおきに取り出すか
-		pdm.step = (int) (pdm.partialSamplingHz / pdm.finalSamplingHz);
+		step = (int) (partialSamplingHz / finalSamplingHz);
 
 		// System.exit(0);
 
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(pdm.workPath);
+		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 
 		// create ThreadPool
 		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 		// System.exit(0);
 
-		Path idPath = pdm.workPath.resolve("partial1DID" + dateString + ".dat");
-		Path datasetPath = pdm.workPath.resolve("partial1D" + dateString + ".dat");
-		try (WaveformDataWriter pdw = new WaveformDataWriter(idPath, datasetPath)) {
+		Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
+		Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
+		try (WaveformDataWriter pdw = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
+				perturbationLocationSet)) {
 
-			pdm.partialDataWriter = pdw;
+			partialDataWriter = pdw;
 			for (EventFolder eventDir : eventDirs)
-				execs.execute(pdm.new Worker(eventDir));
+				execs.execute(new Worker(eventDir));
 			// break;
 			execs.shutdown();
 
@@ -401,17 +430,21 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 		System.out.println();
 		String endLine = "Partial1DDatasetMaker finished in " + Utilities.toTimeString(System.nanoTime() - startTime);
 		System.err.println(endLine);
-		pdm.writeLog(endLine);
-		pdm.writeLog(idPath + " " + datasetPath + " were created");
-		pdm.writeLog(pdm.numberOfAddedID + " IDs are added.");
+		writeLog(endLine);
+		writeLog(idPath + " " + datasetPath + " were created");
+		writeLog(numberOfAddedID + " IDs are added.");
 
 	}
+
+	private double[][] periodRanges;
 
 	private void setBandPassFilter() {
 		double omegaH = fmax * 2 * Math.PI / partialSamplingHz;
 		double omegaL = fmin * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, 4);
 		filter.setBackward(backward);
+		periodRanges = new double[][] { { 1 / fmax, 1 / fmin } };
+
 		// System.out.println("bandpass filter " + fmin + " " + fmax
 		// + " (Hz) was set");
 	}

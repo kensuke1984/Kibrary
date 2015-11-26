@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-
 import filehandling.sac.SACComponent;
 import filehandling.sac.SACData;
 import filehandling.sac.SACFileName;
@@ -23,17 +22,20 @@ import filehandling.sac.SACHeaderEnum;
 import manhattan.external.TauPPhase;
 import manhattan.external.TauPTimeReader;
 import manhattan.globalcmt.GlobalCMTID;
+import manhattan.template.Station;
 import manhattan.template.Utilities;
 
 /**
- * workingDirectory/イベントフォルダ内の波形に対して タイムウインドウをつけていく filterDividerの次にやる
- * その後selectionしてタイムシフトを決める
+ * workingDirectory/イベントフォルダ内の波形に対して タイムウインドウをつけていく
  * 
- * 与えたフェーズにたいしウインドウを作る exフェーズと重なった部分は省く 出力は {@link TimewindowInformationFile}にそう
+ * Create an information file about timewindows. It looks for observed waveforms
+ * in event folders under the working directory. For all the waveforms,
+ * timewindows are computed by TauP.
  * 
- * SacFileのdelta準拠のタイムウインドウにする
  * 
- * @since 2013/9/6
+ * It creates a window for each given phase and exphase with front and rear
+ * parts. Overlapped part between those are abandoned. Start and end time of the
+ * window is set to integer multiple of DELTA in SAC files.
  * 
  * @version 0.1.7
  * 
@@ -87,7 +89,7 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	private void run() throws IOException, InterruptedException {
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
-				eventDir.sacFileSet(sfn -> !sfn.isSYN() || !components.contains(sfn.getComponent())).forEach(sfn -> {
+				eventDir.sacFileSet(sfn -> !sfn.isOBS() || !components.contains(sfn.getComponent())).forEach(sfn -> {
 					try {
 						makeTimeWindow(sfn);
 					} catch (Exception e) {
@@ -104,7 +106,6 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 
 	private void makeTimeWindow(SACFileName sacFileName) throws IOException {
 		SACData sacFile = sacFileName.read();
-
 		// 震源深さ radius
 		double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
 		// 震源観測点ペアの震央距離
@@ -131,17 +132,16 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 		// delta (time step) in SacFile
 		double delta = sacFile.getValue(SACHeaderEnum.DELTA);
 		double e = sacFile.getValue(SACHeaderEnum.E);
-		// station name of SacFile
-		String stationName = sacFileName.getStationName();
+		// station of SacFile
+		Station station = sacFile.getStation();
 		// global cmt id of SacFile
 		GlobalCMTID id = sacFileName.getGlobalCMTID();
 		// component of SacFile
 		SACComponent component = sacFileName.getComponent();
 
 		// window fix
-		Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.endTime <= e)
-				.map(window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), stationName, id,
-						component))
+		Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.endTime <= e).map(
+				window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component))
 				.forEach(timewindowSet::add);
 	}
 
@@ -187,7 +187,7 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	}
 
 	/**
-	 * @param useTimeWindow 
+	 * @param useTimeWindow
 	 * @param exTimeWindow
 	 * @return useTimeWindowからexTimeWindowの重なっている部分を取り除く 何もなくなってしまったらnullを返す
 	 */
@@ -206,8 +206,10 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	 * 
 	 * eliminate exTimeWindows from useTimeWindows
 	 * 
-	 * @param useTimeWindows must be in order by start time
-	 * @param exTimeWindows must be in order by start time
+	 * @param useTimeWindows
+	 *            must be in order by start time
+	 * @param exTimeWindows
+	 *            must be in order by start time
 	 * @return timewindows to use
 	 */
 	private static Timewindow[] considerExPhase(Timewindow[] useTimeWindows, Timewindow[] exTimeWindows) {
@@ -229,7 +231,8 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	 * if there are any overlapping timeWindows, merge them. the start times
 	 * must be in order.
 	 * 
-	 * @param windows to be merged
+	 * @param windows
+	 *            to be merged
 	 * @return windows containing all the input windows in order
 	 */
 	private static Timewindow[] mergeWindow(Timewindow[] windows) {
@@ -254,7 +257,8 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 	}
 
 	/**
-	 * @param phases Set of TauPPhases
+	 * @param phases
+	 *            Set of TauPPhases
 	 * @return travel times in {@link TauPPhase}
 	 */
 	private static double[] toTravelTime(Set<TauPPhase> phases) {

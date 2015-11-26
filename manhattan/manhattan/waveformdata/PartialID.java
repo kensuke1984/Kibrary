@@ -52,11 +52,6 @@ public class PartialID extends BasicID {
 	}
 
 	/**
-	 * File size for an ID
-	 */
-	public static final int oneIDbyte = 82;
-
-	/**
 	 * 摂動点の位置
 	 */
 	protected final Location pointLocation;

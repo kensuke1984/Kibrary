@@ -17,6 +17,7 @@ import filehandling.sac.SACComponent;
 import filehandling.sac.SACData;
 import filehandling.sac.SACFileName;
 import manhattan.globalcmt.GlobalCMTID;
+import manhattan.template.Station;
 import manhattan.template.Trace;
 import manhattan.template.Utilities;
 import manhattan.timewindow.TimewindowInformation;
@@ -35,15 +36,12 @@ import manhattan.timewindow.TimewindowInformationFile;
  * Start time for identification is a start time in the given
  * {@link TimewindowInformationFile}.
  * 
- * @author kensuke
- * @since 2015/08/07
- * @version 0.0.1
+ * <b>Assume that there are no stations with the same name but different networks in an event</b>
  * 
- * @version 0.0.1.1
- * @since 2015/8/14
+ * 
+ * @author kensuke
  * 
  * @version 0.0.2
- * @since 2015/9/14 Timewindow information
  * 
  */
 final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection {
@@ -97,7 +95,7 @@ final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection 
 		GlobalCMTID id = obsName.getGlobalCMTID();
 		SACComponent component = obsName.getComponent();
 		Set<TimewindowInformation> timeWindowSet = timewindow.stream()
-				.filter(info -> info.getStationName().equals(stationName))
+				.filter(info -> info.getStation().getStationName().equals(stationName))
 				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
 				.collect(Collectors.toSet());
 		if (timeWindowSet.size() != 1)
@@ -105,6 +103,7 @@ final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection 
 		TimewindowInformation timeWindow = timeWindowSet.iterator().next();
 		SACData obsSac = obsName.read();
 		SACData synSac = synName.read();
+		Station station = obsSac.getStation();
 		Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
 		Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
 		double obsT = (obsTrace.getXforMaxValue() + obsTrace.getXforMinValue()) / 2;
@@ -113,7 +112,7 @@ final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection 
 		double obsAmp = (obsTrace.getMaxValue() - obsTrace.getMinValue()) / 2;
 		double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
 		double amplitudeRatio = obsAmp / synAmp;
-		StaticCorrection sc = new StaticCorrection(stationName, id, component, timeWindow.getStartTime(), timeShift,
+		StaticCorrection sc = new StaticCorrection(station, id, component, timeWindow.getStartTime(), timeShift,
 				amplitudeRatio);
 		outStaticCorrectionSet.add(sc);
 	}
