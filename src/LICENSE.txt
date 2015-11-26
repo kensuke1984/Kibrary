@@ -1,4 +1,4 @@
-Kibrary 0.2.4.3rc (Goblin) Copyright © 2015 Kensuke Konishi
+Kibrary 0.2.4.4rc (Goblin) Copyright © 2015 Kensuke Konishi
 
 Library for waveform inversion. 
 It bundles ANISOtime package.
