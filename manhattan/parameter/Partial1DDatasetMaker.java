@@ -53,11 +53,17 @@ public class Partial1DDatasetMaker extends ParameterFile {
 	 * time length (DSM parameter)
 	 */
 	protected double tlen;
+
 	/**
 	 * step of frequency domain (DSM parameter)
 	 */
 	protected int np;
 
+	/**
+	 * radius of perturbation
+	 */
+	protected double[] bodyR;
+	
 	/**
 	 * @param args
 	 *            [parameter file name]
@@ -89,6 +95,8 @@ public class Partial1DDatasetMaker extends ParameterFile {
 			pw.println("sourceTimeFunction 1");
 			pw.println("#Path of a timewindow information file");
 			pw.println("timewindowPath timewindow.dat");
+			pw.println("#Path of a station information file");
+			pw.println("stationInformationFilePath station.inf");
 			pw.println("#PartialType[] compute types");
 			pw.println("partialTypes PAR1 PAR2 PAR3 PAR4 PAR5 PARQ");
 			pw.println("#Filter backward");
@@ -105,6 +113,8 @@ public class Partial1DDatasetMaker extends ParameterFile {
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("#double");
 			pw.println("finalSamplingHz 1");
+			pw.println("#radius for perturbation points");
+			pw.println("bodyR 3505 3555 3605");
 		}
 		setExecutable(outPath);
 	}
@@ -143,6 +153,7 @@ public class Partial1DDatasetMaker extends ParameterFile {
 	 */
 	protected double finalSamplingHz;
 	protected Path sourceTimeFunctionPath;
+	protected Path stationInformationFilePath;
 
 	protected Partial1DDatasetMaker(Path parameterPath) throws IOException {
 		super(parameterPath);
@@ -181,9 +192,11 @@ public class Partial1DDatasetMaker extends ParameterFile {
 		fmax = reader.getDouble("fmax");
 		tlen = reader.getDouble("tlen");
 		np = reader.getInt("np");
+		String[] rStr = reader.getStringArray("bodyR");
+		bodyR = Arrays.stream(rStr).mapToDouble(Double::parseDouble).toArray();
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
-
+		stationInformationFilePath= getPath("stationInformationFilePath");
 		finalSamplingHz = Double.parseDouble(reader.getString("finalSamplingHz"));
 
 	}
@@ -202,9 +215,10 @@ public class Partial1DDatasetMaker extends ParameterFile {
 		parameterSet.add("tlen");
 		parameterSet.add("sourceTimeFunction");
 		parameterSet.add("backward");
+		parameterSet.add("stationInformationFilePath");
 		// parameterSet.add("partialSamplingHz"); TODO
 		parameterSet.add("finalSamplingHz");
-		// parameterSet.add("pointFile");
+		 parameterSet.add("bodyR");
 		return reader.containsAll(parameterSet);
 
 	}

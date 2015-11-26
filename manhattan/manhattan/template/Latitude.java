@@ -1,11 +1,14 @@
 package manhattan.template;
 
+
 import org.apache.commons.math3.util.FastMath;
 
 /**
  * 緯度 [-90, 90] 小数点5桁以下を四捨五入
  * 
- * <p>This class is <b>IMMUTABLE</b></p>
+ * <p>
+ * This class is <b>IMMUTABLE</b>
+ * </p>
  * 
  * @version 0.0.2
  * @since 2014/1/12
@@ -21,14 +24,18 @@ import org.apache.commons.math3.util.FastMath;
  * @since 2015/4/14
  * 
  * @version 0.0.6
- * @since 2015/8/18
- * {@link IllegalArgumentException}
+ * @since 2015/8/18 {@link IllegalArgumentException}
  * 
  * 
  * @author kensuke
  * 
  */
-class Latitude {
+class Latitude implements Comparable<Latitude> {
+
+	@Override
+	public int compareTo(Latitude o) {
+		return Double.compare(geographicLatitude, o.geographicLatitude);
+	}
 
 	@Override
 	public int hashCode() {

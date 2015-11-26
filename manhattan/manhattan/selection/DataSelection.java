@@ -29,6 +29,7 @@ import manhattan.datacorrection.StaticCorrection;
 import manhattan.datacorrection.StaticCorrectionFile;
 import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.EventFolder;
+import manhattan.template.Station;
 import manhattan.template.Trace;
 import manhattan.template.Utilities;
 import manhattan.timewindow.Timewindow;
@@ -192,13 +193,15 @@ class DataSelection extends parameter.DataSelection {
 					// synthetic sac
 					SACData obsSac = obsName.read();
 					SACData synSac = synName.read();
+					
+					Station station = obsSac.getStation();
 					//
 					if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA))
 						continue;
 
 					// Pickup a time window of obsName
 					Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet.stream()
-							.filter(info -> info.getStationName().equals(stationName))
+							.filter(info -> info.getStation().equals(station))
 							.filter(info -> info.getGlobalCMTID().equals(id))
 							.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
@@ -224,17 +227,19 @@ class DataSelection extends parameter.DataSelection {
 			// System.out.println(obsEventDirectory + " is done");
 		}
 	}
+
 	/**
 	 * ID for static correction and time window information Default is station
 	 * name, global CMT id, component.
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStationName().equals(t.getStationName()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
 	}
+
 	/**
 	 * @param timewindow
 	 *            timewindow to shift
@@ -243,12 +248,12 @@ class DataSelection extends parameter.DataSelection {
 	 *         the input one.
 	 */
 	private TimewindowInformation shift(TimewindowInformation timewindow) {
-		if(staticCorrectionSet.isEmpty())
+		if (staticCorrectionSet.isEmpty())
 			return timewindow;
 		StaticCorrection foundShift = getStaticCorrection(timewindow);
 		double value = foundShift.getTimeshift();
 		return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
-				foundShift.getStationName(), foundShift.getGlobalCMTID(), foundShift.getComponent());
+				foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent());
 	}
 
 	private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,

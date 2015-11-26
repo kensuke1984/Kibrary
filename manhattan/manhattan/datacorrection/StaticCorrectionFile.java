@@ -4,15 +4,18 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.JOptionPane;
 
@@ -20,37 +23,32 @@ import org.apache.commons.lang3.StringUtils;
 
 import filehandling.sac.SACComponent;
 import manhattan.globalcmt.GlobalCMTID;
+import manhattan.template.HorizontalPosition;
+import manhattan.template.Station;
 
 /**
  * Information File of {@link StaticCorrection}
  * 
- * 1 time shift {@value #oneShiftByte} byte
+ * 1 time shift {@value #oneCorrectionByte} byte The file contains<br>
+ * Numbers of stations, events<br>
+ * Each station information <br>
+ * - name, network, position <br>
+ * Each event <br>
+ * - Global CMT ID Each period<br>
+ * Each static correction information<br>
+ * - see in {@link #read(Path)}<br>
  * 
- * String station name(8)<br>
- * String of {@link GlobalCMTID} (15)<br>
- * component (1)<br>
- * Float start time (s) (4) round off to the third decimal place<br>
- * Float time shift(s) (4) round off to the third decimal place.<br>
- * Float max ratio(obs/syn) (4) round off to the third decimal place
- * 
- * 
- * @version 0.1.0
- * @since 2013/12/1 use global cmt
- * 
- * 
- * @version 0.1.5
- * @since 2014/10/13 to Jave 8 start time installed.
- * 
- * @version 0.2.0
- * @since 2015/5/31 amplitude
  * 
  * @version 0.2.0.1
- * @since 2015/8/7 {@link IOException}
  * 
  * @author Kensuke
  * 
  */
 public final class StaticCorrectionFile {
+	/**
+	 * The number of bytes for one time shift data
+	 */
+	public static final int oneCorrectionByte = 17;
 
 	private StaticCorrectionFile() {
 	}
@@ -63,31 +61,59 @@ public final class StaticCorrectionFile {
 	 *             if an I/O error occurs
 	 */
 	public static Set<StaticCorrection> read(Path infoPath) throws IOException {
-		if (Files.size(infoPath) % oneShiftByte != 0)
-			throw new RuntimeException(infoPath + " is not valid..");
-		Set<StaticCorrection> staticCorrectionSet = new HashSet<>();
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)))) {
-			byte[] strByte = new byte[8];
-			byte[] eventByte = new byte[15];
-			while (true) {
-				dis.read(strByte);
-				String station = new String(strByte).trim();
-				dis.read(eventByte);
-				String eventStr = new String(eventByte).trim();
-				GlobalCMTID eventName = new GlobalCMTID(eventStr); //
-				SACComponent component = SACComponent.getComponent(dis.readByte());
-				double startTime = dis.readFloat();
-				double timeshift = dis.readFloat();
-				double ratioOfMax = dis.readFloat();
-				StaticCorrection shift = new StaticCorrection(station, eventName, component, startTime, timeshift,
-						ratioOfMax);
-				staticCorrectionSet.add(shift);
+			long fileSize = Files.size(infoPath);
+			Station[] stations = new Station[dis.readShort()];
+			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
+			int headerBytes = 2 * 2 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length;
+			long infoParts = fileSize - headerBytes;
+			if (infoParts % oneCorrectionByte != 0)
+				throw new RuntimeException(infoPath + " is not valid..");
+			// name(8),network(8),position(4*2)
+			byte[] stationBytes = new byte[24];
+			for (int i = 0; i < stations.length; i++) {
+				dis.read(stationBytes);
+				stations[i] = Station.createStation(stationBytes);
 			}
-		} catch (EOFException e) {
+			byte[] cmtIDBytes = new byte[15];
+			for (int i = 0; i < cmtIDs.length; i++) {
+				dis.read(cmtIDBytes);
+				cmtIDs[i] = new GlobalCMTID(new String(cmtIDBytes).trim());
+			}
+			int nInfo = (int) (infoParts / oneCorrectionByte);
+			byte[][] bytes = new byte[nInfo][17];
+			for (int i = 0; i < nInfo; i++)
+				dis.read(bytes[i]);
+			Set<StaticCorrection> staticCorrectionSet = Arrays.stream(bytes).parallel()
+					.map(b -> createCorrection(b, stations, cmtIDs)).collect(Collectors.toSet());
+			System.err.println(staticCorrectionSet.size() + " static corrections are read.");
+			return Collections.unmodifiableSet(staticCorrectionSet);
 		}
-		System.err.println(staticCorrectionSet.size() + " static corrections are read.");
-		return Collections.unmodifiableSet(staticCorrectionSet);
+	}
 
+	/**
+	 * Creates a static correction from the input bytes.
+	 * 
+	 * Station index(2)<br>
+	 * GlobalCMTID index(2)<br>
+	 * component(1)<br>
+	 * Float start time(4) round off to the third decimal place<br>
+	 * Float time shift(4) round off to the third decimal place.<br>
+	 * Float amplitude ratio(obs/syn) (4) round off to the third decimal place
+	 * 
+	 * @param bytes
+	 *            containing infomation above.
+	 * @return created static correction
+	 */
+	private static StaticCorrection createCorrection(byte[] bytes, Station[] stations, GlobalCMTID[] ids) {
+		ByteBuffer bb = ByteBuffer.wrap(bytes);
+		Station station = stations[bb.getShort()];
+		GlobalCMTID id = ids[bb.getShort()];
+		SACComponent comp = SACComponent.getComponent(bb.get());
+		double start = bb.getFloat();
+		double timeshift = bb.getFloat();
+		double amplitude = bb.getFloat();
+		return new StaticCorrection(station, id, comp, start, timeshift, amplitude);
 	}
 
 	/**
@@ -102,11 +128,33 @@ public final class StaticCorrectionFile {
 	 */
 	public static void write(Set<StaticCorrection> correctionSet, Path outPath, OpenOption... options)
 			throws IOException {
+		Station[] stations = correctionSet.stream().map(sc -> sc.getStation()).distinct().sorted()
+				.toArray(n -> new Station[n]);
+		GlobalCMTID[] ids = correctionSet.stream().map(sc -> sc.getGlobalCMTID()).distinct().sorted()
+				.toArray(n -> new GlobalCMTID[n]);
+
+		Map<Station, Integer> stationMap = IntStream.range(0, stations.length).boxed()
+				.collect(Collectors.toMap(i -> stations[i], i -> i));
+		Map<GlobalCMTID, Integer> idMap = IntStream.range(0, ids.length).boxed()
+				.collect(Collectors.toMap(i -> ids[i], i -> i));
+
 		try (DataOutputStream dos = new DataOutputStream(
 				new BufferedOutputStream(Files.newOutputStream(outPath, options)))) {
+			dos.writeShort(stations.length);
+			dos.writeShort(ids.length);
+			for (int i = 0; i < stations.length; i++) {
+				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
+				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
+				HorizontalPosition pos = stations[i].getPosition();
+				dos.writeFloat((float) pos.getLatitude());
+				dos.writeFloat((float) pos.getLongitude());
+			}
+			for (int i = 0; i < ids.length; i++)
+				dos.writeBytes(StringUtils.rightPad(ids[i].toString(), 15));
+
 			for (StaticCorrection correction : correctionSet) {
-				dos.writeBytes(StringUtils.rightPad(correction.getStationName(), 8));
-				dos.writeBytes(StringUtils.rightPad(correction.getGlobalCMTID().toString(), 15));
+				dos.writeShort(stationMap.get(correction.getStation()));
+				dos.writeShort(idMap.get(correction.getGlobalCMTID()));
 				dos.writeByte(correction.getComponent().valueOf());
 				dos.writeFloat((float) correction.getSynStartTime());
 				dos.writeFloat((float) correction.getTimeshift());
@@ -117,11 +165,6 @@ public final class StaticCorrectionFile {
 	}
 
 	/**
-	 * The number of bytes for one time shift data
-	 */
-	public static final int oneShiftByte = 36;
-
-	/**
 	 * Shows all static corrections in a file
 	 * 
 	 * @param args
@@ -130,16 +173,16 @@ public final class StaticCorrectionFile {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		Set<StaticCorrection> tsif = null;
+		Set<StaticCorrection> scf = null;
 		if (args.length != 0)
-			tsif = StaticCorrectionFile.read(Paths.get(args[0]));
+			scf = StaticCorrectionFile.read(Paths.get(args[0]));
 		else {
 			String s = JOptionPane.showInputDialog("file?");
 			if (s == null || s.equals(""))
 				return;
-			tsif = StaticCorrectionFile.read(Paths.get(s));
+			scf = StaticCorrectionFile.read(Paths.get(s));
 		}
-		tsif.forEach(System.out::println);
+		scf.stream().sorted().forEach(System.out::println);
 	}
 
 }

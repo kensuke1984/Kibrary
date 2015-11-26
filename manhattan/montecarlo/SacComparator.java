@@ -23,13 +23,10 @@ import manhattan.timewindow.TimewindowInformationFile;
 
 /**
  * SacCompare
- * 
+ * <b>Assume that there are no stations with the same name but different networks</b>
  * @author kensuke
- * @since 2015/07/02
- * @version 0.0.1
  * 
  * @version 0.0.5
- * @since 2015/7/21 Takeuchi comparison
  * 
  * 
  */
@@ -200,7 +197,7 @@ class SacComparator {
 
 		GlobalCMTID id = new GlobalCMTID(obsSac.getSACString(SACHeaderEnum.KEVNM));
 		TimewindowInformation window = twInfo .stream()
-				.filter(info -> info.getStationName().equals(station)).filter(info -> info.getGlobalCMTID().equals(id))
+				.filter(info -> info.getStation().getStationName().equals(station)).filter(info -> info.getGlobalCMTID().equals(id))
 				.filter(info -> info.getComponent() == SACComponent.T).findAny().get();
 		tstart = window.getStartTime();
 		tend = window.getEndTime();

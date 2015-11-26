@@ -5,7 +5,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +20,7 @@ import filehandling.sac.SACComponent;
 import filehandling.sac.SACData;
 import filehandling.sac.SACExtension;
 import filehandling.sac.SACFileName;
+import filehandling.sac.SACHeaderData;
 import filehandling.sac.SACHeaderEnum;
 import filehandling.sac.WaveformType;
 import manhattan.datacorrection.StaticCorrection;
@@ -32,24 +35,30 @@ import manhattan.timewindow.TimewindowInformationFile;
 
 /**
  * 
- * Creates dataset containing observed and synthetic waveforms. The output files
- * are one of ID and one of waveform.
+ * Creates dataset containing observed and synthetic waveforms. <br>
+ * The output is a set of an ID and waveform files.
  * 
+ * Observed and synthetic waveforms in SAC files are collected from the obsDir
+ * and synDir, respectively. Only SAC files, which sample rates are
+ * {@link parameter.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used.
  * 
- * workDir下の各イベントフォルダ内にある観測波形 理論波形からデータセットを構築する。 データセットは
- * それぞれの波形情報ファイルと波形データのファイル
+ * Both folders must have event folders inside which have waveforms.
  * 
- * タイムシフトインフォメーションの中のウインドウのデータを与えたsamplingHzで切り出す
+ * The sample rates of the data is
+ * {@link parameter.ObservedSyntheticDatasetMaker#finalSamplingHz}. Timewindow
+ * information in
+ * {@link parameter.ObservedSyntheticDatasetMaker#timewindowInformationPath} is
+ * used for cutting windows.
  * 
- * 観測波形と理論波形の両方がない震源観測点成分の組み合わせはスキップする。
+ * Only pairs of a seismic source and a receiver with both an observed and
+ * synthetic waveform are collected.
  * 
- * フィルター処理は行わない (先にフィルターをかけておく必要がある) TODO
+ * This class does not apply a digital filter, but extract information about
+ * passband written in SAC files.
  * 
- * TODO データ選定の手段？
+ * TODO <b> Assume that there are no stations with same name but different
+ * network in one event</b>
  * 
- * タイムウインドウファイル内に記述があって、観測もしくは理論波形が存在しなくてもいい
- * 
- * @since 2013/11/12
  * 
  * @version 0.1
  * 
@@ -74,7 +83,42 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 			System.exit(0);
 		if (timeShift || amplitudeCorrection)
 			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionPath);
+
+		// obsDirからイベントフォルダを指定
+		eventDirs = Utilities.eventFolderSet(obsPath);
 		timewindowInformationSet = TimewindowInformationFile.read(timewindowInformationPath);
+		stationSet = timewindowInformationSet.parallelStream().map(ti -> ti.getStation()).collect(Collectors.toSet());
+		idSet = timewindowInformationSet.parallelStream().map(ti -> ti.getGlobalCMTID()).collect(Collectors.toSet());
+		readPeriodRanges();
+	}
+
+	private Set<EventFolder> eventDirs;
+	private Set<Station> stationSet;
+	private Set<GlobalCMTID> idSet;
+	private double[][] periodRanges;
+
+	private void readPeriodRanges() {
+		try {
+			List<double[]> ranges = new ArrayList<>();
+			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
+				if (!name.isOBS())
+					continue;
+				SACHeaderData header = name.readHeader();
+				double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
+						header.getValue(SACHeaderEnum.USER1) };
+				boolean exists = false;
+				if (ranges.size() == 0)
+					ranges.add(range);
+				for (int i = 0; !exists && i < ranges.size(); i++)
+					if (Arrays.equals(range, ranges.get(i)))
+						exists = true;
+				if (!exists)
+					ranges.add(range);
+			}
+			periodRanges = ranges.toArray(new double[ranges.size()][]);
+		} catch (Exception e) {
+			throw new RuntimeException("Error in reading period ranges from SAC files.");
+		}
 	}
 
 	/**
@@ -95,18 +139,24 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 
 		long startT = System.nanoTime();
 
-		// obsDirからイベントフォルダを指定
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(osdm.obsPath);
+		osdm.run();
+		System.err.println();
+		System.out.println("ObservedSynthetic finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+		System.exit(0);
 
+	}
+
+	public void run() {
 		int n = Runtime.getRuntime().availableProcessors();
 		ExecutorService execs = Executors.newFixedThreadPool(n);
 		String dateStr = Utilities.getTemporaryString();
-		Path waveIDPath = osdm.workPath.resolve("waveformID" + dateStr + ".dat");
-		Path waveformPath = osdm.workPath.resolve("waveform" + dateStr + ".dat");
-		try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath)) {
-			osdm.dataWriter = bdw;
+		Path waveIDPath = workPath.resolve("waveformID" + dateStr + ".dat");
+		Path waveformPath = workPath.resolve("waveform" + dateStr + ".dat");
+		try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
+				periodRanges)) {
+			dataWriter = bdw;
 			for (EventFolder eventDir : eventDirs)
-				execs.execute(osdm.new Worker(eventDir));
+				execs.execute(new Worker(eventDir));
 
 			execs.shutdown();
 			while (!execs.isTerminated())
@@ -115,10 +165,6 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.err.println();
-		System.out.println("ObservedSynthetic finished in " + Utilities.toTimeString(System.nanoTime() - startT));
-		System.exit(0);
-
 	}
 
 	private boolean canGO() {
@@ -183,7 +229,7 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 					continue;
 
 				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
-						.filter(info -> info.getStationName().equals(stationName))
+						.filter(info -> info.getStation().getStationName().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
@@ -233,7 +279,7 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 				maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 
 				Station station = obsSac.getStation();
-				
+
 				for (TimewindowInformation window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
 					double startTime = window.getStartTime();
@@ -256,8 +302,8 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 					obsData = Arrays.stream(obsData).map(d -> d / maxratio).toArray();
 					BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
 							component, minPeriod, maxPeriod, 0, isConvolved, synData);
-					BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station,
-							id, component, minPeriod, maxPeriod, 0, isConvolved, obsData);
+					BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
+							component, minPeriod, maxPeriod, 0, isConvolved, obsData);
 					try {
 						dataWriter.addBasicID(obsID);
 						dataWriter.addBasicID(synID);
@@ -277,14 +323,13 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 	 * name, global CMT id, component.
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
-			t) -> s.getStationName().equals(t.getStationName()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
 	}
 
-	
 	private double[] cutDataSac(SACData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);

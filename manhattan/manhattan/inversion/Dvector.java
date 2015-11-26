@@ -237,6 +237,10 @@ public class Dvector {
 		return v;
 	}
 
+	/**
+	 * @return Vectors consisting of dvector. Each vector is each timewindow.
+	 * If you want to get the vector D, you may use {@link #combine(RealVector[])} 
+	 */
 	public RealVector[] getdVec() {
 		return dVec.clone();
 	}

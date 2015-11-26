@@ -10,19 +10,25 @@ import filehandling.sac.SACHeaderEnum;
 
 /**
  * 
+ * Identifier of an event listed in Global CMT project.
+ *  
  * 
- * 
- * globalCMT のデータベース内の識別子
- * 
- * @since 2013/9/19
- * 
- * @version 0.0.7
+ * @version 0.1
  * 
  * 
  * @author kensuke
  * 
  */
-public class GlobalCMTID {
+public class GlobalCMTID implements Comparable<GlobalCMTID>{
+
+	/**
+	 * Compares global CMT IDs by their ID using {@link String#compareTo(String)}
+	 * 
+	 */
+	@Override
+	public int compareTo(GlobalCMTID o) {
+		return id.compareTo(o.id);
+	}
 
 	/**
 	 * @param sacHeaderData
