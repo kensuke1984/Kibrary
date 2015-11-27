@@ -2,17 +2,19 @@ package mathtool.geometry;
 
 /**
  * xy plane
+ * This class is <b>immutable</b>
+ * @version 0.0.1
  * 
  * @author Kensuke
  * 
  */
-public class XY {
+class XY {
 
-	protected double x;
+	final double x;
 
-	protected double y;
+	final double y;
 
-	public XY(double x, double y) {
+	XY(double x, double y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -22,7 +24,7 @@ public class XY {
 	 *            [rad]
 	 * @return XY rotated by theta counter-clockwisely
 	 */
-	public XY rotate(double theta) {
+	XY rotate(double theta) {
 		double x = Math.cos(theta) * this.x - Math.sin(theta) * this.y;
 		double y = Math.sin(theta) * this.x + Math.cos(theta) * this.y;
 		return new XY(x, y);
@@ -32,17 +34,18 @@ public class XY {
 	 * @param xy target
 	 * @return xyとの内積 inner product with the xy
 	 */
-	public double getInnerProduct(XY xy) {
+	double getInnerProduct(XY xy) {
 		return this.x * xy.x + this.y * xy.y;
 	}
 
 	/**
 	 * @return distance from the origin (0,0)
 	 */
-	public double getR() {
+	double getR() {
 		return Math.sqrt(x * x + y * y);
 	}
 
+	@Override
 	public String toString() {
 		return x + " " + y;
 	}
@@ -70,7 +73,7 @@ public class XY {
 	 * @param p1 point
 	 * @param p2 point
 	 * @param p3 point
-	 * @return 0: stright, positive: counterclock, negative: clockwise
+	 * @return 0: straight, positive: counter clock, negative: clockwise
 	 */
 	static double ccw(Point2D p1, Point2D p2, Point2D p3) {
 		Point2D p12 = new Point2D(p2.x - p1.x, p2.y - p1.y);
@@ -78,9 +81,8 @@ public class XY {
 		return cross(p12, p23);
 	}
 
-	public static double dotProduct(Point2D point1, Point2D point2) {
+	static double dotProduct(Point2D point1, Point2D point2) {
 		return point1.x * point2.x + point1.y * point2.y;
-
 	}
 
 }
