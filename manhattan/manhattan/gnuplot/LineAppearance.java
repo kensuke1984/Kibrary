@@ -2,10 +2,9 @@ package manhattan.gnuplot;
 
 /**
  * 
- * gnuplot　のプロットの設定
+ * Settings in gnuplot
  * 
  * @version 0.0.2
- * @since 2013/9/25
  * 
  * @author Kensuke Konishi
  *
