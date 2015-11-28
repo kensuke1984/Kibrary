@@ -4,19 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DSMにいれるinformation fileのヘッダー部分
- * 
- * @version 0.0.2
- * @since 2013/9/25
- * 
- * @version 0.0.3
- * @since 2014/1/17 modify {@link #outputDSMHeader()}
- * 
- * @version 0.0.4
- * @since 2014/1/22 setters with access level default are installed
+ * Header part of a file for DSM.
  * 
  * @version 0.0.4.1
- * @since 2015/8/21 bug fixed in {@link #validTlen(double)}
  * 
  * @author Kensuke
  * 
@@ -190,9 +180,7 @@ class DSMheader {
 
 	private void setDefault() {
 		tlen = 3276.8; // as default
-		// tlen = 13107.2; // as default
 		np = 1024; // as default
-		// np = 2048; //
 		imin = 0; // as default
 		imax = np; // as default
 		relativeError = 1.e-2;

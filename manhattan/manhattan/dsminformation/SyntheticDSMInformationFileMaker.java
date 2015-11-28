@@ -16,8 +16,6 @@ import manhattan.template.Utilities;
 /**
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
  * 
- * @since 2013/10/3
- * 
  * @version 0.1.4
  * 
  * @author kensuke

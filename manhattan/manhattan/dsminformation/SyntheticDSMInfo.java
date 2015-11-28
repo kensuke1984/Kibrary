@@ -14,16 +14,9 @@ import manhattan.template.Location;
 import manhattan.template.Station;
 
 /**
- * DSMにより理論波形計算(tipsv, tish)を行うときのinformation file
- * 
- * @since 2014/9/5
- * @version 0.1.5 to Java8
- * 
- * @since 2015/7/1
- * @version 0.1.5.1 {@link Path}
+ * Information file for TIPSV and TISH
  * 
  * @version 0.1.6
- * @since 2015/8/14 {@link IOException} {@link Path} base
  * 
  * 
  * @author kensuke
