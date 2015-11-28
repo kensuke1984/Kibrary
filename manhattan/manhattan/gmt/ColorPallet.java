@@ -13,8 +13,6 @@ import java.nio.file.StandardOpenOption;
  * 
  * 
  * @version 0.0.5
- * @since 2015/8/24 Interface containing Oobayashi.
- * 
  * @author kensuke
  * 
  */
