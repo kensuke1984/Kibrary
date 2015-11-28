@@ -4,8 +4,13 @@
 package manhattan.external;
 
 /**
+ * 
+ * The output from taup_time.
+ * 
+ * This class is <b>immutable</b>
+ * 
+ * 
  * @author kensuke
- * @since 2014/05/15
  * @version 0.0.1
  */
 public class TauPPhase {
@@ -14,7 +19,6 @@ public class TauPPhase {
 	TauPPhase(double distance, double depth, TauPPhaseName phaseName,
 			double travelTime, double rayParameter, double takeoff,
 			double incident, double puristDistance, String puristName) {
-		super();
 		this.distance = distance;
 		this.depth = depth;
 		this.phaseName = phaseName;
@@ -29,45 +33,45 @@ public class TauPPhase {
 	/**
 	 * epicentral distance (deg)
 	 */
-	private double distance;
+	private final double distance;
 	
 	/**
 	 * source depth not radius (km)
 	 */
-	private double depth;
+	private final double depth;
 	
-	private TauPPhaseName phaseName;
+	private final TauPPhaseName phaseName;
 	
 	/**
 	 * travel time (s) 
 	 */
-	private double travelTime;
+	private final double travelTime;
 	
 	/**
 	 * ray parameter (s/deg)
 	 */
-	private double rayParameter;
+	private final double rayParameter;
 	
 	/**
 	 * takeoff (deg)
 	 */
-	private double takeoff;
+	private final double takeoff;
 	
 	/**
 	 * incident (deg)
 	 */
-	private double incident;
+	private final double incident;
 	
 	
 	/**
 	 * purist distance
 	 */
-	private double puristDistance;
+	private final double puristDistance;
 	
 	/**
 	 * purist name
 	 */
-	private String puristName;
+	private final String puristName;
 
 	public double getDistance() {
 		return distance;

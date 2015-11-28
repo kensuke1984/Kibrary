@@ -12,14 +12,8 @@ import java.io.PrintWriter;
  * 
  * 
  * @author kensuke
- * @since 2014/10/02
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2015/4/24 {@link #createProcess()} installed.
  * 
  * @version 0.1.0
- * @since 2015/8/15 renew. {@link IOException}.
  * 
  */
 public class Sac extends ExternalProcess implements Closeable {

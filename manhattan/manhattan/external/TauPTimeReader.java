@@ -2,9 +2,7 @@ package manhattan.external;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,34 +11,18 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javax.swing.JOptionPane;
-
-import org.apache.commons.io.input.CloseShieldInputStream;
-
 /**
- * @version 0.0.1 taup_time からの情報 taup_timeは /usr/local/taup/bin 下にないと動かない
+ * <p>
+ * Utility class to handle with taup_time in TauP package
+ * </p>
  * 
- * @version 0.1.0 可変長引数による型指定。
- * @since 2013/7/12
+ * taup_time must be in PATH and it must run correctly.<br>
+ * All the standard output and errors will go to the bit bucket
  * 
- * @version 0.1.1 /usr/local 下からTauP*というフォルダを探してその中にbin/taup_timeがあればそれを使う
- *          なければプロンプトで尋ねる。 (それが taup_timeという名前でないとだめ)
  * 
- * @version 0.2.0
- * @since 2014/5/15 {@link InputStreamThread}の実装
- *        {@link #getTauPPhase(double, double, TauPPhaseName...)}の実装 シンクロトンにした
  * 
- * @version 0.2.1
- * @since 2015/1/23 {@link #getTauPPhase(double, double, Set)} installed
- * 
- * @version 0.2.1.1
- * @since 2015/4/2
- * 
- * @version 0.2.2
- * @since 2015/7/2 TauP can be in PATH
- * 
- * @version 0.2.3
- * @since 2015/8/25
+ * @version 0.3
+ * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  * 
  * 
  * @author kensuke
@@ -51,52 +33,15 @@ public final class TauPTimeReader {
 	private TauPTimeReader() {
 	}
 
-	private static String path;
+	private static final String path = "taup_time";
 
 	static {
 		initialize();
 	}
 
 	private static void initialize() {
-		if (System.getenv("PATH").contains("TauP")) {
-			path = "taup_time";
-			return;
-		}
-		Path usrLocal = Paths.get("/usr/local");
-		try {
-			Files.list(usrLocal).filter(path -> path.toString().toLowerCase().contains("taup")).findAny()
-					.ifPresent(path -> {
-						TauPTimeReader.path = path.toString() + "/bin/taup_time";
-					});
-			if (path != null)
-				return;
-		} catch (Exception e) {
-		}
-
-		do {
-			String path = null;
-			try {
-				path = JOptionPane.showInputDialog("Where is \"taup_time?\" (Full path)", path);
-			} catch (Exception e) {
-				System.out.println("Where is \"taup_time\" (Full path)?");
-				try (BufferedReader br = new BufferedReader(
-						new InputStreamReader(new CloseShieldInputStream(System.in)))) {
-					path = br.readLine().trim();
-					// if (!path.startsWith("/"))
-					// path = System.getProperty("user.dir") + "/" + path;
-				} catch (Exception e2) {
-					e2.printStackTrace();
-					throw new RuntimeException();
-				}
-			}
-			if (path == null || path.equals(""))
-				throw new RuntimeException();
-
-			if (path.endsWith("taup_time") && Files.exists(Paths.get(path))) {
-				TauPTimeReader.path = path;
-				break;
-			}
-		} while (true);
+		if (!ExternalProcess.isInPath(path))
+			throw new RuntimeException(path + " is not in PATH");
 	}
 
 	/**
@@ -137,20 +82,17 @@ public final class TauPTimeReader {
 	 */
 	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<TauPPhaseName> phase) {
 		String[] cmd = makeCMD(eventR, epicentralDistance, phase);
-		// System.out.println();
 		ProcessBuilder pb = new ProcessBuilder(cmd);
-		// System.exit(0);
+		pb.redirectError(ExternalProcess.bitBucket);
 		try {
 			Process p = pb.start();
-			InputStreamThread standard = new InputStreamThread(p.getInputStream());
-			InputStreamThread error = new InputStreamThread(p.getErrorStream());
-			error.start();
-			standard.start();
-			p.waitFor();
-			standard.join();
-			error.join();
-			// System.out.println("hi");
-			return standard.getStringList();
+			List<String> outLines = new ArrayList<>();
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+				String line = null;
+				while ((line = br.readLine()) != null)
+					outLines.add(line);
+			}
+			return outLines;
 		} catch (Exception e) {
 			System.out.println("Error occured");
 			System.out.println("could not find the time");
@@ -206,9 +148,7 @@ public final class TauPTimeReader {
 		StringBuffer phase = new StringBuffer(phaseO[0].toString());
 		for (int i = 1; i < phaseO.length; i++)
 			phase.append("," + phaseO[i].toString());
-
-		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model prem -ph " + phase;
-		// System.out.println(cmd);
+		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -models prem -ph " + phase;
 		return cmd.split("\\s+");
 	}
 

@@ -3,7 +3,6 @@ package manhattan.external;
 /**
  * taupで参照するときのphase
  * 
- * @since 2014/5/15
  * @version 0.0.2
  * 
  * @author kensuke
