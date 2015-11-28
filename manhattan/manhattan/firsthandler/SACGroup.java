@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,28 +20,12 @@ import manhattan.template.Utilities;
  * rdseedからできた 1993.052.07.01.12.4000.PS.OGS.(locationID).BHN.D.SAC
  * の用なファイルのうち、同じnetwork, station, locationID, channel, qualityID のもののgroup
  * 
- * @since 2013/9/22
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2014/1/13 calendarをつかうようにした
- * 
- * @version 0.0.3
- * @since 2014/4/29 {@link #merge()}において足し合わせた時の時間差が小さい時は表示しないようにした
- * 
- * @version 0.0.5
- * @since 2015/2/12 {@link Calendar} &rarr; {@link LocalDateTime}
- * 
- * @version 0.0.5.1
- * @since 2015/8/5 {@link #merge()} throws {@link IOException}
- * 
  * @version 0.0.6
- * @since 2015/8/19 {@link Path} base
  * 
  * @author kensuke
  * 
  */
-class SacGroup {
+class SACGroup {
 
 	/**
 	 * mergeする際のファイルのタイムウインドウのずれの許容範囲 sacfile のDELTA * maxgapNumber
@@ -55,7 +38,7 @@ class SacGroup {
 	 */
 	private Path workPath;
 
-	private Set<SacFileName> nameSet = new HashSet<>();
+	private Set<SACFileName> nameSet = new HashSet<>();
 
 	/**
 	 * mergeしたSacFileName
@@ -63,17 +46,17 @@ class SacGroup {
 	private String mergedSacFileName;
 
 	/**
-	 * 基準となる {@link SacFileName}
+	 * 基準となる {@link SACFileName}
 	 */
-	private SacFileName rootSacFileName;
+	private SACFileName rootSacFileName;
 
 	/**
-	 * 基本となる {@link SacFileName}を追加
+	 * 基本となる {@link SACFileName}を追加
 	 * 
 	 * @param workPath
 	 * @param sacFileName
 	 */
-	SacGroup(Path workPath, SacFileName sacFileName) {
+	SACGroup(Path workPath, SACFileName sacFileName) {
 		this.workPath = workPath;
 		nameSet.add(sacFileName);
 		rootSacFileName = sacFileName;
@@ -81,13 +64,13 @@ class SacGroup {
 	}
 
 	/**
-	 * SacSetに{@link SacFileName}を加える 既に同じものが入っていたり
-	 * {@link SacFileName#isRelated(SacFileName)}がfalseの場合追加しない
+	 * SacSetに{@link SACFileName}を加える 既に同じものが入っていたり
+	 * {@link SACFileName#isRelated(SACFileName)}がfalseの場合追加しない
 	 * 
 	 * @param sacFileName
 	 * @return 追加したかどうか
 	 */
-	boolean add(SacFileName sacFileName) {
+	boolean add(SACFileName sacFileName) {
 		return rootSacFileName.isRelated(sacFileName) && nameSet.add(sacFileName);
 	}
 
@@ -114,7 +97,7 @@ class SacGroup {
 	 */
 	boolean merge() throws IOException {
 		// System.out.println("merging");
-		SacFileName[] sacFileNameList = nameSet.toArray(new SacFileName[nameSet.size()]);
+		SACFileName[] sacFileNameList = nameSet.toArray(new SACFileName[nameSet.size()]);
 		// sort the sacFileNameList
 		Arrays.sort(sacFileNameList);
 
@@ -153,7 +136,7 @@ class SacGroup {
 
 		for (int i = 1; i < sacFileNameList.length; i++) {
 			// sacfilename to be joined
-			SacFileName joinSacFileName = sacFileNameList[i];
+			SACFileName joinSacFileName = sacFileNameList[i];
 			Path joinSacPath = workPath.resolve(joinSacFileName.toString());
 			// System.out.println("joining " + joinSacFile);
 

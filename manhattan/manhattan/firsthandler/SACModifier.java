@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Calendar;
 import java.util.Map;
 
 import filehandling.sac.SACHeaderEnum;
@@ -14,39 +13,15 @@ import manhattan.globalcmt.GlobalCMTData;
 import manhattan.template.Location;
 
 /**
- * {@link SeedSac}内で行うSacの修正
+ * {@link SeedSAC}内で行うSacの修正
  * 
- * @version 0.0.1
- * @since 2013/9/22
- * 
- * 
- * @version 0.1.0
- * @since 2014/1/14 {@link Calendar}を用いることで年の瀬もokに
- * 
- * @version 0.1.1
- * @since 2014/1/16 kevnmを設定
- * 
- * @version 0.1.5
- * @since 2015/2/12 {@link Calendar} &rarr; {@link LocalDateTime}
- * 
- * 
- * @version 0.1.6
- * @since 2015/2/13 bug fixes
- * 
- * @version 0.1.6.1
- * @since 2015/8/5 {@link IOException}
- * 
- * @version 0.1.6.2
- * @since 2015/8/15
  * 
  * @version 0.1.7
- * @since 2015/8/19 {@link Path} base
- * 
  * 
  * @author kensuke
  * 
  */
-class SacModifier {
+class SACModifier {
 
 	/**
 	 * Sacのイベント
@@ -63,7 +38,7 @@ class SacModifier {
 	 * @param byPDE
 	 *            true: PDE, false: CMT
 	 */
-	SacModifier(GlobalCMTData event, Path sacPath, boolean byPDE) throws IOException {
+	SACModifier(GlobalCMTData event, Path sacPath, boolean byPDE) throws IOException {
 		this.sacPath = sacPath;
 		headerMap = SACUtil.readHeader(sacPath);
 		// System.out.println(sacFile.getName());

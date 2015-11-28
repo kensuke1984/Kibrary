@@ -31,7 +31,7 @@ import manhattan.template.Utilities;
  * @author kensuke
  * 
  */
-class SeedSac implements Runnable {
+class SeedSAC implements Runnable {
 
 	Path getSeedPath() {
 		return seedFile.getSeedPath();
@@ -113,11 +113,12 @@ class SeedSac implements Runnable {
 	 * @param seedPath
 	 *            to be extracted from
 	 * @param outputDirectoryPath
-	 *            Path where extracted files are placed (<b>must exist</b>)
+	 *            Path where extracted files are placed
 	 * @throws IOException
-	 *             if the outputDirectoryPath does not exist or an error occurs
+	 *             if the outputDirectoryPath already has events which also
+	 *             exists in the seed file or an error occurs
 	 */
-	SeedSac(Path seedPath, Path outputDirectoryPath) throws IOException {
+	SeedSAC(Path seedPath, Path outputDirectoryPath) throws IOException {
 		this(seedPath, outputDirectoryPath, null);
 	}
 
@@ -127,20 +128,26 @@ class SeedSac implements Runnable {
 	 * @param seedPath
 	 *            解凍するseedファイル
 	 * @param outputDirectoryPath
-	 *            解凍先 must exist
+	 *            inside this folder, the seed file is extracted. If the folder
+	 *            does not exist, it will be created.
+	 * 
 	 * @param id
 	 *            global cmt id
 	 * @throws IOException
+	 *             If the folder already has event folders which also exists in
+	 *             the seed file.
 	 */
-	SeedSac(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
+	SeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
 		this.seedFile = new SEEDFile(seedPath);
 		if (id != null)
 			this.id = id;
 		else
 			setID();
 		if (!idValidity())
-			throw new RuntimeException(this.id + " is invalid for " + seedPath);
+			throw new RuntimeException("The ID " + this.id + " is invalid for " + seedPath);
 
+		if (!Files.exists(outputDirectoryPath))
+			Files.createDirectories(outputDirectoryPath);
 		eventDir = new EventFolder(outputDirectoryPath.resolve(this.id.toString()));
 		if (eventDir.exists() || !eventDir.mkdir())
 			throw new FileAlreadyExistsException(eventDir.toString());
@@ -267,7 +274,7 @@ class SeedSac implements Runnable {
 				// seedsacを行う
 				try {
 					int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
-					SacDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
+					SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
 				} catch (Exception e) {
 					// SPECTRAをつくれなかったMOD.*ファイルをnoSpectraに移す
 					Utilities.moveToDirectory(modPath, noSpectraPath, true);
@@ -311,7 +318,7 @@ class SeedSac implements Runnable {
 	private void mergeUnevenSac() throws IOException {
 		// System.out.println("Merging in " + eventDir);
 		// mergeする
-		UnevenSacMerger u = new UnevenSacMerger(eventDir.toPath());
+		UnevenSACMerger u = new UnevenSACMerger(eventDir.toPath());
 		u.merge();
 		u.move();
 		// System.exit(0);
@@ -333,7 +340,7 @@ class SeedSac implements Runnable {
 		try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
 			for (Path sacPath : sacPathStream) {
 				// System.out.println(sacFile);
-				SacModifier sm = new SacModifier(event, sacPath, byPDE);
+				SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
 				// header check
 				if (!sm.canInterpolate() || !sm.checkHeader()) {
@@ -467,11 +474,8 @@ class SeedSac implements Runnable {
 	}
 
 	public static void main(String args[]) throws IOException {
-		Path source = Paths.get("/home/kensuke/test/200504190146A.sd");
-		Path seed = Paths.get("/home/kensuke/test/200504190146A.seed");
-		if (!Files.exists(seed))
-			Files.copy(source, seed);
-		SeedSac ss = new SeedSac(seed, seed.resolveSibling("short"));
+		Path seed = Paths.get("/home/kensuke/test/firsthandler/201311230748A.seed");
+		SeedSAC ss = new SeedSAC(seed, seed.resolveSibling("short"));
 		ss.removeIntermediateFiles = false;
 		ss.run();
 	}

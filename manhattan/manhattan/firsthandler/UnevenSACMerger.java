@@ -11,28 +11,15 @@ import java.util.stream.Stream;
 import manhattan.template.Utilities;
 
 /**
- * @version 0.0.1
- * @since 2013/9/20
  * 
- *        unevenなrdseedから解凍されたSacをmergeする 指定したフォルダ内のすべての.SACファイルを対象に検証を行う
- * 
- * @version 0.0.2
- * @since 2014/1/14 つなぎ合わせられるようにした
- * 
- * 
- * @version 0.0.3
- * @since 2014/1/14 moveを外部からに
- * 
- * @version 0.0.3.1
- * @since 2015/8/5 {@link IOException}
+ * Merging of SAC files 
  * 
  * 
  * @version 0.0.4
- * @since 2015/8/19 {@link Path} base
  * @author kensuke
  * 
  */
-class UnevenSacMerger {
+class UnevenSACMerger {
 
 	// private File[] sacFileList;
 
@@ -56,7 +43,7 @@ class UnevenSacMerger {
 	 * 
 	 * @param workPath
 	 */
-	UnevenSacMerger(Path workPath) throws IOException {
+	UnevenSACMerger(Path workPath) throws IOException {
 		this.workPath = workPath;
 		unevenBoxPath = workPath.resolve("mergedUnevendata");
 		notMergedBoxPath = workPath.resolve("nonMergedUnevendata");
@@ -66,7 +53,7 @@ class UnevenSacMerger {
 	/**
 	 * SacFileNameのリスト
 	 */
-	private SacFileName[] sacFileNameList;
+	private SACFileName[] sacFileNameList;
 
 	/**
 	 * 作業フォルダの下から.SACファイルを拾う
@@ -76,7 +63,7 @@ class UnevenSacMerger {
 
 		try (Stream<Path> sacFileStream = Files.list(workPath)) {
 			sacFileNameList = sacFileStream.map(path -> path.getFileName().toString())
-					.filter(path -> path.endsWith(".SAC")).map(SacFileName::new).toArray(n -> new SacFileName[n]);
+					.filter(path -> path.endsWith(".SAC")).map(SACFileName::new).toArray(n -> new SACFileName[n]);
 		}
 
 		// SacGroupをつくる
@@ -84,7 +71,7 @@ class UnevenSacMerger {
 
 	}
 
-	private Set<SacGroup> sacGroupSet = new HashSet<>();
+	private Set<SACGroup> sacGroupSet = new HashSet<>();
 
 	/**
 	 * すべての {@link #sacGroupSet}をmergeする その後ファイルはゴミ箱へ
@@ -117,15 +104,15 @@ class UnevenSacMerger {
 	}
 
 	/**
-	 * 名前に従い、関連するファイルのグループに分ける {@link SacFileName#isRelated(SacFileName)}
+	 * 名前に従い、関連するファイルのグループに分ける {@link SACFileName#isRelated(SACFileName)}
 	 * がtrue同士で分ける
 	 */
-	private void createGroups(SacFileName[] names) {
+	private void createGroups(SACFileName[] names) {
 		for (int i = 0; i < names.length; i++) {
-			SacFileName name = names[i];
+			SACFileName name = names[i];
 			// 既存のグループに振り分けられなかったら新しいグループを作る
 			if (!sacGroupSet.stream().anyMatch(group -> group.add(name)))
-				sacGroupSet.add(new SacGroup(workPath, names[i]));
+				sacGroupSet.add(new SACGroup(workPath, names[i]));
 			// System.out.println("a new group was made for "+names[i]);
 
 		}

@@ -1,24 +1,17 @@
 package manhattan.firsthandler;
 
 import java.time.LocalDateTime;
-import java.util.Calendar;
 
 /**
- * @version 0.0.1
- * @since 2013/9/20 rdseedで解凍したファイルの名前 1993.052.07.01.12.4000.PS.OGS.(location
- *        ID).BHN.D.SAC
  * 
- * @version 0.0.2
- * @since 2014/1/13 use {@link Calendar} for a starting time
+ * Name of interediate SAC files used in firsthandler
  * 
  * @version 0.0.5
- * @since 2015/2/12
- * {@link Calendar} &rarr; {@link LocalDateTime}
  * 
  * @author kensuke
  * 
  */
-class SacFileName implements Comparable<SacFileName> {
+class SACFileName implements Comparable<SACFileName> {
 
 	/**
 	 * PS.OGS.(locationID).BHN.D.SAC の部分を返す
@@ -71,7 +64,7 @@ class SacFileName implements Comparable<SacFileName> {
 	private String name;
 
 	@Override
-	public int compareTo(SacFileName o) {
+	public int compareTo(SACFileName o) {
 		int c = network.compareTo(o.network);
 		if (c != 0)
 			return c;
@@ -113,7 +106,7 @@ class SacFileName implements Comparable<SacFileName> {
 	 */
 	private String station;
 
-	SacFileName(String sacFileName) {
+	SACFileName(String sacFileName) {
 		String[] parts = sacFileName.split("\\.");
 		// year = parts[0]; hour = parts[2];
 		// min = parts[3]; sec = parts[4];
@@ -142,7 +135,7 @@ class SacFileName implements Comparable<SacFileName> {
 	 * @param sacFileName
 	 * @return
 	 */
-	boolean isRelated(SacFileName sacFileName) {
+	boolean isRelated(SACFileName sacFileName) {
 		return sacFileName.channel.equals(channel)
 				&& sacFileName.network.equals(network)
 				&& sacFileName.station.equals(station)

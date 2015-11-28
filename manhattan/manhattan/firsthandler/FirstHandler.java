@@ -15,43 +15,25 @@ import java.util.stream.Stream;
 import manhattan.template.Utilities;
 
 /**
- * firsthandler.plを移植する 設定ファイルは {@link parameter.FirstHandler}で読み込む First
- * handler. This extracts {@link SEEDFile}s under a working golder
+ * Java version First handler ported from the perl software.<br>
+ * Processes extraction along the information file.
+ * {@link parameter.FirstHandler}
+ * This extracts {@link SEEDFile}s under a working golder
  * 
  * 
- * @since 2013/9/19
- * @version 0.0.1 作業フォルダ下にある.seed ファイルに対して処理を行う 同じイベントに対するseedが存在するとエラー
- *          seedのデータは日付を、またいでいないこととする 確認済み １ rdseed -rfd hogeによるRESP.*の出力は全く同じ
- *          *.SACはSCALEの値だけ異なる しかしIRIS HPによると現在は使われていないので無視 確認済み ２
- *          古いsacのバージョンと新しいsacのバージョンで rtrend やinterpolate 後のsacの値が多少違う
  * 
- *          seed解凍後 channelがBH[ENZ]のものだけから読み込む BH[123]は今のところ使わない
+ * 解凍後の.seed ファイルをまとめる rdseed -fRd rtrend seed解凍後 channelがBH[ENZ]のものだけから読み込む
+ * <p>
+ * <a href=http://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>rdseed</a> and <a
+ * href=http://ds.iris.edu/ds/nodes/dmc/manuals/evalresp/>evalresp</a> must be
+ * in PATH.
+ * </p>
+ * If you want to remove intermediate files.
  * 
+ * TODO NPTSで合わないものを捨てる？
  * 
- * @version 0.0.2 Workerを独立 {@link SeedSac}
- * 
- * @version 0.1.0 日付をまたいでokにした
- * 
- * @version 0.1.0 解凍後の.seed ファイルをまとめることにした
- * 
- *          TODO NPTSで合わないものを捨てる？
- * 
- * @version 0.1.1 evalresp path fixed
- * @version 0.1.2 ignored Seed folders
- * @since 2014/8/14
- * @version 0.1.3 add an option for removing intermediate files.
- * 
- * @version 0.1.4
- * @since 2014/9/6 to Java 8
- * 
- * @version 0.1.5
- * @since 2014/10/2 rdseed, evalresp need be in PATH
- * 
- * @version 0.1.6
- * @since 2015/8/8 {@link IOException} {@link Path} base
  * 
  * @version 0.1.7
- * @since 2015/8/19 {@link Path} base
  * 
  * @author kensuke
  * 
@@ -108,9 +90,9 @@ class FirstHandler extends parameter.FirstHandler {
 		Files.createDirectories(fh.outPath);
 		System.out.println("Output directory is " + fh.outPath);
 
-		Set<SeedSac> seedSacs = seedPaths.stream().map(seedPath -> {
+		Set<SeedSAC> seedSacs = seedPaths.stream().map(seedPath -> {
 			try {
-				return new SeedSac(seedPath, fh.outPath);
+				return new SeedSAC(seedPath, fh.outPath);
 			} catch (Exception e) {
 				try {
 					System.out.println(seedPath + " has problem. " + e);
@@ -137,7 +119,7 @@ class FirstHandler extends parameter.FirstHandler {
 			e2.printStackTrace();
 		}
 
-		for (SeedSac seedSac : seedSacs)
+		for (SeedSAC seedSac : seedSacs)
 			try {
 				if (seedSac == null)
 					continue;
