@@ -40,13 +40,15 @@ import manhattan.timewindow.TimewindowInformationFile;
  * 
  * Observed and synthetic waveforms in SAC files are collected from the obsDir
  * and synDir, respectively. Only SAC files, which sample rates are
- * {@link parameter.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used.
+ * {@link parameter.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used. Both
+ * folders must have event folders inside which have waveforms.
  * 
- * Both folders must have event folders inside which have waveforms.
+ * The static correction is applied as described in {@link StaticCorrection}
+ * 
  * 
  * The sample rates of the data is
- * {@link parameter.ObservedSyntheticDatasetMaker#finalSamplingHz}. Timewindow
- * information in
+ * {@link parameter.ObservedSyntheticDatasetMaker#finalSamplingHz}.<br>
+ * Timewindow information in
  * {@link parameter.ObservedSyntheticDatasetMaker#timewindowInformationPath} is
  * used for cutting windows.
  * 

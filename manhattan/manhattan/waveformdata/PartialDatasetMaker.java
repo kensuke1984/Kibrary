@@ -56,8 +56,7 @@ import manhattan.timewindow.TimewindowInformationFile;
  * 
  * 摂動点の情報がない摂動点に対しては計算しない
  * 
- * 
- * @since 2013/12/17
+ * <b>Assume there are no stations with the same name and different networks</b>
  * 
  * @version 2.2
  * 
@@ -128,7 +127,7 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 
 			// Pickup timewindows
 			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
-					.filter(info -> info.getStationName().equals(stationName))
+					.filter(info -> info.getStation().getStationName().equals(stationName))
 					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
 
 			// timewindow情報のないときスキップ
@@ -214,11 +213,18 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 		Path idPath = workPath.resolve("partialID" + dateString + ".dat");
 		Path datasetPath = workPath.resolve("partial" + dateString + ".dat");
 
-		partialDataWriter = new WaveformDataWriter(idPath, datasetPath);
+		partialDataWriter = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
+				perturbationLocationSet);
 		writeLog("Creating " + idPath + " " + datasetPath);
 		System.out.println("Creating " + idPath + " " + datasetPath);
 
 	}
+
+	// TODO
+	private Set<Station> stationSet;
+	private Set<GlobalCMTID> idSet;
+	private double[][] periodRanges;
+	private Set<Location> perturbationLocationSet;
 
 	private String dateString;
 
@@ -276,8 +282,8 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 			// Set of global cmt IDs for the station in the timewindow.
 			Set<GlobalCMTID> idSet = pdm.timewindowInformation.stream()
 					.filter(info -> pdm.components.contains(info.getComponent()))
-					.filter(info -> info.getStationName().equals(stationName)).map(info -> info.getGlobalCMTID())
-					.collect(Collectors.toSet());
+					.filter(info -> info.getStation().getStationName().equals(stationName))
+					.map(info -> info.getGlobalCMTID()).collect(Collectors.toSet());
 
 			if (idSet.isEmpty())
 				continue;
@@ -335,7 +341,7 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 		String endLine = "Everything is done in " + Utilities.toTimeString(nanoSeconds) + ". Over n out! ";
 		System.out.println(endLine);
 		writeLog(endLine);
-		writeLog(partialDataWriter.getIdPath() + " " + partialDataWriter.getDataPath() + " were created");
+		writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");
 	}
 
 	private synchronized void writeLog(String line) throws IOException {
@@ -378,8 +384,8 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 
 		boolean fpExistence = timewindowInformation.parallelStream().map(window -> window.getGlobalCMTID()).distinct()
 				.allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
-		boolean bpExistence = timewindowInformation.parallelStream().map(window -> window.getStationName()).distinct()
-				.allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));
+		boolean bpExistence = timewindowInformation.parallelStream().map(window -> window.getStation().getStationName())
+				.distinct().allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));
 		if (!fpExistence || !bpExistence)
 			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
 		writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath);
