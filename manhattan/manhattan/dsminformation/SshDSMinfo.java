@@ -12,21 +12,9 @@ import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.Station;
 
 /**
- * sshpsv sshsh のinformation file
- * 
- * 
- * 
- * @version 0.0.2 iso用を追加
- * @since 2013/10/17
- * 
- * @version 0.0.3
- * @since 2014/9/5 to Java 8
- * 
- * @version 0.0.4
- * @since 2015/8/8 {@link IOException} {@link Path} base
+ * Information file for SSHPSV and SSHSH
  * 
  * @version 0.0.4.1
- * @since 2015/8/14
  * 
  * @author kensuke
  * 

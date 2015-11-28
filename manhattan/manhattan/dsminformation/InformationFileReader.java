@@ -7,13 +7,9 @@ import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * @since 2014/1/22
- * @version 0.0.1
- * 
- *          Reader for files which contains c # ! etc for comment lines.
+ * Reader for files which contains c # ! etc for comment lines.
  * 
  * @version 0.0.2
- * @since 2015/8/8 {@link IOException} {@link Path} base
  * 
  * @author kensuke
  * 
@@ -62,11 +58,9 @@ class InformationFileReader {
 		if (readlineNum == linesNum)
 			return null;
 		String line = null;
-		for (;;) {
-			line = lines.get(readlineNum++).trim();
-			if (!isComment(line))
+		for (;;)
+			if (!isComment(line = lines.get(readlineNum++).trim()))
 				return line;
-		}
 	}
 
 	/**
