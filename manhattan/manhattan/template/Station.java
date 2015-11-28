@@ -23,8 +23,6 @@ import filehandling.sac.SACHeaderEnum;
  * 
  * 
  * 
- * @since 2014/8/12
- * 
  * @version 0.0.5
  * 
  * @author kensuke

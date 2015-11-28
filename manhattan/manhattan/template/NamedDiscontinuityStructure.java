@@ -8,21 +8,14 @@ import java.util.List;
 
 /**
  * 
- * Within each layer Bullen law v(r) = Ar^B is used.
+ * Within each layer Bullen law v(r) = Ar<sup>B</sup> is used.
  * {@link #computeBullenLaw(int, double[])}
  * 
- * @version 0.0.2
- * @since 2014/5/20
  * 
  *        Xgbm Davis and Henson, 1993
  * 
- * @version 0.0.3
- * @since 2014/7/25 boundaries installed Bullen law A,B should be saved
  * 
  * @version 0.0.4
- * @since 2015/8/31
- * {@link Path} base
- * 
  * 
  * @author Kensuke
  *
