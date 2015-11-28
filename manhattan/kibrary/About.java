@@ -10,12 +10,10 @@ import org.apache.commons.io.IOUtils;
  * Library for waveform inversion.
  * 
  * <br>
- * Shared in <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
+ * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
+ * @see  <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  * 
  * @author kensuke
- * @since 2015/1/28
- * 
- * 
  * @version 0.2.1
  * 
  * 
