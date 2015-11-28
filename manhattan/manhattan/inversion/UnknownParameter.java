@@ -5,10 +5,10 @@ import filehandling.spc.PartialType;
 /**
  * Am = d の中の mのある成分
  * 
- * 位置、 パラメタの種類, 重み
  * location (radius), type of parameter, weighting (width or volume or...)
  * 
- * IMMUTABLE.
+ * <p>
+ * This class is <b>IMMUTABLE</b>.
  * 
  * @version 0.0.2
  * @since 2015/8/27

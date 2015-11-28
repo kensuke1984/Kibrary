@@ -3,7 +3,6 @@ package manhattan.inversion;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -11,15 +10,14 @@ import java.util.TreeMap;
 import manhattan.template.HorizontalPosition;
 
 /**
+ * 
+ * 
  * 摂動点情報 ポイント名に対するLocation XY?? lat lon
  * 
  * TODO DSM informationとして書き出す
  * 
- * @version 0.1.0
- * @since 2014/4/29 Kepler change done. need check {@link Comparator}
  * 
  * @version 0.1.1
- * @since 2014/10/9 Java 8
  * 
  * @author Kensuke
  * 

@@ -16,24 +16,12 @@ import org.apache.commons.math3.linear.RealVector;
  * SVD inversion
  * 
  * 
- * @version 0.0.2
- * @since 2013/10/18
- * 
- * @version 0.0.3
- * @since 2014/9/8 to Java 8
- * 
- * @version 0.0.5
- * @since 2014/11/20 for very small A
- * 
- * @version 0.0.6
- * @since 2015/8/28
- * 
  * @version 0.0.7
- * @since 2015/9/15 MatrixUtils Path
  * 
  * 
  * @author Kensuke
- *
+ * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>
+ * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  */
 class SingularValueDecomposition extends InverseProblem {
 

@@ -12,14 +12,8 @@ import org.apache.commons.math3.linear.RealVector;
 
 /**
  * @author kensuke
- * @since 2015/08/08
- * @version 0.0.2
  *
  * @version 0.0.3
- * @since 2015/8/28
- * 
- * 
- * 
  * 
  * 
  */

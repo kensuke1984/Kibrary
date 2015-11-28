@@ -24,28 +24,13 @@ import manhattan.template.Location;
  * 
  * 重みが違っても同じ種類、同じ場所の未知数があれば例外
  * 
- * @version 0.0.2
- * @since 2013/11/14
  * 
- * @since 2014/9/11
- * @version 0.0.3 to Java 8
+ * Duplication is NOT allowed.
  * 
  * 
- * @version 0.0.3.1
- * @since 2015/3/18 {@link #UnknownParameterSet(Path)} instaled.
- * 
- * @version 0.0.3.2
- * @since 2015/4/9 getters ffor {@link #unknownParameterSetPath}
- * 
- * @version 0.0.4
- * @since 2015/8/7 When it is constructed, the file must exist.
- *        {@link IOException}
  * 
  * @version 0.0.5
- * @since 2015/8/27 Weighting value must exist in a file. now returns clone of
- *        unknowns
  * 
- *        Duplication is NOT allowed.
  * 
  * 
  * @author kensuke

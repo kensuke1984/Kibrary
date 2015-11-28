@@ -29,7 +29,6 @@ import manhattan.waveformdata.BasicID;
  * 
  * basicDataFileから Dvectorを構築する
  * 
- * @since 2013/9/18
  * 
  *        TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  * 

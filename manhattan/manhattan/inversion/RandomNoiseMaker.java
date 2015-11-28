@@ -18,7 +18,6 @@ import manhattan.template.Trace;
  * @version 0.1.0 ランダム波形作成を並列化
  * 
  * 
- * @since 2013/06/21
  * @author kensuke
  * 
  */

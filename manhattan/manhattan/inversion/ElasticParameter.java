@@ -4,18 +4,15 @@ import filehandling.spc.PartialType;
 import manhattan.template.Location;
 
 /**
- * 
+ * Elastic parameter
  * 弾性定数の偏微分情報 ３次元的な摂動点の位置、 摂動の種類(PartialType) Unknown parameter for 3D. location
  * type
  * 
- * 
+ * <p>
  * This class is <b>IMMUTABLE</b>
  * 
- * @version 0.0.2
- * @since 2014/11/18
  * 
  * @version 0.0.3
- * @since 2015/8/27
  * 
  * @author kensuke
  *
