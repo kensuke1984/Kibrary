@@ -31,8 +31,6 @@ import manhattan.timewindow.TimewindowInformationFile;
  * Values of the correction is by the average time of arrivals and amplitudes of
  * those peaks.
  * 
- * synthetic のウインドウが[t1, t2]の時 値 t の場合 [t1-t, t2-t]を用いる<br>
- * 
  * Start time for identification is a start time in the given
  * {@link TimewindowInformationFile}.
  * 
@@ -42,7 +40,7 @@ import manhattan.timewindow.TimewindowInformationFile;
  * @author kensuke
  * 
  * @version 0.0.2
- * 
+ * @see {@link StaticCorrection}
  */
 final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection {
 	private TakeuchiStaticCorrection(Path parameterPath) throws IOException {

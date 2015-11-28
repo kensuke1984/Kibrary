@@ -27,16 +27,8 @@ import filehandling.sac.SACData;
  * on <br>
  * Waveform in frequency domain: U[1].. U[np], respectively.
  * 
- * @since 2015/08/02
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2015/8/5 {@link #writeSourceTimeFunction(Path, OpenOption...)}
- *        installed
  * 
  * @version 0.0.2.1
- * @since 2015/8/6 {@link #readSourceTimeFunction(Path)} throws
- *        {@link IOException}
  * 
  * @author kensuke
  *
