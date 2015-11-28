@@ -3,6 +3,10 @@
  */
 package manhattan.template;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
@@ -34,11 +38,7 @@ import manhattan.globalcmt.GlobalCMTID;
  * this contains various useful static methods.
  * 
  * @author kensuke
- * @version 0.0.1
- * @since 2014/10/14
- * 
  * @version 0.1.0
- * @since 2015/9/14 Working directory unified. Good bye to File
  * 
  */
 public final class Utilities {
@@ -60,6 +60,18 @@ public final class Utilities {
 		String line = (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ")
 				+ (mins == 0 ? "" : mins + " min and ") + sec + " s";
 		return line;
+	}
+
+	/**
+	 * @return String in the clipboard
+	 * @throws UnsupportedFlavorException
+	 *             if the clipboard has any that can not be string.
+	 * @throws IOException
+	 *             if an I/O error occurs.
+	 */
+	public static String getClipBoard() throws UnsupportedFlavorException, IOException {
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		return clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
 	}
 
 	/**
