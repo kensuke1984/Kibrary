@@ -24,37 +24,9 @@ import manhattan.template.Utilities;
 /**
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる
- * 
- * @version 0.0.1 名前はそのまま、ただしsacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
- * @version 0.0.2 フィルターをかける成分の指定
- * @version 0.0.3 観測、もしくは理論波形のみもする
- * @version 0.0.4
- * @since 2013/10/2 passesパラメタを追加
- * @since 2013
- * 
- * @version 0.0.5
- * @since 2014/9/16 small fix
- * 
- * @since 2014/12/26
- * @version 0.0.6 name of output folder is now automatically chosen.
- * 
- * @since 2015/3/11
- * @version 0.1.0 parallelized
- * 
- * @version 0.1.0.1
- * @since 2015/8/6 {@link IOException}
- * 
- * @version 0.1.1
- * @since 2015/8/8 {@link Path} base
- * 
- * @version 0.1.1.1
- * @since 2015/8/13
- * 
- * @version 0.1.1.2
- * @since 2015/9/12 sacfilename..
+ * sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  * 
  * @version 0.1.2
- * @since 2015/9/14 Utilities
  * 
  * @author Kensuke
  * 
