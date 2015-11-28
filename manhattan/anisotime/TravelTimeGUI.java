@@ -11,31 +11,10 @@ import javax.swing.JButton;
 import javax.swing.WindowConstants;
 
 /**
- * @since 2014/7/7
- * @version 0.0.1
- *
- * @version 0.0.2
- * @since 2014/7/8 names changed JTextfields allows only double now. prohibits
- *        negative values
  * 
- * @version 0.1.0
- * @since 2015/4/29 Robert J. Geller request.
- * 
- * @version 0.1.1
- * @since 2015/5/12
- * @version 0.3.0
- * @since 2015/5/19
- * @version 0.3.1
- * @since 2015/5/20
- * @version 0.3.2
- * @since 2015/8/3
- * 
+ * GUI for ANISOtime
  * 
  * @version 0.3.3
- * @since 2015/8/18
- * 
- * 
- * 
  * 
  * @author kensuke
  */

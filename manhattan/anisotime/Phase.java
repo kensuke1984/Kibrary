@@ -3,40 +3,18 @@ package anisotime;
 import java.util.regex.Pattern;
 
 /**
+ * <p>
  * Phase name.
+ * </p>
+ * 
+ * This class is <b>immutable</b>.
+ * <p>
+ * Waveform is now digitalized. Waveform is divided into parts. each part has up
+ * or downgoing, P or S and the partition in which waveform exists.
+ * 
+ * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
  * 
  * @author kensuke
- * @since 2014/06/13
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2014/7/10 install Pdiff, Sdiff
- * 
- * 
- * @version 0.1.0
- * @since 2014/7/14 Waveform is now digitalized. Waveform is divided into parts.
- *        each part has up or downgoing, P or S and the partition in which
- *        waveform exists.
- * 
- * @version 0.1.1
- * @since 2014/7/21 {@link #equals(Object)} {@link #hashCode()}installed
- * 
- * @version 0.1.2
- * @since 2014/7/23 PdiffXX and SdiffXX can be used. XX is positive double XX is
- *        diffractionAngle
- * 
- * @version 0.1.3
- * @since 2014/8/6 Modifies member signatures
- * 
- * 
- * @version 0.1.4
- * @since 2015/1/15 {@link #isDiffracted()} installed. [ps][PS]diffXX is now
- *        acceptable.
- * 
- * @version 0.1.5
- * @since 2015/5/6 preaches modified.
- * 
- * 
  * 
  */
 public class Phase {
@@ -541,102 +519,57 @@ public class Phase {
 	 */
 	double mantleS() {
 		double sNum = 0;
-		for (int i = 0; i < nPart; i++) {
-			// System.out.println(partition[i]+" "+isP[i]);
+		for (int i = 0; i < nPart; i++) 
 			if (partition[i].equals(Partition.MANTLE))
 				if (!isP[i])
 					sNum += 0.5;
-		}
+		
 		if (phaseName.charAt(0) == 's')
 			sNum -= 0.5;
 		// System.out.println(sNum);
 		return sNum;
 	}
 
-	// /**
-	// * @return
-	// */
-	// double mantleS() {
-	// Pattern halfPattern = Pattern.compile("S[cK]|[cK]S");
-	// int halfS = 0;
-	// int numS = 0;
-	// Matcher m = halfPattern.matcher(phase);
-	// for (int i = 0; i < phase.length(); i++)
-	// if (phase.charAt(i) == 'S')
-	// numS++;
-	// for (int start = 0;;) {
-	// if (!m.find(start))
-	// break;
-	// start = m.start() + 1;
-	// halfS++;
-	// // System.out.println(start-1);
-	// }
-	// double num = numS - 0.5 * halfS;
-	// // System.out.println("S: " + num);
-	// return num;
-	// }
 	/**
-	 * how many times wave travels in the outercore. each down or upgoing is 0.5
+	 * how many times wave travels in the outer core. Each down or up going is
+	 * considered as 0.5
 	 * 
-	 * @return
+	 * @return the times K phase travels in the outer core.
 	 */
 	double outerCore() {
 		double outerCoreNum = 0;
-		for (int i = 0; i < nPart; i++) {
+		for (int i = 0; i < nPart; i++)
 			if (partition[i].equals(Partition.OUTERCORE))
 				outerCoreNum += 0.5;
-		}
+
 		return outerCoreNum;
 	}
 
-	// double outerCore() {
-	// Pattern halfPattern = Pattern.compile("[ijIJ]K|K[IJij]");
-	// int halfK = 0;
-	// int numK = 0;
-	// Matcher m = halfPattern.matcher(phase);
-	// for (int i = 0; i < phase.length(); i++)
-	// if (phase.charAt(i) == 'K')
-	// numK++;
-	// for (int start = 0;;) {
-	// if (!m.find(start))
-	// break;
-	// start = m.start() + 1;
-	// halfK++;
-	// // System.out.println(start-1);
-	// }
-	// double num = numK - 0.5 * halfK;
-	// // System.out.println("K: " + num);
-	// return num;
-	// }
 	/**
-	 * how many times P wave travels in the innercore. each down or upgoing is
-	 * 0.5
+	 * how many times P wave travels in the inner core. Each down or upgoing is
+	 * considered as 0.5
 	 * 
-	 * @return
+	 * @return the times P wave travels in the inner core
 	 */
 	double innerCoreP() {
 		int numI = 0;
 		for (int i = 0; i < phaseName.length(); i++)
 			if (phaseName.charAt(i) == 'I')
 				numI++;
-
-		// System.out.println("I: " + numI);
 		return numI;
 	}
 
 	/**
-	 * how many times S wave travels in the innercore. each down or upgoing is
-	 * 0.5
+	 * how many times S wave travels in the inner core. Each down or up going is
+	 * considered as 0.5
 	 * 
-	 * @return
+	 * @return the times S wave travels in the inner core.
 	 */
 	double innerCoreS() {
 		int numJ = 0;
 		for (int i = 0; i < phaseName.length(); i++)
 			if (phaseName.charAt(i) == 'J')
 				numJ++;
-
-		// System.out.println("J: " + numJ);
 		return numJ;
 	}
 

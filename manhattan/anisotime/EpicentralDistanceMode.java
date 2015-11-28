@@ -9,21 +9,10 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
+ * Epicentral distance mode.
+ * 
  * @author kensuke
- * @since 2014/08/03
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2015/1/15 Use {@link RaypathSearch}
- * 
- * @version 0.1.0
- * @since 2015/4/29 Robert J. Geller request.
- * 
- * @version 0.1.1
- * @since 2015/5/4 Polarization
- * 
  * @version 0.1.2
- * @since 2015/5/6 now multiple phases can be computed
  * 
  * 
  */

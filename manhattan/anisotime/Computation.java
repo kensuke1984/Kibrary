@@ -13,8 +13,6 @@ import javax.swing.SwingUtilities;
 
 /**
  * @author kensuke
- * @since 2014/08/03
- * 
  * @version 0.1.0
  * 
  */
@@ -43,11 +41,11 @@ abstract class Computation implements Runnable {
 				y[i] = points[i][1];
 			}
 			try {
-
 				SwingUtilities.invokeAndWait(() -> {
 					travelTimeGUI.addPath(x, y);
 				});
 			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
 		return;
@@ -64,7 +62,6 @@ abstract class Computation implements Runnable {
 						JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
 						fileChooser.setDialogTitle("Output the path?");
 						fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
 						int action = fileChooser.showOpenDialog(null);
 						if (action == JFileChooser.CANCEL_OPTION || action == JFileChooser.ERROR_OPTION)
 							return;

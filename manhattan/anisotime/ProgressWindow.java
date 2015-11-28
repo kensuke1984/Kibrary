@@ -9,13 +9,12 @@ package anisotime;
 import java.awt.Frame;
 
 /**
- * @author kensuke
- * @since 2014/07/31
- * @version 0.0.1
  * 
- * @version 0.0.2
- * @since 2015/8/18
- * Iconfied
+ * Progress window for computation
+ * 
+ * @author kensuke
+ * 
+ * @version 0.0.2 Iconfied
  * 
  * 
  */
@@ -90,8 +89,6 @@ final class ProgressWindow extends javax.swing.JFrame {
 		pack();
 
 	}// </editor-fold>//GEN-END:initComponents
-
-	
 
 	private int iProgress;
 

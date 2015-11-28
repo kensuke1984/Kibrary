@@ -11,15 +11,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 /**
- * @author kensuke
- * @since 2014/08/04
- * @version 0.0.1
- * 
- * 
- *          Set of several GUI input component
+ * Set of several GUI input components used in ANISOtime.
  * 
  * @version 0.0.2
- * @since 2015/8/20
+ * @author kensuke
  * 
  */
 final class GUIInputComponents {

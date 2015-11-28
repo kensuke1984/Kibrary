@@ -5,7 +5,6 @@ import javax.swing.SwingUtilities;
 
 /**
  * @author kensuke
- * @since 2014/7/7
  * @version 0.3.6.3
  * 
  */
