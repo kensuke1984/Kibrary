@@ -41,6 +41,7 @@ class SyntheticDSMInformationFileMaker extends parameter.SyntheticDSMInformation
 	/**
 	 * @param args
 	 *            [parameter file name]
+	 * @throws IOException if any
 	 */
 	public static void main(String[] args) throws IOException {
 		SyntheticDSMInformationFileMaker sdif = parse(args);

@@ -58,7 +58,7 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 	 * 
 	 * @param args
 	 *            [parameter file name]
-	 * 
+	 * @throws IOException if any
 	 */
 	public static void main(String[] args) throws IOException {
 		InformationFileMaker ifm = null;

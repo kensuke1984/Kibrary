@@ -57,7 +57,9 @@ class DSMheader {
 	}
 
 	/**
-	 * @return if tlen is 2**n/10
+	 * @param tlen
+	 *            to be checked
+	 * @return if tlen is 2<sup>n</sup>/10
 	 */
 	static boolean validTlen(double tlen) {
 		int tlen10 = (int) Math.round(10 * tlen);
@@ -66,7 +68,8 @@ class DSMheader {
 
 	/**
 	 * @param np
-	 * @return if np is 2**n
+	 *            to be checked
+	 * @return if np is 2<sup>n</sup>
 	 */
 	protected static boolean validNp(int np) {
 		return 0 < np && (np & (np - 1)) == 0;
@@ -127,10 +130,9 @@ class DSMheader {
 	 * imin = 0, imax = np
 	 * 
 	 * @param tlen
-	 *            2**n/10でないといけない nは整数
+	 *            2<sup>n</sup>/10でないといけない nは整数
 	 * @param np
-	 *            2**nでないといけない nは整数
-	 * @return
+	 *            2<sup>n</sup>でないといけない nは整数
 	 */
 	DSMheader(double tlen, int np) {
 		if (!validNp(np) || !validTlen(tlen))
@@ -153,7 +155,8 @@ class DSMheader {
 	}
 
 	/**
-	 * @param np must be a power of 2
+	 * @param np
+	 *            must be a power of 2
 	 */
 	void setNp(int np) {
 		if (!validNp(np))

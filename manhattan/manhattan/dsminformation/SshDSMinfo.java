@@ -71,9 +71,9 @@ class SshDSMinfo extends SyntheticDSMInfo {
 	/**
 	 * sshpsv i計算用のファイル出力
 	 * 
-	 * @param psvPath
-	 * @param options
-	 * @throws IOException
+	 * @param psvPath output path
+	 * @param options options for writing
+	 * @throws IOException if any
 	 */
 	void outPSVi(Path psvPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
@@ -149,7 +149,9 @@ class SshDSMinfo extends SyntheticDSMInfo {
 	/**
 	 * sshshi計算用のファイル出力
 	 * 
-	 * @param shPath
+	 * @param shPath output path
+	 * @param options for writing
+	 * @throws IOException if any
 	 */
 	void outSHi(Path shPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath, options))) {

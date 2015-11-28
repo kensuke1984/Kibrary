@@ -166,8 +166,8 @@ class SecondHandler extends parameter.SecondHandler implements Consumer<EventFol
 	/**
 	 * @param args
 	 *            [parameter file name]
-	 * @throws InterruptedException
-	 * @throws IOException
+	 * @throws InterruptedException if any
+	 * @throws IOException if any 
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 		SecondHandler s = null;

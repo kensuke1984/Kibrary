@@ -64,7 +64,7 @@ class SACModifier {
 	/**
 	 * Headerをチェックする CMPINC、khole
 	 * 
-	 * @return
+	 * @return if the header is valid
 	 */
 	boolean checkHeader() {
 		// System.out.println("Checking header validity in "+sacFile);
@@ -84,8 +84,6 @@ class SACModifier {
 	 * 
 	 * operate rtrend and rmean in SAC and the sac file is write to ??.MOD
 	 * 
-	 * @return
-	 * @throws InterruptedException
 	 */
 	void preprocess() throws IOException, InterruptedException {
 		try (Sac sacProcess = Sac.createProcess()) {
