@@ -11,24 +11,10 @@ import org.apache.commons.math3.util.FastMath;
 import manhattan.datacorrection.SourceTimeFunction;
 
 /**
- * SpcSacファイルの中のあるボディの中のスペクトルデータの１成分
  * 
  * Data for one element in one {@link SpcBody} in a {@link SpectrumFile}
  * 
- * @since 2014/10/9
- * @version 0.1.0 fix {@link Complex} issues installs equals hascode
- * 
- *          equals uses {@value #effectivDigit} significant figures
- * 
- * @since 2014/11/14
- * @version 0.1.3 Math&rarr;FastMath
- * 
- * @since 2015/8/2
- * @version 0.1.4 Changes related to {@link SourceTimeFunction}
- * 
  * @version 0.1.5
- * @since 2015/8/24 equals hashcode removede
- * 
  * 
  * @author Kensuke
  * 

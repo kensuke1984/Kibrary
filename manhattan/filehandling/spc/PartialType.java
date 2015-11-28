@@ -3,16 +3,14 @@ package filehandling.spc;
 import java.util.Arrays;
 
 /**
+ * Partial types
+ * 
  * 3D: A, C, F, L, N, LAMBDA, MU, Q<br>
  * 1D: PAR* (PAR1:LAMBDA PAR2:MU)<br>
  * TIME
  * 
  * 
- * @since 2014/11/3
- * @version 0.0.2 modified.
- * 
- * @since 2015/8/23
- * @version 0.0.3 modified
+ * @version 0.0.3 
  * 
  * @author Kensuke
  * 

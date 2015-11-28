@@ -19,14 +19,11 @@ import manhattan.template.Location;
 /**
  * Create a partial derivative from one {@link ForwardPropagation} and one
  * {@link BackwardPropagation}<br>
- * １つずつのFPファイル(u),BPファイル(ETA)から、偏微分係数波形を作る.<br>
- * Uj,q Cjqrs ETAri,s
+ * <p>
+ * U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub>
  * 
- * @since 2014/11/6
- * @version 0.0.2
  * 
  * @version 0.0.2.1
- * @since 2015/3/30
  * 
  * @author Kensuke
  * 

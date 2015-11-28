@@ -28,17 +28,14 @@ import manhattan.template.Trace;
 import manhattan.template.Utilities;
 
 /**
- * １つもしくは2つのスペクトルファイル（spc file）からSAC形式のファイルを作る。 backpropagate forward
- * propagateは無理。。 runさせた時のspc fileで計算する
  * 
- * 日付の情報もつける
+ * This class create SAC files from one or two spector files({@link SpectrumFile})
  * 
- * @since 2013/9/6 or earlier
  * 
  * @version 0.1.2.3
  * 
  * @author Kensuke
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
 
@@ -420,7 +417,7 @@ public class SACMaker implements Runnable {
 				SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(station.getStationName() + "."
 						+ globalCMTID + "." + primeSPC.getSpcFileType() + "..." + bodyR + "." + ext));
 				if (sacFileName.exists()) {
-					System.out.println(sacFileName + " already exists..");
+					System.err.println(sacFileName + " already exists..");
 					return;
 				}
 				SAC outSAC = sac.of(component);

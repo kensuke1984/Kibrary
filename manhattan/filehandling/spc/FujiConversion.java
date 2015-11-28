@@ -19,12 +19,9 @@ import manhattan.template.Location;
  * for &mu;<sub>0</sub> to Q<sub>&mu;</sub>(&ne;q) following Fuji <i>et al</i>.
  * (2010)
  * 
- * @since 2014/10/30
- * @version 0.0.1
  * @author kensuke
  *
  * @version 0.0.1.1
- * @since 2015/4/1 {@link #FujiConversion()} installed
  *
  */
 public final class FujiConversion {

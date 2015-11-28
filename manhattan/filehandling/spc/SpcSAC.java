@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import filehandling.sac.SACData;
 import manhattan.datacorrection.BoxcarSourceTimeFunction;
 import manhattan.datacorrection.SourceTimeFunction;
 import manhattan.datacorrection.TriangleSourceTimeFunction;
@@ -20,17 +21,14 @@ import manhattan.template.EventFolder;
 import manhattan.template.Utilities;
 
 /**
- * SpcSac
- * 
- * 理論波形のスペクトル（spcfile）からSAC形式のファイルを作る。 Information file:
- * {@link parameter.SpcSAC}
- * 
- * @since 2013/9/19 or earlier
+ * SpcSac Convertor from {@link SpectrumFile} to {@link SACData} file.
+ * According to an information file: {@link parameter.SpcSAC},
+ * it creates SAC files.
  * 
  * @version 0.1.3
  * 
  * @author Kensuke Konishi
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 final class SpcSAC extends parameter.SpcSAC {
 
@@ -85,10 +83,10 @@ final class SpcSAC extends parameter.SpcSAC {
 				for (SpcFileName oneFile : psvSet.size() < shSet.size() ? psvSet : shSet) {
 					SpcFileName pairFile = pairFile(oneFile);
 					if (!pairFile.exists()) {
-						System.out.println(pairFile + " does not exist");
+						System.err.println(pairFile + " does not exist");
 						continue;
 					}
-//					System.out.println(oneFile + " " + pairFile);
+					// System.out.println(oneFile + " " + pairFile);
 					SpectrumFile oneSPC = SpectrumFile.getInstance(oneFile);
 					SpectrumFile pairSPC = SpectrumFile.getInstance(pairFile);
 					SACMaker sacMaker = ss.SacMakerMaker(oneSPC, pairSPC);

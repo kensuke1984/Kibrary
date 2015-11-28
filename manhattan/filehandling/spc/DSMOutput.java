@@ -12,7 +12,6 @@ import manhattan.template.Location;
  * Data of DSM output
  * 
  * @author kensuke
- * @since 2015/10/12
  * @version 0.0.1
  */
 public interface DSMOutput {
