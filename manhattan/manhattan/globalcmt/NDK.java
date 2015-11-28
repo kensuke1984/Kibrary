@@ -3,15 +3,14 @@ package manhattan.globalcmt;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
 
 import manhattan.datacorrection.MomentTensor;
 import manhattan.template.Location;
 
 /**
- * Global CMT CatalogueのNDK fomat
+ * NDK format in Global CMT Catalogue
  * 
- * This class is <b>IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b> <br>
  * ==============================================
  * ==================================
  * 
@@ -21,7 +20,7 @@ import manhattan.template.Location;
  * 
  * The "ndk" format replaces the earlier "dek" format.
  * 
- * Last modified: 2006-09-26
+ *
  * 
  * ============================================================================
  * ====
@@ -29,23 +28,12 @@ import manhattan.template.Location;
  * 
  * The format is ASCII and uses five 80-character lines per earthquake.
  * 
- * PDE 2005/01/01 01:20:05.4 13.78 -88.78 193.1 5.0 0.0 EL SALVADOR
- * C200501010120A B: 4 4 40 S: 27 33 50 M: 0 0 0 CMT: 1 TRIHD: 0.6 CENTROID:
- * -0.3 0.9 13.76 0.06 -89.08 0.09 162.8 12.5 FREE S-20050322125201 23 0.838
- * 0.201 -0.005 0.231 -0.833 0.270 1.050 0.121 -0.369 0.161 0.044 0.240 V10
- * 1.581 56 12 -0.537 23 140 -1.044 24 241 1.312 9 29 142 133 72 66 PDE
- * 2005/01/01 01:42:24.9 7.29 93.92 30.0 5.1 0.0 NICOBAR ISLANDS, INDIA R
- * C200501010142A B: 17 27 40 S: 41 58 50 M: 0 0 0 CMT: 1 TRIHD: 0.7 CENTROID:
- * -1.1 0.8 7.24 0.04 93.96 0.04 12.0 0.0 BDY S-20050322125628 23 -1.310 0.212
- * 2.320 0.166 -1.010 0.241 0.013 0.535 -2.570 0.668 1.780 0.151 V10 3.376 16
- * 149 0.611 43 44 -3.987 43 254 3.681 282 48 -23 28 73 -136
- * 
  * 
  * ============================================================================
  * ====
- * 
+ * <br>
  * Notes (additional information):
- * 
+ * <p>
  * (1) CMT event names follow two conventions. Older events use an 8-character
  * name with the structure XMMDDYYZ, where MMDDYY represents the date of the
  * event, Z is a letter (A-Z followed by a-z) distinguishing different events on
@@ -55,18 +43,18 @@ import manhattan.template.Location;
  * precision, and the initial letter is limited to four possibilities: B - body
  * waves only, S - surface waves only, M - mantle waves only, C - a combination
  * of data types.
- * 
+ * <p>
  * (2) The source duration is generally estimated using an empirically
  * determined relationship such that the duration increases as the cube root of
  * the scalar moment. Specifically, we currently use a relationship where the
  * half duration for an event with moment 10**24 is 1.05 seconds, and for an
  * event with moment 10**27 is 10.5 seconds.
- * 
+ * <p>
  * (3) For some small earthquakes for which the azimuthal distribution of
  * stations with useful seismograms is poor, we constrain the epicenter of the
  * event to the reference location. This is reflected in the catalog by standard
  * errors of 0.0 for both the centroid latitude and the centroid longitude.
- * 
+ * <p>
  * (4) For some very shallow earthquakes, the CMT inversion does not well
  * constrain the vertical-dip-slip components of the moment tensor (Mrt and
  * Mrp), and we constrain these components to zero in the inversion. The
@@ -77,11 +65,12 @@ import manhattan.template.Location;
  * 
  * 
  * @since 2013/11/30
-
+ * 
  * @version 0.0.5
  * 
  * @author kensuke
- * 
+ * @see <a
+ *      href=http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official guide</a>
  */
 final class NDK implements GlobalCMTData {
 
@@ -414,31 +403,27 @@ final class NDK implements GlobalCMTData {
 	 */
 	boolean fulfill(GlobalCMTSearch search) {
 		LocalDate cmtDate = getCMTTime().toLocalDate();
-		if (search.getStartDate().isAfter(cmtDate)
-				|| search.getEndDate().isBefore(cmtDate))
+		if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate))
 			return false;
-		if(search.getStartTime()!=null&&
-			search.getStartTime().isAfter(getCMTTime().toLocalTime()))
-				return false;
-		if(search.getEndTime()!=null&&
-			search.getEndTime().isBefore(getCMTTime().toLocalTime()))
+		if (search.getStartTime() != null && search.getStartTime().isAfter(getCMTTime().toLocalTime()))
 			return false;
-		
+		if (search.getEndTime() != null && search.getEndTime().isBefore(getCMTTime().toLocalTime()))
+			return false;
+
 		// latitude
 		double latitude = centroidLocation.getLatitude();
-		if (latitude < search.getLowerLatitude()
-				|| search.getUpperLatitude() < latitude)
+		if (latitude < search.getLowerLatitude() || search.getUpperLatitude() < latitude)
 			return false;
 		// longitude
 		double lowerLongitude = search.getLowerLongitude();
 		double upperLongitude = search.getUpperLongitude();
 		double longitude = centroidLocation.getLongitude();
-		
-		//longitude [-180, 180)
+
+		// longitude [-180, 180)
 		if (upperLongitude < 180)
 			if (upperLongitude < longitude || longitude < lowerLongitude)
 				return false;
-		//longitude [0, 360)
+		// longitude [0, 360)
 		if (180 <= upperLongitude)
 			if (longitude < lowerLongitude && upperLongitude - 360 < longitude)
 				return false;
@@ -449,8 +434,7 @@ final class NDK implements GlobalCMTData {
 			return false;
 
 		// timeshift
-		if (timeDifference < search.getLowerCentroidTimeShift()
-				|| search.getUpperCentroidTimeShift() < timeDifference)
+		if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() < timeDifference)
 			return false;
 		// bodywave magnitude
 		if (mb < search.getLowerMb() || search.getUpperMb() < mb)
@@ -459,20 +443,15 @@ final class NDK implements GlobalCMTData {
 		if (ms < search.getLowerMs() || search.getUpperMs() < ms)
 			return false;
 		// moment magnitude
-		if (momentTensor.getMw() < search.getLowerMw()
-				|| search.getUpperMw() < momentTensor.getMw())
+		if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() < momentTensor.getMw())
 			return false;
 
 		// tension axis plunge
-		if (plunge0 < search.getLowerTensionAxisPlunge()
-				|| search.getUpperTensionAxisPlunge() < plunge0)
+		if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0)
 			return false;
 		// null axis plunge
-		if (plunge1 < search.getLowerNullAxisPlunge()
-				|| search.getUpperNullAxisPlunge() < plunge1)
+		if (plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1)
 			return false;
-
-		
 
 		return true;
 	}
