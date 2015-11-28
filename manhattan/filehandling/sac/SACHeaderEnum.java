@@ -1,20 +1,20 @@
 package filehandling.sac;
 
 /**
- * @version 101.5 SACのHEADER
+ * Header values in a SAC file.
  * 
- *          -1 internal( If the name is INTERNAL then that variable is internal
- *          to SAC and not normally of interest to the user.)
+ * -1 internal( If the name is INTERNAL then that variable is internal to SAC
+ * and not normally of interest to the user.)
  * 
- *          それぞれの名前は、代入されている数値のタイプを記憶する<br>
- *          0:float, 1:integer, 2:enumerated(String), 3:logical(true or false),
- *          8:Alphanumeric(String 8letters), 16:Alphanumeric(String 16letters),
- *          99 unused (If the name is UNUSED then that variable is not currently
- *          being used)
+ * それぞれの名前は、代入されている数値のタイプを記憶する<br>
+ * 0:float, 1:integer, 2:enumerated(String), 3:logical(true or false),
+ * 8:Alphanumeric(String 8letters), 16:Alphanumeric(String 16letters), 99 unused
+ * (If the name is UNUSED then that variable is not currently being used)
  * 
  * 
  * @author kensuke
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */
 public enum SACHeaderEnum {
 	/**

@@ -17,21 +17,10 @@ import manhattan.template.Trace;
  * 
  * Read/Write of a SAC file. (SAC: seismic analysis code)
  * 
- * Sac形式のファイルの読み込み 書き込み
- * 
- * 
- * @version 0.1.0
- * @since 2015/8/5 {@link Path} can be used. Exceptions now used
- * 
- * @version 0.1.0.1
- * @since 2015/8/15
- * 
  * @version 0.1.1
- * @since 2015/9/17 bug fixed
- * 
  * 
  * @author kensuke
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SACUtil {
 

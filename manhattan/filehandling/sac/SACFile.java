@@ -1,8 +1,6 @@
 package filehandling.sac;
 
 import java.io.IOException;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
 
 import manhattan.butterworth.BandPassFilter;
 import manhattan.butterworth.BandStopFilter;
@@ -11,46 +9,15 @@ import manhattan.butterworth.HighPassFilter;
 import manhattan.butterworth.LowPassFilter;
 
 /**
- * SACのfileに対するクラス<br>
- * (SAC: Seismic analysis code)
+ * SAC file<br>
+ * (SAC: Seismic analysis code)<br>
+ * This class is <b>immutable</b>
  * 
- * 
- * @since 2013/9/16
- * @version 0.0.2
- * 
- * @version 0.0.3
- * @since 2013/10/1 データをすぐ読み込むようにした
- * 
- * @version 0.0.4
- * @since 2014/8/22 {@link #applyButterworthFilter(ButterworthFilter)} modified
- * 
- * @version 0.0.5
- * @since 2014/8/25 {@link #applyButterworthFilter(ButterworthFilter)} modified
- *        Deletes depricated methods
- * 
- * @version 0.0.6
- * @since 2014/9/8 {@link #read()} fix
- * 
- * @version 0.0.6.1
- * @since 2015/3/31 Use Arrays
- * 
- * @version 0.0.7
- * @since 2015/8/5 If file has any problems, it throws {@link IOException}
- * 
- * @version 0.0.7.1 {@link #writeSAC(Path, OpenOption...)} also throws
- *          {@link IOException}.
- * 
- * @version 0.0.8
- * @since 2015/8/15 Stream
- * 
- * @version 0.0.9
- * @since 2015/8/23 cut method is cut
  * 
  * @version 1.0.0
- * @since 2015/9/12 package access
- * IMMUTABLE
  * 
  * @author Kensuke
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * 
  */
 class SACFile extends SACHeader implements SACData {
@@ -107,8 +74,6 @@ class SACFile extends SACHeader implements SACData {
 		return sd;
 	}
 
- 
-
 	/**
 	 * Sacの波形部分を読み込む read sacdata from this.sacFile
 	 */
@@ -123,6 +88,7 @@ class SACFile extends SACHeader implements SACData {
 				waveData[i] = stream.readFloat();
 		}
 	}
+
 	@Override
 	public SACFile setSACData(double[] sacData) {
 		// setInt(SacHeaderEnum.NPTS, npts);
@@ -135,7 +101,6 @@ class SACFile extends SACHeader implements SACData {
 		return sf;
 	}
 
-	
 	@Override
 	public SACFile clone() {
 		try {
