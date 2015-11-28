@@ -7,8 +7,7 @@ package manhattan.timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
- * @since 2014/5/19
- * 
+ * @version 0.1.0
  * @author Kensuke
  *
  */
