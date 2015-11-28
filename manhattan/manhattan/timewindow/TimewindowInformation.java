@@ -11,7 +11,6 @@ import manhattan.template.Station;
  * 
  * The information contains a component, a station and a global CMT ID.
  * 
- * @since 2013/12/17 
  * 
  * @version 0.1.2
  * 
