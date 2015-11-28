@@ -13,66 +13,18 @@ import java.util.List;
 
 /**
  * 
- * Every depth is written as radius. The raypath is of a given ray parameter p.
+ * Every depth is written as <b>radius</b>. The raypath is of a given ray parameter p.
  * 
  * Cannot compute travel time for structures that have layers with 0 velocity
  * and non zero velocity. Layers must have only non zero velocity or zero
  * velocity.
  * 
- * 
- * @author Kensuke
- * @since 2014/5/20
- * @version 0.0.2
- * 
- * @version 0.1.0
- * @since 2014/6/24 by a phase name time and delta are computed
- * 
- * @version 0.2.0
- * @since 2014/7/10
- * 
- *        now diffraction phase is computable but only for the raypath which
+ *  now diffraction phase is computable but only for the raypath which
  *        turning R is near the CMB by {@link #permissibleGapForDiff}
+ * @author Kensuke
  * 
- * @version 0.2.5
- * @since 2014/7/15 {@link #getRouteXY(Phase)} installed.
- * 
- * @version 0.3.0
- * @since 2014/7/16 now can compute hidden rayparameter in which S wave has no
- *        turning depth. install {@link #checkPValidity()}
- * 
- * 
- * @version 0.3.1
- * @since 2014/7/23 Can draw diffraction path
- * 
- * @version 0.3.2
- * @since 2014/7/29 consider {@link #eps} for all boundaries now.
- * 
- * @version 0.3.3
- * @since 2014/8/6 Modifies member signatures
- * 
- * @version 0.3.4
- * @since 2014/8/28 Fixed bug on {@link #compute()}
- *        {@link #computeExtendedDelta(Phase)}
- *        {@link #computeExtendedTraveltime(Phase)} installed
- * 
- * @version 0.3.5
- * @since 2015/1/20 {@link #mantleSDelta()} {@link #mantleSTau()} fixed
- * 
- * @version 0.3.6
- * @since 2015/1/27 {@link #getRoute(Phase)} fixed.
- * 
- * @version 0.3.7
- * @since 2015/1/28 {@link #Raypath(double, double, VelocityStructure, boolean)}
- *        installed.
- * 
- * @version 0.3.8
- * @since 2015/4/28 Bug in {@link #sTimeAlongCMB(double)} fixed.
- * 
- * @version 0.3.8.1
- * @since 2015/9/4
  * 
  * @version 0.3.9
- * @since 2015/9/12 compute &rarr; computeDelta, computeTraveltime
  * 
  * 
  */

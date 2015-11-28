@@ -7,18 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Rayparameter mode
+ * 
  * @author kensuke
- * @since 2014/08/03
- * @version 0.0.1
- * 
- * @version 0.1.0
- * @since 2015/4/29 Robert J. Geller request
- * 
- * @version 0.1.1
- * @since 2015/5/4 Polarization
- * 
  * @version 0.1.2
- * @since 2015/5/6 multiple phases ok
  * 
  */
 final class RayparameterMode extends Computation {
@@ -76,9 +68,6 @@ final class RayparameterMode extends Computation {
 		}
 		raypaths = raypathList;
 		phases = phaseList;
-		// travelTimeTool.jPanelTurningInformation.setTurningInformation(
-		// raypath.getPTurningR(), raypath.getSTurningR(),
-		// raypath.getPTurning(), raypath.getSTurning());
 		travelTimeTool.computed(raypath);
 
 		showResult(raypaths, phases);

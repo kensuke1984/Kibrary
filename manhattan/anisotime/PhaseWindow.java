@@ -12,13 +12,12 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 
 /**
- * @author kensuke
- * @since 2015/05/04
- * @version 0.0.1
  * 
+ * Window for choosing phases.
+ * 
+ * @author kensuke
  * 
  * @version 0.0.2
- * @since 2015/5/7 Bob request
  * 
  */
 class PhaseWindow extends javax.swing.JFrame {

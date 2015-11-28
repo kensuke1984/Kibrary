@@ -22,40 +22,8 @@ import manhattan.template.Trace;
  * 
  * 
  * @author kensuke
- * @version 0.0.1
- * @since 2014/08/01
- * 
- * @version 0.0.2
- * @since 2015/1/15
- * 
- *        direct depth phase is ok now.
- *        {@link #lookFor(Phase, VelocityStructure, double, double, double, boolean)}
- * 
- * @version 0.0.3
- * @since 2015/1/20 modified an algorithm for searching the core reflection
- *        phases.
- *        {@link #lookFor(Phase, VelocityStructure, double, double, double)}
- *        slightly changed bug about {@link NamedDiscontinuityStructure} fixes
- *        TODO lookFor for{@link NamedDiscontinuityStructure}sometime NAN why
- * 
- * @version 0.0.4
- * @since 2015/1/23 change in
- *        {@link #makeRaypathCandidates(Phase, VelocityStructure, boolean, double, double, double)}
- *        when ScS computing
- * 
- * @version 0.0.5
- * @since 2015/3/2 Algorithm for the search modified
- * 
- * @version 0.0.6
- * @since 2015/4/29
- *        {@link #lookFor(Phase, VelocityStructure, double, double, double)}
- *        fixed Progress bar revived
- * 
- * @version 0.0.7
- * @since 2015/9/12 compute &rarr; computeDelta, computeTraveltime
  * 
  * @version 0.0.8
- * @since 2015/9/13 SH SV
  * 
  */
 public final class RaypathSearch {

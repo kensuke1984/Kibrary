@@ -1,11 +1,10 @@
 package anisotime;
 
 /**
- * @author kensuke
- * @since 2014/07/29
- * @version 0.0.1
+ * Input model for travel time computation
  * 
- *          Input model for travel time computation
+ * @author kensuke
+ * @version 0.0.1
  * 
  */
 enum InputModel {

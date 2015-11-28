@@ -18,11 +18,7 @@ import manhattan.template.Utilities;
 
 /**
  * @author kensuke
- * @since 2015/05/11
- * @version 0.0.1
- * 
  * @version 0.0.5
- * @since 2015/5/12
  * 
  * 
  */

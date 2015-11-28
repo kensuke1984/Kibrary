@@ -4,8 +4,8 @@
 package anisotime;
 
 /**
+ * Structure information for computing traveltime.
  * @author kensuke
- * @since 2014/05/20
  * @version 0.0.1
  */
 public interface VelocityStructure {

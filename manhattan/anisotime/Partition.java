@@ -4,12 +4,7 @@ package anisotime;
  * Enums of egion and boundaries
  * 
  * @author kensuke
- * @since 2014/06/23
- * @version 0.0.1
- * 
  * @version 0.0.2
- * @since 2014/8/6
- * Modifies member signatures
  */
 enum Partition {
 	MANTLE(0), CORE_MANTLE_BOUNDARY(1), OUTERCORE(2), INNER_CORE_BAUNDARY(3), INNERCORE(4), ;
