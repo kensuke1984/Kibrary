@@ -22,29 +22,9 @@ import javax.swing.JRadioButtonMenuItem;
 import org.apache.commons.io.IOUtils;
 
 /**
+ * Menubar for GUI
  * @author kensuke
- * @since 2014/07/09
- * @version 0.0.1
- * 
- *          MenuBar
- * 
- * 
- * @version 0.0.2
- * @since 2014/7/29 Use {@link ComputationMode}
- * 
- * @version 0.0.3
- * @since 2014/7/30 bug fix related to {@link Desktop}
- * @version 0.1.0
- * @since 2015/4/29 Robert J. Geller request.
- * 
- * @version 0.1.1
- * @since 2015/5/4 Settings added P-SV SH
- * 
- * @version 0.1.2
- * @since 2015/5/7 Bob's request.
- * 
  * @version 0.1.3
- * @since 2015/5/12
  * 
  */
 final class TravelTimeMenuBar extends JMenuBar {

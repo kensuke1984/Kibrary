@@ -21,15 +21,7 @@ import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * @author kensuke
- * @since 2014/07/11
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2014/8/7 Change the constructor
- * 
  * @version 0.0.3
- * @since 2014/8/11 fix bug that if window is not visible yet the width value is
- *        no good
  */
 final class RaypathPanel extends JPanel {
 

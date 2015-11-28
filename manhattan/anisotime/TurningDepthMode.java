@@ -10,15 +10,11 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
- * @author kensuke
- * @since 2014/08/03
- * @version 0.0.1
+ * Turning depth mode
  * 
- * @version 0.1.0
- * @since 2015/4/29
+ * @author kensuke
  * 
  * @version 0.1.1
- * @since 2015/5/6 multiple phases ok
  * 
  */
 class TurningDepthMode extends Computation {

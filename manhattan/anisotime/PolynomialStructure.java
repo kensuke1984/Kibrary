@@ -10,23 +10,10 @@ import manhattan.dsminformation.TransverselyIsotropicParameter;
 import mathtool.LinearEquation;
 
 /**
+ * Polynomial structure.
  * 
- * @version 0.0.2
- * @since 2014/5/20
- * 
- * 
- * @version 0.0.3
- * @since 2014/6/11 turningRs bug fixed...
- * 
- * @version 0.0.3.1
- * @since 2015/8/8 {@link IOException}
- * 
- * @version 0.0.4
- * @since 2015/8/31 {@link Path} base
  * 
  * @version 0.0.5
- * @since 2015/9/4 PREM, ak135 are now final static fields.
- * {@link #STRUCTURE} is now final.
  * 
  * @author kensuke
  *
@@ -82,10 +69,7 @@ public class PolynomialStructure implements VelocityStructure {
 		// System.out.println("ans= "+anstype);//debug
 		if (anstype == 1) {
 			double radius = answer[0].getReal() * earthRadius();
-			if (radius < rmax[i] && rmin[i] <= radius)
-				return radius;
-			else
-				return -1;
+			return rmin[i] <= radius && radius < rmax[i] ? radius : -1;
 		}
 
 		if (anstype < 19)
@@ -94,22 +78,19 @@ public class PolynomialStructure implements VelocityStructure {
 		if (anstype == 20 || anstype == 28 || anstype == 29 || anstype == 30) {
 			double radius = answer[0].getReal() * earthRadius();
 			// System.out.print(shTurningDepth);//debug
-			if (radius < rmax[i] && radius >= rmin[i])
-				return radius;
-			else
-				return -1;
-		} else {
-			double[] x = new double[eq.compute().length];
-			for (int j = 0; j < answer.length; j++)
-				x[j] = answer[j].getReal() * earthRadius();
-			java.util.Arrays.sort(x);
-			for (int j = 0; j < eq.compute().length; j++)
-				if (x[j] < rmax[i] && rmin[i] <= x[j])
-					return x[j];
-
-			return -1;
-			// System.out.println(x[j]);
+			return rmin[i] <= radius && radius < rmax[i] ? radius : -1;
 		}
+		double[] x = new double[eq.compute().length];
+		for (int j = 0; j < answer.length; j++)
+			x[j] = answer[j].getReal() * earthRadius();
+		java.util.Arrays.sort(x);
+		for (int j = 0; j < eq.compute().length; j++)
+			if (x[j] < rmax[i] && rmin[i] <= x[j])
+				return x[j];
+
+		return -1;
+		// System.out.println(x[j]);
+
 	}
 
 	@Override
@@ -123,6 +104,7 @@ public class PolynomialStructure implements VelocityStructure {
 	 * 
 	 * @see traveltime.manhattan.VelocityStructure#shTurningR(double)
 	 */
+	@Override
 	public double shTurningR(double p) {
 		PolynomialFunction[] vsh = STRUCTURE.getVsh();
 		for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
@@ -145,11 +127,7 @@ public class PolynomialStructure implements VelocityStructure {
 		return 1221.5;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see traveltime.manhattan.VelocityStructure#pTurningR(double)
-	 */
+	@Override
 	public double pTurningR(double p) {
 		PolynomialFunction[] vph = STRUCTURE.getVph();
 		double[] coef = new double[4];
@@ -165,11 +143,7 @@ public class PolynomialStructure implements VelocityStructure {
 		return -1;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see traveltime.manhattan.VelocityStructure#svTurningR(double)
-	 */
+	@Override
 	public double svTurningR(double p) {
 		PolynomialFunction[] vsv = STRUCTURE.getVsv();
 		for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {

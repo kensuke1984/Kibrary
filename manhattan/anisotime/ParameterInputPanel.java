@@ -22,30 +22,9 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
- * @since 2014/7/9
- * @version 0.0.1
- * 
- *          Panel for input parameters
- * 
- * @version 0.0.2 Description added
- * @since 2014/7/21
- * 
- * @version 0.0.5
- * @since 2014/7/29 Use {@link InputModel} for choises {@link JComboBox}
- * 
- * @version 0.1.0 fixed for multi threading
- * @since 2014/8/4
- * 
- * @version 0.2.0
- * @since 2015/4/29 Robert J. Geller request
- * 
- * @version 0.2.1
- * @since 2015/8/31 {@link Path} is used
+ * Panel for inputting parameters
  * 
  * @version 0.2.1.1
- * @since 2015/9/4
- * 
- * 
  * @author kensuke
  */
 class ParameterInputPanel extends javax.swing.JPanel {
@@ -144,8 +123,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		this.setLayout(layout);
 		layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 
-		.addGroup(
-				layout.createSequentialGroup().addComponent(jLabelMostImportant).addComponent(jTextFieldMostImportant))
+				.addGroup(layout.createSequentialGroup().addComponent(jLabelMostImportant)
+						.addComponent(jTextFieldMostImportant))
 				.addGroup(layout.createSequentialGroup().addComponent(jLabelModel).addComponent(jComboBoxModel))
 				.addGroup(layout.createSequentialGroup().addComponent(jLabelDepth).addComponent(jTextFieldDepth,
 						javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))

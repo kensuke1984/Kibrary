@@ -8,11 +8,8 @@ import java.awt.event.ComponentEvent;
 
 /**
  * @author kensuke
- * @since 2015/05/10
- * @version 0.0.1
  * 
  * @version 0.1.0
- * @since 2015/5/12
  * 
  * 
  */

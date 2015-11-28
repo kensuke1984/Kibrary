@@ -8,28 +8,18 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 
 /**
- * @author kensuke
- * @since 2014/07/08
- * @version 0.0.1
+ * Document containing only numbers (double value) used in ANISOtime.
  * 
- *          Document containing only numbers (double value)
+ * @version 0.0.1
+ * @author kensuke
  * 
  */
 final class NumberDocument extends PlainDocument {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -7573995261853190455L;
 
-	/**
-	 * 
-	 */
 	NumberDocument() {
-		super();
 	}
-
-	// private int currentValue = 0;
 
 	@Override
 	public void insertString(int offset, String str, AttributeSet attributes) throws BadLocationException {

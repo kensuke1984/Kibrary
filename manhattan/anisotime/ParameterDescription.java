@@ -11,17 +11,12 @@ import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 
 /**
+ * 
+ * Parameter description used in ANISOtime.
+ * 
+ * @version 0.0.3.2
  * @author kensuke
- * @since 2014/07/17
- * @version 0.0.1
  * 
- * @version 0.0.2 Everything is now frame.
- * 
- * @version 0.0.3
- * Description of Rayparameter is changed slightly.
- * 
- * @version 0.0.3.1
- * @since 2015/8/20
  * 
  */
 final class ParameterDescription {
@@ -137,5 +132,6 @@ final class ParameterDescription {
 		f.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
 		return f;
 	}
+	private ParameterDescription(){}
 
 }

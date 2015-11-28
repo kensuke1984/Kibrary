@@ -7,16 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Mode for diffracted waves such as Pdiff, Sdiff...
+ * 
  * @author kensuke
- * @since 2014/08/03
- * @version 0.0.1
- * 
- * 
- * @version 0.1.1
- * @since 2015/5/4 Robert J. Geller request polarization
- * 
  * @version 0.1.5
- * @since 2015/5/6 now can compute multiple phases
  */
 class DiffractionMode extends Computation {
 

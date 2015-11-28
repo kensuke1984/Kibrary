@@ -6,22 +6,10 @@ package anisotime;
 import java.nio.file.Path;
 
 /**
- * 
+ * Named discontinuity structre
  * @author kensuke
- * @since 2014/05/21
- * @version 0.0.1
- * 
- * 
- * @version 0.0.2
- * @since 2014/7/28 operation verification Computation of turningRs installed.
- * 
- * @version 0.0.3
- * @since 2015/1/20
- * bug fix in turningRs 
  * 
  * @version 0.0.4
- * @since 2015/8/31
- * {@link Path} base
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 

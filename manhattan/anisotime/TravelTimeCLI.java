@@ -25,48 +25,7 @@ import manhattan.template.Utilities;
  * 
  * 
  * @author kensuke
- * @version 0.0.1
- * @since 2015/01/13
- * 
- * @version 0.0.2
- * @since 2015/1/15 Diffraction phase is ok now.
- * 
- *        {@link #printResults(CommandLine, double, double)} installed now
- *        configuration for display digit is ready..
- * 
- * @version 0.0.3
- * @since 2015/1/16 can output EPS now.
- * 
- * @version 0.0.4
- * @since 2015/1/16 -p installed
- * 
- * @version 0.0.5
- * @since 2014/1/19 options are slightly changed. can read model file now only
- *        in Polynomial and NamedDiscontinuity. isotropic PREM is ready.
- * 
- * @version 0.0.6 Options are slightly changed.
- * 
- * @version 0.0.7
- * @since 2015/1/28 SV option now works.
- * 
- * 
- * @version 0.0.8
- * @since 2015/2/22 --rayp --time --delta options are installed
- * 
- * @version 0.0.9
- * @since 2015/3/4 --version installed.
- * 
- * @version 0.1.0
- * @since 2015/5/14 3 point interpolation
- * 
- * @version 0.1.1
- * @since 2015/5/20 Option "dR" is now available.
- * 
- * @version 0.1.2
- * @since 2015/8/20 help version
- * 
  * @version 0.1.2.1
- * @since 2015/9/4
  * 
  */
 final class TravelTimeCLI {
