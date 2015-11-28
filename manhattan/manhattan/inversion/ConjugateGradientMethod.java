@@ -7,16 +7,15 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 /**
- * CG法
+ * Conjugate gradient method
  * 
- * @version 0.0.2
- * @since 2013/10/18
  * 
- * @version 0.0.3
- * @since 2015/8/28
- * 
+ * @version 0.0.3 https://en.wikipedia.org/wiki/Conjugate_gradient_method
  * @author kensuke
- * 
+ * @see <a
+ *      href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a> <a
+ *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
+ *      wiki</a>
  */
 class ConjugateGradientMethod extends InverseProblem {
 

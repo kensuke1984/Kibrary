@@ -35,20 +35,9 @@ import manhattan.template.Location;
  * azimuth, deltaTheta, r[]
  * 
  * grid File latitude longitude radius
- * 
- * @since 2014/5/27
- * @version 0.0.2
- * 
  *          TODO maks.dat
  * 
- * @since 2015/4/1
- * @version 0.0.2.1
- * 
- * @version 0.0.2.2
- * @since 2015/8/7 {@link IOException}
- * 
  * @version 0.0.3
- * @since 2015/8/8 {@link Path} base
  * 
  * @author kensuke
  * 
