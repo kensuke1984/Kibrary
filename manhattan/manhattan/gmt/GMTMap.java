@@ -7,14 +7,10 @@ import java.util.stream.Collectors;
 import manhattan.template.HorizontalPosition;
 
 /**
- * @version 0.0.1
- * @since 2013/9/15 GMT地図を書くための簡単なフォーマットを作る
+ * Helper for use of GMT
  * 
- * @version 0.0.2
- * @since 2015/9/2 psbasemap pscoat added
  * 
  * @version 0.0.3
- * @since 2015/9/4 psxy added
  * 
  * 
  * @author Kensuke

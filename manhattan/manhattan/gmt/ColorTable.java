@@ -7,7 +7,6 @@ package manhattan.gmt;
  * 
  * color tables in GMT
  * 
- * @since 2014/02/27
  * @version 0.0.1
  * 
  * 
