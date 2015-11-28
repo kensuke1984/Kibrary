@@ -17,12 +17,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 /**
- * localに保存してあるGlobal CMTのカタログ
  * 
  * Catalog of global CMT solutions.
- * 
- * 
- * @since 2013/12/1
  * 
  * @version 0.1.0
  * 

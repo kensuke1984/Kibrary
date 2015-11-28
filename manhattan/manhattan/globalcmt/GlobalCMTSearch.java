@@ -19,34 +19,7 @@ import manhattan.template.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke
- * @version 0.0.1
- * 
- * @version 0.0.2
- * @since 2013/9/20
- * 
- * @version 0.1.0
- * @since 2014/1/12 install all queries startDate の時刻は0:0:0.000
- *        endDateの時刻は23:59:59.999 にする
- * 
- * @since 2014/9/8
- * @version 0.1.1 fix
- * 
- * @version 0.1.2
- * @since 2015/1/29 Java 8 grammer
- * 
- * @version 0.1.5
- * @since 2015/2/12 {@link java.util.Calendar} &rarr;
- *        {@link java.time.LocalDate}
- * 
- * @version 0.1.5.1
- * @since 2015/4/15 minor bugs fixed
- * 
- * 
- * @version 0.1.6
- * @since 2015/8/21 time range is installed
- * 
  * @version 0.1.7
- * @since 2015/9/8 search Array &rarr; Set
  * 
  * 
  */

@@ -9,8 +9,8 @@ import manhattan.datacorrection.MomentTensor;
 import manhattan.template.Location;
 
 /**
+ * Data for global CMT data used frequently.
  * @author kensuke
- * @since 2015/04/14
  * @version 0.0.1
  */
 public interface GlobalCMTData {
