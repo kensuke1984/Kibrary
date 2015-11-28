@@ -2,15 +2,15 @@ package filehandling.spc;
 
 
 /**
- * tensor components of a spc file
- * 
+ * Tensor components of a spc file
+ * <p>
  * r:Z, t(theta):R, p(phi): T
- * 
+ * <br>
  * rtp &rarr; f_r による　e_tp
- * 
- * FP 1: rr(ZZ) 2: rt(ZR) 3: rp(ZT) 4: tr(RZ) 5: tt(RR) 6: tp(RT) 7: pr(TZ) 8: pt(TR) 9: pp(TT)
- * 
- * BP 1: rrr 2: rrt 3: rrp 4: rtr 5: rtt 6: rtp 7: rpr 8: rpt 9: rpp 10: trr 11:
+ * <p>
+ * Forward propagation 1: rr(ZZ) 2: rt(ZR) 3: rp(ZT) 4: tr(RZ) 5: tt(RR) 6: tp(RT) 7: pr(TZ) 8: pt(TR) 9: pp(TT)
+ * <p>
+ * Backward propagation 1: rrr 2: rrt 3: rrp 4: rtr 5: rtt 6: rtp 7: rpr 8: rpt 9: rpp 10: trr 11:
  * trt 12: trp 13: ttr 14: ttt 15: ttp 16: tpr 17: tpt 18: tpp 19: prr 20: prt
  * 21: prp 22: ptr 23: ptt 24: ptp 25: ppr 26: ppt 27: ppp
  * 

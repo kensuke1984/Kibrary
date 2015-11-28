@@ -7,10 +7,8 @@ import manhattan.elasticparameter.ElasticModuli;
  * derivatives
  * 
  * @author kensuke
- * @since 2015/08/14
- * @version 0.0.2
  * 
- * @version 0.1.0 Unify
+ * @version 0.1.0  
  * 
  */
 interface WeightingFactor {

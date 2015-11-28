@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,22 +14,9 @@ import manhattan.template.HorizontalPosition;
 import manhattan.template.Location;
 
 /**
- * 新生spc File
- * 
- * @since 2014/10/9
- * @version 0.1.0
- * 
- * 
- * @version 0.1.1
- * @since 2015/4/9 {@link #observerPosition} : {@link HorizontalPosition}&rarr;
- *        {@link Location}
- * 
- * @version 0.1.1.1
- * @since 2015/8/5 {@link #getInstance(SpcFileName)} throws {@link IOException}
+ * Spectrum file by DSM.
  * 
  * @version 0.1.2
- * @since 2015/8/15 {@link Path} base
- * 
  * @author Kensuke
  * 
  */
@@ -44,88 +30,6 @@ class SpectrumFile implements DSMOutput {
 		return observerID;
 	}
 
-	// /**
-	// * thisとspc2の各成分を足し合わせる （psvとshの足し合わせ）
-	// *
-	// * @param newName
-	// * name for new {@link PartialSpectrumFile}
-	// * @param spc2
-	// * additional {@link PartialSpectrumFile}
-	// * @return new {@link PartialSpectrumFile}
-	// */
-	// PartialSpectrumFile combine(SpcFileName newName, PartialSpectrumFile
-	// spc2) {
-	// PartialSpectrumFile odps = new PartialSpectrumFile(newName);
-	// boolean isOK = true;
-	// if (nbody != spc2.nbody) {
-	// System.out.println("nbodies are different." + nbody + " " + spc2.nbody);
-	// isOK = false;
-	// }
-	// if (nComponent != spc2.nComponent) {
-	// System.out.println("ncomponents are different." + nComponent + " " +
-	// spc2.nComponent);
-	// isOK = false;
-	// }
-	// if (np != spc2.np) {
-	// System.out.println("nps are different." + np + " " + spc2.np);
-	// isOK = false;
-	// }
-	// if (!observerPosition.equals(spc2.observerPosition)) {
-	// System.out.println("observer locations are different." + observerPosition
-	// + " " + spc2.observerPosition);
-	// isOK = false;
-	// }
-	// if (omegai != spc2.omegai) {
-	// System.out.println("omegais are different." + omegai + " " +
-	// spc2.omegai);
-	// isOK = false;
-	// }
-	// if (!sourceLocation.equals(spc2.sourceLocation)) {
-	// System.out.println("source locations are different." + sourceLocation + "
-	// " + spc2.sourceLocation);
-	// isOK = false;
-	// }
-	// if (tlen != spc2.tlen) {
-	// System.out.println("tlens are different" + tlen + " " + spc2.tlen);
-	// isOK = false;
-	// }
-	// if (isOK) {
-	// for (int i = 0; i < nbody; i++)
-	// if (bodyR[i] != spc2.bodyR[i])
-	// isOK = false;
-	// if (!isOK)
-	// System.out.println("bodyRs are different");
-	// }
-	// if (spcFileName.getFileType() != spc2.getSpcFileName().getFileType()) {
-	// System.out.println("spcfiletypes are different " +
-	// spcFileName.getFileType() + " "
-	// + spc2.getSpcFileName().getFileType());
-	// isOK = false;
-	// }
-	// if (!isOK)
-	// return null;
-	// odps.nbody = nbody;
-	//
-	// odps.nComponent = 3;
-	//
-	// odps.np = np;
-	// odps.observerPosition = observerPosition;
-	// odps.omegai = omegai;
-	// odps.sourceLocation = sourceLocation;
-	// odps.tlen = tlen;
-	//
-	// odps.bodyR = new double[nbody];
-	// for (int i = 0; i < nbody; i++)
-	// odps.bodyR[i] = bodyR[i];
-	//
-	// odps.initializeSPCBodies();
-	// for (int i = 0; i < nbody; i++) {
-	// odps.spcBody.get(i).addBody(spcBody.get(i));
-	// odps.spcBody.get(i).addBody(spc2.spcBody.get(i));
-	// }
-	//
-	// return odps;
-	// }
 
 	@Override
 	public String getSourceID() {
