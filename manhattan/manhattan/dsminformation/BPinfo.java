@@ -9,19 +9,10 @@ import java.util.Arrays;
 import manhattan.template.HorizontalPosition;
 
 /**
+ * Information file for computation of back propagation.
  * 
- * @version 0.0.1 back propagate計算用の情報
- * @version 0.0.2
- * @since 2013/9/25
- * 
- * @version 0.0.3
- * @since 2014/9/5 to Java 8
- * 
- * @version 0.0.4
- * @since 2015/8/8 {@link Path} base
  * 
  * @version 0.0.4.1
- * @since 2015/8/21
  * 
  * @author Kensuke
  * 
@@ -139,7 +130,6 @@ class BPinfo extends DSMheader {
 			pw.println(nr + " nr");
 			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
-			// nsta
 			// nsta
 			int nsta = perturbationPointR.length;
 			pw.println(nsta + " nsta");

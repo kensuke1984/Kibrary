@@ -20,9 +20,6 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @since 2014/1/16 or earlier
- * 
- * 
  * @version 0.2.1
  * 
  * 

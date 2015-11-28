@@ -15,27 +15,8 @@ import manhattan.template.Station;
 import manhattan.template.Utilities;
 
 /**
- * SSHSHようの情報ファイル
- * 
- * 
- * @version 0.0.2
- * @since 2013/9/25
- * 
- * @version 0.0.3
- * @since 2015/8/8 {@link IOException} {@link Path} base
- * 
- * @version 0.0.3.1
- * @since 2015/8/14
- * 
- * @version 0.0.4
- * @since 2015/8/22
- * 
- * @version 0.0.5
- * @since 2015/9/12 SACHeaderData now
- * 
+ * Information file for SSHSH
  * @version 0.0.6
- * @since 2015/9/14 Utilities
- * 
  * 
  * @author kensuke
  *

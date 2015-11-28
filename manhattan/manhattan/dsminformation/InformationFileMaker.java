@@ -25,8 +25,6 @@ import manhattan.template.Utilities;
  * 
  * TODO information of eliminated stations and events
  * 
- * @since 2013/9/25
- * 
  * @version 0.1.0
  * 
  * @author Kensuke
@@ -64,8 +62,6 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 	 */
 	public static void main(String[] args) throws IOException {
 		InformationFileMaker ifm = null;
-		// args = new String[] {
-		// "/home/kensuke/data/WesternPacific/anelasticity/divide/ifm.prm" };
 		if (args.length != 0) {
 			Path parameterPath = Paths.get(args[0]);
 			if (!Files.exists(parameterPath)) 
@@ -73,8 +69,6 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 			ifm = new InformationFileMaker(parameterPath);
 		} else
 			ifm = new InformationFileMaker(null);
-		// System.out.println(ifm.workDir);
-		//
 		// ///
 		Path workPath = ifm.workPath;
 		if (!Files.exists(workPath))

@@ -10,22 +10,9 @@ import manhattan.globalcmt.GlobalCMTData;
 import manhattan.template.HorizontalPosition;
 
 /**
- * 
- * forward propagate 計算用の情報
- * 
- * @version 0.0.1
- * @version 0.0.2
- * @since 2013/9/25
- * 
- * @version 0.0.3
- * @since 2014/9/5 to Java 8
- * 
- * @version 0.0.4
- * @since 2015/8/8
- * {@link Path} base
+ * Information file for computation of forward propagation.
  * 
  * @version 0.0.4.1
- * @since 2015/8/21
  * 
  * @author Kensuke Konishi
  */
@@ -73,11 +60,10 @@ class FPinfo extends DSMheader {
 			Arrays.stream(structure).forEach(pw::println);
 
 			// source
-			pw.println(event.getCmtLocation().getR() + " "
-					+ event.getCmtLocation().getLatitude() + " "
+			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
 					+ event.getCmtLocation().getLongitude());
 			double[] mt = event.getCmt().getDSMmt();
-			Arrays.stream(mt).forEach(d->pw.print(d+" "));
+			Arrays.stream(mt).forEach(d -> pw.print(d + " "));
 			pw.println();
 
 			// output info
@@ -88,8 +74,8 @@ class FPinfo extends DSMheader {
 			// nr
 			int nr = perturbationPoint.length;
 			pw.println(nr + " nr");
-			Arrays.stream(perturbationPoint).forEach(pp->pw.println(pp.getLatitude()+" "+pp.getLongitude()));
-			
+			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+
 			// nsta
 			int nsta = perturbationPointR.length;
 			pw.println(nsta + " nsta");
@@ -110,11 +96,10 @@ class FPinfo extends DSMheader {
 			Arrays.stream(structure).forEach(pw::println);
 
 			// source
-			pw.println(event.getCmtLocation().getR() + " "
-					+ event.getCmtLocation().getLatitude() + " "
+			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
 					+ event.getCmtLocation().getLongitude());
 			double[] mt = event.getCmt().getDSMmt();
-			Arrays.stream(mt).forEach(d->pw.print(d+" "));
+			Arrays.stream(mt).forEach(d -> pw.print(d + " "));
 			pw.println();
 
 			// output info
@@ -125,8 +110,8 @@ class FPinfo extends DSMheader {
 			// nr
 			int nr = perturbationPoint.length;
 			pw.println(nr + " nr");
-			Arrays.stream(perturbationPoint).forEach(pp->pw.println(pp.getLatitude()+" "+pp.getLongitude()));
-			
+			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+
 			// nsta
 			int nsta = perturbationPointR.length;
 			pw.println(nsta + " nsta");
