@@ -21,7 +21,6 @@ import manhattan.template.Utilities;
  * FTP access to IRIS server. OHP will be prepared
  * 
  * @author kensuke
- * @since 2015/09/11
  * @version 0.0.1
  */
 final class DataTransfer {

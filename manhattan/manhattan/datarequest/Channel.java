@@ -11,27 +11,23 @@ import manhattan.globalcmt.GlobalCMTID;
  * 
  * BREAKFASTシステムへのデータリクエストの際のデータ部分
  * 
- * @since 2013/8/5 see http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast/
- * @version 0.0.1 millisecond があいまい 強制的に0にする 各データのchannel は "1 BH?"に固定
+ * millisecond があいまい 強制的に0にする 各データのchannel は "1 BH?"に固定
+ * <p>
+ * STA NN YYYY MM DD HH MM SS.TTTT YYYY MM DD HH MM SS.TTTT #_CH CH1 CH2 CHn LI
+ * <p>
+ * where
  * 
- *          STA NN YYYY MM DD HH MM SS.TTTT YYYY MM DD HH MM SS.TTTT #_CH CH1
- *          CH2 CHn LI where
- * 
- *          #_CH is the number of channel designators in the immediately
- *          following list CHn is a channel designator that can contain
- *          wildcards LI is location identifier (optional)
- * 
- * @version 0.0.2 {@link #channelNumber}の実装
- * @since 2014/1/9 TTTT整えた　
- * 
- * @version 0.0.3
- * @since 2014/8/14 For OHP request, TTTT is now only one digit.
+ * #_CH is the number of channel designators in the immediately following list
+ * CHn is a channel designator that can contain wildcards LI is location
+ * identifier (optional)<br>
+ * <p>
+ * For OHP request, TTTT is now only one digit.
  * 
  * @version 0.0.5
- * @since 2015/2/12 {@link java.util.Calendar} &rarr; {@link java.time.LocalDateTime}
  * 
  * @author kensuke
- * 
+ * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
+ *      guide</a>
  */
 public class Channel {
 
@@ -65,8 +61,7 @@ public class Channel {
 	private int channelNumber = 1;
 	private String[] channel = { "BH?" };
 
-	public Channel(String stationName, String networkName,
-			LocalDateTime startTime, LocalDateTime endTime) {
+	public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
 		super();
 		this.stationName = stationName;
 		this.networkName = networkName;
@@ -74,8 +69,7 @@ public class Channel {
 		this.endTime = endTime;
 	}
 
-	private static DateTimeFormatter outputFormat = DateTimeFormatter
-			.ofPattern("yyyy MM dd HH mm ss");
+	private static DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss");
 
 	/**
 	 * STA NN YYYY MM DD HH MM SS.TTTT YYYY MM DD HH MM SS.TTTT #_CH CH1 CH2 CHn
@@ -95,18 +89,18 @@ public class Channel {
 	 * @return formatted line
 	 */
 	private static String toLine(LocalDateTime time) {
-		return time.format(outputFormat)
-				+"."+ String.format("%01d", time.getNano() /  100 / 1000);
+		return time.format(outputFormat) + "." + String.format("%01d", time.getNano() / 100 / 1000);
 	}
 
+	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < this.channel.length - 1; i++)
 			sb.append(this.channel[i] + " ");
 		sb.append(this.channel[this.channel.length - 1]);
 		String channels = sb.toString();
-		return stationName + " " + networkName + " " + toLine(startTime) + " "
-				+ toLine(endTime) + " " + channelNumber + " " + channels;
+		return stationName + " " + networkName + " " + toLine(startTime) + " " + toLine(endTime) + " " + channelNumber
+				+ " " + channels;
 	}
 
 	/**
@@ -127,9 +121,8 @@ public class Channel {
 	 *            after the impact
 	 * @return channels for the input
 	 */
-	public static Channel[] listChannels(String[] network, GlobalCMTID id,
-			ChronoUnit headUnit, int headAdjustment, ChronoUnit footUnit,
-			int footAdjustment) {
+	public static Channel[] listChannels(String[] network, GlobalCMTID id, ChronoUnit headUnit, int headAdjustment,
+			ChronoUnit footUnit, int footAdjustment) {
 		Channel[] channels = new Channel[network.length];
 
 		LocalDateTime cmtTime = id.getEvent().getCMTTime();
