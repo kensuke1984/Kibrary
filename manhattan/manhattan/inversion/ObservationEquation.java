@@ -23,17 +23,13 @@ import manhattan.waveformdata.PartialID;
 import mathtool.Matrix;
 
 /**
- * Am=dにおけるA readAをすることでAを格納する
+ * Am=d
  * 
- * @since 2013/9/18
  * @version 0.2
  * 
  * 
  * @author Kensuke
- * 
- * 
- * 
- * 
+ * @see {@link Dvector} {@link UnknownParameter}
  */
 public class ObservationEquation {
 

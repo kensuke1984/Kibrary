@@ -29,12 +29,8 @@ import manhattan.waveformdata.BasicID;
  * Utilities for output of {@link LetMeInvert}.
  * 
  * @author kensuke
- * @since 2015/08/27
  * 
  * @version 0.1.0.1
- * 
- * 
- * 
  */
 public class InversionResult {
 

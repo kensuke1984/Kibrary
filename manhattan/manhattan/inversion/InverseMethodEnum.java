@@ -11,7 +11,6 @@ import org.apache.commons.math3.linear.RealVector;
  * value decomposition.. etc
  * 
  * @author kensuke
- * @since 2015/01/28
  * @version 0.0.1
  */
 public enum InverseMethodEnum {
@@ -26,8 +25,6 @@ public enum InverseMethodEnum {
 		default:
 			throw new RuntimeException("soteigai");
 		}
-		
-		
 	}
 	
 }

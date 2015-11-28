@@ -16,6 +16,7 @@ public class TimeshiftParameter implements UnknownParameter{
 	
 	private String side;
 	
+	@Override
 	public String toString(){
 		return PartialType.TIME+" "+side;
 	}

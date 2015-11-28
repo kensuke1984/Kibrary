@@ -4,19 +4,14 @@ import filehandling.spc.PartialType;
 
 /**
  * 
- * 弾性定数の偏微分係数
- * 
+ * Elastic parameter (one dimension)
  * １次元として使う 摂動点の位置（半径位置）、 摂動の種類(PartialType) Unknown parameter for 1D weighting
  * should be a thickness of a layer
- * 
+ * <p>
  * This class is <b>IMMUTABLE</b>
  * 
  * 
- * @version 0.0.2
- * @since 2014/11/8
- * 
  * @version 0.0.3
- * @since 2015/8/27
  * 
  * @author Kensuke
  * 

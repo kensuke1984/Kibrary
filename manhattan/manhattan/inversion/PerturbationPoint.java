@@ -25,7 +25,6 @@ import manhattan.template.Location;
  * TODO 名前のチェック　validity
  * 
  * @version 0.1.0
- * @since 2014/4/29 Kepler change
  * 
  * 
  * 

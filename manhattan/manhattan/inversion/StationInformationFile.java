@@ -27,8 +27,6 @@ import manhattan.template.Utilities;
  * File containing information of stations .<br>
  * Each line: station name, station network, latitude, longitude.
  * 
- * @since 2015/9/14
- * 
  * 
  * @version 0.2
  * 

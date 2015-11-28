@@ -31,15 +31,9 @@ import manhattan.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * その波形での理論テスト、その波形のデータセットのアウトプットなど
- * 
- * @since 2013/11/15
- * 
  * @version 0.1.2
  * 
  * @author Kensuke
- * 
- * 
  * 
  */
 public class CheckerBoardTest extends parameter.CheckerBoardTest {
