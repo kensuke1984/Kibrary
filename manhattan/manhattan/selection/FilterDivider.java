@@ -45,6 +45,7 @@ class FilterDivider extends parameter.FilterDivider {
 	 * @param args
 	 *            [parameter file name]
 	 * @throws InterruptedException if any
+	 * @throws IOException if any
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 		FilterDivider divider = null;

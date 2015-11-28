@@ -76,6 +76,7 @@ class DataSelection extends parameter.DataSelection {
 	/**
 	 * @param args
 	 *            [parameter file name]
+	 * @throws IOException if an I/O happens
 	 */
 	public static void main(String[] args) throws IOException {
 		DataSelection ds = null;

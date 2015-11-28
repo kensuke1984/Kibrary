@@ -14,22 +14,9 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 /**
- * パラメタファイルの読み込み
- * 
- * @version 0.0.2
- * @since 2013/9/19
- * 
- * @version 0.0.3
- * @since 2014/8/19 Constructors changed
- * 
- * @since 2014/9/10
- * @version 0.0.4 getFile installed
- * 
- * @version 0.0.5
- * @since 2015/8/8 {@link Path} base
+ * Parameter file to procedures
  * 
  * @version 0.0.5.1
- * @since 2015/8/13
  * 
  * @author kensuke
  * 
@@ -65,9 +52,8 @@ abstract class ParameterFile {
 	}
 
 	/**
-	 * ファイル名を読み込む
-	 * 
-	 * @return
+	 * Ask a path of the parameter file
+	 * @return Path of the parameter file
 	 */
 	static Path readFileName() {
 		String s = null;
