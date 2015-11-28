@@ -12,7 +12,7 @@ import manhattan.globalcmt.GlobalCMTID;
 /**
  * Style of names of SAC files. (SAC: seismic analysis code)
  * 
- * <b>This class is IMMUTABLE.</b><br>
+ * This class is <b>IMMUTABLE.</b><br>
  *  This class is a sub class of {@link File}
  * {@link #equals(Object)} and {@link #hashCode()} is under the {@link File}
  * 
@@ -26,10 +26,9 @@ import manhattan.globalcmt.GlobalCMTID;
  * 
  * 
  * @version 2.0
- * @since 2015/9/12 read out
  * 
  * @author Kensuke
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACFileName extends File {
 

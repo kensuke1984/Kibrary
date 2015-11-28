@@ -9,23 +9,14 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 
 /**
- * @since 2013/7/10 added #readSacBoolean
- * 
- * @since 2013/9/22
- * @version 0.0.2
- * 
- * @since 2013/9/25
- * @version 0.0.3 public -> default
- * 
- * @version 0.0.5
- * @since 2015/2/20 no more {@link ByteBuffer}
+ * Input stream for a SAC file
  * 
  * @version 0.1.0
- * @since 2015/8/18 {@link FilterInputStream}
  * 
  * 
  * @author kensuke
- *
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */
 final class SACInputStream extends FilterInputStream {
 
@@ -41,7 +32,7 @@ final class SACInputStream extends FilterInputStream {
 		int ch1 = in.read();
 		int ch2 = in.read();
 		int ch3 = in.read();
-		int ch4 = in.read(); 
+		int ch4 = in.read();
 		if ((ch1 | ch2 | ch3 | ch4) < 0)
 			throw new EOFException();
 		return (ch4 << 24) + (ch3 << 16) + (ch2 << 8) + (ch1 << 0);

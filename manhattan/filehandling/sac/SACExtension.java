@@ -1,27 +1,20 @@
 package filehandling.sac;
 
 /**
- * Extension of SAC
- * (SAC: seismic analysis code)
+ * Extension of SAC (SAC: seismic analysis code)
  * 
  * The basic extensions are Z, R, T (observed).<br>
- * ?s is synthetic waveform not convoluted. <br>
- * ?sc is convoluted synthetic waveform. <br>
- * ?st is a temporal partial derivative. <br>
- * ?sct is a convoluted temporal partial derivative. <br>
+ * ?s is synthetic waveform without <i>convolution</i>. <br>
+ * ?sc is synthetic waveform after <i>convolution</i>. <br>
+ * ?st is temporal partial derivative without <i>convolution</i>. <br>
+ * ?sct is temporal partial derivative after <i>convolution</i>. <br>
  * 
  * 
- * 
- * @since 2013/9/16
- * @version 0.0.2
- * 
- * @version 0.0.3
- * @since 2015/1/30 slightly modified.
  * 
  * @version 0.0.4
- * @since 2015/8/23 X is removed
  * 
  * @author Kensuke
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * 
  */
 public enum SACExtension {
@@ -84,8 +77,8 @@ public enum SACExtension {
 	}
 
 	/**
-	 * @param component {@link SACComponent}
-	 *            of extension
+	 * @param component
+	 *            {@link SACComponent} of extension
 	 * @return Z:Zs, R:Rs, T:Ts
 	 */
 	public static SACExtension valueOfSynthetic(SACComponent component) {
@@ -102,8 +95,8 @@ public enum SACExtension {
 	}
 
 	/**
-	 * @param component {@link SACComponent}
-	 *            of extension
+	 * @param component
+	 *            {@link SACComponent} of extension
 	 * @return Z:Zsc, R:Rsc, T:Tsc
 	 */
 	public static SACExtension valueOfConvolutedSynthetic(SACComponent component) {
@@ -120,8 +113,8 @@ public enum SACExtension {
 	}
 
 	/**
-	 * @param component {@link SACComponent}
-	 *            of extension
+	 * @param component
+	 *            {@link SACComponent} of extension
 	 * @return Z:Zsct, R:Rsct, T:Tsct
 	 */
 	public static SACExtension valueOfConvolutedTemporalPartial(SACComponent component) {
