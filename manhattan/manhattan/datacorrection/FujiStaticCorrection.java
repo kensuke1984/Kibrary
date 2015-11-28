@@ -30,56 +30,31 @@ import manhattan.timewindow.TimewindowInformation;
 import manhattan.timewindow.TimewindowInformationFile;
 
 /**
+ * This class computes values of Static correction after Fuji <i>et al</i>.,
+ * (2010) <br>
  * dataselectionした後のフォルダでやる<br>
- * もっともコリレーションのよくなるだけ移動させるための時間を求める observedを何秒ずらすといいかを得る<br>
- * synthetic のウインドウが[t1, t2]の時 値 t の場合 [t1-t, t2-t]を用いる<br>
- * ワーキングディレクトリ以下のイベントたちの中にいく<br>
+ * 
+ * The time shift value <i>t</i> for the ray path is for the observed
+ * timewindow.<br>
+ * (i.e. synthetic window [t1, t2], observed [t1-t, t2-t])
+ * 
+ * The time shift values are computed as follows:
+ * <blockquote>ワーキングディレクトリ以下のイベントたちの中にいく<br>
  * 理論波形のstartMkからendMkまでに間で最大ピークを探し冨士さんの 感じで探す とりあえず±sLimit秒で探してみる <br>
  * 観測波形にマーカーがない場合書いてしまう <br>
  * マーカーはrenewパラメタがtrueなら観測波形のマーカーは上書き<br>
  * time shiftの値は小数点２位以下切捨て
- * 
  * Algorithm startMkからendMkまでの間で最大振幅を取り、
  * それ以前の時間からthreshold（最大振幅ベース）を超えた振幅の一番早いものをえらびstartMkから、
  * そこまでのタイムウインドウのコリレーションをあわせる <br>
- * after Fuji <i>et al</i>., 2010
+ * </blockquote>
  * 
- * @version 0.0.2 if something happens, move the sac file to Trash
+ * If something happens, move the sac file to Trash
  * 
- *          timeshift fileを一つに統一
- * @version 0.0.2
- * @since 2013/9/6
+ * timeshift fileを一つに統一
  * 
- * @version 0.0.3
- * @since 2013/10/10
- * 
- * @version 0.0.4
- * @since 2013/12/17 {@link GlobalCMTID}に
- * 
- * @version 0.0.5
- * @since 2014/4/1 観測波形と理論波形の位置をわけられるにした。
- * 
- * @version 0.0.6
- * @since 2014/5/23 bug fixes
- * 
- * @version 0.1.0
- * @since 2015/5/31 amplitude collection
- * 
- * @version 0.1.0.1
- * @since 2015/8/7 {@link IOException}
- * 
- * @version 0.1.1
- * @since 2015/8/8 {@link Path} base
- * 
- * 
- * @version 0.1.1.1
- * @since 2015/8/17
- * 
- * @version 0.1.2
- * @since 2015/9/12 SACData now
  * 
  * @version 0.1.3
- * @since 2015/9/14 Timewindow information, Static correction, Utilities
  * @author Kensuke
  * 
  */
