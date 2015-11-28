@@ -1,6 +1,5 @@
 package filehandling.sac;
 
-import java.util.Arrays;
 
 /**
  * Components of SAC<br>
@@ -8,14 +7,7 @@ import java.util.Arrays;
  * 
  * 
  * @author kensuke
- * @since 2014/09/05
- * @version 0.0.2
- * 
- * @version 0.0.3
- * @since 2015/1/30 becomes strict.
- * 
  * @version 0.0.3.1
- * @since 2015/8/15
  * 
  * 
  */
@@ -43,8 +35,16 @@ public enum SACComponent {
 	 *             if the input n is not 1,2,3
 	 */
 	public static SACComponent getComponent(int n) {
-		return Arrays.stream(SACComponent.values()).filter(component -> component.valueOf() == n).findAny()
-				.orElseThrow(() -> new IllegalArgumentException("Invalid component! Components are Z(1) R(2) T(3)"));
+		switch (n) {
+		case 1:
+			return Z;
+		case 2:
+			return R;
+		case 3:
+			return T;
+		default:
+			throw new IllegalArgumentException("Invalid component! Components are Z(1) R(2) T(3)");
+		}
 	}
 
 	/**

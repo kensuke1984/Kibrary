@@ -17,9 +17,11 @@ import manhattan.template.Station;
 import manhattan.template.Trace;
 
 /**
+ * Data in a SAC file.
+ * 
  * @author kensuke
- * @since 2015/09/12
  * @version 0.0.1
+ *  @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACData extends SACHeaderData {
 	/**

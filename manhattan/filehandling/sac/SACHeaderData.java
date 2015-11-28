@@ -11,14 +11,17 @@ import manhattan.template.Location;
 import manhattan.template.Station;
 
 /**
- * Interface of SAC data
+ * Interface of SAC header data<br>
  * 
+ * The SAC header is described <A
+ * href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  * 
  * @author kensuke
- * @since 2015/09/12
  * @version 0.0.1
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACHeaderData {
+
 	/**
 	 * 論理値を返す。 数値が整数、文字列のときはエラー
 	 * 
@@ -184,7 +187,7 @@ public interface SACHeaderData {
 	SACHeaderData setSACString(SACHeaderEnum sacHeaderEnum, String string);
 
 	/**
-	 * Changes KSTNM, KNETWK(if exists), STLA, STLO
+	 * Changes KSTNM, KNETWK, STLA, STLO
 	 * 
 	 * @param station
 	 *            to be set
@@ -192,12 +195,7 @@ public interface SACHeaderData {
 	 */
 	default SACHeaderData setStation(Station station) {
 		SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, station.getStationName());
-
-		try {
-			sd = sd.setSACString(SACHeaderEnum.KNETWK, station.getNetwork());
-		} catch (Exception e) {
-			sd = sd.setSACString(SACHeaderEnum.KNETWK, "-12345");
-		}
+		sd = sd.setSACString(SACHeaderEnum.KNETWK, station.getNetwork());
 		return sd.setValue(SACHeaderEnum.STLA, station.getPosition().getLatitude()).setValue(SACHeaderEnum.STLO,
 				station.getPosition().getLongitude());
 	}
@@ -221,7 +219,7 @@ public interface SACHeaderData {
 		if (marker != SACHeaderEnum.T0 && marker != SACHeaderEnum.T1 && marker != SACHeaderEnum.T2
 				&& marker != SACHeaderEnum.T3 && marker != SACHeaderEnum.T4 && marker != SACHeaderEnum.T5
 				&& marker != SACHeaderEnum.T6 && marker != SACHeaderEnum.T7 && marker != SACHeaderEnum.T8
-				&& marker != SACHeaderEnum.T9 &&marker != SACHeaderEnum.A)
+				&& marker != SACHeaderEnum.T9 && marker != SACHeaderEnum.A)
 			throw new IllegalArgumentException("Only Tn n=[0-9] can be set");
 		double b = getValue(SACHeaderEnum.B);
 		// if(getValue(SacHeaderEnum.B)!=0)

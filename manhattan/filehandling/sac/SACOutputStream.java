@@ -7,19 +7,12 @@ import java.io.OutputStream;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @since 2013/7/10 added #writeSacBoolean
- * 
- * @version 0.0.2
- * @since 2013/9/25 public &to; default
- * 
- * @version 0.0.3
- * @since 2015/2/20 {@link #changeEndian(int)} installed.
- * 
+ * Output stream for a SAC file
  * @version 0.0.3.1
- * @since 2015/9/14
  * 
  * @author kensuke
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */
 final class SACOutputStream extends DataOutputStream {
 
