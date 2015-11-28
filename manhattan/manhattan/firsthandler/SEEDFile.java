@@ -17,34 +17,14 @@ import manhattan.external.ExternalProcess;
 import manhattan.globalcmt.GlobalCMTSearch;
 
 /**
- * Seedファイル
- * 
- * @since 2013/9/19
- * 
- * @version 0.0.1
- * @since 2013/9/19 rdseed 5.3 をベースにしている 今の段階では {@link FirstHandler}
- *        による使用だけを視野に入れている
- * 
- * @version 0.0.2
- * @since 2014/2/3 minor bugs and fixed {@link #readSeed(String)}
- * 
- * @version 0.0.3
- * @since 2014/10/2 rdseed MUST be in PATH.
- * 
- * 
- * @version 0.0.5
- * @since 2015/2/12 {@link java.util.Calendar} &rarr;
- *        {@link java.time.LocalDateTime} time should be of UT.
- * 
- * 
- * @version 0.0.6
- * @since 2015/8/19 {@link Path} base
+ * Seed file utility
+ * rdseed MUST be in PATH.
  * 
  * @version 0.0.7
- * @since 2015/8/21 {@link #main(String[])} installed id findings gets smarter
  * 
  * @author kensuke
- * 
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/rdseed/>download</a>
+ * @see <a href=https://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>manual</a>
  */
 public class SEEDFile {
 

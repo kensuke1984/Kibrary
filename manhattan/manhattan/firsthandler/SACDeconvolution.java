@@ -22,23 +22,16 @@ import filehandling.sac.SACUtil;
  * 
  * RESPを考慮した波形を作る
  * 
- * @version 0.0.1
- * @since 2013/10/14
  * 
- *        とりあえずtaperはsine taperで
- * 
- * @version 0.0.2
- * @since 2015/8/5 {@link #compute(File, File, File, double, double)} throws
- *        {@link IOException}
+ * とりあえずtaperはsine taperで
  * 
  * @version 0.0.3
- * @since 2015/8/19 {@link Path} base
  * 
  * 
  * @author kensuke
  * 
  */
-class SacDeconvolution {
+class SACDeconvolution {
 
 	/**
 	 * 0: taper なし, 1: sine taper, 2: cosine taper TODO
@@ -55,7 +48,7 @@ class SacDeconvolution {
 	 */
 	private static double nyquistFreq = 10;
 
-	private SacDeconvolution() {
+	private SACDeconvolution() {
 	}
 
 	/**
@@ -137,7 +130,6 @@ class SacDeconvolution {
 			wavedata[i] *= taper[i];
 			wavedata[(npts - 1) - i] *= taper[i];
 		});
-
 
 	}
 
