@@ -17,9 +17,7 @@ import manhattan.template.Utilities;
 /**
  * IRISのデータセンターに送るBREQ_FASTリクエストのメール
  * 
- * @since 2014/6/5
  * @version 0.0.5
- * 
  * 
  * @author kensuke
  * 
