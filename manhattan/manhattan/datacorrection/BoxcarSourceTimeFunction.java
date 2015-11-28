@@ -19,7 +19,6 @@ import org.apache.commons.math3.util.FastMath;
  * <br>
  * Source time function F(&omega;) = sin(&omega;&tau;)/&omega;&tau;
  * 
- * @since 2015/08/02
  * @version 0.0.1
  * @author kensuke
  *
@@ -57,24 +56,4 @@ public final class BoxcarSourceTimeFunction extends SourceTimeFunction {
 		return sourceTimeFunction;
 	}
 
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }

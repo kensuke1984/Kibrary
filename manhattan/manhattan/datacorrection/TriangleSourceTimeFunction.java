@@ -17,7 +17,6 @@ import org.apache.commons.math3.complex.Complex;
  * Source time function F(&omega;) = (1-e<sup>-2&pi;i&omega;&tau;</sup>
  * -2i&pi;&omega;&tau;)/(2&pi;<sup>2</sup>&omega;<sup>2</sup>&tau;<sup>2</sup>)
  * 
- * @since 2015/08/04
  * @version 0.0.1
  * @author kensuke
  *

@@ -8,7 +8,7 @@ import manhattan.template.Station;
  * 
  * Static correction data for a raypath.<br>
  * <p>
- * <b> This class is IMMUTABlE.</b>
+ *  This class is <b>IMMUTABlE.</b>
  * </p>
  *
  * When a time window for a synthetic is [t1, t2], then <br>

@@ -19,19 +19,10 @@ import manhattan.template.Trace;
 import manhattan.timewindow.TimewindowInformation;
 
 /**
- * Source time function is obtained by stacked peaks.
+ * Source time function estimation by stacked peaks.
  * 
- * @since 2015/08/01
- * @version 0.0.1
  * @author kensuke
- * 
- * 
- * 
- * @version 0.0.2
- * @since 2015/9/12 SACData now.
- * 
  * @version 0.0.3
- * @since 2015/9/14 Timewindow information
  *
  */
 public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {

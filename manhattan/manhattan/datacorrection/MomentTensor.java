@@ -4,11 +4,13 @@ import org.apache.commons.math3.util.FastMath;
 
 /**
  * Moment Tensor<br>
- * Global CMT 1:Mrr 2:Mtt 3:Mpp 4:Mrt 5:Mrp 6 Mtp <br>
- * DSM 1:Mrr 2:Mrt 3:Mrp 4:Mtt 5:Mtp 6:Mpp <br>
+ * Global CMT 1:M<sub>rr</sub> 2:M<sub>tt</sub> 3:M<sub>pp</sub> <br>
+ * 4:M<sub>rt</sub> 5:M<sub>rp</sub> 6 M<sub>tp</sub> <br>
+ * DSM 1:M<sub>rr</sub> 2:M<sub>rt</sub> 3:M<sub>rp</sub> 4:M<sub>tt</sub> 5:M
+ * <sub>tp</sub> 6:M<sub>pp</sub> <br>
+ * <p>
  * This class is <b>IMMUTABLE</b>.
  * 
- * @since 2013/9/20 
  * 
  * @version 0.0.6
  * @author Kensuke
