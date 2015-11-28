@@ -5,7 +5,6 @@ package filehandling.spc;
  * eqlon, depthr, lat, lon, baz, gcarc
  * 
  * @version 0.0.2
- * @since 2015/8/23
  * 
  * 
  * @author Kensuke

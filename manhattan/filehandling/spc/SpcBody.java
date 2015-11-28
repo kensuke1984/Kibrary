@@ -17,25 +17,12 @@ import manhattan.datacorrection.SourceTimeFunction;
  * ista に対応する
  * 
  * 
- * @since 2014/10/9
- * @version 0.1.0 {@link #hashCode()} {@link #equals(Object)} installed
- * 
- * @version 0.1.1
- * @since 2015/8/2 Changes related to {@link SourceTimeFunction}
- * 
- * @version 0.1.1.1
- * @since 2015/8/23
- * 
  * @version 0.1.2
- * @since 2015/8/24
- * equals hashcode removed
  * 
  * @author kensuke
  * 
  */
 public class SpcBody {
-
-
 
 
 	private final int nComponent; // datarealsize

@@ -6,14 +6,10 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
 /**
- * calculation of Uj,q Cjqrs ETAri,s
- * 
- * @version 0.0.2
- * @since 2014/11/7
+ * Calculation of U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub> in
+ * Geller &amp; Hara (1993)
  * 
  * @version 0.0.2.1
- * @since 2015/3/31
- * Use Arrays
  * 
  * @author Kensuke
  * 
@@ -26,7 +22,7 @@ class TensorCalculationUCE {
 	private Complex[][][] u = new Complex[3][3][];
 
 	/**
-	 * i に対して都度計算するので　iは引数に取らない Eta ri,s = eta （[i]）[r][s][(np)]
+	 * i に対して都度計算するので iは引数に取らない Eta ri,s = eta （[i]）[r][s][(np)]
 	 */
 	private Complex[][][] eta = new Complex[3][3][];
 
@@ -53,8 +49,7 @@ class TensorCalculationUCE {
 	 *            どう重み付けするか
 	 * @param angle
 	 */
-	TensorCalculationUCE(SpcBody fp, SpcBody bp, WeightingFactor factor,
-			double angle) {
+	TensorCalculationUCE(SpcBody fp, SpcBody bp, WeightingFactor factor, double angle) {
 		this.fp = fp;
 		this.bp = bp;
 		this.np = fp.getNp();
@@ -63,7 +58,7 @@ class TensorCalculationUCE {
 	}
 
 	/**
-	 * 　Uj,q Cjqrs Eri,sのi成分の計算
+	 * Uj,q Cjqrs Eri,sのi成分の計算
 	 * 
 	 * @param i
 	 *            (0: Z 1:R 2:T)
@@ -72,11 +67,10 @@ class TensorCalculationUCE {
 	public Complex[] calc(int i) {
 		Complex[] partial = new Complex[np + 1];
 		Arrays.fill(partial, Complex.ZERO);
-		
+
 		for (int r = 0; r < 3; r++)
 			for (int s = 0; s < 3; s++) {
-				SpcTensorComponent irs = SpcTensorComponent.valueOfBP(i + 1,
-						r + 1, s + 1);
+				SpcTensorComponent irs = SpcTensorComponent.valueOfBP(i + 1, r + 1, s + 1);
 				eta[r][s] = bp.getSpcComponent(irs).getValueInFrequencyDomain();
 			}
 
@@ -84,18 +78,15 @@ class TensorCalculationUCE {
 
 		for (int p = 0; p < 3; p++)
 			for (int q = 0; q < 3; q++) {
-				SpcTensorComponent pq = SpcTensorComponent.valueOfFP(p + 1,
-						q + 1);
+				SpcTensorComponent pq = SpcTensorComponent.valueOfFP(p + 1, q + 1);
 				u[p][q] = fp.getSpcComponent(pq).getValueInFrequencyDomain();
 				// u = rotate(u,anglefp);
 				for (int r = 0; r < 3; r++)
 					for (int s = 0; s < 3; s++) {
 						// 球座標系とデカルト座標の調整
 						double factor = getFactor(p, q, r, s);
-						if (factor != 0) 
-							addPartial(partial,
-									calcCrossCorrelation(u[p][q], eta[r][s]),
-									factor);
+						if (factor != 0)
+							addPartial(partial, calcCrossCorrelation(u[p][q], eta[r][s]), factor);
 					}
 			}
 		// System.exit(0);
@@ -103,7 +94,7 @@ class TensorCalculationUCE {
 	}
 
 	/**
-	 * 球座標系pqrs(0, 1, 2)に対して　係数を求める (0, 1, 2) = (r, theta, phi) (->) (Z, X, Y) =
+	 * 球座標系pqrs(0, 1, 2)に対して 係数を求める (0, 1, 2) = (r, theta, phi) (->) (Z, X, Y) =
 	 * (2, 0, 1)
 	 * 
 	 * @param p
@@ -114,8 +105,7 @@ class TensorCalculationUCE {
 	 */
 	private double getFactor(int p, int q, int r, int s) {
 		// System.out.println("The factor p, q, r, s ("+p+", "+q+", "+r+", "+s);
-		return factor.getFactor(switchCoordinateSystem(p),
-				switchCoordinateSystem(q), switchCoordinateSystem(r),
+		return factor.getFactor(switchCoordinateSystem(p), switchCoordinateSystem(q), switchCoordinateSystem(r),
 				switchCoordinateSystem(s));
 	}
 
@@ -133,7 +123,7 @@ class TensorCalculationUCE {
 			return 0;
 		case 2:
 			return 1;
-		default: 
+		default:
 			throw new IllegalArgumentException("Invalid integer");
 		}
 
@@ -145,7 +135,7 @@ class TensorCalculationUCE {
 	 * @param eta
 	 *            eta[3][3][np+1]
 	 * @param r
-	 * @return ETAir,s（back propagation）　をテンソルのZ軸中心に {@link #angle} 回す
+	 * @return ETAir,s（back propagation） をテンソルのZ軸中心に {@link #angle} 回す
 	 */
 	private Complex[][][] rotateEta(Complex[][][] eta) {
 
@@ -164,14 +154,11 @@ class TensorCalculationUCE {
 		double cosine = FastMath.cos(angle);
 		double sine = FastMath.sin(angle);
 
-
 		// 回転行列 前から
-		double[][] forwardMatrix = new double[][] { { 1, 0, 0 },
-				{ 0, cosine, sine }, { 0, -sine, cosine } };
+		double[][] forwardMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, sine }, { 0, -sine, cosine } };
 
-		// 回転行列　後ろから
-		double[][] backMatrix = new double[][] { { 1, 0, 0 },
-				{ 0, cosine, -sine }, { 0, sine, cosine } };
+		// 回転行列 後ろから
+		double[][] backMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, -sine }, { 0, sine, cosine } };
 
 		Complex[][][] newETA = new Complex[3][3][np + 1];
 
@@ -179,9 +166,8 @@ class TensorCalculationUCE {
 			for (int r = 0; r < 3; r++)
 				for (int s = 0; s < 3; s++) {
 					newETA[r][s][ip] = Complex.ZERO;
-					for (int k = 0; k < 3; k++) 
-						newETA[r][s][ip] = newETA[r][s][ip].add(eta[k][s][ip]
-								.multiply(forwardMatrix[r][k]));
+					for (int k = 0; k < 3; k++)
+						newETA[r][s][ip] = newETA[r][s][ip].add(eta[k][s][ip].multiply(forwardMatrix[r][k]));
 				}
 
 		Complex[][][] rETA = new Complex[3][3][np + 1];
@@ -190,9 +176,8 @@ class TensorCalculationUCE {
 			for (int r = 0; r < 3; r++)
 				for (int s = 0; s < 3; s++) {
 					rETA[r][s][ip] = Complex.ZERO;
-					for (int k = 0; k < 3; k++) 
-						rETA[r][s][ip] = rETA[r][s][ip].add(newETA[r][k][ip]
-								.multiply(backMatrix[k][s]));
+					for (int k = 0; k < 3; k++)
+						rETA[r][s][ip] = rETA[r][s][ip].add(newETA[r][k][ip].multiply(backMatrix[k][s]));
 				}
 
 		return newETA;
@@ -204,17 +189,17 @@ class TensorCalculationUCE {
 	 * 
 	 * @param u
 	 * @param eta
-	 * @return　c[i] = u[i]* eta[i]
+	 * @return c[i] = u[i]* eta[i]
 	 */
 	private Complex[] calcCrossCorrelation(Complex[] u, Complex[] eta) {
 		Complex[] c = new Complex[np + 1];
-		Arrays.parallelSetAll(c, i->u[i].multiply(eta[i]));
+		Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
 		return c;
 	}
 
 	/**
 	 * 
-	 * イメージとしては　partial = partial+coef*uce
+	 * イメージとしては partial = partial+coef*uce
 	 * 
 	 * partialにcoef倍したuceをたす
 	 * 

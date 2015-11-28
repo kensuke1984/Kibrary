@@ -7,20 +7,23 @@ import java.nio.file.Path;
 
 /**
  * 
- * A name of a spectrum file DSMより作られたSPCファイルの名前 This class is IMMUTABLE.
+ * A name of a spectrum file made by DSM<br>
  * 
- * 理論 station.event(PSV, SV).spc
+ * This class is <b>IMMUTABLE</b>.
  * 
- * 偏微分係数波形 station(String8文字まで).event(GlobalCMTID).type(par2, PF, PB
- * .etc).x.y.(PSV, SH).spc
+ * <p>
+ * Synthetic: station.GlobalCMTID(PSV, SV).spc
  * 
- * 'PSV', 'SH' must be upper case
+ * <p>
+ * Partial derivatives: station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV,
+ * SH).spc
  * 
- * @since 2013/12/17 
- * 
+ * <p>
+ * 'PSV', 'SH' must be upper case. 'station' must be 8 or less letters.
  * 
  * 
  * @author Kensuke
+ * @version 0.1.0
  * 
  */
 public class SpcFileName extends File {
@@ -53,10 +56,9 @@ public class SpcFileName extends File {
 	/**
 	 * @return ID of source
 	 */
-	public String getSourceID(){
+	public String getSourceID() {
 		return sourceID;
 	}
-
 
 	/**
 	 * 入力ファイルのSpcFileTypeを返す
@@ -101,7 +103,8 @@ public class SpcFileName extends File {
 	/**
 	 * @param fileName
 	 * @return PSV or SH
-	 * @throws RuntimeException if spc file has no indication of its mode.
+	 * @throws RuntimeException
+	 *             if spc file has no indication of its mode.
 	 */
 	private static SpcFileComponent getMode(String fileName) {
 		if (fileName.endsWith("PSV.spc"))
@@ -112,7 +115,7 @@ public class SpcFileName extends File {
 			throw new RuntimeException(
 					"A name of SPC file must end with PSV.spc or SH.spc (psv, sh not allowed anymore)");
 	}
-	
+
 	private String observerID;
 
 	/**
@@ -166,8 +169,6 @@ public class SpcFileName extends File {
 		readName(getName());
 	}
 
-
-	
 	private String sourceID;
 
 	private void readName(String fileName) {
@@ -181,12 +182,12 @@ public class SpcFileName extends File {
 		y = getY(fileName);
 	}
 
-	public DSMOutput read() throws IOException{
+	public DSMOutput read() throws IOException {
 		return SpectrumFile.getInstance(this);
 	}
 
 	/**
-	 * @return  psv or  sh
+	 * @return psv or sh
 	 */
 	public SpcFileComponent getMode() {
 		return mode;
@@ -210,7 +211,7 @@ public class SpcFileName extends File {
 	public static boolean isSpcFileName(File file) {
 		String name = file.getName();
 		String[] parts = name.split("\\.");
-		if(!file.getName().endsWith("PSV.spc")&&!file.getName().endsWith("SH.spc"))
+		if (!file.getName().endsWith("PSV.spc") && !file.getName().endsWith("SH.spc"))
 			return false;
 
 		if (parts.length != 3 && parts.length != 7)
