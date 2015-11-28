@@ -24,32 +24,8 @@ import parameter.FirstHandler;
  * is only for observed waveforms. It perhaps should be done before computation
  * for synthetic ones.
  * 
- * @version 0.0.1 depmin depmax TODO イベントごとに波形数少ないものを省く
- *          workDir下のイベントフォルダ群に対して選択を行う。 だめなSACは捨てる. チェック項目 NPTS GCARC
- *          (station)Latitude Longitude
- * @version 0.0.2 DEPMIN DEPMAX DEPMEN の値が入っているかどうか（nanだとおしまい）
- * @version 1.0.0 並列化
- * @since 2013/7/2 並列化
- * 
- * @version 1.0.1
- * @since 2013/11/21 ステーション 観測点の地理的判断に分割
- * 
- * @version 1.0.2
- * @since 2014/8/12 no more use a class Latitude
- * 
- * @version 1.1.0 -> implements {@link Consumer} Java 8!
- * 
- * @versiom 1.1.1
- * @since 2015/1/22 minor fix
- * 
- * @version 1.1.1.1
- * @since 2015/8/9 {@link IOException} {@link InterruptedException}
- * 
- * @version 1.1.2
- * @since 2015/9/12 SACHeaderData now
  * 
  * @version 1.1.3
- * @since 2015/9/14 Utilities
  * 
  * 
  * @author Kensuke

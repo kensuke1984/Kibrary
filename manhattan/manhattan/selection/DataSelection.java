@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -43,29 +42,7 @@ import manhattan.timewindow.TimewindowInformationFile;
  * 振幅比、correlation、variance<br>
  * 
  * {@link TimewindowInformationFile} necessary.
- * 
- * @version 0.0.2
- * @since 2013/9/6
- * 
- * @version 0.0.5
- * @since 2014/9/7 {@link Comparator} used for Sac choosing.
- * 
- * @version 0.0.6
- * @since 2014/10/9 Java 8
- * 
- *        TODO timewindow output fine timewindows
- * 
- * @version 0.0.6.1
- * @since 2015/8/7 {@link IOException}
- * 
- * @version 0.0.7
- * @since 2015/8/8 {@link Path} base
- * 
- * @version 0.0.7.1
- * @since 2015/8/13
- * 
  * @version 0.0.8
- * @since 2015/9/14 TimeWindow information, Static correction, Utilities
  * 
  * 
  * @author Kensuke
