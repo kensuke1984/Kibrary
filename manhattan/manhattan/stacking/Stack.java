@@ -6,7 +6,6 @@ import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.Trace;
 
 /**
- * @since 2013/7/18
  * @version 0.0.1 スタックするためのTraceを作る そのまま時間軸を同じにして足し合わせればいい
  * 　　　　　　　　　　（そのために時間軸をずらす（onsetを０にするとか。。））
  * @author kensuke
