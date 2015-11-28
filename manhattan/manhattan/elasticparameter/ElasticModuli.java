@@ -6,7 +6,6 @@ package manhattan.elasticparameter;
  * @author Kensuke
  *
  * @version 0.0.2
- * @since 2015/4/1
  *
  */
 public class ElasticModuli {
