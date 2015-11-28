@@ -8,7 +8,6 @@ import java.io.PrintWriter;
  * 
  * 
  * @author kensuke
- * @since 2015/08/15
  * @version 0.0.1
  */
 public class Gnuplot extends ExternalProcess {

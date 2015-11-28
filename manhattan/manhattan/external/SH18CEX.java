@@ -10,11 +10,7 @@ import manhattan.template.Location;
  * 
  * Model SH18CEX by Nozomu Takeuchi
  * 
- * @since 2014/02/28
- * @version 0.0.1
- * 
  * @version 0.0.1.1
- * @since 2015/9/10
  * 
  * 
  * @author kensuke
@@ -66,7 +62,6 @@ public final class SH18CEX {
 	}
 
 	private static final double plgndr(int l, int m, double x) {
-
 		if (m < 0 || l < m || x < -1 || 1 < x)
 			throw new IllegalArgumentException("l, m, x are invalid.");
 		double pmm = 1;
@@ -80,19 +75,17 @@ public final class SH18CEX {
 		}
 		if (l == m)
 			return pmm;
-		else {
-			double pmmp1 = x * (2 * m + 1) * pmm;
-			if (l == (m + 1))
-				return pmmp1;
-			else {
-				for (int ll = m + 2; ll <= l; ll++) {
-					double pll = (x * (2 * ll - 1) * pmmp1 - (ll + m - 1) * pmm) / (ll - m);
-					pmm = pmmp1;
-					pmmp1 = pll;
-				}
-				return pmmp1;
-			}
+
+		double pmmp1 = x * (2 * m + 1) * pmm;
+		if (l == (m + 1))
+			return pmmp1;
+
+		for (int ll = m + 2; ll <= l; ll++) {
+			double pll = (x * (2 * ll - 1) * pmmp1 - (ll + m - 1) * pmm) / (ll - m);
+			pmm = pmmp1;
+			pmmp1 = pll;
 		}
+		return pmmp1;
 
 		// return 0;
 	}
