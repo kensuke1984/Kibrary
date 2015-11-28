@@ -44,6 +44,7 @@ import manhattan.globalcmt.GlobalCMTID;
 public final class Utilities {
 
 	/**
+	 * Change the input to an intelligible expression.
 	 * @param nanoSeconds
 	 *            time
 	 * @return ?d, ?h, ?min and ?s

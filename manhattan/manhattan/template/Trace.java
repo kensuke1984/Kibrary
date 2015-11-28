@@ -15,14 +15,12 @@ import org.apache.commons.math3.linear.RealVector;
 import manhattan.timewindow.Timewindow;
 
 /**
- * y=f(x) に関してのいろいろ
+ * Utility for a function y=f(x)
  * 
- * yもｘもdeep copy yとxは長さが同じでないといけない
  * 
  * <p><b>This class is IMMUTABLE</b></p>
  * 
- * @since 2013/7/9
- * 
+ * @version 0.1.0
  * @author Kensuke
  * 
  */
@@ -34,7 +32,7 @@ public class Trace {
 	private final RealVector yVector;
 
 	/**
-	 * ディープコピー
+	 * Deep copy
 	 * 
 	 * @param x
 	 *            array for x

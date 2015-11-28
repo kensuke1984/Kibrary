@@ -5,15 +5,12 @@ import org.apache.commons.math3.util.FastMath;
 import mathtool.geometry.Ellipse;
 
 /**
- * @author kensuke
- * @since 2014/08/12
- * @version 0.0.2 [deg] -&gt; [rad] partly
  * 
- * @since 2014/11/14
- * @version 0.0.5 Math -&gt; FastMath
+ * Earth utility.
+ * 
+ * @author kensuke
  * 
  * @version 0.1.0
- * @since 2015/8/18
  * 
  * 
  */

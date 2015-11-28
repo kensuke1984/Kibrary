@@ -19,7 +19,7 @@ import mathtool.geometry.XYZ;
  * 
  * This class rounds off values at the 4th decimal point.
  * 
- * @since 2013/9/23
+ * @version 0.1.0
  * 
  * @author Kensuke
  * 
