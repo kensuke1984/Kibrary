@@ -460,8 +460,8 @@ class MetroPolice {
 	/**
 	 * @param args
 	 *            runpath, machinefile (option fo mpirun)
-	 * @throws IOException
-	 * @throws InterruptedException
+	 * @throws IOException if any
+	 * @throws InterruptedException iff any
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 		MetroPolice mp = new MetroPolice(args[0]);

@@ -25,13 +25,13 @@ class FPinfo extends DSMheader {
 	private String outputDir;
 
 	/**
-	 * @param event
-	 * @param outputDir
-	 * @param ps
+	 * @param event source
+	 * @param outputDir output folder
+	 * @param ps structure
 	 * @param tlen
-	 *            must be 2^n/10
+	 *            must be 2<sup>n</sup>/10
 	 * @param np
-	 *            must be 2^n
+	 *            must be 2<sup>n</sup>
 	 */
 	FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure ps, double tlen, int np) {
 		super(tlen, np);
