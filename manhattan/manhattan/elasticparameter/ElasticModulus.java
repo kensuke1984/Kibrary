@@ -1,25 +1,18 @@
 package manhattan.elasticparameter;
 
-
 /**
  * 
- * an elastic modulus Cijkl
+ * Elastic modulus C<sub>ijkl</sub>
  * 
- * ijklのセットは何に属するか
- * ijklは　１，２，３
+ * ijklのセットは何に属するか ijkl &rarr; 1, 2, 3
+ * 
  * @author Kensuke
  * 
  * 
  * @version 0.0.2
- * @since 2015/4/1
  * 
  */
 public class ElasticModulus {
-
-	/*
-	 * Cijkl = Cjikl Cijkl = Cijlk Cijkl = Cklij Cijkl = lambda * delta(ij) *
-	 * delta(kl) + mu*(delta(ik)*delta(jl)+delta(il)*delta(jk))
-	 */
 
 	/**
 	 * i=(1,2,3)
@@ -37,18 +30,15 @@ public class ElasticModulus {
 	 * l=(1,2,3)
 	 */
 	private int l;
-	
-	
+
 	private ElasticIJKL ijkl;
 	private ElasticMN mn;
 
 	private double value;
-	
+
 	private TIModulusEnum ti;
 	private IsotropicModulusEnum iso;
-	
-	
-	
+
 	public double getValue() {
 		return value;
 	}
@@ -86,40 +76,44 @@ public class ElasticModulus {
 
 	/**
 	 * check if n is valid for ijkl.
-	 * @param n
+	 * 
+	 * @param n must be 1,2 or 3
 	 * @return boolean
 	 */
-	private static boolean checkComponents(int n){
-		if (n<1 || n>3)
+	private static boolean checkComponents(int n) {
+		if (n < 1 || 3 < n)
 			return false;
 		return true;
 	}
-	
+
 	/**
-	 * Cijkl constructor
-	 * @param i　(1, 2, 3)
-	 * @param j (1, 2, 3)
-	 * @param k (1, 2, 3)
-	 * @param l (1, 2, 3)
+	 * C<sub>ijkl</sub> constructor
+	 * 
+	 * @param i
+	 *            (1, 2, 3)
+	 * @param j
+	 *            (1, 2, 3)
+	 * @param k
+	 *            (1, 2, 3)
+	 * @param l
+	 *            (1, 2, 3)
 	 */
-	ElasticModulus(int i, int j, int k, int l){
-		if(checkComponents(i) && checkComponents(j) &&checkComponents(k) &&checkComponents(l)){
-			this.i=i;
-			this.j=j;
-			this.k=k;
-			this.l=l;
+	ElasticModulus(int i, int j, int k, int l) {
+		if (checkComponents(i) && checkComponents(j) && checkComponents(k) && checkComponents(l)) {
+			this.i = i;
+			this.j = j;
+			this.k = k;
+			this.l = l;
 			setIJKL();
 			mn = ElasticMN.getElasticMN(ijkl);
 			ti = TIModulusEnum.getTI(mn);
 			iso = IsotropicModulusEnum.getIsotropic(mn);
-		}else{
-			System.out.println("Input (i, j, k, l) :"+i+", "+ j+", "+ k+", "+ l+" are invalid.");
+		} else {
+			System.out.println("Input (i, j, k, l) :" + i + ", " + j + ", " + k + ", " + l + " are invalid.");
 			System.out.println("They must be (1, 2, 3)");
-			return ;
+			return;
 		}
 	}
-
-
 
 	public TIModulusEnum getTI() {
 		return ti;
@@ -129,11 +123,8 @@ public class ElasticModulus {
 		return iso;
 	}
 
-	private void setIJKL(){
-		ijkl=ElasticIJKL.valueOf(i, j, k, l);
+	private void setIJKL() {
+		ijkl = ElasticIJKL.valueOf(i, j, k, l);
 	}
-	
-
-
 
 }

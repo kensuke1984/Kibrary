@@ -1,5 +1,10 @@
 package manhattan.elasticparameter;
 
+/**
+ * enum for elements in modulus
+ * @author kensuke 
+ * @version 0.0.1
+ */
 public enum IsotropicModulusEnum {
 	LAMBDA, MU, LAMBDAplus2MU, ZERO;
 
