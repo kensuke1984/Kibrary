@@ -4,7 +4,6 @@ package kibrary;
  * Runtime environment
  * 
  * @author kensuke
- * @since 2015/09/27
  * @version 0.0.1
  */
 class Environment {
