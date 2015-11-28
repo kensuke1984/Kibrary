@@ -1,5 +1,6 @@
 package manhattan.external;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -8,19 +9,11 @@ import java.util.stream.Stream;
 /**
  * ExternalProcess
  * 
+ * Bit bucket is /dev/null and nul for unix and windows system, respectively.
+ * 
  * @author kensuke
- * @since 2014/10/02
- * @version 0.0.1
  * 
- * 
- * @version 0.0.2
- * @since 2015/8/15
- * 
- * 
- * 
- * 
- * 
- * 
+ * @version 0.1
  * 
  */
 public class ExternalProcess {
@@ -56,6 +49,14 @@ public class ExternalProcess {
 	public static ExternalProcess launch(String... command) throws IOException {
 		ProcessBuilder builder = new ProcessBuilder(command);
 		return new ExternalProcess(builder.start());
+	}
+
+	final static File bitBucket; // TODO check in Windows
+
+	static {
+		bitBucket = System.getProperty("os.name").contains("Windows") ? new File("null") : new File("/dev/null");
+		if(!bitBucket.exists())
+			throw new RuntimeException("There is no BLACK HOLE.");
 	}
 
 	/**

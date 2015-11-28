@@ -1,6 +1,5 @@
 package manhattan.external;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -21,19 +20,15 @@ import java.util.concurrent.Callable;
  * tricky, ... ...)
  * 
  * @author kensuke
- * @since 2015/09/27
  * @version 0.0.1
  */
 public final class DSMMPI {
 	public final static boolean psvExists = ExternalProcess.isInPath("mpi-tipsv");
 	public final static boolean shExists = ExternalProcess.isInPath("mpi-tish");
-	private static final File bucket = new File("/dev/null");
 
 	static {
 		if (System.getProperty("os.name").startsWith("Windows"))
 			throw new RuntimeException("So sorry, I love Bill Gates but still this does not work on Windows");
-		if (!bucket.exists())
-			throw new RuntimeException("... Orz ");
 		if (!psvExists)
 			System.err.println("mpi-tipsv is not in PATH");
 		if (!shExists)
@@ -67,7 +62,7 @@ public final class DSMMPI {
 			System.err.println("mpi-tipsv is going on " + information);
 			int exit = new ProcessBuilder("mpirun", "-np", String.valueOf(np), "mpi-tipsv")
 					.directory(information.getParent().toFile()).redirectInput(information.toAbsolutePath().toFile())
-					.redirectError(bucket).redirectOutput(bucket).start().waitFor();
+					.redirectError(ExternalProcess.bitBucket).redirectOutput(ExternalProcess.bitBucket).start().waitFor();
 			if (exit == 0)
 				System.err.println("looks like mpi-tipsv on " + information + " successfully finished");
 			else
@@ -99,7 +94,7 @@ public final class DSMMPI {
 			System.err.println("mpi-tish is going on " + information);
 			int exit = new ProcessBuilder("mpirun", "-np", String.valueOf(np), "mpi-tish")
 					.directory(information.getParent().toFile()).redirectInput(information.toAbsolutePath().toFile())
-					.redirectError(bucket).redirectOutput(bucket).start().waitFor();
+					.redirectError(ExternalProcess.bitBucket).redirectOutput(ExternalProcess.bitBucket).start().waitFor();
 			if (exit == 0)
 				System.err.println("looks like mpi-tish on " + information + " successfully finished");
 			else
