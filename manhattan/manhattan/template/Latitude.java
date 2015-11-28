@@ -4,27 +4,14 @@ package manhattan.template;
 import org.apache.commons.math3.util.FastMath;
 
 /**
- * 緯度 [-90, 90] 小数点5桁以下を四捨五入
+ * Latitude [-90, 90]  
+ * The value is rounded off to the fourth decimal position.
  * 
  * <p>
  * This class is <b>IMMUTABLE</b>
  * </p>
  * 
- * @version 0.0.2
- * @since 2014/1/12
- * 
- * @version 0.0.3
- * @since 2014/8/12 default に
- * 
- * 
- * @version 0.0.5
- * @since 2014/11/14 Math -> FastMath
- * 
- * @version 0.0.5.1
- * @since 2015/4/14
- * 
  * @version 0.0.6
- * @since 2015/8/18 {@link IllegalArgumentException}
  * 
  * 
  * @author kensuke

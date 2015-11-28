@@ -15,37 +15,8 @@ import filehandling.sac.SACFileName;
 import manhattan.globalcmt.GlobalCMTID;
 
 /**
- * イベントフォルダ
  * 
- * @version 0.0.1
- * @since 2013/9/16 {@link File}の拡張
- * 
- * @version 0.0.2
- * @since 2013/11/30
- * 
- * 
- * @version 0.0.3
- * @since 2013/12/17 {@link GlobalCMTID}に
- * 
- * @version 0.0.4
- * @since 2013/2/4 {@link #getGlobalCMTID()} fixed
- * 
- * 
- * @since 2014/9/7
- * @version 0.0.5 to Java 8
- * 
- * @version 0.0.6
- * @since 2015/2/17 Constructors changed.
- * 
- * @version 0.0.7
- * @since 2015/7/13 {@link Path}
- * 
- * @version 0.0.8
- * @since 2015/8/17 {@link #moveSacFile(Predicate, Path, CopyOption...)}
- *        installed
- * 
- * @version 0.0.8.1
- * @since 2015/9/12 sacFilename...
+ * Utility for an event folder
  * 
  * @version 0.0.8.2
  * 

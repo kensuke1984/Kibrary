@@ -15,10 +15,8 @@ import mathtool.geometry.XYZ;
  * This class is <b>IMMUTABLE</b>
  * 
  * 
- * @since 2015/8/22 This class is immutable
  * 
  * @version 0.0.5
- * @since 2015/9/24 of installed
  * 
  * 
  * @author Kensuke
