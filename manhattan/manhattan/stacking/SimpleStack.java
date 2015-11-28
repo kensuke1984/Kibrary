@@ -8,7 +8,6 @@ import manhattan.template.Trace;
 /**
  * 
  * @version 0.0.1
- * @since 2013/8/22
  * ただ、足し合わせるだけ。　タイムウインドウの始めの値を０にするだけ
  * 今の段階では、samplingHzは１秒に固定 
  * @author kensuke

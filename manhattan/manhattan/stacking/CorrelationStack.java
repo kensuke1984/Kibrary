@@ -12,21 +12,16 @@ import manhattan.timewindow.Timewindow;
 import manhattan.timewindow.TimewindowInformation;
 
 /**
- * @since 2013/7/8
- * @version 0.0.1
  * 
- *          基準の波形のタイムウインドウ start &le; t &le; end をセットして
- *          その部分とのコリレーションがよくなるだけずらしてスタックする 一度コリレーションを計算したものはそのまま戻す
- *          （同じ震源観測点の波形を再度代入すると同じだけずらす） timewindowの長さは基準のタイムウインドウを十分に長くしないといけない。
+ * 基準の波形のタイムウインドウ start &le; t &le; end をセットして その部分とのコリレーションがよくなるだけずらしてスタックする
+ * 一度コリレーションを計算したものはそのまま戻す （同じ震源観測点の波形を再度代入すると同じだけずらす）
+ * timewindowの長さは基準のタイムウインドウを十分に長くしないといけない。
  * 
- *          TODO timewindowに複数はいっている場合に対処できていない timewindowの長さがちぐはぐでもいいようにする
- *          時間ステップの異なるデータに対してはできない
+ * TODO timewindowに複数はいっている場合に対処できていない timewindowの長さがちぐはぐでもいいようにする
+ * 時間ステップの異なるデータに対してはできない
  * 
- * @version 0.1.0 BaseTimeStackを利用するようにする TODO
  * 
  * @version 0.1.1
- * @since 2015/9/14
- * Timewindow information
  * 
  * 
  * @author kensuke
@@ -115,7 +110,6 @@ public class CorrelationStack implements Stack {
 	 * ここに書かれたタイムウインドウで比較する
 	 */
 	private Set<TimewindowInformation> timewindowInformationSet;
-
 
 	private class Key {
 		@Override

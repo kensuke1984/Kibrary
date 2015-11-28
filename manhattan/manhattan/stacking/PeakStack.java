@@ -16,7 +16,6 @@ import manhattan.template.Trace;
  * Stacking by the peak-to-peak average arrival time and amplitude.
  * ピーク２ピークの中間時刻　平均絶対振幅で規格化
  * 
- * @since 2015/08/01
  * @version 0.0.1
  * @author kensuke
  *
