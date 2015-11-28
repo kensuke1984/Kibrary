@@ -6,27 +6,16 @@ import org.apache.commons.math3.util.FastMath;
 
 /**
  * 斎藤正徳 漸化式ディジタルフィルタ<br>
- * |B(σ)|**2 = 1/(1+σ**2n)<br>
- * B(σ)= Π1/i(σ-σj) <br>
- * バンドパス実装を目指す 透過域の振幅は1/(1+ap**2)以上<br>
- * 遮断域の振幅は1/(1+as**2)以下<br>
+ * |B(σ)|<sup>2</sup> = 1/(1+σ<sup>2n</sup>)<br>
+ * B(σ)= Π{1/i(σ-σ<sub>j</sub>)} <br>
+ * バンドパス実装を目指す 透過域の振幅は1/(1+ap<sup>2</sup>)以上<br>
+ * 遮断域の振幅は1/(1+as<sup>2</sup>)以下<br>
  * ω=2πfδt
  * 
  * 
  * @author Kensuke
- * @since 2014/8/21
- * @version 0.0.2 implements{@link ButterworthFilter}
- * 
- * @since 2014/8/24
- * @version 0.1.0 {@link #b1}{@link #b2} installed for speeding up
- * 
- * @version 0.1.3
- * @since 2014/11/14 Math -&gt; FastMath
  * 
  * @version 0.1.3.1
- * @since 2015/3/17 Using
- *        {@link System#arraycopy(Object, int, Object, int, int)}
- * 
  * 
  */
 public class BandPassFilter extends ButterworthFilter {
@@ -57,10 +46,6 @@ public class BandPassFilter extends ButterworthFilter {
 	 */
 	public double getOmegaSl() {
 		return omegaSl;
-	}
-
-	public void setBackward(boolean backward) {
-		this.backward = backward;
 	}
 
 	/**
@@ -148,6 +133,7 @@ public class BandPassFilter extends ButterworthFilter {
 		// printParameters();
 	}
 
+	@Override
 	public String toString() {
 		double permeability = 1 / (1 + ap * ap);
 		double cut = 1 / (1 + as * as);
@@ -181,6 +167,7 @@ public class BandPassFilter extends ButterworthFilter {
 	/**
 	 * By eq. 2.25, computes {@link #sigmaSoverSigmaP}
 	 */
+	@Override
 	void setSigmaSoverSigmaP() {
 		double tanH = FastMath.tan(omegaH * 0.5);
 		double tanL = FastMath.tan(omegaL * 0.5);
@@ -286,6 +273,7 @@ public class BandPassFilter extends ButterworthFilter {
 		return responce;
 	}
 
+	@Override
 	public Complex[] applyFilter(Complex[] data) {
 		Complex[] y = new Complex[data.length];
 		System.arraycopy(data, 0, y, 0, data.length);
