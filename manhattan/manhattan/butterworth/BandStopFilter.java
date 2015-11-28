@@ -8,20 +8,10 @@ import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 
 /**
+ * Bandstop filter
  * @author kensuke
- * @since 2014/8/24
- * @version 0.0.1
- * 
- * 
- * @since 2014/9/11
- * @version 0.0.2 bug fix.
- * 
- * @version 0.0.5
- * @since 2014/11/14 Math-&gt;FastMath
  * 
  * @version 0.0.5.1
- * @since 2015/3/17 Using
- *        {@link System#arraycopy(Object, int, Object, int, int)} now.
  * 
  * 
  */
@@ -250,6 +240,7 @@ public class BandStopFilter extends ButterworthFilter {
 		c = FastMath.sqrt(c2);
 	}
 
+	@Override
 	void setSigmaSoverSigmaP() {
 		double tanH = FastMath.tan(0.5 * omegaH);
 		double tanL = FastMath.tan(0.5 * omegaL);

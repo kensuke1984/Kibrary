@@ -8,12 +8,9 @@ import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 
 /**
+ * Highpass filter
  * @author kensuke
- * @since 2014/08/24
- * @version 0.0.1
- * 
  * @version 0.0.5
- * @since 2014/11/14 Math-&gt;FastMath
  * 
  */
 public class HighPassFilter extends ButterworthFilter {
@@ -177,6 +174,7 @@ public class HighPassFilter extends ButterworthFilter {
 	/**
 	 * computes 2.19
 	 */
+	@Override
 	void setSigmaSoverSigmaP() {
 		sigmaSoverSigmaP = FastMath.tan(omegaP / 2) / FastMath.tan(omegaS / 2);
 	}

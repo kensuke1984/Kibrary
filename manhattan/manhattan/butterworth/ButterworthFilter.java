@@ -7,21 +7,18 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.FastMath;
 
 /**
+ * 
  *  Masanori Saito recursive digital filter <br>
  *  斎藤正徳　漸化式ディジタルフィルタ<br>
  * |B<sub>n</sub>(&sigma;)|<sup>2</sup>=1/(1+&sigma;<sup>2n</sup>)<br>
- * Saito, 1978
+ * Saito (1978)
  * Default design is for zero-phase filter.
+ * <p>
  * If you want to create a causal one, use {@link #setBackward(boolean)}
  * and set true.
  * 
  * @author kensuke
- * @since 2014/08/21
- * @version 0.0.1
- * 
  * @version 0.0.5
- * @since 2014/11/14
- * Math -&gt; FastMath
  * 
  */
 public abstract class ButterworthFilter {

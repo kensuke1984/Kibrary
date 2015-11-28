@@ -21,11 +21,8 @@ import org.apache.commons.math3.util.FastMath;
  * f: frequency [Hz] &Delta;t: sampling interval [s]
  * 
  * @author kensuke
- * @since 2014/08/21
- * @version 0.0.1
  * 
  * @version 0.0.3
- * @since 2014/11/14 Math -&gt; FastMath
  * 
  */
 public class LowPassFilter extends ButterworthFilter {
@@ -125,6 +122,7 @@ public class LowPassFilter extends ButterworthFilter {
 	/**
 	 * Compute &sigma;<sub>s</sub>/&sigma;<sub>p</sub>
 	 */
+	@Override
 	void setSigmaSoverSigmaP() {
 		sigmaSoverSigmaP = FastMath.tan(omegaS / 2) / FastMath.tan(omegaP / 2);
 		// System.out.println("sigmaSoverSigmaP " + sigmaSoverSigmaP);
