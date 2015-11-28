@@ -20,7 +20,6 @@ import manhattan.template.Utilities;
  * 
  * It makes a data requesting mail. Information: {@link parameter.DataRequestor}
  * 
- * @since 2015/02/09
  * @author kensuke
  * 
  * @version 0.0.4
