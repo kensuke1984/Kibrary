@@ -1,5 +1,10 @@
 package manhattan.elasticparameter;
 
+/**
+ * Enum for elements in modulus
+ * @author kensuke 
+ * @version 0.0.1
+ */
 public enum TIModulusEnum {
 	A, C, F, L, N, A_2N, ZERO;
 
