@@ -1,5 +1,10 @@
 package manhattan.gnuplot;
 
+/**
+ * Colors in gnuplot
+ * @author kensuke 
+ * @version 0.0.1
+ */
 public enum GnuplotColorNames {
 	  white              ,//#ffffff = 255 255 255
 	  black              ,//#000000 =   0   0   0
