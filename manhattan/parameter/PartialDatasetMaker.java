@@ -54,6 +54,16 @@ public class PartialDatasetMaker extends ParameterFile {
 	protected Set<SACComponent> components;
 
 	/**
+	 * time length (DSM parameter)
+	 */
+	protected double tlen;
+
+	/**
+	 * step of frequency domain (DSM parameter)
+	 */
+	protected int np;
+
+	/**
 	 * BPinfo このフォルダの直下に 0000????を置く
 	 */
 	protected Path bpPath;
@@ -61,8 +71,6 @@ public class PartialDatasetMaker extends ParameterFile {
 	 * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
 	 */
 	protected Path fpPath;
-
-	protected boolean convolve;
 
 	/**
 	 * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
@@ -73,6 +81,10 @@ public class PartialDatasetMaker extends ParameterFile {
 	 * タイムウインドウ情報のファイル
 	 */
 	protected Path timewindowPath;
+	/**
+	 * Information file about locations of perturbation points.
+	 */
+	protected Path perturbationPath;
 
 	/**
 	 * set of partial type for computation
@@ -103,6 +115,14 @@ public class PartialDatasetMaker extends ParameterFile {
 	 * structure for Q partial
 	 */
 	protected PolynomialStructure structure;
+	/**
+	 * 0:none, 1:boxcar, 2:triangle.
+	 */
+	protected int sourceTimeFunction;
+	/**
+	 * The folder contains source time functions.
+	 */
+	protected Path sourceTimeFunctionPath;
 
 	protected PartialDatasetMaker(Path parameterPath) throws IOException {
 		super(parameterPath);
@@ -125,17 +145,21 @@ public class PartialDatasetMaker extends ParameterFile {
 
 		if (reader.containsKey("qinf"))
 			structure = new PolynomialStructure(getPath("qinf"));
-
-		convolve = Boolean.parseBoolean(reader.getString("convolve"));
-
+		try {
+			sourceTimeFunction = Integer.parseInt(reader.getString("sourceTimeFunction"));
+		} catch (Exception e) {
+			sourceTimeFunction = -1;
+			sourceTimeFunctionPath = getPath("sourceTimeFunction");
+		}
 		modelName = reader.getString("modelName");
 
 		String[] parStr = reader.getStringArray("partialTypes");
-		partialTypes =  Arrays.stream(parStr).map(PartialType::valueOf).collect(Collectors.toSet());
-
+		partialTypes = Arrays.stream(parStr).map(PartialType::valueOf).collect(Collectors.toSet());
+		tlen = reader.getDouble("tlen");
+		np = reader.getInt("np");
 		fmin = reader.getDouble("fmin");
 		fmax = reader.getDouble("fmax");
-
+		perturbationPath = getPath("perturbationPath");
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 
@@ -146,7 +170,8 @@ public class PartialDatasetMaker extends ParameterFile {
 	/**
 	 * @param args
 	 *            [parameter file name]
-	 * @throws IOException if an I/O error occurs
+	 * @throws IOException
+	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
 		Path tmp = null;
@@ -172,12 +197,17 @@ public class PartialDatasetMaker extends ParameterFile {
 			pw.println("fpPath FPinfo");
 			pw.println("#String if it is PREM spector file is in bpdir/PREM ");
 			pw.println("modelName PREM");
-			pw.println("#boolean source time function consideration");
-			pw.println("convolve true");
+			pw.println("#Type source time function 0:none, 1:boxcar, 2:triangle.");
+			pw.println("#or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
+			pw.println("sourceTimeFunction 1");
 			pw.println("#Path of a time window file");
 			pw.println("timewindowPath timewindow.dat");
 			pw.println("#PartialType[] compute types");
 			pw.println("partialTypes MU");
+			pw.println("#double time length (DSM parameter tlen)");
+			pw.println("tlen 3276.8 (1638.4 6553.6 13107.2)");
+			pw.println("#int step of frequency domain (DSM parameter np)");
+			pw.println("np 512 (1024 256)");
 			pw.println("#double minimum value of passband");
 			pw.println("fmin 0.005");
 			pw.println("#double maximum value of passband");
@@ -186,6 +216,8 @@ public class PartialDatasetMaker extends ParameterFile {
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("#double");
 			pw.println("finalSamplingHz 1");
+			pw.println("#perturbationPath");
+			pw.println("perturbationPath perturbationPoint.inf");
 			pw.println("#File for Qstructure (if no file, then PREM)");
 			pw.println("#qinf prem.inf");
 		}
@@ -203,11 +235,14 @@ public class PartialDatasetMaker extends ParameterFile {
 		parameterSet.add("modelName");
 		parameterSet.add("timewindowPath");
 		parameterSet.add("partialTypes");
+		parameterSet.add("np");
+		parameterSet.add("tlen");
 		parameterSet.add("fmin");
 		parameterSet.add("fmax");
-		parameterSet.add("convolve");
+		parameterSet.add("sourceTimeFunction");
 		// parameterSet.add("partialSamplingHz"); TODO
 		parameterSet.add("finalSamplingHz");
+		parameterSet.add("perturbationPath");
 		return reader.containsAll(parameterSet);
 
 	}
