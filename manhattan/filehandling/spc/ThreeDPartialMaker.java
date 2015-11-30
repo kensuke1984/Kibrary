@@ -47,7 +47,6 @@ public class ThreeDPartialMaker {
 	private double samplingFrequency = 20;
 
 	private int npts;
-	private boolean computesSourceTimeFunction;
 
 	/**
 	 * 摂動点における bpからのテンソルをfpのテンソルに合わせるために回転させる角度
@@ -73,18 +72,15 @@ public class ThreeDPartialMaker {
 	public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp) {
 		if (!isGoodPair(fp, bp))
 			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
-		id = new GlobalCMTID(fp.getSourceID());
 		this.fp = fp;
 		this.bp = bp;
 		findLsmooth();
 		setAngles();
 	}
 
-	private GlobalCMTID id;
-
 	/**
-	 * Create a {@link DSMOutput} from a {@link ForwardPropagation}
-	 * and a {@link BackwardPropagation}.  
+	 * Create a {@link DSMOutput} from a {@link ForwardPropagation} and a
+	 * {@link BackwardPropagation}.
 	 * 
 	 * @param type
 	 *            {@link PartialType}
@@ -181,16 +177,6 @@ public class ThreeDPartialMaker {
 	}
 
 	/**
-	 * 
-	 * @param bool
-	 *            If true, this computes source timefunction and aply it on
-	 *            partial
-	 */
-	public void setComputesSourceTimeFunction(boolean bool) {
-		computesSourceTimeFunction = bool;
-	}
-
-	/**
 	 * ibody番目のボディ（深さ）に対する摂動の Partial derivatives のiに対する成分 ETAri,s の i
 	 * 
 	 * @param component
@@ -205,8 +191,8 @@ public class ThreeDPartialMaker {
 
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
 				: computeTensorCulculus(component, iBody, type);
-		if (computesSourceTimeFunction)
-			applySourceTimeFunctionRampedSTF(partial_frequency);
+		if (null != sourceTimeFunction)
+			partial_frequency = sourceTimeFunction.convolve(partial_frequency);
 		Complex[] partial_time = toTimedomain(partial_frequency);
 		// System.out.println("ppppppp"+partial0[0].getReal());
 		double[] partialdouble = new double[npts];
@@ -254,29 +240,11 @@ public class ThreeDPartialMaker {
 				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
 
 	}
-	
+
 	private SourceTimeFunction sourceTimeFunction;
 
-	/**
-	 * before toTime This method applies ramped source time function.
-	 * 
-	 * f(t) = 1/2\tau (-\tau <= t <= \tau) and 0 (others) : STF F(\omega) =
-	 * sin(\omega\tau)/\omega\tau halfDurationが-1の時はスキップ
-	 * 
-	 * @param partial
-	 *            周波数領域データ
-	 * @param computesSourceTimeFunction
-	 *            秒
-	 */
-	private void applySourceTimeFunctionRampedSTF(Complex[] partial) {
-		// TODO
-		double deltaF = 1.0 / bp.tlen();
-		double constant = 2 * Math.PI * deltaF * id.getEvent().getHalfDuration();
-		for (int i = 1; i < fp.np() + 1; i++) {
-			double omegaTau = constant * i;
-			partial[i] = partial[i].multiply(Math.sin(omegaTau) / omegaTau);
-		}
-		// System.out.println("the source time function was applied.");
+	public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
+		this.sourceTimeFunction = sourceTimeFunction;
 	}
 
 	/**

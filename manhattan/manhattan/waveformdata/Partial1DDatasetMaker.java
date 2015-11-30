@@ -23,9 +23,7 @@ import filehandling.spc.SpcFileName;
 import filehandling.spc.SpcFileType;
 import manhattan.butterworth.BandPassFilter;
 import manhattan.butterworth.ButterworthFilter;
-import manhattan.datacorrection.BoxcarSourceTimeFunction;
 import manhattan.datacorrection.SourceTimeFunction;
-import manhattan.datacorrection.TriangleSourceTimeFunction;
 import manhattan.dsminformation.PolynomialStructure;
 import manhattan.globalcmt.GlobalCMTID;
 import manhattan.inversion.StationInformationFile;
@@ -167,9 +165,9 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 			case 0:
 				return null;
 			case 1:
-				return new BoxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
+				return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 			case 2:
-				return new TriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
+				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 			default:
 				throw new RuntimeException("Integer for source time function is invalid.");
 			}
@@ -438,15 +436,13 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 
 	private double[][] periodRanges;
 
-	private void setBandPassFilter() {
+	private void setBandPassFilter() throws IOException {
 		double omegaH = fmax * 2 * Math.PI / partialSamplingHz;
 		double omegaL = fmin * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, 4);
 		filter.setBackward(backward);
 		periodRanges = new double[][] { { 1 / fmax, 1 / fmin } };
-
-		// System.out.println("bandpass filter " + fmin + " " + fmax
-		// + " (Hz) was set");
+		writeLog(filter.toString());
 	}
 
 	private void writeLog(String line) throws IOException {

@@ -271,7 +271,7 @@ public abstract class SourceTimeFunction {
 	 * @return convolute data in <b>frequency</b> domain
 	 */
 	public final Complex[] convolve(Complex[] data) {
-		if (data.length != np)
+		if (data.length != np+1)
 			throw new IllegalArgumentException("Input data length is invalid.");
 		return IntStream.range(0, np + 1).parallel()
 				.mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1]))

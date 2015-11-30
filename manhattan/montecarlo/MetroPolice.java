@@ -29,7 +29,6 @@ import filehandling.spc.SACMaker;
 import filehandling.spc.SpcFileName;
 import manhattan.butterworth.BandPassFilter;
 import manhattan.butterworth.ButterworthFilter;
-import manhattan.datacorrection.BoxcarSourceTimeFunction;
 import manhattan.datacorrection.SourceTimeFunction;
 import manhattan.dsminformation.PolynomialStructure;
 import manhattan.dsminformation.SyntheticDSMInfo;
@@ -274,8 +273,8 @@ class MetroPolice {
 	private Path hostFilePath;
 
 	private void runDSM(Path runPath) {
-		idSet.parallelStream().map(id -> id.toString()).map(runPath::resolve).map(e -> e.resolve("sh.inf")).map(mpi::tish)
-				.map(this::postProcess).forEach(f -> {
+		idSet.parallelStream().map(id -> id.toString()).map(runPath::resolve).map(e -> e.resolve("sh.inf"))
+				.map(mpi::tish).map(this::postProcess).forEach(f -> {
 					try {
 						f.get();
 					} catch (Exception e) {
@@ -354,8 +353,8 @@ class MetroPolice {
 	private double samplingHz;
 
 	private void computeSourceTimeFunction() {
-		sourceTimeFunctionMap = idSet.stream().collect(Collectors.toMap(id -> id,
-				id -> new BoxcarSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration())));
+		sourceTimeFunctionMap = idSet.stream().collect(Collectors.toMap(id -> id, id -> SourceTimeFunction
+				.boxcarSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration())));
 	}
 
 	private static Path findModel(Path runPath) throws IOException {
@@ -460,8 +459,10 @@ class MetroPolice {
 	/**
 	 * @param args
 	 *            runpath, machinefile (option fo mpirun)
-	 * @throws IOException if any
-	 * @throws InterruptedException iff any
+	 * @throws IOException
+	 *             if any
+	 * @throws InterruptedException
+	 *             iff any
 	 */
 	public static void main(String[] args) throws IOException, InterruptedException {
 		MetroPolice mp = new MetroPolice(args[0]);
