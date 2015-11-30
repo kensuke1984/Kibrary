@@ -13,17 +13,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import filehandling.sac.SACData;
-import manhattan.datacorrection.BoxcarSourceTimeFunction;
 import manhattan.datacorrection.SourceTimeFunction;
-import manhattan.datacorrection.TriangleSourceTimeFunction;
 import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.EventFolder;
 import manhattan.template.Utilities;
 
 /**
- * SpcSac Convertor from {@link SpectrumFile} to {@link SACData} file.
- * According to an information file: {@link parameter.SpcSAC},
- * it creates SAC files.
+ * SpcSac Convertor from {@link SpectrumFile} to {@link SACData} file. According
+ * to an information file: {@link parameter.SpcSAC}, it creates SAC files.
  * 
  * @version 0.1.3
  * 
@@ -129,9 +126,9 @@ final class SpcSAC extends parameter.SpcSAC {
 		case 0:
 			return null;
 		case 1:
-			return new BoxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+			return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		case 2:
-			return new TriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		default:
 			throw new RuntimeException("Integer for source time function is invalid.");
 		}

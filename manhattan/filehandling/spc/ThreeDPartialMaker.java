@@ -10,6 +10,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
 import filehandling.sac.SACComponent;
+import manhattan.datacorrection.SourceTimeFunction;
 import manhattan.dsminformation.PolynomialStructure;
 import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.Earth;
@@ -82,10 +83,8 @@ public class ThreeDPartialMaker {
 	private GlobalCMTID id;
 
 	/**
-	 * Create a {@link PartialSpectrumFile} from a {@link ForwardPropagation}
-	 * and a {@link BackwardPropagation}. The {@link SpcFileName} of the
-	 * {@link PartialSpectrumFile} has same parent folder with
-	 * {@link ForwardPropagation}.
+	 * Create a {@link DSMOutput} from a {@link ForwardPropagation}
+	 * and a {@link BackwardPropagation}.  
 	 * 
 	 * @param type
 	 *            {@link PartialType}
@@ -255,6 +254,8 @@ public class ThreeDPartialMaker {
 				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
 
 	}
+	
+	private SourceTimeFunction sourceTimeFunction;
 
 	/**
 	 * before toTime This method applies ramped source time function.
