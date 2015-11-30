@@ -390,7 +390,6 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		args = new String[] { "/home/kensuke/tmp/small/pdm.prm", };
 		PartialDatasetMaker pdm = parse(args);
 		long startTime = System.nanoTime();
 
