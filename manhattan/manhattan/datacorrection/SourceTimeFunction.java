@@ -25,15 +25,94 @@ import filehandling.sac.SACData;
  * You have to multiply<br>
  * Source time function: stf[0], .. stf[np-1] <br>
  * on <br>
- * Waveform in frequency domain: U[1].. U[np], respectively.
+ * Waveform in frequency domain: U[1].. U[np], respectively. See
+ * {@link #convolve(Complex[])}
  * 
- * 
- * @version 0.0.2.1
+ * @version 0.0.3
  * 
  * @author kensuke
  *
  */
 public abstract class SourceTimeFunction {
+	/**
+	 * Triangle source time function
+	 * 
+	 * The width is determined by the half duration &tau;. <br>
+	 * f(t) = 1/&tau;<sup>2</sup> t + 1/&tau; (-&tau; &le; t &le; 0), -1/&tau;
+	 * <sup>2</sup> t + 1/&tau; (0 &le; t &le; &tau;), 0 (t &lt; -&tau;, &tau;
+	 * &lt; t) <br>
+	 * Source time function F(&omega;) = (1-e<sup>-2&pi;i&omega;&tau;</sup>
+	 * -2i&pi;&omega;&tau;)/(2&pi;<sup>2</sup>&omega;<sup>2</sup>&tau;
+	 * <sup>2</sup>)
+	 * 
+	 * @param np
+	 *            the number of steps in frequency domain
+	 * @param tlen
+	 *            [s] time length
+	 * @param samplingHz
+	 *            [Hz]
+	 * @param halfDuration
+	 *            [s] of the source
+	 */
+	public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
+			double halfDuration) {
+		return new SourceTimeFunction(np, tlen, samplingHz) {
+
+			@Override
+			public Complex[] getSourceTimeFunction() {
+				if (sourceTimeFunction != null)
+					return sourceTimeFunction;
+				sourceTimeFunction = new Complex[np];
+				double deltaF = 1.0 / tlen;
+				double constant = 2 * Math.PI * deltaF * halfDuration;
+				for (int i = 0; i < np; i++) {
+					double omegaTau = (i + 1) * constant;
+					Complex c = new Complex(2, -2 * omegaTau);
+					Complex c2 = new Complex(2 * Math.cos(omegaTau), -2 * Math.sin(omegaTau));
+					sourceTimeFunction[i] = c.subtract(c2).divide(omegaTau * omegaTau);
+				}
+				return sourceTimeFunction;
+			}
+		};
+	}
+
+	/**
+	 * Boxcar source time function
+	 * 
+	 * The width is determined by the half duration &tau;. <br>
+	 * f(t) = &tau;/2 (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;, &tau; &lt;
+	 * t) <br>
+	 * Source time function F(&omega;) = sin(&omega;&tau;)/&omega;&tau;
+	 * 
+	 * @param np
+	 *            the number of steps in frequency domain
+	 * @param tlen
+	 *            [s] time length
+	 * @param samplingHz
+	 *            [Hz]
+	 * @param halfDuration
+	 *            [s] of the source
+	 */
+	public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
+			double halfDuration) {
+		return new SourceTimeFunction(np, tlen, samplingHz) {
+			@Override
+			public synchronized Complex[] getSourceTimeFunction() {
+				if (sourceTimeFunction != null)
+					return sourceTimeFunction;
+				sourceTimeFunction = new Complex[np];
+				double deltaF = 1.0 / tlen;
+				double constant = 2 * Math.PI * deltaF * halfDuration;
+				for (int i = 0; i < np; i++) {
+					double omegaTau = (i + 1) * constant;
+					sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
+				}
+				return sourceTimeFunction;
+			}
+
+		};
+
+	}
 
 	/**
 	 * @param np
@@ -169,30 +248,46 @@ public abstract class SourceTimeFunction {
 	}
 
 	/**
+	 * Operates convolution for data in <b>time</b> domain.
+	 * 
 	 * @param data
-	 *            to be convolved
-	 * @return convolved data
+	 *            to be convolved in <b>time</b> domain. The data is convolved
+	 *            after FFTed.
+	 * @return convolute data in <b>time</b> domain
 	 */
-	public final double[] convolute(double[] data) {
+	public final double[] convolve(double[] data) {
 		if (data.length != nptsInTimeDomain)
-			throw new RuntimeException("Input data is invalid.");
+			throw new IllegalArgumentException("Input data is invalid (length).");
 		Complex[] dataInFrequencyDomain = fft.transform(data, TransformType.FORWARD);
-		Complex[] convolvedDataInFrequencyDomain = IntStream.range(0, np + 1).parallel().mapToObj(
-				i -> i == 0 ? dataInFrequencyDomain[i] : dataInFrequencyDomain[i].multiply(sourceTimeFunction[i - 1]))
-				.toArray(n -> new Complex[n]);
+		Complex[] convolvedDataInFrequencyDomain = convolve(dataInFrequencyDomain);
 		return inverseFourierTransform(convolvedDataInFrequencyDomain);
 	}
-	
+
 	/**
-	 * @param sacData to convolute with this.
+	 * Operates convolution for data in <b>frequency</b> domain.
+	 * 
+	 * @param data
+	 *            to be convolved in <b>frequency</b> domain.
+	 * @return convolute data in <b>frequency</b> domain
+	 */
+	public final Complex[] convolve(Complex[] data) {
+		if (data.length != np)
+			throw new IllegalArgumentException("Input data length is invalid.");
+		return IntStream.range(0, np + 1).parallel()
+				.mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1]))
+				.toArray(n -> new Complex[n]);
+	}
+
+	/**
+	 * @param sacData
+	 *            to convolute with this.
 	 * @return convoluted SACData
 	 */
-	public final SACData convolute(SACData sacData){
+	public final SACData convolve(SACData sacData) {
 		double[] data = sacData.getData();
-		double[] convoluted = convolute(data);
-		return sacData.setSACData(convoluted);
+		double[] convolute = convolve(data);
+		return sacData.setSACData(convolute);
 	}
-	
 
 	/**
 	 * Source time function is computed simply by division.
@@ -201,9 +296,12 @@ public abstract class SourceTimeFunction {
 	 *            waveform of observed
 	 * @param syn
 	 *            waveform of syn
-	 * @param np steps of frequency [should be same as synthetics]
-	 * @param tlen [s] length of waveform [should be same as synthetics] 
-	 * @param samplingHz [Hz]
+	 * @param np
+	 *            steps of frequency [should be same as synthetics]
+	 * @param tlen
+	 *            [s] length of waveform [should be same as synthetics]
+	 * @param samplingHz
+	 *            [Hz]
 	 * @return Source time function F(obs)/F(syn) in <b>frequency domain</b>
 	 */
 	public static SourceTimeFunction computeSourceTimeFunction(int np, double tlen, double samplingHz, double[] obs,
@@ -224,7 +322,6 @@ public abstract class SourceTimeFunction {
 		for (int i = 0; i < np; i++)
 			sourceTimeFunction[i] = obsInFrequencyDomain[i + 1].divide(synInFrequencyDomain[i + 1]);
 		SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
-
 			@Override
 			public Complex[] getSourceTimeFunction() {
 				return sourceTimeFunction;
