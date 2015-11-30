@@ -47,6 +47,9 @@ import filehandling.spc.PartialType;
 public class Partial1DDatasetMaker extends ParameterFile {
 	protected boolean backward;
 
+	/**
+	 * 0:none, 1:boxcar, 2:triangle.
+	 */
 	protected int sourceTimeFunction;
 
 	/**
@@ -63,7 +66,7 @@ public class Partial1DDatasetMaker extends ParameterFile {
 	 * radius of perturbation
 	 */
 	protected double[] bodyR;
-	
+
 	/**
 	 * @param args
 	 *            [parameter file name]
@@ -101,14 +104,14 @@ public class Partial1DDatasetMaker extends ParameterFile {
 			pw.println("partialTypes PAR1 PAR2 PAR3 PAR4 PAR5 PARQ");
 			pw.println("#Filter backward");
 			pw.println("backward true");
-			pw.println("#double minimum value of passband");
-			pw.println("fmin 0.005");
-			pw.println("#double maximum value of passband");
-			pw.println("fmax 0.08");
 			pw.println("#double time length (DSM parameter tlen)");
 			pw.println("tlen 3276.8 (1638.4 6553.6 13107.2)");
 			pw.println("#int step of frequency domain (DSM parameter np)");
 			pw.println("np 512 (1024 256)");
+			pw.println("#double minimum value of passband");
+			pw.println("fmin 0.005");
+			pw.println("#double maximum value of passband");
+			pw.println("fmax 0.08");
 			pw.println("#double");
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("#double");
@@ -152,6 +155,9 @@ public class Partial1DDatasetMaker extends ParameterFile {
 	 * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
 	 */
 	protected double finalSamplingHz;
+	/**
+	 * The folder contains source time functions.
+	 */
 	protected Path sourceTimeFunctionPath;
 	protected Path stationInformationFilePath;
 
@@ -188,15 +194,15 @@ public class Partial1DDatasetMaker extends ParameterFile {
 		partialTypes = Arrays.stream(reader.getStringArray("partialTypes")).map(PartialType::valueOf)
 				.collect(Collectors.toSet());
 
-		fmin = reader.getDouble("fmin");
-		fmax = reader.getDouble("fmax");
 		tlen = reader.getDouble("tlen");
 		np = reader.getInt("np");
+		fmin = reader.getDouble("fmin");
+		fmax = reader.getDouble("fmax");
 		String[] rStr = reader.getStringArray("bodyR");
 		bodyR = Arrays.stream(rStr).mapToDouble(Double::parseDouble).toArray();
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
-		stationInformationFilePath= getPath("stationInformationFilePath");
+		stationInformationFilePath = getPath("stationInformationFilePath");
 		finalSamplingHz = Double.parseDouble(reader.getString("finalSamplingHz"));
 
 	}
@@ -209,16 +215,16 @@ public class Partial1DDatasetMaker extends ParameterFile {
 		parameterSet.add("modelName");
 		parameterSet.add("timewindowPath");
 		parameterSet.add("partialTypes");
-		parameterSet.add("fmin");
-		parameterSet.add("fmax");
 		parameterSet.add("np");
 		parameterSet.add("tlen");
+		parameterSet.add("fmin");
+		parameterSet.add("fmax");
 		parameterSet.add("sourceTimeFunction");
 		parameterSet.add("backward");
 		parameterSet.add("stationInformationFilePath");
 		// parameterSet.add("partialSamplingHz"); TODO
 		parameterSet.add("finalSamplingHz");
-		 parameterSet.add("bodyR");
+		parameterSet.add("bodyR");
 		return reader.containsAll(parameterSet);
 
 	}
