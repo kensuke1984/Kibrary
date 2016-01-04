@@ -63,7 +63,7 @@ public class ObservedSyntheticDatasetMaker extends ParameterFile {
 	/**
 	 * コンボリューションしてあるデータを使うか
 	 */
-	protected boolean isConvolved;
+	protected boolean convolute;
 
 	/**
 	 * 観測波形と理論波形のタイムシフトを行うか
@@ -109,7 +109,7 @@ public class ObservedSyntheticDatasetMaker extends ParameterFile {
 		String[] str = reader.getStringArray("components"); // SacComponent
 		components = Arrays.stream(str).map(SACComponent::valueOf).collect(Collectors.toSet());
 
-		isConvolved = Boolean.parseBoolean(reader.getString("isConvolved"));
+		convolute = Boolean.parseBoolean(reader.getString("convolute"));
 		timeShift = Boolean.parseBoolean(reader.getString("timeShift"));
 		staticCorrectionPath = getPath("staticCorrectionPath");
 		amplitudeCorrection = Boolean.parseBoolean(reader.getString("amplitudeCorrection"));
@@ -136,8 +136,8 @@ public class ObservedSyntheticDatasetMaker extends ParameterFile {
 			pw.println("synPath .");
 			pw.println("#Path of a timewindow information file");
 			pw.println("timewindowInformationPath timewindow.dat");
-			pw.println("#boolean convolved");
-			pw.println("isConvolved true");
+			pw.println("#boolean convolulte");
+			pw.println("convolute true");
 			pw.println("#boolean timeShift");
 			pw.println("timeShift true");
 			pw.println("#boolean amplitudeCorrection");
@@ -163,7 +163,7 @@ public class ObservedSyntheticDatasetMaker extends ParameterFile {
 		// parameterSet.add("staticCorrectionPath");
 		// parameterSet.add("sacSamplingHz"); //TODO
 		parameterSet.add("components");
-		parameterSet.add("isConvolved");
+		parameterSet.add("convolute");
 		parameterSet.add("finalSamplingHz");
 		parameterSet.add("timeShift");
 		parameterSet.add("amplitudeCorrection");
