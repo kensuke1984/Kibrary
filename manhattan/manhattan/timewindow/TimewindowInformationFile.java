@@ -108,6 +108,8 @@ public final class TimewindowInformationFile {
 	 */
 	public static void write(Set<TimewindowInformation> infoSet, Path outputPath, OpenOption... options)
 			throws IOException {
+		if(infoSet.isEmpty())
+			throw new RuntimeException("Input information may be invalid..");
 		try (DataOutputStream dos = new DataOutputStream(
 				new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
 			GlobalCMTID[] ids = infoSet.stream().map(ti -> ti.getGlobalCMTID()).distinct().sorted()

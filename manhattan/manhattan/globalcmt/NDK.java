@@ -1,6 +1,5 @@
 package manhattan.globalcmt;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -402,12 +401,8 @@ final class NDK implements GlobalCMTData {
 	 * @return if this fulfills "search"
 	 */
 	boolean fulfill(GlobalCMTSearch search) {
-		LocalDate cmtDate = getCMTTime().toLocalDate();
+		LocalDateTime cmtDate = getCMTTime();
 		if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate))
-			return false;
-		if (search.getStartTime() != null && search.getStartTime().isAfter(getCMTTime().toLocalTime()))
-			return false;
-		if (search.getEndTime() != null && search.getEndTime().isBefore(getCMTTime().toLocalTime()))
 			return false;
 
 		// latitude

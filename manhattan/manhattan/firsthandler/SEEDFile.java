@@ -17,10 +17,9 @@ import manhattan.external.ExternalProcess;
 import manhattan.globalcmt.GlobalCMTSearch;
 
 /**
- * Seed file utility
- * rdseed MUST be in PATH.
+ * Seed file utility rdseed must be in PATH.
  * 
- * @version 0.0.7
+ * @version 0.0.8
  * 
  * @author kensuke
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/rdseed/>download</a>
@@ -28,9 +27,13 @@ import manhattan.globalcmt.GlobalCMTSearch;
  */
 public class SEEDFile {
 
+	{
+		if (!ExternalProcess.isInPath("rdseed"))
+			throw new RuntimeException("rdseed is not in PATH.");
+	}
+
 	/**
 	 * Displays Global CMT IDs which might be contained in the seedfile
-	 * 
 	 * @param args
 	 *            [seed file name]
 	 * @throws IOException
@@ -40,9 +43,7 @@ public class SEEDFile {
 		if (args.length != 1)
 			throw new RuntimeException("Usage: [seed file name]");
 		SEEDFile seed = new SEEDFile(Paths.get(args[0]));
-		GlobalCMTSearch sc = new GlobalCMTSearch(seed.startingDate.toLocalDate());
-		sc.setStartTime(seed.startingDate.toLocalTime());
-		sc.setEndTime(seed.endingDate.toLocalTime());
+		GlobalCMTSearch sc = new GlobalCMTSearch(seed.startingDate, seed.endingDate);
 		sc.search().forEach(System.out::println);
 	}
 
@@ -198,7 +199,8 @@ public class SEEDFile {
 		commands.addAll(Arrays.asList(parts));
 		commands.add(seedPath.toString());
 		ExternalProcess process = ExternalProcess.launch(commands);
-		if (process.waitFor() != 0)
+		int exitStatus = process.waitFor();
+		if (exitStatus == 1 || exitStatus == 255)
 			throw new RuntimeException("rdseed did not run correctly.");
 		return process.getStandardOutput().waitAndGetString();
 	}

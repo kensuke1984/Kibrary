@@ -3,7 +3,7 @@ package manhattan.globalcmt;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -19,7 +19,7 @@ import manhattan.template.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke
- * @version 0.1.7
+ * @version 0.1.8
  * 
  * 
  */
@@ -57,14 +57,9 @@ public class GlobalCMTSearch {
 	}
 
 	/**
-	 * end date
+	 * end date and time for CMT
 	 */
-	private LocalDate endDate;
-
-	/**
-	 * end time for CMT time
-	 */
-	private LocalTime endTime;
+	private LocalDateTime endDate;
 
 	/**
 	 * the lower limit of centroid time shift Default: -9999
@@ -112,14 +107,10 @@ public class GlobalCMTSearch {
 	private int lowerTensionAxisPlunge;
 
 	/**
-	 * start date
+	 * start date and time for CMT
 	 */
-	private LocalDate startDate;
+	private LocalDateTime startDate;
 
-	/**
-	 * start time for CMT time
-	 */
-	private LocalTime startTime;
 
 	/**
 	 * the upper limit of centroid time shift Default: 9999
@@ -179,23 +170,30 @@ public class GlobalCMTSearch {
 
 	/**
 	 * Search from the startDate to endDate
-	 * 
 	 * @param startDate
 	 *            starting date of the search (included)
 	 * @param endDate
 	 *            end date of the search (included)
 	 */
 	public GlobalCMTSearch(LocalDate startDate, LocalDate endDate) {
+		this.startDate = startDate.atTime(0, 0);
+		this.endDate = 	endDate.plusDays(1).atTime(0, 0);
+	}
+	/**
+	 * Search from the startDate to endDate
+	 * 
+	 * @param startDate
+	 *            starting date of the search (included)
+	 * @param endDate
+	 *            end date of the search (included)
+	 */
+	public GlobalCMTSearch(LocalDateTime startDate, LocalDateTime endDate) {
 		this.startDate = startDate;
 		this.endDate = endDate;
 	}
 
-	public LocalDate getEndDate() {
+	public LocalDateTime getEndDate() {
 		return endDate;
-	}
-
-	public LocalTime getEndTime() {
-		return endTime;
 	}
 
 	public double getLowerCentroidTimeShift() {
@@ -234,13 +232,10 @@ public class GlobalCMTSearch {
 		return lowerTensionAxisPlunge;
 	}
 
-	public LocalDate getStartDate() {
+	public LocalDateTime getStartDate() {
 		return startDate;
 	}
 
-	public LocalTime getStartTime() {
-		return startTime;
-	}
 
 	public double getUpperCentroidTimeShift() {
 		return upperCentroidTimeShift;
@@ -354,16 +349,6 @@ public class GlobalCMTSearch {
 	}
 
 	/**
-	 * CMT time must be before endTime
-	 * 
-	 * @param endTime
-	 *            the endTime of search range.
-	 */
-	public void setEndTime(LocalTime endTime) {
-		this.endTime = endTime;
-	}
-
-	/**
 	 * Latitude range<br>
 	 * Default:[-90:90]<br>
 	 * If you do not want to set a min or max, -90 or 90
@@ -465,16 +450,6 @@ public class GlobalCMTSearch {
 		this.lowerNullAxisPlunge = lowerNullAxisPlunge;
 		this.upperNullAxisPlunge = upperNullAxisPlunge;
 
-	}
-
-	/**
-	 * CMT time must be after the startTime
-	 * 
-	 * @param startTime
-	 *            start time of search range
-	 */
-	public void setStartTime(LocalTime startTime) {
-		this.startTime = startTime;
 	}
 
 	/**

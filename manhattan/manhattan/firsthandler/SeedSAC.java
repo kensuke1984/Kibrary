@@ -164,17 +164,19 @@ class SeedSAC implements Runnable {
 		id = findIDinFilename();
 		if (id != null)
 			return;
-		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate().toLocalDate());
-		sc.setStartTime(seedFile.getStartingDate().toLocalTime());
-		sc.setEndTime(seedFile.getEndingDate().toLocalTime());
-		id = sc.select();
-		if (id == null) {
-			System.out.println("There is no event in the global CMT catalogue");
-			canGO = false;
+		if (GlobalCMTID.isGlobalCMTID(seedFile.getVolumeLabel())) {
+			id = new GlobalCMTID(seedFile.getVolumeLabel());
+			return;
 		}
+		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
+		id = sc.select();
+		if (id == null)
+			throw new RuntimeException("There is no event in the global CMT catalogue");
 	}
 
 	/**
+	 * TODO use volumeID in seed files
+	 * 
 	 * @return look for GlobalCMTID in the name of the seed file otherwise
 	 *         returns null
 	 */
@@ -198,11 +200,9 @@ class SeedSAC implements Runnable {
 	 * @return
 	 */
 	private boolean idValidity() {
-		// System.out.print("Checking the id: " + id + " ... ");
 		event = id.getEvent();
 		return event != null && id != null && seedFile.getStartingDate().isBefore(event.getPDETime())
 				&& seedFile.getEndingDate().isAfter(event.getCMTTime());
-		// System.out.println(idValidity);
 	}
 
 	/**
@@ -236,22 +236,32 @@ class SeedSAC implements Runnable {
 				switch (componentName) {
 				case "BHE":
 				case "BLE":
+				case "HHE":
+				case "HLE":
 					component = "E";
 					break;
 				case "BHN":
 				case "BLN":
+				case "HHN":
+				case "HLN":
 					component = "N";
 					break;
 				case "BHZ":
 				case "BLZ":
+				case "HHZ":
+				case "HLZ":
 					component = "Z";
 					break;
 				case "BH1":
 				case "BL1":
+				case "HH1":
+				case "HL1":
 					component = "1";
 					break;
 				case "BH2":
 				case "BL2":
+				case "HH2":
+				case "HL2":
 					component = "2";
 					break;
 				default:
@@ -474,7 +484,7 @@ class SeedSAC implements Runnable {
 	}
 
 	public static void main(String args[]) throws IOException {
-		Path seed = Paths.get("/home/kensuke/test/firsthandler/201311230748A.seed");
+		Path seed = Paths.get("/Users/kensuke/tmp/seed/200810122055A.900652.seed");
 		SeedSAC ss = new SeedSAC(seed, seed.resolveSibling("short"));
 		ss.removeIntermediateFiles = false;
 		ss.run();
@@ -500,20 +510,20 @@ class SeedSAC implements Runnable {
 			if (cmpMod)
 				// fix delta values
 				preprocess();
-
 			// merge uneven sacfiles
 			mergeUnevenSac();
 		} catch (IOException e) {
 			throw new RuntimeException("Error on " + id, e);
 		}
 
+		
 		// sacを修正する
 		modifySACs();
 
 		// Use only BH[12ENZ]
 		// remove waveforms of .[~NEZ]
 		selectChannels();
-
+		
 		// 装置関数のdeconvolution OK!
 		try {
 			deconvolute();
@@ -616,7 +626,7 @@ class SeedSAC implements Runnable {
 		String command = "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM)
 				+ " " + event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " "
 				+ samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) + " -s lin -r cs -u vel";
-		// System.out.println(command);
+//		 System.out.println(command);
 
 		ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
 		pb.directory(eventDir.getAbsoluteFile());
@@ -630,7 +640,7 @@ class SeedSAC implements Runnable {
 	}
 
 	/**
-	 * Remove files with suffixes other than B[HL][ENZ12]
+	 * Remove files with suffixes other than [BH][HL][ENZ12]
 	 * 
 	 */
 	private void selectChannels() {
@@ -642,7 +652,9 @@ class SeedSAC implements Runnable {
 				String name = modPath.getFileName().toString();
 				String channel = name.split("\\.")[3];
 				if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE")
-						|| channel.equals("BLN") || channel.equals("BLE"))
+						|| channel.equals("BLN") || channel.equals("BLE") || channel.equals("HHZ")
+						|| channel.equals("HLZ") || channel.equals("HHN") || channel.equals("HHE")
+						|| channel.equals("HLN") || channel.equals("HLE"))
 					continue;
 				Utilities.moveToDirectory(modPath, trashBox, true);
 			}

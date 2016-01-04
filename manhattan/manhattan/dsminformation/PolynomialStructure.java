@@ -15,7 +15,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * 
  * Every depth is written in <b>radius</b>.<br>
  * 
- * <b>This class is IMMUTABLE</b> <br>
+ * This class is <b>IMMUTABLE</b> <br>
  * 
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
@@ -163,6 +163,8 @@ public class PolynomialStructure {
 		double[] addBoundaries = Arrays.stream(boundaries)
 				.filter(d -> 0 < d && d < rmax[nzone - 1] && Arrays.binarySearch(rmin, d) < 0).distinct().sorted()
 				.toArray();
+		if (addBoundaries.length == 0)
+			return this;
 		ps.nzone = nzone + addBoundaries.length;
 		ps.initialize();
 		ps.rmin = DoubleStream.concat(Arrays.stream(rmin), Arrays.stream(addBoundaries)).sorted().toArray();
