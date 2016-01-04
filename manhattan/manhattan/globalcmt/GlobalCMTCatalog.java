@@ -20,7 +20,9 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * 
  * Catalog of global CMT solutions.
  * 
- * @version 0.1.0
+ * The catalog contains event list from <b>1976 Jan</b> to <b>2015 August</b>.
+ * 
+ * @version 0.1.1
  * 
  * @author kensuke
  * 
