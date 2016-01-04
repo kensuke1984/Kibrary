@@ -5,7 +5,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.regex.Matcher;
 
@@ -26,7 +25,7 @@ import manhattan.template.Utilities;
  * This class assumes that rdseed, evalresp and sac exists in your PATH. The
  * software can be found in IRIS.
  * 
- * @version 0.1.7
+ * @version 0.1.8
  * 
  * @author kensuke
  * 
@@ -213,7 +212,7 @@ class SeedSAC implements Runnable {
 		// System.out.println("Conducting deconvolution");
 
 		Path noSpectraPath = eventDir.toPath().resolve("noSpectraOrInvalidMOD");
-
+		Path duplicateChannelPath = eventDir.toPath().resolve("duplicateChannel");
 		// evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
 		Path respBoxPath = eventDir.toPath().resolve("resp");
 		Path spectraBoxPath = eventDir.toPath().resolve("spectra");
@@ -231,6 +230,7 @@ class SeedSAC implements Runnable {
 						+ headerMap.get(SACHeaderEnum.KSTNM) + "." + headerMap.get(SACHeaderEnum.KHOLE) + "."
 						+ componentName;
 				Path spectraPath = eventDir.toPath().resolve(spectraFileName);
+				Path respPath = eventDir.toPath().resolve(respFileName);
 				String component = null;
 
 				switch (componentName) {
@@ -277,25 +277,36 @@ class SeedSAC implements Runnable {
 					// SPECTRAをつくれなかったMOD.*ファイルをnoSpectraに移す
 					Utilities.moveToDirectory(modPath, noSpectraPath, true);
 					// SPECTRAをつくれなかったRESP.*ファイルをnoSpectraに移す
-					Utilities.moveToDirectory(eventDir.toPath().resolve(respFileName), noSpectraPath, true);
+					Utilities.moveToDirectory(respPath, noSpectraPath, true);
 					continue;
 				}
 
 				// seedsacを行う
 				try {
 					int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
+					// duplication of channel
+					if (Files.exists(afterPath)) {
+						// SPECTRAをつくれなかった*.MODファイルをduplicateChannelPathに移す
+						Utilities.moveToDirectory(modPath, duplicateChannelPath, true);
+						// SPECTRAをつくれなかったSPECTRA.*ファイルをduplicateChannelPathに移す
+						Utilities.moveToDirectory(spectraPath, duplicateChannelPath, true);
+						// SPECTRAをつくれなかったRESP.*ファイルをduplicateChannelPathに移す
+						Utilities.moveToDirectory(respPath, duplicateChannelPath, true);
+						continue;
+					}
 					SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
 				} catch (Exception e) {
-					// SPECTRAをつくれなかったMOD.*ファイルをnoSpectraに移す
+					// SPECTRAをつくれなかった*.MODファイルをnoSpectraに移す
 					Utilities.moveToDirectory(modPath, noSpectraPath, true);
+					// SPECTRAをつくれなかったSPECTRA.*ファイルをnoSpectraに移す
 					Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
 					// SPECTRAをつくれなかったRESP.*ファイルをnoSpectraに移す
-					Utilities.moveToDirectory(eventDir.toPath().resolve(respFileName), noSpectraPath, true);
+					Utilities.moveToDirectory(respPath, noSpectraPath, true);
 					continue;
 				}
 
 				// 処理の終わったRESP.*ファイルをrespBoxに移す
-				Utilities.moveToDirectory(eventDir.toPath().resolve(respFileName), respBoxPath, true);
+				Utilities.moveToDirectory(respPath, respBoxPath, true);
 
 				// 処理の終わったSPCTRA.*ファイルをspectraBoxに移す
 				Utilities.moveToDirectory(spectraPath, spectraBoxPath, true);
@@ -483,13 +494,6 @@ class SeedSAC implements Runnable {
 		}
 	}
 
-	public static void main(String args[]) throws IOException {
-		Path seed = Paths.get("/Users/kensuke/tmp/seed/200810122055A.900652.seed");
-		SeedSAC ss = new SeedSAC(seed, seed.resolveSibling("short"));
-		ss.removeIntermediateFiles = false;
-		ss.run();
-	}
-
 	@Override
 	public void run() {
 
@@ -516,14 +520,13 @@ class SeedSAC implements Runnable {
 			throw new RuntimeException("Error on " + id, e);
 		}
 
-		
 		// sacを修正する
 		modifySACs();
 
 		// Use only BH[12ENZ]
 		// remove waveforms of .[~NEZ]
 		selectChannels();
-		
+
 		// 装置関数のdeconvolution OK!
 		try {
 			deconvolute();
@@ -551,18 +554,20 @@ class SeedSAC implements Runnable {
 
 	private void removeIntermediateFiles() {
 		try {
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("merged").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("mod").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("rdseedOutputBackup").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("resp").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("rotatedNE").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("nonRotatedNE").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("spectra").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("trash").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("mergedUnevendata").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("invalidChannel").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("nonMergedUnevendata").toFile());
-			FileUtils.deleteDirectory(eventDir.toPath().resolve("noSpectraOrInvalidMOD").toFile());
+			Path event = eventDir.toPath();
+			FileUtils.deleteDirectory(event.resolve("merged").toFile());
+			FileUtils.deleteDirectory(event.resolve("mod").toFile());
+			FileUtils.deleteDirectory(event.resolve("rdseedOutputBackup").toFile());
+			FileUtils.deleteDirectory(event.resolve("resp").toFile());
+			FileUtils.deleteDirectory(event.resolve("rotatedNE").toFile());
+			FileUtils.deleteDirectory(event.resolve("nonRotatedNE").toFile());
+			FileUtils.deleteDirectory(event.resolve("spectra").toFile());
+			FileUtils.deleteDirectory(event.resolve("trash").toFile());
+			FileUtils.deleteDirectory(event.resolve("mergedUnevendata").toFile());
+			FileUtils.deleteDirectory(event.resolve("invalidChannel").toFile());
+			FileUtils.deleteDirectory(event.resolve("nonMergedUnevendata").toFile());
+			FileUtils.deleteDirectory(event.resolve("noSpectraOrInvalidMOD").toFile());
+			FileUtils.deleteDirectory(event.resolve("duplicateChannel").toFile());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -626,7 +631,7 @@ class SeedSAC implements Runnable {
 		String command = "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM)
 				+ " " + event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " "
 				+ samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) + " -s lin -r cs -u vel";
-//		 System.out.println(command);
+		// System.out.println(command);
 
 		ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
 		pb.directory(eventDir.getAbsoluteFile());

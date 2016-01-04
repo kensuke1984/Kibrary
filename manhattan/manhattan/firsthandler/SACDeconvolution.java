@@ -59,8 +59,8 @@ class SACDeconvolution {
 	 *            evalrespにより作成したスペクトルファイル
 	 * @param outputSacPath
 	 *            装置関数を外したSacFile
-	 * @param minFreq
-	 * @param maxFreq
+	 * @param minFreq minimum frequency
+	 * @param maxFreq maximum frequency
 	 */
 	static void compute(Path sourceSacPath, Path spectraPath, Path outputSacPath, double minFreq, double maxFreq)
 			throws IOException {
