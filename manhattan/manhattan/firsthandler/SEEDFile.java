@@ -201,7 +201,7 @@ public class SEEDFile {
 		ExternalProcess process = ExternalProcess.launch(commands);
 		int exitStatus = process.waitFor();
 		if (exitStatus == 1 || exitStatus == 255)
-			throw new RuntimeException("rdseed did not run correctly.");
+			throw new RuntimeException("rdseed did not run correctly. "+exitStatus+" "+commands);
 		return process.getStandardOutput().waitAndGetString();
 	}
 
