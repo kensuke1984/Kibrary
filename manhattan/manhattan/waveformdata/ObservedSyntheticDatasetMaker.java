@@ -221,7 +221,7 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 				String stationName = obsFileName.getStationName();
 				GlobalCMTID id = obsFileName.getGlobalCMTID();
 				SACComponent component = obsFileName.getComponent();
-				String name = isConvolved
+				String name = convolute
 						? stationName + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
 						: stationName + "." + id + "." + SACExtension.valueOfSynthetic(component);
 				SACFileName synFileName = new SACFileName(synEventPath.resolve(name));
@@ -303,9 +303,9 @@ class ObservedSyntheticDatasetMaker extends parameter.ObservedSyntheticDatasetMa
 
 					obsData = Arrays.stream(obsData).map(d -> d / maxratio).toArray();
 					BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
-							component, minPeriod, maxPeriod, 0, isConvolved, synData);
+							component, minPeriod, maxPeriod, 0, convolute, synData);
 					BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
-							component, minPeriod, maxPeriod, 0, isConvolved, obsData);
+							component, minPeriod, maxPeriod, 0, convolute, obsData);
 					try {
 						dataWriter.addBasicID(obsID);
 						dataWriter.addBasicID(synID);

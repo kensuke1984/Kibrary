@@ -26,24 +26,10 @@ import manhattan.template.Station;
  * 
  * This class create a new set of dataset files.
  * 
- * @since 2013/11/13
- * 
- * 
  * @version 0.4
  * 
  * @author kensuke
  * 
- */
-
-/**
- * @author kensuke 
- * @since 2015/11/24 
- * @version 0.0.1
- */
-/**
- * @author kensuke
- * @since 2015/11/24
- * @version 0.0.1
  */
 public class WaveformDataWriter implements Closeable, Flushable {
 	public Path getIDPath() {

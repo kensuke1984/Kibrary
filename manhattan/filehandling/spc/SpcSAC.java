@@ -19,10 +19,10 @@ import manhattan.template.EventFolder;
 import manhattan.template.Utilities;
 
 /**
- * SpcSac Convertor from {@link SpectrumFile} to {@link SACData} file. According
+ * SpcSAC Converter from {@link SpectrumFile} to {@link SACData} file. According
  * to an information file: {@link parameter.SpcSAC}, it creates SAC files.
  * 
- * @version 0.1.3
+ * @version 0.1.3.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -49,62 +49,8 @@ final class SpcSAC extends parameter.SpcSAC {
 			ss = new SpcSAC(null);
 
 		long start = System.nanoTime();
-		int nThread = Runtime.getRuntime().availableProcessors();
-		ss.outPath = ss.workPath.resolve("spcsac" + Utilities.getTemporaryString());
 		System.out.println("SpcSAC is going.");
-		System.out.println("Converting SPC files in " + ss.workPath + " to SAC files " + ss.outPath);
-		Files.createDirectories(ss.outPath);
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(ss.workPath);
-
-		if (ss.sourceTimeFunction == -1)
-			ss.readUserSourceTimeFunctions();
-
-		for (EventFolder eventDir : eventDirs) {
-			Path modelDir = eventDir.toPath().resolve(ss.modelName);
-			if (!Files.exists(modelDir))
-				continue;
-			Files.createDirectories(ss.outPath.resolve(eventDir.getGlobalCMTID().toString()));
-			ExecutorService execs = Executors.newFixedThreadPool(nThread);
-
-			Set<SpcFileName> spcSet = Utilities.collectSpcFileName(modelDir);
-			Set<SpcFileName> psvSet = new HashSet<>();
-			Set<SpcFileName> shSet = new HashSet<>();
-			spcSet.stream().filter(file -> !file.getName().contains("par")).forEach(file -> {
-				if (file.getName().contains("PSV.spc"))
-					psvSet.add(file);
-				else if (file.getName().contains("SH.spc"))
-					shSet.add(file);
-			});
-
-			if (ss.psvsh == 0)
-				for (SpcFileName oneFile : psvSet.size() < shSet.size() ? psvSet : shSet) {
-					SpcFileName pairFile = pairFile(oneFile);
-					if (!pairFile.exists()) {
-						System.err.println(pairFile + " does not exist");
-						continue;
-					}
-					// System.out.println(oneFile + " " + pairFile);
-					SpectrumFile oneSPC = SpectrumFile.getInstance(oneFile);
-					SpectrumFile pairSPC = SpectrumFile.getInstance(pairFile);
-					SACMaker sacMaker = ss.SacMakerMaker(oneSPC, pairSPC);
-					execs.execute(sacMaker);
-				}
-			else
-				for (SpcFileName oneFile : ss.psvsh == 1 ? psvSet : shSet) {
-					SpectrumFile oneSPC = SpectrumFile.getInstance(oneFile);
-					execs.execute(ss.SacMakerMaker(oneSPC, null));
-				}
-
-			execs.shutdown();
-			while (!execs.isTerminated()) {
-				try {
-					Thread.sleep(100);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-		}
+		ss.run();
 		System.out.println("SpcSAC finished in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
@@ -131,6 +77,62 @@ final class SpcSAC extends parameter.SpcSAC {
 			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		default:
 			throw new RuntimeException("Integer for source time function is invalid.");
+		}
+	}
+
+	public void run() throws IOException {
+		int nThread = Runtime.getRuntime().availableProcessors();
+		outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
+		System.out.println("Converting SPC files in " + workPath + " to SAC files " + outPath);
+		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+		if (sourceTimeFunction == -1)
+			readUserSourceTimeFunctions();
+		Files.createDirectories(outPath);
+
+		for (EventFolder eventDir : eventDirs) {
+			Path modelDir = eventDir.toPath().resolve(modelName);
+			if (!Files.exists(modelDir))
+				continue;
+			Files.createDirectories(outPath.resolve(eventDir.getGlobalCMTID().toString()));
+			ExecutorService execs = Executors.newFixedThreadPool(nThread);
+
+			Set<SpcFileName> spcSet = Utilities.collectSpcFileName(modelDir);
+			Set<SpcFileName> psvSet = new HashSet<>();
+			Set<SpcFileName> shSet = new HashSet<>();
+			spcSet.stream().filter(file -> !file.getName().contains("par")).forEach(file -> {
+				if (file.getName().contains("PSV.spc"))
+					psvSet.add(file);
+				else if (file.getName().contains("SH.spc"))
+					shSet.add(file);
+			});
+
+			if (psvsh == 0)
+				for (SpcFileName oneFile : psvSet.size() < shSet.size() ? psvSet : shSet) {
+					SpcFileName pairFile = pairFile(oneFile);
+					if (!pairFile.exists()) {
+						System.err.println(pairFile + " does not exist");
+						continue;
+					}
+					SpectrumFile oneSPC = SpectrumFile.getInstance(oneFile);
+					SpectrumFile pairSPC = SpectrumFile.getInstance(pairFile);
+					SACMaker sacMaker = SacMakerMaker(oneSPC, pairSPC);
+					execs.execute(sacMaker);
+				}
+			else
+				for (SpcFileName oneFile : psvsh == 1 ? psvSet : shSet) {
+					SpectrumFile oneSPC = SpectrumFile.getInstance(oneFile);
+					execs.execute(SacMakerMaker(oneSPC, null));
+				}
+
+			execs.shutdown();
+			while (!execs.isTerminated()) {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
 		}
 	}
 
