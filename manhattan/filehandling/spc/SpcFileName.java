@@ -94,12 +94,6 @@ public class SpcFileName extends File {
 		return fileName.split("\\.")[4];
 	}
 
-	private static String getZ(String fileName) {
-		if (fileName.split("\\.").length != 7)
-			return null;
-		return fileName.split("\\.")[5];
-	}
-
 	/**
 	 * @param fileName
 	 * @return PSV or SH

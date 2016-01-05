@@ -12,7 +12,6 @@ import org.apache.commons.math3.transform.TransformType;
 import filehandling.sac.SACComponent;
 import manhattan.datacorrection.SourceTimeFunction;
 import manhattan.dsminformation.PolynomialStructure;
-import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.Earth;
 import manhattan.template.HorizontalPosition;
 import manhattan.template.Location;
