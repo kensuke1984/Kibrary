@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -104,9 +103,6 @@ public class Answer extends parameter.Answer {
 		return grid;
 	}
 
-	private void toUNIX(File dosTXT) {
-		// TODO
-	}
 
 	private Answer(Path parameterPath) throws IOException {
 		super(parameterPath);
@@ -121,23 +117,23 @@ public class Answer extends parameter.Answer {
 	public boolean canGO() throws IOException {
 		boolean canGO = true;
 		if (Files.exists(outPath)) {
-			new FileAlreadyExistsException(outPath.toString());
+			System.err.println(outPath.toString());
 			canGO = false;
 		}
 		if (!Files.exists(answerPath)) {
-			new FileAlreadyExistsException(answerPath.toString());
+			System.err.println(answerPath.toString());
 			canGO = false;
 		}
 		if (!Files.exists(unknownParameterSetPath)) {
-			new FileAlreadyExistsException(unknownParameterSetPath.toString());
+			System.err.println(unknownParameterSetPath.toString());
 			canGO = false;
 		}
 		if (crossSectionListPath != null && !Files.exists(crossSectionListPath)) {
-			new FileAlreadyExistsException(crossSectionListPath.toString());
+			System.err.println(crossSectionListPath.toString());
 			canGO = false;
 		}
 		if (gridPath != null && !Files.exists(gridPath)) {
-			new FileAlreadyExistsException(gridPath.toString());
+			System.err.println(gridPath.toString());
 			canGO = false;
 		}
 		if (canGO)
