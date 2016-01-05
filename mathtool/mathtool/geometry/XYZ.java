@@ -12,7 +12,6 @@ import manhattan.template.Location;
  * 
  * 
  * @version 0.0.2
- * @since 2014/12/29
  *  
  * 
  * @author Kensuke
@@ -25,11 +24,9 @@ public class XYZ extends XY {
 		this.z = z;
 	}
 
-	// private double x;
-	// private double y;
 	private double z;
 
-
+	@Override
 	public String toString() {
 		return x + " " + y + " " + z;
 	}
@@ -37,6 +34,7 @@ public class XYZ extends XY {
 	/**
 	 * @return 原点からの距離
 	 */
+	@Override
 	public double getR() {
 		return Math.sqrt(x * x + y * y + z * z);
 	}
@@ -78,7 +76,6 @@ public class XYZ extends XY {
 	public XYZ rotateaboutZ(double theta) {
 		double x = this.x * Math.cos(theta) - this.y * Math.sin(theta);
 		double y = this.y * Math.cos(theta) + this.x * Math.sin(theta);
-		// System.out.println(x+" "+y);
 		return new XYZ(x, y, z);
 	}
 
@@ -87,7 +84,6 @@ public class XYZ extends XY {
 	 * @return xyzとの距離
 	 */
 	public double getDistance(XYZ xyz) {
-
 		return Math.sqrt((x - xyz.x) * (x - xyz.x) + (y - xyz.y) * (y - xyz.y)
 				+ (z - xyz.z) * (z - xyz.z));
 	}

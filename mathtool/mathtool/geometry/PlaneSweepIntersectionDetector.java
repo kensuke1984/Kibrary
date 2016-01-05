@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.TreeSet;
 
 /**
- * @since 2014/02/04
  * @version 0.0.1
  * 
  * @author kensuke
@@ -17,6 +16,7 @@ import java.util.TreeSet;
  */
 public class PlaneSweepIntersectionDetector implements IntersectionDetector {
 	// public class implements IntersectionDetector {
+	@Override
 	public Collection<Intersection> execute(List<LineSegment> lineSegments) {
 		// イベントキューを作成
 		TreeSet<Event> eventQueue = new TreeSet<>();
@@ -25,21 +25,17 @@ public class PlaneSweepIntersectionDetector implements IntersectionDetector {
 			// 線分の端点のうち上にある方を始点，下にある方を終点としてイベントを登録
 			// 線分が水平な場合は左の端点を始点とする
 			if (lineSegment.getPointA().y < lineSegment.getPointB().y
-					|| (lineSegment.getPointA().y == lineSegment.getPointB().y && lineSegment
-							.getPointA().x < lineSegment.getPointB().x)) {
-				eventQueue.add(new Event(SegmentType.SEGMENT_START, lineSegment
-						.getPointA().x, lineSegment.getPointA().y, lineSegment,
-						null));
-				eventQueue.add(new Event(SegmentType.SEGMENT_END, lineSegment
-						.getPointB().x, lineSegment.getPointB().y, lineSegment,
-						null));
+					|| (lineSegment.getPointA().y == lineSegment.getPointB().y
+							&& lineSegment.getPointA().x < lineSegment.getPointB().x)) {
+				eventQueue.add(new Event(SegmentType.SEGMENT_START, lineSegment.getPointA().x,
+						lineSegment.getPointA().y, lineSegment, null));
+				eventQueue.add(new Event(SegmentType.SEGMENT_END, lineSegment.getPointB().x, lineSegment.getPointB().y,
+						lineSegment, null));
 			} else {
-				eventQueue.add(new Event(SegmentType.SEGMENT_START, lineSegment
-						.getPointB().x, lineSegment.getPointB().y, lineSegment,
-						null));
-				eventQueue.add(new Event(SegmentType.SEGMENT_END, lineSegment
-						.getPointA().x, lineSegment.getPointA().y, lineSegment,
-						null));
+				eventQueue.add(new Event(SegmentType.SEGMENT_START, lineSegment.getPointB().x,
+						lineSegment.getPointB().y, lineSegment, null));
+				eventQueue.add(new Event(SegmentType.SEGMENT_END, lineSegment.getPointA().x, lineSegment.getPointA().y,
+						lineSegment, null));
 			}
 		}
 
@@ -83,9 +79,9 @@ public class PlaneSweepIntersectionDetector implements IntersectionDetector {
 				sweepComparator.setY(sweepY); // 走査線を更新
 				// 計算誤差により，走査線の更新後も順序が交換されない場合は
 				// 走査線を少し下げて順序が確実に変わるようにする
-				if (sweepComparator.compare(left, right) < 0) {
+				if (sweepComparator.compare(left, right) < 0)
 					sweepComparator.setY(sweepY + 0.001);
-				}
+
 				// 更新後の走査線を基準としてleftとrightを再追加（位置が交換される）
 				status.add(left);
 				status.add(right);
@@ -113,18 +109,17 @@ public class PlaneSweepIntersectionDetector implements IntersectionDetector {
 	}
 
 	// 線分leftとrightが走査線の下で交差するかどうか調べ，交差する場合は交点イベントを登録する
-	private static void checkIntersection(LineSegment left, LineSegment right,
-			double sweepY, TreeSet<Event> eventQueue) {
+	private static void checkIntersection(LineSegment left, LineSegment right, double sweepY,
+			TreeSet<Event> eventQueue) {
 		// 2線分のうち少なくとも一方が存在しない場合，何もしない
-		if (left == null || right == null) {
+		if (left == null || right == null)
 			return;
-		}
+
 		Point2D p = left.getIntersectionPoint(right);
 		// 交点が走査線よりも下に存在するときのみ，キューに交点イベントを登録
-		if (p != null && p.getY() >= sweepY) {
-			eventQueue.add(new Event(SegmentType.INTERSECTION, p.getX(), p
-					.getY(), left, right));
-		}
+		if (p != null && p.getY() >= sweepY)
+			eventQueue.add(new Event(SegmentType.INTERSECTION, p.getX(), p.getY(), left, right));
+
 	}
 
 }
