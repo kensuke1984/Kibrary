@@ -8,14 +8,12 @@ package mathtool.geometry;
  * if input phi is out of [0, 2*pi), it will be changed to a value in [0, 2*pi)
  * 
  * 
- * @version 0.0.2
- * @since 2014/12/29
+ * @version 0.0.2.1
  * 
  * @author Kensuke
  * 
  */
 public class RThetaPhi {
-
 
 	/**
 	 * @return &phi;[rad]
@@ -38,8 +36,10 @@ public class RThetaPhi {
 	/**
 	 * 入力されたデカルト座標（x, y)に対するφを返す
 	 * 
-	 * @param x in cartesian
-	 * @param y in cartesian
+	 * @param x
+	 *            in cartesian
+	 * @param y
+	 *            in cartesian
 	 * @return &phi; [rad]
 	 */
 	public static double toPHIfromCartesian(double x, double y) {
@@ -49,10 +49,7 @@ public class RThetaPhi {
 		}
 		double r = Math.sqrt(x * x + y * y);
 		double cphi = Math.acos(x / r);
-		if (y < 0)
-			return 2 * Math.PI - cphi;
-		else
-			return cphi;
+		return y < 0 ? 2 * Math.PI - cphi : cphi;
 	}
 
 	/**
@@ -73,10 +70,7 @@ public class RThetaPhi {
 		}
 		double r = Math.sqrt(x * x + y * y);
 		double cphi = Math.acos(x / r);
-		if (y < 0)
-			return 2 * Math.PI - cphi;
-		else
-			return cphi;
+		return y < 0 ? 2 * Math.PI - cphi : cphi;
 	}
 
 	/**
@@ -99,15 +93,19 @@ public class RThetaPhi {
 	/**
 	 * 入力されたデカルト座標（x, y, z)に対するθを返す
 	 * 
-	 * @param x in cartesian
-	 * @param y in cartesian
-	 * @param z in cartesian
+	 * @param x
+	 *            in cartesian
+	 * @param y
+	 *            in cartesian
+	 * @param z
+	 *            in cartesian
 	 * @return &theta; Acos(z/r) [rad]
 	 */
 	public static double toTHETAfromCartesian(double x, double y, double z) {
 		return Math.acos(z / toRfromCartesian(x, y, z));
 	}
 
+	@Override
 	public String toString() {
 		return r + " " + theta + " " + phi;
 	}
@@ -131,7 +129,7 @@ public class RThetaPhi {
 	 * @param r
 	 *            radius
 	 * @param theta
-	 *            　[rad]
+	 *            [rad]
 	 * @param phi
 	 *            [rad]
 	 */
@@ -150,16 +148,14 @@ public class RThetaPhi {
 	 */
 	private void fixPhi() {
 		if (phi < 0 || 2 * Math.PI <= phi)
-			System.out.println("Input phi " + phi + " (" + Math.toDegrees(phi)
-					+ " deg) is out of range");
+			System.out.println("Input phi " + phi + " (" + Math.toDegrees(phi) + " deg) is out of range");
 		while (phi < 0)
 			phi += 2 * Math.PI;
 
 		while (2 * Math.PI <= phi)
 			phi -= 2 * Math.PI;
 		if (phi < 0 || 2 * Math.PI <= phi)
-			System.out
-					.println(phi + "(" + Math.toDegrees(phi) + "deg) is used");
+			System.out.println(phi + "(" + Math.toDegrees(phi) + "deg) is used");
 	}
 
 	/**
@@ -185,9 +181,12 @@ public class RThetaPhi {
 
 	/**
 	 * 
-	 * @param r radius
-	 * @param theta [rad]
-	 * @param phi [rad]
+	 * @param r
+	 *            radius
+	 * @param theta
+	 *            [rad]
+	 * @param phi
+	 *            [rad]
 	 * @return if r, theta, phi are valid
 	 */
 	private static boolean checkValidity(double r, double theta, double phi) {
@@ -199,12 +198,8 @@ public class RThetaPhi {
 		}
 		if (theta < 0 || theta > Math.PI) {
 			double degree = theta / Math.PI * 180.0;
-			System.out
-					.println("theta :"
-							+ theta
-							+ " ("
-							+ degree
-							+ ") must be between 0 and 90 deg but you have to input by radian");
+			System.out.println("theta :" + theta + " (" + degree
+					+ ") must be between 0 and 90 deg but you have to input by radian");
 			validity = false;
 		}
 		return validity;
