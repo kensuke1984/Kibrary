@@ -4,7 +4,6 @@
 package mathtool.geometry;
 
 /**
- * @since 2014/02/04
  * @version 0.0.1
  * 
  * @author kensuke
@@ -37,20 +36,12 @@ class Event implements Comparable<Event> {
 	}
 
 	// Comparable<Event>>の実装
+	@Override
 	public int compareTo(Event event) {
 		int c = Double.compare(y, event.y); // イベント点のy座標を比較
-		if (c == 0) { // y座標が等しい場合はx座標を比較
+		if (c == 0)  // y座標が等しい場合はx座標を比較
 			c = Double.compare(x, event.x);
-		}
 		return c;
-	}
-
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
 	}
 
 }
