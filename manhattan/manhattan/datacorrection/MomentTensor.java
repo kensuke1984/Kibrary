@@ -4,10 +4,10 @@ import org.apache.commons.math3.util.FastMath;
 
 /**
  * Moment Tensor<br>
- * Global CMT 1:M<sub>rr</sub> 2:M<sub>tt</sub> 3:M<sub>pp</sub> <br>
+ * Global CMT 1:M<sub>rr</sub> 2:M<sub>tt</sub> 3:M<sub>pp</sub> 
  * 4:M<sub>rt</sub> 5:M<sub>rp</sub> 6 M<sub>tp</sub> <br>
- * DSM 1:M<sub>rr</sub> 2:M<sub>rt</sub> 3:M<sub>rp</sub> 4:M<sub>tt</sub> 5:M
- * <sub>tp</sub> 6:M<sub>pp</sub> <br>
+ * DSM 1:M<sub>rr</sub> 2:M<sub>rt</sub> 3:M<sub>rp</sub> 4:M<sub>tt</sub> 
+ * 5:M<sub>tp</sub> 6:M<sub>pp</sub> 
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * 
@@ -27,6 +27,17 @@ public class MomentTensor {
 	private final int mtEXP;
 	private final double mw;
 
+	/**
+	 * The order is same as Global CMT project.
+	 * @param mrr Mrr
+	 * @param mtt Mtt
+	 * @param mpp Mpp
+	 * @param mrt Mrt
+	 * @param mrp Mrp
+	 * @param mtp Mtp
+	 * @param mtEXP exponential number
+	 * @param mw Mw
+	 */
 	public MomentTensor(double mrr, double mtt, double mpp, double mrt, double mrp, double mtp, int mtEXP, double mw) {
 		super();
 		this.mrr = mrr;
