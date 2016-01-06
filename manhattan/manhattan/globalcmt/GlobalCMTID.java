@@ -16,10 +16,11 @@ import filehandling.sac.SACHeaderEnum;
  * @author kensuke
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
-public class GlobalCMTID implements Comparable<GlobalCMTID>{
+public class GlobalCMTID implements Comparable<GlobalCMTID> {
 
 	/**
-	 * Compares global CMT IDs by their ID using {@link String#compareTo(String)}
+	 * Compares global CMT IDs by their ID using
+	 * {@link String#compareTo(String)}
 	 * 
 	 */
 	@Override
@@ -50,7 +51,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID>{
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof GlobalCMTID))
 			return false;
 		GlobalCMTID other = (GlobalCMTID) obj;
 		if (id == null) {
@@ -113,7 +114,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID>{
 	 */
 	public GlobalCMTData getEvent() {
 		if (ndk == null)
-			synchronized (this) {
+			synchronized (GlobalCMTID.this) {
 				if (ndk == null)
 					ndk = GlobalCMTCatalog.getNDK(this);
 			}
