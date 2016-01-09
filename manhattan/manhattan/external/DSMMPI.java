@@ -105,7 +105,7 @@ public final class DSMMPI {
 
 	public static void main(String[] args) throws NoSuchFileException {
 		if (args.length == 0 || (!args[0].equals("-sh") && !args[0].equals("-psv")))
-			System.out.println("Usage: -psv (PSV information file names. . .) -sh (SH information names. . .)");
+			throw new IllegalArgumentException("Usage: -psv (PSV information file names. . .) -sh (SH information names. . .)");
 		List<Callable<Integer>> callList = new ArrayList<>();
 		boolean isPSV = args[0].equals("-psv");
 		for (int i = 1; i < args.length; i++) {
