@@ -1,10 +1,12 @@
 package filehandling.spc;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,6 +23,12 @@ import manhattan.template.Utilities;
 /**
  * SpcSAC Converter from {@link SpectrumFile} to {@link SACData} file. According
  * to an information file: {@link parameter.SpcSAC}, it creates SAC files.
+ * 
+ * It converts all the SPC files in event folders/model under the workDir set by
+ * the information file. If you leave 'model name' blank and each event folder
+ * has only one folder, then model name will be set automatically the name of
+ * the folder.
+ * 
  * 
  * @version 0.1.3.1
  * 
@@ -80,6 +88,23 @@ final class SpcSAC extends parameter.SpcSAC {
 		}
 	}
 
+	/**
+	 * @param eventFolder in which search a model folder
+	 * @return the model folder in the folder. If there are no folders in the event folder or more than one folder in the event folder,
+	 * null is returned.
+	 */
+	private static Path searchModelDir(EventFolder eventFolder) {
+		Path[] paths = Arrays.stream(eventFolder.listFiles()).filter(File::isDirectory).map(File::toPath)
+				.toArray(n -> new Path[n]);
+		if (paths.length == 0)
+			System.err.println("No model folder in " + eventFolder);
+		else if (1 < paths.length)
+			System.err.println("More than one model folders in " + eventFolder);
+		else
+			return paths[0];
+		return null;
+	}
+
 	public void run() throws IOException {
 		int nThread = Runtime.getRuntime().availableProcessors();
 		outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
@@ -90,8 +115,13 @@ final class SpcSAC extends parameter.SpcSAC {
 		Files.createDirectories(outPath);
 
 		for (EventFolder eventDir : eventDirs) {
-			Path modelDir = eventDir.toPath().resolve(modelName);
-			if (!Files.exists(modelDir))
+			Path modelDir = null;
+			if (modelName == null)
+				modelDir = searchModelDir(eventDir);
+			else
+				modelDir = eventDir.toPath().resolve(modelName);
+
+			if (modelDir == null || !Files.exists(modelDir))
 				continue;
 			Files.createDirectories(outPath.resolve(eventDir.getGlobalCMTID().toString()));
 			ExecutorService execs = Executors.newFixedThreadPool(nThread);
