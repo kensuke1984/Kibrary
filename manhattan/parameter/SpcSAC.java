@@ -17,35 +17,7 @@ import filehandling.sac.SACComponent;
 /**
  * Information for {@link filehandling.spc.SpcSAC}
  * 
- * @version 0.0.2
- * @since 2013/9/19
- * 
- * @since 2014/8/19
- * @version 0.0.3 Constructors changed
- * 
- * @since 2014/9/7
- * @version 0.0.4 to Java 8
- * 
- * @since 2014/9/11
- * @version 0.0.5 {@link #checkElements()} installed.
- * 
- * @since 2014/10/13
- * @version 0.0.6 outputList modified.
- * 
- * @since 2014/11/3
- * @version 0.0.7 modified.
- * 
- * @version 0.0.8
- * @since 2015/1/27 {@link #components} -&gt; {@link Set}
- * 
- * @version 0.1
- * @since 2015/8/5 Source time function selectable.
- * 
- * @version 0.1.1
- * @since 2015/8/6 User input source time function
- * 
- * @version 0.1.2
- * @since 2015/8/8 {@link IOException} {@link Path}
+ * @version 0.1.3
  * 
  * @author kensuke
  * 
@@ -119,7 +91,8 @@ public class SpcSAC extends ParameterFile {
 	/**
 	 * @param args
 	 *            [parameter file name]
-	 * @throws IOException if an I/O error occurs
+	 * @throws IOException
+	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
 		Path tmp = null;
@@ -142,7 +115,9 @@ public class SpcSAC extends ParameterFile {
 			else
 				throw new RuntimeException("Unexpected.");
 			pw.println("#String if it is PREM spector file is in eventDir/PREM ");
-			pw.println("modelName PREM");
+			pw.println("#if it is blank, then automatically set as the name of a folder in eventDir");
+			pw.println("#but the eventDirs can have only one folder inside.");
+			pw.println("modelName ");
 			pw.println("#Type source time function 0:none, 1:boxcar, 2:triangle.");
 			pw.println("#or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
 			pw.println("sourceTimeFunction 1");
@@ -163,7 +138,7 @@ public class SpcSAC extends ParameterFile {
 		Set<String> parameterSet = new HashSet<>();
 		parameterSet.add("workPath");
 		parameterSet.add("components");
-		parameterSet.add("modelName");
+		// parameterSet.add("modelName");
 		parameterSet.add("timePartial");
 		parameterSet.add("sourceTimeFunction");
 		// parameterSet.add("samplingHz"); TODO
