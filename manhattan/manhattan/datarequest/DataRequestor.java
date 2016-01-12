@@ -63,12 +63,12 @@ class DataRequestor extends parameter.DataRequestor {
 			try {
 				System.err.println("Sending a request for " + id);
 				m.sendIris();
+				output(m);
 				Thread.sleep(300 * 1000);
 			} catch (Exception e) {
 				System.out.println(m.getLabel() + " was not sent");
 				e.printStackTrace();
 			}
-			output(m);
 		});
 	}
 

@@ -148,7 +148,8 @@ public final class TauPTimeReader {
 		StringBuffer phase = new StringBuffer(phaseO[0].toString());
 		for (int i = 1; i < phaseO.length; i++)
 			phase.append("," + phaseO[i].toString());
-		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -models prem -ph " + phase;
+		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model prem -ph " + phase;
+		System.out.println(cmd);
 		return cmd.split("\\s+");
 	}
 
