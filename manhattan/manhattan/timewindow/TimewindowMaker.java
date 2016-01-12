@@ -119,7 +119,6 @@ class TimewindowMaker extends parameter.TimewindowMaker {
 			writeInvalid(sacFileName);
 			return;
 		}
-
 		double[] phaseTime = toTravelTime(usePhases);
 		double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
 		Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime);
