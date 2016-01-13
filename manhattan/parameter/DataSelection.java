@@ -17,31 +17,8 @@ import filehandling.sac.SACComponent;
 /**
  * Information for {@link manhattan.selection.DataSelection}
  * 
- * @version 0.1.0
- * @since 2014/4/1 {@link #obsPath} {@link #synPath} installed
- * @version 0.1.1
- * @since 2014/8/19 Constructors changed.
- * 
- * @version 0.1.2
- * @since 2014/9/7 to Java 8
- * 
- * @version 0.1.3 {@link #checkElements()} installed.
- * @since 2014/9/11
- * 
- * @version 0.1.4
- * @since 2014/10/13 outputListmodified. {@link #timewindowInformationPath}
- *        installed.
- * 
- *        workdir=. ok
- * 
- * @version 0.1.5
- * @since 2015/1/27 {@link #components} -&gt; {@link Set}
- * 
- * @version 0.1.6
- * @since 2015/8/8 {@link Path} base
  * 
  * @version 0.1.7
- * @since 2015/9/14 Station correction bug
  * 
  * @author kensuke
  *

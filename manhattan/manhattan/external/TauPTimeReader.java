@@ -19,9 +19,9 @@ import java.util.stream.IntStream;
  * taup_time must be in PATH and it must run correctly.<br>
  * All the standard output and errors will go to the bit bucket
  * 
+ * PREM is used for travel times.
  * 
- * 
- * @version 0.3
+ * @version 0.3.1
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  * 
  * 
