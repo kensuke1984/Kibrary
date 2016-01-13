@@ -42,6 +42,7 @@ import manhattan.timewindow.TimewindowInformationFile;
  * 振幅比、correlation、variance<br>
  * 
  * {@link TimewindowInformationFile} necessary.
+ * 
  * @version 0.0.8
  * 
  * 
@@ -76,7 +77,8 @@ class DataSelection extends parameter.DataSelection {
 	/**
 	 * @param args
 	 *            [parameter file name]
-	 * @throws IOException if an I/O happens
+	 * @throws IOException
+	 *             if an I/O happens
 	 */
 	public static void main(String[] args) throws IOException {
 		DataSelection ds = null;
@@ -97,16 +99,21 @@ class DataSelection extends parameter.DataSelection {
 			exec.execute(ds.new Worker(eventDirectory));
 
 		exec.shutdown();
-		while (!exec.isTerminated()) {
+		while (!exec.isTerminated())
 			try {
 				Thread.sleep(1000);
 			} catch (Exception e) {
 			}
-		}
+
 		System.out.println();
 		ds.output();
 		System.err.println("DataSelection is done in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
+	
+	
+	
+	
+	
 
 	private void output() throws IOException {
 		TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
@@ -127,7 +134,6 @@ class DataSelection extends parameter.DataSelection {
 			synEventDirectory = new EventFolder(DataSelection.super.synPath.resolve(ed.getName()));
 			if (!synEventDirectory.exists())
 				return;
-
 		}
 
 		@Override
@@ -171,17 +177,17 @@ class DataSelection extends parameter.DataSelection {
 					// synthetic sac
 					SACData obsSac = obsName.read();
 					SACData synSac = synName.read();
-					
+
 					Station station = obsSac.getStation();
 					//
 					if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA))
 						continue;
 
 					// Pickup a time window of obsName
-					Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet.stream()
-							.filter(info -> info.getStation().equals(station))
-							.filter(info -> info.getGlobalCMTID().equals(id))
-							.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
+					Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
+							.stream().filter(info -> info.getStation().equals(station)
+									&& info.getGlobalCMTID().equals(id) && info.getComponent() == component)
+							.collect(Collectors.toSet());
 
 					if (windowInformations.isEmpty())
 						continue;
@@ -191,7 +197,6 @@ class DataSelection extends parameter.DataSelection {
 						RealVector obsU = cutSAC(obsSac, shift(window));
 						if (check(lpw, stationName, id, component, window, obsU, synU))
 							goodTimewindowInformationSet.add(window);
-
 					}
 					// lpw.close();
 				}
@@ -252,9 +257,7 @@ class DataSelection extends parameter.DataSelection {
 		double var = obs2 + syn2 - 2 * cor;
 		double maxRatio = Math.round(synMax / obsMax * 100) / 100.0;
 		double minRatio = Math.round(synMin / obsMin * 100) / 100.0;
-		// ampratio = Math.abs(synMax / obsMax); // TODO
-		double ampRatio = (synMax > -synMin ? synMax : -synMin) / (obsMax > -obsMin ? obsMax : -obsMin);
-		// System.out.println(ampratio);
+		double ampRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
 		var /= obs2;
 		cor /= Math.sqrt(obs2 * syn2);
 
@@ -262,9 +265,9 @@ class DataSelection extends parameter.DataSelection {
 		var = Math.round(var * 100) / 100.0;
 		cor = Math.round(cor * 100) / 100.0;
 		// if (minRatio > ratio || minRatio < 1 / ratio ||
-		boolean isok = !(minRatio > ratio || maxRatio > ratio || maxRatio < 1 / ratio || ampRatio > ratio
-				|| ampRatio < 1 / ratio || cor < minCorrelation || cor > maxCorrelation || var < minVariance
-				|| var > maxVariance);
+		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
+				|| ratio < ampRatio || ampRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
+				|| var < minVariance || maxVariance < var);
 
 		writer.println(stationName + " " + id + " " + component + " " + isok + " " + ratio + " " + maxRatio + " "
 				+ minRatio + " " + var + " " + cor);
