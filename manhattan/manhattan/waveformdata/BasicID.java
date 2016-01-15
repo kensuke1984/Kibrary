@@ -1,9 +1,12 @@
 package manhattan.waveformdata;
 
+import java.util.Arrays;
+
 import filehandling.sac.SACComponent;
 import filehandling.sac.WaveformType;
 import manhattan.globalcmt.GlobalCMTID;
 import manhattan.template.Station;
+import manhattan.template.Trace;
 
 /**
  * <p>
@@ -28,9 +31,8 @@ import manhattan.template.Station;
  * If one is convoluted or observed, true<br>
  * Position of a waveform for the ID<br>
  * 
- * @since 2013/11/13
  * 
- * @version 0.2
+ * @version 0.3
  * @author kensuke
  * 
  */
@@ -237,6 +239,13 @@ public class BasicID {
 		data = waveformData.clone();
 	}
 
+	public Trace getTrace(){
+		double[] x = new double[data.length];
+		Arrays.setAll(x, i->startTime+i/samplingHz);
+		return new Trace(x, data);
+	}
+	
+	
 	/**
 	 * A new BasicID with the input data will be returned.
 	 * 
