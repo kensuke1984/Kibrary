@@ -10,7 +10,7 @@ import manhattan.template.HorizontalPosition;
  * Helper for use of GMT
  * 
  * 
- * @version 0.0.3
+ * @version 0.0.3.1
  * 
  * 
  * @author Kensuke
@@ -131,8 +131,8 @@ public final class GMTMap {
 	public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position,
 			String... additionalOptions) {
 		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		return "echo " + position + " " + symbolSize + " | " + "psxy -V -: -J -R " + symbol.getOption() + " "
-				+ additional + " -P -K -O >> $psname";
+		return "echo " + position.getLatitude() + " " + position.getLongitude() + " " + symbolSize + " | "
+				+ "psxy -V -: -J -R " + symbol.getOption() + " " + additional + " -P -K -O >> $psname";
 	}
 
 	/**
@@ -212,8 +212,7 @@ public final class GMTMap {
 	/**
 	 * 
 	 * @param additionalOptions
-	 *            if any the return will have them.
-	 *            ex) National boundaries -N1
+	 *            if any the return will have them. ex) National boundaries -N1
 	 * @return pscoast -J -R -Bs -Dc -V -W -K -O (additional) &gt;&gt; $psname
 	 */
 	public static String psCoast(String... additionalOptions) {
