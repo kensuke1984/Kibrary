@@ -16,7 +16,7 @@ import manhattan.template.Utilities;
 
 /**
  * Information file for SSHSH
- * @version 0.0.6
+ * @version 0.0.7
  * 
  * @author kensuke
  *
@@ -70,10 +70,10 @@ class SshDSMInformationFileMaker extends parameter.SshDSMInformationFileMaker {
 			Path modelPath = outEvent.resolve(sdif.header);
 			Files.createDirectories(outEvent);
 			Files.createDirectories(modelPath);
-			info.outPSV(outEvent.resolve("par5_" + sdif.header + "_PSV.inf"));
-			info.outSH(outEvent.resolve("par5_" + sdif.header + "_SH.inf"));
-			info.outPSVi(outEvent.resolve("par2_" + sdif.header + "_PSV.inf"));
-			info.outSHi(outEvent.resolve("par2_" + sdif.header + "_SH.inf"));
+			info.writeTIPSV(outEvent.resolve("par5_" + sdif.header + "_PSV.inf"));
+			info.writeTISH(outEvent.resolve("par5_" + sdif.header + "_SH.inf"));
+			info.writeISOPSV(outEvent.resolve("par2_" + sdif.header + "_PSV.inf"));
+			info.writeISOSH(outEvent.resolve("par2_" + sdif.header + "_SH.inf"));
 		}
 
 	}
