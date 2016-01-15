@@ -3,6 +3,7 @@ package manhattan.dsminformation;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -12,11 +13,11 @@ import manhattan.template.HorizontalPosition;
 /**
  * Information file for computation of forward propagation.
  * 
- * @version 0.0.4.1
+ * @version 0.0.4.2
  * 
  * @author Kensuke Konishi
  */
-class FPinfo extends DSMheader {
+public class FPinfo extends DSMheader {
 
 	private GlobalCMTData event;
 	private HorizontalPosition[] perturbationPoint;
@@ -25,15 +26,18 @@ class FPinfo extends DSMheader {
 	private String outputDir;
 
 	/**
-	 * @param event source
-	 * @param outputDir output folder
-	 * @param ps structure
+	 * @param event
+	 *            source
+	 * @param outputDir
+	 *            output folder
+	 * @param ps
+	 *            structure
 	 * @param tlen
-	 *            must be 2<sup>n</sup>/10
+	 *            must be a power of 2 (2<sup>n</sup>)/10
 	 * @param np
-	 *            must be 2<sup>n</sup>
+	 *            must be a power of 2 (2<sup>n</sup>)
 	 */
-	FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure ps, double tlen, int np) {
+	public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure ps, double tlen, int np) {
 		super(tlen, np);
 		this.event = event;
 		this.outputDir = outputDir;
@@ -48,7 +52,13 @@ class FPinfo extends DSMheader {
 		this.perturbationPointR = perturbationPointR;
 	}
 
-	public void outputSHFP(Path outPath) throws IOException {
+	/**
+	 * Write an information file for shfp.
+	 * @param outPath Path for the file
+	 * @param options for opening the file
+	 * @throws IOException If an I/O error happens
+	 */
+	public void writeSHFP(Path outPath, OpenOption... options) throws IOException {
 		// if(true)return;
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
 			// header
@@ -84,7 +94,13 @@ class FPinfo extends DSMheader {
 		}
 	}
 
-	public void outputPSVFP(Path outPath) throws IOException {
+	/**
+	 * Write an information file for psvfp
+	 * @param outPath Path for the file
+	 * @param options for opening the file
+	 * @throws IOException If an I/O error happens
+	 */
+	public void writePSVFP(Path outPath, OpenOption... options) throws IOException {
 		// if(true)return;
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
 			// header
