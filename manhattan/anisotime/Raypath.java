@@ -1726,9 +1726,6 @@ public class Raypath {
 		double b = calcQTS(startR + 0.5 * deltax);
 		double c = calcQTS(endR);
 		tau += bySimpsonRule(a, b, c) * deltax;
-		// if (Double.isNaN(tau))
-		// System.exit(0);
-		// }
 		return tau;
 	}
 
