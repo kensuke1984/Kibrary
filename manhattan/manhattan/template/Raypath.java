@@ -126,29 +126,38 @@ public class Raypath {
 	}
 
 	/**
+	 * ある点を震源、観測点に与えた時に、
+	 * 震源を北極に持って行って観測点をさらに標準時線に持っていった時のある点の座標
 	 * 
 	 * @param position
 	 *            {@link HorizontalPosition} of target
 	 * @return relative position when the source is shifted to the north pole
 	 *         and station is on the Standard meridian
-	 *         震源を北極に持って行って観測点をさらに標準時線に持っていった時の座標に対する 相対座標
 	 */
-	public HorizontalPosition toRaypath(HorizontalPosition position) {
-		// System.out.println(tmpLoc.isContainsR());
-		// if(!tmpLoc.isContainsR())
-		// tmpLoc.setR(Earth.EARTH_RADIUS);
+	public HorizontalPosition moveToNorthPole(HorizontalPosition position) {
 		XYZ xyz = position.toXYZ(Earth.EARTH_RADIUS);
-		// System.out.println(azimuth+" "+source.getTheta());
-		// System.out.println(xyz);
-		// System.exit(0);
-		xyz = xyz.rotateaboutZ(sourceLocation.getPhi());
+		xyz = xyz.rotateaboutZ(-sourceLocation.getPhi());
 		xyz = xyz.rotateaboutY(-sourceLocation.getTheta());
 		xyz = xyz.rotateaboutZ(-Math.PI + azimuth);
-		// System.out.println(xyz);
-
 		return xyz.getLocation();
 	}
-
+	
+	/**
+	 * 震源を北極に持って行って観測点をさらに標準時線に持っていった時に、ある点を仮定する。
+	 * その後震源、観測点を本来の位置に戻した時の、ある点の座標
+	 * 
+	 * @param position
+	 *            {@link HorizontalPosition} of target
+	 * @return relative position when the source is shifted from the north pole
+	 *         and station is from the Standard meridian
+	 */
+	public HorizontalPosition moveFromNorthPole(HorizontalPosition position) {
+		XYZ xyz = position.toXYZ(Earth.EARTH_RADIUS);
+		xyz = xyz.rotateaboutZ(Math.PI - azimuth);
+		xyz = xyz.rotateaboutY(sourceLocation.getTheta());
+		xyz = xyz.rotateaboutZ(sourceLocation.getPhi());
+		return xyz.getLocation();
+	}
 	/**
 	 * Compensation is the raypath extension of the input phase to the surface
 	 * at the source side.
@@ -161,9 +170,9 @@ public class Raypath {
 	 */
 	public double computeCompensatedEpicentralDistance(Phase phase, VelocityStructure structure) {
 		List<anisotime.Raypath> rays = toANISOtime(phase, structure);
-		if(rays.isEmpty())
+		if (rays.isEmpty())
 			throw new RuntimeException("No raypath");
-		if(1<rays.size())
+		if (1 < rays.size())
 			throw new RuntimeException("multiples");
 		return rays.get(0).computeExtendedDelta(phase);
 	}

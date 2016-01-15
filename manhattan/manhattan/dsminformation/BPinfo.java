@@ -3,30 +3,31 @@ package manhattan.dsminformation;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 
 import manhattan.template.HorizontalPosition;
+import manhattan.template.Station;
 
 /**
  * Information file for computation of back propagation.
  * 
  * 
- * @version 0.0.4.1
+ * @version 0.0.4.2
  * 
  * @author Kensuke
  * 
  * 
  */
-class BPinfo extends DSMheader {
+public class BPinfo extends DSMheader {
 
 	private String outputDir;
-	private String staName;
 
 	private double[] perturbationPointR;
 	private HorizontalPosition[] perturbationPoint;
 	// private double sourceR;
-	private HorizontalPosition station;
+	private Station station;
 	private PolynomialStructure ps;
 
 	public String getOutputDir() {
@@ -52,16 +53,12 @@ class BPinfo extends DSMheader {
 	 * @param np
 	 *            must be 2^n
 	 */
-	BPinfo(HorizontalPosition station, String outputDir, PolynomialStructure ps, double tlen, int np) {
+	public BPinfo(Station station, String outputDir, PolynomialStructure ps, double tlen, int np) {
 		super(tlen, np);
 		this.station = station;
 		this.outputDir = outputDir;
 		this.ps = ps;
 		// this.sourceR=sourceR;
-	}
-
-	public String getStaName() {
-		return staName;
 	}
 
 	public void setPerturbationPoint(HorizontalPosition[] perturbationPoint) {
@@ -72,9 +69,15 @@ class BPinfo extends DSMheader {
 		this.perturbationPointR = perturbationPointR;
 	}
 
-	public void outputPSVBP(Path outPath) throws IOException {
+	/**
+	 * Write an information file for psvbp
+	 * @param outPath Path for the file
+	 * @param options for opening the file
+	 * @throws IOException If an I/O error happens
+	 */
+	public void writePSVBP(Path outPath, OpenOption... options) throws IOException {
 
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
 			Arrays.stream(header).forEach(pw::println);
@@ -84,13 +87,14 @@ class BPinfo extends DSMheader {
 			Arrays.stream(structure).forEach(pw::println);
 
 			// source
+			HorizontalPosition stationPosition = station.getPosition();
 			pw.println("0 " + // BPINFOには震源深さいらない
-					station.getLatitude() + " " + station.getLongitude());
+					stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
 			// output info
 			pw.println("c output directory");
 			pw.println(outputDir + "/");
-			pw.println(staName);
+			pw.println(station.getStationName());
 			pw.println("c events and stations");
 
 			// nr
@@ -105,9 +109,19 @@ class BPinfo extends DSMheader {
 		}
 	}
 
-	public void outputSHBP(Path outPath) throws IOException {
+	/**
+	 * Write an information file for shbp
+	 * 
+	 * @param outPath
+	 *            Path for the file
+	 * @param options
+	 *            for opening the file
+	 * @throws IOException
+	 *             if an I/O error happens
+	 */
+	public void writeSHBP(Path outPath, OpenOption... options) throws IOException {
 
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
 			Arrays.stream(header).forEach(pw::println);
@@ -116,13 +130,14 @@ class BPinfo extends DSMheader {
 			String[] structure = ps.toSHlines();
 			Arrays.stream(structure).forEach(pw::println);
 
+			HorizontalPosition stationPosition = station.getPosition();
 			pw.println("0 " + // BPINFOには震源深さいらない
-					station.getLatitude() + " " + station.getLongitude());
+					stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
 			// output info
 			pw.println("c output directory");
 			pw.println(outputDir + "/");
-			pw.println(staName);
+			pw.println(station.getStationName());
 			pw.println("c events and stations");
 
 			// nr
@@ -138,15 +153,9 @@ class BPinfo extends DSMheader {
 		}
 	}
 
-	public void setPerturbationPointDepth(double[] perturbationPointDepth) {
-		this.perturbationPointR = perturbationPointDepth;
-	}
 
 	public void setPs(PolynomialStructure ps) {
 		this.ps = ps;
 	}
 
-	public void setStaName(String staName) {
-		this.staName = staName;
-	}
 }

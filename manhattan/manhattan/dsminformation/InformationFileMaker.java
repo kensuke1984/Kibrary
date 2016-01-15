@@ -109,8 +109,8 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 			// System.out.println(infDir);
 			// infDir.mkdir();
 			Files.createDirectories(infPath.resolve(ifm.header));
-			fp.outputSHFP(infPath.resolve(ifm.header + "_SH.inf"));
-			fp.outputPSVFP(infPath.resolve(ifm.header + "_PSV.inf"));
+			fp.writeSHFP(infPath.resolve(ifm.header + "_SH.inf"));
+			fp.writePSVFP(infPath.resolve(ifm.header + "_PSV.inf"));
 			//
 		}
 
@@ -118,17 +118,16 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 		for (Station station : stationSet) {
 			String str = station.getStationName();
 			// System.out.println(str);
-			BPinfo bp = new BPinfo(station.getPosition(), ifm.header, ps, ifm.tlen, ifm.np);
+			BPinfo bp = new BPinfo(station, ifm.header, ps, ifm.tlen, ifm.np);
 			bp.setPerturbationPointR(ifm.perturbationPointR);
 			bp.setPerturbationPoint(ifm.perturbationPointPositions);
-			bp.setStaName(str);
 
 			Path infPath = bpPath.resolve("0000" + str);
 			// infDir.mkdir();
 			// System.out.println(infDir.getPath()+" was made");
 			Files.createDirectories(infPath.resolve(ifm.header));
-			bp.outputSHBP(infPath.resolve(ifm.header + "_SH.inf"));
-			bp.outputPSVBP(infPath.resolve(ifm.header + "_PSV.inf"));
+			bp.writeSHBP(infPath.resolve(ifm.header + "_SH.inf"));
+			bp.writePSVBP(infPath.resolve(ifm.header + "_PSV.inf"));
 
 		}
 
