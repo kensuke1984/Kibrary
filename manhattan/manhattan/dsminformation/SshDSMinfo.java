@@ -14,12 +14,15 @@ import manhattan.template.Station;
 /**
  * Information file for SSHPSV and SSHSH
  * 
- * @version 0.0.4.1
+ * <p>This class is <b>IMMUTABLE<b>
+ * 
+ * 
+ * @version 0.0.5
  * 
  * @author kensuke
  * 
  */
-class SshDSMinfo extends SyntheticDSMInfo {
+public class SshDSMinfo extends SyntheticDSMInfo {
 
 	private double[] perturbationR;
 
@@ -29,8 +32,17 @@ class SshDSMinfo extends SyntheticDSMInfo {
 		this.perturbationR = perturbationR;
 	}
 
-	@Override
-	public void outPSV(Path psvPath, OpenOption... options) throws IOException {
+	/**
+	 * sshpsv(TI)計算用のファイル出力
+	 * 
+	 * @param psvPath
+	 *            output path
+	 * @param options
+	 *            options for writing
+	 * @throws IOException
+	 *             if any
+	 */
+	public void writeTIPSV(Path psvPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
@@ -69,13 +81,16 @@ class SshDSMinfo extends SyntheticDSMInfo {
 	}
 
 	/**
-	 * sshpsv i計算用のファイル出力
+	 * sshpsvi(isotropic)計算用のファイル出力
 	 * 
-	 * @param psvPath output path
-	 * @param options options for writing
-	 * @throws IOException if any
+	 * @param psvPath
+	 *            output path
+	 * @param options
+	 *            options for writing
+	 * @throws IOException
+	 *             if any
 	 */
-	void outPSVi(Path psvPath, OpenOption... options) throws IOException {
+	public void writeISOPSV(Path psvPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
@@ -106,12 +121,16 @@ class SshDSMinfo extends SyntheticDSMInfo {
 	}
 
 	/**
-	 * sshsh計算用のファイル出力
+	 * sshsh(TI)計算用のファイル出力
 	 * 
 	 * @param shPath
+	 *            output path
+	 * @param options
+	 *            options for writing
+	 * @throws IOException
+	 *             if any
 	 */
-	@Override
-	public void outSH(Path shPath, OpenOption... options) throws IOException {
+	public void writeTISH(Path shPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
@@ -147,13 +166,16 @@ class SshDSMinfo extends SyntheticDSMInfo {
 	}
 
 	/**
-	 * sshshi計算用のファイル出力
+	 * sshshi(isotropic)計算用のファイル出力
 	 * 
-	 * @param shPath output path
-	 * @param options for writing
-	 * @throws IOException if any
+	 * @param shPath
+	 *            output path
+	 * @param options
+	 *            for writing
+	 * @throws IOException
+	 *             if any
 	 */
-	void outSHi(Path shPath, OpenOption... options) throws IOException {
+	public void writeISOSH(Path shPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(shPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
