@@ -13,14 +13,16 @@ import java.util.List;
 
 /**
  * 
- * Every depth is written as <b>radius</b>. The raypath is of a given ray parameter p.
+ * Every depth is written as <b>radius</b>. The raypath is of a given ray
+ * parameter p.
  * 
  * Cannot compute travel time for structures that have layers with 0 velocity
  * and non zero velocity. Layers must have only non zero velocity or zero
  * velocity.
  * 
- *  now diffraction phase is computable but only for the raypath which
- *        turning R is near the CMB by {@link #permissibleGapForDiff}
+ * now diffraction phase is computable but only for the raypath which turning R
+ * is near the CMB by {@link #permissibleGapForDiff}
+ * 
  * @author Kensuke
  * 
  * 
@@ -734,9 +736,13 @@ public class Raypath {
 	 */
 	public double[][] getRoute(Phase phase) {
 		if (!exists(phase)) {
-			System.out.println(phase + " does not exist.");
+			System.err.println(phase + " does not exist.");
 			return null;
 		}
+
+		if (mantlePR == null && mantleSR == null)
+			throw new RuntimeException("It looks like the Raypath is not computed yet");
+
 		// System.out.println(phase+" "+ shTurningR);
 		double[][] points = null;
 		List<Double> thetaList = new ArrayList<>();
@@ -913,7 +919,7 @@ public class Raypath {
 	 */
 	public double[][] getRouteXY(Phase phase) {
 		if (!exists(phase)) {
-			System.out.println(phase + " does not exist.");
+			System.err.println(phase + " does not exist.");
 			return null;
 		}
 		// System.out.println(phase+" "+ shTurningR);
