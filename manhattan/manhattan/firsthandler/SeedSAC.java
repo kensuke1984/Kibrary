@@ -334,7 +334,7 @@ class SeedSAC implements Runnable {
 	}
 
 	/**
-	 * rdseed で解凍した波形ファイルのうちおかしなものを省く deltaがずれているものはすて、 波形がとびとびのものをmergeする
+	 * rdseedで解凍した波形ファイルのうちおかしなものを省くdeltaがずれているものはすて、波形がとびとびのものをmergeする
 	 */
 	private void mergeUnevenSac() throws IOException {
 		// System.out.println("Merging in " + eventDir);
@@ -363,7 +363,7 @@ class SeedSAC implements Runnable {
 				// System.out.println(sacFile);
 				SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
-				// header check
+				// header check  khole e.t.c
 				if (!sm.canInterpolate() || !sm.checkHeader()) {
 					// System.out.println(sacPath + " has too big gap to be
 					// interpolated. or header problem");

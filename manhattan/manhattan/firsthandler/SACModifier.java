@@ -16,7 +16,7 @@ import manhattan.template.Location;
  * {@link SeedSAC}内で行うSacの修正
  * 
  * 
- * @version 0.1.7
+ * @version 0.1.8
  * 
  * @author kensuke
  * 
@@ -77,7 +77,7 @@ class SACModifier {
 
 		// check "khole" value
 		String khole = headerMap.get(SACHeaderEnum.KHOLE);
-		return khole.equals("") || khole.equals("00");
+		return khole.equals("") || khole.equals("00")||khole.equals("01");
 	}
 
 	/**
