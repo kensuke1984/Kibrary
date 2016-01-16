@@ -123,7 +123,7 @@ class ModelGenerator {
 			value *= -1;
 		}
 		PolynomialStructure ps1 = createStructure(percentage);
-		ps1.outPSV(p.resolve("opposite50.model"));
+		ps1.writePSV(p.resolve("opposite50.model"));
 	}
 
 }

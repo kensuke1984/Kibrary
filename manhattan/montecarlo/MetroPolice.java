@@ -423,13 +423,13 @@ class MetroPolice {
 				e.printStackTrace();
 			}
 			if (betterModel) {
-				nextModel.outPSV(candidate.resolve(iRun + ".model"));
+				nextModel.writePSV(candidate.resolve(iRun + ".model"));
 				current = candidate;
 				formerModel = nextModel;
 				modelNumber = iRun;
 			} else {
-				formerModel.outPSV(candidate.resolve(iRun + "." + modelNumber + ".model"));
-				nextModel.outPSV(candidate.resolve(iRun + ".model.botsu"));
+				formerModel.writePSV(candidate.resolve(iRun + "." + modelNumber + ".model"));
+				nextModel.writePSV(candidate.resolve(iRun + ".model.botsu"));
 			}
 		}
 	}

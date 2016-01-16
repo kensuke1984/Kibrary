@@ -363,6 +363,8 @@ class SeedSAC implements Runnable {
 				// System.out.println(sacFile);
 				SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
+				//TODO 00 01 "" duplication detect
+				
 				// header check  khole e.t.c
 				if (!sm.canInterpolate() || !sm.checkHeader()) {
 					// System.out.println(sacPath + " has too big gap to be
