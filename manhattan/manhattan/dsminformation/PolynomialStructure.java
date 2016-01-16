@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 /**
- * Structure of the Earth for DSM input <br>
+ * (input) Structure of the Earth for softwares of <i>Direct Solution Method</i> (DSM)<br>
  * 
  * Every depth is written in <b>radius</b>.<br>
  * 
@@ -20,8 +20,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.1
- * 
+ * @version 0.2.1.1
  * 
  * @author kensuke
  * 
@@ -619,8 +618,8 @@ public class PolynomialStructure {
 	/**
 	 * change String line from coefficients a + bx + cx**2 >>>>> a b c 0
 	 * 
-	 * @param pf
-	 * @return
+	 * @param pf polynomial function for a layer
+	 * @return string in a form of this
 	 */
 	private static String toLine(PolynomialFunction pf) {
 		double[] coef = new double[4];
@@ -666,7 +665,7 @@ public class PolynomialStructure {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outPSV(Path outPath, OpenOption... options) throws IOException {
+	public void writePSV(Path outPath, OpenOption... options) throws IOException {
 		Files.write(outPath, Arrays.asList(toPSVlines()), options);
 	}
 
@@ -678,7 +677,7 @@ public class PolynomialStructure {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outSH(Path outPath, OpenOption... options) throws IOException {
+	public void writeSH(Path outPath, OpenOption... options) throws IOException {
 		Files.write(outPath, Arrays.asList(toSHlines()), options);
 	}
 
