@@ -19,6 +19,7 @@ and then type **gradlew build**,
 you will see a jar file of *Kibrary* in build/libs.
 
 ```bash
+ host$ wget http://kensuke1984.github.io/gradlew.tar http://kensuke1984.github.io/build.gradle
  host$ tar xf gradlew.tar
  host$ ./gradlew
  host$ ./gradlew build 
