@@ -10,9 +10,9 @@ Library for waveform inversion.
 
 It bundles [ANISOtime][ANISOtime] package.  
 
+[Java SE Runtime Environment(JRE) 8][JRE8] is required.
 
 ##Installation
-You need [Java SE Runtime Environment(JRE) 8][JRE8].
 Here is a script [build.gradle][gradlescript] for *Gradle 2.10*.  
 If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
