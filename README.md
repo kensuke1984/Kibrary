@@ -15,7 +15,7 @@ It bundles [ANISOtime][ANISOtime] package.
 You need [Java SE Runtime Environment(JRE) 8][JRE8].
 Here is a script [build.gradle][gradlescript] for *Gradle 2.10*.  
 If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
-and then **gradle build**,  
+and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
 
 ##Usage
