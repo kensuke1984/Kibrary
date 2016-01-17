@@ -4,7 +4,9 @@
 package mathtool.geometry;
 
 /**
- * Point representation This class is <b>immutable </b>
+ * Point representation
+ * <p>
+ * This class is <b>immutable </b>
  * 
  * @version 0.0.1
  *

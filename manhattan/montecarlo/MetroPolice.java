@@ -112,7 +112,7 @@ class MetroPolice {
 				GlobalCMTID id = eventDir.getGlobalCMTID();
 				Files.createDirectories(runPath.resolve(id + "/spc"));
 				// dsmInfo.outPSV(runPath.resolve(id + "/psv.inf"));
-				dsmInfo.outSH(runPath.resolve(id + "/sh.inf"));
+				dsmInfo.writeSH(runPath.resolve(id + "/sh.inf"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

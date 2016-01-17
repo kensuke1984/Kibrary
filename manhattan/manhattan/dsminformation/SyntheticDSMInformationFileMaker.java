@@ -72,8 +72,8 @@ class SyntheticDSMInformationFileMaker extends parameter.SyntheticDSMInformation
 				SyntheticDSMInfo info = new SyntheticDSMInfo(ps, eventDir.getGlobalCMTID(), stations, sdif.header,
 						sdif.tlen, sdif.np);
 				Files.createDirectories(eventOut.resolve(sdif.header));
-				info.outPSV(eventOut.resolve(sdif.header + "_PSV.inf"));
-				info.outSH(eventOut.resolve(sdif.header + "_SH.inf"));
+				info.writePSV(eventOut.resolve(sdif.header + "_PSV.inf"));
+				info.writeSH(eventOut.resolve(sdif.header + "_SH.inf"));
 			} catch (Exception e) {
 				System.err.println("Error on " + eventDir);
 				e.printStackTrace();
