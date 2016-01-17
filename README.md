@@ -12,7 +12,10 @@ It bundles [ANISOtime][ANISOtime] package.
 
 
 ##Installation
-You just need [Java SE Runtime Environment(JRE) 8][JRE8] and set appropriate CLASSPATH.
+You need [Java SE Runtime Environment(JRE) 8][JRE8].
+Here is a gradle script [build.gradle][gradlescript].
+If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
+and then **gradle build**, you will see a jar file of *Kibrary* in build/libs.
 
 ##Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
@@ -40,6 +43,8 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
 [JRE8]:http://www.oracle.com/technetwork/java/javase/downloads/index.html
+[gradlescript]:http://kensuke1984.github.io/build.gradle
+[gradlew]:http://kensuke1984.github.io/gradlew.tar
 
 [wiki]:https://github.com/kensuke1984/Kibrary/wiki
 [email]:mailto:kensuke@earth.sinica.edu.tw
