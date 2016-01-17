@@ -80,7 +80,7 @@ public class SyntheticDSMInfo extends DSMheader {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outPSV(Path psvPath, OpenOption... options) throws IOException {
+	public void writePSV(Path psvPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
 			// header
 			String[] header = outputDSMHeader();
@@ -124,7 +124,7 @@ public class SyntheticDSMInfo extends DSMheader {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outSH(Path outPath, OpenOption... options) throws IOException {
+	public void writeSH(Path outPath, OpenOption... options) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
 			// header
 			String[] header = outputDSMHeader();

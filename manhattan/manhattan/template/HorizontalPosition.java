@@ -3,6 +3,7 @@ package manhattan.template;
 import org.apache.commons.math3.util.FastMath;
 
 import mathtool.geometry.Ellipse;
+import mathtool.geometry.Point2D;
 import mathtool.geometry.RThetaPhi;
 import mathtool.geometry.XYZ;
 
@@ -17,7 +18,7 @@ import mathtool.geometry.XYZ;
  * 
  * @author Kensuke
  * 
- * @version 0.1.0
+ * @version 0.1.1
  * 
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
@@ -257,6 +258,13 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
 		return distance;
 
+	}
+	
+	/**
+	 * @return Point2D of this
+	 */
+	public Point2D toPoint2D(){
+		return new Point2D(getLongitude(), getLatitude());
 	}
 
 }
