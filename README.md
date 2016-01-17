@@ -18,6 +18,12 @@ If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
 
+```bash
+ host$ tar xf gradlew.tar
+ host$ ./gradlew
+ host$ ./gradlew build 
+```
+
 ##Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
