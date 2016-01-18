@@ -7,7 +7,7 @@
 
 
 Library for waveform inversion.   
-aaaaaaaa
+
 It bundles [ANISOtime][ANISOtime] package.  
 
 [Java SE Runtime Environment(JRE) 8][JRE8] is required.
