@@ -2,7 +2,6 @@ package manhattan.firsthandler;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -100,7 +99,7 @@ class SeedSAC implements Runnable {
 	/**
 	 * 解凍できるかどうか
 	 */
-	private boolean canGO;
+	private boolean eventDirAlreadyExists;
 
 	/**
 	 * PDE時刻, 位置を基準に解凍するかどうか デフォルトはfalse (CMT)
@@ -137,7 +136,7 @@ class SeedSAC implements Runnable {
 	 *             the seed file.
 	 */
 	SeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
-		this.seedFile = new SEEDFile(seedPath);
+		seedFile = new SEEDFile(seedPath);
 		if (id != null)
 			this.id = id;
 		else
@@ -148,11 +147,15 @@ class SeedSAC implements Runnable {
 		if (!Files.exists(outputDirectoryPath))
 			Files.createDirectories(outputDirectoryPath);
 		eventDir = new EventFolder(outputDirectoryPath.resolve(this.id.toString()));
-		if (eventDir.exists() || !eventDir.mkdir())
-			throw new FileAlreadyExistsException(eventDir.toString());
 
-		// System.out.println(eventDir + " " + eventDir.exists());
-		canGO = this.seedFile.toDirectory(eventDir.toPath());
+		if (eventDir.exists())
+			eventDirAlreadyExists = false;
+		else if (!eventDir.mkdirs())
+			throw new RuntimeException("Can not create " + eventDir);
+		else
+			eventDirAlreadyExists = true;
+
+		seedFile.toDirectory(eventDir.toPath());
 	}
 
 	/**
@@ -320,10 +323,6 @@ class SeedSAC implements Runnable {
 
 	}
 
-	private boolean canGO() {
-		return canGO;
-	}
-
 	private boolean hadRun;
 
 	/**
@@ -363,9 +362,9 @@ class SeedSAC implements Runnable {
 				// System.out.println(sacFile);
 				SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
-				//TODO 00 01 "" duplication detect
-				
-				// header check  khole e.t.c
+				// TODO 00 01 "" duplication detect
+
+				// header check khole e.t.c
 				if (!sm.canInterpolate() || !sm.checkHeader()) {
 					// System.out.println(sacPath + " has too big gap to be
 					// interpolated. or header problem");
@@ -385,7 +384,6 @@ class SeedSAC implements Runnable {
 
 				// 震央距離check
 				if (!sm.checkEpicentralDistance(epicentralDistanceMin, epicentralDistanceMax)) {
-					// System.out.println(sacFile+" is moved.");
 					Utilities.moveToDirectory(sacPath, trashBoxPath, true);
 					continue;
 				}
@@ -498,12 +496,9 @@ class SeedSAC implements Runnable {
 
 	@Override
 	public void run() {
-
-		if (!canGO())
+		if (!eventDirAlreadyExists)
 			throw new RuntimeException("The condition is no good.");
-
 		System.out.println("Opening " + seedFile + " in " + eventDir);
-
 		// run rdseed -q output -fRd
 		try {
 			seedFile.extract(seedFile.getSeedPath().getParent());

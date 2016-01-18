@@ -17,8 +17,8 @@ import manhattan.template.Utilities;
 /**
  * Java version First handler ported from the perl software.<br>
  * Processes extraction along the information file.
- * {@link parameter.FirstHandler}
- * This extracts {@link SEEDFile}s under a working golder
+ * {@link parameter.FirstHandler} This extracts {@link SEEDFile}s under a
+ * working golder
  * 
  * 
  * 
@@ -26,16 +26,15 @@ import manhattan.template.Utilities;
  * <p>
  * <a href=http://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>rdseed</a> and <a
  * href=http://ds.iris.edu/ds/nodes/dmc/manuals/evalresp/>evalresp</a> must be
- * in PATH.
- * </p>
- * If you want to remove intermediate files.
+ * in PATH. </p> If you want to remove intermediate files.
  * 
  * 
  * TODO NPTSで合わないものを捨てる？
  * 
  * Even if a seed file contains both BH? and HH?, it will not throw errors,
- * however, no one knows which channel is used for extraction until you see the intermediate files.
- * If you want to see them, you have to leave the intermediate files explicitly.
+ * however, no one knows which channel is used for extraction until you see the
+ * intermediate files. If you want to see them, you have to leave the
+ * intermediate files explicitly.
  * 
  * 
  * 
@@ -76,29 +75,34 @@ class FirstHandler extends parameter.FirstHandler {
 		FirstHandler fh = parse(args);
 		long startT = System.nanoTime();
 		System.err.println("FirstHandler is going");
-		System.err.println("Working directory is " + fh.workPath);
+		fh.run();
+		System.err.println("FirstHandler finished in " + Utilities.toTimeString(System.nanoTime() - startT));
 
+	}
+
+	public void run() throws IOException {
+		System.err.println("Working directory is " + workPath);
 		// check if conditions. if for example there are already existing output
 		// files, this program starts here,
-		if (!Files.exists(fh.workPath))
-			throw new NoSuchFileException(fh.workPath.toString());
-		fh.outPath = fh.workPath.resolve("fh" + Utilities.getTemporaryString());
-		Path goodSeedPath = fh.outPath.resolve("goodSeeds");
-		Path badSeedPath = fh.outPath.resolve("badSeeds");
-		Path ignoredSeedPath = fh.outPath.resolve("ignoredSeeds");
+		if (!Files.exists(workPath))
+			throw new NoSuchFileException(workPath.toString());
+		outPath = workPath.resolve("fh" + Utilities.getTemporaryString());
+		Path goodSeedPath = outPath.resolve("goodSeeds");
+		Path badSeedPath = outPath.resolve("badSeeds");
+		Path ignoredSeedPath = outPath.resolve("ignoredSeeds");
 
-		Set<Path> seedPaths = fh.findSeedFiles();
+		Set<Path> seedPaths = findSeedFiles();
 		System.err.println(seedPaths.size() + " seeds are found.");
 		if (seedPaths.isEmpty())
 			return;
 
 		// creates environment (make output folder ...)
-		Files.createDirectories(fh.outPath);
-		System.out.println("Output directory is " + fh.outPath);
+		Files.createDirectories(outPath);
+		System.out.println("Output directory is " + outPath);
 
 		Set<SeedSAC> seedSacs = seedPaths.stream().map(seedPath -> {
 			try {
-				return new SeedSAC(seedPath, fh.outPath);
+				return new SeedSAC(seedPath, outPath);
 			} catch (Exception e) {
 				try {
 					System.out.println(seedPath + " has problem. " + e);
@@ -110,7 +114,7 @@ class FirstHandler extends parameter.FirstHandler {
 			}
 		}).filter(Objects::nonNull).collect(Collectors.toSet());
 
-		seedSacs.forEach(ss -> ss.setRemoveIntermediateFiles(fh.removeIntermediateFile));
+		seedSacs.forEach(ss -> ss.setRemoveIntermediateFiles(removeIntermediateFile));
 
 		int threadNum = Runtime.getRuntime().availableProcessors();
 		ExecutorService es = Executors.newFixedThreadPool(threadNum);
@@ -138,9 +142,6 @@ class FirstHandler extends parameter.FirstHandler {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
-		System.err.println("FirstHandler finished in " + Utilities.toTimeString(System.nanoTime() - startT));
-
 	}
 
 	private Set<Path> findSeedFiles() throws IOException {
