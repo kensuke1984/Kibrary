@@ -36,7 +36,7 @@ Copyright © 2015 Kensuke Konishi
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 
 
-[release-image]:https://img.shields.io/badge/release-Goblin-pink.svg
+[release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
 [release]:https://en.wikipedia.org/wiki/Sahuagin
 [version-image]:https://img.shields.io/badge/version-0.3.beta-yellow.svg
 
