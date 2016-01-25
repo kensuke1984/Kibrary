@@ -12,7 +12,7 @@ import java.util.Set;
 
 /**
  * 
- * Information for {@link manhattan.inversion.CheckerBoardTest}
+ * Information for {@link io.github.kensuke1984.kibrary.inversion.CheckerBoardTest}
  * 
  * @version 0.0.2
  * @since 2013/11/15

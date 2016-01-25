@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Information for {@link manhattan.datacorrection.FujiStaticCorrection}
+ * Information for {@link io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection}
  * 
  * @version 0.0.2
  * @since 2013/10/10

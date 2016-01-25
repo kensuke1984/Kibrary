@@ -12,12 +12,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
-import filehandling.spc.PartialType;
-import manhattan.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
- * Information for {@link manhattan.waveformdata.PartialDatasetMaker}
+ * Information for {@link io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker}
  * 
  * @since 2014/8/19
  * @version 0.0.2 Constructors changed.

@@ -12,11 +12,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * 
- * Information for {@link manhattan.waveformdata.ObservedSyntheticDatasetMaker}
+ * Information for {@link io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker}
  * 
  * @version 0.0.8.1
  * 

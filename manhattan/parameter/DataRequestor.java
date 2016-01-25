@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Information for {@link manhattan.datarequest.DataRequestor}
+ * Information for {@link io.github.kensuke1984.kibrary.datarequest.DataRequestor}
  * 
  * @since 2015/02/09
  * @version 0.0.1

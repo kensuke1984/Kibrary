@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Parameter file for {@link manhattan.selection.SecondHandler}
+ * Parameter file for {@link io.github.kensuke1984.kibrary.selection.SecondHandler}
  * 
  * @version 0.0.2
  * @since 2013/9/25

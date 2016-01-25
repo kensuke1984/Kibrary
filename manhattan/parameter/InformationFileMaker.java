@@ -10,11 +10,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
 
-import manhattan.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 
 /**
  * 
- * Information for {@link manhattan.dsminformation.InformationFileMaker}
+ * Information for {@link io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker}
  * 
  * @version 0.0.2
  * @since 2014/02/05 {@link #tlen} {@link #np} installed
