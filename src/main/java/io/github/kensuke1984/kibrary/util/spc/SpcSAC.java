@@ -79,7 +79,7 @@ public final class SpcSAC implements Operation {
 				.collect(Collectors.toSet());
 
 		try {
-			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimefunction"));
+			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
 			if (sourceTimeFunction != 0 && sourceTimeFunction != 1)
 				throw new IllegalArgumentException(
 						"The property for Source time function is invalid. It must be 0, 1 or a source time function folder path.");
