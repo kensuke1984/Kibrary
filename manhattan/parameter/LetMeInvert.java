@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import manhattan.inversion.InverseMethodEnum;
+import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 
 /**
- * Information of {@link manhattan.inversion.LetMeInvert}
+ * Information of {@link io.github.kensuke1984.kibrary.inversion.LetMeInvert}
  * 
  * 
  * @version 0.1.3.1

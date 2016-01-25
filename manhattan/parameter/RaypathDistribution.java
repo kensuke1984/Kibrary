@@ -12,14 +12,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
-import manhattan.inversion.StationInformationFile;
-import manhattan.template.Station;
-import manhattan.timewindow.TimewindowInformation;
-import manhattan.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Information for {@link manhattan.gmt.RaypathDistribution}
+ * Information for {@link io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution}
  * 
  * 
  * @author kensuke

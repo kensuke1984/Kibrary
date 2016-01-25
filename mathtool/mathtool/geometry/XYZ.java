@@ -1,6 +1,6 @@
 package mathtool.geometry;
 
-import manhattan.template.Location;
+import io.github.kensuke1984.kibrary.util.Location;
 
 /**
  * 3次元直交座標 cartesian 右手系
