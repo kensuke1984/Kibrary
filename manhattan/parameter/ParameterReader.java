@@ -24,20 +24,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * 
  * 区切り文字は スペースかタブ If there are no values, the key is also ignored.
  * 
- * @version 0.0.1 key value
- * @version 0.0.2 key value1 value2 .....
- * 
- * @since 2014/8/19 Constructors changed.
- * 
- * @since 2014/9/7
- * @version 0.0.3 to Java 8
- * 
- * @since 2014/9/10
- * @version 0.0.4 {@link #getInt(String)} {@link #getDouble(String)} installed
- * 
- * 
- * @since 2015/8/13
- * {@link Path} base
+ * @version 0.0.4
  * 
  * @author kensuke
  * 
@@ -54,7 +41,7 @@ class ParameterReader {
 	 * @param parameterFile
 	 *            parameter file
 	 */
-	ParameterReader(Path parameterPath) throws IOException{
+	ParameterReader(Path parameterPath) throws IOException {
 		if (parameterPath == null || !Files.exists(parameterPath))
 			showDialog();
 		else
@@ -65,7 +52,7 @@ class ParameterReader {
 	/**
 	 * show dialog for selecting an input file
 	 */
-	private void showDialog() throws IOException{
+	private void showDialog() throws IOException {
 
 		String filename = null;
 		Path path = null;
@@ -103,7 +90,7 @@ class ParameterReader {
 
 	}
 
-	private static String find(Path path)throws IOException {
+	private static String find(Path path) throws IOException {
 		Path parent = path.getParent();
 		String s = path.toString();
 		try (Stream<Path> listStream = Files.list(parent)) {
@@ -111,8 +98,8 @@ class ParameterReader {
 					.filter(candidate -> candidate.getFileName().toString().startsWith(path.getFileName().toString()))
 					.sorted().toArray(n -> new Path[n]);
 			Arrays.stream(candidates).forEach(System.out::println);
-			if (candidates.length==1)
-				s =candidates[0].toString();
+			if (candidates.length == 1)
+				s = candidates[0].toString();
 		}
 		return s;
 	}
@@ -207,14 +194,14 @@ class ParameterReader {
 		boolean isOK = true;
 		// System.out.println("Checking if "+parameterFile+" has enough
 		// information");
-		for (String key : keys) 
+		for (String key : keys)
 			if (!parameterMap.containsKey(key)) {
 				isOK = false;
 				System.out.println("There is no information about " + key + " "
 						+ Thread.currentThread().getStackTrace()[1].getClassName() + "#"
 						+ Thread.currentThread().getStackTrace()[1].getMethodName());
 			}
-		
+
 		return isOK;
 	}
 

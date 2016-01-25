@@ -12,10 +12,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Information for {@link manhattan.selection.DataSelection}
+ * Information for {@link io.github.kensuke1984.kibrary.selection.DataSelection}
  * 
  * 
  * @version 0.1.7

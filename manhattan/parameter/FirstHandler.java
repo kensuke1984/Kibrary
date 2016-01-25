@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Information for {@link manhattan.firsthandler.FirstHandler}
+ * Information for {@link io.github.kensuke1984.kibrary.firsthandler.FirstHandler}
  * 
  * @version 0.0.2
  * @since 2013/9/24

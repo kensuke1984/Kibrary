@@ -12,17 +12,13 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
- * Parameter file for {@link manhattan.datacorrection.TakeuchiStaticCorrection}
+ * Parameter file for {@link io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection}
  * 
  * @author kensuke
- * @since 2015/08/07
- * @version 0.0.1
- * 
  * @version 0.0.2
- * @since 2015/8/14 {@link IOException} {@link Path}base
  * 
  * 
  */

@@ -12,11 +12,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import filehandling.sac.SACComponent;
-import filehandling.spc.PartialType;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
- * Information of {@link manhattan.waveformdata.Partial1DDatasetMaker}
+ * Information of {@link io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker}
  * 
  * 
  * @version 0.0.2

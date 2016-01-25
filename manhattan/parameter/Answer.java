@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * {@link manhattan.inversion.Answer}information
+ * {@link io.github.kensuke1984.kibrary.inversion.Answer}information
  * 
  * @author kensuke
  * @since 2014/08/19
