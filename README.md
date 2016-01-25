@@ -37,8 +37,8 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 
 
 [release-image]:https://img.shields.io/badge/release-Goblin-pink.svg
-[release]:https://en.wikipedia.org/wiki/Goblin
-[version-image]:https://img.shields.io/badge/version-0.2.8-yellow.svg
+[release]:https://en.wikipedia.org/wiki/Sahuagin
+[version-image]:https://img.shields.io/badge/version-0.3.beta-yellow.svg
 
 [alicense-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: http://www.apache.org/licenses/LICENSE-2.0
