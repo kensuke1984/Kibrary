@@ -135,7 +135,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			pw.println("##np must be a power of 2 (512)");
 			pw.println("#np");
 			pw.println("##Depths for computations, must be defined");
-			pw.println("#perturbationR");
+			pw.println("#perturbationR 3500 3600");
 		}
 		System.out.println(outPath + " is created.");
 	}
