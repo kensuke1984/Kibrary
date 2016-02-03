@@ -9,15 +9,16 @@ import java.time.LocalTime;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Interface of SAC header data<br>
  * 
- * The SAC header is described <A
- * href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
+ * The SAC header is described
+ * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  * 
  * @author kensuke
- * @version 0.0.1
+ * @version 0.0.1.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACHeaderData {
@@ -144,6 +145,14 @@ public interface SACHeaderData {
 				.setInt(SACHeaderEnum.NZMIN, eventDateTime.getMinute())
 				.setInt(SACHeaderEnum.NZSEC, eventDateTime.getSecond())
 				.setInt(SACHeaderEnum.NZMSEC, eventDateTime.getNano() / 1000 / 1000);
+	}
+
+	/**
+	 * If the value KEVNM is not valid for GlobalCMTID, then it will throw RuntimeException.
+	 * @return GlobalCMTID by KEVNM
+	 */
+	default GlobalCMTID getGlobalCMTID() {
+		return new GlobalCMTID(getSACString(SACHeaderEnum.KEVNM));
 	}
 
 	/**

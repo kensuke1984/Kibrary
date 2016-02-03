@@ -7,10 +7,10 @@ import java.util.Arrays;
  * The list of names of manhattan (operation)
  * 
  * @author kensuke
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 public enum Manhattan {
-	SpcSAC(0), FilterDivider(1), TimewindowMaker(2), SyntheticDSMInformationFileMaker(3),;
+	SpcSAC(0), FilterDivider(1), TimewindowMaker(2), SyntheticDSMInformationFileMaker(3),SshDSMInformationFileMaker(4);
 
 	private int value;
 
@@ -27,20 +27,5 @@ public enum Manhattan {
 			System.out.println(i+": "+valueOf(i));
 	}
 
-	private void createDefaultPropertiesFile() {
-		switch (this) {
-		case FilterDivider:
-
-			break;
-		case SpcSAC:
-			break;
-		case SyntheticDSMInformationFileMaker:
-			break;
-		case TimewindowMaker:
-			break;
-		default:
-			break;
-
-		}
-	}
+ 
 }

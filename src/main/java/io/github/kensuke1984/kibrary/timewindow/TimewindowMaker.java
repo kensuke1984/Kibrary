@@ -184,7 +184,7 @@ public class TimewindowMaker implements Operation {
 	public void run() throws Exception {
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
-				eventDir.sacFileSet(sfn -> !sfn.isOBS() || !components.contains(sfn.getComponent())).forEach(sfn -> {
+				eventDir.sacFileSet(sfn -> sfn.isOBS() || !components.contains(sfn.getComponent())).forEach(sfn -> {
 					try {
 						makeTimeWindow(sfn);
 					} catch (Exception e) {
