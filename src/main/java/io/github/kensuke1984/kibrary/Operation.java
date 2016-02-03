@@ -17,6 +17,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.EnumUtils;
 
+import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.selection.FilterDivider;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -64,7 +65,7 @@ public interface Operation {
 			}
 			if (list.isEmpty())
 				throw new NoSuchFileException("No property file is found");
-			System.out.println("Which one do you want to use as a property file? [0-" + (list.size() - 1) + "]");
+			System.out.print("Which one do you want to use as a property file? [0-" + (list.size() - 1) + "]");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 			return list.get(Integer.parseInt(reader.readLine()));
 		}
@@ -108,6 +109,9 @@ public interface Operation {
 			break;
 		case SyntheticDSMInformationFileMaker:
 			SyntheticDSMInformationFileMaker.main(pass);
+			break;
+		case SshDSMInformationFileMaker:
+			SshDSMInformationFileMaker.main(pass);
 			break;
 		}
 

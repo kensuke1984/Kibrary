@@ -91,7 +91,7 @@ public final class SpcSAC implements Operation {
 						"Source time function folder: " + sourceTimeFunctionPath + " does not exist");
 		}
 
-		timePartial = Boolean.parseBoolean(property.getProperty("timePartial"));
+		computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
 		psvsh = Integer.parseInt(property.getProperty("psvsh"));
 
 		modelName = property.getProperty("modelName");
@@ -127,9 +127,9 @@ public final class SpcSAC implements Operation {
 	private int psvsh;
 
 	/**
-	 * タイムパーシャルを計算するか？
+	 * If it computes temporal partial or not.
 	 */
-	private boolean timePartial;
+	private boolean computesPartial;
 
 	/**
 	 * @param args
@@ -215,7 +215,6 @@ public final class SpcSAC implements Operation {
 				modelDir = searchModelDir(eventDir);
 			else
 				modelDir = eventDir.toPath().resolve(modelName);
-
 			if (modelDir == null || !Files.exists(modelDir))
 				continue;
 			Files.createDirectories(outPath.resolve(eventDir.getGlobalCMTID().toString()));
@@ -309,7 +308,7 @@ public final class SpcSAC implements Operation {
 				new GlobalCMTID(primeSPC.getSourceID()));
 		SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction);
 		sm.setComponents(components);
-		sm.setTemporalDifferentiation(timePartial);
+		sm.setTemporalDifferentiation(computesPartial);
 		sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
 		return sm;
 	}
