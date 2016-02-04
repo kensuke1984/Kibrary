@@ -109,7 +109,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 * @param globalCMTIDSet
 	 *            must contain all information of the IDs to output
 	 * @param periodRanges
-	 *            must contain all information of the IDs to output
+	 *            must contain all information of the IDs to output. If you want
+	 *            to use ranges [10, 30] and [50,100] then the periodRanges
+	 *            should be new double[][]{{10,30},{50,100}}
 	 * @throws IOException
 	 *             if an error occurs
 	 */
@@ -131,7 +133,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 * @param globalCMTIDSet
 	 *            must contain all information of the IDs to output
 	 * @param periodRanges
-	 *            must contain all information of the IDs to output
+	 *            must contain all information of the IDs to output. If you want
+	 *            to use ranges [10, 30] and [50,100] then the periodRanges
+	 *            should be new double[][]{{10,30},{50,100}}
 	 * @param perturbationPoints
 	 *            must contain all information of the IDs to output
 	 * @throws IOException
