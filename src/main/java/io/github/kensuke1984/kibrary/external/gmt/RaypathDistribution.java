@@ -28,7 +28,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * event and station are necessary.
  * 
- * <b>Assume that there are no stations with the same name but different networks in an event</b>
+ * <b>Assume that there are no stations with the same name but different
+ * networks in an event</b>
  * 
  * 
  * @author kensuke
@@ -110,7 +111,8 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 	}
 
 	/**
-	 * @param name Sacfile
+	 * @param name
+	 *            Sacfile
 	 * @return if the path of Sacfile should be drawn
 	 */
 	private boolean inTimeWindow(SACFileName name) {
@@ -124,18 +126,19 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 	private void outputRaypath() throws IOException {
 		List<String> lines = Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
-				return eventDir.sacFileSet(sfn->!sfn.isOBS()).stream();
+				return eventDir.sacFileSet().stream();
 			} catch (Exception e) {
 				return Stream.empty();
 			}
-		}).filter(name -> componentSet.contains(name.getComponent())).filter(this::inTimeWindow).map(name -> {
-			try {
-				return name.readHeader();
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
-		}).filter(Objects::nonNull)
+		}).filter(name -> name.isOBS() && componentSet.contains(name.getComponent())).filter(this::inTimeWindow)
+				.map(name -> {
+					try {
+						return name.readHeader();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return null;
+					}
+				}).filter(Objects::nonNull)
 				.map(header -> header.getSACString(SACHeaderEnum.KSTNM) + " " + header.getSACString(SACHeaderEnum.KEVNM)
 						+ " " + header.getEventLocation() + " " + Station.of(header).getPosition())
 				.collect(Collectors.toList());

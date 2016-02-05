@@ -3,12 +3,13 @@ package io.github.kensuke1984.kibrary.selection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,6 +20,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
@@ -43,25 +46,127 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * {@link TimewindowInformationFile} necessary.
  * 
- * @version 0.0.8
+ * @version 0.1
  * 
  * 
  * @author Kensuke
  * 
  */
-class DataSelection extends parameter.DataSelection {
+public class DataSelection implements Operation {
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(DataSelection.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Sac components to be used (Z R T)");
+			pw.println("#components");
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("##Path of a root folder containing observed dataset (.)");
+			pw.println("#obsPath");
+			pw.println("##Path of a root folder containing synthetic dataset (.)");
+			pw.println("#synPath");
+			pw.println("##boolean convolute (true)");
+			pw.println("#convolute");
+			pw.println("##Path of a time window information file, must be defined");
+			pw.println("#timewindowInformationFilePath timewindow.dat");
+			pw.println("##Path of a static correction file");
+			pw.println("##If you do not want to consider static correction, then comment out the next line");
+			pw.println("#staticCorrectionformationFilePath staticCorrection.dat");
+			pw.println("##double sacSamplingHz (20)");
+			pw.println("#sacSamplingHz cant change now");
+			pw.println("##double minCorrelation (0)");
+			pw.println("#minCorrelation");
+			pw.println("##double maxCorrelation (1)");
+			pw.println("#maxCorrelation");
+			pw.println("##double minVariance (0)");
+			pw.println("#minVariance");
+			pw.println("##double maxVariance (2)");
+			pw.println("#maxVariance");
+			pw.println("##double ratio (2)");
+			pw.println("#ratio");
+		}
+		System.out.println(outPath + " is created.");
+	}
 
 	private Set<EventFolder> eventDirs;
 
 	private String dateStr;
 
-	private DataSelection(Path parameterPath) throws IOException {
-		super(parameterPath);
-		staticCorrectionSet = staticCorrectionInformationPath == null ? Collections.emptySet()
-				: StaticCorrectionFile.read(staticCorrectionInformationPath);
+	public DataSelection(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
+		set();
+	}
+
+	protected Set<SACComponent> components;
+	protected Path obsPath;
+	protected Path synPath;
+	protected boolean convolute;
+	protected Path timewindowInformationFilePath;
+	protected Path staticCorrectionInformationFilePath;
+
+	/**
+	 * Minimum correlation coefficients
+	 */
+	protected double minCorrelation;
+
+	/**
+	 * Maximum correlation coefficients
+	 */
+	protected double maxCorrelation;
+
+	/**
+	 * Minimum variance
+	 */
+	protected double minVariance;
+
+	/**
+	 * Maximum variance
+	 */
+	protected double maxVariance;
+
+	/**
+	 * amplitude のしきい値
+	 */
+	protected double ratio;
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("obsPath"))
+			property.setProperty("obsPath", "");
+		if (!property.containsKey("synPath"))
+			property.setProperty("synPath", "");
+
+	}
+
+	private void set() throws IOException {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+
+		obsPath = getPath("obsPath");
+		synPath = getPath("synPath");
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+
+		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
+		minCorrelation = Double.parseDouble(property.getProperty("minCorrelation"));
+		maxCorrelation = Double.parseDouble(property.getProperty("maxCorrelation"));
+		minVariance = Double.parseDouble(property.getProperty("minVariance"));
+		maxVariance = Double.parseDouble(property.getProperty("maxVariance"));
+		ratio = Double.parseDouble(property.getProperty("ratio"));
+		timewindowInformationFilePath = getPath("timewindowInformationFilePath");
+		staticCorrectionInformationFilePath = getPath("staticCorrectionInformationFilePath");
+		// sacSamplingHz
+		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
+		// sacSamplingHz = 20;
+		staticCorrectionSet = staticCorrectionInformationFilePath == null ? Collections.emptySet()
+				: StaticCorrectionFile.read(staticCorrectionInformationFilePath);
 		// eventDirs = WorkingDirectory.listEventDirs(workDir);
 		eventDirs = Utilities.eventFolderSet(obsPath);
-		sourceTimewindowInformationSet = TimewindowInformationFile.read(timewindowInformationPath);
+		sourceTimewindowInformationSet = TimewindowInformationFile.read(timewindowInformationFilePath);
 		dateStr = Utilities.getTemporaryString();
 		outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
 		goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
@@ -77,43 +182,16 @@ class DataSelection extends parameter.DataSelection {
 	/**
 	 * @param args
 	 *            [parameter file name]
-	 * @throws IOException
+	 * @throws Exception
 	 *             if an I/O happens
 	 */
-	public static void main(String[] args) throws IOException {
-		DataSelection ds = null;
-		if (0 < args.length) {
-			Path path = Paths.get(args[0]);
-			if (!Files.exists(path))
-				throw new NoSuchFileException(args[0]);
-			ds = new DataSelection(path);
-		} else
-			ds = new DataSelection(null);
+	public static void main(String[] args) throws Exception {
+		DataSelection ds = new DataSelection(Property.parse(args));
 		long start = System.nanoTime();
 		System.err.println("DataSelection is going");
-		int N_THREADS = Runtime.getRuntime().availableProcessors();
-
-		ExecutorService exec = Executors.newFixedThreadPool(N_THREADS);
-
-		for (EventFolder eventDirectory : ds.eventDirs)
-			exec.execute(ds.new Worker(eventDirectory));
-
-		exec.shutdown();
-		while (!exec.isTerminated())
-			try {
-				Thread.sleep(1000);
-			} catch (Exception e) {
-			}
-
-		System.out.println();
-		ds.output();
+		ds.run();
 		System.err.println("DataSelection is done in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
-	
-	
-	
-	
-	
 
 	private void output() throws IOException {
 		TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
@@ -129,9 +207,9 @@ class DataSelection extends parameter.DataSelection {
 
 		private Worker(EventFolder ed) throws IOException {
 			this.obsEventDirectory = ed;
-			obsFiles = ed.sacFileSet(sfn -> !sfn.isOBS());
+			(obsFiles = ed.sacFileSet()).removeIf(n -> !n.isOBS());
 			id = ed.getGlobalCMTID();
-			synEventDirectory = new EventFolder(DataSelection.super.synPath.resolve(ed.getName()));
+			synEventDirectory = new EventFolder(synPath.resolve(ed.getName()));
 			if (!synEventDirectory.exists())
 				return;
 		}
@@ -154,7 +232,7 @@ class DataSelection extends parameter.DataSelection {
 					Files.newBufferedWriter(obsEventDirectory.toPath().resolve("stationList" + dateStr + ".txt"),
 							StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 				// all the observed files
-				if (isConvolved)
+				if (convolute)
 					lpw.println("#convolved");
 				else
 					lpw.println("#not convolved");
@@ -167,7 +245,7 @@ class DataSelection extends parameter.DataSelection {
 					String stationName = obsName.getStationName();
 					SACComponent component = obsName.getComponent();
 					// double timeshift = 0;
-					SACExtension synExt = isConvolved ? SACExtension.valueOfConvolutedSynthetic(component)
+					SACExtension synExt = convolute ? SACExtension.valueOfConvolutedSynthetic(component)
 							: SACExtension.valueOfSynthetic(component);
 
 					SACFileName synName = new SACFileName(synEventDirectory, stationName + "." + id + "." + synExt);
@@ -288,5 +366,39 @@ class DataSelection extends parameter.DataSelection {
 		double tStart = timeWindow.getStartTime();
 		double tEnd = timeWindow.getEndTime();
 		return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY());
+	}
+
+	private Path workPath;
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	private Properties property;
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
+	@Override
+	public void run() throws Exception {
+		int N_THREADS = Runtime.getRuntime().availableProcessors();
+
+		ExecutorService exec = Executors.newFixedThreadPool(N_THREADS);
+
+		for (EventFolder eventDirectory : eventDirs)
+			exec.execute(new Worker(eventDirectory));
+
+		exec.shutdown();
+		while (!exec.isTerminated())
+			try {
+				Thread.sleep(1000);
+			} catch (Exception e) {
+			}
+
+		System.out.println();
+		output();
 	}
 }

@@ -151,13 +151,13 @@ public class SshDSMInformationFileMaker implements Operation {
 		PolynomialStructure ps = structurePath == null ? PolynomialStructure.PREM
 				: new PolynomialStructure(structurePath);
 		String temporaryString = Utilities.getTemporaryString();
-		Path output = workPath.resolve("oneDPartial" + temporaryString);
+		Path output = getPath("oneDPartial" + temporaryString);
 		Files.createDirectories(output);
 		Set<SACComponent> useComponents = components;
 		for (EventFolder eventDir : eventDirs) {
 			// Event e = eventinfo.getEvent(eventDir.getEventName());
-			Set<Station> stations = eventDir.sacFileSet(sfn -> !sfn.isOBS()).stream()
-					.filter(name -> useComponents.contains(name.getComponent())).map(name -> {
+			Set<Station> stations = eventDir.sacFileSet().stream()
+					.filter(name -> name.isOBS() && useComponents.contains(name.getComponent())).map(name -> {
 						try {
 							return name.readHeader();
 						} catch (Exception e2) {
@@ -181,6 +181,11 @@ public class SshDSMInformationFileMaker implements Operation {
 			info.writeISOPSV(outEvent.resolve("par2_" + header + "_PSV.inf"));
 			info.writeISOSH(outEvent.resolve("par2_" + header + "_SH.inf"));
 		}
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 
 }

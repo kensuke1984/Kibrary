@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  * 
- * @version 0.2
+ * @version 0.2.1
  * 
  * @author Kensuke
  * 
@@ -42,9 +42,9 @@ public class FilterDivider implements Operation {
 		this.property = (Properties) property.clone();
 		set();
 	}
-	
+
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(FilterDivider.class.getName()+ Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(FilterDivider.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
@@ -110,8 +110,8 @@ public class FilterDivider implements Operation {
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
 
-		obsPath = workPath.resolve(property.getProperty("obsPath"));
-		synPath = workPath.resolve(property.getProperty("synPath"));
+		obsPath = getPath("obsPath");
+		synPath = getPath("synPath");
 		delta = Double.parseDouble(property.getProperty("delta"));
 		highFreq = Double.parseDouble(property.getProperty("highFreq"));
 		lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
@@ -192,7 +192,9 @@ public class FilterDivider implements Operation {
 			String eventname = folder.getName();
 			try {
 				Files.createDirectories(outPath.resolve(eventname));
-				folder.sacFileSet(s -> !components.contains(s.getComponent())).forEach(this::filterAndout);
+				Set<SACFileName>set=folder.sacFileSet();
+				set.removeIf(s -> !components.contains(s.getComponent()));
+				set.forEach(this::filterAndout);
 			} catch (Exception e) {
 				System.err.println("Error on " + folder);
 				e.printStackTrace();
@@ -264,11 +266,16 @@ public class FilterDivider implements Operation {
 		outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
 		ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		events.stream().map(f -> process(f)).forEach(es::submit);
+		events.stream().map(this::process).forEach(es::submit);
 		es.shutdown();
 		while (!es.isTerminated()) {
 			Thread.sleep(100);
 		}
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 
 }
