@@ -43,8 +43,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 理論波形のstartMkからendMkまでに間で最大ピークを探し冨士さんの 感じで探す とりあえず±sLimit秒で探してみる <br>
  * 観測波形にマーカーがない場合書いてしまう <br>
  * マーカーはrenewパラメタがtrueなら観測波形のマーカーは上書き<br>
- * time shiftの値は小数点２位以下切捨て
- * Algorithm startMkからendMkまでの間で最大振幅を取り、
+ * time shiftの値は小数点２位以下切捨て Algorithm startMkからendMkまでの間で最大振幅を取り、
  * それ以前の時間からthreshold（最大振幅ベース）を超えた振幅の一番早いものをえらびstartMkから、
  * そこまでのタイムウインドウのコリレーションをあわせる <br>
  * </blockquote>
@@ -85,7 +84,7 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 			// observed fileを拾ってくる
 			Set<SACFileName> obsFiles = null;
 			try {
-				obsFiles = obsEventDir.sacFileSet(h -> !h.isOBS());
+				(obsFiles = obsEventDir.sacFileSet()).removeIf(s -> !s.isOBS());
 			} catch (IOException e1) {
 				e1.printStackTrace();
 				return;

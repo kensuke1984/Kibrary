@@ -65,10 +65,10 @@ public class EventFolder extends File {
 	}
 
 	/**
-	 * Move sacfiles which satisfies an input sacPredicate.
-	 * For example, if you want to move all synthetic sac files,
+	 * Move sacfiles which satisfies an input sacPredicate. For example, if you
+	 * want to move all synthetic sac files,
 	 * 
-	 * predicate is  sfn &rarr; sfn.isSYN()
+	 * predicate is sfn &rarr; sfn.isSYN()
 	 * 
 	 * @param predicate
 	 *            Sac files satisfying the sacPredicate will be moved.
@@ -79,10 +79,9 @@ public class EventFolder extends File {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void moveSacFile(Predicate<SACFileName> predicate, Path movePath, CopyOption... options)
-			throws IOException {
+	public void moveSacFile(Predicate<SACFileName> predicate, Path movePath, CopyOption... options) throws IOException {
 		Files.createDirectories(movePath);
-		sacFileSet().parallelStream().filter(predicate).map(name -> name.toPath()).forEach(path -> {
+		sacFileSet().parallelStream().filter(predicate).map(SACFileName::toPath).forEach(path -> {
 			try {
 				Files.move(path, movePath.resolve(path.getFileName()), options);
 			} catch (Exception e) {
@@ -96,8 +95,8 @@ public class EventFolder extends File {
 	}
 
 	/**
-	 * @return (<b>unmodifiable</b>) Set of all SAC files in this including observed, synthetic and
-	 *         partial derivatives.
+	 * @return (<b>unmodifiable</b>) Set of all SAC files in this including
+	 *         observed, synthetic and partial derivatives.
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
@@ -106,26 +105,5 @@ public class EventFolder extends File {
 			return stream.filter(SACFileName::isSacFileName).map(SACFileName::new).collect(Collectors.toSet());
 		}
 	}
-
-	
-	/**
-	 * If you want to collect observed sac files,
-	 * filter is name &rarr; !name.isOBS()
-	 * 
-	 * @param filter
-	 *            for listing. if a sac file is true in it, the sac file is cut.
-	 * @return (<b>unmodifiable</b>) Set of all SAC files in the event folder without those satisfying
-	 *         the predicate
-	 * @throws IOException
-	 *             if an I/O error occurs
-	 */
-	public Set<SACFileName> sacFileSet(Predicate<SACFileName> filter) throws IOException {
-		Set<SACFileName> set = sacFileSet();
-		set.removeIf(filter);
-		return set;
-	}
-
-
-
 
 }

@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -53,6 +54,7 @@ public final class SpcSAC implements Operation {
 	 */
 	private Path workPath;
 
+	
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
@@ -137,16 +139,8 @@ public final class SpcSAC implements Operation {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		Properties property = new Properties();
-		if (args.length == 0)
-			property.load(Files.newBufferedReader(Operation.findPath()));
-		else if (args.length == 1)
-			property.load(Files.newBufferedReader(Paths.get(args[0])));
-		else
-			throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-
+		Properties property = Property.parse(args);
 		SpcSAC ss = new SpcSAC(property);
-
 		long start = System.nanoTime();
 		System.out.println("SpcSAC is going.");
 		ss.run();
@@ -324,6 +318,11 @@ public final class SpcSAC implements Operation {
 	@Override
 	public Properties getProperties() {
 		return (Properties) property.clone();
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 
 }

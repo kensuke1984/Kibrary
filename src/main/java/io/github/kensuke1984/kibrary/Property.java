@@ -1,13 +1,11 @@
 package io.github.kensuke1984.kibrary;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Properties;
 
-import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.selection.FilterDivider;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 
 /**
  * 
@@ -15,41 +13,29 @@ import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
  * 
  * 
  * @author kensuke
- * @version 0.0.1.1
+ * @version 0.0.2
  * 
  */
-class Property {
+public class Property {
 
-
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws Exception {
 		Manhattan.printList();
 		System.out.print(
 				"For which one do you want to create a property file? [0-" + (Manhattan.values().length - 1) + "]");
-		output(Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())));
+		Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).writeDefaultPropertiesFile();
+		
 		return;
 	}
 
-	
-	private static void output(Manhattan manhattan) throws IOException {
-		switch (manhattan) {
-		case SpcSAC:
-			SpcSAC.writeDefaultPropertiesFile();
-			break;
-		case TimewindowMaker:
-			TimewindowMaker.writeDefaultPropertiesFile();
-			break;
-		case FilterDivider:
-			FilterDivider.writeDefaultPropertiesFile();
-			break;
-		case SyntheticDSMInformationFileMaker:
-			SyntheticDSMInformationFileMaker.writeDefaultPropertiesFile();
-			break;
-		case SshDSMInformationFileMaker:
-			SshDSMInformationFileMaker.writeDefaultPropertiesFile();
-			break;
-		default:
-			break;
-		}
+	public static Properties parse(String[] args) throws IOException{
+		Properties property = new Properties();
+		if (args.length == 0)
+			property.load(Files.newBufferedReader(Operation.findPath()));
+		else if (args.length == 1)
+			property.load(Files.newBufferedReader(Paths.get(args[0])));
+		else
+			throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
+		return property;
 	}
 
 }

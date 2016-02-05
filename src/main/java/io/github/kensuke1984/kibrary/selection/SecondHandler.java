@@ -3,21 +3,25 @@ package io.github.kensuke1984.kibrary.selection;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import parameter.FirstHandler;
 
 /**
  * Filtering for dataset extracted from seed files by {@link FirstHandler}. It
@@ -25,23 +29,154 @@ import parameter.FirstHandler;
  * for synthetic ones.
  * 
  * 
- * @version 1.1.3
+ * @version 1.2
  * 
  * 
  * @author Kensuke
  * 
  */
-class SecondHandler extends parameter.SecondHandler implements Consumer<EventFolder> {
+public class SecondHandler implements Consumer<EventFolder>, Operation {
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(SecondHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("####If the below values are set, then SecondHandler will check the values");
+			pw.println("##double delta of SAC file");
+			pw.println("#delta");
+			pw.println("##int npts");
+			pw.println("#npts");
+			pw.println("####The below values are in [deg] gcarc [0:180] latitude [-90:90], longitude (-180:180]");
+			pw.println("#minGCARC");
+			pw.println("#maxGCARC");
+			pw.println("#minStationLatitude");
+			pw.println("#maxStationLatitude");
+			pw.println("#minStationLongitude");
+			pw.println("#maxStationLongitude");
+			pw.println("#minEventLatitude");
+			pw.println("#maxEventLatitude");
+			pw.println("#minEventLongitude");
+			pw.println("#maxEventLongitude");
+		}
+		System.out.println(outPath + " is created.");
+	}
 
-	private SecondHandler(Path parameterPath) throws IOException {
-		super(parameterPath);
+	/**
+	 * SACのDELTA
+	 */
+	protected double delta;
+
+	protected int npts;
+
+	private Path workPath;
+	private Properties property;
+
+	public SecondHandler(Properties property) {
+		this.property = (Properties) property.clone();
+		set();
 		String date = Utilities.getTemporaryString();
 		trashName = "secondHandlerTrash" + date;
-		logFileName = "secondHandler" + date + ".log";
+	}
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+	}
+
+	/**
+	 * parameterのセット
+	 */
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+
+		predicate = createPredicate();
+	}
+
+	private Predicate<SACData> predicate;
+
+	private Predicate<SACData> createPredicate() {
+
+		double delta = property.containsKey("delta") ? Double.parseDouble(property.getProperty("delta")) : Double.NaN;
+		int npts = property.containsKey("npts") ? Integer.parseInt(property.getProperty("npts")) : Integer.MIN_VALUE;
+
+		double minGCARC = property.containsKey("minGCARC") ? Double.parseDouble(property.getProperty("minGCARC")) : 0;
+		double maxGCARC = property.containsKey("maxGCARC") ? Double.parseDouble(property.getProperty("maxGCARC")) : 180;
+
+		double minStationLatitude = property.containsKey("minStationLatitude")
+				? Double.parseDouble(property.getProperty("minStationLatitude")) : -90;
+		double maxStationLatitude = property.containsKey("maxStationLatitude")
+				? Double.parseDouble(property.getProperty("maxStationLatitude")) : 90;
+
+		double minEventLatitude = property.containsKey("minEventLatitude")
+				? Double.parseDouble(property.getProperty("minEventLatitude")) : -90;
+		double maxEventLatitude = property.containsKey("maxEventLatitude")
+				? Double.parseDouble(property.getProperty("maxEventLatitude")) : 90;
+
+		double minStationLongitude = property.containsKey("minStationLongitude")
+				? Double.parseDouble(property.getProperty("minStationLongitude")) : -180;
+		double maxStationLongitude = property.containsKey("maxStationLongitude")
+				? Double.parseDouble(property.getProperty("maxStationLongitude")) : 180;
+
+		double minEventLongitude = property.containsKey("minEventLongitude")
+				? Double.parseDouble(property.getProperty("minEventLongitude")) : -180;
+		double maxEventLongitude = property.containsKey("maxEventLongitude")
+				? Double.parseDouble(property.getProperty("maxEventLongitude")) : 180;
+		Predicate<SACData> p = new Predicate<SACData>() {
+
+			@Override
+			public boolean test(SACData obsSac) {
+				// Check the value of B
+				if (obsSac.getValue(SACHeaderEnum.B) != 0)
+					return false;
+
+				// DELTAのチェック
+				if (!Double.isNaN(delta) && delta != obsSac.getValue(SACHeaderEnum.DELTA))
+					return false;
+
+				// If DEPMEN, DEPMIN or DEPMAX has NAN
+				if (!checkDEP(obsSac))
+					return false;
+
+				// NPTS
+				if (npts != Integer.MIN_VALUE && obsSac.getInt(SACHeaderEnum.NPTS) != npts)
+					return false;
+
+				// GCARC
+				double gcarc = obsSac.getValue(SACHeaderEnum.GCARC);
+				if (gcarc < minGCARC || maxGCARC < gcarc)
+					return false;
+
+				// station Latitude
+				double stationLatitude = obsSac.getValue(SACHeaderEnum.STLA);
+				if (stationLatitude < minStationLatitude || maxStationLatitude < stationLatitude)
+					return false;
+
+				// station Longitude
+				double stationLongitude = obsSac.getValue(SACHeaderEnum.STLO);
+				if (stationLongitude < minStationLongitude || maxStationLongitude < stationLongitude)
+					return false;
+
+				// Event Latitude
+				double eventLatitude = obsSac.getValue(SACHeaderEnum.EVLA);
+				if (eventLatitude < minEventLatitude || maxEventLatitude < eventLatitude)
+					return false;
+
+				// Event Longitude
+				double eventLongitude = obsSac.getValue(SACHeaderEnum.EVLO);
+				if (eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude)
+					return false;
+
+				return true;
+			}
+		};
+
+		return p;
 	}
 
 	private String trashName;
-	private String logFileName;
 
 	@Override
 	public void accept(EventFolder eventDir) {
@@ -58,98 +193,19 @@ class SecondHandler extends parameter.SecondHandler implements Consumer<EventFol
 			return;
 		}
 
-		try (PrintWriter pw = new PrintWriter(eventDir.toPath().resolve(logFileName).toFile())) {
+		try {
 			for (SACFileName sacName : sacnames) {
 				// if the sacName is OK
 				boolean isOK = true;
 				if (!sacName.isOBS())
 					continue;
 
-				if (!sacName.getGlobalCMTID().equals(eventDir.getGlobalCMTID())) {
-					pw.println(sacName + " has the invalid eventname:" + sacName.getGlobalCMTID());
+				if (!sacName.getGlobalCMTID().equals(eventDir.getGlobalCMTID()))
 					isOK = false;
-				}
 
 				// SacFileの読み込み
-				SACHeaderData obsSac = sacName.read();
-				// System.exit(0);
-
-				// Check the value of B
-				double b = obsSac.getValue(SACHeaderEnum.B);
-				if (b != 0) {
-					isOK = false;
-					pw.println(sacName + " has the invalid B:" + b);
-				}
-
-				// DELTAのチェック
-				double delta = obsSac.getValue(SACHeaderEnum.DELTA);
-				if (delta != this.delta) {
-					isOK = false;
-					pw.println(sacName + " has the invalid DELTA:" + delta);
-				}
-
-				// DEPMEN DEPMIN DEPMAXのチェック TODO どうなる？？
-				if (checkNaNinDEPMS) {
-					boolean depCheck = checkDEP(obsSac);
-					if (!depCheck) {
-						isOK = false;
-						pw.println(sacName + " has some NaNs in DEP???");
-					}
-				}
-
-				// NPTS のチェック
-				if (checkNPTS) {
-					int npts = obsSac.getInt(SACHeaderEnum.NPTS);
-					if (npts != this.npts) {
-						isOK = false;
-						pw.println(sacName + " has the invalid NPTS:" + npts);
-					}
-				}
-
-				// GCARCのチェック
-				if (checkGCARC) {
-					double gcarc = obsSac.getValue(SACHeaderEnum.GCARC);
-					if (gcarc < minGCARC || maxGCARC < gcarc) {
-						isOK = false;
-						pw.println(sacName + " has the invalid GCARC:" + gcarc);
-					}
-				} // GCARC
-
-				// station Latitudeのチェック
-				if (checkStationLatitude) {
-					double latitude = obsSac.getValue(SACHeaderEnum.STLA);
-					if (latitude < minStationLatitude || maxStationLatitude < latitude) {
-						isOK = false;
-						pw.println(sacName + " has the invalid station latitude:" + latitude);
-					}
-				} // Latitude
-
-				// station Longitudeのチェック
-				if (checkStationLongitude) {
-					double longitude = obsSac.getValue(SACHeaderEnum.STLO);
-					if (longitude < minStationLongitude || maxStationLongitude < longitude) {
-						isOK = false;
-						pw.println(sacName + " has the invalid station longitude:" + longitude);
-					}
-				}
-
-				// Event Latitudeのチェック
-				if (checkEventLatitude) {
-					double latitude = obsSac.getValue(SACHeaderEnum.EVLA);
-					if (latitude < minEventLatitude || maxEventLatitude < latitude) {
-						isOK = false;
-						pw.println(sacName + " has the invalid event latitude:" + latitude);
-					}
-				} // Latitude
-
-				// Event Longitudeのチェック
-				if (checkEventLongitude) {
-					double longitude = obsSac.getValue(SACHeaderEnum.EVLO);
-					if (longitude < minEventLongitude || maxEventLongitude < longitude) {
-						isOK = false;
-						pw.println(sacName + " has the invalid event longitude:" + longitude);
-					}
-				} // Longitude
+				SACData obsSac = sacName.read();
+				isOK = predicate.test(obsSac);
 
 				if (!isOK)
 					try {
@@ -166,25 +222,17 @@ class SecondHandler extends parameter.SecondHandler implements Consumer<EventFol
 	/**
 	 * @param args
 	 *            [parameter file name]
-	 * @throws InterruptedException if any
-	 * @throws IOException if any 
+	 * @throws Exception
+	 *             if any
 	 */
-	public static void main(String[] args) throws IOException, InterruptedException {
-		SecondHandler s = null;
-		if (0 < args.length) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			s = new SecondHandler(parameterPath);
-		} else
-			s = new SecondHandler(null);
+	public static void main(String[] args) throws Exception {
+		SecondHandler s = new SecondHandler(Property.parse(args));
 
-		if (s.maxGCARC <= s.minGCARC)
-			throw new RuntimeException(".... minGCARC maxGCARC are invalid");
-
-		System.err.println("SecondHandler is going");
-		long elapsedTime = Utilities.runEventProcess(s.workPath, s, 2, TimeUnit.HOURS);
-		System.err.println("SecondHandler finished in " + Utilities.toTimeString(elapsedTime));
+		System.err.println(SecondHandler.class.getName() + " is going");
+		long time = System.nanoTime();
+		s.run();
+		System.err.println(
+				SecondHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
 	}
 
 	/**
@@ -198,6 +246,21 @@ class SecondHandler extends parameter.SecondHandler implements Consumer<EventFol
 		double depmin = obsSac.getValue(SACHeaderEnum.DEPMIN);
 		// System.out.println(depmen);
 		return !Double.isNaN(depmax) && !Double.isNaN(depmen) && !Double.isNaN(depmin);
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
+	@Override
+	public void run() throws Exception {
+		Utilities.runEventProcess(workPath, this, 2, TimeUnit.HOURS);
 	}
 
 }

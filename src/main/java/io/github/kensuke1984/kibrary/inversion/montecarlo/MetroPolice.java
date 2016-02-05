@@ -105,8 +105,8 @@ class MetroPolice {
 	private void createDSMInf(PolynomialStructure nextModel, Path runPath) throws InterruptedException, IOException {
 		Utilities.runEventProcess(obsDir, eventDir -> {
 			try {
-				Set<Station> stations = eventDir.sacFileSet(sfn -> !sfn.isOBS()).stream()
-						.map(name -> name.getStationName()).distinct().map(this::pickup).collect(Collectors.toSet());
+				Set<Station> stations = eventDir.sacFileSet().stream().filter(SACFileName::isOBS)
+						.map(SACFileName::getStationName).distinct().map(this::pickup).collect(Collectors.toSet());
 				SyntheticDSMInfo dsmInfo = new SyntheticDSMInfo(nextModel, eventDir.getGlobalCMTID(), stations, "spc",
 						1638.4, 256);
 				GlobalCMTID id = eventDir.getGlobalCMTID();
@@ -200,14 +200,15 @@ class MetroPolice {
 
 		}
 
-		double varAve = variance.stream().mapToDouble(d -> d.doubleValue()).average().getAsDouble();
-		double corAve = correlation.stream().mapToDouble(d -> d.doubleValue()).average().getAsDouble();
+		double varAve = variance.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+		double corAve = correlation.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
 		String line = varAve + " " + corAve;
 		Files.write(runPath.resolve("variance.inf"), Arrays.asList(line));
 	}
 
 	private void compare(EventFolder eventDir) throws IOException {
-		Set<SACFileName> synNameSet = eventDir.sacFileSet(name -> !name.isSYN());
+		Set<SACFileName> synNameSet = eventDir.sacFileSet();
+		synNameSet.removeIf(s -> !s.isSYN());
 		List<String> outLines = new ArrayList<>();
 		synNameSet.forEach(synName -> {
 			SACFileName obsName = toObs(synName);
@@ -273,7 +274,7 @@ class MetroPolice {
 	private Path hostFilePath;
 
 	private void runDSM(Path runPath) {
-		idSet.parallelStream().map(id -> id.toString()).map(runPath::resolve).map(e -> e.resolve("sh.inf"))
+		idSet.parallelStream().map(GlobalCMTID::toString).map(runPath::resolve).map(e -> e.resolve("sh.inf"))
 				.map(mpi::tish).map(this::postProcess).forEach(f -> {
 					try {
 						f.get();
@@ -299,7 +300,9 @@ class MetroPolice {
 	}
 
 	private void applyFilter(EventFolder eventDir) throws IOException {
-		eventDir.sacFileSet(name -> !name.isSYN()).forEach(name -> {
+		eventDir.sacFileSet().forEach(name -> {
+			if (!name.isSYN())
+				return;
 			try {
 				SACData sf = name.read().applyButterworthFilter(filter);
 				sf.writeSAC(name.toPath());

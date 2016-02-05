@@ -17,12 +17,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.EnumUtils;
 
-import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.selection.FilterDivider;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 
 /**
  * 
@@ -35,6 +30,8 @@ import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
  */
 public interface Operation {
 
+	public Path getWorkPath();
+	
 	Properties getProperties();
 
 	/**
@@ -51,11 +48,17 @@ public interface Operation {
 						root.resolve(getClass().getName() + Utilities.getTemporaryString() + ".properties")),
 				"This properties for " + getClass().getName());
 	}
+	
+	default Path getPath(String key){
+		String path = getProperties().getProperty(key);
+		if(path.startsWith("/"))
+			return Paths.get(path);
+		return getWorkPath().resolve(path);
+	}
 
 	void run() throws Exception;
 
 	static Path findPath() throws IOException {
-
 		try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("."), "*.properties")) {
 			List<Path> list = new ArrayList<>();
 			int i = 0;
@@ -97,23 +100,7 @@ public interface Operation {
 			throw new IllegalArgumentException(args[0] + " is not a name of Manhattan");
 
 		String[] pass = args.length == 1 ? new String[0] : new String[] { args[1] };
-		switch (Manhattan.valueOf(args[0])) {
-		case SpcSAC:
-			SpcSAC.main(pass);
-			break;
-		case TimewindowMaker:
-			TimewindowMaker.main(pass);
-			break;
-		case FilterDivider:
-			FilterDivider.main(pass);
-			break;
-		case SyntheticDSMInformationFileMaker:
-			SyntheticDSMInformationFileMaker.main(pass);
-			break;
-		case SshDSMInformationFileMaker:
-			SshDSMInformationFileMaker.main(pass);
-			break;
-		}
+		Manhattan.valueOf(args[0]).invokeMain(pass);
 
 	}
 
