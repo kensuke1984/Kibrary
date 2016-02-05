@@ -2,19 +2,23 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -31,27 +35,124 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.1.2
+ * @version 0.2
  * 
  * @author Kensuke
  * 
  */
-public class CheckerBoardTest extends parameter.CheckerBoardTest {
+public class CheckerBoardTest implements Operation {
+
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(CheckerBoardTest.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("##Path of a waveID file, must be defined");
+			pw.println("#waveIDPath id.dat");
+			pw.println("##Path of a waveform file, must be defined");
+			pw.println("#waveformPath waveform.dat");
+			pw.println("##Path of a partial id file, must be defined");
+			pw.println("#partialIDPath partialID.dat");
+			pw.println("##Path of a partial waveform file, must be defined");
+			pw.println("#partialWaveformPath partial.dat");
+			pw.println("##Path of an unknown parameter list file, must be defined");
+			pw.println("#unknownParameterListPath unknowns.inf");
+			pw.println("##Path of an input data list file, must be defined");
+			pw.println("#inputDataPath input.inf");
+			pw.println("##boolean If this is for Iterate (false)");
+			pw.println("#iterate");
+			pw.println("##boolean if it adds noise (false)");
+			pw.println("#noise");
+			pw.println("##noise power (1000)");
+			pw.println("#noisePower");
+		}
+		System.out.println(outPath + " is created.");
+	}
 
 	private ObservationEquation eq;
+	private Properties property;
 
-	private CheckerBoardTest(Path parameterPath) throws IOException {
-		super(parameterPath);
-		// System.out.println("hi");
+	public CheckerBoardTest(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
 		set();
+		read();
 		readIDs();
 	}
 
-	public CheckerBoardTest(ObservationEquation equation) {
-		this.eq = equation;
+	public CheckerBoardTest(ObservationEquation eq) {
+		this.eq = eq;
 		readIDs();
 	}
 
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("sourceTimeFunction"))
+			property.setProperty("sourceTimeFunction", "0");
+		if (!property.containsKey("timePartial"))
+			property.setProperty("timePartial", "false");
+		if (!property.containsKey("psvsh"))
+			property.setProperty("psvsh", "0");
+		if (!property.containsKey("modelName"))
+			property.setProperty("modelName", "");
+	}
+
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		waveIDPath = getPath("waveIDPath");
+		waveformPath = getPath("waveformPath");
+		partialIDPath = getPath("partialIDPath");
+		partialWaveformPath = getPath("partialWaveformPath");
+		unknownParameterListPath = getPath("unknownParameterListPath");
+		inputDataPath = getPath("inputDataPath");
+		noise = Boolean.parseBoolean(property.getProperty("noise"));
+		noisePower = Double.parseDouble(property.getProperty("noisePower"));
+		iterate = Boolean.parseBoolean(property.getProperty("iterate"));
+
+	}
+
+	private Path workPath;
+
+	/**
+	 * 観測波形、理論波形の入ったファイル (BINARY)
+	 */
+	protected Path waveformPath;
+
+	/**
+	 * 求めたい未知数を羅列したファイル (ASCII)
+	 */
+	protected Path unknownParameterListPath;
+
+	/**
+	 * partialIDの入ったファイル
+	 */
+	protected Path partialIDPath;
+	/**
+	 * partial波形の入ったファイル
+	 */
+	protected Path partialWaveformPath;
+
+	protected boolean iterate;
+
+	protected boolean noise;
+
+	/**
+	 * 観測、理論波形のID情報
+	 */
+	protected Path waveIDPath;
+
+	protected double noisePower;
+
+	/**
+	 * psudoMの元になるファイル
+	 */
+	protected Path inputDataPath;
 	private Set<Station> stationSet;
 	private double[][] ranges;
 	private Set<GlobalCMTID> idSet;
@@ -68,13 +169,13 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 			for (int i = 0; !exists && i < ranges.size(); i++)
 				if (Arrays.equals(range, ranges.get(i)))
 					exists = true;
-			if(!exists)
+			if (!exists)
 				ranges.add(range);
 		}
 		this.ranges = ranges.toArray(new double[ranges.size()][]);
 	}
 
-	private void set() throws IOException {
+	private void read() throws IOException {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
 		// basicDataFile.read();
 		// System.out.println("s");
@@ -170,35 +271,15 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 
 	/**
 	 * @param args
-	 *            [parameter file name]
+	 *            [a property file name]
+	 * @throws Exception
+	 *             if any
 	 */
-	public static void main(String[] args) throws IOException {
-		CheckerBoardTest cbt = null;
-		if (0 < args.length) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			// System.out.println("hi");
-			cbt = new CheckerBoardTest(parameterPath);
-		} else
-			cbt = new CheckerBoardTest((Path) null);
-		// System.exit(0);
-		RealVector pseudoM = cbt.readPseudoM();
-		RealVector pseudoD = cbt.computePseudoD(pseudoM);
-		RealVector bornVec = pseudoD.add(cbt.getSynVector());
+	public static void main(String[] args) throws Exception {
+		Properties property = Property.parse(args);
+		CheckerBoardTest cbt = new CheckerBoardTest(property);
 
-		String dateStr = Utilities.getTemporaryString();
-		Path outIDPath = cbt.workPath.resolve("pseudoID" + dateStr + ".dat");
-		Path outDataPath = cbt.workPath.resolve("pseudo" + dateStr + ".dat");
-
-		if (cbt.noise)
-			bornVec = bornVec.add(cbt.computeRandomNoise());
-		if (cbt.iterate)
-			cbt.output4Iterate(outIDPath, outDataPath, bornVec);
-		else
-			cbt.output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
-		//
-
+		cbt.run();
 	}
 
 	public RealVector getSynVector() {
@@ -222,6 +303,35 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 		}
 		// pseudoD = pseudoD.add(randomD);
 		return dVector.combine(noiseV);
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
+	@Override
+	public void run() throws Exception {
+		RealVector pseudoM = readPseudoM();
+		RealVector pseudoD = computePseudoD(pseudoM);
+		RealVector bornVec = pseudoD.add(getSynVector());
+
+		String dateStr = Utilities.getTemporaryString();
+		Path outIDPath = workPath.resolve("pseudoID" + dateStr + ".dat");
+		Path outDataPath = workPath.resolve("pseudo" + dateStr + ".dat");
+
+		if (noise)
+			bornVec = bornVec.add(computeRandomNoise());
+		if (iterate)
+			output4Iterate(outIDPath, outDataPath, bornVec);
+		else
+			output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
+
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 
 }

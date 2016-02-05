@@ -1,17 +1,22 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
@@ -26,7 +31,9 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * <p>
  * <a href=http://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>rdseed</a> and <a
  * href=http://ds.iris.edu/ds/nodes/dmc/manuals/evalresp/>evalresp</a> must be
- * in PATH. </p> If you want to remove intermediate files.
+ * in PATH.
+ * </p>
+ * If you want to remove intermediate files.
  * 
  * 
  * TODO NPTSで合わないものを捨てる？
@@ -38,41 +45,104 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * 
- * @version 0.1.8
+ * @version 0.2
  * 
  * @author kensuke
  * 
  */
-class FirstHandler extends parameter.FirstHandler {
-
-	private FirstHandler(Path parameterPath) throws IOException {
-		super(parameterPath);
+public class FirstHandler implements Operation {
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(FirstHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("##String a name of catalog to use from [cmt, pde]  (cmt)");
+			pw.println("#catalog");
+			pw.println("##double Sampling Hz, can not be changed now (20)");
+			pw.println("#samplingHz");
+			pw.println("##epicentral distance range (0 180)");
+			pw.println("#epicentralDistanceRange");
+			pw.println("##boolean if it is true, remove intermediate files (true)");
+			pw.println("#removeIntermediateFile");
+		}
+		System.out.println(outPath + " is created.");
 	}
+
+	public FirstHandler(Properties property) {
+		this.property = (Properties) property.clone();
+		set();
+	}
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("catalog"))
+			property.setProperty("catalog", "cmt");
+		if (!property.containsKey("obsPath"))
+			property.setProperty("obsPath", "");
+		if (!property.containsKey("synPath"))
+			property.setProperty("synPath", "");
+
+	}
+
+	/**
+	 * parameterのセット
+	 */
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		switch (property.getProperty("catalog")) {
+		case "cmt":
+		case "CMT":
+			catalog = 0;
+			break;
+		case "pde":
+		case "PDE":
+			catalog = 0;
+			break;
+		default:
+			throw new RuntimeException("Invalid catalog name.");
+		}
+		String[] epicentralDistanceRange = property.getProperty("epicentralDistanceRange").split("\\s+");
+		epicentralDistanceMin = Double.parseDouble(epicentralDistanceRange[0]);
+		epicentralDistanceMax = Double.parseDouble(epicentralDistanceRange[1]);
+		samplingHz = 20; // TODO
+		removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
+	}
+
+	protected double samplingHz;
+
+	/**
+	 * 使うデータの震央距離の最小値
+	 */
+	protected double epicentralDistanceMin; //TODO
+	/**
+	 * 使うデータの震央距離の最大値
+	 */
+	protected double epicentralDistanceMax;
+	/**
+	 * which catalog to use 0:CMT 1: PDE
+	 */
+	protected int catalog;
+
+	/**
+	 * if remove intermediate file
+	 */
+	protected boolean removeIntermediateFile;
 
 	/**
 	 * output directory
 	 */
 	private Path outPath;
 
-	private static FirstHandler parse(String[] args) throws IOException {
-		FirstHandler fh = null;
-		if (1 == args.length) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			fh = new FirstHandler(parameterPath);
-		} else if (args.length == 0)
-			fh = new FirstHandler(null);
-
-		return fh;
-	}
-
 	/**
 	 * @param args
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		FirstHandler fh = parse(args);
+		FirstHandler fh = new FirstHandler(Property.parse(args));
 		long startT = System.nanoTime();
 		System.err.println("FirstHandler is going");
 		fh.run();
@@ -80,6 +150,7 @@ class FirstHandler extends parameter.FirstHandler {
 
 	}
 
+	@Override
 	public void run() throws IOException {
 		System.err.println("Working directory is " + workPath);
 		// check if conditions. if for example there are already existing output
@@ -149,6 +220,20 @@ class FirstHandler extends parameter.FirstHandler {
 			return workPathStream.filter(path -> path.toString().endsWith(".seed")).collect(Collectors.toSet());
 		}
 
+	}
+
+	private Path workPath;
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	private Properties property;
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
 	}
 
 }

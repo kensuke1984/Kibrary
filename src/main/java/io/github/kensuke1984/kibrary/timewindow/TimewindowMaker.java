@@ -99,8 +99,8 @@ public class TimewindowMaker implements Operation {
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		String date = Utilities.getTemporaryString();
-		outputPath = workPath.resolve("timewindow" + date + ".dat");
-		invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
+		outputPath = getPath("timewindow" + date + ".dat");
+		invalidList = getPath("invalidTimewindow" + date + ".txt");
 		timewindowSet = Collections.synchronizedSet(new HashSet<>());
 		String[] str = property.getProperty("components").split("\\s+"); // SacComponent
 		components = Arrays.stream(str).map(SACComponent::valueOf).collect(Collectors.toSet());
@@ -184,7 +184,9 @@ public class TimewindowMaker implements Operation {
 	public void run() throws Exception {
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
-				eventDir.sacFileSet(sfn -> sfn.isOBS() || !components.contains(sfn.getComponent())).forEach(sfn -> {
+				Set<SACFileName> set = eventDir.sacFileSet();
+				set.removeIf(sfn -> sfn.isOBS() || !components.contains(sfn.getComponent()));
+				set.stream().forEach(sfn -> {
 					try {
 						makeTimeWindow(sfn);
 					} catch (Exception e) {
@@ -372,6 +374,11 @@ public class TimewindowMaker implements Operation {
 	@Override
 	public Properties getProperties() {
 		return (Properties) property.clone();
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 
 }

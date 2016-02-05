@@ -147,12 +147,12 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		PolynomialStructure ps = structurePath == null ? PolynomialStructure.PREM
 				: new PolynomialStructure(structurePath);
 
-		Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
+		Path outPath = getPath("synthetic" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
 		for (EventFolder eventDir : eventDirs) {
 			try {
-				Set<Station> stations = eventDir.sacFileSet(sfn -> !sfn.isOBS()).stream()
-						.filter(name -> components.contains(name.getComponent())).map(name -> {
+				Set<Station> stations = eventDir.sacFileSet().stream()
+						.filter(name -> name.isOBS() && components.contains(name.getComponent())).map(name -> {
 							try {
 								return name.readHeader();
 							} catch (Exception e2) {
@@ -176,5 +176,10 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			}
 		}
 
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 }
