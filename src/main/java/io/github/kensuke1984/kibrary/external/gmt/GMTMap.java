@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Helper for use of GMT
@@ -70,7 +71,7 @@ public final class GMTMap {
 
 	private String perturbationPointFile = "perturbationPoint.inf";
 
-	private String mapName = "MAP";
+	private String mapName;
 
 	/**
 	 * @param title
@@ -89,8 +90,22 @@ public final class GMTMap {
 		this.maxLongitude = maxLongitude;
 		this.minLatitude = minLatitude;
 		this.maxLatitude = maxLatitude;
-		mapName = title;
+		mapName = title.equals("")?" ":title;
 		setROption();
+		epsFileName = "gmt" + Utilities.getTemporaryString() + ".eps";
+		scriptFileName = "gmt" + Utilities.getTemporaryString() + ".sh";
+	}
+
+	/**
+	 * $header.eps and $header.sh If it is not set, the default is
+	 * gmt+'dateString'.eps and .sh
+	 * 
+	 * @param header
+	 *            set the name of the eps and script files
+	 */
+	public void setFileNameHeader(String header) {
+		epsFileName = header + ".eps";
+		scriptFileName = header + ".sh";
 	}
 
 	/**
@@ -186,6 +201,10 @@ public final class GMTMap {
 		return line;
 	}
 
+	public String psHeader() {
+		return "#!/bin/sh\npsname=" + epsFileName;
+	}
+
 	/**
 	 * Create postscript by psbasemap
 	 * 
@@ -209,8 +228,12 @@ public final class GMTMap {
 
 	}
 
+	public String fixEPS() {
+		return "eps2eps " + epsFileName + " ." + epsFileName + " && mv ." + epsFileName + " " + epsFileName;
+	}
+
 	/**
-	 * 
+	 * If you want to fill dry areas, then -Gcolor (e.g. -Gbrown)
 	 * @param additionalOptions
 	 *            if any the return will have them. ex) National boundaries -N1
 	 * @return pscoast -J -R -Bs -Dc -V -W -K -O (additional) &gt;&gt; $psname
@@ -221,15 +244,20 @@ public final class GMTMap {
 	}
 
 	/**
-	 * 書き出すpsファイルの名前
+	 * a name of an eps
 	 */
-	private String outputFile = "map.ps";
+	private String epsFileName;
+
+	/**
+	 * a name of a script
+	 */
+	private String scriptFileName;
 
 	private String[] outputMap() {
 		setROption();
 		String[] out = new String[8];
 		out[0] = "#!/bin/sh";
-		out[1] = "psname=\"" + outputFile + "\"";
+		out[1] = "psname=\"" + epsFileName + "\"";
 		out[2] = "gmtset BASEMAP_FRAME_RGB 0/0/0";
 		out[3] = "gmtset LABEL_FONT_SIZE 15";
 		out[4] = "";// TODO
@@ -248,11 +276,11 @@ public final class GMTMap {
 		String[] out = new String[6];
 		out[0] = "#!/bin/sh";
 
-		out[1] = "pscoast -K -JQ " + rOption + bOption + " >> " + outputFile;
-		out[2] = "psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " + eventFile + " > " + outputFile;
-		out[3] = "psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " + stationFile + " >> " + outputFile;
-		out[4] = "psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + perturbationPointFile + " >> " + outputFile;
-		out[5] = "grdimage ans.grd -J -Ccp2.cpt -B -O -R >> " + outputFile;
+		out[1] = "pscoast -K -JQ " + rOption + bOption + " >> " + epsFileName;
+		out[2] = "psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " + eventFile + " > " + epsFileName;
+		out[3] = "psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " + stationFile + " >> " + epsFileName;
+		out[4] = "psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + perturbationPointFile + " >> " + epsFileName;
+		out[5] = "grdimage ans.grd -J -Ccp2.cpt -B -O -R >> " + epsFileName;
 		return out;
 	}
 
