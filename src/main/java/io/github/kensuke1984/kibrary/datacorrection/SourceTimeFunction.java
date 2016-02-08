@@ -56,24 +56,22 @@ public abstract class SourceTimeFunction {
 	 */
 	public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
-		return new SourceTimeFunction(np, tlen, samplingHz) {
-
+		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
 			public Complex[] getSourceTimeFunction() {
-				if (sourceTimeFunction != null)
-					return sourceTimeFunction;
-				sourceTimeFunction = new Complex[np];
-				double deltaF = 1.0 / tlen;
-				double constant = 2 * Math.PI * deltaF * halfDuration;
-				for (int i = 0; i < np; i++) {
-					double omegaTau = (i + 1) * constant;
-					Complex c = new Complex(2, -2 * omegaTau);
-					Complex c2 = new Complex(2 * Math.cos(omegaTau), -2 * Math.sin(omegaTau));
-					sourceTimeFunction[i] = c.subtract(c2).divide(omegaTau * omegaTau);
-				}
 				return sourceTimeFunction;
 			}
 		};
+		sourceTimeFunction.sourceTimeFunction = new Complex[np];
+		double deltaF = 1.0 / tlen;
+		double constant = 2 * Math.PI * deltaF * halfDuration;
+		for (int i = 0; i < np; i++) {
+			double omegaTau = (i + 1) * constant;
+			Complex c = new Complex(2, -2 * omegaTau);
+			Complex c2 = new Complex(2 * Math.cos(omegaTau), -2 * Math.sin(omegaTau));
+			sourceTimeFunction.sourceTimeFunction[i] = c.subtract(c2).divide(omegaTau * omegaTau);
+		}
+		return sourceTimeFunction;
 	}
 
 	/**
@@ -95,23 +93,20 @@ public abstract class SourceTimeFunction {
 	 */
 	public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
-		return new SourceTimeFunction(np, tlen, samplingHz) {
+		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
-			public synchronized Complex[] getSourceTimeFunction() {
-				if (sourceTimeFunction != null)
-					return sourceTimeFunction;
-				sourceTimeFunction = new Complex[np];
-				double deltaF = 1.0 / tlen;
-				double constant = 2 * Math.PI * deltaF * halfDuration;
-				for (int i = 0; i < np; i++) {
-					double omegaTau = (i + 1) * constant;
-					sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
-				}
+			public Complex[] getSourceTimeFunction() {
 				return sourceTimeFunction;
 			}
-
 		};
-
+		sourceTimeFunction.sourceTimeFunction = new Complex[np];
+		double deltaF = 1.0 / tlen;
+		double constant = 2 * Math.PI * deltaF * halfDuration;
+		for (int i = 0; i < np; i++) {
+			double omegaTau = (i + 1) * constant;
+			sourceTimeFunction.sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
+		}
+		return sourceTimeFunction;
 	}
 
 	/**
@@ -271,7 +266,7 @@ public abstract class SourceTimeFunction {
 	 * @return convolute data in <b>frequency</b> domain
 	 */
 	public final Complex[] convolve(Complex[] data) {
-		if (data.length != np+1)
+		if (data.length != np + 1)
 			throw new IllegalArgumentException("Input data length is invalid.");
 		return IntStream.range(0, np + 1).parallel()
 				.mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1]))
