@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.3
+ * @version 0.0.3.1
  * 
  * @author kensuke
  *
