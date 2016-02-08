@@ -96,6 +96,9 @@ public abstract class SourceTimeFunction {
 	public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
 		return new SourceTimeFunction(np, tlen, samplingHz) {
+			{
+				getSourceTimeFunction();
+			}
 			@Override
 			public synchronized Complex[] getSourceTimeFunction() {
 				if (sourceTimeFunction != null)
