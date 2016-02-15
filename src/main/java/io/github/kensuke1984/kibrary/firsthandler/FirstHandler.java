@@ -60,8 +60,9 @@ public class FirstHandler implements Operation {
 			pw.println("#catalog");
 			pw.println("##double Sampling Hz, can not be changed now (20)");
 			pw.println("#samplingHz");
-			pw.println("##epicentral distance range (0 180)");
-			pw.println("#epicentralDistanceRange");
+			pw.println("##epicentral distance range Min(0) Max(180)");
+			pw.println("#epicentralDistanceMin");
+			pw.println("#epicentralDistanceMax");
 			pw.println("##boolean if it is true, remove intermediate files (true)");
 			pw.println("#removeIntermediateFile");
 		}
@@ -82,6 +83,10 @@ public class FirstHandler implements Operation {
 			property.setProperty("obsPath", "");
 		if (!property.containsKey("synPath"))
 			property.setProperty("synPath", "");
+		if (!property.containsKey("epicentralDistanceMin"))
+			property.setProperty("epicentralDistanceMin", "0");
+		if (!property.containsKey("epicentralDistanceMax"))
+			property.setProperty("epicentralDistanceMax", "180");
 
 	}
 
@@ -105,9 +110,8 @@ public class FirstHandler implements Operation {
 		default:
 			throw new RuntimeException("Invalid catalog name.");
 		}
-		String[] epicentralDistanceRange = property.getProperty("epicentralDistanceRange").split("\\s+");
-		epicentralDistanceMin = Double.parseDouble(epicentralDistanceRange[0]);
-		epicentralDistanceMax = Double.parseDouble(epicentralDistanceRange[1]);
+		epicentralDistanceMin = Double.parseDouble(property.getProperty("epicentralDistanceMin"));
+		epicentralDistanceMax = Double.parseDouble(property.getProperty("epicentralDistanceMax"));
 		samplingHz = 20; // TODO
 		removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
 	}
