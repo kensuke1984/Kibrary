@@ -13,11 +13,11 @@ It bundles [ANISOtime][ANISOtime] package.
 [Java SE Runtime Environment(JRE) 8][JRE8] is required.
 
 ##Installation
-Here is a script [build.gradle][gradlescript] for *Gradle 2.10*.  
-If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
+Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
 
+Here is the flow.
 ```bash
  % wget http://kensuke1984.github.io/gradlew.tar
  % tar xf gradlew.tar
