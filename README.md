@@ -32,7 +32,7 @@ you have to care about dependencies by yourself.
 The necessary libraries are below:
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
 [*Apache Commons LANG*][lang], [*Apache Commons MATH*][math], [*Apache Commons NET*][net],
-*epsgraphics*, *javax.mail*
+[*Epsgraphics*][eps], [*javax.mail*][mail]
 
 
 
@@ -45,7 +45,8 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 
 ##Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
-Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
+Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
+Last updated Feb 16,2016
 
 
 [release-image]:https://img.shields.io/badge/release-Goblin-pink.svg
@@ -76,7 +77,7 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 [lang]:http://commons.apache.org/proper/commons-lang/
 [math]:http://commons.apache.org/proper/commons-math/
 [net]:http://commons.apache.org/proper/commons-net/
-
-
+[eps]:http://www.abeel.be/wiki/EPSGraphics
+[mail]:https://java.net/projects/javamail/pages/Home
 
 
