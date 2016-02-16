@@ -59,7 +59,7 @@ Last updated Feb 16,2016
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
 
-[ANISOtime]:http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm
+[ANISOtime]:http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
