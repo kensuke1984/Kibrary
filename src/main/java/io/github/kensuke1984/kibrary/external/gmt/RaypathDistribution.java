@@ -4,21 +4,31 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -33,33 +43,101 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * 
  * @author kensuke
- * @version 0.0.4
+ * @version 0.1
  * 
  */
-final class RaypathDistribution extends parameter.RaypathDistribution {
+public class RaypathDistribution implements Operation {
+
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(RaypathDistribution.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
+			pw.println("##Work folder (.)");
+			pw.println("#workPath");
+			pw.println("##boolean true if you want to draw raypath (false)");
+			pw.println("#raypath");
+			pw.println("##StationInformationFile a file containing station information must be set!!");
+			pw.println("#stationInformationPath station.inf");
+			pw.println("##Path of a time window information file.");
+			pw.println("##If it exists, draw raypaths in the file");
+			pw.println("#timeWindowInformationPath");
+		}
+		System.out.println(outPath + " is created.");
+	}
 
 	private Set<GlobalCMTID> ids;
 
-	private RaypathDistribution(Path parameterPath) throws IOException {
-		super(parameterPath);
+	public RaypathDistribution(Properties properties) throws IOException {
+		property = (Properties) properties.clone();
+		set();
 	}
+
+	private Path workPath;
+
+	/**
+	 * parameterのセット
+	 */
+	private void set() throws IOException {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+
+		drawsPath = Boolean.parseBoolean(property.getProperty("raypath"));
+		Path stationPath = getPath("stationInformationPath");
+		stationSet = StationInformationFile.read(stationPath);
+		// drawsPoint = Boolean.parseBoolean(reader.getString("partial"));
+		if (property.containsKey("timeWindowInformationPath")) {
+			Path f = getPath("timeWindowInformationPath");
+			if (Files.exists(f))
+				timeWindowInformationFile = TimewindowInformationFile.read(f);
+		}
+	}
+
+	private Properties property;
+
+	/**
+	 * components for path
+	 */
+	private Set<SACComponent> components;
+
+	/**
+	 * draw path
+	 */
+	protected boolean drawsPath;
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+	}
+
+	/**
+	 * draw points of partial TODO
+	 */
+	// protected boolean drawsPoint;
+
+	private Set<Station> stationSet;
+
+	private Set<TimewindowInformation> timeWindowInformationFile;
 
 	/**
 	 * @param args
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		RaypathDistribution rd = null;
-		if (0 < args.length) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			rd = new RaypathDistribution(parameterPath);
-		} else
-			rd = new RaypathDistribution(null);
-
+		Properties property = Property.parse(args);
+		long start = System.nanoTime();
+		RaypathDistribution rd = new RaypathDistribution(property);
+		System.out.println(RaypathDistribution.class.getName() + " is going.");
 		rd.run();
-
+		System.out.println(RaypathDistribution.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	private Path stationPath;
@@ -96,18 +174,15 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 			Files.write(stationPath, lines);
 	}
 
-	private void run() {
+	@Override
+	public void run() throws IOException {
 		setName();
-		try {
-			ids = Utilities.globalCMTIDSet(workPath);
-			outputEvent();
-			outputStation();
-			if (drawsPath)
-				outputRaypath();
-			outputGMT();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		ids = Utilities.globalCMTIDSet(workPath);
+		outputEvent();
+		outputStation();
+		if (drawsPath)
+			outputRaypath();
+		outputGMT();
 	}
 
 	/**
@@ -130,7 +205,7 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 			} catch (Exception e) {
 				return Stream.empty();
 			}
-		}).filter(name -> name.isOBS() && componentSet.contains(name.getComponent())).filter(this::inTimeWindow)
+		}).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
 				.map(name -> {
 					try {
 						return name.readHeader();
@@ -150,28 +225,24 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 
 		double minimumEventLatitude = ids.stream().map(id -> id.getEvent())
 				.mapToDouble(e -> e.getCmtLocation().getLatitude()).min().getAsDouble();
-
 		double maximumEventLatitude = ids.stream().map(id -> id.getEvent())
 				.mapToDouble(e -> e.getCmtLocation().getLatitude()).max().getAsDouble();
 
 		double minimumEventLongitude = ids.stream().map(id -> id.getEvent())
 				.mapToDouble(e -> e.getCmtLocation().getLongitude()).map(d -> 0 <= d ? d : d + 360).min().getAsDouble();
-
 		double maximumEventLongitude = ids.stream().map(id -> id.getEvent())
 				.mapToDouble(e -> e.getCmtLocation().getLongitude()).map(d -> 0 <= d ? d : d + 360).max().getAsDouble();
 
 		double minimumStationLatitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(pos -> pos.getLatitude()).min().orElse(minimumEventLatitude);
-
+				.mapToDouble(HorizontalPosition::getLatitude).min().orElse(minimumEventLatitude);
 		double maximumStationLatitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(pos -> pos.getLatitude()).max().orElse(maximumEventLatitude);
+				.mapToDouble(HorizontalPosition::getLatitude).max().orElse(maximumEventLatitude);
 
 		double minimumStationLongitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(pos -> pos.getLongitude()).map(d -> 0 <= d ? d : d + 360).min()
+				.mapToDouble(HorizontalPosition::getLongitude).map(d -> 0 <= d ? d : d + 360).min()
 				.orElse(minimumEventLongitude);
-
 		double maximumStationLongitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(pos -> pos.getLongitude()).map(d -> 0 <= d ? d : d + 360).max()
+				.mapToDouble(HorizontalPosition::getLongitude).map(d -> 0 <= d ? d : d + 360).max()
 				.orElse(maximumEventLongitude);
 
 		int minLatitude = (int) Math
@@ -223,4 +294,17 @@ final class RaypathDistribution extends parameter.RaypathDistribution {
 		// for (String s : gmtCMD)
 		// System.out.println(s);
 	}
+
+	@Override
+	public Path getWorkPath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Properties getProperties() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

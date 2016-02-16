@@ -7,7 +7,7 @@ import java.util.Arrays;
  * The list of names of manhattan (operation)
  * 
  * @author kensuke
- * @version 0.0.2
+ * @version 0.0.3
  */
 public enum Manhattan {
 	SpcSAC(0, io.github.kensuke1984.kibrary.util.spc.SpcSAC.class), FilterDivider(1,
@@ -25,8 +25,11 @@ public enum Manhattan {
 																	8,
 																	io.github.kensuke1984.kibrary.selection.DataSelection.class), FirstHandler(
 																			9,
-																			io.github.kensuke1984.kibrary.firsthandler.FirstHandler.class),
-	SecondHandler(10,io.github.kensuke1984.kibrary.selection.SecondHandler.class);
+																			io.github.kensuke1984.kibrary.firsthandler.FirstHandler.class), SecondHandler(
+																					10,
+																					io.github.kensuke1984.kibrary.selection.SecondHandler.class), RaypathDistribution(
+																							11,
+																							io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution.class);
 
 	private int value;
 
@@ -55,19 +58,11 @@ public enum Manhattan {
 	 *             if any
 	 */
 	public void invokeMain(String[] args) throws Exception {
-		try {
-			c.getMethod("main", String[].class).invoke(null, (Object) args);
-		} catch (Exception e) {
-			throw e;
-		}
+		c.getMethod("main", String[].class).invoke(null, (Object) args);
 	}
 
 	public void writeDefaultPropertiesFile() throws Exception {
-		try {
-			c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
-		} catch (Exception e) {
-			throw e;
-		}
+		c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
 	}
 
 }
