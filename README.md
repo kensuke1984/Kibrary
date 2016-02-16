@@ -12,7 +12,7 @@ It bundles [ANISOtime][ANISOtime] package.
 
 [Java SE Runtime Environment(JRE) 8][JRE8] is required.
 
-##<a name="installation"> Installation
+##<a name="installation">Installation
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
