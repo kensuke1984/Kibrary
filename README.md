@@ -26,7 +26,7 @@ Here is the flow.
 ```
 
 ##Build by yourself
-If you just want to use Kibrary, just install as [above][#install].
+If you just want to use Kibrary, just install as [above][#Installation].
 However if you want to modify source codes and build by yourself,
 you have to care about dependencies by yourself.  
 The necessary libraries are below:
