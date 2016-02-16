@@ -54,7 +54,6 @@ public final class SpcSAC implements Operation {
 	 */
 	private Path workPath;
 
-	
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
@@ -142,9 +141,10 @@ public final class SpcSAC implements Operation {
 		Properties property = Property.parse(args);
 		SpcSAC ss = new SpcSAC(property);
 		long start = System.nanoTime();
-		System.out.println("SpcSAC is going.");
+		System.out.println(SpcSAC.class.getName() + " is going.");
 		ss.run();
-		System.out.println("SpcSAC finished in " + Utilities.toTimeString(System.nanoTime() - start));
+		System.out
+				.println(SpcSAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	private void readUserSourceTimeFunctions() throws IOException {
