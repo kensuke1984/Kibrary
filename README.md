@@ -30,7 +30,7 @@ If you just want to use Kibrary, just install as above.
 However if you want to modify source codes and build by yourself,
 you have to care about dependencies by yourself.  
 The necessary libraries are below:
-*Apache Commons CLI*, *Apache Commons Email*, *Apache Commons IO*,
+[*Apache Commons CLI*][cli], *Apache Commons Email*, *Apache Commons IO*,
 *Apache Commons LANG*, *Apache Commons MATH*, *Apache Commons NET*,
 *epsgraphics*, *javax.mail*
 
@@ -69,3 +69,9 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 [wiki]:https://github.com/kensuke1984/Kibrary/wiki
 [email]:mailto:kensuke@earth.sinica.edu.tw
 [javadoc]:https://kensuke1984.github.io/Kibrary
+
+[cli]:http://commons.apache.org/proper/commons-cli/
+
+
+
+
