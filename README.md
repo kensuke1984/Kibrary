@@ -25,6 +25,18 @@ Here is the flow.
  % ./gradlew build 
 ```
 
+##Build by yourself
+If you just want to use Kibrary, just install as above.
+However if you want to modify source codes and build by yourself,
+you have to care about dependencies by yourself.  
+The necessary libraries are below:
+*Apache Commons CLI*, *Apache Commons Email*, *Apache Commons IO*,
+*Apache Commons LANG*, *Apache Commons MATH*, *Apache Commons NET*,
+*epsgraphics*, *javax.mail*
+
+
+
+
 ##Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
