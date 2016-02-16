@@ -12,7 +12,7 @@ It bundles [ANISOtime][ANISOtime] package.
 
 [Java SE Runtime Environment(JRE) 8][JRE8] is required.
 
-##Installation
+##<a name="installation"> Installation
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
@@ -26,7 +26,7 @@ Here is the flow.
 ```
 
 ##Build by yourself
-If you just want to use Kibrary, just install as [above](https://github.com/kensuke1984/Kibrary/blob/master/README.md#installation).
+If you just want to use Kibrary, just install as [above](#installation).
 However if you want to modify source codes and build by yourself,
 you have to care about dependencies by yourself.  
 The necessary libraries are below:
