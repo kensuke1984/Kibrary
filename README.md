@@ -29,11 +29,11 @@ Here is the flow.
 If you just want to use Kibrary, just install as [above](#installation).
 However if you want to modify source codes and build by yourself,
 you have to care about dependencies by yourself.  
-The necessary libraries are below:
+The necessary libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
 [*Apache Commons LANG*][lang], [*Apache Commons MATH*][math], [*Apache Commons NET*][net],
-[*Epsgraphics*][eps], [*javax.mail*][mail]
-
+[*Epsgraphics*][eps], [*javax.mail*][mail].  
+The latest versions are strongly recommended.
 
 
 
