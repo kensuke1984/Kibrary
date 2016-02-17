@@ -69,7 +69,7 @@ public class UnknownParameterFile {
 				case PARN:
 				case PARQ:
 				case PAR2:
-					unknown = new Elastic1DParameter(type, Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+					unknown = new Physical1DParameter(type, Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
 					pars.add(unknown);
 					break;
 				case A:
@@ -79,7 +79,7 @@ public class UnknownParameterFile {
 				case N:
 				case Q:
 				default:
-					unknown = new ElasticParameter(type, new Location(Double.parseDouble(parts[1]),
+					unknown = new Physical3DParameter(type, new Location(Double.parseDouble(parts[1]),
 							Double.parseDouble(parts[2]), Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));
 					pars.add(unknown);
 				}

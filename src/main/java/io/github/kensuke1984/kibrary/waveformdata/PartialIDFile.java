@@ -16,7 +16,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.io.FilenameUtils;
 
-import io.github.kensuke1984.kibrary.inversion.ElasticParameter;
+import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -163,7 +163,7 @@ public final class PartialIDFile {
 		if (Files.exists(outPath))
 			return;
 		List<String> lines = Arrays.stream(pids).parallel()
-				.map(id -> new ElasticParameter(id.partialType, id.pointLocation, 1)).distinct()
+				.map(id -> new Physical3DParameter(id.partialType, id.pointLocation, 1)).distinct()
 				.map(ep -> ep.toString()).sorted().collect(Collectors.toList());
 		Files.write(outPath, lines);
 		System.out.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");

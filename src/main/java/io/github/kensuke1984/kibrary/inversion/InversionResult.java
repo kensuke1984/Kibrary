@@ -505,7 +505,7 @@ public class InversionResult {
 			throw new RuntimeException(type+" is not 3d parameter"); //TODO
 		double value = 0;
 		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type)
-				.collect(Collectors.toMap(key -> ((ElasticParameter) key).getPointLocation(), key -> answer.get(key)));
+				.collect(Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
 		if (type == PartialType.TIME) {
 			System.out.println("madda");
@@ -516,7 +516,7 @@ public class InversionResult {
 		}
 		Location[] nearLocations = location
 				.getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
-						.map(key -> ((ElasticParameter) key).getPointLocation()).toArray(n -> new Location[n]));
+						.map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(n -> new Location[n]));
 		double[] r = new double[nPoints];
 		double rTotal = 0;
 		for (int iPoint = 0; iPoint < nPoints; iPoint++) {
