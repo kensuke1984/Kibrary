@@ -1,7 +1,12 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -306,3 +311,189 @@ public final class GMTMap {
 
 	}
 }
+
+/*
+ * private void outputGridMakerScript() throws IOException {
+
+		Set<Double> rSet = new TreeSet<>();
+		for (int i = 0; i < grid.length; i++)
+			rSet.add(grid[i].getR());
+		double[] r = new double[rSet.size()];
+		{
+			int i = 0;
+			for (double x : rSet)
+				r[i++] = x;
+		}
+
+		Path gridPath = outPath.resolve("gridmaker.sh");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(gridPath))) {
+			pw.println("#!/bin/sh");
+			pw.print("for depth in ");
+			for (int i = 0; i < r.length; i++)
+				pw.print(r[i] + " ");
+			pw.println();
+			pw.println("do");
+			pw.println("dep=${depth%.0}");
+			pw.println("grep \"$depth\" complemented.dat | \\");
+			pw.println("awk \'{print $1, $2, $4}\'  | \\");
+			pw.println("surface -G$dep.grd -R" + minLongitude + "/" + maxLongitude + "/" + minLatitude + "/"
+					+ maxLatitude + " -I5");
+			pw.println("#xyz2grd -G$dep.grd -R145/180/-10/30 -I2.5 -N0");
+			pw.println("grdsample $dep.grd -G${dep}comp.grd -I0.1");
+			pw.println("done");
+		}
+
+		gridPath.toFile().setExecutable(true);
+	}
+
+	private void outputMaskMakerScript() throws IOException {
+
+		Set<Double> rSet = new TreeSet<>();
+		for (int i = 0; i < grid.length; i++)
+			rSet.add(grid[i].getR());
+		double[] r = new double[rSet.size()];
+		{
+			int i = 0;
+			for (double x : rSet)
+				r[i++] = x;
+		}
+
+		Path maskPath = outPath.resolve("masking.sh");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(maskPath))) {
+			pw.println("#!/bin/sh");
+			pw.println("grdmask mask.dat -Gmask.grd -I0.1 -R" + minLongitude + "/" + maxLongitude + "/" + minLatitude
+					+ "/" + maxLatitude + " -NNAN/1/1");
+			pw.print("for depth in ");
+			for (int i = 0; i < r.length; i++)
+				pw.print(r[i] + " ");
+			pw.println();
+			pw.println("do");
+			pw.println("dep=${depth%.0}");
+			pw.println("grdmath $dep\\comp.grd mask.grd OR = masked_data.grd");
+			pw.println("mv masked_data.grd $dep\\comp.grd");
+			pw.println("done");
+		}
+		maskPath.toFile().setExecutable(true);
+
+	}
+
+	private void outputNeoScript() throws IOException {
+		Path neoPath = outPath.resolve("neo.sh");
+
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(neoPath))) {
+			pw.println("#!/bin/sh");
+
+			pw.println("# parameters for pscoast");
+			pw.println("R='-R" + minLongitude + "/" + maxLongitude + "/" + minLatitude + "/" + maxLatitude + "';");
+			pw.println("J='-JQ145/15';");
+			pw.println("G='-G255/255/255';");
+			pw.println("B='-BWeSna30f10';");
+			pw.println("O='-A5000 -W1 -P';");
+
+			// pw.println("gmtset BASEMAP_FRAME_RGB 0/0/0");
+			// pw.println("gmtset ANOT_FONT_SIZE 25");
+			// pw.println("gmtset LABEL_FONT_SIZE 25");
+			// pw.println("gmtset PAPER_MEDIA a0+");
+			// pw.println("gmtset PAGE_ORIENTATION landscape");
+			pw.println("outputps=\"test.ps\"");
+			pw.println("cpt=\"color.cpt\"");
+			pw.println("scale=\"scale.cpt\"");
+			pw.println("grdimage 3855\\comp.grd $J  $R -C$cpt $B -K -P -Y30 > $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K  -Y-1  -O >>$outputps");
+			pw.println("pscoast -V  -R -J -B:.\"350 - 400 km (B)\":  $O -K -O -Y1   >> $outputps");
+
+			pw.println("grdimage 3805\\comp.grd $J  $R -C$cpt $B -K -O -P   -X20 >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"300 - 350 km (A)\":  $O  -K -O -Y1 -X-1 >> $outputps");
+
+			pw.println("grdimage 3755\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"250 - 300 km (B)\":  $O -K -O -Y1 -X-1 >> $outputps");
+
+			pw.println("grdimage 3705\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"200 - 250 km (A)\":  $O -K -O -Y1 -X-1 >> $outputps");
+
+			pw.println("grdimage 3655\\comp.grd $J  $R -C$cpt $B -K -P -Y-23 -X-60 -O >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"150 - 200 km (B)\":  $O -K -O -Y1 -X-1 >> $outputps");
+
+			pw.println("grdimage 3605\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"100 - 150 km (A)\":  $O  -K -O -Y1 -X-1 >> $outputps");
+
+			pw.println("grdimage 3555\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"50 - 100 km (B)\":  $O -K -O -Y1 -X-1 >> $outputps");
+
+			pw.println("grdimage 3505\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
+			pw.println("psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
+			pw.println("pscoast -V -R -J -B:.\"0 - 50 km (A)\":  $O  -O -K  -Y1 -X-1 >> $outputps");
+
+			// pw.println("grdimage a.grd $J $R -Ccp12a.cpt -K -O -P -Y47 -X-40
+			// >> $outputps");
+			// pw.println("psscale -Ccp2.cpt -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K
+			// -O -Y-1 -X1 -O >>$outputps");
+			// pw.println("pscoast -V -R -J $B:.\"Pattern A\": $O -K -O -Y1 -X-1
+			// >> $outputps");
+			//
+			// pw.println("grdimage b.grd $J $R -Ccp12a.cpt $B -K -O -P -X20 >>
+			// $outputps");
+			// pw.println("psscale -Ccp2.cpt -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K
+			// -O -Y-1 -X1 -O >>$outputps");
+			// pw.println("pscoast -V -R -J $B:.\"Pattern B\": $O -O -Y1 -X-1 >>
+			// $outputps");
+
+			pw.println("ps2epsi $outputps");
+
+			pw.println("mv ${outputps%.ps}.epsi ${outputps%.ps}.eps");
+
+			// pw.println("echo $B:a:");
+
+		}
+		neoPath.toFile().setExecutable(true);
+	}
+
+	private void outputMapMakerScript() throws IOException {
+		Set<Double> rSet = new TreeSet<>();
+		for (int i = 0; i < grid.length; i++)
+			rSet.add(grid[i].getR());
+		double[] r = new double[rSet.size()];
+		{
+			int i = 0;
+			for (double x : rSet)
+				r[i++] = x;
+		}
+
+		Path maskPath = outPath.resolve("mapMaker.sh");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(maskPath))) {
+			pw.println("#!/bin/sh");
+			pw.println("# parameters for pscoast");
+			pw.println("R='-R" + minLongitude + "/" + maxLongitude + "/" + minLatitude + "/" + maxLatitude + "'");
+			pw.println("J='-JQ145/15'");
+			pw.println("G='-G255/255/255'");
+			pw.println("B='-Bg30WeSna30f20'");
+			pw.println("B='-Bg30WeSnf20'");
+			pw.println("O='-A5000 -W1 -P'");
+
+			pw.println("gmtset BASEMAP_FRAME_RGB 0/0/0");
+			pw.println("gmtset LABEL_FONT_SIZE 15");
+			pw.print("for depth in ");
+			for (int i = 0; i < r.length; i++)
+				pw.print(r[i] + " ");
+			pw.println();
+			pw.println("do");
+			pw.println("depth=${depth%.0}");
+			pw.println("outputps=\"$depth.ps\"");
+			pw.println("grdimage $depth\\comp.grd $J  $R -Ccolor$depth.cpt  -K -P -Y5 > $outputps");
+			// pw.println("psscale -Cscale$depth.cpt -D7/-1/5/0.5h -K -O
+			// >>$outputps");
+			pw.println("psscale -Cscale$depth.cpt -D7/-1/5/0.5h -Ba1g0.5 -K -O >>$outputps");
+			pw.println("pscoast -V -R -J $B  $O  -O >> $outputps");
+			pw.println("done");
+		}
+		maskPath.toFile().setExecutable(true);
+
+	}
+
+  */

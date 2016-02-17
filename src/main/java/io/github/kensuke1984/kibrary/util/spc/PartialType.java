@@ -10,7 +10,7 @@ import java.util.Arrays;
  * TIME
  * 
  * 
- * @version 0.0.3 
+ * @version 0.0.3
  * 
  * @author Kensuke
  * 
@@ -19,6 +19,10 @@ public enum PartialType {
 
 	A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME(8), PAR1(9), PAR2(10), PARA(11), PARC(12), PARF(
 			13), PARL(14), PARN(15), PARQ(16);
+
+	public boolean is3D() {
+		return 8 < value;
+	}
 
 	private int value;
 
