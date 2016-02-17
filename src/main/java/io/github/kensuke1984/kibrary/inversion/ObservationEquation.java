@@ -153,7 +153,7 @@ public class ObservationEquation {
 			case PARQ:
 			case PAR1:
 			case PAR2:
-				if (location.getR() == ((Elastic1DParameter) parameterList.get(i)).getPerturbationR())
+				if (location.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
 					return i;
 				break;
 			case A:
@@ -164,7 +164,7 @@ public class ObservationEquation {
 			case Q:
 			case MU:
 			case LAMBDA:
-				if (location.equals(((ElasticParameter) parameterList.get(i)).getPointLocation()))
+				if (location.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation()))
 					return i;
 				break;
 			}
