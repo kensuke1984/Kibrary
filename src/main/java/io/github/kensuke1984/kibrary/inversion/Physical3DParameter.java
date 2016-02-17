@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @author kensuke
  *
  */
-public class ElasticParameter implements UnknownParameter {
+public class Physical3DParameter implements UnknownParameter {
 
 	public Location getPointLocation() {
 		return pointLocation;
@@ -31,7 +31,7 @@ public class ElasticParameter implements UnknownParameter {
 	private final PartialType partialType;
 	private final double weighting;
 
-	public ElasticParameter(PartialType partialType, Location pointLocation, double weighting) {
+	public Physical3DParameter(PartialType partialType, Location pointLocation, double weighting) {
 		this.partialType = partialType;
 		this.weighting = weighting;
 		this.pointLocation = pointLocation;
@@ -57,7 +57,7 @@ public class ElasticParameter implements UnknownParameter {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ElasticParameter other = (ElasticParameter) obj;
+		Physical3DParameter other = (Physical3DParameter) obj;
 		if (partialType != other.partialType)
 			return false;
 		if (pointLocation == null) {

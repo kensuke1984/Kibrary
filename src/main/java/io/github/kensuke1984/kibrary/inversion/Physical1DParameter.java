@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @author Kensuke
  * 
  */
-public class Elastic1DParameter implements UnknownParameter {
+public class Physical1DParameter implements UnknownParameter {
 
 	@Override
 	public int hashCode() {
@@ -39,7 +39,7 @@ public class Elastic1DParameter implements UnknownParameter {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Elastic1DParameter other = (Elastic1DParameter) obj;
+		Physical1DParameter other = (Physical1DParameter) obj;
 		if (partialType != other.partialType)
 			return false;
 		if (Double.doubleToLongBits(perturbationR) != Double.doubleToLongBits(other.perturbationR))
@@ -64,7 +64,7 @@ public class Elastic1DParameter implements UnknownParameter {
 	private final double weighting;
 	private final PartialType partialType;
 
-	public Elastic1DParameter(PartialType partialType, double perturbationR, double weighting) {
+	public Physical1DParameter(PartialType partialType, double perturbationR, double weighting) {
 		this.partialType = partialType;
 		this.weighting = weighting;
 		this.perturbationR = perturbationR;
