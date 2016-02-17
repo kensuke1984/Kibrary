@@ -27,45 +27,45 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * 
  * @author kensuke
  * 
- * @version 0.1
+ * @version 0.1.1
  * 
  *
  */
 public class DataRequestor implements Operation {
 
-	protected String institute;
-	protected String mail;
-	protected String email;
-	protected String phone;
-	protected String fax;
-	// protected String label;
-	protected String media;
-	// protected String[] alternateMedia;
-	protected String[] networks;
-	protected LocalDate startDate;
-	protected int headAdjustment;
-	protected int footAdjustment;
+	private String institute;
+	private String mail;
+	private String email;
+	private String phone;
+	private String fax;
+	// private String label;
+	private String media;
+	// private String[] alternateMedia;
+	private String[] networks;
+	private LocalDate startDate;
+	private int headAdjustment;
+	private int footAdjustment;
 
 	private Path workPath;
 
 	/**
 	 * including the date
 	 */
-	protected LocalDate endDate;
-	protected double lowerMw;
-	protected double upperMw;
-	protected double lowerLatitude;
-	protected double upperLatitude;
-	protected double lowerLongitude;
-	protected double upperLongitude;
+	private LocalDate endDate;
+	private double lowerMw;
+	private double upperMw;
+	private double lowerLatitude;
+	private double upperLatitude;
+	private double lowerLongitude;
+	private double upperLongitude;
 	/**
 	 * not radius but distance from the surface
 	 */
-	protected double lowerDepth;
+	private double lowerDepth;
 	/**
 	 * not radius but distance from the surface
 	 */
-	protected double upperDepth;
+	private double upperDepth;
 
 	/**
 	 * @param args

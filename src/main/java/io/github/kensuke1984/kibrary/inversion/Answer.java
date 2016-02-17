@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @author kensuke
  * 
  */
-public class Answer extends parameter.Answer {
+public class Answer extends parameter.AnswerPa {
 
 	private CrossSection[] crossSections;
 

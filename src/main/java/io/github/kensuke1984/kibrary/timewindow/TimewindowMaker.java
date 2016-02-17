@@ -102,9 +102,8 @@ public class TimewindowMaker implements Operation {
 		outputPath = getPath("timewindow" + date + ".dat");
 		invalidList = getPath("invalidTimewindow" + date + ".txt");
 		timewindowSet = Collections.synchronizedSet(new HashSet<>());
-		String[] str = property.getProperty("components").split("\\s+"); // SacComponent
-		components = Arrays.stream(str).map(SACComponent::valueOf).collect(Collectors.toSet());
-
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
 		usePhases = phaseSet(property.getProperty("usePhases"));
 		exPhases = phaseSet(property.getProperty("exPhases"));
 

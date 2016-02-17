@@ -96,37 +96,37 @@ public class DataSelection implements Operation {
 		set();
 	}
 
-	protected Set<SACComponent> components;
-	protected Path obsPath;
-	protected Path synPath;
-	protected boolean convolute;
-	protected Path timewindowInformationFilePath;
-	protected Path staticCorrectionInformationFilePath;
+	private Set<SACComponent> components;
+	private Path obsPath;
+	private Path synPath;
+	private boolean convolute;
+	private Path timewindowInformationFilePath;
+	private Path staticCorrectionInformationFilePath;
 
 	/**
 	 * Minimum correlation coefficients
 	 */
-	protected double minCorrelation;
+	private double minCorrelation;
 
 	/**
 	 * Maximum correlation coefficients
 	 */
-	protected double maxCorrelation;
+	private double maxCorrelation;
 
 	/**
 	 * Minimum variance
 	 */
-	protected double minVariance;
+	private double minVariance;
 
 	/**
 	 * Maximum variance
 	 */
-	protected double maxVariance;
+	private double maxVariance;
 
 	/**
 	 * amplitude のしきい値
 	 */
-	protected double ratio;
+	private double ratio;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))

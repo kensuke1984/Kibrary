@@ -1,20 +1,25 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
@@ -53,11 +58,112 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * timeshift fileを一つに統一
  * 
  * 
- * @version 0.1.3
+ * @version 0.2
  * @author Kensuke
  * 
  */
-final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
+public class FujiStaticCorrection implements Operation {
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("##Path of a root directory containing observed dataset (.)");
+			pw.println("#obsPath");
+			pw.println("##Path of a root directory containing synthetic dataset (.)");
+			pw.println("#synPath");
+			pw.println("##Path of a timeWindowInformation file, must be set");
+			pw.println("#timewindowInformationPath timewindow.dat");
+			pw.println("##boolean convolute (false)");
+			pw.println("#convolute");
+			pw.println("##double sacSamplingHz(20)");
+			pw.println("#sacSamplingHz cant change now");
+			pw.println("##double threshold for peak finder (0.2)");
+			pw.println("#threshold");
+			pw.println("##double searchRange [s] (10)");
+			pw.println("#searchRange");
+		}
+		System.out.println(outPath + " is created.");
+	}
+
+	/**
+	 * components for computation
+	 */
+	private Set<SACComponent> components;
+
+	/**
+	 * コンボリューションされている波形かそうでないか （両方は無理）
+	 */
+	private boolean convolute;
+
+	/**
+	 * range for searching [s] ±searchRange秒の中でコリレーション最大値探す
+	 */
+	private double searchRange;
+
+	/**
+	 * the directory for observed data
+	 */
+	private Path obsPath;
+
+	/**
+	 * the directory for synthetic data
+	 */
+	private Path synPath;
+
+	/**
+	 * sampling Hz [Hz] in sac files
+	 */
+	private double sacSamplingHz;
+
+	private Properties property;
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("obsPath"))
+			property.setProperty("obsPath", "");
+		if (!property.containsKey("synPath"))
+			property.setProperty("synPath", "");
+		if (!property.containsKey("convolute"))
+			property.setProperty("convolute", "false");
+		if (!property.containsKey("threshold"))
+			property.setProperty("threshold", "0.2");
+		if (!property.containsKey("searchRange"))
+			property.setProperty("searchRange", "10");
+	}
+
+	/**
+	 * シグナルとみなすかどうかの最大振幅から見ての比率
+	 */
+	private double threshold;
+
+	private Path timewindowInformationPath;
+
+	private Path workPath;
+
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+		synPath = getPath("synPath");
+		obsPath = getPath("obsPath");
+		timewindowInformationPath = getPath("timewindowInformationPath");
+
+		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
+		// sacSamplingHz
+		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
+		sacSamplingHz = 20;
+		searchRange = Double.parseDouble(property.getProperty("searchRange"));
+		threshold = Double.parseDouble(property.getProperty("threshold"));
+	}
 
 	private Set<StaticCorrection> staticCorrectionSet;
 
@@ -95,7 +201,7 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 				// check a component
 				if (!components.contains(component))
 					continue;
-				SACExtension synExt = isConvolved ? SACExtension.valueOfConvolutedSynthetic(component)
+				SACExtension synExt = convolute ? SACExtension.valueOfConvolutedSynthetic(component)
 						: SACExtension.valueOfSynthetic(component);
 
 				SACFileName synName = new SACFileName(
@@ -147,13 +253,13 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 		}
 	}
 
-	private FujiStaticCorrection(Path parameterPath) throws IOException {
-		super(parameterPath);
+	private FujiStaticCorrection(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
 		String date = Utilities.getTemporaryString();
 		outPath = workPath.resolve("staticCorrection" + date + ".dat");
 		// searchWidth = (int) (searchRange * sacSamplingHz);
 		staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
-
+		set();
 	}
 
 	private Path outPath;
@@ -164,36 +270,12 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 	 *            [parameter file name]
 	 * @throws IOException
 	 */
-	public static void main(String[] args) throws IOException {
-		// test();
-		// args = new String[] { "data/carib/timeshift.prm" };
-		FujiStaticCorrection tsm = null;
-		if (0 < args.length) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			tsm = new FujiStaticCorrection(parameterPath);
-		} else
-			tsm = new FujiStaticCorrection(null);
-		FujiStaticCorrection f = tsm;
-		System.err.println("FujiStaticCorrection is going.");
-		long startTime = System.nanoTime();
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(tsm.obsPath);
-		int n = Runtime.getRuntime().availableProcessors();
-		ExecutorService es = Executors.newFixedThreadPool(n);
-		tsm.timewindowInformation = TimewindowInformationFile.read(tsm.timewindowInformationPath);
-		eventDirs.stream().map(ed -> f.new Worker(ed)).forEach(es::execute);
-		es.shutdown();
+	public static void main(String[] args) throws Exception {
+		FujiStaticCorrection fsc = new FujiStaticCorrection(Property.parse(args));
 
-		while (!es.isTerminated()) {
-			try {
-				// System.out.println("waiting");
-				Thread.sleep(1000);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		f.output();
+		long startTime = System.nanoTime();
+		System.err.println("FujiStaticCorrection is going.");
+		fsc.run();
 		System.err.println("FujiStaticCorrection finished in " + Utilities.toTimeString(System.nanoTime() - startTime));
 
 	}
@@ -383,6 +465,36 @@ final class FujiStaticCorrection extends parameter.FujiStaticCorrection {
 		Trace t = sacData.createTrace();
 		t = t.cutWindow(tStart, tEnd);
 		return t.getY();
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
+	@Override
+	public void run() throws Exception {
+		Set<EventFolder> eventDirs = Utilities.eventFolderSet(obsPath);
+		int n = Runtime.getRuntime().availableProcessors();
+		ExecutorService es = Executors.newFixedThreadPool(n);
+		timewindowInformation = TimewindowInformationFile.read(timewindowInformationPath);
+		eventDirs.stream().map(Worker::new).forEach(es::execute);
+		es.shutdown();
+
+		while (!es.isTerminated()) {
+			try {
+				// System.out.println("waiting");
+				Thread.sleep(1000);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		output();
 	}
 
 }
