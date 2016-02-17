@@ -297,14 +297,12 @@ public class RaypathDistribution implements Operation {
 
 	@Override
 	public Path getWorkPath() {
-		// TODO Auto-generated method stub
-		return null;
+		return workPath;
 	}
 
 	@Override
 	public Properties getProperties() {
-		// TODO Auto-generated method stub
-		return null;
+		return (Properties)property.clone();
 	}
 
 }

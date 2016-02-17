@@ -10,11 +10,14 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
@@ -53,8 +56,170 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
  * @author Kensuke
  * 
  */
-class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
+public class Partial1DDatasetMaker implements Operation {
+	private boolean backward;
 
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths
+				.get(Partial1DDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a working directory (.)");
+			pw.println("#workPath");
+			pw.println("##SacComponents to be used(Z R T)");
+			pw.println("#components");
+			pw.println("##String if it is PREM, spector files are found in [event folder]/PREM (PREM)");
+			pw.println("#modelName");
+			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
+			pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
+			pw.println("#sourceTimeFunction");
+			pw.println("##Path of a timewindow information file, must be set");
+			pw.println("#timewindowPath timewindow.dat");
+			pw.println("##Path of a station information file, must be set");
+			pw.println("#stationInformationFilePath station.inf");
+			pw.println("##PartialType[] compute types (PAR2)");
+			pw.println("#partialTypes");
+			pw.println("##Filter if backward filtering is applied (true)");
+			pw.println("#backward");
+			pw.println("##double time length:DSM parameter tlen, must be set");
+			pw.println("#tlen 3276.8");
+			pw.println("##int step of frequency domain DSM parameter np, must be set");
+			pw.println("#np 512");
+			pw.println("##double minimum value of passband (0.005)");
+			pw.println("#minFreq");
+			pw.println("##double maximum value of passband (0.08)");
+			pw.println("#maxFreq");
+			pw.println("#double");
+			pw.println("#partialSamplingHz cant change now");
+			pw.println("##double sampling Hz in output dataset (1)");
+			pw.println("#finalSamplingHz");
+			pw.println("##radius for perturbation points, must be set");
+			pw.println("#bodyR 3505 3555 3605");
+		}
+		System.out.println(outPath + " is created.");
+	}
+
+	private Set<SACComponent> components;
+
+	private Path workPath;
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("modelName"))
+			property.setProperty("modelName", "PREM");
+		if (!property.containsKey("sourceTimeFunction"))
+			property.setProperty("sourceTimeFunction", "0");
+		if (!property.containsKey("partialTypes"))
+			property.setProperty("partialTypes", "PAR2");
+		if (!property.containsKey("backward"))
+			property.setProperty("backward", "true");
+		if (!property.containsKey("minFreq"))
+			property.setProperty("minFreq", "0.005");
+		if (!property.containsKey("maxFreq"))
+			property.setProperty("maxFreq", "0.08");
+		if (!property.containsKey("finalSamplingHz"))
+			property.setProperty("finalSamplingHz", "1");
+	}
+
+	/**
+	 * parameterのセット
+	 */
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		timewindowPath = getPath("timewindowPath");
+		// pointFile = newFile(reader.getFirstValue("pointFile"));
+		// System.out.println(reader.getFirstValue("pointFile"));
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+
+		try {
+			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
+		} catch (Exception e) {
+			sourceTimeFunction = -1;
+			sourceTimeFunctionPath = getPath("sourceTimeFunction");
+		}
+		backward = Boolean.parseBoolean(property.getProperty("backward"));
+
+		modelName = property.getProperty("modelName");
+
+		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
+				.collect(Collectors.toSet());
+
+		tlen = Double.parseDouble(property.getProperty("tlen"));
+		np = Integer.parseInt(property.getProperty("np"));
+		minFreq = Double.parseDouble(property.getProperty("fmin"));
+		maxFreq = Double.parseDouble(property.getProperty("fmax"));
+		bodyR = Arrays.stream(property.getProperty("bodyR").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+		// partialSamplingHz
+		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
+		stationInformationFilePath = getPath("stationInformationFilePath");
+		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+
+	}
+
+	/**
+	 * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+	 */
+	private String modelName;
+	/**
+	 * Path of a timewindow information file
+	 */
+	private Path timewindowPath;
+
+	/**
+	 * Partial types
+	 */
+	private Set<PartialType> partialTypes;
+
+	/**
+	 * bandpassの最小周波数（Hz）
+	 */
+	private double minFreq;
+
+	/**
+	 * bandpassの最大周波数（Hz）
+	 */
+	private double maxFreq;
+
+	/**
+	 * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
+	 */
+	private double partialSamplingHz = 20;
+
+	/**
+	 * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
+	 */
+	private double finalSamplingHz;
+	/**
+	 * The folder contains source time functions.
+	 */
+	private Path sourceTimeFunctionPath;
+	private Path stationInformationFilePath;
+
+	/**
+	 * 0:none, 1:boxcar, 2:triangle.
+	 */
+	private int sourceTimeFunction;
+
+	/**
+	 * time length (DSM parameter)
+	 */
+	private double tlen;
+
+	/**
+	 * step of frequency domain (DSM parameter)
+	 */
+	private int np;
+
+	/**
+	 * radius of perturbation
+	 */
+	private double[] bodyR;
 	/**
 	 * 追加したID数
 	 */
@@ -159,7 +324,7 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 		private SourceTimeFunction computeSourceTimeFunction() {
 			GlobalCMTID id = eventDir.getGlobalCMTID();
 			double halfDuration = id.getEvent().getHalfDuration();
-			switch (Partial1DDatasetMaker.super.sourceTimeFunction) {
+			switch (Partial1DDatasetMaker.this.sourceTimeFunction) {
 			case -1:
 				return userSourceTimeFunctions.get(id);
 			case 0:
@@ -179,7 +344,7 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 			double[] cutU = sampleOutput(filteredUt, t);
 
 			PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-					1 / fmax, 1 / fmin, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType, cutU);
+					1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType, cutU);
 			try {
 				partialDataWriter.addPartialID(pid);
 				add();
@@ -231,7 +396,7 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 				for (int k = 0; k < spectrum.nbody(); k++) {
 					double bodyR = spectrum.getBodyR()[k];
 					boolean exists = false;
-					for (double r : Partial1DDatasetMaker.super.bodyR)
+					for (double r : Partial1DDatasetMaker.this.bodyR)
 						if (r == bodyR)
 							exists = true;
 					if (!exists)
@@ -246,7 +411,7 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 					for (int k = 0; k < spectrum.nbody(); k++) {
 						double bodyR = spectrum.getBodyR()[k];
 						boolean exists = false;
-						for (double r : Partial1DDatasetMaker.super.bodyR)
+						for (double r : Partial1DDatasetMaker.this.bodyR)
 							if (r == bodyR)
 								exists = true;
 						if (!exists)
@@ -288,9 +453,12 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 
 	}
 
-	private Partial1DDatasetMaker(Path parameterPath) throws IOException {
-		super(parameterPath);
+	public Partial1DDatasetMaker(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
+		set();
 	}
+
+	private Properties property;
 
 	/**
 	 * filter いじらなくていい
@@ -335,14 +503,7 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		Partial1DDatasetMaker pdm = null;
-		if (args.length != 0) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(parameterPath.toString());
-			pdm = new Partial1DDatasetMaker(parameterPath);
-		} else
-			pdm = new Partial1DDatasetMaker(null);
+		Partial1DDatasetMaker pdm = new Partial1DDatasetMaker(Property.parse(args));
 
 		// System.exit(0);
 		if (!pdm.canGO())
@@ -359,13 +520,14 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 		perturbationLocationSet = Arrays.stream(bodyR).mapToObj(r -> new Location(0, 0, r)).collect(Collectors.toSet());
 	}
 
+	@Override
 	public void run() throws IOException {
 		String dateString = Utilities.getTemporaryString();
 
 		logPath = workPath.resolve("partial1D" + dateString + ".log");
 		// System.exit(0);
 
-		System.err.println("Patial1DDatasetMaker is going.");
+		System.err.println(Partial1DDatasetMaker.class.getName() + " is going.");
 		long startTime = System.nanoTime();
 
 		// pdm.createStreams();
@@ -426,7 +588,8 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 			e.printStackTrace();
 		}
 		System.out.println();
-		String endLine = "Partial1DDatasetMaker finished in " + Utilities.toTimeString(System.nanoTime() - startTime);
+		String endLine = Partial1DDatasetMaker.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - startTime);
 		System.err.println(endLine);
 		writeLog(endLine);
 		writeLog(idPath + " " + datasetPath + " were created");
@@ -437,11 +600,11 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 	private double[][] periodRanges;
 
 	private void setBandPassFilter() throws IOException {
-		double omegaH = fmax * 2 * Math.PI / partialSamplingHz;
-		double omegaL = fmin * 2 * Math.PI / partialSamplingHz;
+		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
+		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, 4);
 		filter.setBackward(backward);
-		periodRanges = new double[][] { { 1 / fmax, 1 / fmin } };
+		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
 		writeLog(filter.toString());
 	}
 
@@ -463,6 +626,16 @@ class Partial1DDatasetMaker extends parameter.Partial1DDatasetMaker {
 		}
 
 		return cango;
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
 	}
 
 }

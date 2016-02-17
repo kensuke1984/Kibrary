@@ -11,15 +11,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -34,21 +38,122 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 1.2
+ * @version 2.0
  * 
  * @author Kensuke
  * 
  */
-public class LetMeInvert extends parameter.LetMeInvert {
+public class LetMeInvert implements Operation {
+	/**
+	 * 観測波形、理論波形の入ったファイル (BINARY)
+	 */
+	protected Path waveformPath;
+
+	/**
+	 * 求めたい未知数を羅列したファイル (ASCII)
+	 */
+	protected Path unknownParameterListPath;
+
+	/**
+	 * partialIDの入ったファイル
+	 */
+	protected Path partialIDPath;
+	/**
+	 * partial波形の入ったファイル
+	 */
+	protected Path partialPath;
+
+	/**
+	 * 観測、理論波形のID情報
+	 */
+	protected Path waveIDPath;
+
+	/**
+	 * ステーション位置情報のファイル
+	 */
+	protected Path stationInformationPath;
+
+	/**
+	 * どうやって方程式を解くか。 cg svd
+	 */
+	protected Set<InverseMethodEnum> inverseMethods;
 
 	private ObservationEquation eq;
 
-	private LetMeInvert(Path parameterPath) throws IOException {
-		super(parameterPath);
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("stationInformationPath"))
+			throw new IllegalArgumentException("There is no information about stationInformationPath.");
+		if (!property.containsKey("waveIDPath"))
+			throw new IllegalArgumentException("There is no information about waveIDPath.");
+		if (!property.containsKey("waveformPath"))
+			throw new IllegalArgumentException("There is no information about waveformPath.");
+		if (!property.containsKey("partialIDPath"))
+			throw new IllegalArgumentException("There is no information about partialIDPath.");
+		if (!property.containsKey("partialPath"))
+			throw new IllegalArgumentException("There is no information about partialPath.");
+		if (!property.containsKey("inverseMethods"))
+			property.setProperty("inverseMethods", "CG SVD");
+	}
+
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		stationInformationPath = getPath("stationInformationPath");
+		waveIDPath = getPath("waveIDPath");
+		waveformPath = getPath("waveformPath");
+		partialPath = getPath("partialWaveformPath");
+		partialIDPath = getPath("partialIDPath");
+		unknownParameterListPath = getPath("unknownParameterListPath");
+
+		alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+"))
+				.map(InverseMethodEnum::valueOf).collect(Collectors.toSet());
+	}
+
+	/**
+	 * AIC計算に用いるα 独立データ数はn/αと考える
+	 */
+	protected double[] alpha = { 1, 12.5, 25, 125 };
+
+	private Properties property;
+
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a work folder (.)");
+			pw.println("#workPath");
+			pw.println("##Path of a waveID file, must be set");
+			pw.println("#waveIDPath waveID.dat");
+			pw.println("##Path of a waveform file, must be set");
+			pw.println("#waveformPath waveform.dat");
+			pw.println("##Path of a partial id file, must be set");
+			pw.println("#partialIDPath partialID.dat");
+			pw.println("##Path of a partial waveform file must be set");
+			pw.println("#partialPath partial.dat");
+			pw.println("##Path of a unknown parameter list file, must be set");
+			pw.println("#unknownParameterListPath unknowns.inf");
+			pw.println("##Path of a station information file, must be set");
+			pw.println("#stationInformationPath station.inf");
+			pw.println("##double[] alpha it self, must be set");
+			pw.println("#alpha 1 12.5 25 125");
+			pw.println("##inverseMethods[] names of inverse methods, must be capital letters (CG SVD)");
+			pw.println("#inverseMethods");
+		}
+		System.out.println(outPath + " is created.");
+	}
+
+	private Path workPath;
+
+	public LetMeInvert(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
+		set();
 		outPath = workPath.resolve("lmi" + Utilities.getTemporaryString());
 		if (!canGO())
 			throw new RuntimeException();
-		parameterPath = getParameterPath();
 		setEquation();
 	}
 
@@ -74,7 +179,7 @@ public class LetMeInvert extends parameter.LetMeInvert {
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
 		// set partial matrix
-		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
+		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		eq = new ObservationEquation(partialIDs, parameterList, dVector);
 	}
 
@@ -104,8 +209,6 @@ public class LetMeInvert extends parameter.LetMeInvert {
 		return future;
 	}
 
-	private Path parameterPath;
-
 	public void run() {
 		if (Files.exists(outPath))
 			throw new RuntimeException(outPath + " already exists.");
@@ -114,8 +217,9 @@ public class LetMeInvert extends parameter.LetMeInvert {
 			// outDir.mkdir();
 			// copy information
 			Files.createDirectories(outPath);
-			if (parameterPath != null)
-				Files.copy(getParameterPath(), outPath.resolve(parameterPath.getFileName()));
+			// if (parameterPath != null) TODO
+			// Files.copy(getParameterPath(),
+			// outPath.resolve(parameterPath.getFileName()));
 			if (unknownParameterListPath != null)
 				Files.copy(unknownParameterListPath, outPath.resolve(unknownParameterListPath.getFileName()));
 		} catch (Exception e) {
@@ -372,18 +476,13 @@ public class LetMeInvert extends parameter.LetMeInvert {
 	 */
 	public static void main(String[] args) throws IOException {
 
-		LetMeInvert lmi = null;
-		// args = new String[] {
-		// "/home/kensuke/data/WesternPacific/anelasticity/test/lmi.prm" };
-		if (args.length != 0) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			lmi = new LetMeInvert(parameterPath);
-		} else
-			lmi = new LetMeInvert(null);
-
+		LetMeInvert lmi = new LetMeInvert(Property.parse(args));
+		System.out.println(LetMeInvert.class.getName() + " is running.");
+		long startT = System.nanoTime();
 		lmi.run();
+		System.err.println(
+				LetMeInvert.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+
 	}
 
 	/**
@@ -447,9 +546,9 @@ public class LetMeInvert extends parameter.LetMeInvert {
 			new NoSuchFileException(partialIDPath.toString()).printStackTrace();
 			cango = false;
 		}
-		if (!Files.exists(partialWaveformPath)) {
+		if (!Files.exists(partialPath)) {
 			cango = false;
-			new NoSuchFileException(partialWaveformPath.toString()).printStackTrace();
+			new NoSuchFileException(partialPath.toString()).printStackTrace();
 		}
 		if (!Files.exists(stationInformationPath)) {
 			new NoSuchFileException(stationInformationPath.toString()).printStackTrace();
@@ -503,5 +602,15 @@ public class LetMeInvert extends parameter.LetMeInvert {
 	}
 
 	private Set<Station> stationSet;
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties)property.clone();
+	}
 
 }

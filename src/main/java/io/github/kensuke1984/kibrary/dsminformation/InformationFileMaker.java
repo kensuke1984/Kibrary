@@ -6,12 +6,16 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -25,16 +29,108 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.1.0
+ * @version 0.2
  * 
  * @author Kensuke
  * 
  */
-class InformationFileMaker extends parameter.InformationFileMaker {
-
-	private InformationFileMaker(Path parameterPath) throws IOException {
-		super(parameterPath);
+public class InformationFileMaker implements Operation {
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(InformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("##Path of an information file for locations of perturbation point, must be set");
+			pw.println("#locationsPath pointLocations.inf");
+			pw.println("##Path of a station information file, must be set");
+			pw.println("#stationInformationPath station.inf");
+			pw.println("##header for names of information files 'header'_[PSV, SH].inf (PREM)");
+			pw.println("#header");
+			pw.println("##int np must be a power of 2, must be set");
+			pw.println("#np 1024");
+			pw.println("##double tlen must be a power of 2/10, must be set");
+			pw.println("#tlen 3276.8");
+			pw.println("##polynomial structure file (can be blank)");
+			pw.println("##if so or it doesn't exist model is an initial PREM");
+			pw.println("#structureFile ");
+		}
+		System.out.println(outPath + " is created.");
 	}
+
+	public InformationFileMaker(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
+		set();
+	}
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("tlen"))
+			property.setProperty("tlen", "3276.8");
+		if (!property.containsKey("np"))
+			property.setProperty("np", "1024");
+		if (!property.containsKey("header"))
+			property.setProperty("header", "PREM");
+
+	}
+
+	/**
+	 * np default: 1024
+	 */
+	protected int np;
+
+	/**
+	 * tlen default:3276.8
+	 */
+	protected double tlen;
+
+	/**
+	 * information file of locations of pertubation points.
+	 */
+	protected Path locationsPath;
+
+	/**
+	 * a structure to be used the default is PREM.
+	 */
+	protected PolynomialStructure ps;
+
+	/**
+	 * Information file name is header_[psv,sh].inf
+	 */
+	protected String header;
+
+	protected Path stationInformationPath;
+
+	/**
+	 * work folder
+	 */
+	private Path workPath;
+
+	private void set() throws IOException {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		// System.exit(0);
+
+		locationsPath = getPath("locationsPath");
+
+		stationInformationPath = getPath("stationInformationPath");
+		// str = reader.getValues("partialTypes");
+		np = Integer.parseInt(property.getProperty("np"));
+		tlen = Double.parseDouble(property.getProperty("tlen"));
+		header = property.getProperty("header");
+
+		if (property.containsKey("structureFile")) {
+			Path psPath = getPath("structureFile");
+			ps = psPath == null ? PolynomialStructure.PREM : new PolynomialStructure(psPath);
+		}
+	}
+
+	private Properties property;
 
 	/**
 	 * locations of perturbation points
@@ -47,7 +143,7 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 	 * double[]{3505, 3555, 3605, 3655, 3705, 3755, 3805, 3855}
 	 * 
 	 */
-	private double[] perturbationPointR;
+	private double[] perturbationR;
 
 	private Path outputPath;
 
@@ -58,92 +154,17 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 	 * 
 	 * @param args
 	 *            [parameter file name]
-	 * @throws IOException if any
+	 * @throws IOException
+	 *             if any
 	 */
-	public static void main(String[] args) throws IOException {
-		InformationFileMaker ifm = null;
-		if (args.length != 0) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath)) 
-				throw new NoSuchFileException(args[0]);
-			ifm = new InformationFileMaker(parameterPath);
-		} else
-			ifm = new InformationFileMaker(null);
-		// ///
-		Path workPath = ifm.workPath;
-		if (!Files.exists(workPath))
-			throw new NoSuchFileException(ifm.workPath.toString());
-		if (!Files.exists(ifm.stationInformationPath))
-			throw new NoSuchFileException(ifm.stationInformationPath.toString());
-		ifm.outputPath = workPath.resolve("threedPartial" + Utilities.getTemporaryString());
-		Files.createDirectories(ifm.outputPath);
-
-		Path bpPath = ifm.outputPath.resolve("BPinfo");
-		Path fpPath = ifm.outputPath.resolve("FPinfo");
-		// String model = ifm.model;
-		PolynomialStructure ps = ifm.ps;
-		// double[] perturbationPointR = ifm.perturbationPointR;
-		// horizontalPointFile = new File(workDir, "horizontalPoint.inf");
-		// perturbationPointFile = new File(workDir,"perturbationPoint.inf");
-		ifm.readParameterPointInformation();
-		ifm.createPointInformationFile();
-		// System.exit(0);
-
-		//
-		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
-
-		// reading station information
-		Set<Station> stationSet = StationInformationFile.read(ifm.stationInformationPath);
-
-		// System.exit(0);
-		// //////////////////////////////////////
-		System.out.println("making information files for the events(fp)");
-		for (EventFolder ed : eventDirs) {
-			// System.out.println(ed);
-			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
-			FPinfo fp = new FPinfo(ev, ifm.header, ps, ifm.tlen, ifm.np);
-			fp.setPerturbationPointR(ifm.perturbationPointR);
-			fp.setPerturbationPoint(ifm.perturbationPointPositions);
-			// File parentDir = new File(ifm.outputDir, "FPinfo");
-			Path infPath = fpPath.resolve(ev.toString());
-			// System.out.println(infDir);
-			// infDir.mkdir();
-			Files.createDirectories(infPath.resolve(ifm.header));
-			fp.writeSHFP(infPath.resolve(ifm.header + "_SH.inf"));
-			fp.writePSVFP(infPath.resolve(ifm.header + "_PSV.inf"));
-			//
-		}
-
-		System.out.println("making information files for the stations(bp)");
-		for (Station station : stationSet) {
-			String str = station.getStationName();
-			// System.out.println(str);
-			BPinfo bp = new BPinfo(station, ifm.header, ps, ifm.tlen, ifm.np);
-			bp.setPerturbationPointR(ifm.perturbationPointR);
-			bp.setPerturbationPoint(ifm.perturbationPointPositions);
-
-			Path infPath = bpPath.resolve("0000" + str);
-			// infDir.mkdir();
-			// System.out.println(infDir.getPath()+" was made");
-			Files.createDirectories(infPath.resolve(ifm.header));
-			bp.writeSHBP(infPath.resolve(ifm.header + "_SH.inf"));
-			bp.writePSVBP(infPath.resolve(ifm.header + "_PSV.inf"));
-
-		}
-
-		// TODO
-		if (fpPath.toFile().delete() && bpPath.toFile().delete()) {
-			Files.delete(ifm.outputPath.resolve("horizontalPoint.inf"));
-			Files.delete(ifm.outputPath.resolve("perturbationPoint.inf"));
-			Files.delete(ifm.outputPath);
-		} else {
-			FileUtils.moveFileToDirectory(ifm.getParameterPath().toFile(), ifm.outputPath.toFile(), false);
-			FileUtils.copyFileToDirectory(ifm.locationsPath.toFile(), ifm.outputPath.toFile(), false);
-		}
-		System.out.println("end.");
-
+	public static void main(String[] args) throws Exception {
+		InformationFileMaker ifm = new InformationFileMaker(Property.parse(args));
+		long start = System.nanoTime();
+		System.out.println(InformationFileMaker.class.getName() + " is going.");
+		ifm.run();
+		System.out.println(InformationFileMaker.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - start));
 	}
-
 
 	/**
 	 * read a file describing locations
@@ -161,9 +182,9 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 		InformationFileReader reader = new InformationFileReader(locationsPath);
 		String line0 = reader.next();
 		String[] parts0 = line0.split("\\s+");
-		perturbationPointR = new double[parts0.length];
-		for (int i = 0; i < perturbationPointR.length; i++)
-			perturbationPointR[i] = Double.parseDouble(parts0[i]);
+		perturbationR = new double[parts0.length];
+		for (int i = 0; i < perturbationR.length; i++)
+			perturbationR[i] = Double.parseDouble(parts0[i]);
 
 		List<HorizontalPosition> positionList = new ArrayList<>();
 		String line = null;
@@ -189,11 +210,94 @@ class InformationFileMaker extends parameter.InformationFileMaker {
 			int figure = String.valueOf(perturbationPointPositions.length).length();
 			for (int i = 0; i < perturbationPointPositions.length; i++) {
 				hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + perturbationPointPositions[i]);
-				for (int j = 0; j < perturbationPointR.length; j++)
-					ppw.println(perturbationPointPositions[i] + " " + perturbationPointR[j]);
+				for (int j = 0; j < perturbationR.length; j++)
+					ppw.println(perturbationPointPositions[i] + " " + perturbationR[j]);
 			}
 		}
 
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
+	@Override
+	public void run() throws Exception {
+		// ///
+		if (!Files.exists(workPath))
+			throw new NoSuchFileException(workPath.toString());
+		if (!Files.exists(stationInformationPath))
+			throw new NoSuchFileException(stationInformationPath.toString());
+		outputPath = workPath.resolve("threedPartial" + Utilities.getTemporaryString());
+		Files.createDirectories(outputPath);
+
+		Path bpPath = outputPath.resolve("BPinfo");
+		Path fpPath = outputPath.resolve("FPinfo");
+		// String model = model;
+		// double[] perturbationPointR = perturbationPointR;
+		// horizontalPointFile = new File(workDir, "horizontalPoint.inf");
+		// perturbationPointFile = new File(workDir,"perturbationPoint.inf");
+		readParameterPointInformation();
+		createPointInformationFile();
+		// System.exit(0);
+
+		//
+		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+
+		// reading station information
+		Set<Station> stationSet = StationInformationFile.read(stationInformationPath);
+
+		// System.exit(0);
+		// //////////////////////////////////////
+		System.out.println("making information files for the events(fp)");
+		for (EventFolder ed : eventDirs) {
+			// System.out.println(ed);
+			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
+			FPinfo fp = new FPinfo(ev, header, ps, tlen, np);
+			fp.setPerturbationPointR(perturbationR);
+			fp.setPerturbationPoint(perturbationPointPositions);
+			// File parentDir = new File(outputDir, "FPinfo");
+			Path infPath = fpPath.resolve(ev.toString());
+			// System.out.println(infDir);
+			// infDir.mkdir();
+			Files.createDirectories(infPath.resolve(header));
+			fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
+			fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+			//
+		}
+
+		System.out.println("making information files for the stations(bp)");
+		for (Station station : stationSet) {
+			String str = station.getStationName();
+			// System.out.println(str);
+			BPinfo bp = new BPinfo(station, header, ps, tlen, np);
+			bp.setPerturbationPointR(perturbationR);
+			bp.setPerturbationPoint(perturbationPointPositions);
+
+			Path infPath = bpPath.resolve("0000" + str);
+			// infDir.mkdir();
+			// System.out.println(infDir.getPath()+" was made");
+			Files.createDirectories(infPath.resolve(header));
+			bp.writeSHBP(infPath.resolve(header + "_SH.inf"));
+			bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
+
+		}
+
+		// TODO
+		if (fpPath.toFile().delete() && bpPath.toFile().delete()) {
+			Files.delete(outputPath.resolve("horizontalPoint.inf"));
+			Files.delete(outputPath.resolve("perturbationPoint.inf"));
+			Files.delete(outputPath);
+		} else {
+//			FileUtils.moveFileToDirectory(getParameterPath().toFile(), outputPath.toFile(), false);
+			FileUtils.copyFileToDirectory(locationsPath.toFile(), outputPath.toFile(), false);
+		}
 	}
 
 }

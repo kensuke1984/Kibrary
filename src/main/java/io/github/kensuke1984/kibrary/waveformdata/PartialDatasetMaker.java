@@ -3,7 +3,6 @@ package io.github.kensuke1984.kibrary.waveformdata;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -12,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,9 +20,12 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -64,11 +67,96 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * <p>
  * Because of DSM condition, stations can not have the same name...
  * 
- * @version 2.2
+ * @version 2.3
  * 
  * @author Kensuke Konishi
  */
-class PartialDatasetMaker extends parameter.PartialDatasetMaker {
+public class PartialDatasetMaker implements Operation {
+
+	private Set<SACComponent> components;
+
+	/**
+	 * time length (DSM parameter)
+	 */
+	private double tlen;
+
+	/**
+	 * step of frequency domain (DSM parameter)
+	 */
+	private int np;
+
+	/**
+	 * BPinfo このフォルダの直下に 0000????を置く
+	 */
+	private Path bpPath;
+	/**
+	 * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
+	 */
+	private Path fpPath;
+
+	/**
+	 * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+	 */
+	private String modelName;
+
+	/**
+	 * タイムウインドウ情報のファイル
+	 */
+	private Path timewindowPath;
+	/**
+	 * Information file about locations of perturbation points.
+	 */
+	private Path perturbationPath;
+
+	/**
+	 * set of partial type for computation
+	 */
+	private Set<PartialType> partialTypes;
+
+	/**
+	 * bandpassの最小周波数（Hz）
+	 */
+	private double minFreq;
+
+	/**
+	 * bandpassの最大周波数（Hz）
+	 */
+	private double maxFreq;
+
+	private Properties property;
+	private Path workPath;
+	/**
+	 * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
+	 */
+	private double partialSamplingHz = 20;
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	/**
+	 * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
+	 */
+	private double finalSamplingHz;
+
+	/**
+	 * structure for Q partial
+	 */
+	private PolynomialStructure structure;
+	/**
+	 * 0:none, 1:boxcar, 2:triangle.
+	 */
+	private int sourceTimeFunction;
+	/**
+	 * The folder contains source time functions.
+	 */
+	private Path sourceTimeFunctionPath;
 
 	/**
 	 * 一つのBackPropagationに対して、あるFPを与えた時の計算をさせるスレッドを作る
@@ -140,8 +228,8 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
 				throw new RuntimeException("There may be a station with the same name but other networks.");
 
-			if(bp.tlen()!=tlen||bp.np()!=np)
-				throw new RuntimeException("BP for "+station+" has invalid tlen or np.");
+			if (bp.tlen() != tlen || bp.np() != np)
+				throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
 			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
 
 			touchedSet.add(id);
@@ -184,7 +272,8 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 							double[] cutU = sampleOutput(u, info);
 
 							PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
-									cutU.length, 1 / fmax, 1 / fmin, 0, sourceTimeFunction != 0, location, type, cutU);
+									cutU.length, 1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != 0, location, type,
+									cutU);
 							try {
 								partialDataWriter.addPartialID(pid);
 								System.out.print(".");
@@ -214,8 +303,114 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 
 	private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
-	private PartialDatasetMaker(Path parameterPath) throws IOException {
-		super(parameterPath);
+	public PartialDatasetMaker(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
+		set();
+	}
+
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths.get(PartialDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##Path of a working folder (.)");
+			pw.println("#workPath");
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
+			pw.println("##Path of a back propagate spc folder (BPinfo)");
+			pw.println("#bpPath");
+			pw.println("##Path of a forward propagate spc folder (FPinfo)");
+			pw.println("#fpPath");
+			pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
+			pw.println("#modelName");
+			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
+			pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
+			pw.println("#sourceTimeFunction");
+			pw.println("##Path of a time window file, must be set");
+			pw.println("#timewindowPath timewindow.dat");
+			pw.println("##PartialType[] compute types (MU)");
+			pw.println("#partialTypes");
+			pw.println("##double time length DSM parameter tlen, must be set");
+			pw.println("#tlen 3276.8");
+			pw.println("##int step of frequency domain DSM parameter np, must be set");
+			pw.println("#np 512");
+			pw.println("##double minimum value of passband (0.005)");
+			pw.println("#minFreq");
+			pw.println("##double maximum value of passband (0.08)");
+			pw.println("#maxFreq");
+			pw.println("#double (20)");
+			pw.println("#partialSamplingHz cant change now");
+			pw.println("##double SamplingHz in output dataset (1)");
+			pw.println("#finalSamplingHz");
+			pw.println("##perturbationPath, must be set");
+			pw.println("#perturbationPath perturbationPoint.inf");
+			pw.println("##File for Qstructure (if no file, then PREM)");
+			pw.println("#qinf");
+		}
+		System.out.println(outPath + " is created.");
+	}
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("bpPath"))
+			property.setProperty("bpPath", "BPinfo");
+		if (!property.containsKey("fpPath"))
+			property.setProperty("fpPath", "FPinfo");
+		if (!property.containsKey("modelName"))
+			property.setProperty("modelName", "PREM");
+		if (!property.containsKey("maxFreq"))
+			property.setProperty("maxFreq", "0.08");
+		if (!property.containsKey("minFreq"))
+			property.setProperty("minFreq", "0.005");
+		// if (!property.containsKey("backward")) TODO allow user to change
+		// property.setProperty("backward", "true");partialSamplingHz
+		if (!property.containsKey("sourceTimeFunction"))
+			property.setProperty("sourceTimeFunction", "0");
+		if (!property.containsKey("partialTypes"))
+			property.setProperty("partialTypes", "MU");
+		if (!property.containsKey("partialSamplingHz"))
+			property.setProperty("partialSamplingHz", "20");
+	}
+
+	/**
+	 * parameterのセット
+	 */
+	private void set() throws IOException {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+
+		bpPath = getPath("bpPath");
+		fpPath = getPath("fpPath");
+		timewindowPath = getPath("timewindowPath");
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+
+		if (property.containsKey("qinf"))
+			structure = new PolynomialStructure(getPath("qinf"));
+		try {
+			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
+		} catch (Exception e) {
+			sourceTimeFunction = -1;
+			sourceTimeFunctionPath = getPath("sourceTimeFunction");
+		}
+		modelName = property.getProperty("modelName");
+
+		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
+				.collect(Collectors.toSet());
+		tlen = Double.parseDouble(property.getProperty("tlen"));
+		np = Integer.parseInt(property.getProperty("np"));
+		minFreq = Double.parseDouble(property.getProperty("minFreq"));
+		maxFreq = Double.parseDouble(property.getProperty("maxFreq"));
+		perturbationPath = getPath("perturbationPath");
+		// partialSamplingHz
+		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
+
+		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+
 	}
 
 	private void setLog() throws IOException {
@@ -262,20 +457,11 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 
 	private Path logPath;
 
-	private static PartialDatasetMaker parse(String[] args) throws IOException {
-		if (args.length != 0) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			return new PartialDatasetMaker(parameterPath);
-		}
-		return new PartialDatasetMaker(null);
-	}
-
 	private long startTime = System.nanoTime();
 	private long endTime;
 
-	private void run() throws IOException {
+	@Override
+	public void run() throws IOException {
 		setLog();
 		setTimeWindow();
 		final int N_THREADS = Runtime.getRuntime().availableProcessors();
@@ -286,7 +472,7 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 		readPerturbationPoints();
 
 		// バンドパスを安定させるためwindowを左右に ext = max period(s) ずつ伸ばす
-		ext = (int) (1 / fmin * partialSamplingHz);
+		ext = (int) (1 / minFreq * partialSamplingHz);
 
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
@@ -390,12 +576,13 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		PartialDatasetMaker pdm = parse(args);
+		PartialDatasetMaker pdm = new PartialDatasetMaker(Property.parse(args));
 		long startTime = System.nanoTime();
 
-		System.out.println("PartialDatasetMaker is going..");
+		System.out.println(PartialDatasetMaker.class.getName() + " is going..");
 		pdm.run();
-		System.err.println("PartialDataset finished in " + Utilities.toTimeString(System.nanoTime() - startTime));
+		System.err.println(PartialDatasetMaker.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 
 	private void terminate() throws IOException {
@@ -418,11 +605,11 @@ class PartialDatasetMaker extends parameter.PartialDatasetMaker {
 
 	private void setBandPassFilter() throws IOException {
 		System.out.println("Designing filter.");
-		double omegaH = fmax * 2 * Math.PI / partialSamplingHz;
-		double omegaL = fmin * 2 * Math.PI / partialSamplingHz;
+		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
+		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, 4);
 		writeLog(filter.toString());
-		periodRanges = new double[][] { { 1 / fmax, 1 / fmin } };
+		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
 	}
 
 	private void setTimeWindow() throws IOException {
