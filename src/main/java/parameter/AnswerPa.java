@@ -32,9 +32,9 @@ import java.util.Set;
  * @since 2015/8/13
  * 
  */
-public class Answer extends ParameterFile {
+public class AnswerPa extends ParameterFile {
 
-	protected Answer(Path parameterPath) throws IOException {
+	protected AnswerPa(Path parameterPath) throws IOException {
 		super(parameterPath);
 		if (!checkElements())
 			throw new RuntimeException();

@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -107,15 +108,12 @@ public class SshDSMInformationFileMaker implements Operation {
 	 *             if any
 	 */
 	public static void main(String[] args) throws Exception {
-		Properties property = new Properties();
-		if (args.length == 0)
-			property.load(Files.newBufferedReader(Operation.findPath()));
-		else if (args.length == 1)
-			property.load(Files.newBufferedReader(Paths.get(args[0])));
-		else
-			throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-		SshDSMInformationFileMaker sdif = new SshDSMInformationFileMaker(property);
+		SshDSMInformationFileMaker sdif = new SshDSMInformationFileMaker(Property.parse(args));
+		long start = System.nanoTime();
+		System.out.println(SshDSMInformationFileMaker.class.getName() + " is going.");
 		sdif.run();
+		System.out.println(SshDSMInformationFileMaker.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {

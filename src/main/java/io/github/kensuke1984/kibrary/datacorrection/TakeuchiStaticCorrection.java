@@ -4,15 +4,20 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -34,24 +39,110 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Start time for identification is a start time in the given
  * {@link TimewindowInformationFile}.
  * 
- * <b>Assume that there are no stations with the same name but different networks in an event</b>
+ * <b>Assume that there are no stations with the same name but different
+ * networks in an event</b>
  * 
  * 
  * @author kensuke
  * 
- * @version 0.0.2
+ * @version 0.1
  * @see {@link StaticCorrection}
  */
-final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection {
-	private TakeuchiStaticCorrection(Path parameterPath) throws IOException {
-		super(parameterPath);
+public class TakeuchiStaticCorrection implements Operation {
+	private Properties property;
+
+	public TakeuchiStaticCorrection(Properties property) throws IOException {
+		this.property = (Properties) property.clone();
 		String date = Utilities.getTemporaryString();
-		if (!Files.exists(timeWindowInformationPath))
-			throw new NoSuchFileException(timeWindowInformationPath.toString());
-		timewindow = TimewindowInformationFile.read(timeWindowInformationPath);
+		set();
+		timewindow = TimewindowInformationFile.read(timewindowInformationPath);
 		outStaticCorrectionPath = workPath.resolve("takeuchiCorrection" + date + ".dat");
 		outStaticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
+
 	}
+
+	private Path workPath;
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("obsPath"))
+			property.setProperty("obsPath", "");
+		if (!property.containsKey("synPath"))
+			property.setProperty("synPath", "");
+		if (!property.containsKey("convolute"))
+			property.setProperty("convolute", "false");
+		if (!property.containsKey("timewindowInformationPath"))
+			throw new IllegalArgumentException("There is no information about timewindowInformationPath");
+	}
+
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		synPath = getPath("synPath");
+		obsPath = getPath("obsPath");
+		timewindowInformationPath = getPath("timeWindowInformationPath");
+
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+
+		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
+		// sacSamplingHz
+		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
+		sacSamplingHz = 20;
+	}
+
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths
+				.get(TakeuchiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("#SacComponents to be used (Z R T)");
+			pw.println("#components");
+			pw.println("##Path of a work folder (.)");
+			pw.println("#workPath");
+			pw.println("##Path of a root directory containing observed data (.)");
+			pw.println("#obsPath");
+			pw.println("##Path of a root directory containing synthetic data (.)");
+			pw.println("#synPath");
+			pw.println("##Path of a file for timeWindow information, must be set");
+			pw.println("#timewindowInformationPath timewindow.dat");
+			pw.println("##boolean convolute (false)");
+			pw.println("#convolute");
+			pw.println("#double sacSamplingHz (20)");
+			pw.println("#sacSamplingHz cant change now");
+
+		}
+		System.out.println(outPath + " is created.");
+	}
+
+	/**
+	 * components for computation
+	 */
+	protected Set<SACComponent> components;
+
+	/**
+	 * コンボリューションされている波形かそうでないか （両方は無理）
+	 */
+	protected boolean convolute;
+
+	/**
+	 * {@link Path} for a root directory containing observed data
+	 */
+	protected Path obsPath;
+
+	/**
+	 * sampling Hz [Hz] in sac files
+	 */
+	protected double sacSamplingHz;
+	/**
+	 * {@link Path} for a root directory containing synthetic data
+	 */
+	protected Path synPath;
+	protected Path timewindowInformationPath;
 
 	private Set<StaticCorrection> outStaticCorrectionSet;
 	private Path outStaticCorrectionPath;
@@ -62,22 +153,16 @@ final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection 
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		TakeuchiStaticCorrection tsm = null;
-		if (0 < args.length) {
-			Path parameterPath = Paths.get(args[0]);
-			if (!Files.exists(parameterPath))
-				throw new NoSuchFileException(args[0]);
-			tsm = new TakeuchiStaticCorrection(parameterPath);
-		} else
-			tsm = new TakeuchiStaticCorrection(null);
+		TakeuchiStaticCorrection tsm = new TakeuchiStaticCorrection(Property.parse(args));
 		long time = System.nanoTime();
-		System.err.println("TakeuchiStaticCorrection is going.");
+		System.err.println(TakeuchiStaticCorrection.class.getName() + " is going.");
 		tsm.run();
 
-		System.out.println("TakeuchiStaticCorrection finished in " + Utilities.toTimeString(System.nanoTime() - time));
+		System.out.println(TakeuchiStaticCorrection.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - time));
 	}
 
-	private void run() throws IOException {
+	public void run() throws IOException {
 		Set<SACFileName> nameSet = null;
 		try {
 			nameSet = Utilities.sacFileNameSet(obsPath);
@@ -97,7 +182,7 @@ final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection 
 				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
 				.collect(Collectors.toSet());
 		if (timeWindowSet.size() != 1)
-			throw new RuntimeException(timeWindowInformationPath + " is invalid.");
+			throw new RuntimeException(timewindowInformationPath + " is invalid.");
 		TimewindowInformation timeWindow = timeWindowSet.iterator().next();
 		SACData obsSac = obsName.read();
 		SACData synSac = synName.read();
@@ -124,9 +209,20 @@ final class TakeuchiStaticCorrection extends parameter.TakeuchiStaticCorrection 
 	}
 
 	private SACFileName getPair(SACFileName obsSacFileName) {
-		String ext = obsSacFileName.getComponent() + (isConvolved ? "sc" : "s");
+		String ext = obsSacFileName.getComponent() + (convolute ? "sc" : "s");
 		String id = obsSacFileName.getGlobalCMTID().toString();
 		String name = obsSacFileName.getStationName() + '.' + id + '.' + ext;
 		return new SACFileName(synPath.resolve(id + "/" + name));
 	}
+
+	@Override
+	public Path getWorkPath() {
+		return workPath;
+	}
+
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+
 }
