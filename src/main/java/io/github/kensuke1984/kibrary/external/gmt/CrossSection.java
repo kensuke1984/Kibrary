@@ -7,7 +7,7 @@ import io.github.kensuke1984.kibrary.util.Location;
 /**
  * 
  * 中心点　距離（中心点からの面の広がり）　azimuth r など から、断面を作る
- * 
+ * @version 0.1.0
  * @author kensuke
  * 
  */

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -17,12 +18,14 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
 /**
@@ -482,6 +485,52 @@ public class InversionResult {
 	 */
 	public double getVariance() {
 		return answerVarianceMap.get(InverseMethodEnum.CG)[0];
+	}
+
+	
+	/**
+	 * @param nPoints
+	 *            number of points
+	 * @param nPower
+	 *            距離の何乗で補間するか
+	 * @param location
+	 *            location for complement
+	 * @param type
+	 *            {@link PartialType}
+	 * @return locationの直近nPoints点からの補間値
+	 */
+	public static double complement(Map<UnknownParameter, Double> answer, int nPoints, int nPower, Location location,
+			PartialType type) {
+		if (!type.is3D())
+			throw new RuntimeException(type+" is not 3d parameter"); //TODO
+		double value = 0;
+		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type)
+				.collect(Collectors.toMap(key -> ((ElasticParameter) key).getPointLocation(), key -> answer.get(key)));
+
+		if (type == PartialType.TIME) {
+			System.out.println("madda");
+			return 0;
+		}
+		if (ansMap.containsKey(location)) {
+			return ansMap.get(location);
+		}
+		Location[] nearLocations = location
+				.getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
+						.map(key -> ((ElasticParameter) key).getPointLocation()).toArray(n -> new Location[n]));
+		double[] r = new double[nPoints];
+		double rTotal = 0;
+		for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+			r[iPoint] = Math.pow(nearLocations[iPoint].getDistance(location), nPower);
+			rTotal += 1 / r[iPoint];
+			// System.out.println(nearLocations[iPoint]);
+			// System.out.println(r[iPoint]);
+		}
+		for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+			value += ansMap.get(nearLocations[iPoint]) / r[iPoint];
+			// values[i]= r[iPoint]* ansMap.get(arg0)
+		}
+		value /= rTotal;
+		return value;
 	}
 
 }

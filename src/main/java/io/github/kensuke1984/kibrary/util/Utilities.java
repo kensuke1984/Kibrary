@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -47,6 +48,7 @@ public final class Utilities {
 
 	/**
 	 * Change the input to an intelligible expression.
+	 * 
 	 * @param nanoSeconds
 	 *            time
 	 * @return ?d, ?h, ?min and ?s
@@ -76,12 +78,13 @@ public final class Utilities {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		return clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
 	}
-	
+
 	/**
 	 * @return string read by standard input (System.in)
-	 * @throws IOException if any
+	 * @throws IOException
+	 *             if any
 	 */
-	public static String readInputLine() throws IOException{
+	public static String readInputLine() throws IOException {
 		return new BufferedReader(new InputStreamReader(System.in)).readLine();
 	}
 
@@ -329,5 +332,28 @@ public final class Utilities {
 		return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
 
 	}
+
+	/**
+	 * Comparator of Location. Sorting order is longitude, latitude, radius.
+	 */
+	public static final Comparator<Location> locationComparator = new Comparator<Location>() {
+		@Override
+		public int compare(Location o1, Location o2) {
+			int lon = Double.compare(o1.getLongitude(), o2.getLongitude());
+			switch (lon) {
+			case 0:
+				int lat = Double.compare(o1.getLatitude(), o2.getLatitude());
+				switch (lat) {
+				case 0:
+					return Double.compare(o1.getR(), o2.getR());
+				default:
+					return lat;
+				}
+			default:
+				return lon;
+			}
+		}
+
+	};
 
 }
