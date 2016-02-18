@@ -20,7 +20,7 @@ import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
 
 /**
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.3
  */
 final class RaypathPanel extends JPanel {
@@ -38,13 +38,11 @@ final class RaypathPanel extends JPanel {
 
 	@Override
 	public void paintComponent(Graphics g) {
-		// System.out.println(i);
 		Graphics2D g2 = (Graphics2D) g;
 		// for (QuadCurve2D.Double curve : quadCurve)
 		// g2.draw(curve);
 		drawCurves(g2);
 		// g.drawLine(0 , 90, 100, 200);
-		// // g.
 		drawEarth(g);
 		// g2.drawString("jo", 300, 300);
 		drawAdditionalCircles(g);
@@ -64,7 +62,6 @@ final class RaypathPanel extends JPanel {
 			double depth = Math.round((6371 - radius) * 1000.0) / 1000.0;
 			String line = phase.toString() + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
 					+ ", Epicentral distance[deg]: " + delta + ", Travel time[s]: " + time;
-			// System.out.println(line.length());
 			int startInt = (int) changeX(-line.length() / 2 * 6371 / 45);
 			// epsGraphics.drawLine(0, 100, 200, 300);
 			// epsGraphics.close();
@@ -100,7 +97,6 @@ final class RaypathPanel extends JPanel {
 				double ctrlx = curve.ctrlx;
 				double ctrly = curve.ctrly;
 				x1 = changeX(x1);
-				// System.out.println(x1);
 				x2 = changeX(x2);
 				y1 = changeY(y1);
 				y2 = changeY(y2);
@@ -120,7 +116,6 @@ final class RaypathPanel extends JPanel {
 			double ctrlx = curve.ctrlx;
 			double ctrly = curve.ctrly;
 			x1 = changeX(x1);
-			// System.out.println(x1);
 			x2 = changeX(x2);
 			y1 = changeY(y1);
 			y2 = changeY(y2);

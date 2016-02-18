@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Mode for diffracted waves such as Pdiff, Sdiff...
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.1.5
  */
 class DiffractionMode extends Computation {

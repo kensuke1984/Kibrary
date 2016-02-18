@@ -7,9 +7,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 /**
- * @author kensuke
+ * @author Kensuke Konishi
  * 
- * @version 0.1.0
+ * @version 0.1.0.1
  * 
  * 
  */
@@ -21,6 +21,7 @@ class RaypathTabs extends javax.swing.JFrame {
 	 * Creates new form NewJFrame
 	 */
 	RaypathTabs(TravelTimeGUI travelTimeGui, RaypathPanel raypathPanel) {
+		super("Raypath");
 		this.raypathPanel = raypathPanel;
 		this.travelTimeGUI = travelTimeGui;
 		initComponents();
@@ -44,7 +45,6 @@ class RaypathTabs extends javax.swing.JFrame {
 	private void initComponents() {
 
 		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-		setTitle("Raypath");
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
 		// getContentPane().setLayout(layout);

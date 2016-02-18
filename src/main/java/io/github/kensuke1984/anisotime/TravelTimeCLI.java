@@ -20,12 +20,12 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * 
- * This class is only for CUI use.
+ * This class is only for CLI use.
  * 
  * 
  * 
- * @author kensuke
- * @version 0.1.2.1
+ * @author Kensuke Konishi
+ * @version 0.1.2.2
  * 
  */
 final class TravelTimeCLI {
@@ -51,14 +51,14 @@ final class TravelTimeCLI {
 	 *            [commands]
 	 */
 	public static void main(String[] args) {
-		if (args.length == 0 || Arrays.stream(args).anyMatch(arg -> arg.equals("-version"))) {
+		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
 		}
 		// add options
 		setBooleanOptions();
 		setArgumentOptions();
-		if (Arrays.stream(args).anyMatch(arg -> arg.equals("-help"))) {
+		if (Arrays.stream(args).anyMatch("-help"::equals)) {
 			printHelp();
 			return;
 		}
@@ -186,7 +186,6 @@ final class TravelTimeCLI {
 			try {
 				while ((time1 = RaypathSearch.travelTimeByThreePointInterpolate(delta1, raypath, phase, pInterval)) < 0)
 					pInterval *= 10;
-
 			} catch (Exception e) {
 			}
 			if (0 < time1) {
@@ -197,7 +196,7 @@ final class TravelTimeCLI {
 		try {
 			int n = cmd.hasOption("dec") ? Integer.parseInt(cmd.getOptionValue("dec")) : 2;
 			if (n < 0)
-				throw new RuntimeException();
+				throw new RuntimeException("Invalid value for \"dec\"");
 			// System.out.println("Epicentral distance [deg] Travel time [s]"
 			// );
 			if (cmd.hasOption("rayp"))
@@ -210,8 +209,7 @@ final class TravelTimeCLI {
 				printLine(n, p0, delta0, time0);
 			return;
 		} catch (Exception e) {
-			// e.printStackTrace();
-			System.out.println("Option digit only accepts a positive integer " + cmd.getOptionValue("digit"));
+			System.err.println("Option digit only accepts a positive integer " + cmd.getOptionValue("digit"));
 		}
 
 		// System.out.println("Epicentral distance [deg] Travel time [s]" );
@@ -227,29 +225,17 @@ final class TravelTimeCLI {
 	}
 
 	private static double setDelta(CommandLine cmd) {
-		double delta = 0;
-		if (cmd.hasOption("deg"))
-			delta = Double.parseDouble(cmd.getOptionValue("deg"));
-
-		return Math.toRadians(delta);
+		return cmd.hasOption("deg") ? Double.parseDouble(cmd.getOptionValue("deg")) : 0;
 	}
 
 	private static double setDepth(CommandLine cmd) {
-		double depth = 0;
-		if (cmd.hasOption("h"))
-			depth = Double.parseDouble(cmd.getOptionValue("h"));
-		return 6371 - depth;
+		return cmd.hasOption("h") ? 6371 - Double.parseDouble(cmd.getOptionValue("h")) : 6371;
 	}
 
 	private static void printHelp() {
 		helpFormatter.printHelp("Travel time", options);
 	}
 
-	/**
-	 * 
-	 * @param cmd
-	 * @return
-	 */
 	private static VelocityStructure createVelocityStructure(CommandLine cmd) {
 		VelocityStructure structure = null;
 		Path modelPath = null;

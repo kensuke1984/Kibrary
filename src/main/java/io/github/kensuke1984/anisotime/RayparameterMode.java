@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Rayparameter mode
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.1.2
  * 
  */

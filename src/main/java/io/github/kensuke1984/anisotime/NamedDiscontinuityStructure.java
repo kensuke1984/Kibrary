@@ -7,41 +7,27 @@ import java.nio.file.Path;
 
 /**
  * Named discontinuity structre
- * @author kensuke
  * 
- * @version 0.0.4
+ * @author Kensuke Konishi
+ * 
+ * @version 0.0.4.1
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
 	io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see traveltime.manhattan.VelocityStructure#shTurningR(double)
-	 */
 	@Override
 	public double shTurningR(double rayParameter) {
-		// System.out.println(rayParameter);
 		for (int i = structure.getNzone() - 1; 0 <= i; i--) {
 			double vsA = structure.getVsA(i);
 			double vsB = structure.getVsB(i);
 			double r = Math.pow(1 / (vsA * rayParameter), 1 / (vsB - 1));
-//			System.out.println(i + " " + structure.getBoundary(i) + " "
-//					+ structure.getBoundary(i + 1) + " " + r);
-			if (structure.getBoundary(i) <= r
-					&& r <= structure.getBoundary(i + 1))
+			if (structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
 				return r;
 		}
-
 		return -1;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see traveltime.manhattan.VelocityStructure#svTurningR(double)
-	 */
 	@Override
 	public double svTurningR(double rayParameter) {
 		return shTurningR(rayParameter);
@@ -62,10 +48,7 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 			double vpA = structure.getVpA(i);
 			double vpB = structure.getVpB(i);
 			double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
-			// System.out.println(i+" "+structure.getBoundary(i)+" "+r+" "+structure.getBoundary(i+1));
-
-			if (structure.getBoundary(i) <= r
-					&& r < structure.getBoundary(i + 1))
+			if (structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1))
 				return r;
 		}
 		return -1;
@@ -116,7 +99,6 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 	public double earthRadius() {
 		return structure.getBoundary(structure.getNzone());
 	}
-
 
 	@Override
 	public double getRho(double r) {
