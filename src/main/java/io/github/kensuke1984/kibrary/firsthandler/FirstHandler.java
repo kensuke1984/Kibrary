@@ -31,9 +31,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * <p>
  * <a href=http://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>rdseed</a> and <a
  * href=http://ds.iris.edu/ds/nodes/dmc/manuals/evalresp/>evalresp</a> must be
- * in PATH.
- * </p>
- * If you want to remove intermediate files.
+ * in PATH. </p> If you want to remove intermediate files.
  * 
  * 
  * TODO NPTSで合わないものを捨てる？
@@ -45,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * 
- * @version 0.2
+ * @version 0.2.1
  * 
  * @author kensuke
  * 
@@ -57,7 +55,7 @@ public class FirstHandler implements Operation {
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
 			pw.println("##String a name of catalog to use from [cmt, pde]  (cmt)");
-			pw.println("#catalog");
+			pw.println("#catalog  CANT CHANGE NOW"); // TODO
 			pw.println("##double Sampling Hz, can not be changed now (20)");
 			pw.println("#samplingHz");
 			pw.println("##epicentral distance range Min(0) Max(180)");
@@ -79,15 +77,10 @@ public class FirstHandler implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("catalog"))
 			property.setProperty("catalog", "cmt");
-		if (!property.containsKey("obsPath"))
-			property.setProperty("obsPath", "");
-		if (!property.containsKey("synPath"))
-			property.setProperty("synPath", "");
-		if (!property.containsKey("epicentralDistanceMin"))
-			property.setProperty("epicentralDistanceMin", "0");
-		if (!property.containsKey("epicentralDistanceMax"))
-			property.setProperty("epicentralDistanceMax", "180");
-
+		if (!property.containsKey("samplingHz"))
+			property.setProperty("samplingHz", "20"); // TODO
+		if (!property.containsKey("removeIntermediateFile"))
+			property.setProperty("removeIntermediateFile", "true");
 	}
 
 	/**
@@ -110,31 +103,20 @@ public class FirstHandler implements Operation {
 		default:
 			throw new RuntimeException("Invalid catalog name.");
 		}
-		epicentralDistanceMin = Double.parseDouble(property.getProperty("epicentralDistanceMin"));
-		epicentralDistanceMax = Double.parseDouble(property.getProperty("epicentralDistanceMax"));
-		samplingHz = 20; // TODO
 		removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
 	}
 
-	protected double samplingHz;
+	private double samplingHz;
 
-	/**
-	 * 使うデータの震央距離の最小値
-	 */
-	protected double epicentralDistanceMin; //TODO
-	/**
-	 * 使うデータの震央距離の最大値
-	 */
-	protected double epicentralDistanceMax;
 	/**
 	 * which catalog to use 0:CMT 1: PDE
 	 */
-	protected int catalog;
+	private int catalog;
 
 	/**
 	 * if remove intermediate file
 	 */
-	protected boolean removeIntermediateFile;
+	private boolean removeIntermediateFile;
 
 	/**
 	 * output directory
@@ -148,9 +130,10 @@ public class FirstHandler implements Operation {
 	public static void main(String[] args) throws IOException {
 		FirstHandler fh = new FirstHandler(Property.parse(args));
 		long startT = System.nanoTime();
-		System.err.println("FirstHandler is going");
+		System.err.println(FirstHandler.class.getName() + " is going");
 		fh.run();
-		System.err.println("FirstHandler finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+		System.err.println(
+				FirstHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
 
 	}
 
@@ -194,7 +177,7 @@ public class FirstHandler implements Operation {
 		int threadNum = Runtime.getRuntime().availableProcessors();
 		ExecutorService es = Executors.newFixedThreadPool(threadNum);
 
-		seedSacs.forEach(ss -> es.submit(() -> ss.run()));
+		seedSacs.forEach(ss -> es.submit(ss::run));
 
 		es.shutdown();
 		try {

@@ -119,7 +119,7 @@ class SeedSAC implements Runnable {
 	SeedSAC(Path seedPath, Path outputDirectoryPath) throws IOException {
 		this(seedPath, outputDirectoryPath, null);
 	}
-
+	
 	/**
 	 * 解凍するseed file
 	 * 
@@ -170,6 +170,7 @@ class SeedSAC implements Runnable {
 			id = new GlobalCMTID(seedFile.getVolumeLabel());
 			return;
 		}
+		System.out.println(seedFile.getStartingDate()+" "+seedFile.getEndingDate());
 		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
 		id = sc.select();
 		if (id == null)
