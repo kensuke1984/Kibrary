@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * 
- * Every depth is written as <b>radius</b>. The raypath is of a given ray
+ * Every depth is written as <b>radius [km]</b>. The raypath is of a given ray
  * parameter p.
  * 
  * Cannot compute travel time for structures that have layers with 0 velocity
@@ -23,7 +23,13 @@ import java.util.List;
  * now diffraction phase is computable but only for the raypath which turning R
  * is near the CMB by {@link #permissibleGapForDiff}
  * 
- * @author Kensuke
+ * 
+ * calculation of a travel time and a epicentral distance region 0 near turning
+ * depth (eps +turningDepth) will be calculated by Geffreys region 1 deeper part
+ * than event depth but not including region 0 region 2 shallower part than
+ * event depth to the surface
+ * 
+ * @author Kensuke Konishi
  * 
  * 
  * @version 0.3.9
@@ -137,14 +143,7 @@ public class Raypath {
 	private Partition pTurning;
 
 	private double pTurningR;
-	/*
-	 * calculation of a travel time and a epicentral distance region 0 near
-	 * turning depth (eps +turningDepth) will be calculated by Geffreys region 1
-	 * deeper part than event depth but not including region 0 region 2
-	 * shallower part than event depth to the surface
-	 * 
-	 * @author Kensuke
-	 */
+
 	private final double rayParameter; // rayparameter p = (r * sin(t) )/ v(r)
 	private Partition shTurning;
 	private double shTurningR;
@@ -157,7 +156,6 @@ public class Raypath {
 
 	private Partition svTurning;
 
-	// private double pvTurningR;
 	private double svTurningR;
 
 	private double upperPDelta;
@@ -308,8 +306,7 @@ public class Raypath {
 			bw.newLine();
 			bw.write("Ray parameter: " + rayParameter);
 			bw.newLine();
-			double delta = Math.toDegrees(computeDelta(phase));
-			bw.write("Epicentral distance[deg]: " + delta);
+			bw.write("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(phase)));
 			bw.newLine();
 			bw.write("Travel time[s]: " + computeTraveltime(phase));
 			bw.newLine();
@@ -364,7 +361,6 @@ public class Raypath {
 					y[i] = points[i][1];
 				}
 				panel.addPath(x, y);
-				// System.out.println("hi");
 			}
 			panel.toEPS(os, phase, rayParameter, computeDelta(phase), computeTraveltime(phase), eventR);
 			// panel.setFrameVisible(true);
@@ -374,10 +370,11 @@ public class Raypath {
 	}
 
 	/**
-	 * q=(Rho/L-NP^2/(Lr^2))^0.5
+	 * q=(Rho/L-NP<sup>2</sup>/(Lr<sup>2</sup>))<sup>0.5</sup>
 	 * 
 	 * @param r
-	 * @return
+	 *            radius [km]
+	 * @return Q<sub>&tau;</sub>S
 	 */
 	private double calcQTauS(double r) {
 		double r2 = r * r;
@@ -420,7 +417,6 @@ public class Raypath {
 		double c = structure.getC(r);
 		double f = structure.getF(r);
 		double l = structure.getL(r);
-		// System.out.println(structure.getA(r)+" "+c+" "+f+" "+l);
 		return 0.5 / l / c * (structure.getA(r) * c - f * f - 2 * l * f);
 	}
 
@@ -447,7 +443,6 @@ public class Raypath {
 		double vsv = Math.sqrt(structure.getL(structure.earthRadius()) / rho);
 		double vsh = Math.sqrt(structure.getN(structure.earthRadius()) / rho);
 		double pMax = structure.earthRadius() / (vsv < vsh ? vsv : vsh);
-		// System.out.println(pMax + " " + vsv);
 		return rayParameter < pMax;
 	}
 
@@ -559,7 +554,6 @@ public class Raypath {
 
 		double delta = 0;
 		if (phase.isDiffracted()) {
-			// System.out.println("hi 147");
 			double diffDelta = phase.getDiffractionAngle();
 			delta = phase.toString().contains("P") ? pDiffDelta(diffDelta) : sDiffDelta(diffDelta);
 			if (phase.toString().startsWith("p"))
@@ -569,7 +563,6 @@ public class Raypath {
 			return delta;
 		}
 
-		// System.out.println("hi");
 		double mp = phase.mantleP();
 		double ms = phase.mantleS();
 		double oc = phase.outerCore();
@@ -583,11 +576,6 @@ public class Raypath {
 		double innerCoreP = 0 < icp ? innerCorePDelta * icp * 2 : 0;
 		double innerCoreS = 0 < ics ? innerCoreSDelta * ics * 2 : 0;
 		delta += mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
-		// System.out.println(Math.toDegrees(innerCoreS)+"
-		// "+phase.innerCoreS());
-		// System.out.println("mP mS OC icp ics");
-		// System.out.println(mantleP + " " + mantleS + " " + outerCore + " "
-		// + innerCoreP + " " + innerCoreS);
 
 		char first = phase.toString().charAt(0);
 		switch (first) {
@@ -600,7 +588,6 @@ public class Raypath {
 		case 'S':
 			return delta - upperSDelta;
 		}
-		// System.exit(0);
 		return delta;
 	}
 
@@ -610,11 +597,8 @@ public class Raypath {
 	 * @return Travel time[s] for the phase
 	 */
 	public double computeTraveltime(Phase phase) {
-		if (!exists(phase)) {
-			// System.out.println(name + " does not exist on ray parameter "
-			// + rayParameter);
+		if (!exists(phase))
 			return Double.NaN;
-		}
 
 		double traveltime = 0;
 		if (phase.isDiffracted()) {
@@ -639,12 +623,7 @@ public class Raypath {
 		double outerCore = 0 < oc ? outerCoreTime * oc * 2 : 0;
 		double innerCoreP = 0 < icp ? innerCorePTime * icp * 2 : 0;
 		double innerCoreS = 0 < ics ? innerCoreSTime * ics * 2 : 0;
-		// System.out.println(mantleP + " " + mantleS);
 		traveltime += mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
-		// System.out.println("mP mS OC icp ics");
-		// System.out.println(mantleP + " " + mantleS + " " + outerCore + " "
-		// + innerCoreP + " " + innerCoreS);
-		// System.out.println(traveltime);
 		char first = phase.toString().charAt(0);
 		switch (first) {
 		case 'p':
@@ -671,7 +650,6 @@ public class Raypath {
 	 * @return Earth radius [km]
 	 */
 	double earthRadius() {
-		// System.out.println(structure.earthRadius());
 		return structure.earthRadius();
 	}
 
@@ -1629,7 +1607,6 @@ public class Raypath {
 		pTurning = whichPartition(pTurningR);
 		shTurning = whichPartition(shTurningR);
 		svTurning = whichPartition(svTurningR);
-
 		// System.out.println("Turning Rs P:" + pTurning + " " + pTurningR
 		// + ", SV:" + svTurning + " " + svTurningR + ", SH:" + shTurning
 		// + " " + shTurningR);
@@ -1666,19 +1643,11 @@ public class Raypath {
 	 * @return
 	 */
 	private double simpsonPTau(double startR, double endR) {
-		// double tau = 0;
-		// System.out.println(startR + " " + endR);
-		// double[] x = point(startR, endR, interval);
-		// for (int i = 0; i < x.length - 1; i++) {
 		double deltax = endR - startR;
 		double a = calcQTP(startR);
 		double b = calcQTP(startR + 0.5 * deltax);
 		double c = calcQTP(endR);
-		// System.out.println(x[i]+" "+a+" "+b+" "+c);
 		double tau = bySimpsonRule(a, b, c) * deltax;
-		// if (Double.isNaN(tau))
-		// System.exit(0);
-		// }
 		return tau;
 	}
 
@@ -1690,19 +1659,11 @@ public class Raypath {
 	 * @return
 	 */
 	private double simpsonSDelta(double startR, double endR) {
-		// double delta = 0;
-		// System.out.println(startR+" "+endR);
-		// double[] x = point(startR, endR, interval);
-		// for (int i = 0; i < x.length - 1; i++) {
 		double deltax = endR - startR;
 		double a = calcQDeltaS(startR);
 		double b = calcQDeltaS(startR + 0.5 * deltax);
 		double c = calcQDeltaS(endR);
 		double delta = bySimpsonRule(a, b, c) * deltax;
-		// }
-		// if (Double.isNaN(delta))
-		// System.out.println(startR + " " + endR + " " + a + " " + b + " "
-		// + c);
 		return delta;
 	}
 

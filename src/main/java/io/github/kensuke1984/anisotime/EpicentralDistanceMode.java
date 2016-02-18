@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 /**
  * Epicentral distance mode.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.1.2
  * 
  * 

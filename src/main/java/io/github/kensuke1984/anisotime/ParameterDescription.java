@@ -15,7 +15,7 @@ import javax.swing.border.EmptyBorder;
  * Parameter description used in ANISOtime.
  * 
  * @version 0.0.3.2
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * 
  */
@@ -26,21 +26,16 @@ final class ParameterDescription {
 		String html = "<html><br>Depth [km]:<br>&nbsp;source depth</html>";
 		JLabel label = new JLabel(html);
 		label.setBorder(new EmptyBorder(0, 10, 0, 0));
-		// label.setHorizontalAlignment(SwingConstants.CENTER);
 		f.add(label, BorderLayout.NORTH);
 		f.setLocationRelativeTo(null);
 		f.setSize(300, 100);
 		f.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
-		// f.add(label);
-		// f.setVisible(true);
-		// f.add(area);
 		return f;
 	}
 
 	static JFrame createFrameAllowableError() {
 		JFrame f = new JFrame("Allowable error [km]");
 		String html = "<html><br>Do NOT need to touch (see Konishi <i>et al</i>., 2014 for detail)";
-		// + "<br>Allowable error of turning depth [km]</html>";
 		JLabel label = new JLabel(html);
 		f.setSize(500, 100);
 		f.add(label, BorderLayout.NORTH);
@@ -54,7 +49,6 @@ final class ParameterDescription {
 	static JFrame createFrameInterval() {
 		JFrame f = new JFrame("Integration interval [km]");
 		String html = "<html><br>Do NOT need to touch (see Konishi <i>et al</i>., 2014 for detail)";
-		// + "<br>Allowable error of turning depth [km]</html>";
 		JLabel label = new JLabel(html);
 		f.setSize(500, 100);
 		f.add(label, BorderLayout.NORTH);
@@ -70,7 +64,6 @@ final class ParameterDescription {
 		String html = "<html><br>Phase:<br>"
 				+ "&nbsp;Typical phase are prepared. You can also identify the name of phase in the convention of XXXX"
 				+ "&nbsp;(ex. P, S, ScS, PKP...)";
-		// + "<br>Allowable error of turning depth [km]</html>";
 		JLabel label = new JLabel(html);
 		f.setSize(500, 150);
 		f.add(label, BorderLayout.NORTH);
@@ -86,7 +79,6 @@ final class ParameterDescription {
 		f.setTitle("SH/SV");
 		String html = "<html><br>SH/SV:<br>"
 				+ "&nbsp;mode of S polarization (V: vertical, H: horizontal)";
-		// + "<br>Allowable error of turning depth [km]</html>";
 		JLabel label = new JLabel(html);
 		f.setSize(500, 150);
 		f.add(label, BorderLayout.NORTH);
@@ -105,7 +97,6 @@ final class ParameterDescription {
 				+ "The surface is replaced by solid (not ocean)."
 				+ "<br>&nbsp;AK135: Kennet <i>et al</i>. (1995) improved model of iasp91"
 				+ "<br>&nbsp;Polynomial file: a file written in polynomial form";
-		// + "<br>Allowable error of turning depth [km]</html>";
 		JLabel label = new JLabel(html);
 		f.setSize(500, 150);
 		f.add(label, BorderLayout.NORTH);
@@ -122,7 +113,6 @@ final class ParameterDescription {
 		String html = "<html><br>Rayparameter <i>p</i> [s]:&nbsp;dT/d&Delta;"
 				+ "<br>&nbsp;T: Travel time[s], &Delta;: Epicentral distance"
 				+ "<br>&nbsp;The relationship between <i>p</i> and the angle <i>i</i> is detailed in Konishi <i>et al</i>. (2014)";
-		// + "<br>Allowable error of turning depth [km]</html>";
 		JLabel label = new JLabel(html);
 		f.setSize(500, 150);
 		f.add(label, BorderLayout.NORTH);

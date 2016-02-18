@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * Searching utilities for raypath.
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.0.8
  * 
@@ -54,7 +54,6 @@ public final class RaypathSearch {
 		double p = toPRayParameter(turningR, structure);
 		raypath = new Raypath(p, eventR, structure);
 		double residual = turningR - raypath.getPTurningR();
-		// System.out.println(turningR+" "+raypath.pTurningR);
 		if (Math.abs(residual) < permissibleRGap)
 			return raypath;
 		return null;
@@ -167,11 +166,9 @@ public final class RaypathSearch {
 			double eventR, double targetDelta, double deltaR) {
 		Partition pTurning = targetPhase.pReaches();
 		Partition sTurning = targetPhase.sReaches();
-		// System.out.println(pTurning + " " + sTurning);
 		double rStart = 0;
 		double rEnd = 0;
 		List<Raypath> pathList = new ArrayList<>();
-		// List<Double> pList = new ArrayList<>();
 		if (sTurning != null) {
 			switch (sTurning) {
 			case MANTLE:
@@ -197,7 +194,6 @@ public final class RaypathSearch {
 						- pathList.get(pathList.size() - 2).getRayParameter());
 				double pStart = pathList.get(pathList.size() - 1).getRayParameter();
 				double pEnd = toSRayParameter(structure.coreMantleBoundary() + 0.0001, structure, sv);
-				// System.out.println(pStart + " " + pEnd + " " + pdelta);
 				while (0.001 < pdelta) {
 					for (double p = pStart + pdelta; p < pEnd; p += pdelta)
 						pathList.add(new Raypath(p, eventR, structure, sv));
@@ -326,8 +322,6 @@ public final class RaypathSearch {
 		// System.out.println(targetPhase);
 		final List<Raypath> searchPathlist = makeRaypathCandidates(targetPhase, structure, sv, eventR, targetDelta,
 				deltaR);
-		// System.out.println("the number of searching is "
-		// + searchPathlist.size());
 
 		if (sv)
 			searchPathlist.forEach(path -> path.switchSV());

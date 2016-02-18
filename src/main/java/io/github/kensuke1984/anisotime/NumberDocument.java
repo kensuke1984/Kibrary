@@ -10,8 +10,8 @@ import javax.swing.text.PlainDocument;
 /**
  * Document containing only numbers (double value) used in ANISOtime.
  * 
- * @version 0.0.1
- * @author kensuke
+ * @version 0.0.1.1
+ * @author Kensuke Konishi
  * 
  */
 final class NumberDocument extends PlainDocument {
@@ -25,11 +25,8 @@ final class NumberDocument extends PlainDocument {
 	public void insertString(int offset, String str, AttributeSet attributes) throws BadLocationException {
 		if (str == null)
 			return;
-
-		String newValue =null;
+		String newValue = null;
 		int length = getLength();
-		// System.out.println(offset + " " + str + " " + getLength());
-
 		if (length == 0) {
 			newValue = str;
 		} else {
@@ -40,7 +37,6 @@ final class NumberDocument extends PlainDocument {
 		}
 		checkInput(newValue, offset);
 		super.insertString(offset, str, attributes);
-
 	}
 
 	@Override
@@ -50,13 +46,12 @@ final class NumberDocument extends PlainDocument {
 		String before = currentContent.substring(0, offset);
 		String after = currentContent.substring(length + offset, currentLength);
 		String newValue = before + after;
-		// currentValue = checkInput(newValue, offset);
 		checkInput(newValue, offset);
 		super.remove(offset, length);
 	}
 
 	private static void checkInput(String proposedValue, int offset) throws BadLocationException {
-		if (proposedValue.length() > 0) {
+		if (0 < proposedValue.length()) {
 			if (proposedValue.equals("+") || proposedValue.equals("-"))
 				return;
 			try {

@@ -5,7 +5,7 @@ package io.github.kensuke1984.anisotime;
 
 /**
  * Structure information for computing traveltime.
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 public interface VelocityStructure {

@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * 
  * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Phase {
@@ -236,17 +236,8 @@ public class Phase {
 				iCurrentPart++;
 				break;
 			}
-			// System.out.println(s);
 		}
 
-		// for (int i = 0; i < nPart; i++)
-		// System.out.print(isP[i]?"P ":"S ");
-		// System.out.println();
-		// for (int i = 0; i < nPart; i++)
-		// System.out.print((isDownGoing[i]?"down ":"up "));
-		// System.out.println();
-		// for (int i = 0; i < nPart; i++)
-		// System.out.print(partition[i]+" ");
 	}
 
 	/**
@@ -356,7 +347,6 @@ public class Phase {
 		Partition p = pReaches();
 		// System.out.println("P reaches "+p);
 		Partition s = sReaches();
-		// System.out.println("S reaches "+s);
 		// System.out.println("P reaches "+p+", S reaches "+s);
 		if (p != null) {
 			if (pTurning == null)
@@ -369,10 +359,9 @@ public class Phase {
 					return false;
 			if (pTurning.equals(Partition.INNERCORE))
 				if (phaseName.contains("K"))
-					if (!(phaseName.contains("I") || phaseName.contains("J") || phaseName.contains("i"))) {
-						// System.out.println("!");
+					if (!(phaseName.contains("I") || phaseName.contains("J") || phaseName.contains("i"))) 
 						return false;
-					}
+					
 
 			// System.out.println("hi");
 			if (!p.shallow(pTurning))
@@ -396,11 +385,9 @@ public class Phase {
 					else
 						return phaseName.contains("I") || phaseName.contains("J") || phaseName.contains("i");
 
-			// System.out.println("?");
 			if (!s.shallow(sTurning))
 				return false;
 		}
-		// System.out.println("?");
 		return true;
 	}
 
@@ -493,25 +480,6 @@ public class Phase {
 		return partition[i];
 	}
 
-	// double mantleP() {
-	// Pattern halfPattern = Pattern.compile("P[cK]|[cK]P");
-	// int halfP = 0;
-	// int numP = 0;
-	// Matcher m = halfPattern.matcher(phase);
-	// for (int i = 0; i < phase.length(); i++)
-	// if (phase.charAt(i) == 'P')
-	// numP++;
-	// for (int start = 0;;) {
-	// if (!m.find(start))
-	// break;
-	// start = m.start() + 1;
-	// halfP++;
-	// // Pystem.out.println(start-1);
-	// }
-	// double num = numP - 0.5 * halfP;
-	// // System.out.println("P: " + num);
-	// return num;
-	// }
 	/**
 	 * how many times S wave travels in the mantle. each down or upgoing is 0.5
 	 * 
@@ -526,7 +494,6 @@ public class Phase {
 		
 		if (phaseName.charAt(0) == 's')
 			sNum -= 0.5;
-		// System.out.println(sNum);
 		return sNum;
 	}
 

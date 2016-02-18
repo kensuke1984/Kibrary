@@ -6,7 +6,7 @@ import java.awt.GraphicsEnvironment;
  * Information about ANISO time package.
  * 
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.0.2.1
  * 

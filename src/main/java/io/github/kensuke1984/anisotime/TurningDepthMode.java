@@ -12,7 +12,7 @@ import javax.swing.SwingUtilities;
 /**
  * Turning depth mode
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.1.1
  * 

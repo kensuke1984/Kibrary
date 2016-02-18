@@ -16,7 +16,7 @@ import javax.swing.WindowConstants;
  * 
  * @version 0.3.3
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  */
 class TravelTimeGUI extends javax.swing.JFrame {
 
