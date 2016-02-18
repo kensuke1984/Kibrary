@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
  * 
  * 
  * @version 0.0.6.1
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class MomentTensor {
@@ -48,7 +48,6 @@ public class MomentTensor {
 	 *            Mw
 	 */
 	public MomentTensor(double mrr, double mtt, double mpp, double mrt, double mrp, double mtp, int mtEXP, double mw) {
-		super();
 		this.mrr = mrr;
 		this.mtt = mtt;
 		this.mpp = mpp;

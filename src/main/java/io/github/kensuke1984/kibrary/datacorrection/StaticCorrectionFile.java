@@ -39,9 +39,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see in {@link #read(Path)}<br>
  * 
  * 
- * @version 0.2.0.1
+ * @version 0.2.0.2
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class StaticCorrectionFile {
@@ -128,9 +128,9 @@ public final class StaticCorrectionFile {
 	 */
 	public static void write(Set<StaticCorrection> correctionSet, Path outPath, OpenOption... options)
 			throws IOException {
-		Station[] stations = correctionSet.stream().map(sc -> sc.getStation()).distinct().sorted()
+		Station[] stations = correctionSet.stream().map(StaticCorrection::getStation).distinct().sorted()
 				.toArray(n -> new Station[n]);
-		GlobalCMTID[] ids = correctionSet.stream().map(sc -> sc.getGlobalCMTID()).distinct().sorted()
+		GlobalCMTID[] ids = correctionSet.stream().map(StaticCorrection::getGlobalCMTID).distinct().sorted()
 				.toArray(n -> new GlobalCMTID[n]);
 
 		Map<Station, Integer> stationMap = IntStream.range(0, stations.length).boxed()

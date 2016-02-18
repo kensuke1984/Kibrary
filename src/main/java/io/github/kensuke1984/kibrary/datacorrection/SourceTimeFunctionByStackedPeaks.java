@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * Source time function estimation by stacked peaks.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.3
  *
  */
