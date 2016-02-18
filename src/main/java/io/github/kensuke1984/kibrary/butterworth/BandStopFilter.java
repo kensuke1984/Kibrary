@@ -9,7 +9,7 @@ import org.apache.commons.math3.util.FastMath;
 
 /**
  * Bandstop filter
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.0.5.1
  * 
