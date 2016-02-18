@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
  * ω=2πfδt
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.1.3.1
  * 
