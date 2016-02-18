@@ -22,7 +22,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * 
  * @version 0.2.1.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class PolynomialStructure {
@@ -591,22 +591,18 @@ public class PolynomialStructure {
 	 *            {@link Path} of a structureFile
 	 */
 	private void readStructureFile(Path structurePath) throws IOException {
-		// this.psFile = psFile;
 		InformationFileReader reader = new InformationFileReader(structurePath);
 		readLines(reader.getNonCommentLines());
-
 	}
 
 	public String[] toSHlines() {
 		String[] outString = new String[3 * (nzone - coreZone) + 4];
 		int zone = nzone - coreZone;
 		outString[0] = String.valueOf(zone) + " nzone";
-		// System.out.println(nzone+" "+cmbZone);
 		outString[1] = "c  --- Radius(km) ---  --- Density (g/cm^3) ---";
 		outString[2] = "c                      ---   Vsv     (km/s) ---";
 		outString[3] = "c                      ---   Vsh     (km/s) ---      - Qmu -";
 		for (int i = coreZone; i < nzone; i++) {
-			// System.out.println(i);
 			outString[3 * (i - coreZone) + 4] = String.valueOf(rmin[i]) + " " + String.valueOf(rmax[i]) + " "
 					+ toLine(rho[i]);
 			outString[3 * (i - coreZone) + 5] = toLine(vsv[i]);
@@ -645,14 +641,12 @@ public class PolynomialStructure {
 		outString[5] = "c                     ---   Vsh     (km/s) ---";
 		outString[6] = "c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -";
 		for (int i = 0; i < nzone; i++) {
-			// System.out.println(i);
 			outString[6 * i + 7] = String.valueOf(rmin[i]) + " " + String.valueOf(rmax[i]) + " " + toLine(rho[i]);
 			outString[6 * i + 8] = toLine(vpv[i]);
 			outString[6 * i + 9] = toLine(vph[i]);
 			outString[6 * i + 10] = toLine(vsv[i]);
 			outString[6 * i + 11] = toLine(vsh[i]);
 			outString[6 * i + 12] = toLine(eta[i]) + " " + String.valueOf(qMu[i]) + " " + String.valueOf(qKappa[i]);
-
 		}
 		return outString;
 	}
