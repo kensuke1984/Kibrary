@@ -13,9 +13,9 @@ import io.github.kensuke1984.kibrary.math.LinearEquation;
  * Polynomial structure.
  * 
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public class PolynomialStructure implements VelocityStructure {
@@ -27,30 +27,22 @@ public class PolynomialStructure implements VelocityStructure {
 	}
 
 	/**
-	 * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
+	 * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
 	 */
-	public static final PolynomialStructure PREM = prem();
+	public static final PolynomialStructure PREM = new PolynomialStructure(
+			io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.PREM);
+
 	/**
-	 * isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
+	 * isotropic PREM by Dziewonski &amp; Anderson 1981
 	 */
-	public static final PolynomialStructure ISO_PREM = iprem();
+	public static final PolynomialStructure ISO_PREM = new PolynomialStructure(
+			io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.ISO_PREM);
 
 	/**
 	 * AK135 by Kennett <i>et al</i>. (1995)
 	 */
-	public static final PolynomialStructure AK135 = ak135();
-
-	private static PolynomialStructure iprem() {
-		return new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.ISO_PREM);
-	}
-
-	private static PolynomialStructure prem() {
-		return new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.PREM);
-	}
-
-	private static PolynomialStructure ak135() {
-		return new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.AK135);
-	}
+	public static final PolynomialStructure AK135 = new PolynomialStructure(
+			io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.AK135);
 
 	public PolynomialStructure(Path path) throws IOException {
 		STRUCTURE = new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(path);
@@ -66,7 +58,6 @@ public class PolynomialStructure implements VelocityStructure {
 		double[] rmin = STRUCTURE.getRmin();
 		int anstype = eq.Discriminant();
 		Complex[] answer = eq.compute();
-		// System.out.println("ans= "+anstype);//debug
 		if (anstype == 1) {
 			double radius = answer[0].getReal() * earthRadius();
 			return rmin[i] <= radius && radius < rmax[i] ? radius : -1;
@@ -77,7 +68,6 @@ public class PolynomialStructure implements VelocityStructure {
 
 		if (anstype == 20 || anstype == 28 || anstype == 29 || anstype == 30) {
 			double radius = answer[0].getReal() * earthRadius();
-			// System.out.print(shTurningDepth);//debug
 			return rmin[i] <= radius && radius < rmax[i] ? radius : -1;
 		}
 		double[] x = new double[eq.compute().length];
@@ -89,31 +79,21 @@ public class PolynomialStructure implements VelocityStructure {
 				return x[j];
 
 		return -1;
-		// System.out.println(x[j]);
-
 	}
 
 	@Override
 	public double earthRadius() {
-		double[] rmax = STRUCTURE.getRmax();
-		return rmax[rmax.length - 1];
+		return STRUCTURE.getRmax()[STRUCTURE.getNzone() - 1];
 	}
 
-	/*
-	 * (non-Javadoc) The radius which gives the ray parameter p(r*sin(i)/v)=r/v
-	 * 
-	 * @see traveltime.manhattan.VelocityStructure#shTurningR(double)
-	 */
 	@Override
 	public double shTurningR(double p) {
 		PolynomialFunction[] vsh = STRUCTURE.getVsh();
-		for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
-			// System.out.println(rmin[i]+"---"+rmax[i]);//debug
+		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
 			double[] coef = new double[4];
 			for (int j = 0; j < vsh[i].getCoefficients().length; j++)
 				coef[j] = vsh[i].getCoefficients()[j];
 			LinearEquation eq = new LinearEquation(p * coef[0], p * coef[1] - earthRadius(), p * coef[2], p * coef[3]);
-			// System.out.println(eq+" "+p*vsh[i][0]);
 			double r = findTurningR(i, eq);
 			if (r != -1)
 				return r;
@@ -123,8 +103,7 @@ public class PolynomialStructure implements VelocityStructure {
 
 	@Override
 	public double innerCoreBoundary() {
-		// TODO Auto-generated method stub
-		return 1221.5;
+		return 1221.5; // TODO
 	}
 
 	@Override
@@ -190,7 +169,6 @@ public class PolynomialStructure implements VelocityStructure {
 
 	@Override
 	public double coreMantleBoundary() {
-		// TODO
-		return 3480;
+		return 3480; // TODO
 	}
 }

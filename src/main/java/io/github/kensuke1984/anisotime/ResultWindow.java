@@ -17,8 +17,8 @@ import javax.swing.table.DefaultTableModel;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * @author kensuke
- * @version 0.0.5
+ * @author Kensuke Konishi
+ * @version 0.0.5.1
  * 
  * 
  */
@@ -50,7 +50,6 @@ class ResultWindow extends javax.swing.JPanel {
 		jScrollPane1 = new JScrollPane();
 		jTable1 = new javax.swing.JTable();
 		jScrollPane1.setViewportView(jTable1);
-		// setTitle("ANISOtime");
 		render = new SampleTableCellRenderer02();
 		jTable1.setDefaultRenderer(Object.class, render);
 		// setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -83,20 +82,15 @@ class ResultWindow extends javax.swing.JPanel {
 				travelTimeGUI.selectRaypath(row);
 			}
 		});
-		jTable1.setModel(new javax.swing.table.DefaultTableModel(
-				new Object[][] {}, new String[] { "Dist", "Depth", "Name",
-						"Time", "Rayparameter" }));
+		jTable1.setModel(new javax.swing.table.DefaultTableModel(new Object[][] {},
+				new String[] { "Dist", "Depth", "Name", "Time", "Rayparameter" }));
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
 		setLayout(layout);
-		layout.setHorizontalGroup(layout.createParallelGroup(
-				javax.swing.GroupLayout.Alignment.LEADING).addComponent(
-				jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 243,
-				Short.MAX_VALUE));
-		layout.setVerticalGroup(layout.createParallelGroup(
-				javax.swing.GroupLayout.Alignment.LEADING).addComponent(
-				jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 187,
-				Short.MAX_VALUE));
+		layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+				.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE));
+		layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+				.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 187, Short.MAX_VALUE));
 		// setPreferredSize(getMinimumSize());
 	}// </editor-fold>
 
@@ -116,16 +110,14 @@ class ResultWindow extends javax.swing.JPanel {
 	 * @param travelTime
 	 *            [s]
 	 */
-	void addRow(double epicentralDistance, double depth, String phase,
-			double travelTime, double rayparameter) {
+	void addRow(double epicentralDistance, double depth, String phase, double travelTime, double rayparameter) {
 		String delta = Utilities.fixDecimalPlaces(2, epicentralDistance);
 		String depthS = Utilities.fixDecimalPlaces(2, depth);
 		String p = Utilities.fixDecimalPlaces(2, rayparameter);
 		String time = Utilities.fixDecimalPlaces(2, travelTime);
 		try {
-			SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1
-					.getModel())).addRow(new String[] { delta, depthS, phase,
-					time, p }));
+			SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1.getModel()))
+					.addRow(new String[] { delta, depthS, phase, time, p }));
 
 		} catch (Exception e) {
 		}
@@ -150,11 +142,9 @@ class ResultWindow extends javax.swing.JPanel {
 		}
 
 		@Override
-		public Component getTableCellRendererComponent(JTable table,
-				Object value, boolean isSelected, boolean hasFocus, int row,
-				int column) {
-			super.getTableCellRendererComponent(table, value, isSelected,
-					hasFocus, row, column);
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+				int row, int column) {
+			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
 			/*
 			 * どういう呼ばれ方をしてるのか確認するための出力文 目に見えるセルだけ毎度、描画しているらしい スクロールさせると、それがわかる
@@ -207,34 +197,29 @@ class ResultWindow extends javax.swing.JPanel {
 		 * /tutorial/uiswing/lookandfeel/plaf.html
 		 */
 		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager
-					.getInstalledLookAndFeels()) {
+			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
 				if ("Nimbus".equals(info.getName())) {
 					javax.swing.UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
 			}
 		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName())
-					.log(java.util.logging.Level.SEVERE, null, ex);
+			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
+					ex);
 		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName())
-					.log(java.util.logging.Level.SEVERE, null, ex);
+			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
+					ex);
 		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName())
-					.log(java.util.logging.Level.SEVERE, null, ex);
+			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
+					ex);
 		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName())
-					.log(java.util.logging.Level.SEVERE, null, ex);
+			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
+					ex);
 		}
 		// </editor-fold>
 
 		/* Create and display the form */
-		java.awt.EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				new ResultWindow(null).setVisible(true);
-			}
-		});
+		java.awt.EventQueue.invokeLater(() -> new ResultWindow(null).setVisible(true));
 	}
 
 	// Variables declaration - do not modify

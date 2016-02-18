@@ -4,7 +4,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.3.6.3
  * 
  */

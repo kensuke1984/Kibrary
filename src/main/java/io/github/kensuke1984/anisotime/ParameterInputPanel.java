@@ -25,7 +25,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * Panel for inputting parameters
  * 
  * @version 0.2.1.1
- * @author kensuke
+ * @author Kensuke Konishi
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 

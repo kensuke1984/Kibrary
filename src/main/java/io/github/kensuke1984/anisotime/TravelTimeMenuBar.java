@@ -23,8 +23,9 @@ import org.apache.commons.io.IOUtils;
 
 /**
  * Menubar for GUI
- * @author kensuke
- * @version 0.1.3
+ * 
+ * @author Kensuke Konishi
+ * @version 0.1.3.1
  * 
  */
 final class TravelTimeMenuBar extends JMenuBar {
@@ -105,9 +106,7 @@ final class TravelTimeMenuBar extends JMenuBar {
 			JOptionPane.showMessageDialog(null,
 					"Can't open a pdf file. Look at " + pdfFile + " and delete by yourself.");
 		});
-		jMenuItemAbout.addActionListener(e -> {
-			new About().setVisible(true);
-		});
+		jMenuItemAbout.addActionListener(e -> new About().setVisible(true));
 		jMenuItemMail.addActionListener(e -> {
 			try {
 				Desktop.getDesktop().mail(new URI("mailto:bob@eps.s.u-tokyo.ac.jp"));
@@ -161,15 +160,9 @@ final class TravelTimeMenuBar extends JMenuBar {
 	}
 
 	private void setPolarization() {
-		jMenuItemPSVSH.addActionListener(e -> {
-			gui.setPolarity(0);
-		});
-		jMenuItemPSV.addActionListener(e -> {
-			gui.setPolarity(1);
-		});
-		jMenuItemSH.addActionListener(e -> {
-			gui.setPolarity(2);
-		});
+		jMenuItemPSVSH.addActionListener(e -> gui.setPolarity(0));
+		jMenuItemPSV.addActionListener(e -> gui.setPolarity(1));
+		jMenuItemSH.addActionListener(e -> gui.setPolarity(2));
 	}
 
 	String getPoleString() {
@@ -226,9 +219,7 @@ final class TravelTimeMenuBar extends JMenuBar {
 			gui.setMode(mode);
 			gui.setPolarity(polarization);
 		});
-		jMenuItemPreferences.addActionListener(e -> {
-			gui.changePropertiesVisible();
-		});
+		jMenuItemPreferences.addActionListener(e -> gui.changePropertiesVisible());
 	}
 
 	ComputationMode selectedMode() {

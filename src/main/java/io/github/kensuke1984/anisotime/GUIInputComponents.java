@@ -13,8 +13,8 @@ import javax.swing.SwingConstants;
 /**
  * Set of several GUI input components used in ANISOtime.
  * 
- * @version 0.0.2
- * @author kensuke
+ * @version 0.0.2.1
+ * @author Kensuke Konishi
  * 
  */
 final class GUIInputComponents {
@@ -62,7 +62,7 @@ final class GUIInputComponents {
 			if (inputString.length() == 0)
 				return true;
 			String[] phaseNames = inputString.trim().split(",");
-			return Arrays.stream(phaseNames).map(name -> name.trim()).allMatch(Phase::isValid);
+			return Arrays.stream(phaseNames).map(String::trim).allMatch(Phase::isValid);
 		}
 	};
 

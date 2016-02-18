@@ -12,8 +12,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
- * @author kensuke
- * @version 0.1.0
+ * @author Kensuke Konishi
+ * @version 0.1.0.1
  * 
  */
 abstract class Computation implements Runnable {
@@ -41,9 +41,7 @@ abstract class Computation implements Runnable {
 				y[i] = points[i][1];
 			}
 			try {
-				SwingUtilities.invokeAndWait(() -> {
-					travelTimeGUI.addPath(x, y);
-				});
+				SwingUtilities.invokeAndWait(() -> travelTimeGUI.addPath(x, y));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -150,7 +148,6 @@ abstract class Computation implements Runnable {
 								raypath.getRayParameter());
 						showRayPath(travelTimeTool, raypath, phase);
 
-						// travelTimeTool.resultWindow.setVisible(true);
 						continue;
 					}
 				if (!Double.isNaN(time)) {

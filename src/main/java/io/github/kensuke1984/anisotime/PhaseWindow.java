@@ -15,7 +15,7 @@ import javax.swing.ListCellRenderer;
  * 
  * Window for choosing phases.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.0.2
  * 

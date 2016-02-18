@@ -3,7 +3,7 @@ package io.github.kensuke1984.anisotime;
 /**
  * Input model for travel time computation
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  * 
  */
