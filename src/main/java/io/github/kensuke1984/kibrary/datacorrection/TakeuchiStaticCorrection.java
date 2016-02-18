@@ -43,9 +43,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * networks in an event</b>
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
- * @version 0.1
+ * @version 0.1.1
  * @see {@link StaticCorrection}
  */
 public class TakeuchiStaticCorrection implements Operation {
@@ -74,6 +74,8 @@ public class TakeuchiStaticCorrection implements Operation {
 			property.setProperty("synPath", "");
 		if (!property.containsKey("convolute"))
 			property.setProperty("convolute", "false");
+		if (!property.containsKey("sacSamplingHz"))
+			property.setProperty("sacSamplingHz", "20");
 		if (!property.containsKey("timewindowInformationPath"))
 			throw new IllegalArgumentException("There is no information about timewindowInformationPath");
 	}
@@ -91,9 +93,7 @@ public class TakeuchiStaticCorrection implements Operation {
 				.collect(Collectors.toSet());
 
 		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
-		// sacSamplingHz
-		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
-		sacSamplingHz = 20;
+		sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz")); // TODO
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {

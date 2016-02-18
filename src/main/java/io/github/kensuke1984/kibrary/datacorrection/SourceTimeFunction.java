@@ -28,9 +28,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.3.1
+ * @version 0.0.3.2
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public abstract class SourceTimeFunction {
@@ -239,7 +239,7 @@ public abstract class SourceTimeFunction {
 		// fast fourier transformation
 		data = fft.transform(data, TransformType.INVERSE);
 
-		return Arrays.stream(data).mapToDouble(d -> d.getReal()).toArray();
+		return Arrays.stream(data).mapToDouble(Complex::getReal).toArray();
 	}
 
 	/**
