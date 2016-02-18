@@ -20,7 +20,7 @@ import org.apache.commons.math3.util.FastMath;
  * ω=2&pi;f&Delta;t <br>
  * f: frequency [Hz] &Delta;t: sampling interval [s]
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.0.3
  * 
