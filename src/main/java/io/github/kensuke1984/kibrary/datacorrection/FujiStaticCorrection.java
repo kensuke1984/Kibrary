@@ -58,11 +58,12 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * timeshift fileを一つに統一
  * 
  * 
- * @version 0.2
- * @author Kensuke
+ * @version 0.2.1
+ * @author Kensuke Konishi
  * 
  */
 public class FujiStaticCorrection implements Operation {
+
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -135,6 +136,8 @@ public class FujiStaticCorrection implements Operation {
 			property.setProperty("threshold", "0.2");
 		if (!property.containsKey("searchRange"))
 			property.setProperty("searchRange", "10");
+		if (!property.containsKey("sacSamplingHz"))
+			property.setProperty("sacSamplingHz", "20");
 	}
 
 	/**
@@ -158,9 +161,7 @@ public class FujiStaticCorrection implements Operation {
 		timewindowInformationPath = getPath("timewindowInformationPath");
 
 		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
-		// sacSamplingHz
-		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
-		sacSamplingHz = 20;
+		sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
 		searchRange = Double.parseDouble(property.getProperty("searchRange"));
 		threshold = Double.parseDouble(property.getProperty("threshold"));
 	}
@@ -217,7 +218,6 @@ public class FujiStaticCorrection implements Operation {
 				try {
 					obsSac = obsName.read();
 					synSac = synName.read();
-
 				} catch (Exception e) {
 					e.printStackTrace();
 					continue;
