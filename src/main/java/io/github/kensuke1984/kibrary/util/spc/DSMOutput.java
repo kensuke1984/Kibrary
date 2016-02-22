@@ -11,26 +11,26 @@ import io.github.kensuke1984.kibrary.util.Location;
 /**
  * Data of DSM output
  * 
- * @author kensuke
+ * @author kensuke Konishi
  * @version 0.0.1
  */
 public interface DSMOutput {
-	
+
 	/**
-	 * @return number of bodies  
+	 * @return number of bodies
 	 */
 	int nbody();
-	
+
 	/**
 	 * @return list of spc bodies
 	 */
-	List<SpcBody> getSpcBodyList() ;
-	
+	List<SpcBody> getSpcBodyList();
+
 	/**
 	 * @return array of body Rs
 	 */
 	double[] getBodyR();
-	
+
 	/**
 	 * @return Location of a seismic source.
 	 */
@@ -40,20 +40,19 @@ public interface DSMOutput {
 	 * @return ID of a source
 	 */
 	String getSourceID();
-	
+
 	/**
 	 * @return ID of an observer
 	 */
 	String getObserverID();
-	
-	
+
 	/**
 	 * @return HorizontalPosition of an observer.
 	 */
 	HorizontalPosition getObserverPosition();
 
 	/**
-	 * @return length of time 
+	 * @return length of time
 	 */
 	double tlen();
 
@@ -67,10 +66,9 @@ public interface DSMOutput {
 	 */
 	double omegai();
 
-
 	/**
 	 * @return SpcFileType of this
 	 */
 	SpcFileType getSpcFileType();
-	
+
 }

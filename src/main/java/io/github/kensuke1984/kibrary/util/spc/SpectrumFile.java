@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Spectrum file by DSM.
  * 
  * @version 0.1.2
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 class SpectrumFile implements DSMOutput {
@@ -144,10 +144,11 @@ class SpectrumFile implements DSMOutput {
 			default:
 				throw new RuntimeException("component can be only 3(synthetic), 9(fp) or 27(bp) right now");
 			}
-			// System.out.println(nbody);
+//			 System.out.println(nbody);
 			specFile.nbody = nbody;
 			specFile.np = np;
 			specFile.tlen = tlen;
+			
 			specFile.spcBody = new ArrayList<>(nbody);
 			for (int i = 0; i < nbody; i++)
 				specFile.spcBody.add(new SpcBody(specFile.nComponent, np));

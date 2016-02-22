@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is only for CLI use.
  * 
  * 
- * 
  * @author Kensuke Konishi
  * @version 0.1.2.2
  * 

@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * has only one folder, then model name will be set automatically the name of
  * the folder.
  * 
- * @version 0.2
+ * @version 0.2.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -81,7 +81,7 @@ public final class SpcSAC implements Operation {
 
 		try {
 			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-			if (sourceTimeFunction != 0 && sourceTimeFunction != 1)
+			if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction !=2)
 				throw new IllegalArgumentException(
 						"The property for Source time function is invalid. It must be 0, 1 or a source time function folder path.");
 		} catch (Exception e) {
@@ -263,7 +263,6 @@ public final class SpcSAC implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(SpcSAC.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("#!java filehandling.spc.SpcSAC");
 			pw.println("#SACComponents to be used (Z R T)");
 			pw.println("#components");
 			pw.println("#Path of a working folder (.)");
