@@ -59,6 +59,7 @@ public final class RaypathSearch {
 		return null;
 	}
 
+
 	/**
 	 * Create a {@link Raypath} where V wave turns at eventR
 	 * 
@@ -184,7 +185,7 @@ public final class RaypathSearch {
 				throw new RuntimeException("UNEXPECTED");
 			}
 			pathList.addAll(DoubleStream.iterate(rStart, r -> r += deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
-					.filter(r->0<r&&r<=structure.earthRadius()).parallel()
+					.filter(r -> 0 < r && r <= structure.earthRadius()).parallel()
 					.mapToObj(r -> RaypathSearch.raypathBySTurningR(structure, r, 0.01, eventR, sv))
 					.filter(Objects::nonNull).collect(Collectors.toList()));
 
@@ -324,7 +325,7 @@ public final class RaypathSearch {
 				deltaR);
 
 		if (sv)
-			searchPathlist.forEach(path -> path.switchSV());
+			searchPathlist.forEach(Raypath::switchSV);
 
 		// compute all raypath
 		if (!computeRaypath(searchPathlist, targetPhase))
@@ -384,11 +385,17 @@ public final class RaypathSearch {
 		// System.out.println(possibleRaypathList.size() + " are found");
 		if (possibleRaypathList.size() == 0)
 			return Collections.emptyList();
-		possibleRaypathList.forEach(ray -> ray.computeTraveltime());
+		possibleRaypathList.forEach(Raypath::computeTraveltime);
 		return possibleRaypathList;
 	}
 
 	/**
+	 * If a return value is raypath0 or raypath1,
+	 * it almost means the raypath computation is related to triplication range's.
+	 * 
+	 *  Should consider more TODO
+	 * 
+	 * 
 	 * @param raypath0
 	 *            in which {@link Raypath#compute()} is done
 	 * @param raypath1
@@ -458,15 +465,15 @@ public final class RaypathSearch {
 			if (raypath != null)
 				return raypath;
 		}
-		if (Double.isNaN(raypathList.get(0).computeDelta(phase))) {
-			for (int i = 1; i < raypathList.size() - 2; i++)
+		if (Double.isNaN(raypathList.get(0).computeDelta(phase)))
+			for (int i = 1; i < raypathList.size() - 2; i++) {
 				if (!Double.isNaN(raypathList.get(i).computeDelta(phase)))
 					return raypathList.get(i);
-		} else {
+			}
+		else
 			for (int i = raypathList.size() - 2; 1 < i; i--)
 				if (!Double.isNaN(raypathList.get(i).computeDelta(phase)))
 					return raypathList.get(i);
-		}
 
 		return null;
 	}

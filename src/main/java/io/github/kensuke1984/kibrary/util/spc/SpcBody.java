@@ -19,11 +19,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * @version 0.1.2
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class SpcBody {
-
 
 	private final int nComponent; // datarealsize
 	private final int np;
@@ -51,7 +50,7 @@ public class SpcBody {
 	 * @param np
 	 *            the number of steps in frequency domain
 	 */
-	 SpcBody(int nComponent, int np) {
+	SpcBody(int nComponent, int np) {
 		this.nComponent = nComponent;
 		this.np = np;
 		allocateComponents();
@@ -103,13 +102,10 @@ public class SpcBody {
 	 *            {@link SpcBody} for addition
 	 */
 	public void addBody(SpcBody anotherBody) {
-		if (this.np != anotherBody.getNp()) {
-			System.out.println("Error: Size of body is not equal!");
-			System.exit(1);
-		} else if (this.nComponent != anotherBody.getNumberOfComponent()) {
-			System.out.println("Error: The numbers of each component are different.");
-			System.exit(1);
-		}
+		if (this.np != anotherBody.getNp())
+			throw new RuntimeException("Error: Size of body is not equal!");
+		else if (this.nComponent != anotherBody.getNumberOfComponent())
+			throw new RuntimeException("Error: The numbers of each component are different.");
 
 		for (int j = 0; j < nComponent; j++)
 			spcComponents[j].addComponent(anotherBody.spcComponents[j]);
@@ -146,7 +142,8 @@ public class SpcBody {
 	/**
 	 * before toTime This method applies ramped source time function.
 	 * 
-	 * @param sourceTimeFunction will be applied on all components.
+	 * @param sourceTimeFunction
+	 *            will be applied on all components.
 	 */
 	public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
 		Arrays.stream(spcComponents).forEach(component -> component.applySourceTimeFunction(sourceTimeFunction));

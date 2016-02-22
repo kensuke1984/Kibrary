@@ -4,6 +4,9 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
+ * 
+ * ANISOtime launcher.
+ * 
  * @author Kensuke Konishi
  * @version 0.3.6.3
  * 
@@ -40,7 +43,6 @@ final class ANISOtime extends TravelTimeGUI {
 	@Override
 	void compute() {
 		createNewRaypathTabs();
-		// System.out.println(SwingUtilities.isEventDispatchThread());
 		switch (selectedMode()) {
 		case RAYPARAMETER:
 			Raypath raypath = new Raypath(getMostImportant(), getEventR(), getStructure(), false);
