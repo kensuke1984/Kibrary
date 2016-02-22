@@ -29,7 +29,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * 
- * This class create SAC files from one or two spector files({@link SpectrumFile})
+ * This class create SAC files from one or two spector files(
+ * {@link SpectrumFile})
  * 
  * 
  * @version 0.1.2.3
@@ -604,7 +605,6 @@ public class SACMaker implements Runnable {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		// args = new String[2];
 		if (args == null || args.length != 2) {
 			System.out.println("Usage: psv sh");
 			return;
@@ -615,6 +615,7 @@ public class SACMaker implements Runnable {
 
 		SpectrumFile pairSPC = SpectrumFile.getInstance(pairName);
 		SpectrumFile oneSPC = SpectrumFile.getInstance(oneName);
+
 		SACMaker sm = new SACMaker(oneSPC, pairSPC);
 		sm.setOutPath(Paths.get(System.getProperty("user.dir")));
 		sm.run();

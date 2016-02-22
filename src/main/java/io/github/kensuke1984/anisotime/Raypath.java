@@ -1460,9 +1460,9 @@ public class Raypath {
 		// System.out.println(startR + " " + endR);
 		double startR = pTurningR < icb ? icb + eps : pTurningR + jeffereysEPS; //
 		// System.out.println(startR + " dd ");
-		if (cmbR <= startR) {
+		if (cmbR <= startR)  
 			return jeffreysOuterCoreTau(pTurningR, cmbR);
-		}
+		 
 		double[] x = point(startR, cmbR, interval);
 		for (int i = 0; i < x.length - 1; i++) {
 			double deltax = x[i + 1] - x[i];
@@ -1680,8 +1680,6 @@ public class Raypath {
 			return 0;
 		if (startR > endR)
 			throw new RuntimeException("Invalid Rs");
-		// double[] x = point(startR, endR, interval);
-		// for (int i = 0; i < x.length - 1; i++) {
 		double deltax = endR - startR;
 		double a = calcQTS(startR);
 		double b = calcQTS(startR + 0.5 * deltax);
@@ -1812,7 +1810,7 @@ public class Raypath {
 	}
 
 	/**
-	 * @param r
+	 * @param r radius [km]
 	 * @return which part r belong to
 	 */
 	private Partition whichPartition(double r) {

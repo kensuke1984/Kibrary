@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
  * 
  * @version 0.1.5
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class SpcComponent {
