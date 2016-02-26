@@ -14,7 +14,7 @@ It bundles [ANISOtime][ANISOtime] package.
 
 
 ##<a name="installation">Installation
-Kibrary runs on *Java SE Runtime Environment 8*.
+Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
 If you are not sure about the version you have, click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
