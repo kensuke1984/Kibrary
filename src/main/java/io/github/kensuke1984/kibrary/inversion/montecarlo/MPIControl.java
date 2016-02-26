@@ -15,6 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+/**
+ * @author Kensuke Konishi
+ * @version 0.0.1
+ */
 class MPIControl {
 
 	private final File bucket = new File("/dev/null");

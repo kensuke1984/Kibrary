@@ -40,20 +40,17 @@ import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 
 /**
- * @author kensuke
- * @since 2015/06/30
- * @version 0.0.1
+ * Waveform inversion with Metropolis–Hastings algorithm <a href=
+ * https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm>wiki</a>
  * 
- * @version 0.0.2
- * @since 2015/8/5 run0を基準に 震源関数
  * 
- *        logFile is in run0.
  * 
- * @version 0.0.2.1
- * @since 2015/8/7 {@link IOException}
+ * @author Kensuke Konishi
+ * 
+ *         logFile is in run0.
+ * 
  * 
  * @version 0.0.2.2
- * @since 2015/8/8 {@link InterruptedException}
  */
 class MetroPolice {
 	private Path montePath;
@@ -76,6 +73,7 @@ class MetroPolice {
 			new NoSuchFileException(montePath.toString()).printStackTrace();
 			isOK = false;
 		}
+		
 		run0Path = montePath.resolve("run0");
 		if (!Files.exists(run0Path)) {
 			new NoSuchFileException(run0Path.toString()).printStackTrace();
