@@ -46,7 +46,7 @@ The latest versions are strongly recommended.
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
 ##Contact me
-If you have any comments or questions, please feel free to contact me by [E-mail][email].
+If you have any comments or questions, please feel free to contact me by [E-mail][mailto].
 
 ##Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
@@ -73,7 +73,7 @@ Last updated Feb 16,2016
 [gradlew]:http://kensuke1984.github.io/gradlew.tar
 
 [wiki]:https://github.com/kensuke1984/Kibrary/wiki
-[email]:mailto:kensuke@earth.sinica.edu.tw
+[mailto]:mailto:kensuke@earth.sinica.edu.tw
 [javadoc]:https://kensuke1984.github.io/Kibrary
 
 [cli]:http://commons.apache.org/proper/commons-cli/
