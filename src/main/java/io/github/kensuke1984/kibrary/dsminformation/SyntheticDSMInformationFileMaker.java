@@ -21,9 +21,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
  * 
- * @version 0.2
+ * @version 0.2.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
@@ -147,7 +147,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		PolynomialStructure ps = structurePath == null ? PolynomialStructure.PREM
 				: new PolynomialStructure(structurePath);
 
-		Path outPath = getPath("synthetic" + Utilities.getTemporaryString());
+		Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
 		for (EventFolder eventDir : eventDirs) {
 			try {
