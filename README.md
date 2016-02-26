@@ -5,6 +5,9 @@
 [ ![oLicense] [olicense-image] ] [olicense]
 [![Java8][Java8-image]] [Java8]  
 
+# Installing Java
+You need [Java SE Runtime Environment 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) or higher (the latest version is strongly recommended).
+If you are not sure about the version you have, click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
 Library for waveform inversion.   
 
