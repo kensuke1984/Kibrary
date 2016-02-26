@@ -13,8 +13,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 
 /**
- * @author kensuke
- * @since 2015/07/02
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 class ModelGenerator {

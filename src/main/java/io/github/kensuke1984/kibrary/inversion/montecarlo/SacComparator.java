@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 /**
  * SacCompare
  * <b>Assume that there are no stations with the same name but different networks</b>
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.0.5
  * 

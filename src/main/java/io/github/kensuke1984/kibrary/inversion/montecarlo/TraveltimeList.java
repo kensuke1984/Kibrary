@@ -13,6 +13,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
+/**
+ * @author Kensuke Konishi 
+ * @version 0.0.1
+ */
 class TraveltimeList {
 
 	private String[] stations;
