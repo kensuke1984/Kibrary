@@ -4,18 +4,20 @@
 [ ![aLicense] [alicense-image] ] [alicense]
 [ ![oLicense] [olicense-image] ] [olicense]
 [![Java8][Java8-image]] [Java8]  
-
-# Installing Java
-You need [Java SE Runtime Environment 8](http://www.oracle.com/technetwork/java/javase/downloads/index.html) or higher (the latest version is strongly recommended).
-If you are not sure about the version you have, click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
-
 Library for waveform inversion.   
 
 It bundles [ANISOtime][ANISOtime] package.  
 
-[Java SE Runtime Environment(JRE) 8][JRE8] is required.
+
+# Installing Java
+
+
 
 ##<a name="installation">Installation
+Kibrary runs on *Java SE Runtime Environment 8*.
+You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
+If you are not sure about the version you have, click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
+
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
