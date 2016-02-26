@@ -9,10 +9,6 @@ Library for waveform inversion.
 It bundles [ANISOtime][ANISOtime] package.  
 
 
-# Installing Java
-
-
-
 ##<a name="installation">Installation
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
