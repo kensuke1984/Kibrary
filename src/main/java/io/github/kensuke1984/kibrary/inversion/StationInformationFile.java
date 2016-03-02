@@ -119,7 +119,7 @@ public final class StationInformationFile {
 
 	/**
 	 * ワーキングディレクトリ下のイベントフォルダ群からステーション情報を抽出して書き込む。
-	 * 
+	 * Creates a file for stations under the working folder.
 	 * @param args
 	 *            [folder: to look into for stations (containing event folders)]
 	 * @throws IOException
