@@ -1,12 +1,7 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -16,10 +11,10 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * Helper for use of GMT
  * 
  * 
- * @version 0.0.3.1
+ * @version 0.0.3.2
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class GMTMap {
@@ -100,6 +95,14 @@ public final class GMTMap {
 		epsFileName = "gmt" + Utilities.getTemporaryString() + ".eps";
 		scriptFileName = "gmt" + Utilities.getTemporaryString() + ".sh";
 	}
+	
+	/**
+	 * @return the name of the eps file name
+	 */
+	public String getEPSfilename(){
+		return epsFileName;
+	}
+	
 
 	/**
 	 * $header.eps and $header.sh If it is not set, the default is
