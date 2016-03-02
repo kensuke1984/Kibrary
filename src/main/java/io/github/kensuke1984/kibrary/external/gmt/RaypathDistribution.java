@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * networks in an event</b>
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.1
  * 
  */
@@ -115,6 +115,8 @@ public class RaypathDistribution implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
+		if(!property.containsKey("stationInformationPath"))
+			throw new RuntimeException("There is no information of a station information file.");
 	}
 
 	/**
@@ -287,8 +289,7 @@ public class RaypathDistribution implements Operation {
 		gmtCMD.add("awk '{print $2, $3}' " + stationPath + " |psxy -V -: -J -R -K -O -P -Si0.3 -G0/0/255 -W1 "
 				+ " >> $psname");
 		gmtCMD.add(gmtmap.psEnd());
-		gmtCMD.add("#eps2eps $psname $psname.eps");
-		gmtCMD.add("#mv $psname.eps $psname");
+		gmtCMD.add("#eps2eps $psname .$psname && mv .$psname $psname");
 		Files.write(gmtPath, gmtCMD);
 		gmtPath.toFile().setExecutable(true);
 		// for (String s : gmtCMD)
