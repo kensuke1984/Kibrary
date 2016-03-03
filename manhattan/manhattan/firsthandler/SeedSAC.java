@@ -170,6 +170,7 @@ class SeedSAC implements Runnable {
 			id = new GlobalCMTID(seedFile.getVolumeLabel());
 			return;
 		}
+		System.out.println("Dataset in this seed file starts " + seedFile.getStartingDate());
 		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
 		id = sc.select();
 		if (id == null)
