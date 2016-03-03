@@ -38,7 +38,7 @@ public class GlobalCMTSearch {
 		double lat = location.getLatitude();
 		double lon = location.getLongitude();
 		double depth = Math.round((6371 - location.getR()) * 1000) / 1000.0;
-		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth);
+		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth+" MW:"+ event.getCmt().getMw());
 
 	}
 
@@ -295,7 +295,7 @@ public class GlobalCMTSearch {
 			System.out.println("Which ID do you want to use?");
 			System.out.println("# ID date time latitude longitude depth");
 			for (int i = 0; i < ids.length; i++) {
-				System.out.print(i + " ");
+				System.out.print((i+1) + " ");
 				printIDinformation(ids[i]);
 			}
 			// byte[] inputByte = new byte[4];
@@ -304,12 +304,12 @@ public class GlobalCMTSearch {
 				String numStr = br.readLine();
 				if (NumberUtils.isNumber(numStr))
 					k = Integer.parseInt(numStr);
-				if (k < 0 || ids.length <= k) {
+				if (k < 1 || ids.length <= k-1) {
 					System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
 					k = -1;
 				}
 			}
-			id = ids[k];
+			id = ids[k-1];
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
