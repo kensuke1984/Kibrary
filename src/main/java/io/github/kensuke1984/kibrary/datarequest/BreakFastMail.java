@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * @version 0.0.5
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class BreakFastMail {
@@ -77,11 +77,10 @@ public class BreakFastMail {
 	private static String getPassword() throws InterruptedException {
 		if (password != null)
 			return password;
-		else if (!GraphicsEnvironment.isHeadless()){
+		else if (!GraphicsEnvironment.isHeadless()) {
 			PasswordInput pi = PasswordInput.createAndShowGUI();
 			password = pi.getPassword();
-		}
-		else {
+		} else {
 			Console console = System.console();
 			password = String.copyValueOf(console.readPassword("Password for waveformrequest2015@gmail.com"));
 		}
@@ -132,17 +131,21 @@ public class BreakFastMail {
 	/**
 	 * 
 	 * Option: -iris now only iris is possible <br>
-	 * 
+	 * Send mails every 2 min.
 	 * @param args
 	 *            (option) [mail file]
 	 * @throws Exception
 	 *             if an error occurs
 	 */
 	public static void main(String[] args) throws Exception {
-		if (args.length == 2 && args[0].equals("-iris"))
-			sendIris(Files.readAllLines(Paths.get(args[1])).toArray(new String[0]));
-		else
-			throw new IllegalArgumentException("-iris [mail file]   (Only sending to IRIS is possible now");
+		if (args[0].equals("-iris")) {
+			for (int i = 1; i < args.length; i++) {
+				sendIris(Files.readAllLines(Paths.get(args[i])).toArray(new String[0]));
+				System.out.println("Sent "+args[i]);
+				Thread.sleep(2 * 60 * 1000);
+			}
+		} else
+			throw new IllegalArgumentException("-iris [mail files]   (Only sending to IRIS is possible now");
 
 	}
 

@@ -23,11 +23,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 /**
  * 
- * It makes a data requesting mail. Information: {@link parameter.DataRequestor}
+ * It makes a data requesting mail.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
- * @version 0.1.1
+ * @version 0.1.3
  * 
  *
  */
@@ -80,29 +80,6 @@ public class DataRequestor implements Operation {
 	}
 
 	private Set<GlobalCMTID> requestedIDs;
-
-	private void request() {
-		requestedIDs = listIDs();
-		System.out.println(requestedIDs.size() + " events are found.");
-		System.out.println("Label contains \"" + date + "\"");
-		try {
-			System.out.println("Sending requests in 10 sec");
-			Thread.sleep(1000 * 10);
-		} catch (Exception e2) {
-		}
-		requestedIDs.forEach(id -> {
-			BreakFastMail m = createBreakFastMail(id);
-			try {
-				System.err.println("Sending a request for " + id);
-				m.sendIris();
-				output(m);
-				Thread.sleep(300 * 1000);
-			} catch (Exception e) {
-				System.out.println(m.getLabel() + " was not sent");
-				e.printStackTrace();
-			}
-		});
-	}
 
 	private static void output(BreakFastMail mail) {
 		Path out = Paths.get(mail.getLabel() + ".mail");
@@ -159,7 +136,11 @@ public class DataRequestor implements Operation {
 			throw new RuntimeException("No information about the foot adjustment");
 		if (!property.containsKey("headAdjustment"))
 			throw new RuntimeException("No information about the head adjustment");
+		if (!property.containsKey("send"))
+			property.setProperty("send", "false");
 	}
+
+	private boolean send;
 
 	private void set() {
 		checkAndPutDefaults();
@@ -183,7 +164,7 @@ public class DataRequestor implements Operation {
 		endDate = LocalDate.parse(property.getProperty("endDate"));
 		headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
 		footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
-
+		send = Boolean.parseBoolean(property.getProperty("send"));
 	}
 
 	private Properties property;
@@ -196,7 +177,7 @@ public class DataRequestor implements Operation {
 	 * @param id
 	 *            of {@link GlobalCMTID}
 	 */
-	private BreakFastMail createBreakFastMail(GlobalCMTID id) {
+	public BreakFastMail createBreakFastMail(GlobalCMTID id) {
 		Channel[] channels = Channel.listChannels(networks, id, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
 				footAdjustment);
 		return new BreakFastMail(System.getProperty("user.name"), institute, mail, email, phone, fax,
@@ -235,9 +216,9 @@ public class DataRequestor implements Operation {
 				pw.println("#fax 03-5841-8791");
 			}
 			pw.println("##Email address, must be defined");
-			pw.println("email waveformrequest2015@gmail.com");
+			pw.println("#email waveformrequest2015@gmail.com");
 			pw.println("##media(FTP)");
-			pw.println("#media FTP");
+			pw.println("#media");
 			pw.println("##Network names for request, must be defined");
 			pw.println("##Note that it will make a request for all stations in the networks.");
 			pw.println("#networks II IU _US-All");
@@ -266,6 +247,8 @@ public class DataRequestor implements Operation {
 			pw.println("#headAdjustment -10");
 			pw.println("##Adjustment at the foot [min], must be integer and defined");
 			pw.println("#footAdjustment 120");
+			pw.println("##If you just want to create emails, then set it true (false)");
+			pw.println("#send");
 		}
 		System.out.println(outPath + " is created.");
 	}
@@ -282,7 +265,28 @@ public class DataRequestor implements Operation {
 
 	@Override
 	public void run() throws Exception {
-		request();
+		requestedIDs = listIDs();
+		System.out.println(requestedIDs.size() + " events are found.");
+		System.out.println("Label contains \"" + date + "\"");
+		try {
+			System.out.println("Sending requests in 10 sec");
+			Thread.sleep(1000 * 10);
+		} catch (Exception e2) {
+		}
+		requestedIDs.forEach(id -> {
+			BreakFastMail m = createBreakFastMail(id);
+			try {
+				output(m);
+				if (!send)
+					return;
+				System.err.println("Sending a request for " + id);
+				m.sendIris();
+				Thread.sleep(300 * 1000);
+			} catch (Exception e) {
+				System.out.println(m.getLabel() + " was not sent");
+				e.printStackTrace();
+			}
+		});
 	}
 
 }
