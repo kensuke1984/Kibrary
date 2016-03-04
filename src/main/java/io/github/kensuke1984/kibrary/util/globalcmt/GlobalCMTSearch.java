@@ -18,8 +18,8 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * Global CMT searchを行う時のQuery
  * 
- * @author Kensuke
- * @version 0.1.8
+ * @author Kensuke Konishi
+ * @version 0.1.9
  * 
  * 
  */
@@ -38,7 +38,8 @@ public class GlobalCMTSearch {
 		double lat = location.getLatitude();
 		double lon = location.getLongitude();
 		double depth = Math.round((6371 - location.getR()) * 1000) / 1000.0;
-		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth);
+		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth
+				+ " Mw:" + event.getCmt().getMw());
 
 	}
 
@@ -111,7 +112,6 @@ public class GlobalCMTSearch {
 	 */
 	private LocalDateTime startDate;
 
-
 	/**
 	 * the upper limit of centroid time shift Default: 9999
 	 */
@@ -170,6 +170,7 @@ public class GlobalCMTSearch {
 
 	/**
 	 * Search from the startDate to endDate
+	 * 
 	 * @param startDate
 	 *            starting date of the search (included)
 	 * @param endDate
@@ -177,8 +178,9 @@ public class GlobalCMTSearch {
 	 */
 	public GlobalCMTSearch(LocalDate startDate, LocalDate endDate) {
 		this.startDate = startDate.atTime(0, 0);
-		this.endDate = 	endDate.plusDays(1).atTime(0, 0);
+		this.endDate = endDate.plusDays(1).atTime(0, 0);
 	}
+
 	/**
 	 * Search from the startDate to endDate
 	 * 
@@ -235,7 +237,6 @@ public class GlobalCMTSearch {
 	public LocalDateTime getStartDate() {
 		return startDate;
 	}
-
 
 	public double getUpperCentroidTimeShift() {
 		return upperCentroidTimeShift;
@@ -295,7 +296,7 @@ public class GlobalCMTSearch {
 			System.out.println("Which ID do you want to use?");
 			System.out.println("# ID date time latitude longitude depth");
 			for (int i = 0; i < ids.length; i++) {
-				System.out.print(i + " ");
+				System.out.print((i + 1) + " ");
 				printIDinformation(ids[i]);
 			}
 			// byte[] inputByte = new byte[4];
@@ -304,16 +305,16 @@ public class GlobalCMTSearch {
 				String numStr = br.readLine();
 				if (NumberUtils.isNumber(numStr))
 					k = Integer.parseInt(numStr);
-				if (k < 0 || ids.length <= k) {
+				if (k < 1 || ids.length <= k - 1) {
 					System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
 					k = -1;
 				}
 			}
-			id = ids[k];
+			id = ids[k - 1];
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		System.out.println(id);
+		System.out.println(id+" is chosen.");
 		return id;
 
 	}
