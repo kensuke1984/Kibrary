@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * 
  * @version 0.0.8
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/rdseed/>download</a>
  * @see <a href=https://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>manual</a>
  */
@@ -34,6 +34,7 @@ public class SEEDFile {
 
 	/**
 	 * Displays Global CMT IDs which might be contained in the seedfile
+	 * 
 	 * @param args
 	 *            [seed file name]
 	 * @throws IOException
@@ -201,7 +202,7 @@ public class SEEDFile {
 		ExternalProcess process = ExternalProcess.launch(commands);
 		int exitStatus = process.waitFor();
 		if (exitStatus == 1 || exitStatus == 255)
-			throw new RuntimeException("rdseed did not run correctly. "+exitStatus+" "+commands);
+			throw new RuntimeException("rdseed did not run correctly. " + exitStatus + " " + commands);
 		return process.getStandardOutput().waitAndGetString();
 	}
 
