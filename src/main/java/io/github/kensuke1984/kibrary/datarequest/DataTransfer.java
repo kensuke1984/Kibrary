@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  * FTP access to IRIS server. OHP will be prepared
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 final class DataTransfer {
@@ -50,11 +50,14 @@ final class DataTransfer {
 			// binary mode
 			ftpclient.setFileType(FTP.BINARY_FILE_TYPE);
 			// ftpclient.changeWorkingDirectory(userPath);
-
-			FTPFileFilter fff = file -> date.equals("*") ? file.getName().endsWith(".seed")
+			FTPFileFilter fff = file -> date.equals("*") || date.equals("-c") ? file.getName().endsWith(".seed")
 					: file.getName().endsWith(".seed") && file.getName().contains(date);
 			FTPFile[] ffiles = ftpclient.listFiles(irisUserPath, fff);
 			System.out.println(ffiles.length + " seed files are found in the server.");
+			for(FTPFile f : ffiles)
+				System.out.println(f);
+			if (date.equals("-c"))
+				return;
 			System.out.println("Downloading in 10 s");
 			Thread.sleep(10 * 1000);
 			Files.createDirectories(outPath);
@@ -84,13 +87,13 @@ final class DataTransfer {
 	/**
 	 * @param args
 	 *            [option] [tag]<br>
-	 *            If option -c, then check the number of files with "tag", else
-	 *            FTP [date string] to get seed files(*.seed) in
+	 *            If option -c, then check the number of files in the server,
+	 *            else FTP [date string] to get seed files(*.seed) in
 	 *            (/pub/userdata/`USERNAME`/) with the `tag`. If "*" (you might
 	 *            need "\*"), then get all seed files in the folder. <br>
 	 */
 	public static void main(String[] args) {
-		if (2 < args.length || (args.length == 2 && !args[0].equals("-c")))
+		if (args.length != 1)
 			throw new IllegalArgumentException(
 					"Usage:[-c](to check the number only) [tag] or [*] (may need be \\*) if all seeds you need");
 

@@ -23,7 +23,7 @@ import javax.swing.WindowConstants;
  * This class is based on a class provided as a Sample by Oracle. The copyright
  * is stated in the Kibrary License statement.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 class PasswordInput extends JPanel implements ActionListener {
