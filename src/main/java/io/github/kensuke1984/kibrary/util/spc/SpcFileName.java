@@ -31,7 +31,7 @@ public class SpcFileName extends File {
 	private static final long serialVersionUID = -6340811322023603513L;
 
 	/**
-	 * spheroidal mode PSV, SH
+	 * spheroidal mode PSV, toroidal mode SH
 	 */
 	private SpcFileComponent mode;
 
