@@ -46,10 +46,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * {@link TimewindowInformationFile} necessary.
  * 
- * @version 0.1
+ * @version 0.1.0.1
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class DataSelection implements Operation {
@@ -137,7 +137,16 @@ public class DataSelection implements Operation {
 			property.setProperty("obsPath", "");
 		if (!property.containsKey("synPath"))
 			property.setProperty("synPath", "");
-
+		if (!property.containsKey("minCorrelation"))
+			property.setProperty("minCorrelation", "0");
+		if (!property.containsKey("maxCorrelation"))
+			property.setProperty("maxCorrelation", "1");
+		if (!property.containsKey("minVariance"))
+			property.setProperty("minVariance", "0");
+		if (!property.containsKey("maxVariance"))
+			property.setProperty("maxVariance", "2");
+		if (!property.containsKey("ratio"))
+			property.setProperty("ratio", "2");
 	}
 
 	private void set() throws IOException {
@@ -158,7 +167,8 @@ public class DataSelection implements Operation {
 		maxVariance = Double.parseDouble(property.getProperty("maxVariance"));
 		ratio = Double.parseDouble(property.getProperty("ratio"));
 		timewindowInformationFilePath = getPath("timewindowInformationFilePath");
-		staticCorrectionInformationFilePath = getPath("staticCorrectionInformationFilePath");
+		if (property.containsKey("staticCorrectionInformationFilePath"))
+			staticCorrectionInformationFilePath = getPath("staticCorrectionInformationFilePath");
 		// sacSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
 		// sacSamplingHz = 20;
@@ -188,9 +198,9 @@ public class DataSelection implements Operation {
 	public static void main(String[] args) throws Exception {
 		DataSelection ds = new DataSelection(Property.parse(args));
 		long start = System.nanoTime();
-		System.err.println("DataSelection is going");
+		System.err.println(DataSelection.class.getName()+" is going");
 		ds.run();
-		System.err.println("DataSelection is done in " + Utilities.toTimeString(System.nanoTime() - start));
+		System.err.println(DataSelection.class.getName()+" finished in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	private void output() throws IOException {
@@ -335,19 +345,19 @@ public class DataSelection implements Operation {
 		double var = obs2 + syn2 - 2 * cor;
 		double maxRatio = Math.round(synMax / obsMax * 100) / 100.0;
 		double minRatio = Math.round(synMin / obsMin * 100) / 100.0;
-		double ampRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
+		double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
 		var /= obs2;
 		cor /= Math.sqrt(obs2 * syn2);
 
-		ampRatio = Math.round(ampRatio * 100) / 100.0;
+		absRatio = Math.round(absRatio * 100) / 100.0;
 		var = Math.round(var * 100) / 100.0;
 		cor = Math.round(cor * 100) / 100.0;
 		// if (minRatio > ratio || minRatio < 1 / ratio ||
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
-				|| ratio < ampRatio || ampRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
+				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
 				|| var < minVariance || maxVariance < var);
 
-		writer.println(stationName + " " + id + " " + component + " " + isok + " " + ratio + " " + maxRatio + " "
+		writer.println(stationName + " " + id + " " + component + " " + isok + " " + absRatio + " " + maxRatio + " "
 				+ minRatio + " " + var + " " + cor);
 		return isok;
 	}

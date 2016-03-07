@@ -31,9 +31,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  * 
- * @version 0.2.1
+ * @version 0.2.1.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class FilterDivider implements Operation {
@@ -60,8 +60,8 @@ public class FilterDivider implements Operation {
 			pw.println("#lowFreq");
 			pw.println("##Higher limit of the frequency band [Hz] (0.08)");
 			pw.println("#highFreq");
-			pw.println(
-					"##Filter type to be applied (bandpass) The filter can be 'lowpass', 'highpass', 'bandpass', 'bandstop'");
+			pw.println("##Filter type to be applied (bandpass)");
+			pw.println("##The filter can be 'lowpass', 'highpass', 'bandpass', 'bandstop'");
 			pw.println("#filter");
 			pw.println("##The value of np (4)");
 			pw.println("#np");
@@ -183,8 +183,10 @@ public class FilterDivider implements Operation {
 			throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
 		FilterDivider divider = new FilterDivider(property);
 		long startTime = System.nanoTime();
+		System.err.println(FilterDivider.class.getName() + " is going.");
 		divider.run();
-		System.err.println("FilterDivider finished in " + Utilities.toTimeString(System.nanoTime() - startTime));
+		System.err.println(FilterDivider.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 
 	private Runnable process(EventFolder folder) {
@@ -192,7 +194,7 @@ public class FilterDivider implements Operation {
 			String eventname = folder.getName();
 			try {
 				Files.createDirectories(outPath.resolve(eventname));
-				Set<SACFileName>set=folder.sacFileSet();
+				Set<SACFileName> set = folder.sacFileSet();
 				set.removeIf(s -> !components.contains(s.getComponent()));
 				set.forEach(this::filterAndout);
 			} catch (Exception e) {
@@ -262,7 +264,6 @@ public class FilterDivider implements Operation {
 		if (events.isEmpty())
 			return;
 
-		System.err.println("FilterDivider is going.");
 		outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
 		ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());

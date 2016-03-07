@@ -35,14 +35,14 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * has only one folder, then model name will be set automatically the name of
  * the folder.
  * 
- * @version 0.2.2
+ * @version 0.2.3
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SpcSAC implements Operation {
 
-	public SpcSAC(Properties properties) {
+	public SpcSAC(Properties properties) throws IOException {
 		property = (Properties) properties.clone();
 		set();
 	}
@@ -71,7 +71,7 @@ public final class SpcSAC implements Operation {
 			property.setProperty("modelName", "");
 	}
 
-	private void set() {
+	private void set() throws IOException {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
 		if (!property.getProperty("psvPath").equals("null"))
@@ -87,6 +87,10 @@ public final class SpcSAC implements Operation {
 			throw new RuntimeException("The shPath: " + shPath + " does not exist");
 
 		modelName = property.getProperty("modelName");
+
+		if (modelName.equals(""))
+			setModelName();
+
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
 
@@ -179,38 +183,33 @@ public final class SpcSAC implements Operation {
 		}
 	}
 
-	/**
-	 * @param eventFolder
-	 *            in which search a model folder
-	 * @return the model folder in the folder. If there are no folders in the
-	 *         event folder or more than one folder in the event folder, null is
-	 *         returned.
-	 */
-	private static Path searchModelDir(EventFolder eventFolder) {
-		Path[] paths = Arrays.stream(eventFolder.listFiles()).filter(File::isDirectory).map(File::toPath)
-				.toArray(n -> new Path[n]);
-		if (paths.length == 0)
-			System.err.println("No model folder in " + eventFolder);
-		else if (1 < paths.length)
-			System.err.println("More than one model folders in " + eventFolder);
+	private void setModelName() throws IOException {
+		Set<EventFolder> eventFolders = new HashSet<>();
+		if (psvPath != null)
+			eventFolders.addAll(Utilities.eventFolderSet(psvPath));
+		if (shPath != null)
+			eventFolders.addAll(Utilities.eventFolderSet(shPath));
+		Set<String> possibleNames = new HashSet<>();
+		eventFolders.forEach(ef -> Arrays.stream(ef.listFiles()).filter(File::isDirectory).map(File::getName)
+				.forEach(possibleNames::add));
+		if (possibleNames.size() != 1)
+			throw new RuntimeException(
+					"There are no model folder in event folders or more than one folder. You must specify 'modelName' in the case.");
+
+		String modelName = possibleNames.iterator().next();
+		if (eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists))
+			this.modelName = modelName;
 		else
-			return paths[0];
-		return null;
+			throw new RuntimeException("There are some events without model folder " + modelName);
 	}
 
 	private Set<SpcFileName> collectSHSPCs() throws IOException {
 		Set<SpcFileName> shSet = new HashSet<>();
 		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(shPath);
 		for (EventFolder eventFolder : eventFolderSet) {
-			Path modelFolder = null;
-			if (modelName.equals(""))
-				modelFolder = searchModelDir(eventFolder);
-			else
-				modelFolder = eventFolder.toPath().resolve(modelName);
-			if (modelFolder == null || !Files.exists(modelFolder))
-				return null;
+			Path modelFolder = eventFolder.toPath().resolve(modelName);
 			Utilities.collectSpcFileName(modelFolder).stream()
-					.filter(f -> f.getName().contains("par") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
+					.filter(f -> !f.getName().contains("par") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
 		}
 		return shSet;
 	}
@@ -219,15 +218,9 @@ public final class SpcSAC implements Operation {
 		Set<SpcFileName> psvSet = new HashSet<>();
 		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(psvPath);
 		for (EventFolder eventFolder : eventFolderSet) {
-			Path modelFolder = null;
-			if (modelName.equals(""))
-				modelFolder = searchModelDir(eventFolder);
-			else
-				modelFolder = eventFolder.toPath().resolve(modelName);
-			if (modelFolder == null || !Files.exists(modelFolder))
-				return null;
+			Path modelFolder = eventFolder.toPath().resolve(modelName);
 			Utilities.collectSpcFileName(modelFolder).stream()
-					.filter(f -> f.getName().contains("par") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
+					.filter(f -> !f.getName().contains("par") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
 		}
 		return psvSet;
 	}
@@ -238,8 +231,8 @@ public final class SpcSAC implements Operation {
 	private SpcFileName pairFile(SpcFileName psvFileName) {
 		if (psvFileName.getMode() == SpcFileComponent.SH)
 			return null;
-		return new SpcFileName(
-				shPath.resolve(psvFileName.getSourceID() + "/" + psvFileName.getName().replace("PSV.spc", "SH.spc")));
+		return new SpcFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/"
+				+ psvFileName.getName().replace("PSV.spc", "SH.spc")));
 	}
 
 	@Override
@@ -266,6 +259,7 @@ public final class SpcSAC implements Operation {
 				Files.createDirectories(outPath.resolve(spc.getSourceID()));
 				execs.execute(createSACMaker(one, null));
 			}
+		// both
 		else
 			for (SpcFileName spc : psvSPCs) {
 				SpectrumFile one = SpectrumFile.getInstance(spc);
