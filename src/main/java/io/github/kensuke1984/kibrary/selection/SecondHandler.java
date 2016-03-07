@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 1.2
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class SecondHandler implements Consumer<EventFolder>, Operation {
