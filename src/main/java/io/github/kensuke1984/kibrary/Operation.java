@@ -24,14 +24,14 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * Main procedures in Kibrary
  * 
- * @version 0.0.1
- * @author kensuke
+ * @version 0.0.2.1
+ * @author Kensuke Konishi
  *
  */
 public interface Operation {
 
 	public Path getWorkPath();
-	
+
 	Properties getProperties();
 
 	/**
@@ -48,10 +48,10 @@ public interface Operation {
 						root.resolve(getClass().getName() + Utilities.getTemporaryString() + ".properties")),
 				"This properties for " + getClass().getName());
 	}
-	
-	default Path getPath(String key){
+
+	default Path getPath(String key) {
 		String path = getProperties().getProperty(key);
-		if(path.startsWith("/"))
+		if (path.startsWith("/"))
 			return Paths.get(path);
 		return getWorkPath().resolve(path);
 	}
@@ -61,16 +61,16 @@ public interface Operation {
 	static Path findPath() throws IOException {
 		try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get("."), "*.properties")) {
 			List<Path> list = new ArrayList<>();
-			int i = 0;
+			int i = 1;
 			for (Path path : stream) {
 				System.out.println(i++ + ": " + path);
 				list.add(path);
 			}
 			if (list.isEmpty())
 				throw new NoSuchFileException("No property file is found");
-			System.out.print("Which one do you want to use as a property file? [0-" + (list.size() - 1) + "]");
+			System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "]");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-			return list.get(Integer.parseInt(reader.readLine()));
+			return list.get(Integer.parseInt(reader.readLine())-1);
 		}
 	}
 
@@ -84,7 +84,7 @@ public interface Operation {
 	public static void main(String[] args) throws Exception {
 		if (args.length == 0) {
 			Manhattan.printList();
-			System.out.print("Which one do you want to operate? [0-" + (Manhattan.values().length - 1) + "]");
+			System.out.print("Which one do you want to operate? [1-" + Manhattan.values().length + "]");
 			args = new String[] { Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).toString() };
 		}
 

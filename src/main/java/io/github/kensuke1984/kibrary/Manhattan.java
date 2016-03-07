@@ -26,34 +26,30 @@ import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
  * 
  * The list of names of manhattan (operation)
  * 
- * @author kensuke
- * @version 0.0.4
+ * @author Kensuke Konishi
+ * @version 0.0.4.1
  */
 public enum Manhattan {
-	SpcSAC(0, SpcSAC.class), FilterDivider(1, FilterDivider.class), TimewindowMaker(2,
-			TimewindowMaker.class), SyntheticDSMInformationFileMaker(3,
-					SyntheticDSMInformationFileMaker.class), SshDSMInformationFileMaker(4,
-							SshDSMInformationFileMaker.class), ObservedSyntheticDatasetMaker(5,
-									ObservedSyntheticDatasetMaker.class), CheckerBoardTest(6,
-											CheckerBoardTest.class), DataRequestor(7,
-													DataRequestor.class), DataSelection(8,
-															DataSelection.class), FirstHandler(9,
-																	FirstHandler.class), SecondHandler(10,
-																			SecondHandler.class), RaypathDistribution(
-																					11,
-																					RaypathDistribution.class), FujiStaticCorrection(
-																							12,
-																							FujiStaticCorrection.class), InformationFileMaker(
-																									13,
-																									InformationFileMaker.class), LetMeInvert(
-																											14,
-																											LetMeInvert.class), TakeuchiStaticCorrection(
-																													15,
-																													TakeuchiStaticCorrection.class), Partial1DDatasetMaker(
-																															16,
-																															Partial1DDatasetMaker.class),
-PartialDatasetMaker(17,PartialDatasetMaker.class),
-	;
+	SpcSAC(1, SpcSAC.class), FilterDivider(2, FilterDivider.class), SyntheticDSMInformationFileMaker(3,
+			SyntheticDSMInformationFileMaker.class), SshDSMInformationFileMaker(4,
+					SshDSMInformationFileMaker.class), ObservedSyntheticDatasetMaker(5,
+							ObservedSyntheticDatasetMaker.class), CheckerBoardTest(6,
+									CheckerBoardTest.class), DataRequestor(7, DataRequestor.class), DataSelection(8,
+											DataSelection.class), FirstHandler(9, FirstHandler.class), SecondHandler(10,
+													SecondHandler.class), RaypathDistribution(11,
+															RaypathDistribution.class), FujiStaticCorrection(12,
+																	FujiStaticCorrection.class), InformationFileMaker(
+																			13,
+																			InformationFileMaker.class), LetMeInvert(14,
+																					LetMeInvert.class), TakeuchiStaticCorrection(
+																							15,
+																							TakeuchiStaticCorrection.class), Partial1DDatasetMaker(
+																									16,
+																									Partial1DDatasetMaker.class), PartialDatasetMaker(
+																											17,
+																											PartialDatasetMaker.class), TimewindowMaker(
+																													18,
+																													TimewindowMaker.class),;
 
 	private int value;
 
@@ -69,8 +65,8 @@ PartialDatasetMaker(17,PartialDatasetMaker.class),
 	}
 
 	public static void printList() {
-		for (int i = 0; i < values().length; i++)
-			System.out.println(i + ": " + valueOf(i).c.getName());
+		Arrays.stream(values()).sorted((m1, m2) -> Integer.compare(m1.value, m2.value))
+				.forEach(m -> System.out.println(m.value + " " + m.c));
 	}
 
 	/**
