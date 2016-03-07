@@ -40,10 +40,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class TimewindowMaker implements Operation {
@@ -99,14 +99,14 @@ public class TimewindowMaker implements Operation {
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		String date = Utilities.getTemporaryString();
-		outputPath = getPath("timewindow" + date + ".dat");
-		invalidList = getPath("invalidTimewindow" + date + ".txt");
+		outputPath = workPath.resolve("timewindow" + date + ".dat");
+		invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");
 		timewindowSet = Collections.synchronizedSet(new HashSet<>());
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
 		usePhases = phaseSet(property.getProperty("usePhases"));
 		exPhases = phaseSet(property.getProperty("exPhases"));
-
+		
 		frontShift = Double.parseDouble(property.getProperty("frontShift"));
 		rearShift = Double.parseDouble(property.getProperty("rearShift"));
 
@@ -172,10 +172,11 @@ public class TimewindowMaker implements Operation {
 			throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
 
 		TimewindowMaker twm = new TimewindowMaker(property);
-		System.err.println("TimewindowMaker is going.");
+		System.err.println(TimewindowMaker.class.getName() + " is going.");
 		long startT = System.nanoTime();
 		twm.run();
-		System.err.println(Utilities.toTimeString(System.nanoTime() - startT));
+		System.err.println(
+				TimewindowMaker.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
 
 	}
 
@@ -183,9 +184,8 @@ public class TimewindowMaker implements Operation {
 	public void run() throws Exception {
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
-				Set<SACFileName> set = eventDir.sacFileSet();
-				set.removeIf(sfn -> sfn.isOBS() || !components.contains(sfn.getComponent()));
-				set.stream().forEach(sfn -> {
+				eventDir.sacFileSet().stream().filter(sfn -> sfn.isSYN() && components.contains(sfn.getComponent()))
+						.forEach(sfn -> {
 					try {
 						makeTimeWindow(sfn);
 					} catch (Exception e) {
@@ -275,7 +275,7 @@ public class TimewindowMaker implements Operation {
 		Timewindow[] exWindows = exPhaseTime == null ? null
 				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - frontShift, time + rearShift))
 						.sorted().toArray(n -> new Timewindow[n]);
-
+		
 		windows = mergeWindow(windows);
 
 		if (exWindows == null)
