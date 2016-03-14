@@ -6,9 +6,9 @@ import io.github.kensuke1984.kibrary.elasticparameter.ElasticModuli;
  * Weighting factor in Geller &amp; Hara (1993) to compute 3-D partial
  * derivatives
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
- * @version 0.1.0  
+ * @version 0.1.0.1
  * 
  */
 interface WeightingFactor {
@@ -52,9 +52,9 @@ interface WeightingFactor {
 		public double getFactor(int i, int j, int k, int l) {
 			switch (ElasticModuli.getElasticModulus(i, j, k, l).getTI()) {
 			case C:
-				return 1.0;
+				return 1;
 			default:
-				return 0.0;
+				return 0;
 			}
 		}
 	};
@@ -67,9 +67,9 @@ interface WeightingFactor {
 		public double getFactor(int i, int j, int k, int l) {
 			switch (ElasticModuli.getElasticModulus(i, j, k, l).getTI()) {
 			case F:
-				return 1.0;
+				return 1;
 			default:
-				return 0.0;
+				return 0;
 			}
 		};
 	};
@@ -81,9 +81,9 @@ interface WeightingFactor {
 		public double getFactor(int i, int j, int k, int l) {
 			switch (ElasticModuli.getElasticModulus(i, j, k, l).getTI()) {
 			case L:
-				return 1.0;
+				return 1;
 			default:
-				return 0.0;
+				return 0;
 			}
 		}
 
@@ -96,11 +96,11 @@ interface WeightingFactor {
 		public double getFactor(int i, int j, int k, int l) {
 			switch (ElasticModuli.getElasticModulus(i, j, k, l).getTI()) {
 			case A_2N:
-				return -2.0;
+				return -2;
 			case N:
-				return 1.0;
+				return 1;
 			default:
-				return 0.0;
+				return 0;
 			}
 		}
 	};
@@ -112,11 +112,11 @@ interface WeightingFactor {
 		public double getFactor(int i, int j, int k, int l) {
 			switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
 			case MU:
-				return 1.0;
+				return 1;
 			case LAMBDAplus2MU:
-				return 2.0;
+				return 2;
 			default:
-				return 0.0;
+				return 0;
 			}
 		}
 	};
@@ -129,9 +129,9 @@ interface WeightingFactor {
 			switch (ElasticModuli.getElasticModulus(i, j, k, l).getISO()) {
 			case LAMBDA:
 			case LAMBDAplus2MU:
-				return 1.0;
+				return 1;
 			default:
-				return 0.0;
+				return 0;
 			}
 		}
 

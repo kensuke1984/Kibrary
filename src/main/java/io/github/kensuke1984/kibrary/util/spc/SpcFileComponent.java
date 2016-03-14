@@ -6,7 +6,7 @@ package io.github.kensuke1984.kibrary.util.spc;
  * 
  * @version 0.0.3
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  *
  */
 enum SpcFileComponent {

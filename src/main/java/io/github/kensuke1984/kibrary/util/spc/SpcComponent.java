@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
  * 
  * Data for one element in one {@link SpcBody} in a {@link SpectrumFile}
  * 
- * @version 0.1.5
+ * @version 0.1.5.1
  * 
  * @author Kensuke Konishi
  * 
@@ -130,15 +130,16 @@ public class SpcComponent {
 	}
 
 	/**
-	 * before toTime
+	 * before toTime ufreq[i] * 2&times; &pi; &times i /tlen;
 	 * 
+	 * uFreq[i] = uFreq[i].multiply(new Complex(0, constant * i));
 	 * @param tlen
 	 *            time length
 	 */
 	void differentiate(double tlen) {
 		final double constant = 2 * Math.PI / tlen;
-		for (int i = 1; i < np + 1; i++)
-			uFreq[i] = uFreq[i].multiply(new Complex(0, constant * i));
+		for (int i = 1; i <= np; i++)
+			uFreq[i] = new Complex(-uFreq[i].getImaginary() * constant, uFreq[i].getReal() * constant);
 	}
 
 	/**

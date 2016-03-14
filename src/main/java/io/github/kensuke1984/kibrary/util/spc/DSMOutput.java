@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.Location;
 /**
  * Data of DSM output
  * 
- * @author kensuke Konishi
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 public interface DSMOutput {
