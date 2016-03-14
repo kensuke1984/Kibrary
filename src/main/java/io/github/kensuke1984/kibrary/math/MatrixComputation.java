@@ -15,9 +15,8 @@ import org.apache.commons.math3.linear.RealVector;
  * Computations of matrix and vector
  * 
  * 
- * @author kensuke
- * @since 2014/11/26
  * @version 0.0.1
+ * @author Kensuke Konishi
  */
 class MatrixComputation {
 
