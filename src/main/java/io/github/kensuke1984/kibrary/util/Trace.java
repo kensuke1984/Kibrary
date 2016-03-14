@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * <p><b>This class is IMMUTABLE</b></p>
  * 
  * @version 0.1.0
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Trace {

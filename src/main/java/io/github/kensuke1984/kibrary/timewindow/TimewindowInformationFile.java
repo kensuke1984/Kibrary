@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @version 0.3.0
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class TimewindowInformationFile {

@@ -117,7 +117,7 @@ public class PlaneSweepIntersectionDetector implements IntersectionDetector {
 
 		Point2D p = left.getIntersectionPoint(right);
 		// 交点が走査線よりも下に存在するときのみ，キューに交点イベントを登録
-		if (p != null && p.getY() >= sweepY)
+		if (p != null && sweepY <= p.getY())
 			eventQueue.add(new Event(SegmentType.INTERSECTION, p.getX(), p.getY(), left, right));
 
 	}

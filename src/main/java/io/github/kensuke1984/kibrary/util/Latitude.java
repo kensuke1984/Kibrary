@@ -14,7 +14,7 @@ import org.apache.commons.math3.util.FastMath;
  * @version 0.0.6
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class Latitude implements Comparable<Latitude> {
