@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * This class rounds off values at the 4th decimal point.
  * 
- * @version 0.1.0
+ * @version 0.1.0.1
  * 
  * @author Kensuke
  * 
@@ -125,7 +125,7 @@ public class Location extends HorizontalPosition {
 		Arrays.sort(newLocations, (o1, o2) -> {
 			double dist1 = o1.getDistance(this);
 			double dist2 = o2.getDistance(this);
-			return (int) (FastMath.round(dist1 - dist2));
+			return Double.compare(dist1, dist2);
 		});
 		return newLocations;
 
