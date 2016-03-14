@@ -14,8 +14,8 @@ import org.apache.commons.io.IOUtils;
  * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  * 
- * @author kensuke
- * @version 0.3b 
+ * @author Kensuke Konishi
+ * @version 0.3.0.2 
  * 
  * 
  */
