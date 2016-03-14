@@ -12,7 +12,7 @@ import java.util.Arrays;
  * 
  * @version 0.0.3
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public enum PartialType {

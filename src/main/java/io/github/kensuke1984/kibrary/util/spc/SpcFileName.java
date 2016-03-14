@@ -22,7 +22,7 @@ import java.nio.file.Path;
  * 'PSV', 'SH' must be upper case. 'station' must be 8 or less letters.
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @version 0.1.0
  * 
  */

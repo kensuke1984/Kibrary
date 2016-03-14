@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * @version 0.1.2.3
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {

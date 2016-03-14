@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * for &mu;<sub>0</sub> to Q<sub>&mu;</sub>(&ne;q) following Fuji <i>et al</i>.
  * (2010)
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  * @version 0.0.1.1
  *

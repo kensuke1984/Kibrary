@@ -11,7 +11,7 @@ import org.apache.commons.math3.util.FastMath;
  * 
  * @version 0.0.2.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 class TensorCalculationUCE {
@@ -110,7 +110,7 @@ class TensorCalculationUCE {
 	}
 
 	/**
-	 * (0, 1, 2) = (r, theta, phi) (->) (Z, X, Y) = (2, 0, 1)
+	 * (0, 1, 2) = (r, theta, phi) &rarr; (Z, X, Y) = (2, 0, 1)
 	 * 
 	 * @param i
 	 * @return
