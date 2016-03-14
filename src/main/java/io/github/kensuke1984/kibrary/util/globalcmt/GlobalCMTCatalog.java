@@ -24,7 +24,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * 
  * @version 0.1.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 final class GlobalCMTCatalog {

@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * @version 0.1.0.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Location extends HorizontalPosition {

@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * @version 0.2
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  * 
  * 
@@ -53,7 +53,7 @@ public class Dvector {
 	 * compare id0 and id1 if component npts sampling Hz start time max min
 	 * period station global cmt id are same This method does NOT consider if
 	 * the input ids are observed or synthetic.
-	 * 
+	 * TODO start time
 	 * @param id0
 	 *            {@link BasicID}
 	 * @param id1

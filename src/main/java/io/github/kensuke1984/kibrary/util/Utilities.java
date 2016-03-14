@@ -40,8 +40,8 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * Utilities for a workpath containing event folders which have SAC files. also
  * this contains various useful static methods.
  * 
- * @author kensuke
- * @version 0.1.0
+ * @author Kensuke Konishi
+ * @version 0.1.0.1
  * 
  */
 public final class Utilities {
@@ -328,7 +328,6 @@ public final class Utilities {
 		double decimal = d - intValue;
 		decimal *= Math.pow(10, n);
 		int decimalInt = (int) Math.round(decimal);
-
 		return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
 
 	}
@@ -340,18 +339,10 @@ public final class Utilities {
 		@Override
 		public int compare(Location o1, Location o2) {
 			int lon = Double.compare(o1.getLongitude(), o2.getLongitude());
-			switch (lon) {
-			case 0:
-				int lat = Double.compare(o1.getLatitude(), o2.getLatitude());
-				switch (lat) {
-				case 0:
-					return Double.compare(o1.getR(), o2.getR());
-				default:
-					return lat;
-				}
-			default:
+			if (lon != 0)
 				return lon;
-			}
+			int lat = Double.compare(o1.getLatitude(), o2.getLatitude());
+			return lat == 0 ? Double.compare(o1.getR(), o2.getR()) : lat;
 		}
 
 	};

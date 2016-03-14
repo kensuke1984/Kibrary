@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * This class is <b>immutable</b>.
  * </p>
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.1.1
  * 
