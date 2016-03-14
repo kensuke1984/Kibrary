@@ -11,12 +11,8 @@ import org.apache.commons.math3.linear.RealVector;
  * 行列計算 parallelized Matrix
  * 
  * @version 0.1.0
- * @since 2014/11/26
  * 
- * 
- * 
- * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Matrix extends Array2DRowRealMatrix {

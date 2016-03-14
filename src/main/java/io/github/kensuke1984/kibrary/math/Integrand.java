@@ -2,15 +2,11 @@ package io.github.kensuke1984.kibrary.math;
 
 /**
  * 
- * @version 0.0.2
- * @since 2014/7/2
+ * Integrand utilities
  * 
  * @version 0.0.3
- * @since 2015/9/3
  * 
- * 
- * 
- * @author Kensuke
+ * @author Kensuke Konishi
  *
  */
 public final class Integrand {
