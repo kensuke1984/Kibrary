@@ -125,7 +125,7 @@ public class Location extends HorizontalPosition {
 		Arrays.sort(newLocations, (o1, o2) -> {
 			double dist1 = o1.getDistance(this);
 			double dist2 = o2.getDistance(this);
-			return (int) (FastMath.round(dist1 - dist2));
+			return Double.compare(dist1, dist2);
 		});
 		return newLocations;
 
