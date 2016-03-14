@@ -7,20 +7,16 @@ package io.github.kensuke1984.kibrary.timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
- * @version 0.1.0
- * @author Kensuke
+ * @version 0.1.0.1
+ * @author Kensuke Konishi
  *
  */
 public class Timewindow implements Comparable<Timewindow> {
 
 	@Override
 	public int compareTo(Timewindow o) {
-		if (startTime < o.startTime)
-			return -1;
-		else if (startTime == o.startTime)
-			return Double.compare(endTime, o.endTime);
-		else
-			return 1;
+		int c = Double.compare(startTime, o.startTime);
+		return c != 0 ? c : Double.compare(endTime, o.endTime);
 	}
 
 	@Override

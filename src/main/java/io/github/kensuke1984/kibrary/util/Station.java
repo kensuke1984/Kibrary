@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * @version 0.0.5
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Station implements Comparable<Station> {
