@@ -14,9 +14,9 @@ package io.github.kensuke1984.kibrary.util.spc;
  * trt 12: trp 13: ttr 14: ttt 15: ttp 16: tpr 17: tpt 18: tpp 19: prr 20: prt
  * 21: prp 22: ptr 23: ptt 24: ptp 25: ppr 26: ppt 27: ppp
  * 
+ * @version 0.1
  * 
- * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 enum SpcTensorComponent {
