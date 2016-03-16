@@ -25,10 +25,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * 
  * とりあえずtaperはsine taperで
  * 
- * @version 0.0.3
+ * @version 0.0.3.1
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class SACDeconvolution {
@@ -154,7 +154,7 @@ class SACDeconvolution {
 	 */
 	private static void taperInFrequencydomain(double[] freq, double cutfreq, double minFreq, Complex[] complexData) {
 		int npts = complexData.length;
-		complexData[0] = new Complex(0);
+		complexData[0] =  Complex.ZERO;
 		for (int i = 1; i <= npts / 2; i++) {
 			double taper = 0;
 			if (freq[i - 1] < cutfreq)
