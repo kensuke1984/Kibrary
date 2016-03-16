@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * @version 0.1.0 ランダム波形作成を並列化
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class RandomNoiseMaker {
