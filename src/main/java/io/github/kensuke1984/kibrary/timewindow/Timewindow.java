@@ -47,6 +47,11 @@ public class Timewindow implements Comparable<Timewindow> {
 		return true;
 	}
 
+	/**
+	 * startTime must be less than endTime
+	 * @param startTime start time of the window
+	 * @param endTime end time of the window
+	 */
 	public Timewindow(double startTime, double endTime) {
 		if (endTime < startTime)
 			throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
