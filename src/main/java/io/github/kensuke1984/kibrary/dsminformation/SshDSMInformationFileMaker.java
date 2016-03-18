@@ -22,9 +22,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Information file for SSHSH
  * 
- * @version 0.1
+ * @version 0.1.0.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public class SshDSMInformationFileMaker implements Operation {
@@ -110,9 +110,9 @@ public class SshDSMInformationFileMaker implements Operation {
 	public static void main(String[] args) throws Exception {
 		SshDSMInformationFileMaker sdif = new SshDSMInformationFileMaker(Property.parse(args));
 		long start = System.nanoTime();
-		System.out.println(SshDSMInformationFileMaker.class.getName() + " is going.");
+		System.err.println(SshDSMInformationFileMaker.class.getName() + " is going.");
 		sdif.run();
-		System.out.println(SshDSMInformationFileMaker.class.getName() + " finished in "
+		System.err.println(SshDSMInformationFileMaker.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - start));
 	}
 
@@ -149,7 +149,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		PolynomialStructure ps = structurePath == null ? PolynomialStructure.PREM
 				: new PolynomialStructure(structurePath);
 		String temporaryString = Utilities.getTemporaryString();
-		Path output = getPath("oneDPartial" + temporaryString);
+		Path output = workPath.resolve("oneDPartial" + temporaryString);
 		Files.createDirectories(output);
 		Set<SACComponent> useComponents = components;
 		for (EventFolder eventDir : eventDirs) {
@@ -165,7 +165,7 @@ public class SshDSMInformationFileMaker implements Operation {
 					}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 			if (stations.isEmpty())
 				continue;
-			int numberOfStation = (int) stations.stream().map(s -> s.getStationName()).count();
+			int numberOfStation = (int) stations.stream().map(Station::getStationName).count();
 			if (numberOfStation != stations.size())
 				System.err.println("!Caution there are stations with the same name and different positions in "
 						+ eventDir.getGlobalCMTID());
