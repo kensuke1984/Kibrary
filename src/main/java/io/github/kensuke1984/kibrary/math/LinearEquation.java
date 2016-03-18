@@ -7,9 +7,9 @@ import org.apache.commons.math3.complex.Complex;
 
 /**
  * 
- * Solve an linear equation Coefficients must be real numbers.
+ * Solver for cubic equations with coefficients of real numbers.
  * 
- * @version 0.1
+ * @version 0.1.0.2
  * @author Kensuke Konishi
  *
  */
@@ -17,7 +17,7 @@ import org.apache.commons.math3.complex.Complex;
 public class LinearEquation {
 
 	public static void main(String[] args) {
-		double[] coef = { -1, 0, 0, 1 };
+		double[] coef = { 10375.513863539234, -23198.069259778826, 21407.688976409227, -11078.20626807574 };
 		LinearEquation le = new LinearEquation(coef);
 		System.out.println(le);
 		for (Complex c : le.compute())
@@ -69,19 +69,18 @@ public class LinearEquation {
 	}
 
 	private Complex[] OneDimensionEquation() {
-		Complex answer = Complex.valueOf(-coef[0] / coef[1]);
-		return new Complex[] { answer };
+		return new Complex[] { Complex.valueOf(-coef[0] / coef[1]) };
 	}
 
 	/**
 	 * @return the answers
 	 */
 	private Complex[] TwoDimensionEquation() {
-		double a = 1;
+		// double a = 1;
 		double b = coef[1] / coef[2];
 		double c = coef[0] / coef[2];
 		// System.out.println("Calculating "+a+"x^2 + "+b+"x + "+c+" =0");
-		double D = b * b - 4 * a * c;
+		double D = b * b - 4 * c;
 		if (D == 0) {
 			return new Complex[] { Complex.valueOf(-b / 2) };
 		} else if (D < 0) {
@@ -97,10 +96,6 @@ public class LinearEquation {
 	 * @return the answers
 	 */
 	private Complex[] ThreeDimensionEquation() {
-		// if (pf.degree() != 3) {
-		// System.out.println(pf.toString() + "has not been solved.");
-		// return null;
-		// }
 		// double a = 1;
 		double b = coef[2] / coef[3];
 		double c = coef[1] / coef[3];
@@ -125,7 +120,7 @@ public class LinearEquation {
 		if (sr.abs() == 0)
 			u = Complex.ZERO;
 		else
-			u = sr.pow(1 / 3);
+			u = sr.pow(1.0 / 3);
 		if (u.abs() == 0)
 			return new Complex[] { Complex.valueOf(-b / 3) };
 		Complex v = new Complex(-q / 3, 0);
@@ -136,11 +131,8 @@ public class LinearEquation {
 		x[1] = u.multiply(omega).add(v.multiply(omega2)).subtract(b3);
 		x[2] = u.multiply(omega2).add(v.multiply(omega)).subtract(b3);
 		Arrays.sort(x, (o1, o2) -> {
-			return Double.compare(Math.abs(((Complex) o1).getImaginary()), Math.abs(((Complex) o2).getImaginary()));
+			return Double.compare(Math.abs(o1.getImaginary()), Math.abs(o2.getImaginary()));
 		});
-		// for (int i=0;i<x.length;i++)
-		// System.out.println("a "+x[i].getReal()*6371);
-		//
 
 		return x;
 
