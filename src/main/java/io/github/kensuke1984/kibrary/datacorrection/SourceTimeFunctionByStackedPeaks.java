@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Source time function estimation by stacked peaks.
  * 
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.1
  *
  */
 public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
@@ -72,13 +72,11 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 		Station station = sacFile.getStation();
 		GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
 		SACComponent component = SACComponent.of(sacFile);
-		
-		TimewindowInformation window = timewindow.stream().filter(info -> info.getStation().equals(station))
-				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
-				.findAny().get();
 
-		Trace trace = sacFile.createTrace();
-		return trace.cutWindow(window.getStartTime(), window.getEndTime());
+		TimewindowInformation window = timewindow.stream().filter(info -> info.getStation().equals(station)
+				&& info.getGlobalCMTID().equals(id) && info.getComponent() == component).findAny().get();
+
+		return sacFile.createTrace().cutWindow(window);
 	}
 
 	/**
@@ -158,7 +156,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 	}
 
 	@Override
-	public Complex[] getSourceTimeFunction() {
+	public Complex[] getSourceTimeFunctionInFrequencyDomain() {
 		if (sourceTimeFunction != null)
 			return sourceTimeFunction;
 		synchronized (this) {
