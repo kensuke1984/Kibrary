@@ -1607,9 +1607,9 @@ public class Raypath {
 		pTurning = whichPartition(pTurningR);
 		shTurning = whichPartition(shTurningR);
 		svTurning = whichPartition(svTurningR);
-		// System.out.println("Turning Rs P:" + pTurning + " " + pTurningR
-		// + ", SV:" + svTurning + " " + svTurningR + ", SH:" + shTurning
-		// + " " + shTurningR);
+//		 System.out.println("Turning Rs P:" + pTurning + " " + pTurningR
+//		 + ", SV:" + svTurning + " " + svTurningR + ", SH:" + shTurning
+//		 + " " + shTurningR);
 	}
 
 	/**

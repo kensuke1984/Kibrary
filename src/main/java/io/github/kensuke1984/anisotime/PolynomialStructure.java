@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.math.LinearEquation;
  * Polynomial structure.
  * 
  * 
- * @version 0.0.5.1
+ * @version 0.0.5.2
  * 
  * @author Kensuke Konishi
  *
@@ -50,17 +50,19 @@ public class PolynomialStructure implements VelocityStructure {
 
 	/**
 	 * @param i
+	 *            zone number for the search
 	 * @param eq
+	 *            equation to solve
 	 * @return turningR in the i-th zone or -1 if no valid R in the i-th zone
 	 */
 	private double findTurningR(int i, LinearEquation eq) {
-		double[] rmax = STRUCTURE.getRmax();
-		double[] rmin = STRUCTURE.getRmin();
+		double rmin = STRUCTURE.getRmin()[i];
+		double rmax = STRUCTURE.getRmax()[i];
 		int anstype = eq.Discriminant();
 		Complex[] answer = eq.compute();
 		if (anstype == 1) {
 			double radius = answer[0].getReal() * earthRadius();
-			return rmin[i] <= radius && radius < rmax[i] ? radius : -1;
+			return rmin <= radius && radius < rmax ? radius : -1;
 		}
 
 		if (anstype < 19)
@@ -68,14 +70,14 @@ public class PolynomialStructure implements VelocityStructure {
 
 		if (anstype == 20 || anstype == 28 || anstype == 29 || anstype == 30) {
 			double radius = answer[0].getReal() * earthRadius();
-			return rmin[i] <= radius && radius < rmax[i] ? radius : -1;
+			return rmin <= radius && radius < rmax ? radius : -1;
 		}
-		double[] x = new double[eq.compute().length];
+		double[] x = new double[answer.length];
 		for (int j = 0; j < answer.length; j++)
 			x[j] = answer[j].getReal() * earthRadius();
 		java.util.Arrays.sort(x);
 		for (int j = 0; j < eq.compute().length; j++)
-			if (x[j] < rmax[i] && rmin[i] <= x[j])
+			if (x[j] < rmax && rmin <= x[j])
 				return x[j];
 
 		return -1;
@@ -110,10 +112,11 @@ public class PolynomialStructure implements VelocityStructure {
 	public double pTurningR(double p) {
 		PolynomialFunction[] vph = STRUCTURE.getVph();
 		double[] coef = new double[4];
-		for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
+		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
 			for (int j = 0; j < vph[i].getCoefficients().length; j++)
 				coef[j] = vph[i].getCoefficients()[j];
-
+			if(i!=3) //TODO
+				continue;
 			LinearEquation eq = new LinearEquation(p * coef[0], p * coef[1] - earthRadius(), p * coef[2], p * coef[3]);
 			double r = findTurningR(i, eq);
 			if (r != -1)
