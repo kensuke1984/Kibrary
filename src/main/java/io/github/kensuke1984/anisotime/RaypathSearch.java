@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.8
+ * @version 0.0.8.1
  * 
  */
 public final class RaypathSearch {
@@ -50,15 +50,11 @@ public final class RaypathSearch {
 	 */
 	public static Raypath raypathByPTurningR(VelocityStructure structure, double turningR, double permissibleRGap,
 			double eventR) {
-		Raypath raypath = null;
 		double p = toPRayParameter(turningR, structure);
-		raypath = new Raypath(p, eventR, structure);
+		Raypath raypath = new Raypath(p, eventR, structure);
 		double residual = turningR - raypath.getPTurningR();
-		if (Math.abs(residual) < permissibleRGap)
-			return raypath;
-		return null;
+		return Math.abs(residual) < permissibleRGap ? raypath : null;
 	}
-
 
 	/**
 	 * Create a {@link Raypath} where V wave turns at eventR
@@ -151,7 +147,9 @@ public final class RaypathSearch {
 	 * By input parameters, make a list of possible P
 	 * 
 	 * @param targetPhase
+	 *            the phase for search
 	 * @param structure
+	 *            of the earth
 	 * @param sv
 	 *            SV or not
 	 * @param eventR
@@ -167,6 +165,7 @@ public final class RaypathSearch {
 			double eventR, double targetDelta, double deltaR) {
 		Partition pTurning = targetPhase.pReaches();
 		Partition sTurning = targetPhase.sReaches();
+		// System.out.println(pTurning+" "+sTurning);
 		double rStart = 0;
 		double rEnd = 0;
 		List<Raypath> pathList = new ArrayList<>();
@@ -184,7 +183,7 @@ public final class RaypathSearch {
 			default:
 				throw new RuntimeException("UNEXPECTED");
 			}
-			pathList.addAll(DoubleStream.iterate(rStart, r -> r += deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
+			pathList.addAll(DoubleStream.iterate(rStart, r -> r + deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
 					.filter(r -> 0 < r && r <= structure.earthRadius()).parallel()
 					.mapToObj(r -> RaypathSearch.raypathBySTurningR(structure, r, 0.01, eventR, sv))
 					.filter(Objects::nonNull).collect(Collectors.toList()));
@@ -276,9 +275,7 @@ public final class RaypathSearch {
 
 		});
 		if (window != null)
-			SwingUtilities.invokeLater(() -> {
-				window.dispose();
-			});
+			SwingUtilities.invokeLater(() -> window.dispose());
 		if (window == null)
 			return true;
 		return !window.isCanceled();
@@ -320,7 +317,6 @@ public final class RaypathSearch {
 			return new ArrayList<>(Arrays.asList(diffRay));
 		}
 		// long startTime = System.nanoTime();
-		// System.out.println(targetPhase);
 		final List<Raypath> searchPathlist = makeRaypathCandidates(targetPhase, structure, sv, eventR, targetDelta,
 				deltaR);
 
@@ -390,10 +386,10 @@ public final class RaypathSearch {
 	}
 
 	/**
-	 * If a return value is raypath0 or raypath1,
-	 * it almost means the raypath computation is related to triplication range's.
+	 * If a return value is raypath0 or raypath1, it almost means the raypath
+	 * computation is related to triplication range's.
 	 * 
-	 *  Should consider more TODO
+	 * Should consider more TODO
 	 * 
 	 * 
 	 * @param raypath0
