@@ -17,6 +17,7 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
+import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 
 /**
@@ -28,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.3.2
+ * @version 0.0.4
  * 
  * @author Kensuke Konishi
  *
@@ -58,7 +59,7 @@ public abstract class SourceTimeFunction {
 			double halfDuration) {
 		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
-			public Complex[] getSourceTimeFunction() {
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
 				return sourceTimeFunction;
 			}
 		};
@@ -78,9 +79,10 @@ public abstract class SourceTimeFunction {
 	 * Boxcar source time function
 	 * 
 	 * The width is determined by the half duration &tau;. <br>
-	 * f(t) = &tau;/2 (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;, &tau; &lt;
-	 * t) <br>
-	 * Source time function F(&omega;) = sin(&omega;&tau;)/&omega;&tau;
+	 * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
+	 * &tau; &lt; t) <br>
+	 * Source time function F(&omega;) =
+	 * sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
 	 * 
 	 * @param np
 	 *            the number of steps in frequency domain
@@ -95,12 +97,12 @@ public abstract class SourceTimeFunction {
 			double halfDuration) {
 		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
-			public Complex[] getSourceTimeFunction() {
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
 				return sourceTimeFunction;
 			}
 		};
 		sourceTimeFunction.sourceTimeFunction = new Complex[np];
-		double deltaF = 1.0 / tlen;
+		double deltaF = 1.0 / tlen; // omega
 		double constant = 2 * Math.PI * deltaF * halfDuration;
 		for (int i = 0; i < np; i++) {
 			double omegaTau = (i + 1) * constant;
@@ -171,8 +173,17 @@ public abstract class SourceTimeFunction {
 
 	protected Complex[] sourceTimeFunction;
 
-	public abstract Complex[] getSourceTimeFunction();
+	public abstract Complex[] getSourceTimeFunctionInFrequencyDomain();
 
+	/**
+	 * @param outPath
+	 *            Path for a file.
+	 * @param options
+	 *            for writing the file
+	 * @throws IOException
+	 *             if the source time function is not computed, then an error
+	 *             occurs
+	 */
 	public void writeSourceTimeFunction(Path outPath, OpenOption... options) throws IOException {
 		if (sourceTimeFunction == null)
 			throw new RuntimeException("Source time function is not computed yet.");
@@ -204,7 +215,7 @@ public abstract class SourceTimeFunction {
 
 		SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
-			public Complex[] getSourceTimeFunction() {
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
 				return function;
 			}
 		};
@@ -239,7 +250,7 @@ public abstract class SourceTimeFunction {
 		// fast fourier transformation
 		data = fft.transform(data, TransformType.INVERSE);
 
-		return Arrays.stream(data).mapToDouble(Complex::getReal).toArray();
+		return Arrays.stream(data).mapToDouble(Complex::abs).toArray();
 	}
 
 	/**
@@ -285,6 +296,27 @@ public abstract class SourceTimeFunction {
 	}
 
 	/**
+	 * x axis: time [s], y axis: amplitude
+	 * 
+	 * @return trace of Source time function in time domain
+	 */
+	public Trace getSourceTimeFunctionInTimeDomain() {
+		if (sourceTimeFunction == null)
+			throw new RuntimeException("Source time function is not computed yet.");
+		double[] time = new double[nptsInTimeDomain];
+		Arrays.setAll(time, i -> i / samplingHz);
+
+		Complex[] stf = new Complex[nptsInTimeDomain];
+		Arrays.fill(stf, Complex.ZERO);
+		for (int i = 0; i < sourceTimeFunction.length; i++)
+			stf[i] = sourceTimeFunction[i];
+
+		double[] stfInTime = Arrays.stream(inverseFourierTransform(stf)).map(d -> d * samplingHz).toArray();
+
+		return new Trace(time, stfInTime);
+	}
+
+	/**
 	 * Source time function is computed simply by division.
 	 * 
 	 * @param obs
@@ -318,7 +350,7 @@ public abstract class SourceTimeFunction {
 			sourceTimeFunction[i] = obsInFrequencyDomain[i + 1].divide(synInFrequencyDomain[i + 1]);
 		SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
-			public Complex[] getSourceTimeFunction() {
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
 				return sourceTimeFunction;
 			}
 		};
