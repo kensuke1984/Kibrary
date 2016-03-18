@@ -124,7 +124,7 @@ public class SpcComponent {
 	 *            to be applied
 	 */
 	public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-		Complex[] sourceTimeFunctionU = sourceTimeFunction.getSourceTimeFunction();
+		Complex[] sourceTimeFunctionU = sourceTimeFunction.getSourceTimeFunctionInFrequencyDomain();
 		for (int i = 0; i < sourceTimeFunctionU.length; i++)
 			uFreq[i + 1] = uFreq[i + 1].multiply(sourceTimeFunctionU[i]);
 	}

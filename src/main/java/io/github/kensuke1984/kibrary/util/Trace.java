@@ -18,9 +18,11 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * Utility for a function y=f(x)
  * 
  * 
- * <p><b>This class is IMMUTABLE</b></p>
+ * <p>
+ * <b>This class is IMMUTABLE</b>
+ * </p>
  * 
- * @version 0.1.0
+ * @version 0.1.0.1
  * @author Kensuke Konishi
  * 
  */
@@ -47,8 +49,7 @@ public class Trace {
 		xVector = new ArrayRealVector(x, false);
 		yVector = new ArrayRealVector(y, false);
 	}
-	
-	
+
 	/**
 	 * @return the number of elements
 	 */
@@ -165,7 +166,7 @@ public class Trace {
 		for (int i = 1; i < x.length - 1; i++)
 			if (0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]))
 				indexList.add(i);
-		return indexList.stream().mapToInt(i -> i.intValue()).toArray();
+		return indexList.stream().mapToInt(Integer::intValue).toArray();
 	}
 
 	/**
@@ -176,9 +177,9 @@ public class Trace {
 	public int[] indexOfDownwardConvex() {
 		List<Integer> indexList = new ArrayList<>();
 		for (int i = 1; i < x.length - 1; i++)
-			if (0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]) && y[i] < y[i - 1])
+			if (y[i] < y[i - 1] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]))
 				indexList.add(i);
-		return indexList.stream().mapToInt(i -> i.intValue()).toArray();
+		return indexList.stream().mapToInt(Integer::intValue).toArray();
 
 	}
 
@@ -190,9 +191,9 @@ public class Trace {
 	public int[] indexOfUpwardConvex() {
 		List<Integer> indexList = new ArrayList<>();
 		for (int i = 1; i < x.length - 1; i++)
-			if (0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]) && y[i - 1] < y[i])
+			if (y[i - 1] < y[i] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]))
 				indexList.add(i);
-		return indexList.stream().mapToInt(i -> i.intValue()).toArray();
+		return indexList.stream().mapToInt(Integer::intValue).toArray();
 
 	}
 
@@ -297,7 +298,7 @@ public class Trace {
 			double residual = Math.abs(this.x[i] - x);
 			for (int j = 0; j < n; j++)
 				if (res[j] < 0 || residual <= res[j]) {
-					for (int k = n - 1; k > j; k--) {
+					for (int k = n - 1; j < k; k--) {
 						res[k] = res[k - 1];
 						xi[k] = xi[k - 1];
 					}
@@ -327,8 +328,8 @@ public class Trace {
 		});
 		if (xList.isEmpty())
 			throw new RuntimeException("No data in [" + start + ", " + end + "]");
-		return new Trace(xList.stream().mapToDouble(d -> d.doubleValue()).toArray(),
-				yList.stream().mapToDouble(d -> d.doubleValue()).toArray());
+		return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
+				yList.stream().mapToDouble(Double::doubleValue).toArray());
 	}
 
 	/**
@@ -394,9 +395,10 @@ public class Trace {
 	}
 
 	/**
-	 * x in this and trace must be same.
-	 * i.e. all the x elements must be same
-	 * @param trace to be added
+	 * x in this and trace must be same. i.e. all the x elements must be same
+	 * 
+	 * @param trace
+	 *            to be added
 	 * @return new Trace after the addition
 	 */
 	public Trace add(Trace trace) {
@@ -404,15 +406,15 @@ public class Trace {
 			throw new IllegalArgumentException("Trace to be added has different x axis.");
 		return new Trace(x.clone(), yVector.add(trace.yVector).toArray());
 	}
-	
+
 	/**
-	 * @param d to be multiplied
+	 * @param d
+	 *            to be multiplied
 	 * @return Trace which Y is multiplied d
 	 */
-	public Trace multiply(double d){
+	public Trace multiply(double d) {
 		return new Trace(x.clone(), yVector.mapMultiply(d).toArray());
 	}
-	
 
 	/**
 	 * @return the average value of y
