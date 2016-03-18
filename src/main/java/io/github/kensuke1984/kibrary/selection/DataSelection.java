@@ -293,7 +293,7 @@ public class DataSelection implements Operation {
 				e.printStackTrace();
 				System.out.println("error on " + obsEventDirectory);
 			}
-			System.out.print(".");
+			System.err.print(".");
 			// System.exit(0);
 			// System.out.println(obsEventDirectory + " is done");
 		}
@@ -377,7 +377,7 @@ public class DataSelection implements Operation {
 		double tEnd = timeWindow.getEndTime();
 		return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY());
 	}
-
+	
 	private Path workPath;
 
 	@Override
@@ -408,7 +408,7 @@ public class DataSelection implements Operation {
 			} catch (Exception e) {
 			}
 
-		System.out.println();
+		System.err.println();
 		output();
 	}
 }
