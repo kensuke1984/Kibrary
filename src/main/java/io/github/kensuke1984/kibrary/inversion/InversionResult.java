@@ -30,9 +30,9 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 /**
  * Utilities for output of {@link LetMeInvert}.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  */
 public class InversionResult {
 
@@ -336,7 +336,7 @@ public class InversionResult {
 		for (InverseMethodEnum inverse : InverseMethodEnum.values()) {
 			Path path = rootPath.resolve(inverse.name() + "/variance.txt");
 			answerVarianceMap.put(inverse,
-					Files.lines(path).mapToDouble(Double::parseDouble).boxed().toArray(n -> new Double[n]));
+					Files.lines(path).mapToDouble(Double::parseDouble).boxed().toArray(Double[]::new));
 		}
 	}
 
@@ -486,7 +486,6 @@ public class InversionResult {
 		return answerVarianceMap.get(InverseMethodEnum.CG)[0];
 	}
 
-	
 	/**
 	 * @param nPoints
 	 *            number of points
@@ -501,10 +500,10 @@ public class InversionResult {
 	public static double complement(Map<UnknownParameter, Double> answer, int nPoints, int nPower, Location location,
 			PartialType type) {
 		if (!type.is3D())
-			throw new RuntimeException(type+" is not 3d parameter"); //TODO
+			throw new RuntimeException(type + " is not 3d parameter"); // TODO
 		double value = 0;
-		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type)
-				.collect(Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
+		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
+				Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
 		if (type == PartialType.TIME) {
 			System.out.println("madda");
@@ -515,7 +514,7 @@ public class InversionResult {
 		}
 		Location[] nearLocations = location
 				.getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
-						.map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(n -> new Location[n]));
+						.map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(Location[]::new));
 		double[] r = new double[nPoints];
 		double rTotal = 0;
 		for (int iPoint = 0; iPoint < nPoints; iPoint++) {

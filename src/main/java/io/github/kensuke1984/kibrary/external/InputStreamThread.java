@@ -16,10 +16,10 @@ import java.util.List;
  * 外部プログラムを実行時の標準出力 標準エラーの読み込みスレッド You may have to {@link #join()} after the
  * external program finishes(). {@link ExternalProcess#waitFor()}
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class InputStreamThread extends Thread {
@@ -41,7 +41,7 @@ public class InputStreamThread extends Thread {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		return list.toArray(new String[list.size()]);
+		return list.toArray(new String[0]);
 	}
 
 	@Override

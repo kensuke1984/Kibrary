@@ -9,9 +9,9 @@ import java.util.List;
 /**
  * Reader for files which contains c # ! etc for comment lines.
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class InformationFileReader {
@@ -99,7 +99,7 @@ class InformationFileReader {
 	 * @return String[] made of non comment lines
 	 */
 	String[] getNonCommentLines() {
-		return lines.stream().filter(line -> !isComment(line)).toArray(n -> new String[n]);
+		return lines.stream().filter(line -> !isComment(line)).toArray(String[]::new);
 	}
 
 	/**

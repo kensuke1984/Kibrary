@@ -53,7 +53,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
  * @version 0.2
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Partial1DDatasetMaker implements Operation {

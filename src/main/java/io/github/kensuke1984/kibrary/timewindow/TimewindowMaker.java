@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
  * 
- * @version 0.2.0.1
+ * @version 0.2.0.2
  * 
  * 
  * @author Kensuke Konishi
@@ -271,10 +271,10 @@ public class TimewindowMaker implements Operation {
 	private Timewindow[] createTimeWindows(double[] phaseTime, double[] exPhaseTime) {
 		Timewindow[] windows = Arrays.stream(phaseTime)
 				.mapToObj(time -> new Timewindow(time - frontShift, time + rearShift)).sorted()
-				.toArray(n -> new Timewindow[n]);
+				.toArray(Timewindow[]::new);
 		Timewindow[] exWindows = exPhaseTime == null ? null
 				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - frontShift, time + rearShift))
-						.sorted().toArray(n -> new Timewindow[n]);
+						.sorted().toArray(Timewindow[]::new);
 		
 		windows = mergeWindow(windows);
 
@@ -322,7 +322,7 @@ public class TimewindowMaker implements Operation {
 				usable.add(window);
 		}
 
-		return usable.size() == 0 ? null : usable.toArray(new Timewindow[usable.size()]);
+		return usable.size() == 0 ? null : usable.toArray(new Timewindow[0]);
 	}
 
 	/**
@@ -351,7 +351,7 @@ public class TimewindowMaker implements Operation {
 					windowList.add(windows[i]);
 			}
 		}
-		return windowList.toArray(new Timewindow[windowList.size()]);
+		return windowList.toArray(new Timewindow[0]);
 	}
 
 	/**
@@ -360,7 +360,7 @@ public class TimewindowMaker implements Operation {
 	 * @return travel times in {@link TauPPhase}
 	 */
 	private static double[] toTravelTime(Set<TauPPhase> phases) {
-		return phases.stream().mapToDouble(phase -> phase.getTravelTime()).toArray();
+		return phases.stream().mapToDouble(TauPPhase::getTravelTime).toArray();
 	}
 
 	private synchronized void writeInvalid(SACFileName sacFileName) throws IOException {

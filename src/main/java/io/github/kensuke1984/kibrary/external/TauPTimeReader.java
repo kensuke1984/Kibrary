@@ -21,11 +21,11 @@ import java.util.stream.IntStream;
  * 
  * PREM is used for travel times.
  * 
- * @version 0.3.1
+ * @version 0.3.1.1
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class TauPTimeReader {
@@ -144,10 +144,7 @@ public final class TauPTimeReader {
 	 * @return
 	 */
 	private static String[] makeCMD(double eventR, double epicentralDistance, Set<TauPPhaseName> phases) {
-		Object[] phaseO = phases.toArray();
-		StringBuffer phase = new StringBuffer(phaseO[0].toString());
-		for (int i = 1; i < phaseO.length; i++)
-			phase.append("," + phaseO[i].toString());
+		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model prem -ph " + phase;
 		return cmd.split("\\s+");
 	}

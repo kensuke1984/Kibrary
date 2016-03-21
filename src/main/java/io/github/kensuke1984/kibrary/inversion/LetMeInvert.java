@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * @version 2.0
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class LetMeInvert implements Operation {

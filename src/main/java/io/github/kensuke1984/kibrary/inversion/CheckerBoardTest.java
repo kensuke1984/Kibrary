@@ -35,9 +35,9 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class CheckerBoardTest implements Operation {
@@ -172,7 +172,7 @@ public class CheckerBoardTest implements Operation {
 			if (!exists)
 				ranges.add(range);
 		}
-		this.ranges = ranges.toArray(new double[ranges.size()][]);
+		this.ranges = ranges.toArray(new double[0][]);
 	}
 
 	private void read() throws IOException {
@@ -278,8 +278,11 @@ public class CheckerBoardTest implements Operation {
 	public static void main(String[] args) throws Exception {
 		Properties property = Property.parse(args);
 		CheckerBoardTest cbt = new CheckerBoardTest(property);
-
+		long time = System.nanoTime();
+		System.err.println(CheckerBoardTest.class.getName() + " is going.");
 		cbt.run();
+		System.err.println(
+				CheckerBoardTest.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
 	}
 
 	public RealVector getSynVector() {

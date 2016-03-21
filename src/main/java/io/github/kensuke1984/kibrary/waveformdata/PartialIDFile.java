@@ -44,9 +44,9 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * @since 2013/12/1 or earlier
  * 
- * @version 0.3
+ * @version 0.3.0.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  * 
  */
@@ -74,7 +74,7 @@ public final class PartialIDFile {
 			}
 		}
 		if (chooser != null)
-			ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(n -> new PartialID[n]);
+			ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
 		System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
 		return ids;
 	}
@@ -114,7 +114,7 @@ public final class PartialIDFile {
 				periodRanges[i][1] = dis.readFloat();
 			}
 			for (int i = 0; i < perturbationLocations.length; i++)
-			 	perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
+				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
 			int nid = (int) (idParts / oneIDByte);
 			System.err.println("Reading partialID file: " + idPath);
 			long t = System.nanoTime();

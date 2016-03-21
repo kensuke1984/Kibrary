@@ -17,7 +17,7 @@ import java.util.List;
  * 
  * @version 0.0.4
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  *
  */
 public class NamedDiscontinuityStructure {
@@ -260,7 +260,6 @@ public class NamedDiscontinuityStructure {
 					throw new RuntimeException("FORMAT ERROR");
 				useLines.add(parts);
 			}
-			// lines = (String[][]) useLines.toArray(new String[0][]);
 
 		} catch (Exception e) {
 			e.printStackTrace();
