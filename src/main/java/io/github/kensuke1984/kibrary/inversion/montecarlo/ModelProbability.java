@@ -31,7 +31,7 @@ class ModelProbability {
 	private void gatherRuns() {
 		try (Stream<Path> paths = Files.list(workPath)) {
 			runPaths = paths.filter(p -> p.getFileName().toString().startsWith("run") && Files.isDirectory(p)).sorted()
-					.toArray(n -> new Path[n]);
+					.toArray(Path[]::new);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -48,7 +48,7 @@ class ModelProbability {
 			} catch (Exception e) {
 			}
 			return null;
-		}).toArray(n -> new PolynomialStructure[n]);
+		}).toArray(PolynomialStructure[]::new);
 		modelsToDepths(models, workPath.resolve("test"));
 		depthTohistGram(workPath.resolve("test"));
 		forGMT(workPath.resolve("test"));
@@ -150,7 +150,7 @@ class ModelProbability {
 	}
 
 	private Path[] gatherModelPaths(Path path) {
-		Path[] modelPaths = Arrays.stream(runPaths).map(ModelProbability::getModelPath).toArray(n -> new Path[n]);
+		Path[] modelPaths = Arrays.stream(runPaths).map(ModelProbability::getModelPath).toArray(Path[]::new);
 		return modelPaths;
 	}
 
@@ -180,7 +180,6 @@ class ModelProbability {
 			Files.write(qHist, qLines);
 			Files.write(vHist, vLines);
 		} catch (Exception e) {
-		} finally {
 		}
 	}
 

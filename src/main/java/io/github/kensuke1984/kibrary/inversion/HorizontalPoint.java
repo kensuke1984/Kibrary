@@ -17,9 +17,9 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
  * TODO DSM informationとして書き出す
  * 
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class HorizontalPoint {
@@ -102,9 +102,7 @@ public class HorizontalPoint {
 		for (String str : perPointMap.keySet())
 			if (loc.equals(perPointMap.get(str)))
 				return str;
-
 		System.out.println("could not find the point");
-
 		return null;
 	}
 
@@ -119,14 +117,8 @@ public class HorizontalPoint {
 			HorizontalPosition hp2 = perPointMap.get(o2);
 			double dist1 = hp1.getEpicentralDistance(position);
 			double dist2 = hp2.getEpicentralDistance(position);
-			// System.out.println(dist1+" "+dist2);
-			if (dist1 < dist2)
-				return -1;
-			else if (dist2 < dist1)
-				return 1;
-			return 0;
-
-		}).toArray(n -> new String[perPointMap.size()]);
+			return Double.compare(dist1, dist2);
+		}).toArray(String[]::new);
 	}
 
 }

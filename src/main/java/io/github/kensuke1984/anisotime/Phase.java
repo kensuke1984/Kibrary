@@ -59,7 +59,8 @@ public class Phase {
 	/**
 	 * @param phase
 	 *            phase name
-	 * @return null if phase is an invalid name
+	 * @return phase for input
+	 * @throws IllegalArgumentException if the phase is invalid
 	 */
 	public static Phase create(String phase) {
 		if (isValid(phase))

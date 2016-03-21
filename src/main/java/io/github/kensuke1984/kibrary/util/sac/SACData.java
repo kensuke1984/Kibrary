@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 /**
  * Data in a SAC file.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  *  @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */

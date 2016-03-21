@@ -66,9 +66,9 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * network in one event</b>
  * 
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class ObservedSyntheticDatasetMaker implements Operation {
@@ -244,7 +244,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				if (!exists)
 					ranges.add(range);
 			}
-			periodRanges = ranges.toArray(new double[ranges.size()][]);
+			periodRanges = ranges.toArray(new double[0][]);
 		} catch (Exception e) {
 			throw new RuntimeException("Error in reading period ranges from SAC files.");
 		}

@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see {@link #create(byte[], Station[], GlobalCMTID[])}
  * 
  * 
- * @version 0.3.0
+ * @version 0.3.0.1
  * 
  * 
  * @author Kensuke Konishi
@@ -108,14 +108,14 @@ public final class TimewindowInformationFile {
 	 */
 	public static void write(Set<TimewindowInformation> infoSet, Path outputPath, OpenOption... options)
 			throws IOException {
-		if(infoSet.isEmpty())
+		if (infoSet.isEmpty())
 			throw new RuntimeException("Input information is empty..");
 		try (DataOutputStream dos = new DataOutputStream(
 				new BufferedOutputStream(Files.newOutputStream(outputPath, options)))) {
-			GlobalCMTID[] ids = infoSet.stream().map(ti -> ti.getGlobalCMTID()).distinct().sorted()
-					.toArray(n -> new GlobalCMTID[n]);
-			Station[] stations = infoSet.stream().map(ti -> ti.getStation()).distinct().sorted()
-					.toArray(n -> new Station[n]);
+			GlobalCMTID[] ids = infoSet.stream().map(TimewindowInformation::getGlobalCMTID).distinct().sorted()
+					.toArray(GlobalCMTID[]::new);
+			Station[] stations = infoSet.stream().map(TimewindowInformation::getStation).distinct().sorted()
+					.toArray(Station[]::new);
 			Map<GlobalCMTID, Integer> idMap = new HashMap<>();
 			Map<Station, Integer> stationMap = new HashMap<>();
 			dos.writeShort(stations.length);

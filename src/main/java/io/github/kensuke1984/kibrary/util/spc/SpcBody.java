@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * ista に対応する
  * 
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  * @author Kensuke Konishi
  * 
@@ -114,7 +114,7 @@ public class SpcBody {
 
 	private void allocateComponents() {
 		spcComponents = IntStream.range(0, nComponent).mapToObj(i -> new SpcComponent(np))
-				.toArray(n -> new SpcComponent[n]);
+				.toArray(SpcComponent[]::new);
 	}
 
 	/**

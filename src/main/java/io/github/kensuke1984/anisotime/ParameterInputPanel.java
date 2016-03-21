@@ -24,7 +24,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  * Panel for inputting parameters
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.2
  * @author Kensuke Konishi
  */
 class ParameterInputPanel extends javax.swing.JPanel {
@@ -114,7 +114,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
 		changeBorderTitle("Mode:Epicentral Distance   Polarity:P-SV");
 
-		String[] modelTitles = Arrays.stream(InputModel.values()).map(model -> model.title).toArray(n -> new String[n]);
+		String[] modelTitles = Arrays.stream(InputModel.values()).map(model -> model.title).toArray(String[]::new);
 		jComboBoxModel = new JComboBox<>(modelTitles);
 
 		addListners();

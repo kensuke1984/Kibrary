@@ -67,7 +67,7 @@ public class BreakFastMail {
 			for (Channel channel : channels)
 				lines.add(channel.toString());
 		// lines[lines.length-1] = ".END";
-		return lines.toArray(new String[lines.size()]);
+		return lines.toArray(new String[0]);
 	}
 
 	void sendIris() throws Exception {
@@ -132,6 +132,7 @@ public class BreakFastMail {
 	 * 
 	 * Option: -iris now only iris is possible <br>
 	 * Send mails every 2 min.
+	 * 
 	 * @param args
 	 *            (option) [mail file]
 	 * @throws Exception
@@ -141,7 +142,7 @@ public class BreakFastMail {
 		if (args[0].equals("-iris")) {
 			for (int i = 1; i < args.length; i++) {
 				sendIris(Files.readAllLines(Paths.get(args[i])).toArray(new String[0]));
-				System.out.println("Sent "+args[i]);
+				System.out.println("Sent " + args[i]);
 				Thread.sleep(2 * 60 * 1000);
 			}
 		} else

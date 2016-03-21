@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.2.3
  * 
  */
 final class TravelTimeCLI {
@@ -76,10 +76,6 @@ final class TravelTimeCLI {
 
 			VelocityStructure structure = createVelocityStructure(cmd);
 			Phase targetPhase = createPhase(cmd);
-			if (targetPhase == null) {
-				System.out.println("No such phase:" + cmd.getOptionValue("phase"));
-				return;
-			}
 
 			boolean sv = cmd.hasOption("SV");
 			double eventR = setDepth(cmd);
@@ -104,7 +100,6 @@ final class TravelTimeCLI {
 				} catch (Exception e) {
 					throw new RuntimeException("The value dR is invalid " + cmd.getOptionValue("dR"));
 				}
-
 			List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase, structure, eventR, targetDelta, interval, sv);
 			if (raypaths.isEmpty()) {
 				System.out.println("No raypaths satisfying the input condition");
@@ -133,7 +128,7 @@ final class TravelTimeCLI {
 		} catch (Exception e) {
 			System.out.println("improper usage");
 			e.printStackTrace();
-			printHelp();
+//			printHelp();
 			return;
 		}
 
@@ -223,8 +218,12 @@ final class TravelTimeCLI {
 		return phase;
 	}
 
+	/**
+	 * @param cmd input options
+	 * @return target delta [rad]
+	 */
 	private static double setDelta(CommandLine cmd) {
-		return cmd.hasOption("deg") ? Double.parseDouble(cmd.getOptionValue("deg")) : 0;
+		return cmd.hasOption("deg") ? Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg"))) : 0;
 	}
 
 	private static double setDepth(CommandLine cmd) {
@@ -316,22 +315,22 @@ final class TravelTimeCLI {
 	private static boolean hasConflict(CommandLine cmd) {
 		if (cmd.hasOption("p")) {
 			if (cmd.hasOption("deg")) {
-				System.out.println("You can not use both option -p and -deg simltaneously.");
+				System.err.println("You can not use both option -p and -deg simultaneously.");
 				return true;
 			}
 		} else if (!cmd.hasOption("deg")) {
-			System.out.println("Use the option -deg to specify the epicentral distance,"
+			System.err.println("Use the option -deg to specify the epicentral distance,"
 					+ " or you can directly choose a raypath for your input ray parameter by the option -p");
 			return true;
 		}
 
 		if (cmd.hasOption("rayp")) {
 			if (cmd.hasOption("time") || cmd.hasOption("delta")) {
-				System.out.println("Only one option out of --rayp," + " --delta and --time can be used at once.");
+				System.err.println("Only one option out of --rayp," + " --delta and --time can be used at once.");
 				return true;
 			}
 		} else if (cmd.hasOption("time") && cmd.hasOption("delta")) {
-			System.out.println("Only one option out of --rayp," + " --delta and --time can be used at once.");
+			System.err.println("Only one option out of --rayp," + " --delta and --time can be used at once.");
 			return true;
 		}
 
