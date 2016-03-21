@@ -29,9 +29,9 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class InformationFileMaker implements Operation {
@@ -160,9 +160,9 @@ public class InformationFileMaker implements Operation {
 	public static void main(String[] args) throws Exception {
 		InformationFileMaker ifm = new InformationFileMaker(Property.parse(args));
 		long start = System.nanoTime();
-		System.out.println(InformationFileMaker.class.getName() + " is going.");
+		System.err.println(InformationFileMaker.class.getName() + " is going.");
 		ifm.run();
-		System.out.println(InformationFileMaker.class.getName() + " finished in "
+		System.err.println(InformationFileMaker.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - start));
 	}
 
@@ -195,7 +195,7 @@ public class InformationFileMaker implements Operation {
 			positionList.add(position);
 		}
 
-		perturbationPointPositions = positionList.toArray(new HorizontalPosition[positionList.size()]);
+		perturbationPointPositions = positionList.toArray(new HorizontalPosition[0]);
 
 	}
 

@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  *        TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
  * @author Kensuke Konishi
  * 
@@ -344,14 +344,14 @@ public class Dvector {
 	public void outputVarianceOf(Path outPath, RealVector[] vectors) throws IOException {
 		Files.createDirectories(outPath);
 		Map<Station, Double> stationDenominator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> Double.valueOf(0)));
+				.collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<Station, Double> stationNumerator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> Double.valueOf(0)));
+				.collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> Double.valueOf(0)));
+				.collect(Collectors.toMap(id -> id, id -> 0.0));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> Double.valueOf(0)));
-		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> Double.valueOf(0)));
+				.collect(Collectors.toMap(id -> id, id -> 0.0));
+		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 
 		Path eachVariancePath = outPath.resolve("eachVariance.txt");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
@@ -401,13 +401,13 @@ public class Dvector {
 		// double t = System.nanoTime();
 		int start = 0;
 		Map<Station, Double> stationDenominator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> Double.valueOf(0)));
+				.collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<Station, Double> stationNumerator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> Double.valueOf(0)));
+				.collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> Double.valueOf(0)));
+				.collect(Collectors.toMap(id -> id, id -> 0.0));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> Double.valueOf(0)));
+				.collect(Collectors.toMap(id -> id, id -> 0.0));
 		double obs2 =0;
 		for (int i = 0; i < nTimeWindow; i++) {
 			startPoints[i] = start;
@@ -536,8 +536,8 @@ public class Dvector {
 		// are used.");
 
 		nTimeWindow = useSynList.size();
-		obsIDs = useObsList.toArray(new BasicID[nTimeWindow]);
-		synIDs = useSynList.toArray(new BasicID[nTimeWindow]);
+		obsIDs = useObsList.toArray(new BasicID[0]);
+		synIDs = useSynList.toArray(new BasicID[0]);
 
 		weighting = new double[nTimeWindow];
 		startPoints = new int[nTimeWindow];

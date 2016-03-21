@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
  * 
  * Data for one element in one {@link SpcBody} in a {@link SpectrumFile}
  * 
- * @version 0.1.5.1
+ * @version 0.1.5.2
  * 
  * @author Kensuke Konishi
  * 
@@ -157,7 +157,7 @@ public class SpcComponent {
 	 * @return the data in time_domain
 	 */
 	public double[] getTimeseries() {
-		return Arrays.stream(uTime).mapToDouble(u -> u.getReal()).toArray();
+		return Arrays.stream(uTime).mapToDouble(Complex::getReal).toArray();
 	}
 
 	private int getNPTS(int lsmooth) {

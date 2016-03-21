@@ -67,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * <p>
  * Because of DSM condition, stations can not have the same name...
  * 
- * @version 2.3
+ * @version 2.3.0.1
  * 
  * @author Kensuke Konishi
  */
@@ -500,7 +500,7 @@ public class PartialDatasetMaker implements Operation {
 
 			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
 			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id.toString() + "/" + modelName))
-					.filter(Files::exists).toArray(nEvent -> new Path[nEvent]);
+					.filter(Files::exists).toArray(Path[]::new);
 
 			int donebp = 0;
 			// bpフォルダ内の各bpファイルに対して
@@ -579,7 +579,7 @@ public class PartialDatasetMaker implements Operation {
 		PartialDatasetMaker pdm = new PartialDatasetMaker(Property.parse(args));
 		long startTime = System.nanoTime();
 
-		System.out.println(PartialDatasetMaker.class.getName() + " is going..");
+		System.err.println(PartialDatasetMaker.class.getName() + " is going..");
 		pdm.run();
 		System.err.println(PartialDatasetMaker.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime));
@@ -590,7 +590,7 @@ public class PartialDatasetMaker implements Operation {
 		endTime = System.nanoTime();
 		long nanoSeconds = endTime - startTime;
 		String endLine = "Everything is done in " + Utilities.toTimeString(nanoSeconds) + ". Over n out! ";
-		System.out.println(endLine);
+		System.err.println(endLine);
 		writeLog(endLine);
 		writeLog(partialDataWriter.getIDPath() + " " + partialDataWriter.getDataPath() + " were created");
 	}
@@ -604,7 +604,7 @@ public class PartialDatasetMaker implements Operation {
 	}
 
 	private void setBandPassFilter() throws IOException {
-		System.out.println("Designing filter.");
+		System.err.println("Designing filter.");
 		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
 		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, 4);
@@ -614,7 +614,7 @@ public class PartialDatasetMaker implements Operation {
 
 	private void setTimeWindow() throws IOException {
 		// タイムウインドウの情報を読み取る。
-		System.out.println("Reading timewindow information");
+		System.err.println("Reading timewindow information");
 		timewindowInformation = TimewindowInformationFile.read(timewindowPath);
 		idSet = new HashSet<>();
 		stationSet = new HashSet<>();
@@ -624,7 +624,7 @@ public class PartialDatasetMaker implements Operation {
 		});
 
 		// TODO
-		if (stationSet.size() != stationSet.stream().map(s -> s.getStationName()).distinct().count())
+		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
 			throw new RuntimeException("Station duplication...");
 
 		boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));

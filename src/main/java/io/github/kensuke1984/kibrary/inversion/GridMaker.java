@@ -36,18 +36,15 @@ public class GridMaker extends Raypath {
 		System.out.println("mid point: " + midPoint);
 	}
 
-	public static HorizontalPosition[] makeGrid(double startLatitude,
-			double endLatitude, double dtheta, double startLongitude,
-			double endLongitude, double dphi) {
+	public static HorizontalPosition[] makeGrid(double startLatitude, double endLatitude, double dtheta,
+			double startLongitude, double endLongitude, double dphi) {
 		int ntheta = (int) ((endLatitude - startLatitude) / dtheta);
 		int nphi = (int) ((endLongitude - startLongitude) / dphi);
 		HorizontalPosition[] location = new HorizontalPosition[nphi * ntheta];
-		for (int i = 0; i < ntheta; i++) 
-			for (int j = 0; j < nphi; j++) 
-				location[i * nphi + j] = new HorizontalPosition(startLatitude
-						+ i * dtheta, startLongitude + j * dphi);
-			
-		
+		for (int i = 0; i < ntheta; i++)
+			for (int j = 0; j < nphi; j++)
+				location[i * nphi + j] = new HorizontalPosition(startLatitude + i * dtheta, startLongitude + j * dphi);
+
 		return location;
 	}
 
@@ -68,8 +65,7 @@ public class GridMaker extends Raypath {
 		double deltaTheta = Math.toRadians(1);
 		double phiRange = Math.toRadians(10);
 		double deltaPhi = Math.toRadians(1);
-		HorizontalPosition[] positions = gm.makeGrids(thetaRange, deltaTheta,
-				phiRange, deltaPhi);
+		HorizontalPosition[] positions = gm.makeGrids(thetaRange, deltaTheta, phiRange, deltaPhi);
 
 		for (int i = 0; i < positions.length; i++)
 			System.out.println(positions[i]);
@@ -91,8 +87,7 @@ public class GridMaker extends Raypath {
 				}
 			}
 			if (!contain)
-				System.out.println(loc1[i].getLatitude() + " "
-						+ loc1[i].getLongitude());
+				System.out.println(loc1[i].getLatitude() + " " + loc1[i].getLongitude());
 		}
 		System.out.println(j);
 
@@ -103,10 +98,9 @@ public class GridMaker extends Raypath {
 	}
 
 	/**
-	 * TODO チェック必要 波線にそって震源観測点中心から　±thetaRange ±phiRangeをとる
-	 * thetaは波線方向　phiは大円に直交方向 その領域の中からdeltaTheta deltaPhiで点を作る
-	 * 　 [手順]　中心点を北極に持って行って、波線方向の点を作る
-	 * その点に直交するように　更にポイントを取る。
+	 * TODO チェック必要 波線にそって震源観測点中心から ±thetaRange ±phiRangeをとる thetaは波線方向
+	 * phiは大円に直交方向 その領域の中からdeltaTheta deltaPhiで点を作る [手順] 中心点を北極に持って行って、波線方向の点を作る
+	 * その点に直交するように 更にポイントを取る。
 	 * 
 	 * @param thetaRange
 	 *            [rad]
@@ -118,13 +112,11 @@ public class GridMaker extends Raypath {
 	 *            [rad]
 	 * @return points in the ranges
 	 */
-	public HorizontalPosition[] makeGrids(double thetaRange, double deltaTheta,
-			double phiRange, double deltaPhi) {
+	public HorizontalPosition[] makeGrids(double thetaRange, double deltaTheta, double phiRange, double deltaPhi) {
 		// System.out.println(thetaRange+" "+deltaTheta);
 		int nPhi = (int) Math.round(phiRange / deltaPhi);
 		int nTheta = (int) (thetaRange / deltaTheta);
-		HorizontalPosition[] positions = new HorizontalPosition[(2 * nPhi + 1)
-				* (2 * nTheta + 1)];
+		HorizontalPosition[] positions = new HorizontalPosition[(2 * nPhi + 1) * (2 * nTheta + 1)];
 		// double midTheta = 0.5*epicentralDistance;
 		// System.out.println("midtheta"+Math.toDegrees(midTheta));
 		// double lat = Latitude.toLatitude(midTheta);
@@ -135,26 +127,21 @@ public class GridMaker extends Raypath {
 		// System.exit(0);
 
 		// 波線上のポイントを作る
-		HorizontalPosition[] raypathLocation = computePointsLocationsOnRayPath(
-				thetaRange, deltaTheta);
+		HorizontalPosition[] raypathLocation = computePointsLocationsOnRayPath(thetaRange, deltaTheta);
 		int k = 0;
 		for (int iTheta = -nTheta; iTheta < nTheta + 1; iTheta++)
 			for (int iPhi = -nPhi; iPhi < nPhi + 1; iPhi++) {
 				// 波線に直交するポイントを作るための点（北極中心に置く）
 				XYZ xyz = null;
 				if (iPhi < 0)
-					xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS,
-							Math.abs(iPhi) * deltaPhi, Math.PI * 1.5);
+					xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, Math.abs(iPhi) * deltaPhi, Math.PI * 1.5);
 				else
-					xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, iPhi
-							* deltaPhi, Math.PI * 0.5);
+					xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, iPhi * deltaPhi, Math.PI * 0.5);
 
 				xyz = xyz.rotateaboutZ(Math.PI - azimuth);
 				// System.out.println(raypathLocation.length+" "+iTheta);
-				xyz = xyz.rotateaboutY(raypathLocation[iTheta + nTheta]
-						.getTheta());
-				xyz = xyz.rotateaboutZ(raypathLocation[iTheta + nTheta]
-						.getPhi());
+				xyz = xyz.rotateaboutY(raypathLocation[iTheta + nTheta].getTheta());
+				xyz = xyz.rotateaboutZ(raypathLocation[iTheta + nTheta].getPhi());
 				positions[k++] = xyz.getLocation();
 				// System.out.println(latitude+" "+longitude);
 			}
@@ -172,8 +159,7 @@ public class GridMaker extends Raypath {
 	 * @param deltaTheta
 	 * @return
 	 */
-	private HorizontalPosition[] computePointsLocationsOnRayPath(
-			double thetaRange, double deltaTheta) {
+	private HorizontalPosition[] computePointsLocationsOnRayPath(double thetaRange, double deltaTheta) {
 		int nTheta = (int) Math.round(thetaRange / deltaTheta);
 		HorizontalPosition[] locations = new HorizontalPosition[2 * nTheta + 1];
 		System.out.println(locations.length);
@@ -189,8 +175,8 @@ public class GridMaker extends Raypath {
 		return locations;
 	}
 
-	public static HorizontalPosition[] makeGrid0(double startLongitude,
-			double endLongitude, double startLatitude, double endLatitude) {
+	public static HorizontalPosition[] makeGrid0(double startLongitude, double endLongitude, double startLatitude,
+			double endLatitude) {
 
 		double dLatitude = 5;
 		double dLongitude = 5;
@@ -209,8 +195,7 @@ public class GridMaker extends Raypath {
 
 		for (int ilat = 0; ilat < nLatitude; ilat++)
 			for (int ilon = 0; ilon < nLongitude; ilon++) {
-				loc[ilat * nLongitude + ilon] = new HorizontalPosition(
-						latitudes[ilat], longitudes[ilon]);
+				loc[ilat * nLongitude + ilon] = new HorizontalPosition(latitudes[ilat], longitudes[ilon]);
 			}
 		return loc;
 
@@ -228,8 +213,7 @@ public class GridMaker extends Raypath {
 		double[] longitudes = new double[nLongitude];
 		double[] latitudes = new double[nLatitude];
 		// System.out.println("yo");
-		HorizontalPosition[] hps = new HorizontalPosition[nLongitude
-				* nLatitude];
+		HorizontalPosition[] hps = new HorizontalPosition[nLongitude * nLatitude];
 
 		for (int i = 0; i < nLatitude; i++) {
 			latitudes[i] = startLatitude + i * dLatitude;
@@ -237,8 +221,7 @@ public class GridMaker extends Raypath {
 			for (int j = 0; j < nLongitude; j++) {
 				longitudes[j] = startLongitude + j * dLongitude;
 				// System.out.println(longitudes[i]);
-				hps[i * nLongitude + j] = new HorizontalPosition(latitudes[i],
-						longitudes[j]);
+				hps[i * nLongitude + j] = new HorizontalPosition(latitudes[i], longitudes[j]);
 			}
 		}
 		return hps;
@@ -274,41 +257,9 @@ public class GridMaker extends Raypath {
 				}
 			}
 		}
-		HorizontalPosition[] loc = (HorizontalPosition[]) locs
-				.toArray(new HorizontalPosition[0]);
+		HorizontalPosition[] loc = locs.toArray(new HorizontalPosition[0]);
 		return loc;
-		// System.exit(0);
 
-		/*
-		 * // 下の線　lat = al* lon +bl double al = 0; double bl = -5;
-		 * 
-		 * // 上の線　lat = au *lon + bu double au = 0; double bu = 25;
-		 * 
-		 * // 右の線 double ar = -2; double br = 350;
-		 * 
-		 * // 左の線 double aleft = -2; double bleft = 320;
-		 * 
-		 * // 内部点 List<Location> locs = new ArrayList<Location>(); for (int ilon
-		 * = 0; ilon < nLongitude; ilon++) { double uplat = au *
-		 * longitudes[ilon] + bu; double lowlat = al * longitudes[ilon] + bl; //
-		 * System.out.println(lowlat+" <> "+uplat); // System.out.println("hi");
-		 * for (int ilat = 0; ilat < nLatitude; ilat++) { //
-		 * System.out.println(latitudes[ilat]+"  "+longitudes[ilon]); double
-		 * lowlon = (latitudes[ilat] - bleft) / aleft; double uplon =
-		 * (latitudes[ilat] - br) / ar;
-		 * 
-		 * if (latitudes[ilat] > uplat || latitudes[ilat] < lowlat ||
-		 * longitudes[ilon] > uplon || longitudes[ilon] < lowlon) continue;
-		 * Location insideLoc = null; if (longitudes[ilon] > 180) insideLoc =
-		 * new Location(latitudes[ilat], longitudes[ilon] - 360); else insideLoc
-		 * = new Location(latitudes[ilat], longitudes[ilon]);
-		 * locs.add(insideLoc); System.out.println(latitudes[ilat] + "  " +
-		 * longitudes[ilon]); }
-		 * 
-		 * }
-		 */
-		// return null;
-		// return locs.toArray(new Location[0]);
 	}
 
 	public static HorizontalPosition[] makeGridWPTA() {
@@ -392,8 +343,7 @@ public class GridMaker extends Raypath {
 
 				// if (y > x - 140 || y < -x + 160 || y < x - 170 || y > -x +
 				// 180)
-				System.out.println("XY" + String.format("%02d", k) + " " + y
-						+ " " + x);
+				System.out.println("XY" + String.format("%02d", k) + " " + y + " " + x);
 			}
 
 		}
@@ -410,8 +360,7 @@ public class GridMaker extends Raypath {
 	}
 
 	public static HorizontalPosition[] makeAdditionalPoints() {
-		Point2D[] points = new Point2D[] { new Point2D(140, 15),
-				new Point2D(155, 30), new Point2D(185, 0),
+		Point2D[] points = new Point2D[] { new Point2D(140, 15), new Point2D(155, 30), new Point2D(185, 0),
 				new Point2D(170, -15) };
 		ConvexPolygon cp = new ConvexPolygon(points);
 		List<HorizontalPosition> hpList = new ArrayList<>();
@@ -460,14 +409,12 @@ public class GridMaker extends Raypath {
 					// System.out.println(latitudes[i] + " " + longitudes[j]);
 					locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
 				}
-				if ((-longitudes[j] + 155) < latitudes[i]
-						&& longitudes[j] > 160 && longitudes[j] < 166
+				if ((-longitudes[j] + 155) < latitudes[i] && longitudes[j] > 160 && longitudes[j] < 166
 						&& (-longitudes[j] + 185) > latitudes[i]) {
 					// System.out.println(latitudes[i] + " " + longitudes[j]);
 					locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
 				}
-				if ((-longitudes[j] + 185) > latitudes[i]
-						&& longitudes[j] > 165
+				if ((-longitudes[j] + 185) > latitudes[i] && longitudes[j] > 165
 						&& (longitudes[j] - 175) < latitudes[i]) {
 					// System.out.println(latitudes[i] + " " + longitudes[j]);
 					locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
@@ -475,8 +422,7 @@ public class GridMaker extends Raypath {
 
 			}
 		}
-		HorizontalPosition[] loc = (HorizontalPosition[]) locs
-				.toArray(new HorizontalPosition[0]);
+		HorizontalPosition[] loc = (HorizontalPosition[]) locs.toArray(new HorizontalPosition[0]);
 		return loc;
 	}
 
@@ -507,8 +453,7 @@ public class GridMaker extends Raypath {
 				locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
 			}
 		}
-		HorizontalPosition[] loc = (HorizontalPosition[]) locs
-				.toArray(new Location[0]);
+		HorizontalPosition[] loc = (HorizontalPosition[]) locs.toArray(new Location[0]);
 		return loc;
 	}
 
@@ -541,14 +486,12 @@ public class GridMaker extends Raypath {
 					System.out.println(latitudes[i] + " " + longitudes[j]);
 					locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
 				}
-				if ((-longitudes[j] + 155) < latitudes[i]
-						&& longitudes[j] > 160 && longitudes[j] < 166
+				if ((-longitudes[j] + 155) < latitudes[i] && longitudes[j] > 160 && longitudes[j] < 166
 						&& (-longitudes[j] + 185) > latitudes[i]) {
 					System.out.println(latitudes[i] + " " + longitudes[j]);
 					locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
 				}
-				if ((-longitudes[j] + 185) > latitudes[i]
-						&& longitudes[j] > 165
+				if ((-longitudes[j] + 185) > latitudes[i] && longitudes[j] > 165
 						&& (longitudes[j] - 175) < latitudes[i]) {
 					System.out.println(latitudes[i] + " " + longitudes[j]);
 					locs.add(new HorizontalPosition(latitudes[i], longitudes[j]));
@@ -556,8 +499,7 @@ public class GridMaker extends Raypath {
 
 			}
 		}
-		HorizontalPosition[] loc = (HorizontalPosition[]) locs
-				.toArray(new Location[0]);
+		HorizontalPosition[] loc = (HorizontalPosition[]) locs.toArray(new Location[0]);
 		return loc;
 	}
 
@@ -572,12 +514,10 @@ public class GridMaker extends Raypath {
 	 *            [deg]
 	 * @return volume
 	 */
-	public static double getVolume(Location point, double dr, double dLatitude,
-			double dLongitude) {
+	public static double getVolume(Location point, double dr, double dLatitude, double dLongitude) {
 		double r = point.getR();
 		if (r <= 0) {
-			System.out.println("location has no R information or invalid R:"
-					+ r);
+			System.out.println("location has no R information or invalid R:" + r);
 			return 0;
 		}
 		double latitude = point.getLatitude();// 地理緯度
@@ -590,9 +530,8 @@ public class GridMaker extends Raypath {
 		r = Earth.getExtendedShaft(point);
 		// System.out.println(startA + " " + endA);
 		// System.exit(0);
-		double v = Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude,
-				latitude + 0.5 * dLatitude, longitude - 0.5 * dLongitude,
-				longitude + 0.5 * dLongitude);
+		double v = Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
+				longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
 
 		return v;
 	}
@@ -605,8 +544,7 @@ public class GridMaker extends Raypath {
 			for (int j = 0; j < 8; j++) {
 				double latitude = 40 + j * 5;
 				System.out.println(longitude + " " + latitude);
-				loc[j + (i - 1) * 8] = new HorizontalPosition(latitude,
-						longitude);
+				loc[j + (i - 1) * 8] = new HorizontalPosition(latitude, longitude);
 			}
 		}
 

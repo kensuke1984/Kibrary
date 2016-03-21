@@ -118,7 +118,7 @@ class DSMheader {
 		outputLines.add(String.valueOf(artificialDampl));
 		outputLines.add(String.valueOf(imin) + " " + String.valueOf(imax));
 
-		return (String[]) outputLines.toArray(new String[0]);
+		return outputLines.toArray(new String[0]);
 	}
 
 	DSMheader() {

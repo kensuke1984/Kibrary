@@ -17,7 +17,7 @@ import javax.swing.ListCellRenderer;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * 
  */
 class PhaseWindow extends javax.swing.JFrame {
@@ -104,8 +104,8 @@ class PhaseWindow extends javax.swing.JFrame {
 		jList1.setSelectedIndices(new int[] { 2, 3 });
 		jButtonAdd.addActionListener(evt -> {
 			String line = jTextFieldPhaseAdd.getText();
-			Arrays.stream(line.split(",")).map(str -> str.trim()).filter(str -> phaseLists.indexOf(str) == -1)
-					.forEach(phase -> phaseLists.addElement(phase));
+			Arrays.stream(line.split(",")).map(String::trim).filter(str -> phaseLists.indexOf(str) == -1)
+					.forEach(phaseLists::addElement);
 		});
 		JLabel jLabelShift = new JLabel("Hold SHIFT to select range");
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -139,7 +139,7 @@ class PhaseWindow extends javax.swing.JFrame {
 	}// </editor-fold>
 
 	Phase[] getSelectedPhases() {
-		return jList1.getSelectedValuesList().stream().map(Phase::create).toArray(n -> new Phase[n]);
+		return jList1.getSelectedValuesList().stream().map(Phase::create).toArray(Phase[]::new);
 	}
 
 	/**

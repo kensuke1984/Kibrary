@@ -20,9 +20,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * rdseedからできた 1993.052.07.01.12.4000.PS.OGS.(locationID).BHN.D.SAC
  * の用なファイルのうち、同じnetwork, station, locationID, channel, qualityID のもののgroup
  * 
- * @version 0.0.6
+ * @version 0.0.6.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class SACGroup {
@@ -80,7 +80,7 @@ class SACGroup {
 	 * @return 捨てられたかどうか
 	 */
 	void move(Path trash) {
-		nameSet.stream().map(name -> name.toString()).map(workPath::resolve).forEach(srcPath -> {
+		nameSet.stream().map(Object::toString).map(workPath::resolve).forEach(srcPath -> {
 			try {
 				Utilities.moveToDirectory(srcPath, trash, true);
 			} catch (Exception e) {
@@ -97,7 +97,7 @@ class SACGroup {
 	 */
 	boolean merge() throws IOException {
 		// System.out.println("merging");
-		SACFileName[] sacFileNameList = nameSet.toArray(new SACFileName[nameSet.size()]);
+		SACFileName[] sacFileNameList = nameSet.toArray(new SACFileName[0]);
 		// sort the sacFileNameList
 		Arrays.sort(sacFileNameList);
 
@@ -218,7 +218,7 @@ class SACGroup {
 		// System.out.println(e+" "+eInMillis);
 		headerMap.put(SACHeaderEnum.NPTS, Integer.toString(sacdata.size()));
 		headerMap.put(SACHeaderEnum.E, Double.toString(e));
-		double[] sdata = sacdata.stream().mapToDouble(d -> d.doubleValue()).toArray();
+		double[] sdata = sacdata.stream().mapToDouble(Double::doubleValue).toArray();
 
 		// System.exit(0);
 		SACUtil.writeSAC(workPath.resolve(mergedSacFileName), headerMap, sdata);

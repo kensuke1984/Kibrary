@@ -12,11 +12,11 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * 
- * Merging of SAC files 
+ * Merging of SAC files
  * 
  * 
- * @version 0.0.4
- * @author kensuke
+ * @version 0.0.4.1
+ * @author Kensuke Konishi
  * 
  */
 class UnevenSACMerger {
@@ -63,7 +63,7 @@ class UnevenSACMerger {
 
 		try (Stream<Path> sacFileStream = Files.list(workPath)) {
 			sacFileNameList = sacFileStream.map(path -> path.getFileName().toString())
-					.filter(path -> path.endsWith(".SAC")).map(SACFileName::new).toArray(n -> new SACFileName[n]);
+					.filter(path -> path.endsWith(".SAC")).map(SACFileName::new).toArray(SACFileName[]::new);
 		}
 
 		// SacGroupをつくる
@@ -92,7 +92,7 @@ class UnevenSACMerger {
 	 * にすてる
 	 */
 	void move() {
-		Arrays.stream(sacFileNameList).map(name -> name.toString()).map(workPath::resolve).filter(Files::exists)
+		Arrays.stream(sacFileNameList).map(Object::toString).map(workPath::resolve).filter(Files::exists)
 				.forEach(path -> {
 					try {
 						Utilities.moveToDirectory(path, unevenBoxPath, true);
@@ -114,7 +114,6 @@ class UnevenSACMerger {
 			if (!sacGroupSet.stream().anyMatch(group -> group.add(name)))
 				sacGroupSet.add(new SACGroup(workPath, names[i]));
 			// System.out.println("a new group was made for "+names[i]);
-
 		}
 
 	}

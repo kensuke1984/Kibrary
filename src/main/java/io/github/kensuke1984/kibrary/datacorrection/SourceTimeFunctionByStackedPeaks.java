@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Source time function estimation by stacked peaks.
  * 
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.2
  *
  */
 public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
@@ -114,8 +114,8 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 
 	private void compute() {
 		Complex[] sourceTimeFunction = new Complex[np];
-		Trace[] obsTraces = Arrays.stream(obsSacs).map(this::createTrace).toArray(n -> new Trace[n]);
-		Trace[] synTraces = Arrays.stream(synSacs).map(this::createTrace).toArray(n -> new Trace[n]);
+		Trace[] obsTraces = Arrays.stream(obsSacs).map(this::createTrace).toArray(Trace[]::new);
+		Trace[] synTraces = Arrays.stream(synSacs).map(this::createTrace).toArray(Trace[]::new);
 		ampRatio = new double[obsTraces.length];
 		for (int i = 0; i < obsTraces.length; i++) {
 			double obsP2P = obsTraces[i].getMaxValue() - obsTraces[i].getMinValue();
@@ -123,8 +123,8 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 			ampRatio[i] = obsP2P / synP2P;
 		}
 
-		Trace[] obsStackTraces = Arrays.stream(obsTraces).map(this::toStackTrace).toArray(n -> new Trace[n]);
-		Trace[] synStackTraces = Arrays.stream(synTraces).map(this::toStackTrace).toArray(n -> new Trace[n]);
+		Trace[] obsStackTraces = Arrays.stream(obsTraces).map(this::toStackTrace).toArray(Trace[]::new);
+		Trace[] synStackTraces = Arrays.stream(synTraces).map(this::toStackTrace).toArray(Trace[]::new);
 
 		int n = (int) (range * 2 * samplingHz) + 1;
 		double[] obsStack = new double[n];

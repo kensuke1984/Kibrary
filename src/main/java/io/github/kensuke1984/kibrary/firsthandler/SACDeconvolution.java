@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * 
  * とりあえずtaperはsine taperで
  * 
- * @version 0.0.3.1
+ * @version 0.0.3.2
  * 
  * 
  * @author Kensuke Konishi
@@ -74,7 +74,7 @@ class SACDeconvolution {
 			taperInTimeDomain(wavedata);
 		// double[] complexWaveform = new double[npts * 2];
 
-		Complex[] complexWave = Arrays.stream(wavedata).mapToObj(Complex::new).toArray(n -> new Complex[n]);
+		Complex[] complexWave = Arrays.stream(wavedata).mapToObj(Complex::new).toArray(Complex[]::new);
 		// フーリエ変換 波形を周波数空間へ
 		complexWave = fft.transform(complexWave, TransformType.FORWARD);
 
@@ -186,7 +186,6 @@ class SACDeconvolution {
 			String[] parts = lines.get(i).split("\\s+");
 			freq[i] = Double.parseDouble(parts[0]);
 			resp[i] = new Complex(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
-			// resp[i] = new Complex(1,0);
 		}
 	}
 
