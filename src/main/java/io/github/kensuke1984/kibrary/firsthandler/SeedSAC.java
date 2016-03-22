@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
 
-import io.github.kensuke1984.kibrary.external.Sac;
+import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -479,7 +479,7 @@ class SeedSAC implements Runnable {
 	 *             if something during sac processing.
 	 */
 	private static void fixDelta(Path sacPath) throws IOException, InterruptedException {
-		try (Sac sacD = Sac.createProcess()) {
+		try (SAC sacD = SAC.createProcess()) {
 			String cwd = sacPath.getParent().toString();
 			sacD.inputCMD("cd " + cwd);// set current directory
 			sacD.inputCMD("r " + sacPath.getFileName());// read
