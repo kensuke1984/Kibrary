@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
-import io.github.kensuke1984.kibrary.external.Sac;
+import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -86,7 +86,7 @@ class SACModifier {
 	 * 
 	 */
 	void preprocess() throws IOException, InterruptedException {
-		try (Sac sacProcess = Sac.createProcess()) {
+		try (SAC sacProcess = SAC.createProcess()) {
 			String cwd = sacPath.getParent().toString();
 			sacProcess.inputCMD("cd " + cwd);
 			sacProcess.inputCMD("r " + sacPath.getFileName());
@@ -240,13 +240,13 @@ class SACModifier {
 		int newNpts = Integer.highestOneBit(npts);
 		// System.out.println("rebuilding "+ sacFile);
 		String cwd = sacPath.getParent().toString();
-		try (Sac sacP1 = Sac.createProcess()) {
+		try (SAC sacP1 = SAC.createProcess()) {
 			sacP1.inputCMD("cd " + cwd);
 			sacP1.inputCMD("r " + modifiedSacPath.getFileName());
 			sacP1.inputCMD("interpolate b 0");
 			sacP1.inputCMD("w over");
 		}
-		try (Sac sacP2 = Sac.createProcess()) {
+		try (SAC sacP2 = SAC.createProcess()) {
 			// current directoryをうつす
 			sacP2.inputCMD("cd " + cwd);
 			sacP2.inputCMD("cut b n " + newNpts);

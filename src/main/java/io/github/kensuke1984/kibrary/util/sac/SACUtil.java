@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
 
-import io.github.kensuke1984.kibrary.external.Sac;
+import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.Trace;
 
 /**
@@ -65,7 +65,7 @@ public final class SACUtil {
 			return false;
 
 		// sacを開く
-		try (Sac sacProcess = Sac.createProcess()) {
+		try (SAC sacProcess = SAC.createProcess()) {
 			Path rPath = outputRPath.getFileName();
 			Path tPath = outputTPath.getFileName();
 			sacProcess.inputCMD("cd " + sacNPath.toAbsolutePath().getParent());
