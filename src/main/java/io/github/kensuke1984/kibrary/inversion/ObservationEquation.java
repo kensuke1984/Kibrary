@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
  * @version 0.2
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @see {@link Dvector} {@link UnknownParameter}
  */
 public class ObservationEquation {
@@ -44,19 +44,17 @@ public class ObservationEquation {
 	 *            for equation
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector) {
-
-		this.dvector = dVector;
+		this.dVector = dVector;
 		this.parameterList = parameterList;
 		readA(partialIDs);
-
-		atd = computeAtD(dVector.combine(dvector.getdVec()));
+		atd = computeAtD(dVector.combine(dVector.getdVec()));
 	}
 
 	private List<UnknownParameter> parameterList;
-	private Dvector dvector;
+	private Dvector dVector;
 
 	public int getDlength() {
-		return dvector.getNpts();
+		return dVector.getNpts();
 	}
 
 	/**
@@ -65,11 +63,10 @@ public class ObservationEquation {
 	 * @return Amをsyntheticに足したd列 順番はDvectorと同じ
 	 */
 	public RealVector[] bornOut(RealVector m) {
-		RealVector[] am = dvector.separate(operate(m));
-		RealVector[] syn = dvector.getSynVec();
-		RealVector[] born = new ArrayRealVector[dvector.getNTimeWindow()];
+		RealVector[] am = dVector.separate(operate(m));
+		RealVector[] syn = dVector.getSynVec();
+		RealVector[] born = new ArrayRealVector[dVector.getNTimeWindow()];
 		Arrays.setAll(born, i -> syn[i].add(am[i]));
-
 		return born;
 	}
 
@@ -85,8 +82,8 @@ public class ObservationEquation {
 	 */
 	public double varianceOf(RealVector m) {
 		Objects.requireNonNull(m);
-		double obs2 = dvector.getObsNorm() * dvector.getObsNorm();
-		double variance = dvector.getDNorm() * dvector.getDNorm();
+		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
+		double variance = dVector.getDNorm() * dVector.getDNorm();
 
 		variance -= 2 * atd.dotProduct(m);
 		variance += m.dotProduct(getAtA().operate(m));
@@ -106,29 +103,28 @@ public class ObservationEquation {
 	 * @param dvector
 	 */
 	private void readA(PartialID[] ids) {
-		// System.out.println(dvec.getNpts()+" "+ parameterSet.getMLength());
-		a = new Matrix(dvector.getNpts(), parameterList.size());
+		a = new Matrix(dVector.getNpts(), parameterList.size());
 		// partialDataFile.readWaveform();
 		long t = System.nanoTime();
 		AtomicInteger count = new AtomicInteger();
 		Arrays.stream(ids).parallel().forEach(id -> {
-			if (count.get() == dvector.getNTimeWindow() * parameterList.size())
+			if (count.get() == dVector.getNTimeWindow() * parameterList.size())
 				return;
 			int column = whatNumer(id.getPartialType(), id.getPerturbationLocation());
 			if (column < 0)
 				return;
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
-			int k = dvector.whichTimewindow(id);
+			int k = dVector.whichTimewindow(id);
 			if (k < 0)
 				return;
-			int row = dvector.getStartPoints(k);
-			double weighting = dvector.getWeighting()[k] * parameterList.get(column).getWeighting();
+			int row = dVector.getStartPoints(k);
+			double weighting = dVector.getWeighting()[k] * parameterList.get(column).getWeighting();
 			double[] partial = id.getData();
 			for (int j = 0; j < partial.length; j++)
 				a.setEntry(row + j, column, partial[j] * weighting);
 			count.incrementAndGet();
 		});
-		if (count.get() != dvector.getNTimeWindow() * parameterList.size())
+		if (count.get() != dVector.getNTimeWindow() * parameterList.size())
 			throw new RuntimeException("Input partials are not enough");
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 	}
@@ -198,7 +194,7 @@ public class ObservationEquation {
 		if (Files.exists(outputPath))
 			throw new FileAlreadyExistsException(outputPath.toString());
 		Files.createDirectories(outputPath);
-		BasicID[] ids = dvector.getSynIDs();
+		BasicID[] ids = dVector.getSynIDs();
 		IntStream.range(0, ids.length).forEach(i -> {
 			BasicID id = ids[i];
 			Path eventPath = outputPath.resolve(id.getGlobalCMTID().toString());
@@ -207,7 +203,7 @@ public class ObservationEquation {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			int start = dvector.getStartPoints(i);
+			int start = dVector.getStartPoints(i);
 			double synStartTime = id.getStartTime();
 			Path outPath = eventPath.resolve(
 					id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
@@ -252,7 +248,7 @@ public class ObservationEquation {
 	}
 
 	public Dvector getDVector() {
-		return dvector;
+		return dVector;
 	}
 
 	public int getMlength() {

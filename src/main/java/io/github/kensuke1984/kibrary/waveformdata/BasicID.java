@@ -32,12 +32,11 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Position of a waveform for the ID<br>
  * 
  * 
- * @version 0.3
- * @author kensuke
+ * @version 0.3.0
+ * @author Kensuke Konishi
  * 
  */
 public class BasicID {
-
 
 	/**
 	 * waveformData
@@ -50,7 +49,7 @@ public class BasicID {
 	public double[] getData() {
 		return data.clone();
 	}
-	
+
 	@Override
 	public String toString() {
 		return station + " " + station.getNetwork() + " " + station.getPosition() + " " + globalCMTID + " "
@@ -239,13 +238,12 @@ public class BasicID {
 		data = waveformData.clone();
 	}
 
-	public Trace getTrace(){
+	public Trace getTrace() {
 		double[] x = new double[data.length];
-		Arrays.setAll(x, i->startTime+i/samplingHz);
+		Arrays.setAll(x, i -> startTime + i / samplingHz);
 		return new Trace(x, data);
 	}
-	
-	
+
 	/**
 	 * A new BasicID with the input data will be returned.
 	 * 

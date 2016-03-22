@@ -11,8 +11,8 @@ package io.github.kensuke1984.kibrary.util.sac;
  * 8:Alphanumeric(String 8letters), 16:Alphanumeric(String 16letters), 99 unused
  * (If the name is UNUSED then that variable is not currently being used)
  * 
- * 
- * @author kensuke
+ * @version 0.0.1
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */

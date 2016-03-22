@@ -10,7 +10,7 @@ package io.github.kensuke1984.kibrary.external;
  * This class is <b>immutable</b>
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 public class TauPPhase {

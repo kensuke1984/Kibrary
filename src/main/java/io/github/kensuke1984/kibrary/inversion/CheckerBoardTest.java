@@ -177,11 +177,8 @@ public class CheckerBoardTest implements Operation {
 
 	private void read() throws IOException {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
-		// basicDataFile.read();
-		// System.out.println("s");
 		Dvector dVector = new Dvector(ids);
 		PartialID[] pids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
-		// System.out.println("v");
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		eq = new ObservationEquation(pids, parameterList, dVector);
 	}

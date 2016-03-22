@@ -9,7 +9,7 @@ import org.apache.commons.math3.complex.Complex;
  * 
  * Solver for cubic equations with coefficients of real numbers.
  * 
- * @version 0.1.0.2
+ * @version 0.1.0.3
  * @author Kensuke Konishi
  *
  */
@@ -162,22 +162,18 @@ public class LinearEquation {
 	 *
 	 */
 	private int Discriminant2() {
-		if (pf.degree() != 2) {
-			System.out.println(pf.toString() + "is not a 2nd order equation.");
-			return 0;
-		}
-		double a = this.coef[2];
-		double b = this.coef[1];
-		double c = this.coef[0];
-		// System.out.println("What kind of answers is that of "+a+"x^2 + "+b+"x
-		// + "+c+" =0");
+		if (pf.degree() != 2)
+			throw new RuntimeException(pf.toString() + "is not a 2nd order equation.");
+		double a = coef[2];
+		double b = coef[1];
+		double c = coef[0];
 		double D = b * b - 4 * a * c;
-		if (0 < D)
-			return 21;
+		if (D < 0)
+			return 19;
 		else if (D == 0)
 			return 20;
 		else
-			return 19;
+			return 21;
 	}
 
 	/**
@@ -185,14 +181,12 @@ public class LinearEquation {
 	 *         & one Real, 30: Triple root, 31: three Reals
 	 */
 	private int Discriminant3() {
-		if (pf.degree() != 3) {
-			System.out.println(pf.toString() + "is not a 2nd order equation.");
-			return 0;
-		}
-		double a = this.coef[3];
-		double b = this.coef[2];
-		double c = this.coef[1];
-		double d = this.coef[0];
+		if (pf.degree() != 3)
+			throw new RuntimeException(pf.toString() + "is not a cubic equation.");
+		double a = coef[3];
+		double b = coef[2];
+		double c = coef[1];
+		double d = coef[0];
 		// System.out.println("What kind of answers is that of "+a+"x^3 +
 		// "+b+"x^2 + "+c+"x + "+d+" =0");
 		double D = b * b * c * c + 18 * a * b * c * d - 4 * a * c * c * c - 4 * b * b * b * d - 27 * a * a * d * d;
@@ -200,12 +194,7 @@ public class LinearEquation {
 			return 31; // 3 Real
 		if (D < 0)
 			return 28; // 1 Real 2 Imaginary
-		D = -2 * b * b * b + 9 * a * b * c - 27 * a * a * c;
-		if (D == 0)
-			return 30;
-		return 29;
+		return -2 * b * b * b + 9 * a * b * c - 27 * a * a * c == 0 ? 30 : 29;
 	}
-
-	// private double Eq
 
 }

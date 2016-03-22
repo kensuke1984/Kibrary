@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * 
  */
 public final class Utilities {
@@ -62,9 +62,8 @@ public final class Utilities {
 		long mins = TimeUnit.NANOSECONDS.toMinutes(nanoSeconds - used);
 		used += TimeUnit.MINUTES.toNanos(mins);
 		double sec = (nanoSeconds - used) / 1000000000.0;
-		String line = (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ")
+		return (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ")
 				+ (mins == 0 ? "" : mins + " min and ") + sec + " s";
-		return line;
 	}
 
 	/**

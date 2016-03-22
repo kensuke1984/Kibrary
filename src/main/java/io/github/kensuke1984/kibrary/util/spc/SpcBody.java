@@ -32,7 +32,6 @@ public class SpcBody {
 	private SpcComponent[] spcComponents;
 
 	/**
-	 * TODO check
 	 * 
 	 * @return DEEP copy of this
 	 */

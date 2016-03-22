@@ -67,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * @version 0.0.5
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @see <a
  *      href=http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official guide</a>
  */
@@ -187,7 +187,6 @@ final class NDK implements GlobalCMTData {
 	 * longitude, and centroid depth. The value of each variable is followed by
 	 * its estimated standard error. See note (3) below for cases in which the
 	 * hypocentral coordinates are held fixed. Centroidとreference Timeとの違い
-	 * 
 	 * 
 	 */
 	private double timeDifference;

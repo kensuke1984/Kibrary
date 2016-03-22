@@ -73,9 +73,7 @@ public class SpcFileName extends File {
 
 		typeStr = typeStr.replace("par", "PAR");
 
-		SpcFileType type = SpcFileType.valueOf(typeStr);
-		// System.out.println(type);
-		return type;
+		return SpcFileType.valueOf(typeStr);
 	}
 
 	private static String getObserverID(String fileName) {

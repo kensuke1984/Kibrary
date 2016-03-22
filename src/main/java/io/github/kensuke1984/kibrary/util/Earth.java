@@ -8,9 +8,9 @@ import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
  * 
  * Earth utility.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
- * @version 0.1.0
+ * @version 0.1.0.1
  * 
  * 
  */
@@ -32,7 +32,7 @@ public final class Earth {
 	public static double getMeridionalParts(double lowerLatitude, double upperLatitude) {
 		if (upperLatitude < lowerLatitude || lowerLatitude < -90 || 90 < lowerLatitude || upperLatitude < -90
 				|| 90 < upperLatitude) {
-			System.out
+			System.err
 					.println("input latitudes lower, upper: " + lowerLatitude + "  " + upperLatitude + " are invalid");
 			return 0;
 		}
@@ -96,10 +96,8 @@ public final class Earth {
 	 *         equator and an input latitude.
 	 */
 	private static double getMeridionalParts(double latitude) {
-		if (latitude < -90 || latitude > 90) {
-			System.out.println("input latitude : " + latitude + " is invalid");
-			return 0;
-		}
+		if (latitude < -90 || 90 < latitude)
+			throw new IllegalArgumentException("input latitude : " + latitude + " is invalid");
 
 		double s = getSUMforMeridionalParts(latitude);
 		// System.out.println(s);
@@ -117,10 +115,8 @@ public final class Earth {
 	 * @return 長軸１ｋｍの時の 赤道から入力された緯度までの子午線弧の長さ
 	 */
 	private static double getSUMforMeridionalParts(double latitude) {
-		if (latitude < -90 || latitude > 90) {
-			System.out.println("input latitude : " + latitude + " is invalid");
-			return 0;
-		}
+		if (latitude < -90 || 90 < latitude)
+			throw new IllegalArgumentException("input latitude : " + latitude + " is invalid");
 		double s = 0; // length
 		// double N=0;
 		double n2 = N * N;
@@ -214,11 +210,6 @@ public final class Earth {
 		// System.out.println("eq:"+e+" station: "+s);
 		double deltaPhi = -eq.getPhi() + station.getPhi();
 		double delta = getEpicentralDistance(eq, station);
-		// System.out.println(delta/Math.PI*180);
-		// System.out.println(Math.cos(e)+" "+Math.sin(e)+" "+Math.cos(s)+"
-		// "+Math.sin(s));
-		// System.out.println(Math.cos(deltaPhi)+" "+Math.sin(deltaPhi));
-		// System.out.println(Math.sin(delta)+" s"+delta);
 		double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi))
 				/ FastMath.sin(delta);
 		if (1 < cos)
@@ -230,7 +221,6 @@ public final class Earth {
 		// System.out.println(cos+" "+az);
 		// System.out.println(az*180/Math.PI);
 		return 0 <= sin ? az : -az + 2 * Math.PI;
-
 	}
 
 	/**
@@ -246,10 +236,6 @@ public final class Earth {
 		double s = receiverPos.getTheta();
 		double deltaPhi = sourcePos.getPhi() - receiverPos.getPhi();
 		double delta = getEpicentralDistance(sourcePos, receiverPos);
-		// System.out.println(Math.cos(e)+" "+Math.sin(e)+" "+Math.cos(s)+"
-		// "+Math.sin(s));
-		// System.out.println(Math.cos(deltaPhi)+" "+Math.sin(deltaPhi));
-		// System.out.println(Math.sin(delta)+" s"+delta);
 		double cos = (FastMath.cos(e) * FastMath.sin(s) - FastMath.sin(e) * FastMath.cos(s) * FastMath.cos(deltaPhi))
 				/ FastMath.sin(delta);
 		double sin = FastMath.sin(e) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
@@ -257,21 +243,18 @@ public final class Earth {
 		// System.out.println(cos+"");
 		// System.out.println(az*180/Math.PI);
 		return 0 <= sin ? az : -az + 2 * Math.PI;
-
 	}
 
 	/**
 	 * 地理緯度を入れたときに地心緯度を返す Transform geogrphic latitude to geocentric.
 	 * 
 	 * @param geographical
-	 *            [rad] geographic latitude 地理緯度 [-pi/2, pi/2]
-	 * @return geocentric latitude [rad] 地心緯度 [-pi/2, pi/2]
+	 *            [rad] geographic latitude 地理緯度 [-&pi;/2, &pi;/2]
+	 * @return geocentric latitude [rad] 地心緯度 [-&pi;/2, &pi;/2]
 	 */
 	static double toGeocentric(double geographical) {
-		if (geographical < -0.5 * Math.PI || 0.5 * Math.PI < geographical) {
-			System.out.println("geographical latitude: " + geographical + " must be [-pi/2, pi/2]");
-			return 0;
-		}
+		if (0.5 * Math.PI < Math.abs(geographical))
+			throw new IllegalArgumentException("geographical latitude: " + geographical + " must be [-pi/2, pi/2]");
 		double ratio = POLAR_RADIUS / EQUATORIAL_RADIUS;
 		return FastMath.atan(ratio * ratio * FastMath.tan(geographical));
 	}
@@ -310,10 +293,8 @@ public final class Earth {
 			double startLongitude, double endLongitude) {
 
 		// radius
-		if (endA <= startA || startA < 0) {
-			System.out.println("endA: " + endA + " must be bigger than startA:" + startA);
-			return 0;
-		}
+		if (endA <= startA || startA < 0)
+			throw new IllegalArgumentException("endA: " + endA + " must be bigger than startA:" + startA);
 
 		if (startLongitude < 0 && 180 < endLongitude) {
 			System.out.println("startLongitude :" + startLongitude);
@@ -329,7 +310,7 @@ public final class Earth {
 			return 0;
 		}
 		// longitude
-		if (startLongitude < -180 || endLongitude > 360 || startLongitude >= endLongitude) {
+		if (startLongitude < -180 || 360 < endLongitude || endLongitude <= startLongitude) {
 			System.out.println("startLongitude :" + startLongitude + " must be [-180, endLongitude)");
 			System.out.println("endLongitude :" + endLongitude + " must be (startLongitude, 360]");
 			System.out

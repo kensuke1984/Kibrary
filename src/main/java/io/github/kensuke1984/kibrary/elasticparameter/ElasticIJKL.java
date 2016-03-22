@@ -4,8 +4,8 @@ package io.github.kensuke1984.kibrary.elasticparameter;
  * 
  * ID for elastic parameter C<sub>ijkl</sub>
  * 
- * @author kensuke
- * @version 0.0.1
+ * @author Kensuke Konishi
+ * @version 0.0.1.1
  */
 public enum ElasticIJKL {
 	C1111(1111), C1122(1122), C1133(1133), C1123(1123), C1113(1113), C1112(1112), C2211(2211), C2222(2222), C2233(
@@ -15,25 +15,24 @@ public enum ElasticIJKL {
 									1211), C1222(1222), C1233(1233), C1223(1223), C1213(1213), C1212(1212);
 	//
 
-	private int value;
+	private final int value;
 
 	private ElasticIJKL(int n) {
-		this.value = n;
+		value = n;
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	private static boolean checkInt(int n) {
-		if (n < 1 || 3 < n)
-			return false;
-		return true;
+		return 1 <= n && n <= 3;
 	}
 
 	public static ElasticIJKL valueOf(int i, int j, int k, int l) {
 		if (!checkInt(i) || !checkInt(j) || !checkInt(k) || !checkInt(l))
-			throw new IllegalArgumentException("input (i, j, k, l) : (" + i + ", " + j + ", " + k + ", " + l + ") is invalid");
+			throw new IllegalArgumentException(
+					"input (i, j, k, l) : (" + i + ", " + j + ", " + k + ", " + l + ") is invalid");
 		int n = 1000 * i + 100 * j + 10 * k + l;
 		for (ElasticIJKL ijkl : values())
 			if (ijkl.getValue() == n)

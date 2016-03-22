@@ -26,10 +26,10 @@ class TurningDepthMode extends Computation {
 	/**
 	 * @param travelTimeTool
 	 */
-	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure vs, double eventR) {
+	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure structure, double eventR) {
 		super(travelTimeTool);
 		this.eventR = eventR;
-		this.structure = vs;
+		this.structure = structure;
 	}
 
 	@Override

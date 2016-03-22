@@ -14,7 +14,7 @@ package io.github.kensuke1984.kibrary.math.geometry;
  * @version 0.0.2
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class Line {

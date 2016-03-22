@@ -17,7 +17,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * The SAC header is described
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */

@@ -325,8 +325,8 @@ public class SACMaker implements Runnable {
 	public SACMaker(DSMOutput oneSPC, DSMOutput pairSPC, SourceTimeFunction sourceTimeFunction) {
 		if (pairSPC != null && !check(oneSPC, pairSPC))
 			throw new RuntimeException("Input spc are not a pair.");
-		this.primeSPC = oneSPC;
-		this.secondarySPC = pairSPC;
+		primeSPC = oneSPC;
+		secondarySPC = pairSPC;
 		globalCMTID = new GlobalCMTID(oneSPC.getSourceID());
 		this.sourceTimeFunction = sourceTimeFunction;
 	}

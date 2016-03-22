@@ -235,7 +235,6 @@ public class DataSelection implements Operation {
 				}
 				return;
 			}
-
 			// System.out.println("Checking " + obsEventDirectory);
 			// System.out.println(obsEventDirectory + " checked all observeds");
 			try (PrintWriter lpw = new PrintWriter(
@@ -291,10 +290,9 @@ public class DataSelection implements Operation {
 				// spw.close();
 			} catch (Exception e) {
 				e.printStackTrace();
-				System.out.println("error on " + obsEventDirectory);
+				System.err.println("error on " + obsEventDirectory);
 			}
 			System.err.print(".");
-			// System.exit(0);
 			// System.out.println(obsEventDirectory + " is done");
 		}
 	}
@@ -352,7 +350,6 @@ public class DataSelection implements Operation {
 		absRatio = Math.round(absRatio * 100) / 100.0;
 		var = Math.round(var * 100) / 100.0;
 		cor = Math.round(cor * 100) / 100.0;
-		// if (minRatio > ratio || minRatio < 1 / ratio ||
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
 				|| var < minVariance || maxVariance < var);

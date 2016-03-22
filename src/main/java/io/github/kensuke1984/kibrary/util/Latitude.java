@@ -1,18 +1,15 @@
 package io.github.kensuke1984.kibrary.util;
 
-
 import org.apache.commons.math3.util.FastMath;
 
 /**
- * Latitude [-90, 90]  
- * The value is rounded off to the fourth decimal position.
+ * Latitude [-90, 90] The value is rounded off to the fourth decimal position.
  * 
  * <p>
  * This class is <b>IMMUTABLE</b>
  * </p>
  * 
- * @version 0.0.6
- * 
+ * @version 0.0.6.1
  * 
  * @author Kensuke Konishi
  * 
@@ -122,14 +119,13 @@ class Latitude implements Comparable<Latitude> {
 
 	/**
 	 * @param theta
-	 *            [rad] spherical coordinates 球座標 [0, pi]
-	 * @return 地理緯度(度）
+	 *            [rad] spherical coordinates 球座標 [0, &pi;]
+	 * @return geographic latitude [deg] 地理緯度(度）
 	 */
 	static double toLatitude(double theta) {
-		if (theta < 0 || Math.PI < theta) {
-			System.out.println("Invalid theta(must be[0, pi]): " + theta + " @"
+		if (theta < 0 || Math.PI < theta)
+			throw new IllegalArgumentException("Invalid theta(must be[0, pi]): " + theta + " @"
 					+ Thread.currentThread().getStackTrace()[1].getMethodName());
-		}
 
 		double geocentric = 0.5 * Math.PI - theta;
 		return FastMath.toDegrees(Earth.toGeographical(geocentric));

@@ -6,9 +6,9 @@ import java.util.List;
 /**
  * Header part of a file for DSM.
  * 
- * @version 0.0.4.1
+ * @version 0.0.4.2
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 class DSMheader {
@@ -166,7 +166,7 @@ class DSMheader {
 	}
 
 	void setRe(double re) {
-		this.relativeError = re;
+		 relativeError = re;
 	}
 
 	void setRatc(double ratc) {

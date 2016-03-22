@@ -49,8 +49,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toPSVlines();
-			Arrays.stream(structure).forEach(pw::println);
+			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
@@ -97,8 +96,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toPSVlines();
-			Arrays.stream(structure).forEach(pw::println);
+			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
@@ -137,8 +135,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toSHlines();
-			Arrays.stream(structure).forEach(pw::println);
+			Arrays.stream(structure.toSHlines()).forEach(pw::println);
 
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
@@ -182,8 +179,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toSHlines();
-			Arrays.stream(structure).forEach(pw::println);
+			Arrays.stream(structure.toSHlines()).forEach(pw::println);
 
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()

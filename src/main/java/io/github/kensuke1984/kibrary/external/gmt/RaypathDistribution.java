@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1
+ * @version 0.1.0.1
  * 
  */
 public class RaypathDistribution implements Operation {
@@ -115,7 +115,7 @@ public class RaypathDistribution implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
-		if(!property.containsKey("stationInformationPath"))
+		if (!property.containsKey("stationInformationPath"))
 			throw new RuntimeException("There is no information of a station information file.");
 	}
 
@@ -225,27 +225,25 @@ public class RaypathDistribution implements Operation {
 
 	private GMTMap createBaseMap() {
 
-		double minimumEventLatitude = ids.stream().map(id -> id.getEvent())
-				.mapToDouble(e -> e.getCmtLocation().getLatitude()).min().getAsDouble();
-		double maximumEventLatitude = ids.stream().map(id -> id.getEvent())
-				.mapToDouble(e -> e.getCmtLocation().getLatitude()).max().getAsDouble();
+		double minimumEventLatitude = ids.stream().mapToDouble(id -> id.getEvent().getCmtLocation().getLatitude()).min()
+				.getAsDouble();
+		double maximumEventLatitude = ids.stream().mapToDouble(id -> id.getEvent().getCmtLocation().getLatitude()).max()
+				.getAsDouble();
 
-		double minimumEventLongitude = ids.stream().map(id -> id.getEvent())
-				.mapToDouble(e -> e.getCmtLocation().getLongitude()).map(d -> 0 <= d ? d : d + 360).min().getAsDouble();
-		double maximumEventLongitude = ids.stream().map(id -> id.getEvent())
-				.mapToDouble(e -> e.getCmtLocation().getLongitude()).map(d -> 0 <= d ? d : d + 360).max().getAsDouble();
+		double minimumEventLongitude = ids.stream().mapToDouble(e -> e.getEvent().getCmtLocation().getLongitude())
+				.map(d -> 0 <= d ? d : d + 360).min().getAsDouble();
+		double maximumEventLongitude = ids.stream().mapToDouble(e -> e.getEvent().getCmtLocation().getLongitude())
+				.map(d -> 0 <= d ? d : d + 360).max().getAsDouble();
 
-		double minimumStationLatitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(HorizontalPosition::getLatitude).min().orElse(minimumEventLatitude);
-		double maximumStationLatitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(HorizontalPosition::getLatitude).max().orElse(maximumEventLatitude);
+		double minimumStationLatitude = stationSet.stream().mapToDouble(s -> s.getPosition().getLatitude()).min()
+				.orElse(minimumEventLatitude);
+		double maximumStationLatitude = stationSet.stream().mapToDouble(s -> s.getPosition().getLatitude()).max()
+				.orElse(maximumEventLatitude);
 
-		double minimumStationLongitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(HorizontalPosition::getLongitude).map(d -> 0 <= d ? d : d + 360).min()
-				.orElse(minimumEventLongitude);
-		double maximumStationLongitude = stationSet.stream().map(station -> station.getPosition())
-				.mapToDouble(HorizontalPosition::getLongitude).map(d -> 0 <= d ? d : d + 360).max()
-				.orElse(maximumEventLongitude);
+		double minimumStationLongitude = stationSet.stream().mapToDouble(s -> s.getPosition().getLongitude())
+				.map(d -> 0 <= d ? d : d + 360).min().orElse(minimumEventLongitude);
+		double maximumStationLongitude = stationSet.stream().mapToDouble(s -> s.getPosition().getLongitude())
+				.map(d -> 0 <= d ? d : d + 360).max().orElse(maximumEventLongitude);
 
 		int minLatitude = (int) Math
 				.round(minimumEventLatitude < minimumStationLatitude ? minimumEventLatitude : minimumStationLatitude)
@@ -263,8 +261,6 @@ public class RaypathDistribution implements Operation {
 			minLatitude = -90;
 		if (90 < maxLatitude)
 			maxLatitude = 90;
-		// System.out.println(minLatitude + " " + maxLatitude + " " +
-		// minLongitude + " " + maxLongitude);
 		return new GMTMap("MAP", minLongitude, maxLongitude, minLatitude, maxLatitude);
 	}
 
@@ -292,8 +288,6 @@ public class RaypathDistribution implements Operation {
 		gmtCMD.add("#eps2eps $psname .$psname && mv .$psname $psname");
 		Files.write(gmtPath, gmtCMD);
 		gmtPath.toFile().setExecutable(true);
-		// for (String s : gmtCMD)
-		// System.out.println(s);
 	}
 
 	@Override
@@ -303,7 +297,7 @@ public class RaypathDistribution implements Operation {
 
 	@Override
 	public Properties getProperties() {
-		return (Properties)property.clone();
+		return (Properties) property.clone();
 	}
 
 }

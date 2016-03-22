@@ -5,13 +5,15 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 /**
- * (input) Structure of the Earth for softwares of <i>Direct Solution Method</i> (DSM)<br>
+ * (input) Structure of the Earth for softwares of <i>Direct Solution Method</i>
+ * (DSM)<br>
  * 
  * Every depth is written in <b>radius</b>.<br>
  * 
@@ -20,7 +22,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.3
  * 
  * @author Kensuke Konishi
  * 
@@ -49,44 +51,17 @@ public class PolynomialStructure {
 	/**
 	 * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
 	 */
-	public static final PolynomialStructure PREM = prem();
+	public static final PolynomialStructure PREM = initialAnisoPREM();
 
 	/**
-	 * isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
+	 * isotropic PREM by Dziewonski &amp; Anderson 1981
 	 */
-	public static final PolynomialStructure ISO_PREM = iprem();
+	public static final PolynomialStructure ISO_PREM = initialIsoPREM();
 
 	/**
 	 * AK135 by Kennett <i>et al</i>. (1995)
 	 */
-	public static final PolynomialStructure AK135 = ak135();
-
-	/**
-	 * @return standard TI PREM by Dziewonski &amp; Anderson 1981
-	 */
-	private static PolynomialStructure prem() {
-		PolynomialStructure ps = new PolynomialStructure();
-		ps.initialAnisoPREM();
-		return ps;
-	}
-
-	/**
-	 * @return standard AK135 by Kennett <i>et al</i>. (1995)
-	 */
-	private static PolynomialStructure ak135() {
-		PolynomialStructure ps = new PolynomialStructure();
-		ps.initialAK135();
-		return ps;
-	}
-
-	/**
-	 * @return standard ISOTROPIC PREM by Dziewonski &amp; Anderson 1981
-	 */
-	private static PolynomialStructure iprem() {
-		PolynomialStructure ps = new PolynomialStructure();
-		ps.initialIsoPREM();
-		return ps;
-	}
+	public static final PolynomialStructure AK135 = initialAK135();
 
 	/**
 	 * @param structurePath
@@ -372,78 +347,87 @@ public class PolynomialStructure {
 				.orElseThrow(() -> new IllegalArgumentException("Input r:" + r + "is invalid."));
 	}
 
-	private void initialAnisoPREM() {
-		nzone = 12;
-		rmin = new double[] { 0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356 };
-		rmax = new double[] { 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356, 6371 };
-		double[][] rho = new double[][] { { 13.0885, 0, -8.8381, 0 }, { 12.5815, -1.2638, -3.6426, -5.5281 },
+	private static PolynomialStructure set(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
+			double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu, double[] qKappa) {
+		final PolynomialStructure structure = new PolynomialStructure();
+		structure.nzone = 12;
+		structure.rmin = rmin;
+		structure.rmax = rmax;
+
+		structure.rho = new PolynomialFunction[nzone];
+		structure.vpv = new PolynomialFunction[nzone];
+		structure.vph = new PolynomialFunction[nzone];
+		structure.vsv = new PolynomialFunction[nzone];
+		structure.vsh = new PolynomialFunction[nzone];
+		structure.eta = new PolynomialFunction[nzone];
+		structure.qMu = qMu;
+		structure.qKappa = qKappa;
+
+		for (int i = 0; i < nzone; i++) {
+			structure.rho[i] = new PolynomialFunction(rho[i]);
+			structure.vpv[i] = new PolynomialFunction(vpv[i]);
+			structure.vph[i] = new PolynomialFunction(vph[i]);
+			structure.vsv[i] = new PolynomialFunction(vsv[i]);
+			structure.vsh[i] = new PolynomialFunction(vsh[i]);
+			structure.eta[i] = new PolynomialFunction(eta[i]);
+		}
+
+		return structure;
+	}
+
+	private static PolynomialStructure initialAnisoPREM() {
+		final int nzone = 12;
+		final double[] rmin = new double[] { 0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356 };
+		final double[] rmax = new double[] { 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356,
+				6371 };
+		final double[][] rho = new double[][] { { 13.0885, 0, -8.8381, 0 }, { 12.5815, -1.2638, -3.6426, -5.5281 },
 				{ 7.9565, -6.4761, 5.5283, -3.0807 }, { 7.9565, -6.4761, 5.5283, -3.0807 },
 				{ 7.9565, -6.4761, 5.5283, -3.0807 }, { 5.3197, -1.4836, 0, 0 }, { 11.2494, -8.0298, 0, 0 },
 				{ 7.1089, -3.8045, 0, 0 }, { 2.691, 0.6924, 0, 0 }, { 2.691, 0.6924, 0, 0 }, { 2.9, 0, 0, 0 },
 				{ 2.6, 0, 0, 0 }, };
-
-		//
-		double[][] vpv = new double[][] { { 11.2622, 0, -6.364, 0 }, { 11.0487, -4.0362, 4.8023, -13.5732 },
+		final double[][] vpv = new double[][] { { 11.2622, 0, -6.364, 0 }, { 11.0487, -4.0362, 4.8023, -13.5732 },
 				{ 15.3891, -5.3181, 5.5242, -2.5514 }, { 24.952, -40.4673, 51.4832, -26.6419 },
 				{ 29.2766, -23.6027, 5.5242, -2.5514 }, { 19.0957, -9.8672, 0, 0 }, { 39.7027, -32.6166, 0, 0 },
 				{ 20.3926, -12.2569, 0, 0 }, { 0.8317, 7.218, 0, 0 }, { 0.8317, 7.218, 0, 0 }, { 6.8, 0, 0, 0 },
 				{ 5.8, 0, 0, 0 }, };
-
-		double[][] vph = new double[][] { { 11.2622, 0, -6.364, 0 }, { 11.0487, -4.0362, 4.8023, -13.5732 },
+		final double[][] vph = new double[][] { { 11.2622, 0, -6.364, 0 }, { 11.0487, -4.0362, 4.8023, -13.5732 },
 				{ 15.3891, -5.3181, 5.5242, -2.5514 }, { 24.952, -40.4673, 51.4832, -26.6419 },
 				{ 29.2766, -23.6027, 5.5242, -2.5514 }, { 19.0957, -9.8672, 0, 0 }, { 39.7027, -32.6166, 0, 0 },
 				{ 20.3926, -12.2569, 0, 0 }, { 3.5908, 4.6172, 0, 0 }, { 3.5908, 4.6172, 0, 0 }, { 6.8, 0, 0, 0 },
 				{ 5.8, 0, 0, 0 }, };
-
-		double[][] vsv = new double[][] { { 3.6678, 0, -4.4475, 0 }, { 0, 0, 0, 0 },
+		final double[][] vsv = new double[][] { { 3.6678, 0, -4.4475, 0 }, { 0, 0, 0, 0 },
 				{ 6.9254, 1.4672, -2.0834, 0.9783 }, { 11.1671, -13.7818, 17.4575, -9.2777 },
 				{ 22.3459, -17.2473, -2.0834, 0.9783 }, { 9.9839, -4.9324, 0, 0 }, { 22.3512, -18.5856, 0, 0 },
 				{ 8.9496, -4.4597, 0, 0 }, { 5.8582, -1.4678, 0, 0 }, { 5.8582, -1.4678, 0, 0 }, { 3.9, 0, 0, 0 },
 				{ 3.2, 0, 0, 0 }, };
-
-		double[][] vsh = new double[][] { { 3.6678, 0, -4.4475, 0 }, { 0, 0, 0, 0 },
+		final double[][] vsh = new double[][] { { 3.6678, 0, -4.4475, 0 }, { 0, 0, 0, 0 },
 				{ 6.9254, 1.4672, -2.0834, 0.9783 }, { 11.1671, -13.7818, 17.4575, -9.2777 },
 				{ 22.3459, -17.2473, -2.0834, 0.9783 }, { 9.9839, -4.9324, 0, 0 }, { 22.3512, -18.5856, 0, 0 },
 				{ 8.9496, -4.4597, 0, 0 }, { -1.0839, 5.7176, 0, 0 }, { -1.0839, 5.7176, 0, 0 }, { 3.9, 0, 0, 0 },
 				{ 3.2, 0, 0, 0 }, };
-
-		double[][] eta = new double[][] { { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
+		final double[][] eta = new double[][] { { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
 				{ 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 3.3687, -2.4778, 0, 0 },
 				{ 3.3687, -2.4778, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, };
-
-		this.rho = new PolynomialFunction[nzone];
-		this.vpv = new PolynomialFunction[nzone];
-		this.vph = new PolynomialFunction[nzone];
-		this.vsv = new PolynomialFunction[nzone];
-		this.vsh = new PolynomialFunction[nzone];
-		this.eta = new PolynomialFunction[nzone];
-
-		for (int i = 0; i < nzone; i++) {
-			this.rho[i] = new PolynomialFunction(rho[i]);
-			this.vpv[i] = new PolynomialFunction(vpv[i]);
-			this.vph[i] = new PolynomialFunction(vph[i]);
-			this.vsv[i] = new PolynomialFunction(vsv[i]);
-			this.vsh[i] = new PolynomialFunction(vsh[i]);
-			this.eta[i] = new PolynomialFunction(eta[i]);
-		}
-
-		qMu = new double[] { 84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600, };
-		qKappa = new double[] { 1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823 };
+		final double[] qMu = new double[] { 84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600,
+				600, };
+		final double[] qKappa = new double[] { 1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,
+				57823, 57823 };
+		return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
 	}
 
-	private void initialIsoPREM() {
-		initialAnisoPREM();
-
+	private static PolynomialStructure initialIsoPREM() {
+		PolynomialStructure prem = initialAnisoPREM();
 		double[] vp = new double[] { 4.1875, 3.9382, 0, 0 };
 		double[] vs = new double[] { 2.1519, 2.3481, 0, 0 };
 		double[] eta = new double[] { 1, 0, 0, 0 };
 		for (int i = 8; i <= 9; i++) {
-			vpv[i] = new PolynomialFunction(vp);
-			vph[i] = new PolynomialFunction(vp);
-			vsv[i] = new PolynomialFunction(vs);
-			vsh[i] = new PolynomialFunction(vs);
-			this.eta[i] = new PolynomialFunction(eta);
+			prem.vpv[i] = new PolynomialFunction(vp);
+			prem.vph[i] = new PolynomialFunction(vp);
+			prem.vsv[i] = new PolynomialFunction(vs);
+			prem.vsh[i] = new PolynomialFunction(vs);
+			prem.eta[i] = new PolynomialFunction(eta);
 		}
+		return prem;
 	}
 
 	/**
@@ -484,54 +468,41 @@ public class PolynomialStructure {
 	/**
 	 * standard AK135 Kennett <i>et al<i>. (1995)
 	 */
-	private void initialAK135() {
-		nzone = 11;
-		rmin = new double[] { 0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351 };
-		rmax = new double[] { 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351, 6371 };
-		double[][] rho = new double[][] { { 13.0885, 0, -8.8381, 0 }, { 12.5815, -1.2638, -3.6426, -5.5281 },
+	private static PolynomialStructure initialAK135() {
+		final int nzone = 11;
+		final double[] rmin = new double[] { 0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351 };
+		final double[] rmax = new double[] { 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351, 6371 };
+		final double[][] rho = new double[][] { { 13.0885, 0, -8.8381, 0 }, { 12.5815, -1.2638, -3.6426, -5.5281 },
 				{ 7.9565, -6.4761, 5.5283, -3.0807 }, { 7.9565, -6.4761, 5.5283, -3.0807 },
 				{ 7.9565, -6.4761, 5.5283, -3.0807 }, { 5.3197, -1.4836, 0, 0 }, { 11.2494, -8.0298, 0, 0 },
 				{ 7.1089, -3.8045, 0, 0 }, { 2.691, 0.6924, 0, 0 }, { 2.691, 0.6924, 0, 0 }, { 2.9, 0, 0, 0 },
 				{ 2.6, 0, 0, 0 }, };
-		double[][] vpv = new double[][] { { 11.261692, 0.028794, -6.627846, 0 }, { 10.118851, 3.457774, -13.434875, 0 },
-				{ 13.908244, -0.45417, 0, 0 }, { 24.138794, -37.097655, 46.631994, -24.272115 },
-				{ 25.969838, -16.934118, 0, 0 }, { 29.38896, -21.40656, 0, 0 }, { 30.78765, -23.25415, 0, 0 },
-				{ 25.413889, -17.697222, 0, 0 }, { 8.785412, -0.749529, 0, 0, }, { 6.5, 0.0, 0.0, 0.0 },
-				{ 5.8, 0.0, 0.0, 0.0 }, };
-		double[][] vph = new double[][] { { 11.261692, 0.028794, -6.627846, 0 }, { 10.118851, 3.457774, -13.434875, 0 },
-				{ 13.908244, -0.45417, 0, 0 }, { 24.138794, -37.097655, 46.631994, -24.272115 },
-				{ 25.969838, -16.934118, 0, 0 }, { 29.38896, -21.40656, 0, 0 }, { 30.78765, -23.25415, 0, 0 },
-				{ 25.413889, -17.697222, 0, 0 }, { 8.785412, -0.749529, 0, 0, }, { 6.5, 0, 0, 0 }, { 5.8, 0, 0, 0 } };
-		double[][] vsv = new double[][] { { 3.667865, -0.001345, -4.440915, 0 }, { 0, 0, 0, 0 },
+		final double[][] vpv = new double[][] { { 11.261692, 0.028794, -6.627846, 0 },
+				{ 10.118851, 3.457774, -13.434875, 0 }, { 13.908244, -0.45417, 0, 0 },
+				{ 24.138794, -37.097655, 46.631994, -24.272115 }, { 25.969838, -16.934118, 0, 0 },
+				{ 29.38896, -21.40656, 0, 0 }, { 30.78765, -23.25415, 0, 0 }, { 25.413889, -17.697222, 0, 0 },
+				{ 8.785412, -0.749529, 0, 0, }, { 6.5, 0.0, 0.0, 0.0 }, { 5.8, 0.0, 0.0, 0.0 }, };
+		final double[][] vph = new double[][] { { 11.261692, 0.028794, -6.627846, 0 },
+				{ 10.118851, 3.457774, -13.434875, 0 }, { 13.908244, -0.45417, 0, 0 },
+				{ 24.138794, -37.097655, 46.631994, -24.272115 }, { 25.969838, -16.934118, 0, 0 },
+				{ 29.38896, -21.40656, 0, 0 }, { 30.78765, -23.25415, 0, 0 }, { 25.413889, -17.697222, 0, 0 },
+				{ 8.785412, -0.749529, 0, 0, }, { 6.5, 0, 0, 0 }, { 5.8, 0, 0, 0 } };
+		final double[][] vsv = new double[][] { { 3.667865, -0.001345, -4.440915, 0 }, { 0, 0, 0, 0 },
 				{ 8.018341, -1.349895, 0, 0 }, { 12.213901, -18.573085, 24.557329, -12.728015 },
 				{ 20.208945, -15.895645, 0, 0 }, { 17.71732, -13.50652, 0, 0 }, { 15.212335, -11.053685, 0, 0 },
 				{ 5.7502, -1.2742, 0, 0 }, { 5.970824, -1.499059, 0, 0 }, { 3.85, 0, 0, 0 }, { 3.46, 0, 0, 0 } };
-		double[][] vsh = new double[][] { { 3.667865, -0.001345, -4.440915, 0 }, { 0, 0, 0, 0 },
+		final double[][] vsh = new double[][] { { 3.667865, -0.001345, -4.440915, 0 }, { 0, 0, 0, 0 },
 				{ 8.018341, -1.349895, 0, 0 }, { 12.213901, -18.573085, 24.557329, -12.728015 },
 				{ 20.208945, -15.895645, 0, 0 }, { 17.71732, -13.50652, 0, 0 }, { 15.212335, -11.053685, 0, 0 },
 				{ 5.7502, -1.2742, 0, 0 }, { 5.970824, -1.499059, 0, 0 }, { 3.85, 0, 0, 0 }, { 3.46, 0, 0, 0 } };
-		double[][] eta = new double[][] { { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
+		final double[][] eta = new double[][] { { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
 				{ 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
 				{ 1, 0, 0, 0 }, }; // ok
+		final double[] qMu = new double[] { 84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600, }; // ok
+		final double[] qKappa = new double[] { 1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,
+				57823, }; // OK
+		return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
 
-		this.rho = new PolynomialFunction[nzone];
-		this.vpv = new PolynomialFunction[nzone];
-		this.vph = new PolynomialFunction[nzone];
-		this.vsv = new PolynomialFunction[nzone];
-		this.vsh = new PolynomialFunction[nzone];
-		this.eta = new PolynomialFunction[nzone];
-
-		for (int i = 0; i < nzone; i++) {
-			this.rho[i] = new PolynomialFunction(rho[i]);
-			this.vpv[i] = new PolynomialFunction(vpv[i]);
-			this.vph[i] = new PolynomialFunction(vph[i]);
-			this.vsv[i] = new PolynomialFunction(vsv[i]);
-			this.vsh[i] = new PolynomialFunction(vsh[i]);
-			this.eta[i] = new PolynomialFunction(eta[i]);
-		}
-
-		qMu = new double[] { 84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600, }; // ok
-		qKappa = new double[] { 1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, }; // OK
 	}
 
 	/**
@@ -543,11 +514,10 @@ public class PolynomialStructure {
 	 */
 	private void readLines(String[] structureLines) {
 		String space = "\\s+";
-		int nzone = Integer.parseInt(structureLines[0].split(space)[0]);
+		nzone = Integer.parseInt(structureLines[0].split(space)[0]);
 		if (structureLines.length != (nzone * 6 + 1))
 			throw new IllegalArgumentException("Invalid lines");
-		this.nzone = nzone;
-		this.initialize();
+		initialize();
 		for (int i = 0; i < nzone; i++) {
 			String[] rangeRhoParts = structureLines[i * 6 + 1].split(space);
 			String[] vpvParts = structureLines[i * 6 + 2].split(space);
@@ -555,8 +525,8 @@ public class PolynomialStructure {
 			String[] vsvParts = structureLines[i * 6 + 4].split(space);
 			String[] vshParts = structureLines[i * 6 + 5].split(space);
 			String[] etaParts = structureLines[i * 6 + 6].split(space);
-			this.rmin[i] = Double.parseDouble(rangeRhoParts[0]);
-			this.rmax[i] = Double.parseDouble(rangeRhoParts[1]);
+			rmin[i] = Double.parseDouble(rangeRhoParts[0]);
+			rmax[i] = Double.parseDouble(rangeRhoParts[1]);
 			double[] rho = new double[4];
 			double[] vpv = new double[4];
 			double[] vph = new double[4];
@@ -571,16 +541,14 @@ public class PolynomialStructure {
 				vsh[j] = Double.parseDouble(vshParts[j]);
 				eta[j] = Double.parseDouble(etaParts[j]);
 			}
-
 			this.rho[i] = new PolynomialFunction(rho);
 			this.vpv[i] = new PolynomialFunction(vpv);
 			this.vph[i] = new PolynomialFunction(vph);
 			this.vsv[i] = new PolynomialFunction(vsv);
 			this.vsh[i] = new PolynomialFunction(vsh);
 			this.eta[i] = new PolynomialFunction(eta);
-
-			this.qMu[i] = Double.parseDouble(etaParts[4]);
-			this.qKappa[i] = Double.parseDouble(etaParts[5]);
+			qMu[i] = Double.parseDouble(etaParts[4]);
+			qKappa[i] = Double.parseDouble(etaParts[5]);
 		}
 	}
 
@@ -614,19 +582,12 @@ public class PolynomialStructure {
 	/**
 	 * change String line from coefficients a + bx + cx**2 >>>>> a b c 0
 	 * 
-	 * @param pf polynomial function for a layer
+	 * @param pf
+	 *            polynomial function for a layer
 	 * @return string in a form of this
 	 */
 	private static String toLine(PolynomialFunction pf) {
-		double[] coef = new double[4];
-		double[] pfCoef = pf.getCoefficients();
-		for (int i = 0; i < pfCoef.length; i++)
-			coef[i] = pfCoef[i];
-		StringBuffer sb = new StringBuffer();
-		for (int i = 0; i < 4; i++)
-			sb.append(coef[i] + " ");
-		return sb.toString().trim();
-
+		return Arrays.stream(pf.getCoefficients()).mapToObj(Double::toString).collect(Collectors.joining(" "));
 	}
 
 	public String[] toPSVlines() {

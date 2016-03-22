@@ -153,11 +153,11 @@ class ResultWindow extends javax.swing.JPanel {
 			// " /selected:" + isSelected + " /focus:" + hasFocus + " /value:" +
 			// value);
 			if (row == featured) {
-				this.setForeground(Color.RED);
-				this.setBackground(Color.white);
+				setForeground(Color.RED);
+				setBackground(Color.white);
 			} else {
-				this.setForeground(Color.BLACK);
-				this.setBackground(Color.white);
+				setForeground(Color.BLACK);
+				setBackground(Color.white);
 			}
 			// System.out.println(featured+" fe");
 			// // 選択されている行を赤色にする

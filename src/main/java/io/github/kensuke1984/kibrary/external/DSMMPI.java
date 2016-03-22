@@ -19,7 +19,7 @@ import java.util.concurrent.Callable;
  * so that you do not care about working folder. (If your information file is
  * tricky, ... ...)
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 public final class DSMMPI {

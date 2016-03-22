@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * Merging of SAC files
  * 
  * 
- * @version 0.0.4.1
+ * @version 0.0.4.2
  * @author Kensuke Konishi
  * 
  */
@@ -113,7 +113,6 @@ class UnevenSACMerger {
 			// 既存のグループに振り分けられなかったら新しいグループを作る
 			if (!sacGroupSet.stream().anyMatch(group -> group.add(name)))
 				sacGroupSet.add(new SACGroup(workPath, names[i]));
-			// System.out.println("a new group was made for "+names[i]);
 		}
 
 	}

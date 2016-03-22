@@ -14,6 +14,9 @@ import java.util.regex.Pattern;
  * 
  * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
  * 
+ * 
+ * @version 0.1.0.1
+ * 
  * @author Kensuke Konishi
  * 
  */
@@ -49,9 +52,8 @@ public class Phase {
 	 */
 	private String phaseName;
 
-	private Phase(String phase) {
-		this.phaseName = phase;
-		// System.out.println(phase);
+	private Phase(String phaseName) {
+		this.phaseName = phaseName;
 		computeParts();
 		digitalize();
 	}
@@ -60,7 +62,8 @@ public class Phase {
 	 * @param phase
 	 *            phase name
 	 * @return phase for input
-	 * @throws IllegalArgumentException if the phase is invalid
+	 * @throws IllegalArgumentException
+	 *             if the phase is invalid
 	 */
 	public static Phase create(String phase) {
 		if (isValid(phase))
@@ -132,7 +135,6 @@ public class Phase {
 		isDownGoing = new boolean[nPart];
 		isP = new boolean[nPart];
 		partition = new Partition[nPart];
-		// System.out.println(nPart);
 	}
 
 	boolean isDiffracted() {
@@ -155,21 +157,18 @@ public class Phase {
 			case 'i':
 				continue;
 			case 'p':
-				// System.out.println("p");
 				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = false;
 				partition[iCurrentPart] = Partition.MANTLE;
 				iCurrentPart++;
 				break;
 			case 's':
-				// System.out.println("s");
 				isP[iCurrentPart] = false;
 				isDownGoing[iCurrentPart] = false;
 				partition[iCurrentPart] = Partition.MANTLE;
 				iCurrentPart++;
 				break;
 			case 'P':
-				// System.out.println("P");
 				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = i == 0
 						|| (phaseName.charAt(i - 1) != 'K' && phaseName.charAt(i - 1) != 'c');
@@ -220,7 +219,6 @@ public class Phase {
 				iCurrentPart++;
 				break;
 			case 'K':
-				// System.out.println("K " + iCurrentPart);
 				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = phaseName.charAt(i - 1) != 'i' && phaseName.charAt(i - 1) != 'I'
 						&& phaseName.charAt(i - 1) != 'J';
@@ -263,8 +261,7 @@ public class Phase {
 				return true;
 			String footer = phase.substring(header);
 			try {
-				double d = Double.parseDouble(footer);
-				return 0 <= d;
+				return 0 <= Double.parseDouble(footer);
 			} catch (Exception e) {
 				return false;
 			}
@@ -346,9 +343,7 @@ public class Phase {
 
 	boolean turningRValidity(Partition pTurning, Partition sTurning) {
 		Partition p = pReaches();
-		// System.out.println("P reaches "+p);
 		Partition s = sReaches();
-		// System.out.println("P reaches "+p+", S reaches "+s);
 		if (p != null) {
 			if (pTurning == null)
 				return false;
@@ -360,15 +355,12 @@ public class Phase {
 					return false;
 			if (pTurning.equals(Partition.INNERCORE))
 				if (phaseName.contains("K"))
-					if (!(phaseName.contains("I") || phaseName.contains("J") || phaseName.contains("i"))) 
+					if (!(phaseName.contains("I") || phaseName.contains("J") || phaseName.contains("i")))
 						return false;
-					
 
-			// System.out.println("hi");
 			if (!p.shallow(pTurning))
 				return false;
 		}
-		// System.out.println("hi");
 		if (s != null) {
 			if (sTurning == null)
 				return false;
@@ -488,11 +480,11 @@ public class Phase {
 	 */
 	double mantleS() {
 		double sNum = 0;
-		for (int i = 0; i < nPart; i++) 
+		for (int i = 0; i < nPart; i++)
 			if (partition[i].equals(Partition.MANTLE))
 				if (!isP[i])
 					sNum += 0.5;
-		
+
 		if (phaseName.charAt(0) == 's')
 			sNum -= 0.5;
 		return sNum;

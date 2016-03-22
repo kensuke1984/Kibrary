@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * sideにイベントか観測点名を入れる
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public class TimeshiftParameter implements UnknownParameter{

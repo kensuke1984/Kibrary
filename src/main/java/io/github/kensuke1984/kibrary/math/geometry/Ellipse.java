@@ -1,21 +1,20 @@
 package io.github.kensuke1984.kibrary.math.geometry;
 
-
 /**
  * 楕円
  * 
- * @author Kensuke
- * 
+ * @author Kensuke Konishi
+ * @version 0.0.1.1
  */
 public class Ellipse {
 
 	/**
-	 * 　長軸 extended shaft (0, ∞
+	 * 長軸 extended shaft (0, ∞
 	 */
 	private double a;
 
 	/**
-	 * 　短軸 minor axis (0, ∞
+	 * 短軸 minor axis (0, ∞
 	 */
 	private double b;
 
@@ -52,14 +51,11 @@ public class Ellipse {
 	 *            minor axis 短軸
 	 */
 	public Ellipse(double a, double b) {
-		if (a < b) {
-			System.out.println("a: " + a + "must be bigger than b: " + b);
-			return;
-		}
-		if (!(a > 0) || !(b > 0)) {
-			System.out.println("a, b :" + a + ", " + b + " must pe positive.");
-			return;
-		}
+		if (a < b)
+			throw new IllegalArgumentException("a: " + a + "must be bigger than b: " + b);
+		if (!(a > 0) || !(b > 0))
+			throw new IllegalArgumentException("a, b :" + a + ", " + b + " must pe positive.");
+
 		this.a = a;
 		this.b = b;
 
@@ -91,8 +87,7 @@ public class Ellipse {
 	 * @return r for the &theta;
 	 */
 	public double toR(double theta) {
-		return Math.sqrt(1 / (Math.cos(theta) * Math.cos(theta) / a / a + Math
-				.sin(theta) * Math.sin(theta) / b / b));
+		return Math.sqrt(1 / (Math.cos(theta) * Math.cos(theta) / a / a + Math.sin(theta) * Math.sin(theta) / b / b));
 	}
 
 	/**
@@ -119,7 +114,7 @@ public class Ellipse {
 	 * @return theta0からtheta1までの間の面積(亜扇形？) theta0 &lt; theta1
 	 */
 	public double getS(double theta0, double theta1) {
-		if (theta0 > theta1 || theta0 < 0 || theta1 > 2 * Math.PI) {
+		if (theta1 < theta0 || theta0 < 0 || 2 * Math.PI < theta1) {
 			System.out.println("theta0: " + theta0 + " must be [0, theta1]");
 			System.out.println("theta1: " + theta1 + " must be [theta0, 2*pi]");
 			return 0;
@@ -129,7 +124,7 @@ public class Ellipse {
 		double r0 = toR(theta0);
 		double x0 = r0 * Math.cos(theta0);
 		double y0 = r0 * Math.sin(theta0);
-		// System.out.println(r0+"  "+x0+"  "+y0);
+		// System.out.println(r0+" "+x0+" "+y0);
 
 		// (x1, y1) theta1
 		double r1 = toR(theta1);
@@ -143,11 +138,9 @@ public class Ellipse {
 		XY xy0 = new XY(x0, y0);
 		XY xy1 = new XY(x1, y1);
 
-		double theta = Math.acos(xy0.getInnerProduct(xy1) / xy0.getR()
-				/ xy1.getR());
-		if ((theta1 - theta0) > Math.PI)
+		double theta = Math.acos(xy0.getInnerProduct(xy1) / xy0.getR() / xy1.getR());
+		if (Math.PI < theta1 - theta0)
 			theta = 2 * Math.PI - theta;
-
 		return a * b * theta / 2;
 	}
 

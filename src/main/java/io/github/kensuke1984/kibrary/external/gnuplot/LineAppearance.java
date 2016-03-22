@@ -22,7 +22,6 @@ public class LineAppearance {
 	 */
 	private GnuplotColorNames linecolor = GnuplotColorNames.black;
 	
-	
 	/**
 	 * 線の太さ
 	 */
@@ -46,7 +45,6 @@ public class LineAppearance {
 	 * @param plotPart ????の部分　（例　1:3, 1:($3+$1)）
 	 */
 	public void setPlotPart(String plotPart) {
-			
 		this.plotPart = plotPart;
 		plotPartSetting = true;
 	}

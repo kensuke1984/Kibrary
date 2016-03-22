@@ -16,15 +16,15 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Information file for TIPSV and TISH
  * 
- * @version 0.1.6
+ * @version 0.1.6.1
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class SyntheticDSMInfo extends DSMheader {
 
-	protected final PolynomialStructure ps;
+	protected final PolynomialStructure structure;
 
 	protected final String outputDir;
 
@@ -52,7 +52,7 @@ public class SyntheticDSMInfo extends DSMheader {
 	public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTID eventID, Set<Station> stations, String outputDir,
 			double tlen, int np) {
 		super(tlen, np);
-		this.ps = structure;
+		this.structure = structure;
 		this.eventID = eventID;
 		this.stations = Collections.unmodifiableSet(stations);
 		this.outputDir = outputDir;
@@ -87,8 +87,8 @@ public class SyntheticDSMInfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toPSVlines();
-			Arrays.stream(structure).forEach(pw::println);
+			String[] structurePart = structure.toPSVlines();
+			Arrays.stream(structurePart).forEach(pw::println);
 
 			// source
 			pw.println("c parameter for the source");
@@ -131,8 +131,8 @@ public class SyntheticDSMInfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toSHlines();
-			Arrays.stream(structure).forEach(pw::println);
+			String[] structurePart = structure.toSHlines();
+			Arrays.stream(structurePart).forEach(pw::println);
 
 			// source
 			pw.println("c parameter for the source");

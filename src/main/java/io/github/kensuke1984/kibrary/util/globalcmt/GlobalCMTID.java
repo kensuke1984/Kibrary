@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * Identifier of an event listed in Global CMT project.
  * 
- * @version 0.1
+ * @version 0.1.0.1
  * @author Kensuke Konishi
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
@@ -102,8 +102,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 	public GlobalCMTID(String idStr) {
 		if (isGlobalCMTID(idStr))
 			id = idStr;
-		else
-			throw new IllegalArgumentException(idStr + " is an invalid id.");
+		throw new IllegalArgumentException(idStr + " is an invalid id.");
 	}
 
 	/**
@@ -157,7 +156,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 	 * @return {@link GlobalCMTData} written in catalogFile
 	 */
 	public static Set<GlobalCMTData> readCatalog(Path catalogFile) {
-		return GlobalCMTCatalog.read(catalogFile).stream().map(ndk -> (GlobalCMTData) ndk).collect(Collectors.toSet());
+		return GlobalCMTCatalog.read(catalogFile).stream().collect(Collectors.toSet());
 	}
 
 }

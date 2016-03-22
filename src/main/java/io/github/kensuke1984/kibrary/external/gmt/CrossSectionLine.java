@@ -7,7 +7,8 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 
 /**
  * クロスセクションの地表面でのパス
- * @author kensuke
+ * @version 0.0.1
+ * @author Kensuke Konishi
  *
  */
 public class CrossSectionLine {
@@ -26,7 +27,6 @@ public class CrossSectionLine {
 		this.azimuth = azimuth;
 		this.deltaTheta = deltaTheta;
 		setPoints();
-//		System.out.println(azimuth+" azizi");
 	}
 
 	/**

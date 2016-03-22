@@ -4,10 +4,9 @@
 package io.github.kensuke1984.kibrary.math.geometry;
 
 /**
- * @since 2014/02/04
- * @version 0.0.1
+ * @version 0.0.1.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Intersection {
@@ -18,25 +17,13 @@ public class Intersection {
 		this.lineSegment1 = lineSegment1;
 		this.lineSegment2 = lineSegment2;
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
+ 
 	@Override
 	public int hashCode() {
-		// final int prime = 31;
-		int result = lineSegment1.hashCode() + lineSegment2.hashCode();
-
-		return result;
+		return lineSegment1.hashCode() + lineSegment2.hashCode();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
+	 
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

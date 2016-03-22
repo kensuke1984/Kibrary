@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * 
  * Utility for an event folder
  * 
- * @version 0.0.8.2
+ * @version 0.0.8.3
  * 
  * @author Kensuke Konishi
  * 
@@ -101,7 +101,7 @@ public class EventFolder extends File {
 	 *             if an I/O error occurs
 	 */
 	public Set<SACFileName> sacFileSet() throws IOException {
-		try (Stream<Path> stream = Files.list(this.toPath())) {
+		try (Stream<Path> stream = Files.list(toPath())) {
 			return stream.filter(SACFileName::isSacFileName).map(SACFileName::new).collect(Collectors.toSet());
 		}
 	}
