@@ -35,11 +35,9 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * </p>
  * 
  * 
- * @since 2013/12/1
- * 
  * @version 0.2
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class PartialID extends BasicID {

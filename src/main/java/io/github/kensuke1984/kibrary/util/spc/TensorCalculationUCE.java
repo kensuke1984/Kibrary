@@ -52,7 +52,7 @@ class TensorCalculationUCE {
 	TensorCalculationUCE(SpcBody fp, SpcBody bp, WeightingFactor factor, double angle) {
 		this.fp = fp;
 		this.bp = bp;
-		this.np = fp.getNp();
+		np = fp.getNp();
 		this.factor = factor;
 		this.angle = angle;
 	}
@@ -89,7 +89,6 @@ class TensorCalculationUCE {
 							addPartial(partial, calcCrossCorrelation(u[p][q], eta[r][s]), factor);
 					}
 			}
-		// System.exit(0);
 		return partial;
 	}
 
@@ -104,7 +103,6 @@ class TensorCalculationUCE {
 	 * @return
 	 */
 	private double getFactor(int p, int q, int r, int s) {
-		// System.out.println("The factor p, q, r, s ("+p+", "+q+", "+r+", "+s);
 		return factor.getFactor(switchCoordinateSystem(p), switchCoordinateSystem(q), switchCoordinateSystem(r),
 				switchCoordinateSystem(s));
 	}
@@ -140,7 +138,6 @@ class TensorCalculationUCE {
 	private Complex[][][] rotateEta(Complex[][][] eta) {
 
 		// double angle = this.angle+Math.toRadians(195);
-
 		/*
 		 * テンソル（eta）をangleだけ回転させ新しいテンソル(reta)を返す。
 		 * 

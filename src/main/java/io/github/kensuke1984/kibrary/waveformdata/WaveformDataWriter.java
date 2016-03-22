@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * 
  * @version 0.4
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class WaveformDataWriter implements Closeable, Flushable {

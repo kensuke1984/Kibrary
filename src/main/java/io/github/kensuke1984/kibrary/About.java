@@ -15,7 +15,7 @@ import org.apache.commons.io.IOUtils;
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  * 
  * @author Kensuke Konishi
- * @version 0.3.0.2 
+ * @version 0.3.0.3
  * 
  * 
  */
@@ -34,14 +34,10 @@ final class About extends javax.swing.JFrame {
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">
 	private void initComponents() {
 		setTitle("About Kibrary");
-		jScrollPane1 = new javax.swing.JScrollPane();
-		jTextArea1 = new javax.swing.JTextArea();
+		jTextArea1 = new javax.swing.JTextArea(line, 5, 20);
+		jScrollPane1 = new javax.swing.JScrollPane(jTextArea1);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-		jTextArea1.setColumns(20);
-		jTextArea1.setRows(5);
-		jScrollPane1.setViewportView(jTextArea1);
-		jTextArea1.setText(line);
 		jTextArea1.setLineWrap(true);
 		jTextArea1.setEditable(false);
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -63,8 +59,7 @@ final class About extends javax.swing.JFrame {
 
 	static {
 		try {
-			line = String.join("\n",
-					IOUtils.readLines(About.class.getClassLoader().getResourceAsStream("LICENSE")));
+			line = String.join("\n", IOUtils.readLines(About.class.getClassLoader().getResourceAsStream("LICENSE")));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

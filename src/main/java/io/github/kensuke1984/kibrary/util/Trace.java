@@ -65,7 +65,7 @@ public class Trace {
 	 * @return n th {@link PolynomialFunction} fitted to this
 	 */
 	public PolynomialFunction toPolynomial(int n) {
-		if (x.length < (n + 1))
+		if (x.length <= n)
 			throw new IllegalArgumentException("n is too big");
 		if (n < 0)
 			throw new IllegalArgumentException("n must be positive..(at least)");
@@ -78,12 +78,9 @@ public class Trace {
 			for (int i = 0; i <= n; i++)
 				a.setEntry(j, i, Math.pow(x[j], i));
 		}
-		// System.out.println(Math.pow(3, 2));System.exit(0);
 		RealMatrix at = a.transpose();
 		a = at.multiply(a);
 		b = at.operate(b);
-		// System.out.println(a);
-		// System.out.println(new LUDecomposition(a).getDeterminant());
 		RealVector coef = new LUDecomposition(a).getSolver().solve(b);
 		PolynomialFunction pf = new PolynomialFunction(coef.toArray());
 
@@ -124,8 +121,6 @@ public class Trace {
 
 		double[] xi = Arrays.stream(j).parallel().mapToDouble(i -> x[i]).toArray();
 
-		// System.out.println(i+" "+xi[i]);
-
 		// c**n + c**n-1 + .....
 		RealVector cx = new ArrayRealVector(n + 1);
 
@@ -140,9 +135,6 @@ public class Trace {
 			bb.setEntry(i, y[j[i]]);
 			// b[i] = y[j[i]];
 		}
-		// System.out.println(matrix);
-		//
-		// System.out.println(cx);
 
 		return cx.dotProduct(new LUDecomposition(matrix).getSolver().solve(bb));
 	}

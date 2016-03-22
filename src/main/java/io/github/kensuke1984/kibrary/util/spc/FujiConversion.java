@@ -71,7 +71,6 @@ public final class FujiConversion {
 			double mu0 = structure.getMu(r);
 			SpcBody body = spectrum.getSpcBodyList().get(i);
 			SpcBody newBody = new SpcBody(3, np);
-			// System.out.println(body.getNumberOfComponent());
 			for (int ip = 0; ip < np + 1; ip++) {
 				Complex[] uQ = new Complex[body.getNumberOfComponent()];
 				double omegaOverOmega0 = (ip + 1) / omega0;
@@ -81,17 +80,12 @@ public final class FujiConversion {
 					double log = 2 * FastMath.log(omegaOverOmega0) / Math.PI;
 					double dmudmu0Real = (1 + q * log);
 					Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
-					// System.out.println(dmudmu0);
 					Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
-					// System.out.println(dmudq);
 					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
-					// System.out.println(iComponent + " " + uQ[iComponent]);
 				}
 				newBody.add(ip, uQ);
-				// System.exit(0);
 			}
 			spcBodyList.add(newBody);
-
 		}
 		DSMOutput dsmoutput = new DSMOutput() {
 

@@ -69,9 +69,7 @@ public class Matrix extends Array2DRowRealMatrix {
 			throws DimensionMismatchException {
 		if(v.getDimension() != getRowDimension())
 			throw new DimensionMismatchException(v.getDimension(), getRowDimension());
-		
 		return MatrixComputation.premultiply(v, this);
-		
 	}
 
 	@Override
@@ -79,8 +77,6 @@ public class Matrix extends Array2DRowRealMatrix {
 		if (arg0.getDimension() != getColumnDimension())
 			throw new DimensionMismatchException(arg0.getDimension(),
 					getColumnDimension());
-		// System.out
-		// .println("Matrix Vector Multiplication may take a long time so parallelized");
 		return MatrixComputation.operate(this, arg0);
 	}
 }

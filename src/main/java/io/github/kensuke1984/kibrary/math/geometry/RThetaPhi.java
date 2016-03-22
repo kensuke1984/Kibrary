@@ -8,9 +8,9 @@ package io.github.kensuke1984.kibrary.math.geometry;
  * if input phi is out of [0, 2*pi), it will be changed to a value in [0, 2*pi)
  * 
  * 
- * @version 0.0.2.1
+ * @version 0.0.2.2
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class RThetaPhi {
@@ -134,9 +134,8 @@ public class RThetaPhi {
 	 *            [rad]
 	 */
 	public RThetaPhi(double r, double theta, double phi) {
-		super();
 		if (!checkValidity(r, theta, phi))
-			return;
+			throw new IllegalArgumentException();
 		this.r = r;
 		this.theta = theta;
 		this.phi = phi;
@@ -148,14 +147,14 @@ public class RThetaPhi {
 	 */
 	private void fixPhi() {
 		if (phi < 0 || 2 * Math.PI <= phi)
-			System.out.println("Input phi " + phi + " (" + Math.toDegrees(phi) + " deg) is out of range");
+			System.err.println("Input phi " + phi + " (" + Math.toDegrees(phi) + " deg) is out of range");
 		while (phi < 0)
 			phi += 2 * Math.PI;
 
 		while (2 * Math.PI <= phi)
 			phi -= 2 * Math.PI;
 		if (phi < 0 || 2 * Math.PI <= phi)
-			System.out.println(phi + "(" + Math.toDegrees(phi) + "deg) is used");
+			System.err.println(phi + "(" + Math.toDegrees(phi) + "deg) is used");
 	}
 
 	/**
@@ -191,14 +190,13 @@ public class RThetaPhi {
 	 */
 	private static boolean checkValidity(double r, double theta, double phi) {
 		boolean validity = true;
-
 		if (r < 0) {
-			System.out.println("r :" + r + " must be positive.");
+			System.err.println("r :" + r + " must be positive.");
 			validity = false;
 		}
-		if (theta < 0 || theta > Math.PI) {
+		if (theta < 0 || Math.PI < theta) {
 			double degree = theta / Math.PI * 180.0;
-			System.out.println("theta :" + theta + " (" + degree
+			System.err.println("theta :" + theta + " (" + degree
 					+ ") must be between 0 and 90 deg but you have to input by radian");
 			validity = false;
 		}

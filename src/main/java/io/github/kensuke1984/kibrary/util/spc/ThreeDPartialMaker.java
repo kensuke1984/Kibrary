@@ -86,8 +86,6 @@ public class ThreeDPartialMaker {
 	 * @return {@link PartialSpectrumFile}
 	 */
 	public DSMOutput toSpectrum(PartialType type) {
-
-		// System.out.println(spcFileName);
 		double tlen = bp.tlen();
 		int np = bp.np();
 		int nbody = bp.nbody();
@@ -115,7 +113,7 @@ public class ThreeDPartialMaker {
 				body.add(ip, partialZ[ip], partialR[ip], partialT[ip]);
 			spcBodyList.add(body);
 		}
-		DSMOutput dsmoutput = new DSMOutput() {
+		return new DSMOutput() {
 
 			@Override
 			public double tlen() {
@@ -172,7 +170,6 @@ public class ThreeDPartialMaker {
 				return bodyR;
 			}
 		};
-		return dsmoutput;
 	}
 
 	/**
@@ -187,17 +184,15 @@ public class ThreeDPartialMaker {
 	 * @return Ui(t) u[t] 時間領域
 	 */
 	public double[] createPartial(SACComponent component, int iBody, PartialType type) {
-
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
 				: computeTensorCulculus(component, iBody, type);
 		if (null != sourceTimeFunction)
 			partial_frequency = sourceTimeFunction.convolve(partial_frequency);
 		Complex[] partial_time = toTimedomain(partial_frequency);
-		// System.out.println("ppppppp"+partial0[0].getReal());
 		double[] partialdouble = new double[npts];
 		for (int j = 0; j < npts; j++)
 			partialdouble[j] = partial_time[j].getReal();
-
+		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
 		return partialdouble;
 	}
 
@@ -361,9 +356,7 @@ public class ThreeDPartialMaker {
 			data[nnp + i + 1] = data[nnp - i - 1].conjugate();
 
 		// fast fourier transformation
-		data = fft.transform(data, TransformType.INVERSE); // check
-
-		return data;
+		return fft.transform(data, TransformType.INVERSE); // check
 
 	}
 

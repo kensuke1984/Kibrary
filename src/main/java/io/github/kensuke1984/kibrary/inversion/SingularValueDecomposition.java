@@ -16,10 +16,10 @@ import org.apache.commons.math3.linear.RealVector;
  * SVD inversion
  * 
  * 
- * @version 0.0.7
+ * @version 0.0.7.1
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  */
@@ -56,7 +56,6 @@ class SingularValueDecomposition extends InverseProblem {
 		double[] lambda = svdi.getSingularValues();
 		double sigmaD2 = sigmaD * sigmaD;
 		for (int i = 0; i < j + 1; i++) {
-			// double sigmaD2lambda2 = sigmaD2/lambda[i]/lambda[i];
 			double sigmaD2lambda2 = sigmaD2 / lambda[i];
 			RealMatrix v = MatrixUtils.createColumnRealMatrix(svdi.getV().getColumn(i));
 			covarianceMatrix = covarianceMatrix.add(v.multiply(v.transpose()).scalarMultiply(sigmaD2lambda2));
@@ -70,7 +69,6 @@ class SingularValueDecomposition extends InverseProblem {
 	public void compute() {
 		System.out.print("singular value decomposing AtA");
 		svdi = new org.apache.commons.math3.linear.SingularValueDecomposition(ata);
-		// System.exit(0);
 		System.out.println("  done");
 		RealMatrix vt = svdi.getVT();
 
@@ -97,7 +95,7 @@ class SingularValueDecomposition extends InverseProblem {
 				RealVector vi = vt.getRowVector(i);
 				ans = ans.add(vi.mapMultiply(p.getEntry(i)));
 			}
-			super.ans.setColumnVector(j, ans);
+			this.ans.setColumnVector(j, ans);
 		}
 
 	}
@@ -108,20 +106,16 @@ class SingularValueDecomposition extends InverseProblem {
 
 	public RealMatrix computeCovariance() {
 		return new LUDecomposition(ata).getSolver().getInverse(); // TODO
-		// return
-		// svdi.getV().multiply((svdi.getS().transpose().multiply(svdi.getS())).inverse()).multiply(svdi.getVT());
 	}
 
 	public SingularValueDecomposition(RealMatrix ata, RealVector atd) {
 		this.ata = ata;
 		this.atd = atd;
 		ans = MatrixUtils.createRealMatrix(ata.getColumnDimension(), ata.getColumnDimension());
-		// compute();
 	}
 
 	@Override
 	public RealMatrix getBaseVectors() {
-
 		return svdi.getVT();
 	}
 

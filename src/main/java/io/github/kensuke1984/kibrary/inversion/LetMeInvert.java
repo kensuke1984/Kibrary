@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0
+ * @version 2.0.1
  * 
  * @author Kensuke Konishi
  * 
@@ -157,18 +157,16 @@ public class LetMeInvert implements Operation {
 		setEquation();
 	}
 
-	public LetMeInvert(Path outPath, Set<Station> stationInformation, ObservationEquation equation) {
+	public LetMeInvert(Path outPath, Set<Station> stationSet, ObservationEquation equation) {
 		eq = equation;
-		this.stationSet = stationInformation;
+		this.stationSet = stationSet;
 		this.outPath = outPath;
 	}
 
 	private Path outPath;
 
 	private void setEquation() throws IOException {
-		System.out.print("Reading BasicDataFile");
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
-		System.out.println("  done");
 
 		// set Dvector
 		System.out.println("Creating D vector");

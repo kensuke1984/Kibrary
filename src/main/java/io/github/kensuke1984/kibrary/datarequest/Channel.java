@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.datarequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
@@ -94,11 +96,7 @@ public class Channel {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < this.channel.length - 1; i++)
-			sb.append(this.channel[i] + " ");
-		sb.append(this.channel[this.channel.length - 1]);
-		String channels = sb.toString();
+		String channels = Arrays.stream(channel).collect(Collectors.joining(" "));;
 		return stationName + " " + networkName + " " + toLine(startTime) + " " + toLine(endTime) + " " + channelNumber
 				+ " " + channels;
 	}

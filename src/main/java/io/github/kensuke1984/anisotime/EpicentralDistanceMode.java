@@ -29,24 +29,24 @@ class EpicentralDistanceMode extends Computation {
 	/**
 	 * @param travelTimeTool
 	 *            parent
-	 * @param phases
+	 * @param targetPhases
 	 *            Array of {@link PhaseName}s
 	 * @param epicentralDistance
 	 *            target delta [rad]
-	 * @param vs
+	 * @param structure
 	 *            structure
 	 * @param eventR
 	 *            radius (not depth) [km]
 	 * @param sv
 	 *            if true, p-SV mode
 	 */
-	EpicentralDistanceMode(ANISOtime travelTimeTool, Phase[] phases, double epicentralDistance, VelocityStructure vs,
+	EpicentralDistanceMode(ANISOtime travelTimeTool, Phase[] targetPhases, double epicentralDistance, VelocityStructure structure,
 			double eventR) {
 		super(travelTimeTool);
-		structure = vs;
+		this.structure = structure;
 		this.eventR = eventR;
 		this.epicentralDistance = epicentralDistance;
-		this.targetPhases = phases;
+		this.targetPhases = targetPhases;
 	}
 
 	@Override

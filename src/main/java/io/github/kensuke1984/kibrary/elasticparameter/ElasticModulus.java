@@ -6,10 +6,10 @@ package io.github.kensuke1984.kibrary.elasticparameter;
  * 
  * ijklのセットは何に属するか ijkl &rarr; 1, 2, 3
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * 
  */
 public class ElasticModulus {
@@ -17,19 +17,19 @@ public class ElasticModulus {
 	/**
 	 * i=(1,2,3)
 	 */
-	private int i;
+	private final int i;
 	/**
 	 * j=(1,2,3)
 	 */
-	private int j;
+	private final int j;
 	/**
 	 * k=(1,2,3)
 	 */
-	private int k;
+	private final int k;
 	/**
 	 * l=(1,2,3)
 	 */
-	private int l;
+	private final int l;
 
 	private ElasticIJKL ijkl;
 	private ElasticMN mn;
@@ -77,13 +77,12 @@ public class ElasticModulus {
 	/**
 	 * check if n is valid for ijkl.
 	 * 
-	 * @param n must be 1,2 or 3
+	 * @param n
+	 *            must be 1,2 or 3
 	 * @return boolean
 	 */
 	private static boolean checkComponents(int n) {
-		if (n < 1 || 3 < n)
-			return false;
-		return true;
+		return 1 <= n && n <= 3;
 	}
 
 	/**
@@ -109,9 +108,8 @@ public class ElasticModulus {
 			ti = TIModulusEnum.getTI(mn);
 			iso = IsotropicModulusEnum.getIsotropic(mn);
 		} else {
-			System.out.println("Input (i, j, k, l) :" + i + ", " + j + ", " + k + ", " + l + " are invalid.");
-			System.out.println("They must be (1, 2, 3)");
-			return;
+			throw new IllegalArgumentException(
+					"Input (i, j, k, l) :" + i + ", " + j + ", " + k + ", " + l + " are invalid.");
 		}
 	}
 

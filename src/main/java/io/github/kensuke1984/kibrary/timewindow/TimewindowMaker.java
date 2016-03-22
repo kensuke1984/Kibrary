@@ -106,16 +106,15 @@ public class TimewindowMaker implements Operation {
 				.collect(Collectors.toSet());
 		usePhases = phaseSet(property.getProperty("usePhases"));
 		exPhases = phaseSet(property.getProperty("exPhases"));
-		
+
 		frontShift = Double.parseDouble(property.getProperty("frontShift"));
 		rearShift = Double.parseDouble(property.getProperty("rearShift"));
 
 	}
 
 	private static Set<TauPPhaseName> phaseSet(String arg) {
-		if (arg == null || arg.equals(""))
-			return Collections.emptySet();
-		return Arrays.stream(arg.split("\\s+")).map(TauPPhaseName::valueOf).collect(Collectors.toSet());
+		return arg == null || arg.equals("") ? Collections.emptySet()
+				: Arrays.stream(arg.split("\\s+")).map(TauPPhaseName::valueOf).collect(Collectors.toSet());
 	}
 
 	/**
@@ -275,7 +274,7 @@ public class TimewindowMaker implements Operation {
 		Timewindow[] exWindows = exPhaseTime == null ? null
 				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - frontShift, time + rearShift))
 						.sorted().toArray(Timewindow[]::new);
-		
+
 		windows = mergeWindow(windows);
 
 		if (exWindows == null)

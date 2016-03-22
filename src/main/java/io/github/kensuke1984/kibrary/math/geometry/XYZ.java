@@ -5,16 +5,10 @@ import io.github.kensuke1984.kibrary.util.Location;
 /**
  * 3次元直交座標 cartesian 右手系
  * 
- * 3-D Cartesian coordinates
- * right-handed system
+ * 3-D Cartesian coordinates right-handed system
  * 
- * 
- * 
- * 
- * @version 0.0.2
- *  
- * 
- * @author Kensuke
+ * @version 0.0.2.1
+ * @author Kensuke Konishi
  * 
  */
 public class XYZ extends XY {
@@ -46,8 +40,10 @@ public class XYZ extends XY {
 	/**
 	 * X軸中心にtheta回転させる
 	 * 
-	 * @param theta &theta;[rad]
-	 * @return {@link XYZ} created by rotating this by the theta about the x axis
+	 * @param theta
+	 *            &theta;[rad]
+	 * @return {@link XYZ} created by rotating this by the theta about the x
+	 *         axis
 	 */
 	public XYZ rotateaboutX(double theta) {
 		double y = this.y * Math.cos(theta) - this.z * Math.sin(theta);
@@ -58,8 +54,10 @@ public class XYZ extends XY {
 	/**
 	 * Y軸中心にtheta回転させる
 	 * 
-	 * @param theta &theta;[rad]
-	 * @return {@link XYZ} created by rotating this by the theta about the y axis
+	 * @param theta
+	 *            &theta;[rad]
+	 * @return {@link XYZ} created by rotating this by the theta about the y
+	 *         axis
 	 */
 	public XYZ rotateaboutY(double theta) {
 		double z = this.z * Math.cos(theta) - this.x * Math.sin(theta);
@@ -70,8 +68,10 @@ public class XYZ extends XY {
 	/**
 	 * Z軸中心にtheta回転させる
 	 * 
-	 * @param theta &theta;[rad]
-	 * @return {@link XYZ} created by rotating this by the theta about the z axis
+	 * @param theta
+	 *            &theta;[rad]
+	 * @return {@link XYZ} created by rotating this by the theta about the z
+	 *         axis
 	 */
 	public XYZ rotateaboutZ(double theta) {
 		double x = this.x * Math.cos(theta) - this.y * Math.sin(theta);
@@ -80,31 +80,24 @@ public class XYZ extends XY {
 	}
 
 	/**
-	 * @param xyz target
+	 * @param xyz
+	 *            target
 	 * @return xyzとの距離
 	 */
 	public double getDistance(XYZ xyz) {
-		return Math.sqrt((x - xyz.x) * (x - xyz.x) + (y - xyz.y) * (y - xyz.y)
-				+ (z - xyz.z) * (z - xyz.z));
+		return Math.sqrt((x - xyz.x) * (x - xyz.x) + (y - xyz.y) * (y - xyz.y) + (z - xyz.z) * (z - xyz.z));
 	}
 
 	public static RThetaPhi toSphericalCoordinate(double x, double y, double z) {
-		if (x == 0 && y == 0 && z == 0) {
-			System.out
-					.println("input coordinate x, y, z locates at the origin point.");
-			return null;
-		}
-		// System.out.println(x+" "+y+" "+z+" hi");
-		return new RThetaPhi(RThetaPhi.toRfromCartesian(x, y, z),
-				RThetaPhi.toTHETAfromCartesian(x, y, z),
+		if (x == 0 && y == 0 && z == 0)
+			throw new IllegalArgumentException("input coordinate x, y, z locates at the origin point.");
+		return new RThetaPhi(RThetaPhi.toRfromCartesian(x, y, z), RThetaPhi.toTHETAfromCartesian(x, y, z),
 				RThetaPhi.toPHIfromCartesian(x, y, z));
 	}
 
 	public Location getLocation() {
 		RThetaPhi rtp = toSphericalCoordinate(x, y, z);
-		// System.out.println(rtp);
-		Location location = new Location(Location.toLatitude(rtp.getTheta()),
-				Math.toDegrees(rtp.getPhi()), rtp.getR());
+		Location location = new Location(Location.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
 		return location;
 	}
 

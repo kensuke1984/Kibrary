@@ -12,9 +12,9 @@ import java.util.Arrays;
  * {@link #contains(Point2D)} modified.
  * 
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class ConvexPolygon {
@@ -38,18 +38,17 @@ public class ConvexPolygon {
 	 */
 	public ConvexPolygon(Point2D... vertices) {
 		int size = vertices.length;
-		if (size < 3) { // 角数が3未満の場合はエラー
+		if (size < 3)   // 角数が3未満の場合はエラー
 			throw new IllegalArgumentException();
-		}
+		 
 		this.vertices = vertices;
 		edges = new LineSegment[size];
 
 		// 基準となるCCW値を計算
 		double ccw0 = XY.ccw(vertices[0], vertices[1], vertices[2]);
-		// System.out.println(ccw0);
-		if (ccw0 == 0) { // ゼロの場合はエラー
+		if (ccw0 == 0)  // ゼロの場合はエラー
 			throw new IllegalArgumentException("Polygon is not convex.");
-		}
+		 
 		for (int i = 1; i < size; i++) {
 			Point2D v1 = vertices[i]; // i番目の頂点
 			Point2D v2 = vertices[(i + 1) % size]; // v1の次の頂点
@@ -101,7 +100,7 @@ public class ConvexPolygon {
 			double cross = XY.cross(v1, v2);
 			crossSum += cross; // 外積を加算
 		}
-		return Math.abs(crossSum / 2.0);
+		return Math.abs(crossSum / 2);
 	}
 
 	/**
@@ -117,7 +116,6 @@ public class ConvexPolygon {
 
 		double x = point.x;
 		double y = point.y;
-		// System.out.println(x + " " + y);
 
 		// yが最小値-最大値の範囲外の場合はfalseを返す
 		if (y < minY || maxY < y)

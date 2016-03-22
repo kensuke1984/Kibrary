@@ -101,6 +101,7 @@ public class Partial1DDatasetMaker implements Operation {
 	private Set<SACComponent> components;
 
 	private Path workPath;
+
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
@@ -253,7 +254,7 @@ public class Partial1DDatasetMaker implements Operation {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			Path spcFolder = eventDir.toPath().resolve(Partial1DDatasetMaker.this.modelName); // SPCの入っているフォルダ
+			Path spcFolder = eventDir.toPath().resolve(modelName); // SPCの入っているフォルダ
 
 			if (!Files.exists(spcFolder)) {
 				System.err.println(spcFolder + " does not exist...");
@@ -344,7 +345,8 @@ public class Partial1DDatasetMaker implements Operation {
 			double[] cutU = sampleOutput(filteredUt, t);
 
 			PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-					1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType, cutU);
+					1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
+					cutU);
 			try {
 				partialDataWriter.addPartialID(pid);
 				add();
@@ -505,9 +507,8 @@ public class Partial1DDatasetMaker implements Operation {
 	public static void main(String[] args) throws IOException {
 		Partial1DDatasetMaker pdm = new Partial1DDatasetMaker(Property.parse(args));
 
-		// System.exit(0);
-		if (!pdm.canGO())
-			System.exit(0);
+		if (!Files.exists(pdm.timewindowPath))
+			throw new NoSuchFileException(pdm.timewindowPath.toString());
 
 		pdm.run();
 	}
@@ -525,7 +526,6 @@ public class Partial1DDatasetMaker implements Operation {
 		String dateString = Utilities.getTemporaryString();
 
 		logPath = workPath.resolve("partial1D" + dateString + ".log");
-		// System.exit(0);
 
 		System.err.println(Partial1DDatasetMaker.class.getName() + " is going.");
 		long startTime = System.nanoTime();
@@ -550,26 +550,24 @@ public class Partial1DDatasetMaker implements Operation {
 			readSourceTimeFunctions();
 
 		// filter設計
-		System.out.println("Designing filter.");
+		System.err.println("Designing filter.");
 		setBandPassFilter();
 		writeLog(filter.toString());
 		setPerturbationLocation();
 		stationSet = StationInformationFile.read(stationInformationFilePath);
 		idSet = Utilities.globalCMTIDSet(workPath);
 		// information about output partial types
-		writeLog(partialTypes.stream().map(type -> type.toString())
+		writeLog(partialTypes.stream().map(Object::toString)
 				.collect(Collectors.joining(" ", "Computing for ", "")));
 
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 
-		// System.exit(0);
 
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 
 		// create ThreadPool
 		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-		// System.exit(0);
 
 		Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
 		Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
@@ -587,7 +585,7 @@ public class Partial1DDatasetMaker implements Operation {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println();
+		System.err.println();
 		String endLine = Partial1DDatasetMaker.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime);
 		System.err.println(endLine);
@@ -618,15 +616,6 @@ public class Partial1DDatasetMaker implements Operation {
 		}
 	}
 
-	private boolean canGO() {
-		boolean cango = true;
-		if (!Files.exists(timewindowPath)) {
-			new NoSuchFileException(timewindowPath.toString()).printStackTrace();
-			cango = false;
-		}
-
-		return cango;
-	}
 
 	@Override
 	public Path getWorkPath() {

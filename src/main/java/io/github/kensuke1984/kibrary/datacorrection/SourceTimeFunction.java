@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
  * @author Kensuke Konishi
  *
@@ -122,7 +122,7 @@ public abstract class SourceTimeFunction {
 		this.np = np;
 		this.tlen = tlen;
 		this.samplingHz = samplingHz;
-		this.nptsInTimeDomain = np * 2 * computeLsmooth(np, tlen, samplingHz);
+		nptsInTimeDomain = np * 2 * computeLsmooth(np, tlen, samplingHz);
 	}
 
 	protected static boolean checkValues(int np, double tlen, double samplingHz) {

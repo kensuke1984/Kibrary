@@ -11,7 +11,7 @@ import java.util.stream.Stream;
  * 
  * Bit bucket is /dev/null and nul for unix and windows system, respectively.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.1
  * 

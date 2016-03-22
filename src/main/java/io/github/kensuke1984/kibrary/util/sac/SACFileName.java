@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * @version 2.0
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACFileName extends File {
@@ -168,7 +168,6 @@ public class SACFileName extends File {
 		String[] part = fileName.split("\\.");
 
 		if (part.length != 7 && part.length != 3)
-			// System.out.println(fileName + " is not in SacFileName format.");
 			return false;
 
 		// station name must be 8 letters or shorter.

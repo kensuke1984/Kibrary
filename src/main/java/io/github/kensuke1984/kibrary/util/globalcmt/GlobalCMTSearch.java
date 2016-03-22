@@ -49,7 +49,7 @@ public class GlobalCMTSearch {
 	 * @return all global CMT IDs satisfying the input predicate
 	 */
 	public static Set<GlobalCMTID> search(Predicate<GlobalCMTData> predicate) {
-		return GlobalCMTCatalog.allNDK().stream().filter(predicate).map(n -> n.getGlobalCMTID())
+		return GlobalCMTCatalog.allNDK().stream().filter(predicate).map(NDK::getGlobalCMTID)
 				.collect(Collectors.toSet());
 	}
 
@@ -278,7 +278,7 @@ public class GlobalCMTSearch {
 	 * @return Set of {@link GlobalCMTID} which fulfill queries
 	 */
 	public Set<GlobalCMTID> search() {
-		return GlobalCMTCatalog.allNDK().parallelStream().filter(ndk -> ndk.fulfill(this)).map(ndk -> ndk.getID())
+		return GlobalCMTCatalog.allNDK().parallelStream().filter(ndk -> ndk.fulfill(this)).map(NDK::getID)
 				.collect(Collectors.toSet());
 	}
 
@@ -314,7 +314,7 @@ public class GlobalCMTSearch {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		System.out.println(id+" is chosen.");
+		System.out.println(id + " is chosen.");
 		return id;
 
 	}
