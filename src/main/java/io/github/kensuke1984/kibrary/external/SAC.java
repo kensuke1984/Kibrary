@@ -11,25 +11,25 @@ import java.io.PrintWriter;
  * Sac process made by SacLauncher
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  * @version 0.1.0
  * 
  */
-public class Sac extends ExternalProcess implements Closeable {
+public class SAC extends ExternalProcess implements Closeable {
 
-	private Sac(Process process) {
+	private SAC(Process process) {
 		super(process);
 		standardInput = new PrintWriter(super.standardInput);
 	}
 
-	public static Sac createProcess() throws IOException {
+	public static SAC createProcess() throws IOException {
 		ProcessBuilder builder = null;
 		if (System.getenv("SACAUX") != null && isInPath("sac"))
 			builder = new ProcessBuilder("sac");
 		else
 			throw new RuntimeException("No sac in PATH or No SACAUX is set.");
-		return new Sac(builder.start());
+		return new SAC(builder.start());
 	}
 
 	/**
