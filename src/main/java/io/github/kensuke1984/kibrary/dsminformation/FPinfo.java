@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -13,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 /**
  * Information file for computation of forward propagation.
  * 
- * @version 0.0.4.2
+ * @version 0.0.4.3
  * 
  * @author Kensuke Konishi
  */
@@ -22,7 +23,7 @@ public class FPinfo extends DSMheader {
 	private GlobalCMTData event;
 	private HorizontalPosition[] perturbationPoint;
 	private double[] perturbationPointR;
-	private PolynomialStructure ps;
+	private PolynomialStructure structure;
 	private String outputDir;
 
 	/**
@@ -30,18 +31,18 @@ public class FPinfo extends DSMheader {
 	 *            source
 	 * @param outputDir
 	 *            output folder
-	 * @param ps
+	 * @param structure
 	 *            structure
 	 * @param tlen
 	 *            must be a power of 2 (2<sup>n</sup>)/10
 	 * @param np
 	 *            must be a power of 2 (2<sup>n</sup>)
 	 */
-	public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure ps, double tlen, int np) {
+	public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure structure, double tlen, int np) {
 		super(tlen, np);
 		this.event = event;
 		this.outputDir = outputDir;
-		this.ps = ps;
+		this.structure = structure;
 	}
 
 	public void setPerturbationPoint(HorizontalPosition[] perturbationPoint) {
@@ -54,9 +55,13 @@ public class FPinfo extends DSMheader {
 
 	/**
 	 * Write an information file for shfp.
-	 * @param outPath Path for the file
-	 * @param options for opening the file
-	 * @throws IOException If an I/O error happens
+	 * 
+	 * @param outPath
+	 *            Path for the file
+	 * @param options
+	 *            for opening the file
+	 * @throws IOException
+	 *             If an I/O error happens
 	 */
 	public void writeSHFP(Path outPath, OpenOption... options) throws IOException {
 		// if(true)return;
@@ -66,15 +71,14 @@ public class FPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toSHlines();
-			Arrays.stream(structure).forEach(pw::println);
+			String[] structurePart = structure.toSHlines();
+			Arrays.stream(structurePart).forEach(pw::println);
 
 			// source
 			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
 					+ event.getCmtLocation().getLongitude());
 			double[] mt = event.getCmt().getDSMmt();
-			Arrays.stream(mt).forEach(d -> pw.print(d + " "));
-			pw.println();
+			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")));
 
 			// output info
 			pw.println("c output directory");
@@ -96,9 +100,13 @@ public class FPinfo extends DSMheader {
 
 	/**
 	 * Write an information file for psvfp
-	 * @param outPath Path for the file
-	 * @param options for opening the file
-	 * @throws IOException If an I/O error happens
+	 * 
+	 * @param outPath
+	 *            Path for the file
+	 * @param options
+	 *            for opening the file
+	 * @throws IOException
+	 *             If an I/O error happens
 	 */
 	public void writePSVFP(Path outPath, OpenOption... options) throws IOException {
 		// if(true)return;
@@ -108,15 +116,14 @@ public class FPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toPSVlines();
-			Arrays.stream(structure).forEach(pw::println);
+			String[] structurePart = structure.toPSVlines();
+			Arrays.stream(structurePart).forEach(pw::println);
 
 			// source
 			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
 					+ event.getCmtLocation().getLongitude());
 			double[] mt = event.getCmt().getDSMmt();
-			Arrays.stream(mt).forEach(d -> pw.print(d + " "));
-			pw.println();
+			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")));
 
 			// output info
 			pw.println("c output directory");

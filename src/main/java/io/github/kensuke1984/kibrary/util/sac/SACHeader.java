@@ -7,9 +7,9 @@ import java.io.IOException;
  * Information in the header parts of a SAC file.
  * <p>This class is <b>IMMUTABLE</b></p>
  * 
- * @version 2.0
+ * @version 2.0.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACHeader implements SACHeaderData, Cloneable {
@@ -17,9 +17,7 @@ class SACHeader implements SACHeaderData, Cloneable {
 	@Override
 	public SACHeader clone() {
 		try {
-			SACHeader sh = (SACHeader) super.clone();
-			return sh;
-
+			return (SACHeader) super.clone();
 		} catch (Exception e) {
 			throw new RuntimeException("UNEXPecTEd");
 		}
@@ -177,7 +175,6 @@ class SACHeader implements SACHeaderData, Cloneable {
 			knetwk = stream.readString(8);
 			KDATRD = stream.readString(8);
 			KINST = stream.readString(8);
-
 		}
 		return;
 	}
@@ -560,9 +557,6 @@ class SACHeader implements SACHeaderData, Cloneable {
 		default:
 			throw new RuntimeException(sacHeaderEnum + " is unanticipated.");
 		}
-		// double value = Float.parseFloat(header.get(she));
-		// value = Math.round(value * 10000) / 10000.0;
-		// return value;
 	}
 
 	@Override
@@ -607,7 +601,6 @@ class SACHeader implements SACHeaderData, Cloneable {
 		default:
 			throw new RuntimeException("Unexpected happens.");
 		}
-		// return Integer.parseInt(header.get(she));
 	}
 
 	@Override
@@ -690,9 +683,7 @@ class SACHeader implements SACHeaderData, Cloneable {
 			return sh;
 		default:
 			throw new RuntimeException("Unanticipated happens on " + sacHeaderEnum);
-			// return null;
 		}
-
 	}
 
 	@Override

@@ -10,7 +10,7 @@ import org.apache.commons.math3.linear.RealVector;
  * Names of methods for inversion. such as conjugate gradient method, singular
  * value decomposition.. etc
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 public enum InverseMethodEnum {

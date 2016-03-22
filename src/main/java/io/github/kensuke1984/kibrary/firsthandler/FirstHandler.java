@@ -43,9 +43,9 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * 
- * @version 0.2.1
+ * @version 0.2.1.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class FirstHandler implements Operation {
@@ -134,7 +134,6 @@ public class FirstHandler implements Operation {
 		fh.run();
 		System.err.println(
 				FirstHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
-
 	}
 
 	@Override
@@ -156,7 +155,7 @@ public class FirstHandler implements Operation {
 
 		// creates environment (make output folder ...)
 		Files.createDirectories(outPath);
-		System.out.println("Output directory is " + outPath);
+		System.err.println("Output directory is " + outPath);
 
 		Set<SeedSAC> seedSacs = seedPaths.stream().map(seedPath -> {
 			try {

@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,12 +26,9 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * TODO 名前のチェック　validity
  * 
- * @version 0.1.0
+ * @version 0.1.1
  * 
- * 
- * 
- * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class PerturbationPoint extends HorizontalPoint {
@@ -88,11 +87,10 @@ public class PerturbationPoint extends HorizontalPoint {
 	}
 
 	// TODO
-	public void createUnknownParameterSetFile(File outFile) {
-		if (outFile.exists()) {
-			System.out.println(outFile + " already exists");
-			System.exit(0);
-		}
+	public void createUnknownParameterSetFile(File outFile) throws FileAlreadyExistsException {
+		if (outFile.exists()) 
+			throw new FileAlreadyExistsException(outFile.getPath());
+		
 		computeVolumes();
 
 		try (PrintWriter pw = new PrintWriter(new BufferedWriter(
@@ -150,8 +148,10 @@ public class PerturbationPoint extends HorizontalPoint {
 
 	/**
 	 * @param args dir dR dLatitude dLongitude
+	 * @throws FileAlreadyExistsException 
+	 * @throws NoSuchFileException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
 		if (args.length != 4) {
 			System.out.println("dir dR dLatitude dLongitude");
 			return;
@@ -181,9 +181,10 @@ public class PerturbationPoint extends HorizontalPoint {
 	 * @param r array  of radius
 	 * @param horizontalInfo file for {@link HorizontalPoint}
 	 * @param out for output
+	 * @throws NoSuchFileException 
 	 */
 	public static void createPerturbationPoint(double[] r, File horizontalInfo,
-			File out) {
+			File out) throws NoSuchFileException {
 		HorizontalPoint hp = new HorizontalPoint(horizontalInfo);
 		Set<String> pointNameSet = hp.getHorizontalPointNameSet();
 		// Map<String, HorizontalPosition> pointMap = hp.getPerPointMap();
@@ -203,9 +204,10 @@ public class PerturbationPoint extends HorizontalPoint {
 	/**
 	 * @param horizontalPointFile {@link File} for {@link HorizontalPoint}
 	 * @param perturbationPointFile {@link File} for link PerturbationPoint}
+	 * @throws NoSuchFileException 
 	 */
 	public PerturbationPoint(File horizontalPointFile,
-			File perturbationPointFile) {
+			File perturbationPointFile) throws NoSuchFileException {
 		super(horizontalPointFile);
 		this.perturbationPointFile = perturbationPointFile;
 		readPerturbationPointFile();

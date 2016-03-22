@@ -67,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * <p>
  * Because of DSM condition, stations can not have the same name...
  * 
- * @version 2.3.0.1
+ * @version 2.3.0.2
  * 
  * @author Kensuke Konishi
  */
@@ -215,16 +215,12 @@ public class PartialDatasetMaker implements Operation {
 		}
 
 		private SourceTimeFunction getSourceTimeFunction() {
-			if (sourceTimeFunction == 0)
-				return null;
-			return userSourceTimeFunctions.get(id);
+			return sourceTimeFunction == 0 ? null : userSourceTimeFunctions.get(id);
 		}
 
 		@Override
 		public void run() {
 			String stationName = bp.getSourceID();
-			// Station station = new Station(stationName,
-			// bp.getSourceLocation(), "DSM");
 			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
 				throw new RuntimeException("There may be a station with the same name but other networks.");
 

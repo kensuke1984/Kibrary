@@ -10,8 +10,8 @@ import org.apache.commons.math3.linear.RealVector;
  * Conjugate gradient method
  * 
  * 
- * @version 0.0.3 https://en.wikipedia.org/wiki/Conjugate_gradient_method
- * @author kensuke
+ * @version 0.0.3.1
+ * @author Kensuke Konishi
  * @see <a
  *      href=https://ja.wikipedia.org/wiki/%E5%85%B1%E5%BD%B9%E5%8B%BE%E9%85%8D%E6%B3%95>Japanese wiki</a> <a
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
@@ -86,13 +86,11 @@ class ConjugateGradientMethod extends InverseProblem {
 
 	@Override
 	public RealMatrix computeCovariance(double sigmaD, int j) {
-		RealMatrix ata = this.ata;
 		RealMatrix covariance = MatrixUtils.createRealMatrix(getParN(), getParN());
 		double sigmaD2 = sigmaD * sigmaD;
 		for (int i = 0; i < j + 1; i++) {
+			double paap = p.getColumnVector(i).dotProduct(ata.operate(p.getColumnVector(i)));
 			RealMatrix p = this.p.getColumnMatrix(i);
-			double paap = this.p.getColumnVector(i).dotProduct(ata.operate(this.p.getColumnVector(i)));
-			// System.out.println("paap:"+i+" "+paap);
 			double sigmaD2paap = sigmaD2 / paap;
 			covariance = covariance.add(p.multiply(p.transpose()).scalarMultiply(sigmaD2paap));
 		}

@@ -120,7 +120,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		addListners();
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
-		this.setLayout(layout);
+		setLayout(layout);
 		layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 
 				.addGroup(layout.createSequentialGroup().addComponent(jLabelMostImportant)

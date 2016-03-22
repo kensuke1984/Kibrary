@@ -10,7 +10,7 @@ import java.util.List;
  * Rayparameter mode
  * 
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  */
 final class RayparameterMode extends Computation {
@@ -69,7 +69,6 @@ final class RayparameterMode extends Computation {
 		raypaths = raypathList;
 		phases = phaseList;
 		travelTimeTool.computed(raypath);
-
 		showResult(raypaths, phases);
 	}
 }

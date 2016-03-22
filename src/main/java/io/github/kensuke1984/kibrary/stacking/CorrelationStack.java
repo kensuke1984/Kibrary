@@ -83,12 +83,6 @@ public class CorrelationStack implements Stack {
 	public CorrelationStack(String stationName, GlobalCMTID id, SACComponent component, WaveformType type, Trace trace,
 			Timewindow window, Set<TimewindowInformation> timeWindowInformationSet) {
 		timewindowInformationSet = timeWindowInformationSet;
-		// if (!timeWindowInformationFile.contains(stationName, eventName,
-		// component)) {
-		// System.out.println("No time window information for " + stationName
-		// + " " + eventName + " " + component);
-		// throw new RuntimeException();
-		// }
 		double start = window.getStartTime();
 		double end = window.getEndTime();
 		double startOfTrace = trace.getX()[0];
@@ -96,14 +90,8 @@ public class CorrelationStack implements Stack {
 		if (start < startOfTrace || endOfTrace < end)
 			throw new RuntimeException("input window [" + start + ", " + end
 					+ "] must be within the one of input trace [" + startOfTrace + ", " + endOfTrace + "]");
-
-		// TimeWindow tw = timeWindowInformationFile.getTimeWindow(station,
-		// eventName, component)[0];
-		// double start = tw.getStartTime() - 10;
-		// double end = tw.getEndTime() + 10;
 		standardTrace = trace.cutWindow(window);
 		shiftMap.put(new Key(stationName, id, component), 0);
-		// System.out.println(this.standardTrace.getX().length);System.exit(0);
 	}
 
 	/**
@@ -153,14 +141,11 @@ public class CorrelationStack implements Stack {
 		private GlobalCMTID id;
 		private SACComponent component;
 
-		// private WaveformType type;
 
 		private Key(String stationName, GlobalCMTID id, SACComponent component) {
-			super();
 			this.stationName = stationName;
 			this.id = id;
 			this.component = component;
-			// this.type = type;
 		}
 
 		private CorrelationStack getOuterType() {

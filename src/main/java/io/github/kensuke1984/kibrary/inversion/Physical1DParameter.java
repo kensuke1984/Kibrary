@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * @version 0.0.3
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class Physical1DParameter implements UnknownParameter {

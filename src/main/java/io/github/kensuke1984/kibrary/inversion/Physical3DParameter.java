@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * @version 0.0.3
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public class Physical3DParameter implements UnknownParameter {

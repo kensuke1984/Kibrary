@@ -117,7 +117,7 @@ public interface SACData extends SACHeaderData {
 			stream.writeSACDouble(getValue(SACHeaderEnum.num67)); // 67
 			stream.writeSACDouble(getValue(SACHeaderEnum.num68)); // 68
 			stream.writeSACDouble(getValue(SACHeaderEnum.num69)); // 69
-			// / int
+			// int
 			stream.writeSACInt(getInt(SACHeaderEnum.NZYEAR)); // 70
 			stream.writeSACInt(getInt(SACHeaderEnum.NZJDAY)); // 71
 			stream.writeSACInt(getInt(SACHeaderEnum.NZHOUR)); // 72
@@ -133,7 +133,7 @@ public interface SACData extends SACHeaderData {
 			stream.writeSACInt(getInt(SACHeaderEnum.NXSIZE)); // 82
 			stream.writeSACInt(getInt(SACHeaderEnum.NYSIZE)); // 83
 			stream.writeSACInt(getInt(SACHeaderEnum.num84)); // 84
-			// /////////enumerized
+			// enumerized
 			stream.writeSACInt(getSACEnumerated(SACHeaderEnum.IFTYPE)); // 85
 			stream.writeSACInt(getSACEnumerated(SACHeaderEnum.IDEP)); // 86
 			stream.writeSACInt(getSACEnumerated(SACHeaderEnum.IZTYPE)); // 87
@@ -223,7 +223,6 @@ public interface SACData extends SACHeaderData {
 	 */
 	default Trace createTrace() {
 		double delta = getValue(SACHeaderEnum.DELTA);
-
 		double b = (int) (getValue(SACHeaderEnum.B) / delta) * delta;
 		int npts = getInt(SACHeaderEnum.NPTS);
 		double[] timeAxis = IntStream.range(0, npts).parallel()

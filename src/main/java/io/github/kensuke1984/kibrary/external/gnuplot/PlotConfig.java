@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.external.gnuplot;
 
+/**
+ * @author Kensuke Konishi
+ * @version 0.0.1
+ */
 public class PlotConfig {
 
 	private double [] xrange;

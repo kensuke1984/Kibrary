@@ -10,7 +10,7 @@ package io.github.kensuke1984.kibrary.math.geometry;
  * 
  * @version 0.0.4
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class LineSegment {
@@ -47,7 +47,6 @@ class LineSegment {
 		double t1 = line.a * pointA.x + line.b * pointA.y + line.c; // 端点1の座標を直線の式に代入
 		double t2 = line.a * pointB.x + line.b * pointB.y + line.c; // 端点2の座標を直線の式に代入
 		return t1 * t2 <= 0;
-		// return (t1 <= 0 && t2 >= 0) || (t1 >= 0 && t2 <= 0); // 不等式の判定
 	}
 
 	/**
@@ -56,10 +55,7 @@ class LineSegment {
 	 * @return an intersection point or null if they do not intersect
 	 */
 	public Point2D getIntersectionPoint(Line line) {
-		if (!intersects(line)) {
-			return null; // 交差しない場合はnullを返す
-		}
-		return line.getIntersectionPoint(toLine());
+		return intersects(line) ? line.getIntersectionPoint(toLine()) : null; // 交差しない場合はnullを返す
 	}
 
 	/**
@@ -68,10 +64,8 @@ class LineSegment {
 	 * @return intersection point or null if they do not intersect
 	 */
 	public Point2D getIntersectionPoint(LineSegment lineSegment) {
-		if (!intersects(lineSegment)) {
-			return null; // 交差しない場合はnullを返す
-		}
-		return lineSegment.toLine().getIntersectionPoint(toLine());
+		// 交差しない場合はnullを返す
+		return intersects(lineSegment) ? lineSegment.toLine().getIntersectionPoint(toLine()) : null;
 	}
 
 	/**
@@ -84,12 +78,13 @@ class LineSegment {
 	private boolean bothSides(LineSegment s) {
 		double ccw1 = XY.ccw(pointA, s.pointA, pointB);
 		double ccw2 = XY.ccw(pointA, s.pointB, pointB);
-		if (ccw1 == 0 && ccw2 == 0) { // sと自線分が一直線上にある場合
-			// sのいずれか1つの端点が自線分を内分していれば，sは自線分と共有部分を持つので
-			// trueを返す
-			return internal(s.pointA.x, s.pointA.y) || internal(s.pointB.x, s.pointB.y);
-		} // それ以外の場合 CCW値の符号が異なる場合にtrueを返す
-		return ccw1 * ccw2 <= 0;
+		return (ccw1 == 0 && ccw2 == 0) ? // sと自線分が一直線上にある場合
+		// sのいずれか1つの端点が自線分を内分していれば，sは自線分と共有部分を持つので
+		// trueを返す
+		internal(s.pointA.x, s.pointA.y) || internal(s.pointB.x, s.pointB.y)
+				:
+				// それ以外の場合 CCW値の符号が異なる場合にtrueを返す
+				ccw1 * ccw2 <= 0;
 	}
 
 	/**
@@ -114,8 +109,6 @@ class LineSegment {
 	 * @return if this and lineSegment intersect
 	 */
 	public boolean intersects(LineSegment lineSegment) {
-		// return intersects(lineSegment.toLine())
-		// && lineSegment.intersects(toLine());
 		return bothSides(lineSegment) && lineSegment.bothSides(this);
 	}
 

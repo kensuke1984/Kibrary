@@ -9,7 +9,7 @@ import java.io.PrintWriter;
  * 
  * gnuplotの外観の設定
  * @author Kensuke Konishi
- *
+ * @version 0.0.1
  */
 public class PlotConfiguration {
 
@@ -102,10 +102,8 @@ public class PlotConfiguration {
 	
 	
 	public void setXrange(double xmin, double xmax) {
-		if (xmax<=xmin){
-			System.out.println("Input xmin xmax "+xmin+" "+xmax+" are invalid");
-			return;
-		}
+		if (xmax<=xmin)
+			throw new IllegalArgumentException("Input xmin xmax "+xmin+" "+xmax+" are invalid");
 		this.xmin = xmin;
 		this.xmax = xmax;
 		xrange=true;

@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
  * @version 0.0.5
  * 
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  *
  */
 public class Raypath {

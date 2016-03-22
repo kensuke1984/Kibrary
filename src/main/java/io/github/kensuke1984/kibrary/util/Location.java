@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * This class rounds off values at the 4th decimal point.
  * 
- * @version 0.1.0.1
+ * @version 0.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -56,10 +56,6 @@ public class Location extends HorizontalPosition {
 	 * @return {@link RThetaPhi} of this
 	 */
 	public RThetaPhi getRThetaPhi() {
-		if (r == 0) {
-			System.out.println("r is not set yet");
-			return null;
-		}
 		return new RThetaPhi(r, getTheta(), getPhi());
 	}
 

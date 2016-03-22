@@ -4,7 +4,6 @@ import static io.github.kensuke1984.kibrary.math.Integrand.bySimpsonRule;
 import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod3;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,7 +31,7 @@ import java.util.List;
  * @author Kensuke Konishi
  * 
  * 
- * @version 0.3.9
+ * @version 0.3.9.2
  * 
  * 
  */
@@ -213,10 +212,7 @@ public class Raypath {
 	public Raypath(double rayParameterP, double eventR, VelocityStructure structure, boolean sv) {
 		this.sv = sv;
 		this.rayParameter = rayParameterP;
-		if (0 < eventR)
-			this.eventR = eventR;
-		else
-			this.eventR = structure.earthRadius();
+		this.eventR = 0 < eventR ? eventR : structure.earthRadius();
 		this.structure = structure;
 
 		if (!checkPValidity())
@@ -301,15 +297,11 @@ public class Raypath {
 	 *            Seismic {@link Phase}
 	 */
 	public void outputInfo(Path informationFile, Phase phase) {
-		try (BufferedWriter bw = Files.newBufferedWriter(informationFile)) {
-			bw.write("Phase: " + phase);
-			bw.newLine();
-			bw.write("Ray parameter: " + rayParameter);
-			bw.newLine();
-			bw.write("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(phase)));
-			bw.newLine();
-			bw.write("Travel time[s]: " + computeTraveltime(phase));
-			bw.newLine();
+		try (PrintWriter pw = new PrintWriter(informationFile.toFile())) {
+			pw.println("Phase: " + phase);
+			pw.println("Ray parameter: " + rayParameter);
+			pw.println("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(phase)));
+			pw.println("Travel time[s]: " + computeTraveltime(phase));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -324,7 +316,7 @@ public class Raypath {
 	public void outputDat(Path dataFile, Phase phase) {
 		if (!exists(phase))
 			return;
-		try (PrintWriter os = new PrintWriter(Files.newBufferedWriter(dataFile))) {
+		try (PrintWriter os = new PrintWriter(dataFile.toFile())) {
 			double[][] points = getRoute(phase);
 			os.println("#Radius[km] Theta[deg]");
 			if (points != null)
@@ -1158,12 +1150,11 @@ public class Raypath {
 	 */
 	private double jeffreysPTau(double rStart, double rEnd) {
 		double[] x = new double[3];
-		double dr = (rEnd - rStart) / 3;
+		final double dr = (rEnd - rStart) / 3;
 		for (int i = 0; i < 3; i++) {
 			double r = rStart + dr * (i + 1);
-			x[i] = this.calcQTP(r);
+			x[i] = calcQTP(r);
 		}
-		// System.out.println("Geffreys");
 		return jeffreysMethod3(x) * dr * 3;
 	}
 
@@ -1177,12 +1168,11 @@ public class Raypath {
 	 */
 	private double jeffreysSDelta(double rStart, double rEnd) {
 		double[] x = new double[3];
-		double dr = (rEnd - rStart) / 3;
+		final double dr = (rEnd - rStart) / 3;
 		for (int i = 0; i < 3; i++) {
 			double r = rStart + dr * (i + 1);
-			x[i] = this.calcQDeltaS(r);
+			x[i] = calcQDeltaS(r);
 		}
-		// System.out.println("Geffreys");
 		return jeffreysMethod3(x) * dr * 3;
 	}
 
@@ -1196,12 +1186,11 @@ public class Raypath {
 	 */
 	private double jeffreysSTau(double rStart, double rEnd) {
 		double[] x = new double[3];
-		double dr = (rEnd - rStart) / 3;
+		final double dr = (rEnd - rStart) / 3;
 		for (int i = 0; i < 3; i++) {
 			double r = rStart + dr * (i + 1);
-			x[i] = this.calcQTS(r);
+			x[i] = calcQTS(r);
 		}
-		// System.out.println("Geffreys");
 		return jeffreysMethod3(x) * dr * 3;
 	}
 
@@ -1460,9 +1449,9 @@ public class Raypath {
 		// System.out.println(startR + " " + endR);
 		double startR = pTurningR < icb ? icb + eps : pTurningR + jeffereysEPS; //
 		// System.out.println(startR + " dd ");
-		if (cmbR <= startR)  
+		if (cmbR <= startR)
 			return jeffreysOuterCoreTau(pTurningR, cmbR);
-		 
+
 		double[] x = point(startR, cmbR, interval);
 		for (int i = 0; i < x.length - 1; i++) {
 			double deltax = x[i + 1] - x[i];
@@ -1607,9 +1596,9 @@ public class Raypath {
 		pTurning = whichPartition(pTurningR);
 		shTurning = whichPartition(shTurningR);
 		svTurning = whichPartition(svTurningR);
-//		 System.out.println("Turning Rs P:" + pTurning + " " + pTurningR
-//		 + ", SV:" + svTurning + " " + svTurningR + ", SH:" + shTurning
-//		 + " " + shTurningR);
+		// System.out.println("Turning Rs P:" + pTurning + " " + pTurningR
+		// + ", SV:" + svTurning + " " + svTurningR + ", SH:" + shTurning
+		// + " " + shTurningR);
 	}
 
 	/**
@@ -1810,7 +1799,8 @@ public class Raypath {
 	}
 
 	/**
-	 * @param r radius [km]
+	 * @param r
+	 *            radius [km]
 	 * @return which part r belong to
 	 */
 	private Partition whichPartition(double r) {

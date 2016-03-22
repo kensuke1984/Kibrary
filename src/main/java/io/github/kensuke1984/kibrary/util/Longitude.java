@@ -12,11 +12,9 @@ import org.apache.commons.math3.util.FastMath;
  * This class is <b>IMMUTABLE</b>
  * </p>
  * 
- * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.0
- * 
+ * @version 0.1.0.1
  * 
  */
 class Longitude implements Comparable<Longitude> {
@@ -45,12 +43,12 @@ class Longitude implements Comparable<Longitude> {
 			throw new IllegalArgumentException(
 					"The input longitude: " + longitude + " is invalid (must be [-180, 360).");
 		// longitude = FastMath.round(longitude*10000)/10000.0;
-		this.inLongitude = longitude;
+		inLongitude = longitude;
 		if (180 < longitude) {
-			this.phi = FastMath.toRadians(longitude - 360);
+			phi = FastMath.toRadians(longitude - 360);
 			this.longitude = -360 + longitude;
 		} else {
-			this.phi = FastMath.toRadians(longitude);
+			phi = FastMath.toRadians(longitude);
 			this.longitude = longitude;
 		}
 		adjust();

@@ -14,7 +14,7 @@ import javax.swing.WindowConstants;
  * 
  * GUI for ANISOtime
  * 
- * @version 0.3.3
+ * @version 0.3.3.1
  * 
  * @author Kensuke Konishi
  */
@@ -115,9 +115,9 @@ class TravelTimeGUI extends javax.swing.JFrame {
 		setJMenuBar(jMenuBar1);
 		// textFieldRayParameter.setText("0");
 
-		buttonCompute.addActionListener(evt -> buttonComputeActionPerformed(evt));
+		buttonCompute.addActionListener(this::buttonComputeActionPerformed);
 
-		buttonShow.addActionListener(evt -> buttonShowPerformed(evt));
+		buttonShow.addActionListener(this::buttonShowPerformed);
 
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);

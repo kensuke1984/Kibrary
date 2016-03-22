@@ -49,8 +49,11 @@ public class Timewindow implements Comparable<Timewindow> {
 
 	/**
 	 * startTime must be less than endTime
-	 * @param startTime start time of the window
-	 * @param endTime end time of the window
+	 * 
+	 * @param startTime
+	 *            start time of the window
+	 * @param endTime
+	 *            end time of the window
 	 */
 	public Timewindow(double startTime, double endTime) {
 		if (endTime < startTime)
@@ -70,7 +73,7 @@ public class Timewindow implements Comparable<Timewindow> {
 	 * @return if timeWindow and this overlap
 	 */
 	boolean overlap(Timewindow timeWindow) {
-		return !(endTime < timeWindow.startTime || timeWindow.endTime < startTime);
+		return timeWindow.startTime <= endTime && startTime <= timeWindow.endTime;
 	}
 
 	/**

@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.butterworth.LowPassFilter;
  * 
  * @version 1.0.0
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * 
  */
@@ -28,7 +28,6 @@ class SACFile extends SACHeader implements SACData {
 	private double[] waveData;
 
 	/**
-	 * 
 	 * @param sacFileName
 	 *            the {@link SACFileName} of the sacfile
 	 * @throws IOException
@@ -68,7 +67,6 @@ class SACFile extends SACHeader implements SACData {
 			double periodMax = 2 * Math.PI * getValue(SACHeaderEnum.DELTA) / bsf.getOmegaH();
 			sd = sd.setValue(SACHeaderEnum.USER0, periodMax).setValue(SACHeaderEnum.USER1, periodMin);
 		}
-
 		double[] sacdata = filter.applyFilter(waveData.clone());
 		sd = sd.setSACData(sacdata);
 		return sd;
@@ -93,7 +91,6 @@ class SACFile extends SACHeader implements SACData {
 	public SACFile setSACData(double[] sacData) {
 		// setInt(SacHeaderEnum.NPTS, npts);
 		int npts = getInt(SACHeaderEnum.NPTS);
-
 		if (npts != sacData.length)
 			throw new IllegalStateException("input npts is invalid. SAC npts" + npts + " input npts:" + npts);
 		SACFile sf = clone();
@@ -107,7 +104,6 @@ class SACFile extends SACHeader implements SACData {
 			SACFile sf = (SACFile) super.clone();
 			sf.waveData = waveData.clone();
 			return sf;
-
 		} catch (Exception e) {
 			throw new RuntimeException("UNExPECTed");
 		}

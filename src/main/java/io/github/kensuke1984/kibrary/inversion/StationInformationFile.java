@@ -28,9 +28,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Each line: station name, station network, latitude, longitude.
  * 
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public final class StationInformationFile {
@@ -67,7 +67,7 @@ public final class StationInformationFile {
 	public static Set<Station> read(Path infoPath) throws IOException {
 		Set<Station> stationSet = new HashSet<>();
 		try (BufferedReader br = Files.newBufferedReader(infoPath)) {
-			br.lines().map(line -> line.trim()).filter(line -> !line.startsWith("#")).forEach(line -> {
+			br.lines().map(String::trim).filter(line -> !line.startsWith("#")).forEach(line -> {
 				String[] parts = line.split("\\s+");
 				HorizontalPosition hp = new HorizontalPosition(Double.parseDouble(parts[2]),
 						Double.parseDouble(parts[3]));
@@ -76,7 +76,7 @@ public final class StationInformationFile {
 					throw new RuntimeException("There is duplication in " + infoPath);
 			});
 		}
-		if (stationSet.size() != stationSet.stream().map(s -> s.getStationName()).distinct().count())
+		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
 			System.err.println("CAUTION!! Stations with the same name but different positions detected!");
 
 		return Collections.unmodifiableSet(stationSet);
@@ -110,7 +110,7 @@ public final class StationInformationFile {
 			}
 		}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 
-		if (stationSet.size() != stationSet.stream().map(s -> s.getStationName()).distinct().count())
+		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
 			System.err.println("CAUTION!! Stations with a same name but different positions detected!");
 
 		write(stationSet, out, options);

@@ -66,7 +66,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * network in one event</b>
  * 
  * 
- * @version 0.2.0.1
+ * @version 0.2.0.2
  * 
  * @author Kensuke Konishi
  * 
@@ -321,14 +321,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		private EventFolder obsEventDir;
 
 		private Worker(EventFolder eventDir) {
-			this.obsEventDir = eventDir;
-			// System.out.println("this is " + eventDir);
+			 obsEventDir = eventDir;
 		}
 
 		@Override
 		public void run() {
 			Path synEventPath = synPath.resolve(obsEventDir.getGlobalCMTID().toString());
-			// System.out.println(synEventDir);
 			if (!Files.exists(synEventPath))
 				throw new RuntimeException(synEventPath + " does not exist.");
 
@@ -351,7 +349,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 						? stationName + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
 						: stationName + "." + id + "." + SACExtension.valueOfSynthetic(component);
 				SACFileName synFileName = new SACFileName(synEventPath.resolve(name));
-				// System.out.println(synFileName.getFile().getName());
 
 				if (!synFileName.exists())
 					continue;
@@ -374,7 +371,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					continue;
 				}
 
-				// System.out.println("reading " + synFileName);
 				SACData synSac = null;
 				try {
 					synSac = synFileName.read();

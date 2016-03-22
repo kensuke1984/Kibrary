@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.inversion;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.nio.file.NoSuchFileException;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -17,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
  * TODO DSM informationとして書き出す
  * 
  * 
- * @version 0.1.1.1
+ * @version 0.1.2
  * 
  * @author Kensuke Konishi
  * 
@@ -38,11 +39,9 @@ public class HorizontalPoint {
 		return perPointMap.keySet();
 	}
 
-	public HorizontalPoint(File infoFile) {
-		if (!infoFile.exists()) {
-			System.out.println(infoFile + " does not exist.");
-			return;
-		}
+	public HorizontalPoint(File infoFile) throws NoSuchFileException {
+		if (!infoFile.exists()) 
+			throw new NoSuchFileException(infoFile.getPath());
 		this.infoFile = infoFile;
 		readFile();
 	}
@@ -72,7 +71,6 @@ public class HorizontalPoint {
 				HorizontalPosition loc = new HorizontalPosition(Double.parseDouble(line.trim().split("\\s+")[1]),
 						Double.parseDouble(line.trim().split("\\s+")[2]));
 				perPointMap.put(line.trim().split("\\s+")[0], loc);
-				// perPoint.add(line.trim().split("\\s+")[0]);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(infoFile + " is not valid");
@@ -97,12 +95,10 @@ public class HorizontalPoint {
 	 * @return locationに対するポイントの名前
 	 */
 	public String toString(HorizontalPosition loc) {
-		// HorizontalPosition loc1 = new Location(loc.getLatitude(),
-		// loc.getLongitude());
 		for (String str : perPointMap.keySet())
 			if (loc.equals(perPointMap.get(str)))
 				return str;
-		System.out.println("could not find the point");
+		System.err.println("could not find the point");
 		return null;
 	}
 

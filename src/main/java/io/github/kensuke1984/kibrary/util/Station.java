@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * 
  * 
- * @version 0.0.5
+ * @version 0.0.5.2
  * 
  * @author Kensuke Konishi
  * 
@@ -34,11 +34,9 @@ public class Station implements Comparable<Station> {
 	public int compareTo(Station o) {
 		int name = stationName.compareTo(o.stationName);
 		if (name != 0)
-			return stationName.compareTo(o.stationName);
+			return name;
 		int net = network.compareTo(o.network);
-		if (net != 0)
-			return net;
-		return position.compareTo(o.position);
+		return net != 0 ? net : position.compareTo(o.position);
 	}
 
 	/**
@@ -69,8 +67,6 @@ public class Station implements Comparable<Station> {
 		int result = 1;
 		result = prime * result + ((position == null) ? 0 : position.hashCode());
 		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
-		// result = prime * result + ((network == null) ? 0 :
-		// network.hashCode());
 		return result;
 	}
 

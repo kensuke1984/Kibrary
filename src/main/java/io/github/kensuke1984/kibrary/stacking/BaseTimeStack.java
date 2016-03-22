@@ -12,11 +12,8 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * TODO まだ作成中 ピックした時刻など、ある時刻を基準にしたスタックをするためのStack
  * 
  * 設定されている時刻を０（基準時刻）にずらしたTraceを返す。 振幅はいじらない
- * 
- * 
- * 
- * 
- * @author kensuke
+ * @version 0.0.1
+ * @author Kensuke Konishi
  * 
  */
 public class BaseTimeStack implements Stack {
@@ -28,11 +25,6 @@ public class BaseTimeStack implements Stack {
 		if (!baseTimeMap.containsKey(key))
 			throw new RuntimeException("The data for " + station + "."
 					+ globalCMTID + "." + component + " doesn't exist.");
-		// Trace newTrace = trace.deepCopy();
-		// double[] x = newTrace.getX();
-		// double t = baseTimeMap.get(key);
-		// for (int i = 0; i < x.length; i++)
-		// x[i] -= t;
 		return stack(trace, baseTimeMap.get(key));
 	}
 
@@ -73,11 +65,9 @@ public class BaseTimeStack implements Stack {
 			throw new RuntimeException("The data for " + station + "." + id
 					+ "." + component + " already exists.");
 		baseTimeMap.put(key, baseTime);
-
 	}
 
 	private class Key {
-
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -124,15 +114,10 @@ public class BaseTimeStack implements Stack {
 		// private WaveformType type;
 		// private Trace trace;
 		private Key(String station, GlobalCMTID id, SACComponent component) {
-			super();
 			this.station = station;
 			this.id = id;
 			this.component = component;
 		}
-
-		// private PickedTimeStack getOuterType() {
-		// return PickedTimeStack.this;
-		// }
 
 		private BaseTimeStack getOuterType() {
 			return BaseTimeStack.this;

@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
@@ -31,9 +31,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 	@Override
 	public int compareTo(HorizontalPosition o) {
 		int lat = latitude.compareTo(o.latitude);
-		if (lat != 0)
-			return lat;
-		return longitude.compareTo(o.longitude);
+		return lat != 0 ? lat : longitude.compareTo(o.longitude);
 	}
 
 	@Override
@@ -259,11 +257,11 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 		return distance;
 
 	}
-	
+
 	/**
 	 * @return Point2D of this
 	 */
-	public Point2D toPoint2D(){
+	public Point2D toPoint2D() {
 		return new Point2D(getLongitude(), getLatitude());
 	}
 

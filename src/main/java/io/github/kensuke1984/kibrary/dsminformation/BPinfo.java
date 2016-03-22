@@ -14,9 +14,9 @@ import io.github.kensuke1984.kibrary.util.Station;
  * Information file for computation of back propagation.
  * 
  * 
- * @version 0.0.4.2
+ * @version 0.0.4.3
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  * 
  */
@@ -28,7 +28,7 @@ public class BPinfo extends DSMheader {
 	private HorizontalPosition[] perturbationPoint;
 	// private double sourceR;
 	private Station station;
-	private PolynomialStructure ps;
+	private PolynomialStructure structure;
 
 	public String getOutputDir() {
 		return outputDir;
@@ -39,7 +39,7 @@ public class BPinfo extends DSMheader {
 	}
 
 	public PolynomialStructure getPs() {
-		return ps;
+		return structure;
 	}
 
 	/**
@@ -47,18 +47,17 @@ public class BPinfo extends DSMheader {
 	 *            stationの位置
 	 * @param outputDir
 	 *            書き込むフォルダ （相対パス）
-	 * @param ps
+	 * @param structure
 	 * @param tlen
-	 *            must be 2^n/10
+	 *            must be a power of 2 /10
 	 * @param np
-	 *            must be 2^n
+	 *            must be a power of 2
 	 */
-	public BPinfo(Station station, String outputDir, PolynomialStructure ps, double tlen, int np) {
+	public BPinfo(Station station, String outputDir, PolynomialStructure structure, double tlen, int np) {
 		super(tlen, np);
 		this.station = station;
 		this.outputDir = outputDir;
-		this.ps = ps;
-		// this.sourceR=sourceR;
+		this.structure = structure;
 	}
 
 	public void setPerturbationPoint(HorizontalPosition[] perturbationPoint) {
@@ -83,8 +82,7 @@ public class BPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toPSVlines();
-			Arrays.stream(structure).forEach(pw::println);
+			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
 
 			// source
 			HorizontalPosition stationPosition = station.getPosition();
@@ -127,8 +125,7 @@ public class BPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structure = ps.toSHlines();
-			Arrays.stream(structure).forEach(pw::println);
+			Arrays.stream(structure.toSHlines()).forEach(pw::println);
 
 			HorizontalPosition stationPosition = station.getPosition();
 			pw.println("0 " + // BPINFOには震源深さいらない
@@ -154,8 +151,8 @@ public class BPinfo extends DSMheader {
 	}
 
 
-	public void setPs(PolynomialStructure ps) {
-		this.ps = ps;
+	public void setStructure(PolynomialStructure structure) {
+		this.structure = structure;
 	}
 
 }

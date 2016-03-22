@@ -4,7 +4,7 @@
 package io.github.kensuke1984.kibrary.math.geometry;
 
 /**
- * @version 0.0.1
+ * @version 0.0.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -26,8 +26,7 @@ class Event implements Comparable<Event> {
 	 */
 	LineSegment lineSegment2;
 
-	Event(SegmentType type, double x, double y, LineSegment lineSegment1,
-			LineSegment lineSegment2) {
+	Event(SegmentType type, double x, double y, LineSegment lineSegment1, LineSegment lineSegment2) {
 		this.type = type;
 		this.x = x;
 		this.y = y;
@@ -39,9 +38,7 @@ class Event implements Comparable<Event> {
 	@Override
 	public int compareTo(Event event) {
 		int c = Double.compare(y, event.y); // イベント点のy座標を比較
-		if (c == 0)  // y座標が等しい場合はx座標を比較
-			c = Double.compare(x, event.x);
-		return c;
+		return c == 0 ? Double.compare(x, event.x) : c;// y座標が等しい場合はx座標を比較
 	}
 
 }

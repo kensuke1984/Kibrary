@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 /**
  * Seed file utility rdseed must be in PATH.
  * 
- * @version 0.0.8
+ * @version 0.0.8.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/rdseed/>download</a>
@@ -126,14 +126,11 @@ public class SEEDFile {
 	 * @throws IOException
 	 */
 	private void readVolumeHeader() throws IOException {
-		// System.out.println("rdseed -cf " + seedFile);
-		// System.out.println("Reading volume header of "+seedFile);
 		if (!Files.exists(seedPath))
 			throw new NoSuchFileException(seedPath.toString());
 
 		String[] lines = readSeed("-cf");
 		for (int i = 0; i < lines.length; i++) {
-			// System.out.println(lines[i]);
 			if (lines[i].contains("Starting date of this volume")) {
 				Matcher m = datePattern.matcher(lines[i]);
 				m.find();
@@ -158,7 +155,6 @@ public class SEEDFile {
 					buffer.append(parts[j]);
 				buffer.append(parts[parts.length - 1]);
 				originatingOrganization = buffer.toString();
-
 			} else if (lines[i].contains("Volume Label")) {
 				String[] parts = lines[i].split("\\s+");
 				if (parts.length == 2)

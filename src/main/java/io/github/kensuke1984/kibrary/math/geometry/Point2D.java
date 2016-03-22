@@ -12,7 +12,7 @@ package io.github.kensuke1984.kibrary.math.geometry;
  *
  *          point (x, y)
  *
- * @author kensuke
+ * @author Kensuke Konishi
  *
  */
 public class Point2D {

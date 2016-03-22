@@ -3,8 +3,8 @@ package io.github.kensuke1984.kibrary.elasticparameter;
 /**
  * ID for elastic parameter C<sub>mn</sub>
  * 
- * @author kensuke
- * @version 0.0.2
+ * @author Kensuke Konishi
+ * @version 0.0.2.1
  */
 public enum ElasticMN {
 	C11(11), C12(12), C13(13), C14(14), C15(15), C16(16), C21(21), C22(22), C23(23), C24(24), C25(25), C26(26), C31(
@@ -12,7 +12,7 @@ public enum ElasticMN {
 					51), C52(52), C53(53), C54(54), C55(55), C56(56), C61(61), C62(62), C63(63), C64(64), C65(65), C66(
 							66);
 
-	private int value;
+	private final int value;
 
 	public int getM() {
 		return value / 10;
@@ -68,11 +68,11 @@ public enum ElasticMN {
 	}
 
 	private ElasticMN(int n) {
-		this.value = n;
+		value = n;
 	}
 
 	public int getValue() {
-		return this.value;
+		return value;
 	}
 
 	/**

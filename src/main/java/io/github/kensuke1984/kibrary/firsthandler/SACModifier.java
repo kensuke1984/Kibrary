@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * 
  * @version 0.1.8
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class SACModifier {
@@ -41,7 +41,6 @@ class SACModifier {
 	SACModifier(GlobalCMTData event, Path sacPath, boolean byPDE) throws IOException {
 		this.sacPath = sacPath;
 		headerMap = SACUtil.readHeader(sacPath);
-		// System.out.println(sacFile.getName());
 		String modifiedFileName = sacPath.getFileName().toString().replace(".SAC", ".MOD");
 		modifiedSacPath = sacPath.resolveSibling(modifiedFileName);
 		this.event = event;

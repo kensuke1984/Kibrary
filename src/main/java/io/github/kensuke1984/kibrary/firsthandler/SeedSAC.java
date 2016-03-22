@@ -24,9 +24,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * This class assumes that rdseed, evalresp and sac exists in your PATH. The
  * software can be found in IRIS.
  * 
- * @version 0.1.8
+ * @version 0.1.8.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 class SeedSAC implements Runnable {
@@ -170,7 +170,7 @@ class SeedSAC implements Runnable {
 			id = new GlobalCMTID(seedFile.getVolumeLabel());
 			return;
 		}
-		System.out.println(seedFile.getStartingDate() + " " + seedFile.getEndingDate());
+		System.err.println(seedFile.getStartingDate() + " " + seedFile.getEndingDate());
 		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
 		id = sc.select();
 		if (id == null)
@@ -499,7 +499,7 @@ class SeedSAC implements Runnable {
 	public void run() {
 		if (!eventDirAlreadyExists)
 			throw new RuntimeException("The condition is no good.");
-		System.out.println("Opening " + seedFile + " in " + eventDir);
+		System.err.println("Opening " + seedFile + " in " + eventDir);
 		// run rdseed -q output -fRd
 		try {
 			seedFile.extract(seedFile.getSeedPath().getParent());
@@ -546,7 +546,6 @@ class SeedSAC implements Runnable {
 		if (removeIntermediateFiles)
 			removeIntermediateFiles();
 
-		// System.exit(0);
 		System.out.println("finish");
 	}
 
@@ -629,7 +628,6 @@ class SeedSAC implements Runnable {
 		String command = "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM)
 				+ " " + event.getCMTTime().getYear() + " " + event.getCMTTime().getDayOfYear() + " " + minFreq + " "
 				+ samplingHz + " " + headerMap.get(SACHeaderEnum.NPTS) + " -s lin -r cs -u vel";
-		// System.out.println(command);
 
 		ProcessBuilder pb = new ProcessBuilder(command.split("\\s"));
 		pb.directory(eventDir.getAbsoluteFile());

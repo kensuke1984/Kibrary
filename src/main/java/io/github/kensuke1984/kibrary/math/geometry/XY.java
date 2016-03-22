@@ -3,9 +3,9 @@ package io.github.kensuke1984.kibrary.math.geometry;
 /**
  * xy plane
  * This class is <b>immutable</b>
- * @version 0.0.1
+ * @version 0.0.1.1
  * 
- * @author Kensuke
+ * @author Kensuke Konishi
  * 
  */
 class XY {
@@ -35,7 +35,7 @@ class XY {
 	 * @return xyとの内積 inner product with the xy
 	 */
 	double getInnerProduct(XY xy) {
-		return this.x * xy.x + this.y * xy.y;
+		return  x * xy.x +  y * xy.y;
 	}
 
 	/**
