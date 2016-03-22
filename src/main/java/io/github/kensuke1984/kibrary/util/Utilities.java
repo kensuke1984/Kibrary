@@ -100,10 +100,8 @@ public final class Utilities {
 	 * @return aic
 	 */
 	public static double computeAIC(double variance, double n, double k) {
-		double aic = 0;
 		final double log2pi = Math.log(2 * Math.PI);
-		aic = n * (log2pi + Math.log(variance) + 1) + 2 * k + 2;
-		return aic;
+		return n * (log2pi + Math.log(variance) + 1) + 2 * k + 2;
 	}
 
 	private Utilities() {
