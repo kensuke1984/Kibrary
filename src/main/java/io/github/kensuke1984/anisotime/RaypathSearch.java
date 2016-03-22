@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.8.1
+ * @version 0.0.8.2
  * 
  */
 public final class RaypathSearch {
@@ -275,7 +275,7 @@ public final class RaypathSearch {
 
 		});
 		if (window != null)
-			SwingUtilities.invokeLater(() -> window.dispose());
+			SwingUtilities.invokeLater(window::dispose);
 		if (window == null)
 			return true;
 		return !window.isCanceled();

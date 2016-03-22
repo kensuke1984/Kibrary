@@ -21,7 +21,7 @@ import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.1
  */
 final class RaypathPanel extends JPanel {
 
@@ -237,7 +237,7 @@ final class RaypathPanel extends JPanel {
 			curveList.add(curve);
 		}
 		quadCurves.add(curveList);
-		SwingUtilities.invokeLater(() -> repaint());
+		SwingUtilities.invokeLater(this::repaint);
 	}
 
 	private final List<List<QuadCurve2D.Double>> quadCurves = new ArrayList<>();
