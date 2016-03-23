@@ -31,7 +31,7 @@ import manhattan.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  * @author Kensuke
  * 
@@ -52,9 +52,9 @@ public class CheckerBoardTest extends parameter.CheckerBoardTest {
 		readIDs();
 	}
 
-	private Set<Station> stationSet;
+	private Set<Station> stationSet= new HashSet<>();
 	private double[][] ranges;
-	private Set<GlobalCMTID> idSet;
+	private Set<GlobalCMTID> idSet= new HashSet<>();
 
 	private void readIDs() {
 		List<double[]> ranges = new ArrayList<>();
