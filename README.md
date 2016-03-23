@@ -9,11 +9,6 @@ Library for waveform inversion.
 It bundles [ANISOtime][ANISOtime] package.  
 
 
-##Installation
-*This is for the installation of the stable version of Kibrary.*
-
-Here is a script [build.gradle][gradlescript] for *Gradle 2.12*.  
-If no *Gradle 2.12* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
 ##<a name="installation">Installation
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
