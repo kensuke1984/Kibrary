@@ -92,14 +92,7 @@ public abstract class SourceTimeFunction {
 	 */
 	public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
-<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/datacorrection/SourceTimeFunction.java
 		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-=======
-		return new SourceTimeFunction(np, tlen, samplingHz) {
-			{
-				getSourceTimeFunction();
-			}
->>>>>>> 653601e352be77d0e661eefd1e6e8e45b6485680:manhattan/manhattan/datacorrection/SourceTimeFunction.java
 			@Override
 			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
 				return sourceTimeFunction;
