@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -35,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.1
+ * @version 0.2.0.2
  * 
  * @author Kensuke Konishi
  * 
@@ -153,9 +154,9 @@ public class CheckerBoardTest implements Operation {
 	 * psudoMの元になるファイル
 	 */
 	protected Path inputDataPath;
-	private Set<Station> stationSet;
+	private Set<Station> stationSet = new HashSet<>();
 	private double[][] ranges;
-	private Set<GlobalCMTID> idSet;
+	private Set<GlobalCMTID> idSet = new HashSet<>();
 
 	private void readIDs() {
 		List<double[]> ranges = new ArrayList<>();
