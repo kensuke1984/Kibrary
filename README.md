@@ -26,6 +26,9 @@ Here is the flow.
  % ./gradlew build 
 ```
 
+If you want to have Kibrary-goblin, you try the above flow with *goblin.tar* instead of *gradlew.tar*
+
+
 ##Build by yourself
 If you just want to use Kibrary, just install as [above](#installation).
 However if you want to modify source codes and build by yourself,
