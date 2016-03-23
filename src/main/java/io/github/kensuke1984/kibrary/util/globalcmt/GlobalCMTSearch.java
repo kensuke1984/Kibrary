@@ -38,8 +38,12 @@ public class GlobalCMTSearch {
 		double lat = location.getLatitude();
 		double lon = location.getLongitude();
 		double depth = Math.round((6371 - location.getR()) * 1000) / 1000.0;
+<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTSearch.java
 		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth
 				+ " Mw:" + event.getCmt().getMw());
+=======
+		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth+" MW:"+ event.getCmt().getMw());
+>>>>>>> 653601e352be77d0e661eefd1e6e8e45b6485680:manhattan/manhattan/globalcmt/GlobalCMTSearch.java
 
 	}
 
@@ -296,7 +300,11 @@ public class GlobalCMTSearch {
 			System.out.println("Which ID do you want to use?");
 			System.out.println("# ID date time latitude longitude depth");
 			for (int i = 0; i < ids.length; i++) {
+<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTSearch.java
 				System.out.print((i + 1) + " ");
+=======
+				System.out.print((i+1) + " ");
+>>>>>>> 653601e352be77d0e661eefd1e6e8e45b6485680:manhattan/manhattan/globalcmt/GlobalCMTSearch.java
 				printIDinformation(ids[i]);
 			}
 			// byte[] inputByte = new byte[4];
@@ -305,12 +313,20 @@ public class GlobalCMTSearch {
 				String numStr = br.readLine();
 				if (NumberUtils.isNumber(numStr))
 					k = Integer.parseInt(numStr);
+<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTSearch.java
 				if (k < 1 || ids.length <= k - 1) {
+=======
+				if (k < 1 || ids.length <= k-1) {
+>>>>>>> 653601e352be77d0e661eefd1e6e8e45b6485680:manhattan/manhattan/globalcmt/GlobalCMTSearch.java
 					System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
 					k = -1;
 				}
 			}
+<<<<<<< HEAD:src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTSearch.java
 			id = ids[k - 1];
+=======
+			id = ids[k-1];
+>>>>>>> 653601e352be77d0e661eefd1e6e8e45b6485680:manhattan/manhattan/globalcmt/GlobalCMTSearch.java
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

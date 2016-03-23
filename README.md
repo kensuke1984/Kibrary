@@ -4,38 +4,57 @@
 [ ![aLicense] [alicense-image] ] [alicense]
 [ ![oLicense] [olicense-image] ] [olicense]
 [![Java8][Java8-image]] [Java8]  
-
-
 Library for waveform inversion.   
 
 It bundles [ANISOtime][ANISOtime] package.  
 
-[Java SE Runtime Environment(JRE) 8][JRE8] is required.
 
+<<<<<<< HEAD
 ##Installation
 *This is for the installation of the stable version of Kibrary.*
 
 Here is a script [build.gradle][gradlescript] for *Gradle 2.10*.  
 If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
+=======
+##<a name="installation">Installation
+Kibrary currently runs on *Java SE Runtime Environment 8*.
+You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
+If you are not sure about the version you have, click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
+
+Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs.
 
+Here is the flow.
 ```bash
- host$ wget http://kensuke1984.github.io/gradlew.tar
- host$ tar xf gradlew.tar
- host$ ./gradlew
- host$ ./gradlew build 
+ % wget http://kensuke1984.github.io/gradlew.tar
+ % tar xf gradlew.tar
+ % ./gradlew
+ % ./gradlew build 
 ```
+
+##Build by yourself
+If you just want to use Kibrary, just install as [above](#installation).
+However if you want to modify source codes and build by yourself,
+you have to care about dependencies by yourself.  
+The necessary libraries are  
+[*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
+[*Apache Commons LANG*][lang], [*Apache Commons MATH*][math], [*Apache Commons NET*][net],
+[*Epsgraphics*][eps], [*javax.mail*][mail].  
+The latest versions are strongly recommended.
+
+
 
 ##Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
 ##Contact me
-If you have any comments or questions, please feel free to contact me by [E-mail][email].
+If you have any comments or questions, please feel free to contact me by [E-mail][mailto].
 
 ##Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
-Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
+Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
+Last updated Feb 26,2016
 
 
 [release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
@@ -48,7 +67,7 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
 
-[ANISOtime]:http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm
+[ANISOtime]:http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
@@ -57,5 +76,16 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 [gradlew]:http://kensuke1984.github.io/gradlew.tar
 
 [wiki]:https://github.com/kensuke1984/Kibrary/wiki
-[email]:mailto:kensuke@earth.sinica.edu.tw
+[mailto]:mailto:kensuke@earth.sinica.edu.tw
 [javadoc]:https://kensuke1984.github.io/Kibrary
+
+[cli]:http://commons.apache.org/proper/commons-cli/
+[email]:http://commons.apache.org/proper/commons-email/
+[io]:http://commons.apache.org/proper/commons-io/
+[lang]:http://commons.apache.org/proper/commons-lang/
+[math]:http://commons.apache.org/proper/commons-math/
+[net]:http://commons.apache.org/proper/commons-net/
+[eps]:http://www.abeel.be/wiki/EPSGraphics
+[mail]:https://java.net/projects/javamail/pages/Home
+
+
