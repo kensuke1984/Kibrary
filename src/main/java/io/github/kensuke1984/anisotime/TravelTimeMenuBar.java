@@ -153,7 +153,7 @@ final class TravelTimeMenuBar extends JMenuBar {
 	}
 
 	/**
-	 * 0(default): All, 1: P-SV, 2: SH
+	 * @param i 0(default): All, 1: P-SV, 2: SH
 	 */
 	void setPolarity(int i) {
 		polarization = i;

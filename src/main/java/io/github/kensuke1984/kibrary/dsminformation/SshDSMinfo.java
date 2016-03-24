@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Information file for SSHPSV and SSHSH
  * 
- * <p>This class is <b>IMMUTABLE<b>
+ * <p>This class is <b>IMMUTABLE</b>
  * 
  * 
  * @version 0.0.5

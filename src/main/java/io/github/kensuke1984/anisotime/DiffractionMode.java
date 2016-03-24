@@ -17,9 +17,6 @@ class DiffractionMode extends Computation {
 	private VelocityStructure structure;
 	private double eventR;
 
-	/**
-	 * @param travelTimeTool
-	 */
 	DiffractionMode(ANISOtime travelTimeTool, VelocityStructure structure, double eventR) {
 		super(travelTimeTool);
 		this.eventR = eventR;

@@ -227,7 +227,7 @@ public class Raypath {
 	}
 
 	/**
-	 * @param phase
+	 * @param phase the target phase
 	 * @return bottom Radius of the input phase[km]
 	 */
 	double bottomingR(Phase phase) {
@@ -516,7 +516,6 @@ public class Raypath {
 	 */
 	public double computeExtendedTraveltime(Phase phase) {
 		double traveltime = computeTraveltime(phase);
-
 		char first = phase.toString().charAt(0);
 		switch (first) {
 		case 'p':

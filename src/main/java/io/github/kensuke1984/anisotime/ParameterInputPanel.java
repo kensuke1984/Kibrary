@@ -114,7 +114,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
 		changeBorderTitle("Mode:Epicentral Distance   Polarity:P-SV");
 
-		String[] modelTitles = Arrays.stream(InputModel.values()).map(model -> model.title).toArray(String[]::new);
+		String[] modelTitles = Arrays.stream(InputModel.values()).map(model -> model.name).toArray(String[]::new);
 		jComboBoxModel = new JComboBox<>(modelTitles);
 
 		addListners();

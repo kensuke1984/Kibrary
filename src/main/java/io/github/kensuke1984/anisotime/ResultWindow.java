@@ -18,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.5.1
+ * @version 0.0.5.2
  * 
  * 
  */
@@ -26,9 +26,6 @@ class ResultWindow extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = -7565301966921737987L;
 
-	/**
-	 * Creates new form NewJFrame1
-	 */
 	public ResultWindow(TravelTimeGUI travelTimeGUI) {
 		this.travelTimeGUI = travelTimeGUI;
 		initComponents();

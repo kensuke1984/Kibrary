@@ -40,7 +40,7 @@ public interface Operation {
 	 * 
 	 * @param root
 	 *            a folder where the file will be created
-	 * @throws IOException
+	 * @throws IOException if any
 	 */
 	default void writeProperties(Path root) throws IOException {
 		getProperties().store(
@@ -78,7 +78,7 @@ public interface Operation {
 	 * @param args
 	 *            [a name of procedure] (a property file) <br>
 	 *            -l to show the list of procedures
-	 * @throws Exception
+	 * @throws Exception if any
 	 * 
 	 */
 	public static void main(String[] args) throws Exception {

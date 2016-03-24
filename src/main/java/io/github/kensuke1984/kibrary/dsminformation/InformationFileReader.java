@@ -105,6 +105,7 @@ class InformationFileReader {
 	/**
 	 * @param args
 	 *            [information file name]
+	 * @throws IOException if any
 	 */
 	public static void main(String[] args) throws IOException {
 		if (args.length == 1) {
