@@ -9,13 +9,6 @@ Library for waveform inversion.
 It bundles [ANISOtime][ANISOtime] package.  
 
 
-<<<<<<< HEAD
-##Installation
-*This is for the installation of the stable version of Kibrary.*
-
-Here is a script [build.gradle][gradlescript] for *Gradle 2.10*.  
-If no *Gradle 2.10* in your computer, download and extract [gradlew.tar][gradlew] and execute *gradlew*
-=======
 ##<a name="installation">Installation
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
@@ -32,6 +25,9 @@ Here is the flow.
  % ./gradlew
  % ./gradlew build 
 ```
+
+If you want to have Kibrary-goblin, you try the above flow with *goblin.tar* instead of *gradlew.tar*
+
 
 ##Build by yourself
 If you just want to use Kibrary, just install as [above](#installation).
@@ -59,7 +55,7 @@ Last updated Feb 26,2016
 
 [release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
 [release]:https://en.wikipedia.org/wiki/Sahuagin
-[version-image]:https://img.shields.io/badge/version-0.3.beta-yellow.svg
+[version-image]:https://img.shields.io/badge/version-0.3.1-yellow.svg
 
 [alicense-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: http://www.apache.org/licenses/LICENSE-2.0
