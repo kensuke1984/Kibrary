@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.5.1
+ * @version 0.0.6
  * 
  * @author Kensuke Konishi
  *
@@ -104,6 +104,43 @@ public abstract class SourceTimeFunction {
 		for (int i = 0; i < np; i++) {
 			double omegaTau = (i + 1) * constant;
 			sourceTimeFunction.sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
+		}
+		return sourceTimeFunction;
+	}
+
+	/**
+	 * Smoothed ramp source time function
+	 * 
+	 * The width is determined by the half duration &tau;. <br>
+	 * f(t) = (1-tanh<sup>2</sup>(2t/&tau;))/&tau; (-&tau; &le; t &le; &tau;), 0
+	 * (t &lt; -&tau;, &tau; &lt; t) <br>
+	 * Source time function F(&omega;) =
+	 * (&pi;<sup>2</sup>&omega;&tau;/2)/sinh(&pi;<sup>2</sup>&omega;&tau;/2)<br>
+	 * 
+	 * @param np
+	 *            the number of steps in frequency domain
+	 * 
+	 * @param tlen
+	 *            [s] time length
+	 * @param samplingHz
+	 *            [Hz]
+	 * @param halfDuration
+	 *            [s] of the source
+	 */
+	public static final SourceTimeFunction smoothedRampSourceTimeFunction(int np, double tlen, double samplingHz,
+			double halfDuration) {
+		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
+			@Override
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+				return sourceTimeFunction;
+			}
+		};
+		sourceTimeFunction.sourceTimeFunction = new Complex[np];
+		final double deltaF = 1.0 / tlen; // omega
+		final double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
+		for (int i = 0; i < np; i++) {
+			double omegaTau = (i + 1) * constant;
+			sourceTimeFunction.sourceTimeFunction[i] = new Complex(omegaTau / Math.sinh(omegaTau));
 		}
 		return sourceTimeFunction;
 	}
@@ -207,8 +244,7 @@ public abstract class SourceTimeFunction {
 		int np = Integer.parseInt(parts[0]);
 		double tlen = Double.parseDouble(parts[1]);
 		double samplingHz = Double.parseDouble(parts[2]);
-		Complex[] function = IntStream.range(0, np).mapToObj(i -> toComplex(lines.get(i + 2)))
-				.toArray(Complex[]::new);
+		Complex[] function = IntStream.range(0, np).mapToObj(i -> toComplex(lines.get(i + 2))).toArray(Complex[]::new);
 
 		SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
 			@Override
@@ -277,8 +313,7 @@ public abstract class SourceTimeFunction {
 		if (data.length != np + 1)
 			throw new IllegalArgumentException("Input data length is invalid.");
 		return IntStream.range(0, np + 1).parallel()
-				.mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1]))
-				.toArray(Complex[]::new);
+				.mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
 	}
 
 	/**
@@ -302,7 +337,7 @@ public abstract class SourceTimeFunction {
 			throw new RuntimeException("Source time function is not computed yet.");
 		double[] time = new double[nptsInTimeDomain];
 		Arrays.setAll(time, i -> i / samplingHz);
-		
+
 		Complex[] stf = new Complex[nptsInTimeDomain];
 		Arrays.fill(stf, Complex.ZERO);
 		for (int i = 0; i < sourceTimeFunction.length; i++)
