@@ -4,29 +4,31 @@ package io.github.kensuke1984.anisotime;
  * Input model for travel time computation
  * 
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.2
  * 
  */
 enum InputModel {
 	ANISOTROPIC_PREM("PREM (anisotropic)"), ISOTROPIC_PREM("PREM (isotropic)"), AK135("ak135"), POLYNOMIAL(
 			"polynomial"), NAMED_DISCONTINUITY("named discontinuity");
 
-	final String title;
+	/**
+	 * name of model
+	 */
+	final String name;
 
 	private InputModel(String string) {
-		title = string;
+		name = string;
 	}
 	
 	/**
-	 * @param title
+	 * @param title to look for
 	 * @return InputModel which has the title
 	 */
 	static InputModel titleOf(String title) {
 		for (InputModel model : values())
-			if (model.title.equals(title))
+			if (model.name.equals(title))
 				return model;
-		return null;
-
+		throw new IllegalArgumentException("There is no "+title);
 	}
 
 }

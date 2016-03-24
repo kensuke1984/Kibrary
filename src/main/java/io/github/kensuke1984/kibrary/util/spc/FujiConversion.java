@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * @author Kensuke Konishi
  *
- * @version 0.0.1.1
+ * @version 0.0.1.2
  *
  */
 public final class FujiConversion {
@@ -43,11 +43,6 @@ public final class FujiConversion {
 		this(null);
 	}
 
-	/**
-	 * @param spectrum
-	 *            {@link PartialSpectrumFile}
-	 * @return converted {@link PartialSpectrumFile}
-	 */
 	public DSMOutput convert(DSMOutput spectrum) {
 		if (spectrum.getSpcFileType() != SpcFileType.PAR2)
 			throw new RuntimeException();

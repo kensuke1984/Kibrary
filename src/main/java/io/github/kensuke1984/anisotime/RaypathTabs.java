@@ -17,9 +17,6 @@ class RaypathTabs extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = 406911785152443889L;
 
-	/**
-	 * Creates new form NewJFrame
-	 */
 	RaypathTabs(TravelTimeGUI travelTimeGui, RaypathPanel raypathPanel) {
 		super("Raypath");
 		this.raypathPanel = raypathPanel;
