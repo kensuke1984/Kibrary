@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
  * 
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * 
  * @author Kensuke Konishi
  * 
@@ -423,21 +423,16 @@ public class Phase {
 	}
 
 	/**
-	 * how many times P wave travels in the mantle. each down or upgoing is 0.5
-	 * 
-	 * @return
+	 * @return how many times P wave travels in the mantle. each down or upgoing
+	 *         is 0.5
 	 */
 	double mantleP() {
 		double pNum = 0;
-		for (int i = 0; i < nPart; i++) {
-			if (partition[i].equals(Partition.MANTLE))
-				if (isP[i])
-					pNum += 0.5;
-		}
-		if (phaseName.charAt(0) == 'p')
-			pNum -= 0.5;
+		for (int i = 0; i < nPart; i++)
+			if (partition[i].equals(Partition.MANTLE) && isP[i])
+				pNum += 0.5;
 
-		return pNum;
+		return phaseName.charAt(0) == 'p' ? pNum - 0.5 : pNum;
 	}
 
 	/**
@@ -451,6 +446,7 @@ public class Phase {
 
 	/**
 	 * @param i
+	 *            index of the target part
 	 * @return if it is p phase in i th part.
 	 */
 	boolean partIsP(int i) {
@@ -459,6 +455,7 @@ public class Phase {
 
 	/**
 	 * @param i
+	 *            index of the target
 	 * @return if it is down going in i th part.
 	 */
 	boolean partIsDownGoing(int i) {
@@ -467,6 +464,7 @@ public class Phase {
 
 	/**
 	 * @param i
+	 *            index of the target
 	 * @return the partition in which i th part is
 	 */
 	Partition partIs(int i) {
@@ -481,13 +479,10 @@ public class Phase {
 	double mantleS() {
 		double sNum = 0;
 		for (int i = 0; i < nPart; i++)
-			if (partition[i].equals(Partition.MANTLE))
-				if (!isP[i])
-					sNum += 0.5;
+			if (partition[i].equals(Partition.MANTLE) && !isP[i])
+				sNum += 0.5;
 
-		if (phaseName.charAt(0) == 's')
-			sNum -= 0.5;
-		return sNum;
+		return phaseName.charAt(0) == 's' ? sNum - 0.5 : sNum;
 	}
 
 	/**

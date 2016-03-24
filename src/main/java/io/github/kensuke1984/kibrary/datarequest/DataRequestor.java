@@ -176,6 +176,7 @@ public class DataRequestor implements Operation {
 	 * 
 	 * @param id
 	 *            of {@link GlobalCMTID}
+	 * @return BreakFastMail for the id
 	 */
 	public BreakFastMail createBreakFastMail(GlobalCMTID id) {
 		Channel[] channels = Channel.listChannels(networks, id, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,

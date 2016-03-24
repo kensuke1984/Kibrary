@@ -14,7 +14,7 @@ import javax.swing.SwingUtilities;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  */
 class TurningDepthMode extends Computation {
@@ -23,9 +23,6 @@ class TurningDepthMode extends Computation {
 	private VelocityStructure structure;
 	private static final double PERMISSIBLE_GAP = 0.0001;
 
-	/**
-	 * @param travelTimeTool
-	 */
 	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure structure, double eventR) {
 		super(travelTimeTool);
 		this.eventR = eventR;

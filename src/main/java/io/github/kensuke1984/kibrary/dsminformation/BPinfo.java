@@ -47,7 +47,7 @@ public class BPinfo extends DSMheader {
 	 *            stationの位置
 	 * @param outputDir
 	 *            書き込むフォルダ （相対パス）
-	 * @param structure
+	 * @param structure velocity structure
 	 * @param tlen
 	 *            must be a power of 2 /10
 	 * @param np

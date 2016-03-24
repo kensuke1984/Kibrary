@@ -40,13 +40,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * 
- * Information: {@link parameter.DataSelection} 理論波形と観測波形の比較から使えるものを選択する。<br>
+ *  理論波形と観測波形の比較から使えるものを選択する。<br>
  * workDir以下にあるイベントディレクトリの中から選ぶ<br>
  * 振幅比、correlation、variance<br>
  * 
  * {@link TimewindowInformationFile} necessary.
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * 
  * 
  * @author Kensuke Konishi

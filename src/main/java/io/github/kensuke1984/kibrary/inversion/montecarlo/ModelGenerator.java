@@ -40,7 +40,7 @@ class ModelGenerator {
 		return structure;
 	}
 
-	/**
+	/*
 	 * +-4% <br>
 	 * 0:3480-3530 V<br>
 	 * 1:3530-3580 V<br>

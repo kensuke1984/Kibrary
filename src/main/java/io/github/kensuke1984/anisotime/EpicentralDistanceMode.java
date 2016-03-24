@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
  * Epicentral distance mode.
  * 
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  * 
  */
@@ -30,15 +30,13 @@ class EpicentralDistanceMode extends Computation {
 	 * @param travelTimeTool
 	 *            parent
 	 * @param targetPhases
-	 *            Array of {@link PhaseName}s
+	 *            Array of PhaseNames
 	 * @param epicentralDistance
 	 *            target delta [rad]
 	 * @param structure
 	 *            structure
 	 * @param eventR
 	 *            radius (not depth) [km]
-	 * @param sv
-	 *            if true, p-SV mode
 	 */
 	EpicentralDistanceMode(ANISOtime travelTimeTool, Phase[] targetPhases, double epicentralDistance, VelocityStructure structure,
 			double eventR) {

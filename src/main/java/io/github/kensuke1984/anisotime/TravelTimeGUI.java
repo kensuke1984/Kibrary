@@ -14,7 +14,7 @@ import javax.swing.WindowConstants;
  * 
  * GUI for ANISOtime
  * 
- * @version 0.3.3.1
+ * @version 0.3.3.2
  * 
  * @author Kensuke Konishi
  */
@@ -69,7 +69,7 @@ class TravelTimeGUI extends javax.swing.JFrame {
 	}
 
 	/**
-	 * 0(default): All, 1: P-SV, 2: SH
+	 * @return 0(default): All, 1: P-SV, 2: SH
 	 */
 	int getPolarization() {
 		return jMenuBar1.getPolarization();
