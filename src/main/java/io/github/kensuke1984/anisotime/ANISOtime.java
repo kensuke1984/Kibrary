@@ -56,7 +56,6 @@ final class ANISOtime extends TravelTimeGUI {
 		case DIFFRACTION:
 			DiffractionMode dMode = new DiffractionMode(this, getStructure(), getEventR());
 			currentComputationMode = dMode;
-			// jMenuBar1.setMode(ComputationMode.NORMAL);
 			break;
 		case EPICENTRAL_DISTANCE:
 			EpicentralDistanceMode eMode = new EpicentralDistanceMode(this, getSelectedPhases(),
