@@ -190,10 +190,12 @@ public enum SACHeaderEnum {
 
 	/**
 	 * User defined variable storage area, n = 0,9.
+	 * (use for filter band0)
 	 */
 	USER0(0), // 40
 	/**
 	 * User defined variable storage area, n = 0,9.
+	 * (use for filter band1)
 	 */
 	USER1(0), // 41
 	/**
