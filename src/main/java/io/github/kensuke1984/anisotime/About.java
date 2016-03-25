@@ -8,7 +8,7 @@ import java.awt.GraphicsEnvironment;
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
  * @author Kensuke Konishi
  * 
- * @version 0.0.2.1
+ * @version 0.0.2.2
  * 
  */
 final class About extends javax.swing.JFrame {
@@ -28,13 +28,10 @@ final class About extends javax.swing.JFrame {
 	private void initComponents() {
 		setTitle("About ANISOtime");
 		jScrollPane1 = new javax.swing.JScrollPane();
-		jTextArea1 = new javax.swing.JTextArea();
+		jTextArea1 = new javax.swing.JTextArea(line,5,20);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-		jTextArea1.setColumns(20);
-		jTextArea1.setRows(5);
 		jScrollPane1.setViewportView(jTextArea1);
-		jTextArea1.setText(line);
 		jTextArea1.setLineWrap(true);
 		jTextArea1.setEditable(false);
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -47,7 +44,6 @@ final class About extends javax.swing.JFrame {
 				.addGroup(layout.createSequentialGroup().addContainerGap()
 						.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE)
 						.addContainerGap()));
-
 		pack();
 		java.awt.EventQueue.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
 	}// </editor-fold>
