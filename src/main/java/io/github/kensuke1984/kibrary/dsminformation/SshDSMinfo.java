@@ -14,10 +14,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Information file for SSHPSV and SSHSH
  * 
- * <p>This class is <b>IMMUTABLE</b>
+ * <p>
+ * This class is <b>IMMUTABLE</b>
  * 
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
  * @author kensuke
  * 
@@ -26,9 +27,9 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 
 	private double[] perturbationR;
 
-	public SshDSMinfo(PolynomialStructure ps, GlobalCMTID id, Set<Station> stations, String outputDir,
+	public SshDSMinfo(PolynomialStructure structure, GlobalCMTID id, Set<Station> stations, String outputDir,
 			double[] perturbationR, double tlen, int np) {
-		super(ps, id, stations, outputDir, tlen, np);
+		super(structure, id, stations, outputDir, tlen, np);
 		this.perturbationR = perturbationR;
 	}
 
