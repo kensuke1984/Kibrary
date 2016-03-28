@@ -330,9 +330,7 @@ public class Trace {
 	 * @return timeWindowの内部に属する部分を切り取ったものをnewして返す
 	 */
 	public Trace cutWindow(Timewindow timeWindow) {
-		double start = timeWindow.getStartTime();
-		double end = timeWindow.getEndTime();
-		return cutWindow(start, end);
+		return cutWindow(timeWindow.getStartTime(), timeWindow.getEndTime());
 	}
 
 	/**

@@ -4,12 +4,12 @@ package io.github.kensuke1984.anisotime;
  * Enums of egion and boundaries
  * 
  * @author Kensuke Konishi
- * @version 0.0.2.1
+ * @version 0.0.2.2
  */
 enum Partition {
 	MANTLE(0), CORE_MANTLE_BOUNDARY(1), OUTERCORE(2), INNER_CORE_BAUNDARY(3), INNERCORE(4),;
 
-	private int value;
+	private final int value;
 
 	private Partition(int i) {
 		value = i;
