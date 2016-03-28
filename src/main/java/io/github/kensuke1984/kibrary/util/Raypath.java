@@ -6,7 +6,6 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.anisotime.RaypathSearch;
 import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
-import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 
 /**
@@ -16,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
  * 
  * 
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
  * 
  * @author Kensuke Konishi
@@ -91,8 +90,8 @@ public class Raypath {
 	 *            {@link HorizontalPosition} of a station
 	 */
 	public Raypath(Location source, HorizontalPosition station) {
-		this.sourceLocation = source;
-		this.stationPosition = station;
+		sourceLocation = source;
+		stationPosition = station;
 		azimuth = source.getAzimuth(station);
 		epicentralDistance = Earth.getEpicentralDistance(source, station);
 		backAzimuth = source.getBackAzimuth(station);
@@ -116,18 +115,12 @@ public class Raypath {
 	 *         distance of theta from the source. 震源から観測点に向けての震央距離thetaでの座標
 	 */
 	public HorizontalPosition positionOnRaypathAt(double theta) {
-		XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0);
-		// xyz = xyz.rotateaboutZ(station.getPhi()-source.getPhi());
-		xyz = xyz.rotateaboutZ(Math.PI - azimuth);
-		xyz = xyz.rotateaboutY(sourceLocation.getTheta());
-		xyz = xyz.rotateaboutZ(sourceLocation.getPhi());
-
-		return xyz.getLocation();
+		return RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0).rotateaboutZ(Math.PI - azimuth)
+				.rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).getLocation();
 	}
 
 	/**
-	 * ある点を震源、観測点に与えた時に、
-	 * 震源を北極に持って行って観測点をさらに標準時線に持っていった時のある点の座標
+	 * ある点を震源、観測点に与えた時に、 震源を北極に持って行って観測点をさらに標準時線に持っていった時のある点の座標
 	 * 
 	 * @param position
 	 *            {@link HorizontalPosition} of target
@@ -135,16 +128,12 @@ public class Raypath {
 	 *         and station is on the Standard meridian
 	 */
 	public HorizontalPosition moveToNorthPole(HorizontalPosition position) {
-		XYZ xyz = position.toXYZ(Earth.EARTH_RADIUS);
-		xyz = xyz.rotateaboutZ(-sourceLocation.getPhi());
-		xyz = xyz.rotateaboutY(-sourceLocation.getTheta());
-		xyz = xyz.rotateaboutZ(-Math.PI + azimuth);
-		return xyz.getLocation();
+		return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(-sourceLocation.getPhi())
+				.rotateaboutY(-sourceLocation.getTheta()).rotateaboutZ(-Math.PI + azimuth).getLocation();
 	}
-	
+
 	/**
-	 * 震源を北極に持って行って観測点をさらに標準時線に持っていった時に、ある点を仮定する。
-	 * その後震源、観測点を本来の位置に戻した時の、ある点の座標
+	 * 震源を北極に持って行って観測点をさらに標準時線に持っていった時に、ある点を仮定する。 その後震源、観測点を本来の位置に戻した時の、ある点の座標
 	 * 
 	 * @param position
 	 *            {@link HorizontalPosition} of target
@@ -152,12 +141,10 @@ public class Raypath {
 	 *         and station is from the Standard meridian
 	 */
 	public HorizontalPosition moveFromNorthPole(HorizontalPosition position) {
-		XYZ xyz = position.toXYZ(Earth.EARTH_RADIUS);
-		xyz = xyz.rotateaboutZ(Math.PI - azimuth);
-		xyz = xyz.rotateaboutY(sourceLocation.getTheta());
-		xyz = xyz.rotateaboutZ(sourceLocation.getPhi());
-		return xyz.getLocation();
+		return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(Math.PI - azimuth)
+				.rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).getLocation();
 	}
+
 	/**
 	 * Compensation is the raypath extension of the input phase to the surface
 	 * at the source side.
@@ -185,9 +172,7 @@ public class Raypath {
 	 * @return Raypath which phase travels this raypath
 	 */
 	public List<io.github.kensuke1984.anisotime.Raypath> toANISOtime(Phase phase, VelocityStructure structure) {
-		double deltaR = 10;
-		double eventR = sourceLocation.getR();
-		return RaypathSearch.lookFor(phase, structure, eventR, epicentralDistance, deltaR);
+		return RaypathSearch.lookFor(phase, structure, sourceLocation.getR(), epicentralDistance, 10);
 	}
 
 }
