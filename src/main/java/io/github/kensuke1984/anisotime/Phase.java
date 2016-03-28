@@ -268,58 +268,58 @@ public class Phase {
 		}
 
 		// check if other letters are used.
-		Pattern others = Pattern.compile("[abd-hj-oqrt-zA-HL-OQ-RT-Z]");
+		final Pattern others = Pattern.compile("[abd-hj-oqrt-zA-HL-OQ-RT-Z]");
 		if (others.matcher(phase).find())
 			return false;
 
 		// first letter is sSpP
-		Pattern firstLetter = Pattern.compile("^[^sSPp]");
+		final Pattern firstLetter = Pattern.compile("^[^sSPp]");
 		if (firstLetter.matcher(phase).find())
 			return false;
 
 		// final letter is psSP
-		Pattern finalLetter = Pattern.compile("[^psSP]$");
+		final Pattern finalLetter = Pattern.compile("[^psSP]$");
 		if (finalLetter.matcher(phase).find())
 			return false;
 
 		// p s must be the first letter
-		Pattern ps = Pattern.compile(".[ps]");
+		final Pattern ps = Pattern.compile(".[ps]");
 		if (ps.matcher(phase).find())
 			return false;
 
 		// c must be next to PS
-		Pattern nextC = Pattern.compile("[^PS]c|c[^PS]|[^PSps][PS]c|c[PS][^PS]");
+		final Pattern nextC = Pattern.compile("[^PS]c|c[^PS]|[^PSps][PS]c|c[PS][^PS]");
 		if (nextC.matcher(phase).find())
 			return false;
 
-		Pattern nextK = Pattern.compile("[^PSKiIJ]K[^PSKiIJ]|[^psPS][PS]K|K[PS][^PS]");
+		final Pattern nextK = Pattern.compile("[^PSKiIJ]K[^PSKiIJ]|[^psPS][PS]K|K[PS][^PS]");
 		if (nextK.matcher(phase).find())
 			return false;
 
-		Pattern nextJ = Pattern.compile("[^IJK]J|J[^IJK]");
+		final Pattern nextJ = Pattern.compile("[^IJK]J|J[^IJK]");
 		if (nextJ.matcher(phase).find())
 			return false;
 
-		Pattern smallI = Pattern.compile("[^K]i|i[^K]|[^PSK]Ki|iK[^KPS]");
+		final Pattern smallI = Pattern.compile("[^K]i|i[^K]|[^PSK]Ki|iK[^KPS]");
 		if (smallI.matcher(phase).find())
 			return false;
 
-		Pattern largeI = Pattern.compile("[^IJK]I|I[^IJK]");
+		final Pattern largeI = Pattern.compile("[^IJK]I|I[^IJK]");
 		if (largeI.matcher(phase).find())
 			return false;
 
 		// phase turning R is above the CMB
-		Pattern mantleP = Pattern.compile("^P$|^P[PS]|[psPS]P$|[psPS]P[PS]");
-		Pattern mantleS = Pattern.compile("^S$|^S[PS]|[psPS]S$|[psPS]S[PS]");
+		final Pattern mantleP = Pattern.compile("^P$|^P[PS]|[psPS]P$|[psPS]P[PS]");
+		final Pattern mantleS = Pattern.compile("^S$|^S[PS]|[psPS]S$|[psPS]S[PS]");
 
 		// phase reflected at the cmb
-		Pattern cmbP = Pattern.compile("Pc|cP");
-		Pattern cmbS = Pattern.compile("Sc|cS");
+		final Pattern cmbP = Pattern.compile("Pc|cP");
+		final Pattern cmbS = Pattern.compile("Sc|cS");
 		// phase turning R r <cmb
-		Pattern outercoreP = Pattern.compile("PK|KP");
-		Pattern outercoreS = Pattern.compile("SK|KS");
+		final Pattern outercoreP = Pattern.compile("PK|KP");
+		final Pattern outercoreS = Pattern.compile("SK|KS");
 		// phase turning R icb < r < cmb
-		Pattern outercore = Pattern.compile("[PSK]K[PSK]");
+		final Pattern outercore = Pattern.compile("[PSK]K[PSK]");
 
 		// phase reflected at the icb
 		boolean icb = phase.contains("i");
@@ -337,7 +337,6 @@ public class Phase {
 		if (outercore.matcher(phase).find())
 			if (innercoreP || icb || innercoreS)
 				return false;
-
 		return true;
 	}
 
@@ -357,7 +356,6 @@ public class Phase {
 				if (phaseName.contains("K"))
 					if (!(phaseName.contains("I") || phaseName.contains("J") || phaseName.contains("i")))
 						return false;
-
 			if (!p.shallow(pTurning))
 				return false;
 		}
