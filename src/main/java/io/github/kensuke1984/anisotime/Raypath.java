@@ -31,7 +31,7 @@ import java.util.List;
  * @author Kensuke Konishi
  * 
  * 
- * @version 0.3.9.2
+ * @version 0.3.9.3
  * 
  * 
  */
@@ -219,7 +219,6 @@ public class Raypath {
 			throw new RuntimeException("Input p is invalid.");
 
 		setTurningRs();
-		// compute();
 	}
 
 	public boolean isSv() {
@@ -227,7 +226,8 @@ public class Raypath {
 	}
 
 	/**
-	 * @param phase the target phase
+	 * @param phase
+	 *            the target phase
 	 * @return bottom Radius of the input phase[km]
 	 */
 	double bottomingR(Phase phase) {
@@ -355,7 +355,6 @@ public class Raypath {
 				panel.addPath(x, y);
 			}
 			panel.toEPS(os, phase, rayParameter, computeDelta(phase), computeTraveltime(phase), eventR);
-			// panel.setFrameVisible(true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -378,7 +377,6 @@ public class Raypath {
 
 	private double calcQTP(double r) {
 		double s2 = calcS2(r);
-		// System.out.println(s2);
 		return (calcS1(r) - (calcS5(r) * rayParameter * rayParameter / r / r + s2 * s2) / calcR(r)) / calcQTauP(r);
 	}
 
@@ -485,7 +483,7 @@ public class Raypath {
 	 * 
 	 * @param phase
 	 *            Seismic {@link Phase}
-	 * @return delta for phase &pm; upper going delta
+	 * @return delta[rad] for phase &pm; upper going delta
 	 */
 	public double computeExtendedDelta(Phase phase) {
 		double delta = computeDelta(phase);
@@ -559,7 +557,6 @@ public class Raypath {
 		double oc = phase.outerCore();
 		double icp = phase.innerCoreP();
 		double ics = phase.innerCoreS();
-		// System.out.println(ms);
 
 		double mantleP = 0 < mp ? mantlePDelta * mp * 2 : 0;
 		double mantleS = 0 < ms ? mantleSDelta * ms * 2 : 0;
@@ -945,9 +942,8 @@ public class Raypath {
 	}
 
 	/**
-	 * (Half)Delta in inner core
 	 * 
-	 * @return
+	 * @return (Half)Delta in inner core
 	 */
 	private double innerCorePDelta() {
 		double delta = 0;
@@ -992,9 +988,8 @@ public class Raypath {
 	}
 
 	/**
-	 * (Half)travel time in inner core
 	 * 
-	 * @return
+	 * @return (Half)travel time in inner core
 	 */
 	private double innerCorePTau() {
 		double icbR = structure.innerCoreBoundary();
@@ -1018,9 +1013,8 @@ public class Raypath {
 	}
 
 	/**
-	 * (Half) Delta in inner core
 	 * 
-	 * @return
+	 * @return (Half) Delta in inner core
 	 */
 	private double innerCoreSDelta() {
 		double icbR = structure.innerCoreBoundary();
@@ -1420,16 +1414,14 @@ public class Raypath {
 		double v = Math.sqrt(structure.getA(r) / structure.getRho(r));
 		double sin = rayParameter * v / r;
 		double cos = Math.sqrt(1 - sin * sin);
-		double qdelta = sin / cos / r;
-		return qdelta;
+		return sin / cos / r;
 	}
 
 	private double outerCoreQT(double r) {
 		double v = Math.sqrt(structure.getA(r) / structure.getRho(r));
 		double sin = rayParameter * v / r;
 		double cos = Math.sqrt(1 - sin * sin);
-		double tau = 1 / v / cos;
-		return tau;
+		return 1 / v / cos;
 	}
 
 	/**
@@ -1485,8 +1477,7 @@ public class Raypath {
 		double gap = Math.abs(pTurningR - structure.coreMantleBoundary());
 		if (permissibleGapForDiff < gap)
 			return -1;
-		double delta = 2 * mantlePDelta - upperPDelta + deltaOnCMB;
-		return delta;
+		return 2 * mantlePDelta - upperPDelta + deltaOnCMB;
 	}
 
 	/**
@@ -1501,8 +1492,7 @@ public class Raypath {
 		double gap = Math.abs(pTurningR - structure.coreMantleBoundary());
 		if (permissibleGapForDiff < gap)
 			return -1;
-		double time = 2 * mantlePTime - upperPTime + pTimeAlongCMB(deltaOnCMB);
-		return time;
+		return 2 * mantlePTime - upperPTime + pTimeAlongCMB(deltaOnCMB);
 	}
 
 	/**
@@ -1542,9 +1532,7 @@ public class Raypath {
 		// System.out.println(gap+" "+permissibleGapForDiff);
 		if (permissibleGapForDiff < gap)
 			return -1;
-		double delta = 2 * mantleSDelta - upperSDelta + deltaOnCMB;
-		// System.out.println(mantleSDelta + " " + upperSDelta);
-		return delta;
+		return 2 * mantleSDelta - upperSDelta + deltaOnCMB;
 	}
 
 	/**
@@ -1559,8 +1547,7 @@ public class Raypath {
 		double gap = Math.abs(getSTurningR() - structure.coreMantleBoundary());
 		if (permissibleGapForDiff < gap)
 			return -1;
-		double time = 2 * mantleSTime - upperSTime + sTimeAlongCMB(deltaOnCMB);
-		return time;
+		return 2 * mantleSTime - upperSTime + sTimeAlongCMB(deltaOnCMB);
 	}
 
 	/**
@@ -1614,13 +1601,7 @@ public class Raypath {
 		double a = calcQDeltaP(startR);
 		double b = calcQDeltaP(startR + 0.5 * deltax);
 		double c = calcQDeltaP(endR);
-		// System.out.println(a+" "+b+" "+c);
-		// System.out.println(x[i]*Math.sin(delta)+" "+x[i]*Math.cos(delta));
-		double delta = bySimpsonRule(a, b, c) * deltax;
-		// System.out.println(x[i+1]);
-		// if(Double.isNaN(delta))
-		// System.exit(0);
-		return delta;
+		return bySimpsonRule(a, b, c) * deltax;
 	}
 
 	/**
@@ -1635,8 +1616,7 @@ public class Raypath {
 		double a = calcQTP(startR);
 		double b = calcQTP(startR + 0.5 * deltax);
 		double c = calcQTP(endR);
-		double tau = bySimpsonRule(a, b, c) * deltax;
-		return tau;
+		return bySimpsonRule(a, b, c) * deltax;
 	}
 
 	/**
@@ -1651,8 +1631,7 @@ public class Raypath {
 		double a = calcQDeltaS(startR);
 		double b = calcQDeltaS(startR + 0.5 * deltax);
 		double c = calcQDeltaS(endR);
-		double delta = bySimpsonRule(a, b, c) * deltax;
-		return delta;
+		return bySimpsonRule(a, b, c) * deltax;
 	}
 
 	/**
@@ -1663,17 +1642,15 @@ public class Raypath {
 	 * @return
 	 */
 	private double simpsonSTau(double startR, double endR) {
-		double tau = 0;
 		if (startR == endR)
 			return 0;
-		if (startR > endR)
+		if (endR < startR)
 			throw new RuntimeException("Invalid Rs");
 		double deltax = endR - startR;
 		double a = calcQTS(startR);
 		double b = calcQTS(startR + 0.5 * deltax);
 		double c = calcQTS(endR);
-		tau += bySimpsonRule(a, b, c) * deltax;
-		return tau;
+		return bySimpsonRule(a, b, c) * deltax;
 	}
 
 	/**
@@ -1684,14 +1661,11 @@ public class Raypath {
 	 * @return P wave traveltime along the CMB
 	 */
 	private double pTimeAlongCMB(double deltaOnCMB) {
-		double time = 0;
 		// radius which avoids 0 on cmb
 		double r = structure.coreMantleBoundary() + eps;
 		double s = r * deltaOnCMB;
 		double velocity = Math.sqrt(structure.getA(r) / structure.getRho(r));
-		time = s / velocity;
-		// System.out.println("pTimeAlongCMB = "+time);
-		return time;
+		return s / velocity;
 	}
 
 	/**
@@ -1704,13 +1678,10 @@ public class Raypath {
 	 * @return P wave traveltime along the CMB
 	 */
 	private double pDiffractionTime(double r, double delta) {
-		double time = 0;
 		// radius which avoids 0 on cmb
 		double s = r * delta;
 		double velocity = Math.sqrt(structure.getA(r) / structure.getRho(r));
-		time = s / velocity;
-		// System.out.println("pTimeAlongCMB = "+time);
-		return time;
+		return s / velocity;
 	}
 
 	/**
@@ -1774,13 +1745,11 @@ public class Raypath {
 	 * @return S wave traveltime along the CMB
 	 */
 	private double sTimeAlongCMB(double deltaOnCMB) {
-		double time = 0;
 		// radius which avoids 0 on cmb
 		double r = structure.coreMantleBoundary() + eps;
 		double s = r * deltaOnCMB;
 		double velocity = Math.sqrt((sv ? structure.getL(r) : structure.getN(r)) / structure.getRho(r));
-		time = s / velocity;
-		return time;
+		return s / velocity;
 	}
 
 	/**
