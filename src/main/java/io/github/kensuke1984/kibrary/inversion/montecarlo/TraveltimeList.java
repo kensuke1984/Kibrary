@@ -6,7 +6,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 
-import io.github.kensuke1984.kibrary.external.TauPPhaseName;
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * @author Kensuke Konishi 
- * @version 0.0.1
+ * @version 0.0.2
  */
 class TraveltimeList {
 
@@ -31,7 +31,7 @@ class TraveltimeList {
 			read(listPath);
 	}
 
-	void add(SACData sacFile, TauPPhaseName phase) {
+	void add(SACData sacFile, Phase phase) {
 		double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 		double time = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, phase).iterator().next().getTravelTime();

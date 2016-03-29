@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.github.kensuke1984.anisotime.Phase;
+
 /**
  * <p>
  * Utility class to handle with taup_time in TauP package
@@ -21,9 +23,11 @@ import java.util.stream.IntStream;
  * 
  * PREM is used for travel times.
  * 
- * @version 0.3.1.1
+ * @version 0.3.2
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  * 
+ * 
+ * TODO phase
  * 
  * @author Kensuke Konishi
  * 
@@ -54,8 +58,8 @@ public final class TauPTimeReader {
 	 * @return travel times for the phase if theres a multiplication, all values
 	 *         will be returned
 	 */
-	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, TauPPhaseName... phases) {
-		Set<TauPPhaseName> phaseSet = new HashSet<>(Arrays.asList(phases));
+	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, Phase... phases) {
+		Set<Phase> phaseSet = new HashSet<>(Arrays.asList(phases));
 		return getTauPPhase(eventR, epicentralDistance, phaseSet);
 	}
 
@@ -68,7 +72,7 @@ public final class TauPTimeReader {
 	 *            set of seismic phase.
 	 * @return {@link Set} of TauPPhases.
 	 */
-	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, Set<TauPPhaseName> phaseSet) {
+	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, Set<Phase> phaseSet) {
 		return toPhase(operateTauPTime(eventR, epicentralDistance, phaseSet));
 	}
 
@@ -80,7 +84,7 @@ public final class TauPTimeReader {
 	 * @param phase
 	 * @return result lines
 	 */
-	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<TauPPhaseName> phase) {
+	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<Phase> phase) {
 		String[] cmd = makeCMD(eventR, epicentralDistance, phase);
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.redirectError(ExternalProcess.bitBucket);
@@ -120,7 +124,7 @@ public final class TauPTimeReader {
 		// System.out.println(line+"hi");
 		double distance = Double.parseDouble(parts[0]);
 		double depth = Double.parseDouble(parts[1]);
-		TauPPhaseName phaseName = TauPPhaseName.valueOf(parts[2]);
+		Phase phaseName = Phase.create(parts[2]);
 		double travelTime = Double.parseDouble(parts[3]);
 		double rayParameter = Double.parseDouble(parts[4]);
 		double takeoff = Double.parseDouble(parts[5]);
@@ -140,10 +144,11 @@ public final class TauPTimeReader {
 	 *            [km] RADIUS (NOT depth from the surface)
 	 * @param epicentralDistance
 	 *            [deg]
-	 * @param phase
-	 * @return
+	 * @param phases
+	 *            phase set
+	 * @return command
 	 */
-	private static String[] makeCMD(double eventR, double epicentralDistance, Set<TauPPhaseName> phases) {
+	private static String[] makeCMD(double eventR, double epicentralDistance, Set<Phase> phases) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model prem -ph " + phase;
 		return cmd.split("\\s+");
