@@ -144,6 +144,8 @@ public final class RaypathSearch {
 	}
 
 	/**
+	 * 
+	 * TODO
 	 * By input parameters, make a list of possible P
 	 * 
 	 * @param targetPhase
@@ -282,6 +284,12 @@ public final class RaypathSearch {
 
 	}
 
+	public static void main(String[] args){
+		Raypath p = lookFor(Phase.create("SKS"), VelocityStructure.prem(), 6000, 100, 10).get(0);
+		System.out.println(p.getRayParameter());
+	}
+	
+	
 	/**
 	 * For the structure, search a rayparameter for the input epicentral
 	 * distance by deltaR

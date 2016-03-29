@@ -16,9 +16,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
-import io.github.kensuke1984.kibrary.external.TauPPhaseName;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
  * 
- * @version 0.2.0.2
+ * @version 0.2.1
  * 
  * 
  * @author Kensuke Konishi
@@ -112,9 +112,9 @@ public class TimewindowMaker implements Operation {
 
 	}
 
-	private static Set<TauPPhaseName> phaseSet(String arg) {
+	private static Set<Phase> phaseSet(String arg) {
 		return arg == null || arg.equals("") ? Collections.emptySet()
-				: Arrays.stream(arg.split("\\s+")).map(TauPPhaseName::valueOf).collect(Collectors.toSet());
+				: Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
 	}
 
 	/**
@@ -138,12 +138,12 @@ public class TimewindowMaker implements Operation {
 	/**
 	 * 省きたいフェーズ
 	 */
-	private Set<TauPPhaseName> exPhases;
+	private Set<Phase> exPhases;
 
 	/**
 	 * 使いたいフェーズ
 	 */
-	private Set<TauPPhaseName> usePhases;
+	private Set<Phase> usePhases;
 
 	private Path outputPath;
 	private Set<TimewindowInformation> timewindowSet;

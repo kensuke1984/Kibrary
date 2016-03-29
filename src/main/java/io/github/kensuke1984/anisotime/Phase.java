@@ -431,7 +431,7 @@ public class Phase {
 	 * @return null if P phase does not exist.
 	 */
 	Partition pReaches() {
-		if (compiledName.contains("Sdiff"))
+		if (compiledName.contains("Sdiff")) // pSdiffの可能性 TODO
 			return null;
 		if (compiledName.contains("I"))
 			return Partition.INNERCORE;
