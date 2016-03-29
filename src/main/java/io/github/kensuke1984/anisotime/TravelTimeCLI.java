@@ -214,7 +214,7 @@ final class TravelTimeCLI {
 		if (cmd.hasOption("ph")) {
 			phase = Phase.create(cmd.getOptionValue("ph"));
 		} else
-			phase = Phase.create("S");
+			phase = Phase.S;
 		return phase;
 	}
 
