@@ -15,12 +15,20 @@ import java.util.regex.Pattern;
  * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
  * 
  * 
- * @version 0.1.0.2
+ * @version 0.1.1
  * 
  * @author Kensuke Konishi
  * 
  */
 public class Phase {
+	
+	//frequently use
+	public static final Phase P = Phase.create("P");
+	public static final Phase PcP = Phase.create("PcP");
+	public static final Phase S = Phase.create("S");
+	public static final Phase ScS = Phase.create("ScS");
+	
+	
 
 	@Override
 	public int hashCode() {
@@ -150,8 +158,7 @@ public class Phase {
 		// P
 		int iCurrentPart = 0;
 		for (int i = 0; i < phaseName.length(); i++) {
-			char s = phaseName.charAt(i);
-			switch (s) {
+			switch (phaseName.charAt(i)) {
 			case 'c':
 				continue;
 			case 'i':
