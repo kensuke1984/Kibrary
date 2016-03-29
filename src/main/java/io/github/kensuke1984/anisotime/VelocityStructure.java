@@ -5,10 +5,25 @@ package io.github.kensuke1984.anisotime;
 
 /**
  * Structure information for computing traveltime.
+ * 
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.2
  */
 public interface VelocityStructure {
+
+	/**
+	 * @return Transversely isotropic (TI) PREM by Dziewonski & Anderson 1981
+	 */
+	public static VelocityStructure prem() {
+		return PolynomialStructure.PREM;
+	}
+
+	/**
+	 * @return isotropic PREM by Dziewonski & Anderson 1981
+	 */
+	public static VelocityStructure isoPREM() {
+		return PolynomialStructure.ISO_PREM;
+	}
 
 	/**
 	 * @param r
@@ -18,21 +33,24 @@ public interface VelocityStructure {
 	double getRho(double r);
 
 	/**
-	 * @param rayParameter ray parameter
+	 * @param rayParameter
+	 *            ray parameter
 	 * @return the SH turning radius [km] for the raypath or -1 if there is no
 	 *         valid R
 	 */
 	double shTurningR(double rayParameter);
 
 	/**
-	 * @param rayParameter ray parameter
+	 * @param rayParameter
+	 *            ray parameter
 	 * @return the SV turning radius [km] for the raypath or -1 if there is no
 	 *         valid R
 	 */
 	double svTurningR(double rayParameter);
 
 	/**
-	 * @param rayParameter ray parameter
+	 * @param rayParameter
+	 *            ray parameter
 	 * @return the P turning radius [km] for the raypath or -1 if there is no
 	 *         valid R
 	 */
