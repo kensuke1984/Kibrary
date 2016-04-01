@@ -8,7 +8,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * Static correction data for a raypath.<br>
  * <p>
- *  This class is <b>IMMUTABlE.</b>
+ * This class is <b>IMMUTABlE.</b>
  * </p>
  *
  * When a time window for a synthetic is [t1, t2], then <br>
@@ -16,8 +16,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * and amplitude observed dataset is divided by the amplitudeRatio.
  * 
  * 
- * In short, Time correction value is relative pick time in synthetic - the one in observed
- * Amplitude correction value (amplitudeRatio) is observed / synthetic
+ * In short, Time correction value is relative pick time in synthetic - the one
+ * in observed Amplitude correction value (amplitudeRatio) is observed /
+ * synthetic
  * 
  * 
  * Time shift is rounded off to the second decimal place.
