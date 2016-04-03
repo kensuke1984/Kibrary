@@ -145,8 +145,7 @@ public final class RaypathSearch {
 
 	/**
 	 * 
-	 * TODO
-	 * By input parameters, make a list of possible P
+	 * TODO By input parameters, make a list of possible P
 	 * 
 	 * @param targetPhase
 	 *            the phase for search
@@ -284,12 +283,20 @@ public final class RaypathSearch {
 
 	}
 
-	public static void main(String[] args){
-		Raypath p = lookFor(Phase.create("SKS"), VelocityStructure.prem(), 6000, 100, 10).get(0);
-		System.out.println(p.getRayParameter());
+	public static void main(String[] args) {
+		// Raypath p = lookFor(Phase.create("SKS"), VelocityStructure.prem(),
+		// 6000, 100, 10).get(0);
+		// System.out.println(p.getRayParameter());
+		double d =300;
+		double p = toPRayParameter(d, VelocityStructure.prem());
+			Raypath r = new Raypath(p);
+			System.out.println(Phase.create("SKiKS").exists(r));
+			System.out.println(d + "  " + r.getPTurningR()+" "+p+" "+r.getKTurningR()+" "+r.getPTurningR());
+			r.compute();
+			System.out.println(Math.toDegrees(r.computeDelta(Phase.create("SKiKS"))) + "  " + r.computeTraveltime(Phase.create("SKiKS")));
+//			if (d-r.getPTurningR()>3)
 	}
-	
-	
+
 	/**
 	 * For the structure, search a rayparameter for the input epicentral
 	 * distance by deltaR

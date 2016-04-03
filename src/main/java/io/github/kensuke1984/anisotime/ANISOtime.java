@@ -8,14 +8,14 @@ import javax.swing.SwingUtilities;
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 0.3.7
+ * @version 0.3.8
  * 
  */
 final class ANISOtime extends TravelTimeGUI {
 	
 	static final String codename = "Promyvion";
 	
-	static final String version ="0.3.7b";
+	static final String version ="0.3.7.1b";
 	
 	private static final long serialVersionUID = -4093263118460123169L;
 

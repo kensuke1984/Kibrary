@@ -16,11 +16,12 @@ import java.util.regex.Pattern;
  * 
  * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
  * 
- * If there is a number (n) in the name.
- * the next letter to the number will be repeated n times.
- * (e.g. S3KS &rarr; SKKKS)
+ * If there is a number (n) in the name. the next letter to the number will be
+ * repeated n times. (e.g. S3KS &rarr; SKKKS)
  * 
  * @version 0.1.2
+ * 
+ *          TODO TauP
  * 
  * @author Kensuke Konishi
  * 
@@ -45,23 +46,30 @@ public class Phase {
 	private static final Pattern nextJ = Pattern.compile("[^IJK]J|J[^IJK]");
 	private static final Pattern smallI = Pattern.compile("[^K]i|i[^K]|[^PSK]Ki|iK[^KPS]");
 	private static final Pattern largeI = Pattern.compile("[^IJK]I|I[^IJK]");
+
 	// phase turning R is above the CMB
 	private static final Pattern mantleP = Pattern.compile("^P$|^P[PS]|[psPS]P$|[psPS]P[PS]");
 	private static final Pattern mantleS = Pattern.compile("^S$|^S[PS]|[psPS]S$|[psPS]S[PS]");
+
 	// phase reflected at the cmb
 	private static final Pattern cmbP = Pattern.compile("Pc|cP");
 	private static final Pattern cmbS = Pattern.compile("Sc|cS");
+
 	// phase turning R r <cmb
 	private static final Pattern outercoreP = Pattern.compile("PK|KP");
 	private static final Pattern outercoreS = Pattern.compile("SK|KS");
+
 	// phase turning R icb < r < cmb
 	private static final Pattern outercore = Pattern.compile("[PSK]K[PSK]");
 
 	// frequently use
 	public static final Phase P = Phase.create("P");
 	public static final Phase PcP = Phase.create("PcP");
+	public static final Phase PKiKP = Phase.create("PKiKP");
 	public static final Phase S = Phase.create("S");
 	public static final Phase ScS = Phase.create("ScS");
+	public static final Phase SKS = Phase.create("SKS");
+	public static final Phase SKiKS = Phase.create("SKiKS");
 
 	@Override
 	public int hashCode() {
@@ -103,6 +111,7 @@ public class Phase {
 		this.compiledName = compiledName;
 		computeParts();
 		digitalize();
+		setPropagation();
 	}
 
 	/**
@@ -307,6 +316,28 @@ public class Phase {
 
 	}
 
+	private void setPropagation() {
+		if (compiledName.contains("P"))
+			mantlePPropagation = Propagation.BOUNCING;
+		if (compiledName.contains("S"))
+			mantleSPropagation = Propagation.BOUNCING;
+		if (compiledName.contains("SK") || compiledName.contains("Sc") || compiledName.contains("KS")
+				|| compiledName.contains("cS"))
+			mantleSPropagation = Propagation.PENETRATING;
+		if (compiledName.contains("PK") || compiledName.contains("Pc") || compiledName.contains("KP")
+				|| compiledName.contains("cP"))
+			mantlePPropagation = Propagation.PENETRATING;
+		if (compiledName.contains("I") || compiledName.contains("J") || compiledName.contains("i"))
+			kPropagation = Propagation.PENETRATING;
+		else if (compiledName.contains("K"))
+			kPropagation = Propagation.BOUNCING;
+		if (compiledName.contains("I"))
+			innerCorePPropagation = Propagation.BOUNCING;
+		if (compiledName.contains("J"))
+			innerCoreSPropagation = Propagation.BOUNCING;
+
+	}
+
 	/**
 	 * @param phase
 	 *            phase name
@@ -382,44 +413,59 @@ public class Phase {
 		return true;
 	}
 
-	boolean turningRValidity(Partition pTurning, Partition sTurning) {
-		Partition p = pReaches();
-		Partition s = sReaches();
-		if (p != null) {
-			if (pTurning == null)
-				return false;
-			if (p.equals(Partition.MANTLE)) {
-				if (!pTurning.equals(Partition.MANTLE))
-					return false;
-			} else if (p.equals(Partition.OUTERCORE))
-				if (!pTurning.equals(Partition.OUTERCORE))
-					return false;
-			if (pTurning.equals(Partition.INNERCORE))
-				if (compiledName.contains("K"))
-					if (!(compiledName.contains("I") || compiledName.contains("J") || compiledName.contains("i")))
-						return false;
-			if (!p.shallow(pTurning))
-				return false;
-		}
-		if (s != null) {
-			if (sTurning == null)
-				return false;
-			if (s.equals(Partition.MANTLE))
-				if (!sTurning.equals(Partition.MANTLE))
-					return false;
-			if (sTurning.equals(Partition.INNERCORE))
-				if (compiledName.contains("K"))
-					if (pTurning.shallow(Partition.CORE_MANTLE_BOUNDARY))
-						return false;
-					else if (pTurning.shallow(Partition.OUTERCORE))
-						return !(compiledName.contains("I") || compiledName.contains("J")
-								|| compiledName.contains("i"));
-					else if (pTurning.equals(Partition.INNER_CORE_BAUNDARY))
-						return compiledName.contains("i");
-					else
-						return compiledName.contains("I") || compiledName.contains("J") || compiledName.contains("i");
+	private Propagation mantlePPropagation;
+	private Propagation innerCorePPropagation;
+	private Propagation kPropagation;
 
-			if (!s.shallow(sTurning))
+	private Propagation mantleSPropagation;
+	private Propagation innerCoreSPropagation;
+
+	Propagation getMantlePPropagation() {
+		return mantlePPropagation;
+	}
+
+	Propagation getInnerCorePPropagation() {
+		return innerCorePPropagation;
+	}
+
+	Propagation getkPropagation() {
+		return kPropagation;
+	}
+
+	Propagation getMantleSPropagation() {
+		return mantleSPropagation;
+	}
+
+	Propagation getInnerCoreSPropagation() {
+		return innerCoreSPropagation;
+	}
+
+	/**
+	 * TODO K
+	 * 
+	 * 
+	 * @param pTurning
+	 *            turning point of P
+	 * @param sTurning
+	 *            turning point of S
+	 * @return if the input turning points are valid for this
+	 */
+	boolean exists(Raypath ray) {
+		if (mantlePPropagation != null && ray.getMantlePPropagation() != mantlePPropagation)
+			return false;
+		if (kPropagation != null && ray.getkPropagation() != kPropagation)
+			return false;
+		if (innerCorePPropagation != null && ray.getInnerCorePPropagation() != innerCorePPropagation)
+			return false;
+		if (ray.isSv()) {
+			if (mantleSPropagation != null && ray.getMantleSVPropagation() != mantleSPropagation)
+				return false;
+			if (innerCoreSPropagation != null && ray.getInnerCoreSVPropagation() != innerCoreSPropagation)
+				return false;
+		} else {
+			if (mantleSPropagation != null && ray.getMantleSHPropagation() != mantleSPropagation)
+				return false;
+			if (innerCoreSPropagation != null && ray.getInnerCoreSHPropagation() != innerCoreSPropagation)
 				return false;
 		}
 		return true;
@@ -459,7 +505,6 @@ public class Phase {
 		if (compiledName.contains("Sc") || compiledName.contains("cS") || compiledName.contains("KS")
 				|| compiledName.contains("SK") || compiledName.contains("diff"))
 			return Partition.CORE_MANTLE_BOUNDARY;
-
 		return Partition.MANTLE;
 	}
 
@@ -472,7 +517,6 @@ public class Phase {
 		for (int i = 0; i < nPart; i++)
 			if (partition[i].equals(Partition.MANTLE) && isP[i])
 				pNum += 0.5;
-
 		return compiledName.charAt(0) == 'p' ? pNum - 0.5 : pNum;
 	}
 
