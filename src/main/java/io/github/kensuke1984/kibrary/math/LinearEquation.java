@@ -8,8 +8,8 @@ import org.apache.commons.math3.complex.Complex;
 /**
  * 
  * Solver for cubic equations with coefficients of real numbers.
- * 
- * @version 0.1.0.3
+ * <p>This class is <b>immutable</b>
+ * @version 0.1.2
  * @author Kensuke Konishi
  *
  */
@@ -24,7 +24,7 @@ public class LinearEquation {
 			System.out.println(c);
 	}
 
-	private PolynomialFunction pf = null;
+	private PolynomialFunction pf;
 	private double[] coef;
 
 	/**
@@ -34,8 +34,17 @@ public class LinearEquation {
 	 *            coefficients a[i] i=0,1,...
 	 */
 	public LinearEquation(double... coef) {
-		pf = new PolynomialFunction(coef);
-		this.coef = pf.getCoefficients();
+		this(new PolynomialFunction(coef));
+	}
+
+	/**
+	 * Solver for polynomial function = 0
+	 * 
+	 * @param pf polynomial functions for equations
+	 */
+	public LinearEquation(PolynomialFunction pf) {
+		this.pf = pf;
+		coef = pf.getCoefficients();
 	}
 
 	/**
