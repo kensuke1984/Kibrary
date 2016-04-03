@@ -10,7 +10,7 @@ import java.nio.file.Path;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.4.1
+ * @version 0.0.5
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
@@ -103,6 +103,19 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 	@Override
 	public double getRho(double r) {
 		return structure.getRho(r);
+	}
+
+	@Override
+	public double kTurningR(double rayParameter) {
+		for (int i = structure.getNzone() - 1; 0 <= i; i--) {
+			double vpA = structure.getVpA(i);
+			double vpB = structure.getVpB(i);
+			double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
+			if (structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1) && r < coreMantleBoundary()
+					&& innerCoreBoundary() < r)
+				return r;
+		}
+		return -1;
 	}
 
 }
