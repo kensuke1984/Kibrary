@@ -66,7 +66,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * network in one event</b>
  * 
  * 
- * @version 0.2.0.2
+ * @version 0.2.0.3
  * 
  * @author Kensuke Konishi
  * 
@@ -100,8 +100,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			property.setProperty("amplitudeCorrection", "false");
 		if (!property.containsKey("timeCorrection"))
 			property.setProperty("timeCorrection", "false");
-		if (!property.containsKey("timewindowInformationFilePath"))
-			throw new IllegalArgumentException("There is no information about timewindowInformationFilePath.");
+		if (!property.containsKey("timewindowPath"))
+			throw new IllegalArgumentException("There is no information about timewindowPath.");
 		if (!property.containsKey("sacSamplingHz"))
 			property.setProperty("sacSamplingHz", "20");
 		if (!property.containsKey("finalSamplingHz"))
@@ -118,16 +118,16 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		synPath = getPath("synPath");
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
-		timewindowInformationFilePath = getPath("timewindowInformationFilePath");
+		timewindowPath = getPath("timewindowPath");
 		timeCorrection = Boolean.parseBoolean(property.getProperty("timeCorrection"));
 		amplitudeCorrection = Boolean.parseBoolean(property.getProperty("amplitudeCorrection"));
 
 		if (timeCorrection || amplitudeCorrection) {
-			if (!property.containsKey("staticCorrectionFilePath"))
+			if (!property.containsKey("staticCorrectionPath"))
 				throw new RuntimeException("staticCorrectionPath is blank");
-			staticCorrectionFilePath = getPath("staticCorrectionFilePath");
-			if (!Files.exists(staticCorrectionFilePath))
-				throw new NoSuchFileException(staticCorrectionFilePath.toString());
+			staticCorrectionPath = getPath("staticCorrectionPath");
+			if (!Files.exists(staticCorrectionPath))
+				throw new NoSuchFileException(staticCorrectionPath.toString());
 		}
 
 		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
@@ -157,10 +157,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("##boolean amplitudeCorrection (false)");
 			pw.println("#amplitudeCorrection");
 			pw.println("##Path of a timewindow information file, must be defined");
-			pw.println("#timewindowInformationFilePath timewindow.dat");
+			pw.println("#timewindowPath timewindow.dat");
 			pw.println("##Path of a static correction file, ");
 			pw.println("##if any of the corrections are true, the path must be defined");
-			pw.println("#staticCorrectionFilePath staticCorrection.dat");
+			pw.println("#staticCorrectionPath staticCorrection.dat");
 			pw.println("##double value of sac sampling Hz (20) can't be changed now");
 			pw.println("#sacSamplingHz the value will be ignored");
 			pw.println("##double value of sampling Hz in output files (1)");
@@ -182,12 +182,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	/**
 	 * {@link Path} of a timewindow information file
 	 */
-	private Path timewindowInformationFilePath;
+	private Path timewindowPath;
 
 	/**
 	 * {@link Path} of a static correction file
 	 */
-	private Path staticCorrectionFilePath;
+	private Path staticCorrectionPath;
 
 	/**
 	 * Sacのサンプリングヘルツ （これと異なるSACはスキップ）
@@ -279,11 +279,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	@Override
 	public void run() throws Exception {
 		if (timeCorrection || amplitudeCorrection)
-			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionFilePath);
+			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionPath);
 
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
-		timewindowInformationSet = TimewindowInformationFile.read(timewindowInformationFilePath);
+		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
 				.collect(Collectors.toSet());
 		idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)

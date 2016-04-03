@@ -22,7 +22,6 @@ import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -74,8 +73,6 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("#sourceTimeFunction");
 			pw.println("##Path of a timewindow information file, must be set");
 			pw.println("#timewindowPath timewindow.dat");
-			pw.println("##Path of a station information file, must be set");
-			pw.println("#stationInformationFilePath station.inf");
 			pw.println("##PartialType[] compute types (PAR2)");
 			pw.println("#partialTypes");
 			pw.println("##Filter if backward filtering is applied (true)");
@@ -121,6 +118,8 @@ public class Partial1DDatasetMaker implements Operation {
 			property.setProperty("maxFreq", "0.08");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
+		if (!property.containsKey("timewindowPath"))
+			throw new IllegalArgumentException("There is no information about timewindowPath.");
 	}
 
 	/**
@@ -153,12 +152,11 @@ public class Partial1DDatasetMaker implements Operation {
 
 		tlen = Double.parseDouble(property.getProperty("tlen"));
 		np = Integer.parseInt(property.getProperty("np"));
-		minFreq = Double.parseDouble(property.getProperty("fmin"));
-		maxFreq = Double.parseDouble(property.getProperty("fmax"));
+		minFreq = Double.parseDouble(property.getProperty("minFreq"));
+		maxFreq = Double.parseDouble(property.getProperty("maxFreq"));
 		bodyR = Arrays.stream(property.getProperty("bodyR").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
-		stationInformationFilePath = getPath("stationInformationFilePath");
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
 
 	}
@@ -167,6 +165,7 @@ public class Partial1DDatasetMaker implements Operation {
 	 * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
 	 */
 	private String modelName;
+
 	/**
 	 * Path of a timewindow information file
 	 */
@@ -196,11 +195,11 @@ public class Partial1DDatasetMaker implements Operation {
 	 * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
 	 */
 	private double finalSamplingHz;
+	
 	/**
 	 * The folder contains source time functions.
 	 */
 	private Path sourceTimeFunctionPath;
-	private Path stationInformationFilePath;
 
 	/**
 	 * 0:none, 1:boxcar, 2:triangle.
@@ -554,15 +553,14 @@ public class Partial1DDatasetMaker implements Operation {
 		setBandPassFilter();
 		writeLog(filter.toString());
 		setPerturbationLocation();
-		stationSet = StationInformationFile.read(stationInformationFilePath);
+		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
+				.collect(Collectors.toSet());
 		idSet = Utilities.globalCMTIDSet(workPath);
 		// information about output partial types
-		writeLog(partialTypes.stream().map(Object::toString)
-				.collect(Collectors.joining(" ", "Computing for ", "")));
+		writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
-
 
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 
@@ -615,7 +613,6 @@ public class Partial1DDatasetMaker implements Operation {
 			}
 		}
 	}
-
 
 	@Override
 	public Path getWorkPath() {
