@@ -7,7 +7,7 @@ package io.github.kensuke1984.anisotime;
  * Structure information for computing traveltime.
  * 
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @version 0.0.3
  */
 public interface VelocityStructure {
 
@@ -31,6 +31,13 @@ public interface VelocityStructure {
 	 * @return density rho(r) [g/cm**3]
 	 */
 	double getRho(double r);
+
+	/**
+	 * @param rayParameter
+	 *            ray parameter
+	 * @return radius [km] at which K bounces.
+	 */
+	double kTurningR(double rayParameter);
 
 	/**
 	 * @param rayParameter
@@ -114,5 +121,25 @@ public interface VelocityStructure {
 	 * @return radius[km] of Earth
 	 */
 	double earthRadius();
+
+	/**
+	 * @param r
+	 *            radius [km]
+	 * @return which part r belong to
+	 */
+	default Partition whichPartition(double r) {
+		if (r < 0)
+			return null;
+		else if (r < innerCoreBoundary())
+			return Partition.INNERCORE;
+		else if (r == innerCoreBoundary())
+			return Partition.INNER_CORE_BAUNDARY;
+		else if (r < coreMantleBoundary())
+			return Partition.OUTERCORE;
+		else if (r == coreMantleBoundary())
+			return Partition.CORE_MANTLE_BOUNDARY;
+		else
+			return Partition.MANTLE;
+	}
 
 }

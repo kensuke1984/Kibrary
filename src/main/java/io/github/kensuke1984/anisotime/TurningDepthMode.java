@@ -105,7 +105,7 @@ class TurningDepthMode extends Computation {
 							break;
 						case INNERCORE:
 							if (raypath.getPTurning().equals(Partition.INNERCORE))
-								phase = Phase.create("SKIKS");
+								phase = Phase.create("SKJKS");
 							break;
 						default:
 							continue;
