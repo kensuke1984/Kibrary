@@ -199,13 +199,13 @@ public final class GMTMap {
 	 * @return psxy -V -K -O -P -Bname -Dxpos/ypos/length/width(h) -CcptPath >>
 	 *         $psname
 	 */
-	public static String psscale(String name, int interval, int xpos, int ypos, int length, int width, Path cptPath,
+	public static String psscale(String name, double interval, double xpos, double ypos, double length, double width, Path cptPath,
 			String... additionalOptions) {
-		String dOption = "-D" + xpos + "/" + ypos + "/" + length + "/" + width + "h";
-		String bOption = "-B" + interval + "+l\"" + name + "\"";
+		String dOption = " -D" + xpos + "/" + ypos + "/" + length + "/" + width + "h";
+		String bOption = " -B" + interval + "+l\"" + name + "\"";
 		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		String cOption = "-C" + cptPath;
-		String line = "psscale -V -K -O -P " + dOption + " " + bOption + cOption + " " + additional + " >>$psname";
+		String cOption = " -C" + cptPath;
+		String line = "psscale -V -K -O -P " + dOption  + bOption + cOption + " " + additional + " >>$psname";
 		return line;
 	}
 
