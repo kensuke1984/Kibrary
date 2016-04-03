@@ -22,7 +22,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.1.3
+ * @version 0.2.1.4
  * 
  * @author Kensuke Konishi
  * 
@@ -350,7 +350,7 @@ public class PolynomialStructure {
 	private static PolynomialStructure set(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
 			double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu, double[] qKappa) {
 		final PolynomialStructure structure = new PolynomialStructure();
-		structure.nzone = 12;
+		structure.nzone = nzone;
 		structure.rmin = rmin;
 		structure.rmax = rmax;
 
