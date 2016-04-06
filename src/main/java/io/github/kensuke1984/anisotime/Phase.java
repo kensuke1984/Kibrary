@@ -14,12 +14,14 @@ import java.util.regex.Pattern;
  * Waveform is now digitalized. Waveform is divided into parts. each part has up
  * or downgoing, P or S and the partition in which waveform exists.
  * 
- * PdiffXX and SdiffXX can be used. XX is positive double XX is diffractionAngle
+ * ???PdiffXX and ???SdiffXX can be used. XX is positive double XX is
+ * diffractionAngle diff must be the last part.
+ * 
  * 
  * If there is a number (n) in the name. the next letter to the number will be
  * repeated n times. (e.g. S3KS &rarr; SKKKS)
  * 
- * @version 0.1.2
+ * @version 0.1.3.1
  * 
  *          TODO TauP
  * 
@@ -28,10 +30,8 @@ import java.util.regex.Pattern;
  */
 public class Phase {
 
-	/**
-	 * no use letters
-	 */
-	private static final Pattern others = Pattern.compile("[abd-hj-oqrt-zA-HL-OQ-RT-Z]");
+	// no use letters
+	private static final Pattern others = Pattern.compile("[abeghj-oqrt-zA-HL-OQ-RT-Z]");
 	private static final Pattern number = Pattern.compile("\\d+");
 
 	// first letter is sSpP
@@ -44,12 +44,17 @@ public class Phase {
 	private static final Pattern nextC = Pattern.compile("[^PS]c|c[^PS]|[^PSps][PS]c|c[PS][^PS]");
 	private static final Pattern nextK = Pattern.compile("[^PSKiIJ]K[^PSKiIJ]|[^psPS][PS]K|K[PS][^PS]");
 	private static final Pattern nextJ = Pattern.compile("[^IJK]J|J[^IJK]");
-	private static final Pattern smallI = Pattern.compile("[^K]i|i[^K]|[^PSK]Ki|iK[^KPS]");
+	private static final Pattern smallI = Pattern.compile("[^Kd]i|i[^fK]|[^PSK]Ki|iK[^KPS]");
 	private static final Pattern largeI = Pattern.compile("[^IJK]I|I[^IJK]");
 
 	// phase turning R is above the CMB
 	private static final Pattern mantleP = Pattern.compile("^P$|^P[PS]|[psPS]P$|[psPS]P[PS]");
 	private static final Pattern mantleS = Pattern.compile("^S$|^S[PS]|[psPS]S$|[psPS]S[PS]");
+
+	// diffraction phase
+	private static final Pattern pDiff = Pattern.compile("Pdiff\\d*(\\.\\d+)?$");
+	private static final Pattern sDiff = Pattern.compile("Sdiff\\d*(\\.?\\d+)?$");
+	private static final Pattern diffRule = Pattern.compile("diff.+diff|P.*Pdiff|S.*Sdiff|diff.*[^\\d]$");
 
 	// phase reflected at the cmb
 	private static final Pattern cmbP = Pattern.compile("Pc|cP");
@@ -59,17 +64,19 @@ public class Phase {
 	private static final Pattern outercoreP = Pattern.compile("PK|KP");
 	private static final Pattern outercoreS = Pattern.compile("SK|KS");
 
-	// phase turning R icb < r < cmb
+	// phase turning R icb < r < cmb, i.e., the phase does not go to inner core.
 	private static final Pattern outercore = Pattern.compile("[PSK]K[PSK]");
 
 	// frequently use
 	public static final Phase P = Phase.create("P");
 	public static final Phase PcP = Phase.create("PcP");
 	public static final Phase PKiKP = Phase.create("PKiKP");
+	public static final Phase PKIKP = Phase.create("PKIKP");
 	public static final Phase S = Phase.create("S");
 	public static final Phase ScS = Phase.create("ScS");
 	public static final Phase SKS = Phase.create("SKS");
 	public static final Phase SKiKS = Phase.create("SKiKS");
+	public static final Phase SKIKS = Phase.create("SKIKS");
 
 	@Override
 	public int hashCode() {
@@ -131,7 +138,8 @@ public class Phase {
 	private static String compile(String name) {
 		try {
 			Matcher m = number.matcher(name);
-			while (m.find()) {
+			int dPos = name.indexOf('d');
+			while (m.find() && m.start() < dPos) {
 				int n = Integer.parseInt(m.group());
 				char c = name.charAt(m.end());
 				char[] chars = new char[n - 1];
@@ -182,7 +190,9 @@ public class Phase {
 		// waveform goes to a deeper part.
 		int zoneMove = 0;
 		for (int i = 0; i < compiledName.length(); i++)
-			if (compiledName.charAt(i) == 'c' || compiledName.charAt(i) == 'i')
+			if (compiledName.charAt(i) == 'd')
+				break;
+			else if (compiledName.charAt(i) == 'c' || compiledName.charAt(i) == 'i')
 				reflection++;
 			else if (compiledName.charAt(i) == 'K'
 					&& (compiledName.charAt(i - 1) == 'P' || compiledName.charAt(i - 1) == 'S'))
@@ -191,23 +201,14 @@ public class Phase {
 					&& compiledName.charAt(i - 1) == 'K')
 				zoneMove++;
 		// reflection++;
-		nPart = (compiledName.length() - reflection * 2 - zoneMove) * 2;
+		int dPos = compiledName.indexOf('d');
+		nPart = ((0 < dPos ? dPos : compiledName.length()) - reflection * 2 - zoneMove) * 2;
 		if (compiledName.charAt(0) == 'p' || compiledName.charAt(0) == 's')
 			nPart -= 1;
 
 		// diffraction
-		if (compiledName.contains("diff")) {
-			int header = 0;
-			if (compiledName.startsWith("P") || compiledName.startsWith("S")) {
-				header = 5;
-				nPart = 2;
-			} else {
-				header = 6;
-				nPart = 3;
-			}
-			if (compiledName.length() != header)
-				diffractionAngle = Math.toRadians(Double.parseDouble(compiledName.substring(header)));
-		}
+		if (0 < dPos && dPos+4<compiledName.length())
+			diffractionAngle = Math.toRadians(Double.parseDouble(compiledName.substring(dPos + 4)));
 
 		isDownGoing = new boolean[nPart];
 		isP = new boolean[nPart];
@@ -228,6 +229,8 @@ public class Phase {
 		int iCurrentPart = 0;
 		for (int i = 0; i < compiledName.length(); i++) {
 			switch (compiledName.charAt(i)) {
+			case 'd':
+				break;
 			case 'c':
 				continue;
 			case 'i':
@@ -246,9 +249,9 @@ public class Phase {
 				break;
 			case 'P':
 				isP[iCurrentPart] = true;
+				partition[iCurrentPart] = Partition.MANTLE;
 				isDownGoing[iCurrentPart] = i == 0
 						|| (compiledName.charAt(i - 1) != 'K' && compiledName.charAt(i - 1) != 'c');
-				partition[iCurrentPart] = Partition.MANTLE;
 				if (i == 0 || ((compiledName.charAt(i - 1) != 'c' && compiledName.charAt(i - 1) != 'K')))
 					if ((i + 1) == compiledName.length()
 							|| (compiledName.charAt(i + 1) != 'c' && compiledName.charAt(i + 1) != 'K')) {
@@ -299,7 +302,6 @@ public class Phase {
 				isDownGoing[iCurrentPart] = compiledName.charAt(i - 1) != 'i' && compiledName.charAt(i - 1) != 'I'
 						&& compiledName.charAt(i - 1) != 'J';
 				partition[iCurrentPart] = Partition.OUTERCORE;
-				// isDownGoing[iCurrentPart] = true;
 				if (compiledName.charAt(i - 1) != 'i' && compiledName.charAt(i - 1) != 'I'
 						&& compiledName.charAt(i - 1) != 'J')
 					if (compiledName.charAt(i + 1) != 'i' && compiledName.charAt(i + 1) != 'I'
@@ -319,61 +321,57 @@ public class Phase {
 	private void setPropagation() {
 		if (compiledName.contains("P"))
 			mantlePPropagation = Propagation.BOUNCING;
+		if (compiledName.contains("PK") || compiledName.contains("Pc") || compiledName.contains("KP")
+				|| compiledName.contains("cP"))
+			mantlePPropagation = Propagation.PENETRATING;
+		if(compiledName.contains("Pdiff"))
+			mantlePPropagation = Propagation.DIFFRACTION;
+		
 		if (compiledName.contains("S"))
 			mantleSPropagation = Propagation.BOUNCING;
 		if (compiledName.contains("SK") || compiledName.contains("Sc") || compiledName.contains("KS")
 				|| compiledName.contains("cS"))
 			mantleSPropagation = Propagation.PENETRATING;
-		if (compiledName.contains("PK") || compiledName.contains("Pc") || compiledName.contains("KP")
-				|| compiledName.contains("cP"))
-			mantlePPropagation = Propagation.PENETRATING;
+		if( compiledName.contains("Sdiff"))
+			mantleSPropagation=Propagation.DIFFRACTION;
+		
 		if (compiledName.contains("I") || compiledName.contains("J") || compiledName.contains("i"))
 			kPropagation = Propagation.PENETRATING;
 		else if (compiledName.contains("K"))
 			kPropagation = Propagation.BOUNCING;
+
 		if (compiledName.contains("I"))
 			innerCorePPropagation = Propagation.BOUNCING;
+
 		if (compiledName.contains("J"))
 			innerCoreSPropagation = Propagation.BOUNCING;
 
 	}
 
+	public static void main(String[] args) {
+		System.out.println(Phase.create("2PSdiff900"));
+		// System.out.println(isValid("PKPScPSdiff10000"));
+	}
+
 	/**
 	 * @param phase
 	 *            phase name
-	 * @return if is wellknow phase?
+	 * @return if is well known phase?
 	 */
 	static boolean isValid(String phase) {
 		if (phase.equals(""))
 			return false;
-
 		// diffraction phase
-		if (phase.contains("diff")) {
-			int header = 0;
-			if (phase.startsWith("P") || phase.startsWith("S"))
-				header = 5;
-			else if (phase.startsWith("p") || phase.startsWith("s"))
-				header = 6;
-			else
-				return false;
-			if (phase.length() == header)
-				return true;
-			String footer = phase.substring(header);
-			try {
-				return 0 <= Double.parseDouble(footer);
-			} catch (Exception e) {
-				return false;
-			}
-		}
+		if (diffRule.matcher(phase).find())
+			return false;
+		if (!pDiff.matcher(phase).find() && !sDiff.matcher(phase).find() && finalLetter.matcher(phase).find())
+			return false;
 
 		// check if other letters are used.
 		if (others.matcher(phase).find())
 			return false;
 
 		if (firstLetter.matcher(phase).find())
-			return false;
-
-		if (finalLetter.matcher(phase).find())
 			return false;
 
 		if (ps.matcher(phase).find())
@@ -395,7 +393,7 @@ public class Phase {
 			return false;
 
 		// phase reflected at the icb
-		boolean icb = phase.contains("i");
+		boolean icb = phase.contains("Ki") || phase.contains("iK");
 		boolean innercoreP = phase.contains("I");
 		boolean innercoreS = phase.contains("J");
 
@@ -441,9 +439,6 @@ public class Phase {
 	}
 
 	/**
-	 * TODO K
-	 * 
-	 * 
 	 * @param pTurning
 	 *            turning point of P
 	 * @param sTurning
@@ -477,7 +472,7 @@ public class Phase {
 	 * @return null if P phase does not exist.
 	 */
 	Partition pReaches() {
-		if (compiledName.contains("Sdiff")) // pSdiffの可能性 TODO
+		if (compiledName.contains("Sdiff"))
 			return null;
 		if (compiledName.contains("I"))
 			return Partition.INNERCORE;

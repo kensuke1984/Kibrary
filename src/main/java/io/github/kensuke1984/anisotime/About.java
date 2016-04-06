@@ -8,7 +8,7 @@ import java.awt.GraphicsEnvironment;
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
  * @author Kensuke Konishi
  * 
- * @version 0.0.2.2
+ * @version 0.0.2.3
  * 
  */
 final class About extends javax.swing.JFrame {
