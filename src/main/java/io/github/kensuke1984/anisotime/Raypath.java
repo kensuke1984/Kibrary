@@ -31,7 +31,7 @@ import java.util.List;
  * @author Kensuke Konishi
  * 
  * 
- * @version 0.3.10
+ * @version 0.3.11
  * 
  * 
  *          TODO SKS
@@ -44,9 +44,30 @@ public class Raypath {
 	 * when integrate values on boundaries, use the value at point very close to
 	 * the boundaries by eps. Default value is 1e-7
 	 */
-	private final static double eps = 1e-7;
+	private static final double eps = 1e-7;
 
-	private final double eventR; // as the initial value
+	/**
+	 * If the gap between the CMB and the turning r is under this value, then
+	 * diffracted phase can be computed.
+	 */
+	private static final double permissibleGapForDiff = 1e-9;
+
+	/**
+	 * the interval of calculation points (/km)
+	 */
+	private final double interval;
+
+	/**
+	 * the region near the turning point. the integral for this region is
+	 * obtained by Jeffereys eps cannot be big. If it if big... might be ignored
+	 * like the case if turningR is closer to boundaries
+	 */
+	private final double jeffereysEPS;
+
+	/**
+	 * radius of the source
+	 */
+	private final double eventR; 
 
 	public double getEventR() {
 		return eventR;
@@ -81,17 +102,6 @@ public class Raypath {
 	private double[] innerCoreSTheta;
 	private double innerCoreSTime;
 
-	/**
-	 * the interval of calculation points (/km)
-	 */
-	private double interval = 1;
-
-	/**
-	 * the region near the turning point. the integral for this region is
-	 * obtained by Jeffereys eps cannot be big. If it if big... might be ignored
-	 * like the case if turningR is closer to boundaries
-	 */
-	private double jeffereysEPS = 10;
 	private double mantlePDelta;
 
 	/**
@@ -135,12 +145,6 @@ public class Raypath {
 	private double[] outerCoreTheta;
 
 	private double outerCoreTime;
-
-	/**
-	 * If the gap between the CMB and the turning r is under this value, then
-	 * diffracted phase can be computed.
-	 */
-	private static double permissibleGapForDiff = 10e-9;
 
 	/**
 	 * region where P bounces
@@ -208,25 +212,39 @@ public class Raypath {
 	 *            {@link VelocityStructure}
 	 */
 	public Raypath(double rayParameterP, double eventR, VelocityStructure structure) {
-		this(rayParameterP, eventR, structure, false);
+		this(rayParameterP, eventR, structure, false,1,10);
+	}
+
+	/**
+	
+	 */
+	public Raypath(double rayParameterP, double eventR, VelocityStructure structure, boolean sv) {
+		this(rayParameterP, eventR, structure, sv, 1, 10);
 	}
 
 	/**
 	 * @param rayParameterP
 	 *            the ray parameter
+	 * 
 	 * @param eventR
 	 *            the radius of the hypocenter
 	 * @param structure
 	 *            {@link VelocityStructure}
 	 * @param sv
 	 *            if true computes SV, else SH
+	 * @param interval
+	 *            [km] interval for computation points
+	 * @param jeffereysEPS
+	 *            [km] range for jeffreys computation
 	 */
-	public Raypath(double rayParameterP, double eventR, VelocityStructure structure, boolean sv) {
-		this.sv = sv;
-		this.rayParameter = rayParameterP;
+	public Raypath(double rayParameter, double eventR, VelocityStructure structure, boolean sv, double interval,
+			double jeffereysEPS) {
+		this.rayParameter = rayParameter;
 		this.eventR = 0 < eventR ? eventR : structure.earthRadius();
 		this.structure = structure;
-
+		this.sv = sv;
+		this.interval = interval;
+		this.jeffereysEPS = jeffereysEPS;
 		if (!checkPValidity())
 			throw new RuntimeException("Input p is invalid.");
 
@@ -554,29 +572,25 @@ public class Raypath {
 	public double computeDelta(Phase phase) {
 		if (!exists(phase))
 			return Double.NaN;
-		double delta = 0;
-		if (phase.isDiffracted()) {
-			double diffDelta = phase.getDiffractionAngle();
-			delta = phase.toString().contains("P") ? pDiffDelta(diffDelta) : sDiffDelta(diffDelta);
-			if (phase.toString().startsWith("p"))
-				delta += upperPDelta + (phase.toString().contains("P") ? upperPDelta : upperSDelta);
-			else if (phase.toString().startsWith("s"))
-				delta += upperSDelta + (phase.toString().contains("P") ? upperPDelta : upperSDelta);
-			return delta;
-		}
 
 		double mp = phase.mantleP();
 		double ms = phase.mantleS();
 		double oc = phase.outerCore();
 		double icp = phase.innerCoreP();
 		double ics = phase.innerCoreS();
-
+		// System.out.println(mp+" "+ms+" "+oc+" "+icp+" "+ics);
 		double mantleP = 0 < mp ? mantlePDelta * mp * 2 : 0;
 		double mantleS = 0 < ms ? mantleSDelta * ms * 2 : 0;
 		double outerCore = 0 < oc ? outerCoreDelta * oc * 2 : 0;
 		double innerCoreP = 0 < icp ? innerCorePDelta * icp * 2 : 0;
 		double innerCoreS = 0 < ics ? innerCoreSDelta * ics * 2 : 0;
-		delta += mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
+		// System.out.println(mantleP + " " + mantleS + " " + outerCore + " " +
+		// innerCoreP + " " + innerCoreS);
+		double delta = mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
+		// System.out.println(delta + " delta" + upperSDelta);
+
+		if (phase.isDiffracted())
+			delta += phase.getDiffractionAngle();
 
 		char first = phase.toString().charAt(0);
 		switch (first) {
@@ -600,16 +614,6 @@ public class Raypath {
 	public double computeTraveltime(Phase phase) {
 		if (!exists(phase))
 			return Double.NaN;
-		double traveltime = 0;
-		if (phase.isDiffracted()) {
-			double delta = phase.getDiffractionAngle();
-			traveltime = phase.toString().contains("P") ? pDiffTraveltime(delta) : sDiffTraveltime(delta);
-			if (phase.toString().startsWith("p"))
-				traveltime += upperPTime + (phase.toString().contains("P") ? upperPTime : upperSTime);
-			else if (phase.toString().startsWith("s"))
-				traveltime += upperSTime + (phase.toString().contains("P") ? upperPTime : upperSTime);
-			return traveltime;
-		}
 
 		double mp = phase.mantleP();
 		double ms = phase.mantleS();
@@ -622,7 +626,13 @@ public class Raypath {
 		double outerCore = 0 < oc ? outerCoreTime * oc * 2 : 0;
 		double innerCoreP = 0 < icp ? innerCorePTime * icp * 2 : 0;
 		double innerCoreS = 0 < ics ? innerCoreSTime * ics * 2 : 0;
-		traveltime += mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
+		double traveltime = mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
+
+		if (phase.isDiffracted()) {
+			double deltaOnCMB = phase.getDiffractionAngle();
+			traveltime += phase.toString().contains("Pdiff") ? pTimeAlongCMB(deltaOnCMB) : sTimeAlongCMB(deltaOnCMB);
+		}
+
 		char first = phase.toString().charAt(0);
 		switch (first) {
 		case 'p':
@@ -666,10 +676,6 @@ public class Raypath {
 
 		if (nameStr.startsWith("p") || nameStr.startsWith("s"))
 			if (eventR == structure.earthRadius())
-				return false;
-
-		if (pTurning == null || pTurning.equals(Partition.MANTLE))
-			if (nameStr.contains("P") && nameStr.contains("K"))
 				return false;
 
 		if (nameStr.contains("P"))
@@ -1212,7 +1218,7 @@ public class Raypath {
 		}
 		double delta = 0;
 		double[] x = point(startR, structure.earthRadius(), interval);
-		if (mantlePPropagation == Propagation.BOUNCING) {
+		if (mantlePPropagation != Propagation.PENETRATING) {
 			double jeff = jeffreysPDelta(pTurningR, startR);
 			delta += jeff;
 			mantlePR = new double[x.length + 1];
@@ -1225,7 +1231,7 @@ public class Raypath {
 		}
 		for (int i = 0; i < x.length - 1; i++) {
 			double dDelta = simpsonPDelta(x[i], x[i + 1]);
-			if (cmb <= pTurningR) {
+			if (mantlePPropagation != Propagation.PENETRATING) {
 				mantlePR[i + 1] = x[i];
 				mantlePTheta[i + 1] = dDelta;
 			} else {
@@ -1259,7 +1265,7 @@ public class Raypath {
 		for (int i = 0; i < x.length - 1; i++)
 			tau += simpsonPTau(x[i], x[i + 1]);
 		// System.out.println("mantle P time[s]:" + tau);
-		return cmb <= pTurningR ? tau + jeffreysPTau(pTurningR, startR) : tau;
+		return mantlePPropagation == Propagation.PENETRATING ? tau : tau + jeffreysPTau(pTurningR, startR);
 	}
 
 	/**
@@ -1284,9 +1290,8 @@ public class Raypath {
 			return jeff;
 		}
 		double delta = 0;
-
 		double[] x = point(startR, structure.earthRadius(), interval);
-		if (cmb <= turningR) {
+		if (prop != Propagation.PENETRATING) {
 			double jeff = jeffreysSDelta(turningR, startR);
 			delta += jeff;
 			mantleSTheta = new double[x.length];
@@ -1299,7 +1304,7 @@ public class Raypath {
 		}
 		for (int i = 0; i < x.length - 1; i++) {
 			double simpson = simpsonSDelta(x[i], x[i + 1]);
-			if (cmb <= turningR) {
+			if (prop != Propagation.PENETRATING) {
 				mantleSTheta[i + 1] = simpson;
 				mantleSR[i + 1] = x[i];
 			} else {
@@ -1321,7 +1326,6 @@ public class Raypath {
 		double cmb = structure.coreMantleBoundary();
 		double turningR = sv ? svTurningR : shTurningR;
 		Propagation prop = sv ? mantleSVPropagation : mantleSHPropagation;
-		// tau = simpsonSTau(startR, structure.earthRadius());
 		if (prop == Propagation.NOEXIST || eventR < turningR)
 			return Double.NaN;
 		double startR = prop == Propagation.PENETRATING ? cmb + eps : turningR + jeffereysEPS;//
@@ -1332,7 +1336,7 @@ public class Raypath {
 		for (int i = 0; i < x.length - 1; i++)
 			tau += simpsonSTau(x[i], x[i + 1]);
 		// System.out.println("mantle S time[s]:" + tau);
-		return cmb <= turningR ? tau + jeffreysSTau(turningR, startR) : tau;
+		return prop == Propagation.PENETRATING ? tau : tau + jeffreysSTau(turningR, startR);
 	}
 
 	/**
@@ -1431,39 +1435,6 @@ public class Raypath {
 	}
 
 	/**
-	 * Epicentral distance(delta) for the diffracted phase which travels
-	 * deltaOnCMB on the CMB If and only if P wave of this {@link Raypath} has
-	 * turning depth sufficiently near the core mantle boundary. Permissible gap
-	 * is {@link #permissibleGapForDiff}.
-	 * 
-	 * @param deltaOnCMB
-	 *            [rad]
-	 * @return delta [rad] or -1 if the diffracted phase is not computable due
-	 *         to turning R
-	 */
-	private double pDiffDelta(double deltaOnCMB) {
-		double gap = Math.abs(pTurningR - structure.coreMantleBoundary());
-		if (permissibleGapForDiff < gap)
-			return -1;
-		return 2 * mantlePDelta - upperPDelta + deltaOnCMB;
-	}
-
-	/**
-	 * Travel time for the diffracted phase which travels deltaOnCMB on the CMB
-	 * 
-	 * @param deltaOnCMB
-	 *            [rad]
-	 * @return [s] travel time for the path of -1 if the diffracted phase is not
-	 *         computable due to Turning R
-	 */
-	private double pDiffTraveltime(double deltaOnCMB) {
-		double gap = Math.abs(pTurningR - structure.coreMantleBoundary());
-		if (permissibleGapForDiff < gap)
-			return -1;
-		return 2 * mantlePTime - upperPTime + pTimeAlongCMB(deltaOnCMB);
-	}
-
-	/**
 	 * Interval of integration startR to endR is divided by deltaR
 	 * 
 	 * @param startR
@@ -1484,57 +1455,6 @@ public class Raypath {
 		x[n] = endR;
 		return x;
 
-	}
-
-	/**
-	 * Epicentral distance(delta) for diffracted phase which travels deltaOnCMB
-	 * on the CMB
-	 * 
-	 * @param deltaOnCMB
-	 *            [rad]
-	 * @return delta [rad] or -1 if the diffracted phase is not computable due
-	 *         to turning R
-	 */
-	private double sDiffDelta(double deltaOnCMB) {
-		double gap = Math.abs(getSTurningR() - structure.coreMantleBoundary());
-		if (permissibleGapForDiff < gap)
-			return -1;
-		return 2 * mantleSDelta - upperSDelta + deltaOnCMB;
-	}
-
-	/**
-	 * Travel time for the diffracted phase which travels deltaOnCMB on the CMB
-	 * 
-	 * @param deltaOnCMB
-	 *            [rad]
-	 * @return [s] travel time for the path of -1 if the diffracted phase is not
-	 *         computable due to Turning R
-	 */
-	private double sDiffTraveltime(double deltaOnCMB) {
-		double gap = Math.abs(getSTurningR() - structure.coreMantleBoundary());
-		if (permissibleGapForDiff < gap)
-			return -1;
-		return 2 * mantleSTime - upperSTime + sTimeAlongCMB(deltaOnCMB);
-	}
-
-	/**
-	 * Set integral interval grid.
-	 * 
-	 * @param interval
-	 *            [km] integral interval
-	 */
-	public void setInterval(double interval) {
-		this.interval = interval;
-	}
-
-	/**
-	 * Set radius region of Jeffrey &amp; Jeffrey computation.
-	 * 
-	 * @param jeffreysEPS
-	 *            [km] radius range
-	 */
-	public void setJeffreysEPS(double jeffreysEPS) {
-		this.jeffereysEPS = jeffreysEPS;
 	}
 
 	private Propagation mantlePPropagation;
@@ -1592,10 +1512,13 @@ public class Raypath {
 		innerCorePPropagation = Double.isNaN(calcQTauP(eps)) ? Propagation.NOEXIST : Propagation.PENETRATING;
 		mantlePPropagation = Double.isNaN(calcQTauP(coreMantleBoundary() + eps)) ? Propagation.NOEXIST
 				: Propagation.PENETRATING;
-		if (coreMantleBoundary() < pTurningR)
+
+		if (coreMantleBoundary() + permissibleGapForDiff < pTurningR)
 			mantlePPropagation = Propagation.BOUNCING;
 		else if (0 < pTurningR && pTurningR < innerCoreBoundary())
 			innerCorePPropagation = Propagation.BOUNCING;
+		else if (coreMantleBoundary() <= pTurningR)
+			mantlePPropagation = Propagation.DIFFRACTION;
 
 		innerCoreSHPropagation = Double.isNaN(calcQTauSH(eps)) ? Propagation.NOEXIST : Propagation.PENETRATING;
 		mantleSHPropagation = Double.isNaN(calcQTauSH(coreMantleBoundary() + eps)) ? Propagation.NOEXIST
@@ -1604,14 +1527,20 @@ public class Raypath {
 		innerCoreSVPropagation = Double.isNaN(calcQTauSV(eps)) ? Propagation.NOEXIST : Propagation.PENETRATING;
 		mantleSVPropagation = Double.isNaN(calcQTauSV(coreMantleBoundary() + eps)) ? Propagation.NOEXIST
 				: Propagation.PENETRATING;
-		if (coreMantleBoundary() < shTurningR)
+
+		if (coreMantleBoundary() + permissibleGapForDiff < shTurningR)
 			mantleSHPropagation = Propagation.BOUNCING;
 		else if (0 < shTurningR && shTurningR < innerCoreBoundary())
 			innerCoreSHPropagation = Propagation.BOUNCING;
-		if (coreMantleBoundary() < svTurningR)
+		else if (coreMantleBoundary() <= shTurningR)
+			mantleSHPropagation = Propagation.DIFFRACTION;
+
+		if (coreMantleBoundary() + permissibleGapForDiff < svTurningR)
 			mantleSVPropagation = Propagation.BOUNCING;
 		else if (0 < svTurningR && svTurningR < innerCoreBoundary())
 			innerCoreSVPropagation = Propagation.BOUNCING;
+		else if (coreMantleBoundary() <= svTurningR)
+			mantleSVPropagation = Propagation.DIFFRACTION;
 
 		pTurning = structure.whichPartition(pTurningR);
 		shTurning = structure.whichPartition(shTurningR);
@@ -1700,75 +1629,6 @@ public class Raypath {
 		double s = r * deltaOnCMB;
 		double velocity = Math.sqrt(structure.getA(r) / structure.getRho(r));
 		return s / velocity;
-	}
-
-	/**
-	 * Computation for diffracted waves. TODO AN
-	 * 
-	 * @param r
-	 *            [km] radius
-	 * @param delta
-	 *            [rad]
-	 * @return P wave traveltime along the CMB
-	 */
-	private double pDiffractionTime(double r, double delta) {
-		// radius which avoids 0 on cmb
-		double s = r * delta;
-		double velocity = Math.sqrt(structure.getA(r) / structure.getRho(r));
-		return s / velocity;
-	}
-
-	/**
-	 * Computation for diffracted waves. TODO
-	 * 
-	 * @param r
-	 *            [km] radius where raypath diffracts
-	 * @param deltaOnBoundary
-	 *            [rad]
-	 * @return S wave traveltime along the CMB
-	 */
-	public double sDiffractionTime(double r, double deltaOnBoundary) {
-		double startR = r;
-		double turningR = sv ? svTurningR : shTurningR;
-		if (eventR < r || r <= turningR + jeffereysEPS)
-			throw new RuntimeException("Unexpected");
-		if (r <= structure.coreMantleBoundary() + permissibleGapForDiff)
-			throw new RuntimeException("Not yet...");
-		// tau = simpsonSTau(startR, structure.earthRadius());
-		// System.out.println("ho");
-		double tau = 0;
-		double[] x = point(startR, structure.earthRadius(), interval);
-		for (int i = 0; i < x.length - 1; i++)
-			tau += simpsonSTau(x[i], x[i + 1]);
-		// tau *= 2;
-		// radius which avoids 0 on cmb
-		double s = r * deltaOnBoundary;
-		double velocity = Math.sqrt((sv ? structure.getL(r) : structure.getN(r)) / structure.getRho(r));
-		double timeOnDiffraction = s / velocity;
-		return tau * 2 + timeOnDiffraction - upperSTime;
-	}
-
-	/**
-	 * TODO
-	 * 
-	 * @param r
-	 *            [km] radius for boundary
-	 * @param deltaOnBoundary
-	 *            [rad]
-	 * @return delta [rad]
-	 */
-	public double sDiffractionDelta(double r, double deltaOnBoundary) {
-		double startR = r;
-		double turningR = sv ? svTurningR : shTurningR;
-		if (eventR < r || r <= turningR + jeffereysEPS)
-			throw new RuntimeException("Unexpected");
-		if (r <= structure.coreMantleBoundary() + permissibleGapForDiff)
-			throw new RuntimeException("Not yet...");
-		double delta = 0;
-		double[] x = point(startR, structure.earthRadius(), interval);
-		for (int i = 0; i < x.length - 1; i++)
-			delta += simpsonSDelta(x[i], x[i + 1]);
-		return delta * 2 + deltaOnBoundary - upperSDelta;
 	}
 
 	/**
