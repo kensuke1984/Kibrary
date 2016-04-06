@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0.1
+ * @version 2.0.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -58,6 +58,7 @@ public class LetMeInvert implements Operation {
 	 * partialIDの入ったファイル
 	 */
 	protected Path partialIDPath;
+	
 	/**
 	 * partial波形の入ったファイル
 	 */
@@ -105,7 +106,7 @@ public class LetMeInvert implements Operation {
 		stationInformationPath = getPath("stationInformationPath");
 		waveIDPath = getPath("waveIDPath");
 		waveformPath = getPath("waveformPath");
-		partialPath = getPath("partialWaveformPath");
+		partialPath = getPath("partialPath");
 		partialIDPath = getPath("partialIDPath");
 		unknownParameterListPath = getPath("unknownParameterListPath");
 
