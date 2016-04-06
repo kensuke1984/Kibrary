@@ -284,17 +284,37 @@ public final class RaypathSearch {
 	}
 
 	public static void main(String[] args) {
-		// Raypath p = lookFor(Phase.create("SKS"), VelocityStructure.prem(),
+//		 Raypath p = lookFor(Phase.create("SKS"), VelocityStructure.prem(),
+		// 6000, 100, 10).get(0);
 		// 6000, 100, 10).get(0);
 		// System.out.println(p.getRayParameter());
-		double d =300;
-		double p = toPRayParameter(d, VelocityStructure.prem());
-			Raypath r = new Raypath(p);
-			System.out.println(Phase.create("SKiKS").exists(r));
-			System.out.println(d + "  " + r.getPTurningR()+" "+p+" "+r.getKTurningR()+" "+r.getPTurningR());
-			r.compute();
-			System.out.println(Math.toDegrees(r.computeDelta(Phase.create("SKiKS"))) + "  " + r.computeTraveltime(Phase.create("SKiKS")));
-//			if (d-r.getPTurningR()>3)
+		Phase ph = Phase.create("PSdiff");
+//		Phase ps = Phase.create("PSdiff");
+//		Phase sp = Phase.create("SPdiff");
+		VelocityStructure structure = VelocityStructure.prem();
+		Raypath sdiff = sDiffRaypath(structure, 6371, false);
+		Raypath pdiff = pDiffRaypath(structure, 6371);
+		System.out.println(10e-7+1);
+//		System.out.println("SDIFF"+sdiff.getPTurningR()+" "+ps.exists(sdiff));
+//		System.out.println(pdiff.getSTurningR()+" "+sdiff.getMantleSVPropagation());
+//		pdiff.compute();
+//		System.out.println(pdiff.computeDelta(Phase.ScS));
+		sdiff
+		.compute();
+		
+//		System.out.println((sdiff.computeDelta(ph))+" b");
+		System.out.println(Math.toDegrees(sdiff.computeDelta(ph))+" a"+sdiff.computeTraveltime(ph));
+		System.out.println(Math.toDegrees(sdiff.computeDelta(Phase.create("sSdiff")))+" a"+sdiff.computeTraveltime(Phase.create("sSdiff")));
+		System.out.println(Math.toDegrees(sdiff.computeDelta(Phase.create("Sdiff")))+" a"+sdiff.computeTraveltime(Phase.create("Sdiff")));
+		System.out.println(Math.toDegrees(sdiff.computeDelta(Phase.P))+" a"+sdiff.computeTraveltime(Phase.P));
+		System.exit(0);
+		List<Raypath> list = lookFor(Phase.create("Sdiff"), VelocityStructure.prem(), 6371, Math.toRadians(110), 10);
+		System.out.println(list.size());
+		if (list.size() == 0)
+			System.exit(0);
+
+		System.out.println(list.get(0).computeDelta(ph) + " " + list.get(0).computeTraveltime(ph));
+
 	}
 
 	/**
@@ -320,12 +340,10 @@ public final class RaypathSearch {
 	public static List<Raypath> lookFor(Phase targetPhase, VelocityStructure structure, double eventR,
 			double targetDelta, double deltaR, boolean sv) {
 		if (targetPhase.isDiffracted()) {
-			Raypath diffRay = null;
-			if (targetPhase.toString().contains("Pdiff"))
-				diffRay = pDiffRaypath(structure, eventR);
-			else
-				diffRay = sDiffRaypath(structure, eventR, sv);
+			Raypath diffRay = targetPhase.toString().contains("Pdiff") ? pDiffRaypath(structure, eventR)
+					: sDiffRaypath(structure, eventR, sv);
 			diffRay.computeDelta();
+			System.out.println(diffRay.computeDelta(targetPhase)+" "+targetDelta);// TODO
 			if (targetDelta < diffRay.computeDelta(targetPhase))
 				return Collections.emptyList();
 			diffRay.computeTraveltime();
