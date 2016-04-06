@@ -208,6 +208,7 @@ public class LetMeInvert implements Operation {
 		return future;
 	}
 
+	@Override
 	public void run() {
 		if (Files.exists(outPath))
 			throw new RuntimeException(outPath + " already exists.");
@@ -219,8 +220,8 @@ public class LetMeInvert implements Operation {
 			// if (parameterPath != null) TODO
 			// Files.copy(getParameterPath(),
 			// outPath.resolve(parameterPath.getFileName()));
-			if (unknownParameterListPath != null)
-				Files.copy(unknownParameterListPath, outPath.resolve(unknownParameterListPath.getFileName()));
+//			if (unknownParameterListPath != null)
+//				Files.copy(unknownParameterListPath, outPath.resolve(unknownParameterListPath.getFileName()));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Can not create " + outPath);
