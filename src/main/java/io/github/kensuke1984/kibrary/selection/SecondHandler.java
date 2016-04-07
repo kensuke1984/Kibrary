@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * for synthetic ones.
  * 
  * 
- * @version 1.2
+ * @version 1.2.0.1
  * 
  * 
  * @author Kensuke Konishi
@@ -182,11 +182,10 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	@Override
 	public void accept(EventFolder eventDir) {
 		Path trashDir = eventDir.toPath().resolve(trashName);
-		// System.out.println();
 		System.out.println(eventDir);
 		// + " making trash box (" + trashFile + ")");
 		// 観測波形ファイルを拾う
-		Set<SACFileName> sacnames = null;
+		Set<SACFileName> sacnames;
 		try {
 			sacnames = eventDir.sacFileSet();
 		} catch (IOException e1) {

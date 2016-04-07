@@ -1,7 +1,6 @@
 package io.github.kensuke1984.kibrary.datarequest;
 
 import java.awt.GraphicsEnvironment;
-import java.io.Console;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  * IRISのデータセンターに送るBREQ_FASTリクエストのメール
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
  * @author Kensuke Konishi
  * 
@@ -66,7 +65,6 @@ public class BreakFastMail {
 		if (channels != null)
 			for (Channel channel : channels)
 				lines.add(channel.toString());
-		// lines[lines.length-1] = ".END";
 		return lines.toArray(new String[0]);
 	}
 
@@ -78,11 +76,9 @@ public class BreakFastMail {
 		if (password != null)
 			return password;
 		else if (!GraphicsEnvironment.isHeadless()) {
-			PasswordInput pi = PasswordInput.createAndShowGUI();
-			password = pi.getPassword();
+			password = PasswordInput.createAndShowGUI().getPassword();
 		} else {
-			Console console = System.console();
-			password = String.copyValueOf(console.readPassword("Password for waveformrequest2015@gmail.com"));
+			password = String.copyValueOf(System.console().readPassword("Password for waveformrequest2015@gmail.com"));
 		}
 		return password;
 	}

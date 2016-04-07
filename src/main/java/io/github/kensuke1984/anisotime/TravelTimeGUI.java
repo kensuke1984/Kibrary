@@ -14,7 +14,7 @@ import javax.swing.WindowConstants;
  * 
  * GUI for ANISOtime
  * 
- * @version 0.3.3.2
+ * @version 0.3.3.3
  * 
  * @author Kensuke Konishi
  */
@@ -89,7 +89,7 @@ class TravelTimeGUI extends javax.swing.JFrame {
 	void setPolarity(int i) {
 		phaseWindow.setPolarity(i);
 		jMenuBar1.setPolarity(i);
-		jPanelParameter.changeBorderTitle(jMenuBar1.getModeName() + "  " + jMenuBar1.getPoleString());
+		jPanelParameter.changeBorderTitle(jMenuBar1.getModeName() + " " + jMenuBar1.getPoleString());
 	}
 
 	/**

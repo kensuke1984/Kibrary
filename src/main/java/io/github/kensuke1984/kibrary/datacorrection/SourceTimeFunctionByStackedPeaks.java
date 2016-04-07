@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Source time function estimation by stacked peaks.
  * 
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @version 0.0.3.3
  *
  */
 public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
@@ -163,7 +163,6 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
 			if (sourceTimeFunction != null)
 				return sourceTimeFunction;
 			compute();
-
 		}
 		return sourceTimeFunction;
 	}

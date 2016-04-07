@@ -8,7 +8,7 @@ import java.io.PrintWriter;
  * 
  * 
  * @author kensuke
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 public class Gnuplot extends ExternalProcess {
 	private PrintWriter standardInput;
@@ -19,24 +19,18 @@ public class Gnuplot extends ExternalProcess {
 	}
 
 	public static Gnuplot createProcess() throws IOException {
-		ProcessBuilder builder = null;
 		if (isInPath("gnuplot"))
-			builder = new ProcessBuilder("gnuplot");
-		else
-			throw new RuntimeException("No gnuplot in PATH.");
-
-		return new Gnuplot(builder.start());
+			return new Gnuplot(new ProcessBuilder("gnuplot").start());
+		throw new RuntimeException("No gnuplot in PATH.");
 	}
 
 	public void close() throws InterruptedException {
 		standardInput.println("q");
 		standardInput.flush();
 		standardInput.close();
-
 		process.waitFor();
 		standardOutput.join();
 		standardError.join();
-
 	}
 
 	/**

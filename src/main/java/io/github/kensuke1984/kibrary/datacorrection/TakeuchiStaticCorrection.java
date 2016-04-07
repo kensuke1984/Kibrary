@@ -45,7 +45,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * @see {@link StaticCorrection}
  */
 public class TakeuchiStaticCorrection implements Operation {
@@ -151,19 +151,20 @@ public class TakeuchiStaticCorrection implements Operation {
 	/**
 	 * @param args
 	 *            [parameter file name]
+	 * @throws IOException if any
 	 */
 	public static void main(String[] args) throws IOException {
 		TakeuchiStaticCorrection tsm = new TakeuchiStaticCorrection(Property.parse(args));
 		long time = System.nanoTime();
 		System.err.println(TakeuchiStaticCorrection.class.getName() + " is going.");
 		tsm.run();
-
 		System.out.println(TakeuchiStaticCorrection.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - time));
 	}
 
+	@Override
 	public void run() throws IOException {
-		Set<SACFileName> nameSet = null;
+		Set<SACFileName> nameSet;
 		try {
 			nameSet = Utilities.sacFileNameSet(obsPath);
 		} catch (Exception e3) {

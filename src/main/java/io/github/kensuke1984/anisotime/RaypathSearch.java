@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.awt.GraphicsEnvironment;
@@ -20,18 +17,15 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * 
  * Searching utilities for raypath.
  * 
- * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.8.2
+ * @version 0.0.8.3
  * 
  */
 public final class RaypathSearch {
 
 	private RaypathSearch() {
 	}
-
-	private static final double diffEPS = 10e-11; // TODO
 
 	private static final boolean isDisplayable = !GraphicsEnvironment.isHeadless();
 
@@ -73,7 +67,7 @@ public final class RaypathSearch {
 	 */
 	public static Raypath raypathBySTurningR(VelocityStructure structure, double turningR, double permissibleRGap,
 			double eventR, boolean sv) {
-		Raypath raypath = null;
+		Raypath raypath;
 		double p = toSRayParameter(turningR, structure, sv);
 		try {
 			raypath = new Raypath(p, eventR, structure, sv);
@@ -81,9 +75,7 @@ public final class RaypathSearch {
 			return null;
 		}
 		double residual = turningR - (sv ? raypath.getSVTurningR() : raypath.getSHTurningR());
-		if (Math.abs(residual) < permissibleRGap)
-			return raypath;
-		return null;
+		return Math.abs(residual) < permissibleRGap ? raypath : null;
 	}
 
 	/**
@@ -97,7 +89,8 @@ public final class RaypathSearch {
 	 * @return raypath which has pturning R on the CMB
 	 */
 	public static Raypath pDiffRaypath(VelocityStructure structure, double eventR) {
-		return raypathByPTurningR(structure, structure.coreMantleBoundary() + diffEPS, 100 * diffEPS, eventR);
+		return raypathByPTurningR(structure, structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100,
+				Raypath.permissibleGapForDiff, eventR);
 	}
 
 	/**
@@ -113,7 +106,8 @@ public final class RaypathSearch {
 	 * @return raypath which has svturning R on the CMB
 	 */
 	public static Raypath sDiffRaypath(VelocityStructure structure, double eventR, boolean sv) {
-		return raypathBySTurningR(structure, structure.coreMantleBoundary() + diffEPS, 100 * diffEPS, eventR, sv);
+		return raypathBySTurningR(structure, structure.coreMantleBoundary() + Raypath.permissibleGapForDiff,
+				100 * Raypath.permissibleGapForDiff, eventR, sv);
 	}
 
 	/**
@@ -283,40 +277,6 @@ public final class RaypathSearch {
 
 	}
 
-	public static void main(String[] args) {
-//		 Raypath p = lookFor(Phase.create("SKS"), VelocityStructure.prem(),
-		// 6000, 100, 10).get(0);
-		// 6000, 100, 10).get(0);
-		// System.out.println(p.getRayParameter());
-		Phase ph = Phase.create("PSdiff");
-//		Phase ps = Phase.create("PSdiff");
-//		Phase sp = Phase.create("SPdiff");
-		VelocityStructure structure = VelocityStructure.prem();
-		Raypath sdiff = sDiffRaypath(structure, 6371, false);
-		Raypath pdiff = pDiffRaypath(structure, 6371);
-		System.out.println(10e-7+1);
-//		System.out.println("SDIFF"+sdiff.getPTurningR()+" "+ps.exists(sdiff));
-//		System.out.println(pdiff.getSTurningR()+" "+sdiff.getMantleSVPropagation());
-//		pdiff.compute();
-//		System.out.println(pdiff.computeDelta(Phase.ScS));
-		sdiff
-		.compute();
-		
-//		System.out.println((sdiff.computeDelta(ph))+" b");
-		System.out.println(Math.toDegrees(sdiff.computeDelta(ph))+" a"+sdiff.computeTraveltime(ph));
-		System.out.println(Math.toDegrees(sdiff.computeDelta(Phase.create("sSdiff")))+" a"+sdiff.computeTraveltime(Phase.create("sSdiff")));
-		System.out.println(Math.toDegrees(sdiff.computeDelta(Phase.create("Sdiff")))+" a"+sdiff.computeTraveltime(Phase.create("Sdiff")));
-		System.out.println(Math.toDegrees(sdiff.computeDelta(Phase.P))+" a"+sdiff.computeTraveltime(Phase.P));
-		System.exit(0);
-		List<Raypath> list = lookFor(Phase.create("Sdiff"), VelocityStructure.prem(), 6371, Math.toRadians(110), 10);
-		System.out.println(list.size());
-		if (list.size() == 0)
-			System.exit(0);
-
-		System.out.println(list.get(0).computeDelta(ph) + " " + list.get(0).computeTraveltime(ph));
-
-	}
-
 	/**
 	 * For the structure, search a rayparameter for the input epicentral
 	 * distance by deltaR
@@ -343,7 +303,6 @@ public final class RaypathSearch {
 			Raypath diffRay = targetPhase.toString().contains("Pdiff") ? pDiffRaypath(structure, eventR)
 					: sDiffRaypath(structure, eventR, sv);
 			diffRay.computeDelta();
-			System.out.println(diffRay.computeDelta(targetPhase)+" "+targetDelta);// TODO
 			if (targetDelta < diffRay.computeDelta(targetPhase))
 				return Collections.emptyList();
 			diffRay.computeTraveltime();
@@ -385,8 +344,8 @@ public final class RaypathSearch {
 					candidateRaypath.switchSV();
 				possibleRaypathList.add(candidateRaypath);
 			} else {
-				Raypath raypathNaN = null;
-				Raypath raypathNonNaN = null;
+				Raypath raypathNaN;
+				Raypath raypathNonNaN;
 				if (Double.isNaN(delta[i])) {
 					raypathNaN = searchPathlist.get(i); // NAN
 					raypathNonNaN = searchPathlist.get(i + 1);

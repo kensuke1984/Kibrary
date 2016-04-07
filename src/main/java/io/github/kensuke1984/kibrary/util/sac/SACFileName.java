@@ -12,8 +12,8 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * Style of names of SAC files. (SAC: seismic analysis code)
  * 
  * This class is <b>IMMUTABLE.</b><br>
- *  This class is a sub class of {@link File}
- * {@link #equals(Object)} and {@link #hashCode()} is under the {@link File}
+ * This class is a sub class of {@link File} {@link #equals(Object)} and
+ * {@link #hashCode()} is under the {@link File}
  * 
  * 
  * station.{@link GlobalCMTID}.{@link PartialType}.x.y.z.{@link SACExtension}
@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * station must be 8 or less letters
  * 
  * 
- * @version 2.0
+ * @version 2.0.0.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -83,9 +83,10 @@ public class SACFileName extends File {
 	}
 
 	private static PartialType getSacFileType(String fileName) {
-		if (fileName.split("\\.").length != 7)
+		String[] parts = fileName.split("\\.");
+		if (parts.length != 7)
 			return null;
-		String typeStr = fileName.split("\\.")[2].replace("par", "PAR");
+		String typeStr = parts[2].replace("par", "PAR");
 		return PartialType.valueOf(typeStr);
 	}
 
@@ -94,9 +95,8 @@ public class SACFileName extends File {
 	}
 
 	private static String getX(String fileName) {
-		if (fileName.split("\\.").length != 7)
-			return null;
-		return fileName.split("\\.")[3];
+		String[] parts = fileName.split("\\.");
+		return parts.length != 7 ? null : parts[3];
 	}
 
 	private static String getY(String fileName) {
@@ -297,19 +297,20 @@ public class SACFileName extends File {
 
 	/**
 	 * @return (immutable) SACHeaderData of this file
-	 * @throws IOException if an I/O error occurs
+	 * @throws IOException
+	 *             if an I/O error occurs
 	 */
 	public SACHeaderData readHeader() throws IOException {
 		return new SACHeader(this);
 	}
-	
+
 	/**
 	 * @return (immutable) SACData of this file
-	 * @throws IOException if an I/O error occurs
+	 * @throws IOException
+	 *             if an I/O error occurs
 	 */
-	public SACData read() throws IOException{
+	public SACData read() throws IOException {
 		return new SACFile(this);
 	}
-	
 
 }

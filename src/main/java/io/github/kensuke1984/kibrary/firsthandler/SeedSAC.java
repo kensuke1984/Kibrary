@@ -5,6 +5,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
@@ -24,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * This class assumes that rdseed, evalresp and sac exists in your PATH. The
  * software can be found in IRIS.
  * 
- * @version 0.1.8.1
+ * @version 0.1.8.2
  * 
  * @author Kensuke Konishi
  * 
@@ -173,8 +174,7 @@ class SeedSAC implements Runnable {
 		System.err.println("Dataset in this seed file starts " + seedFile.getStartingDate());
 		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
 		id = sc.select();
-		if (id == null)
-			throw new RuntimeException("There is no event in the global CMT catalogue");
+		Objects.requireNonNull(id, "There is no event in the global CMT catalogue");
 	}
 
 	/**
@@ -191,10 +191,7 @@ class SeedSAC implements Runnable {
 			return new GlobalCMTID(m1.group());
 
 		Matcher m0 = GlobalCMTID.PREVIOUS_GLOBALCMTID_PATTERN.matcher(fileName);
-		if (m0.find())
-			return new GlobalCMTID(m0.group());
-
-		return null;
+		return m0.find() ? new GlobalCMTID(m0.group()) : null;
 	}
 
 	/**
@@ -235,8 +232,7 @@ class SeedSAC implements Runnable {
 						+ componentName;
 				Path spectraPath = eventDir.toPath().resolve(spectraFileName);
 				Path respPath = eventDir.toPath().resolve(respFileName);
-				String component = null;
-
+				String component;
 				switch (componentName) {
 				case "BHE":
 				case "BLE":

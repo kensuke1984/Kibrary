@@ -4,7 +4,6 @@
 package io.github.kensuke1984.kibrary.util;
 
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.BufferedReader;
@@ -41,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.2
+ * @version 0.1.0.3
  * 
  */
 public final class Utilities {
@@ -74,8 +73,8 @@ public final class Utilities {
 	 *             if an I/O error occurs.
 	 */
 	public static String getClipBoard() throws UnsupportedFlavorException, IOException {
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-		return clipboard.getContents(null).getTransferData(DataFlavor.stringFlavor).toString();
+		return Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null)
+				.getTransferData(DataFlavor.stringFlavor).toString();
 	}
 
 	/**

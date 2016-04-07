@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1.2.3
+ * @version 0.1.2.4
  * 
  */
 final class TravelTimeCLI {
@@ -128,7 +128,7 @@ final class TravelTimeCLI {
 		} catch (Exception e) {
 			System.out.println("improper usage");
 			e.printStackTrace();
-//			printHelp();
+			// printHelp();
 			return;
 		}
 
@@ -205,21 +205,15 @@ final class TravelTimeCLI {
 		} catch (Exception e) {
 			System.err.println("Option digit only accepts a positive integer " + cmd.getOptionValue("digit"));
 		}
-
-		// System.out.println("Epicentral distance [deg] Travel time [s]" );
 	}
 
 	private static Phase createPhase(CommandLine cmd) {
-		Phase phase = null;
-		if (cmd.hasOption("ph")) {
-			phase = Phase.create(cmd.getOptionValue("ph"));
-		} else
-			phase = Phase.S;
-		return phase;
+		return cmd.hasOption("ph") ? Phase.create(cmd.getOptionValue("ph")) : Phase.S;
 	}
 
 	/**
-	 * @param cmd input options
+	 * @param cmd
+	 *            input options
 	 * @return target delta [rad]
 	 */
 	private static double setDelta(CommandLine cmd) {
@@ -235,44 +229,35 @@ final class TravelTimeCLI {
 	}
 
 	private static VelocityStructure createVelocityStructure(CommandLine cmd) {
-		VelocityStructure structure = null;
-		Path modelPath = null;
-		if (cmd.hasOption("mod")) {
+		Path modelPath;
+		if (cmd.hasOption("mod"))
 			switch (cmd.getOptionValue("mod")) {
 			case "AK135":
-				structure = PolynomialStructure.AK135;
-				break;
+				return PolynomialStructure.AK135;
 			case "PREM":
-				structure = PolynomialStructure.PREM;
-				break;
+				return PolynomialStructure.PREM;
 			case "iPREM":
-				structure = PolynomialStructure.ISO_PREM;
-				break;
+				return PolynomialStructure.ISO_PREM;
 			default:
 				modelPath = Paths.get(cmd.getOptionValue("mod"));
 			}
-		} else
-			structure = PolynomialStructure.PREM;
+		else
+			return PolynomialStructure.PREM;
 
-		if (modelPath != null) {
-			if (Files.exists(modelPath)) {
-				try {
-					structure = new PolynomialStructure(modelPath);
-					return structure;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				try {
-					structure = new NamedDiscontinuityStructure(modelPath);
-					return structure;
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				throw new RuntimeException("Input model file is not acceptable.");
+		if (Files.exists(modelPath)) {
+			try {
+				return new PolynomialStructure(modelPath);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
-			throw new RuntimeException("No input model file " + modelPath);
+			try {
+				return new NamedDiscontinuityStructure(modelPath);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			throw new RuntimeException("Input model file is not acceptable.");
 		}
-		return structure;
+		throw new RuntimeException("No input model file " + modelPath);
 	}
 
 	private static void setBooleanOptions() {

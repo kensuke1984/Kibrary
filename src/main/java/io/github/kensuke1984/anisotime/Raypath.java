@@ -30,13 +30,7 @@ import java.util.List;
  * 
  * @author Kensuke Konishi
  * 
- * 
- * @version 0.3.11
- * 
- * 
- *          TODO SKS
- * 
- * 
+ * @version 0.3.11.1
  */
 public class Raypath {
 
@@ -44,13 +38,13 @@ public class Raypath {
 	 * when integrate values on boundaries, use the value at point very close to
 	 * the boundaries by eps. Default value is 1e-7
 	 */
-	private static final double eps = 1e-7;
+	static final double eps = 1e-7;
 
 	/**
 	 * If the gap between the CMB and the turning r is under this value, then
 	 * diffracted phase can be computed.
 	 */
-	private static final double permissibleGapForDiff = 1e-9;
+	static final double permissibleGapForDiff = 1e-9;
 
 	/**
 	 * the interval of calculation points (/km)
@@ -731,7 +725,7 @@ public class Raypath {
 			throw new RuntimeException("It looks like the Raypath is not computed yet");
 
 		// System.out.println(phase+" "+ shTurningR);
-		double[][] points = null;
+		double[][] points;
 		List<Double> thetaList = new ArrayList<>();
 		List<Double> rList = new ArrayList<>();
 		double currentTheta = 0;
@@ -787,8 +781,8 @@ public class Raypath {
 		} else {
 			// not diffracted
 			// p s first exception
-			double[] firstR = null;
-			double[] firstTheta = null;
+			double[] firstR;
+			double[] firstTheta;
 			if (phase.partIsP(0)) {
 				firstR = mantlePR;
 				firstTheta = mantlePTheta;
@@ -818,8 +812,8 @@ public class Raypath {
 				// System.out.println("hi" + i);
 				switch (phase.partIs(i)) {
 				case MANTLE: {
-					double[] mantleR = null;
-					double[] mantleTheta = null;
+					double[] mantleR;
+					double[] mantleTheta;
 					if (phase.partIsP(i)) {
 						mantleR = mantlePR;
 						mantleTheta = mantlePTheta;
@@ -857,8 +851,8 @@ public class Raypath {
 					}
 					break;
 				case INNERCORE: {
-					double[] innerCoreR = null;
-					double[] innerCoreTheta = null;
+					double[] innerCoreR;
+					double[] innerCoreTheta;
 					if (phase.partIsP(i)) {
 						innerCoreR = innerCorePR;
 						innerCoreTheta = innerCorePTheta;

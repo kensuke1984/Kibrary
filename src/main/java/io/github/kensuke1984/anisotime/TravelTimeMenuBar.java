@@ -166,21 +166,16 @@ final class TravelTimeMenuBar extends JMenuBar {
 	}
 
 	String getPoleString() {
-		String pole = null;
 		switch (polarization) {
 		case 0:
-			pole = "Polarity:All";
-			break;
+			return "Polarity:All";
 		case 1:
-			pole = "Polarity:P-SV";
-			break;
+			return "Polarity:P-SV";
 		case 2:
-			pole = "Polarity:SH";
-			break;
+			return "Polarity:SH";
 		default:
 			throw new RuntimeException("Unexpected");
 		}
-		return pole;
 	}
 
 	String getModeName() {
