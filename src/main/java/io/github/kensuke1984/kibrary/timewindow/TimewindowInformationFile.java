@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see {@link #create(byte[], Station[], GlobalCMTID[])}
  * 
  * 
- * @version 0.3.0.1
+ * @version 0.3.0.2
  * 
  * 
  * @author Kensuke Konishi
@@ -64,16 +64,16 @@ public final class TimewindowInformationFile {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		Set<TimewindowInformation> set = null;
+		Set<TimewindowInformation> set;
 		if (args.length != 0)
 			set = TimewindowInformationFile.read(Paths.get(args[0]));
 		else {
 			String s = "";
-			Path f = null;
+			Path f;
 			do {
 				s = JOptionPane.showInputDialog("file?", s);
 				if (s == null || s.equals(""))
-					System.exit(0);
+					return;
 				f = Paths.get(s);
 			} while (!Files.exists(f) || Files.isDirectory(f));
 			set = TimewindowInformationFile.read(f);

@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
  * 
- * @version 0.2.1
+ * @version 0.2.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -132,7 +132,6 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
 
 		SyntheticDSMInformationFileMaker sdif = new SyntheticDSMInformationFileMaker(property);
-		// System.exit(0);
 		sdif.run();
 	}
 
@@ -161,7 +160,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 						}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 				if (stations.isEmpty())
 					continue;
-				int numberOfStation = (int) stations.stream().map(s -> s.getStationName()).count();
+				int numberOfStation = (int) stations.stream().map(Station::getStationName).count();
 				if (numberOfStation != stations.size())
 					System.err.println("!Caution there are stations with the same name and different positions in "
 							+ eventDir.getGlobalCMTID());
@@ -175,7 +174,6 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 	@Override

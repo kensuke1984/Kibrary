@@ -24,7 +24,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  * Panel for inputting parameters
  * 
- * @version 0.2.1.2
+ * @version 0.2.1.3
  * @author Kensuke Konishi
  */
 class ParameterInputPanel extends javax.swing.JPanel {
@@ -137,14 +137,14 @@ class ParameterInputPanel extends javax.swing.JPanel {
 				.addGroup(layout.createSequentialGroup()
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 								.addComponent(jLabelMostImportant).addComponent(jTextFieldMostImportant))
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-						.addComponent(jComboBoxModel).addComponent(jLabelModel))
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-						.addComponent(jTextFieldDepth).addComponent(jLabelDepth))
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-						.addComponent(jLabelInterval).addComponent(jTextFieldInterval))
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-						.addComponent(jLabelTurningRegionR).addComponent(jTextFieldTurningRegionR))));
+						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+								.addComponent(jComboBoxModel).addComponent(jLabelModel))
+						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+								.addComponent(jTextFieldDepth).addComponent(jLabelDepth))
+						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+								.addComponent(jLabelInterval).addComponent(jTextFieldInterval))
+						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+								.addComponent(jLabelTurningRegionR).addComponent(jTextFieldTurningRegionR))));
 		createStructure();
 
 	}// </editor-fold>//GEN-END:initComponents
@@ -170,10 +170,9 @@ class ParameterInputPanel extends javax.swing.JPanel {
 	}
 
 	private static MouseListener createDescriptionMouseListner(final JFrame frame) {
-		MouseListener ml = new MouseListener() {
-			Timer timer = null;
+		return new MouseListener() {
+			Timer timer;
 
-			// JDialog d = ParameterDescription.dialogForRayparameter();
 			@Override
 			public void mouseReleased(MouseEvent e) {
 			}
@@ -203,14 +202,12 @@ class ParameterInputPanel extends javax.swing.JPanel {
 				newLocation.x += 10;
 				newLocation.y += 10;
 				frame.setLocation(newLocation);
-				// frame.setVisible(true);
 			}
 
 			@Override
 			public void mouseClicked(MouseEvent e) {
 			}
 		};
-		return ml;
 	}
 
 	private void addListners() {
@@ -221,7 +218,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		jTextFieldTurningRegionR.addFocusListener(textFieldFocusListner);
 
 		jComboBoxModel.addPopupMenuListener(new PopupMenuListener() {
-			InputModel currentModel = null;
+			InputModel currentModel;
 
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -293,7 +290,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
 	private void createStructure() {
 		InputModel model = InputModel.titleOf((String) jComboBoxModel.getSelectedItem());
-		JFileChooser fileChooser = null;
+		JFileChooser fileChooser;
 		switch (model) {
 		case AK135:
 			structure = PolynomialStructure.AK135;

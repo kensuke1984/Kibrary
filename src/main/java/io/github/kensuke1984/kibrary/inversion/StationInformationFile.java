@@ -28,8 +28,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Each line: station name, station network, latitude, longitude.
  * 
  * 
- * @version 0.2.0.1
- * 
+ * @version 0.2.0.2
  * @author Kensuke Konishi
  *
  */
@@ -118,8 +117,9 @@ public final class StationInformationFile {
 	}
 
 	/**
-	 * ワーキングディレクトリ下のイベントフォルダ群からステーション情報を抽出して書き込む。
-	 * Creates a file for stations under the working folder.
+	 * ワーキングディレクトリ下のイベントフォルダ群からステーション情報を抽出して書き込む。 Creates a file for stations
+	 * under the working folder.
+	 * 
 	 * @param args
 	 *            [folder: to look into for stations (containing event folders)]
 	 * @throws IOException
@@ -136,15 +136,15 @@ public final class StationInformationFile {
 			else
 				System.out.println(f + " does not exist or is not a directory.");
 		} else {
-			Path workPath = null;
-			String path = null;
+			Path workPath;
+			String path = "";
 			do {
 				try {
 					path = JOptionPane.showInputDialog("Working folder?", path);
 				} catch (Exception e) {
 					System.out.println("Working folder?");
 					try (BufferedReader br = new BufferedReader(
-							new InputStreamReader(new CloseShieldInputStream(System.in)));) {
+							new InputStreamReader(new CloseShieldInputStream(System.in)))) {
 						path = br.readLine().trim();
 						if (!path.startsWith("/"))
 							path = System.getProperty("user.dir") + "/" + path;
@@ -154,7 +154,7 @@ public final class StationInformationFile {
 					}
 				}
 				if (path == null || path.equals(""))
-					System.exit(0);
+					return;
 				else
 					workPath = Paths.get(path);
 				if (!Files.isDirectory(workPath))

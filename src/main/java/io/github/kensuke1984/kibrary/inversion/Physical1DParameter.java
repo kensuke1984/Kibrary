@@ -54,7 +54,6 @@ public class Physical1DParameter implements UnknownParameter {
 	@Override
 	public String toString() {
 		return partialType + " " + perturbationR + " " + getWeighting();
-
 	}
 
 	public double getPerturbationR() {

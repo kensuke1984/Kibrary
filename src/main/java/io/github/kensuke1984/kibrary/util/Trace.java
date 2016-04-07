@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * @author Kensuke Konishi
  * 
  */
@@ -241,8 +241,8 @@ public class Trace {
 	 * @return compareを何ポイントずらすか 0だと先頭から
 	 */
 	public static int findBestShift(double[] base, double[] compare) {
-		double[] shorter = null;
-		double[] longer = null;
+		double[] shorter;
+		double[] longer;
 		if (base.length == compare.length)
 			return 0;
 		if (base.length < compare.length) {

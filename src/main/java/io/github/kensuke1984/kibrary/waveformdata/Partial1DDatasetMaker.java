@@ -49,7 +49,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
  * <b>Assume there are no station with the same name but different networks in
  * same events</b> TODO
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
  * 
  * @author Kensuke Konishi
@@ -195,7 +195,7 @@ public class Partial1DDatasetMaker implements Operation {
 	 * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
 	 */
 	private double finalSamplingHz;
-	
+
 	/**
 	 * The folder contains source time functions.
 	 */
@@ -260,7 +260,7 @@ public class Partial1DDatasetMaker implements Operation {
 				return;
 			}
 
-			Set<SpcFileName> spcFileNameSet = null;
+			Set<SpcFileName> spcFileNameSet;
 			try {
 				spcFileNameSet = Utilities.collectSpcFileName(spcFolder);
 			} catch (IOException e1) {

@@ -66,7 +66,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * network in one event</b>
  * 
  * 
- * @version 0.2.0.3
+ * @version 0.2.0.4
  * 
  * @author Kensuke Konishi
  * 
@@ -330,7 +330,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			if (!Files.exists(synEventPath))
 				throw new RuntimeException(synEventPath + " does not exist.");
 
-			Set<SACFileName> obsFiles = null;
+			Set<SACFileName> obsFiles;
 			try {
 				(obsFiles = obsEventDir.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
 			} catch (IOException e2) {
@@ -362,7 +362,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				if (windows.isEmpty())
 					continue;
 
-				SACData obsSac = null;
+				SACData obsSac;
 				try {
 					obsSac = obsFileName.read();
 				} catch (IOException e1) {
@@ -371,7 +371,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					continue;
 				}
 
-				SACData synSac = null;
+				SACData synSac;
 				try {
 					synSac = synFileName.read();
 				} catch (IOException e1) {

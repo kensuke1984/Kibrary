@@ -52,7 +52,6 @@ public class InputStreamThread extends Thread {
 				if (line == null)
 					break;
 				list.add(line);
-				// System.out.println(line+" "+list.size());
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

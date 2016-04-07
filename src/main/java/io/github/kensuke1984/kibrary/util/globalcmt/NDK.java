@@ -65,7 +65,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * @since 2013/11/30
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
  * @author Kensuke Konishi
  * @see <a
@@ -297,7 +297,7 @@ final class NDK implements GlobalCMTData {
 			throw new IllegalArgumentException("Invalid input for an NDK");
 
 		NDK ndk = new NDK();
-		String[] parts = null;
+		String[] parts;
 		// line 1
 		parts = lines[0].split("\\s+");
 		ndk.hypocenterReferenceCatalog = parts[0];

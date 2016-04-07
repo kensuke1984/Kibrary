@@ -10,7 +10,7 @@ import javax.swing.text.PlainDocument;
 /**
  * Document containing only numbers (double value) used in ANISOtime.
  * 
- * @version 0.0.1.1
+ * @version 0.0.1.2
  * @author Kensuke Konishi
  * 
  */
@@ -25,11 +25,11 @@ final class NumberDocument extends PlainDocument {
 	public void insertString(int offset, String str, AttributeSet attributes) throws BadLocationException {
 		if (str == null)
 			return;
-		String newValue = null;
+		String newValue;
 		int length = getLength();
-		if (length == 0) {
+		if (length == 0)
 			newValue = str;
-		} else {
+		else {
 			String currentContent = getText(0, length);
 			StringBuffer currentBuffer = new StringBuffer(currentContent);
 			currentBuffer.insert(offset, str);

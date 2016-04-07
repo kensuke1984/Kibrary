@@ -27,11 +27,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * Duplication is NOT allowed.
  * 
- * 
- * 
- * @version 0.0.5
- * 
- * 
+ * @version 0.0.5.1
  * 
  * @author kensuke
  * 
@@ -51,14 +47,14 @@ public class UnknownParameterFile {
 	public static List<UnknownParameter> read(Path path) throws IOException {
 		List<UnknownParameter> pars = new ArrayList<>();
 		try (BufferedReader br = Files.newBufferedReader(path)) {
-			String line = null;
+			String line;
 			while (null != (line = br.readLine())) {
 				line = line.trim();
 				if (line.length() == 0 || line.startsWith("#"))
 					continue;
 				String[] parts = line.trim().split("\\s+");
 				PartialType type = PartialType.valueOf(parts[0]);
-				UnknownParameter unknown = null;
+				UnknownParameter unknown;
 				switch (type) {
 				case TIME:
 					throw new RuntimeException("time  madamuripo");

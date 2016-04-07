@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 /**
  * Am=d
  * 
- * @version 0.2
+ * @version 0.2.1
  * 
  * 
  * @author Kensuke Konishi
@@ -83,11 +83,8 @@ public class ObservationEquation {
 	public double varianceOf(RealVector m) {
 		Objects.requireNonNull(m);
 		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
-		double variance = dVector.getDNorm() * dVector.getDNorm();
-
-		variance -= 2 * atd.dotProduct(m);
-		variance += m.dotProduct(getAtA().operate(m));
-
+		double variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+				+ m.dotProduct(getAtA().operate(m));
 		return variance / obs2;
 	}
 
@@ -174,9 +171,12 @@ public class ObservationEquation {
 
 	private RealMatrix ata;
 
-	public synchronized RealMatrix getAtA() {
+	public RealMatrix getAtA() {
 		if (ata == null)
-			ata = a.computeAtA();
+			synchronized (this) {
+				if (ata == null)
+					ata = a.computeAtA();
+			}
 		return ata;
 	}
 

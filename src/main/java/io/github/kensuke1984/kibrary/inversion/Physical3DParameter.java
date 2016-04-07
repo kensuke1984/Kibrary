@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * This class is <b>IMMUTABLE</b>
  * 
  * 
- * @version 0.0.3
+ * @version 0.0.3.1
  * 
  * @author Kensuke Konishi
  *
@@ -25,7 +25,7 @@ public class Physical3DParameter implements UnknownParameter {
 
 	@Override
 	public String toString() {
-		return partialType + " " + pointLocation + " " + getWeighting();
+		return partialType + " " + pointLocation + " " + weighting;
 	}
 
 	private final PartialType partialType;

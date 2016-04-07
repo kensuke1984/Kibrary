@@ -35,7 +35,7 @@ final class GlobalCMTCatalog {
 	private final static Set<NDK> NDKs;
 
 	private static Path selectCatalogFile() {
-		Path catalogFile = null;
+		Path catalogFile;
 		String path = System.getProperty("user.dir");
 		do {
 			try {

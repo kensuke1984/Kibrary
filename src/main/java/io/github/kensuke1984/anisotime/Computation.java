@@ -51,7 +51,7 @@ abstract class Computation implements Runnable {
 
 	void outputPath() {
 		Runnable output = new Runnable() {
-			Path outputDirectory = null;
+			Path outputDirectory;
 
 			@Override
 			public void run() {
@@ -64,7 +64,6 @@ abstract class Computation implements Runnable {
 						if (action == JFileChooser.CANCEL_OPTION || action == JFileChooser.ERROR_OPTION)
 							return;
 						outputDirectory = fileChooser.getSelectedFile().toPath();
-
 					});
 					if (outputDirectory == null)
 						return;

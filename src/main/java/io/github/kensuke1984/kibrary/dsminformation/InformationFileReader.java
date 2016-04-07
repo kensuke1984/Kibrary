@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Reader for files which contains c # ! etc for comment lines.
  * 
- * @version 0.0.2.1
+ * @version 0.0.2.2
  * 
  * @author Kensuke Konishi
  * 
@@ -51,13 +51,13 @@ class InformationFileReader {
 	 * if the next line is a comment line, it will be skipped. (c#!...) the line
 	 * will be returned after trimmed
 	 * 
-	 * @return the next line to the line already read , returns null if all
+	 * @return the next line to the line already read ,returns null if all
 	 *         lines are already read
 	 */
 	String next() {
 		if (readlineNum == linesNum)
 			return null;
-		String line = null;
+		String line;
 		for (;;)
 			if (!isComment(line = lines.get(readlineNum++).trim()))
 				return line;
@@ -110,12 +110,9 @@ class InformationFileReader {
 	public static void main(String[] args) throws IOException {
 		if (args.length == 1) {
 			InformationFileReader ifr = new InformationFileReader(Paths.get(args[0]));
-			for (;;) {
-				String line = ifr.next();
-				if (line == null)
-					break;
+			String line;
+			while(null!=(line=ifr.next()))
 				System.out.println(line);
-			}
 		}
 	}
 
