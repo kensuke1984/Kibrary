@@ -14,9 +14,8 @@ import io.github.kensuke1984.kibrary.util.Raypath;
 
 /**
  * RaypathまわりにGridを作る
- * 
- * @author Kensuke
- * 
+ * @version 0.0.2
+ * @author Kensuke Konishi
  */
 public class GridMaker extends Raypath {
 
@@ -132,14 +131,10 @@ public class GridMaker extends Raypath {
 		for (int iTheta = -nTheta; iTheta < nTheta + 1; iTheta++)
 			for (int iPhi = -nPhi; iPhi < nPhi + 1; iPhi++) {
 				// 波線に直交するポイントを作るための点（北極中心に置く）
-				XYZ xyz = null;
-				if (iPhi < 0)
-					xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, Math.abs(iPhi) * deltaPhi, Math.PI * 1.5);
-				else
-					xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, iPhi * deltaPhi, Math.PI * 0.5);
+				XYZ xyz = iPhi < 0 ? RThetaPhi.toCartesian(Earth.EARTH_RADIUS, Math.abs(iPhi) * deltaPhi, Math.PI * 1.5)
+						: RThetaPhi.toCartesian(Earth.EARTH_RADIUS, iPhi * deltaPhi, Math.PI * 0.5);
 
 				xyz = xyz.rotateaboutZ(Math.PI - azimuth);
-				// System.out.println(raypathLocation.length+" "+iTheta);
 				xyz = xyz.rotateaboutY(raypathLocation[iTheta + nTheta].getTheta());
 				xyz = xyz.rotateaboutZ(raypathLocation[iTheta + nTheta].getPhi());
 				positions[k++] = xyz.getLocation();

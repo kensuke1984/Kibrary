@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2.0.1
+ * @version 0.2.0.2
  * 
  * @author Kensuke Konishi
  * 
@@ -114,7 +114,6 @@ public class InformationFileMaker implements Operation {
 
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-		// System.exit(0);
 
 		locationsPath = getPath("locationsPath");
 
@@ -187,16 +186,14 @@ public class InformationFileMaker implements Operation {
 			perturbationR[i] = Double.parseDouble(parts0[i]);
 
 		List<HorizontalPosition> positionList = new ArrayList<>();
-		String line = null;
+		String line;
 		while ((line = reader.next()) != null) {
 			String[] part = line.split("\\s+");
 			HorizontalPosition position = new HorizontalPosition(Double.parseDouble(part[0]),
 					Double.parseDouble(part[1]));
 			positionList.add(position);
 		}
-
 		perturbationPointPositions = positionList.toArray(new HorizontalPosition[0]);
-
 	}
 
 	/**

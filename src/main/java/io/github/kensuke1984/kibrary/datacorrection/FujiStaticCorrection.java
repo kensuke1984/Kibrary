@@ -58,7 +58,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * timeshift fileを一つに統一
  * 
  * 
- * @version 0.2.1
+ * @version 0.2.1.1
  * @author Kensuke Konishi
  * 
  */
@@ -189,7 +189,7 @@ public class FujiStaticCorrection implements Operation {
 			}
 
 			// observed fileを拾ってくる
-			Set<SACFileName> obsFiles = null;
+			Set<SACFileName> obsFiles;
 			try {
 				(obsFiles = obsEventDir.sacFileSet()).removeIf(s -> !s.isOBS());
 			} catch (IOException e1) {
@@ -213,8 +213,8 @@ public class FujiStaticCorrection implements Operation {
 					System.out.println(synName + " does not exist. ");
 					continue;
 				}
-				SACData obsSac = null;
-				SACData synSac = null;
+				SACData obsSac;
+				SACData synSac;
 				try {
 					obsSac = obsName.read();
 					synSac = synName.read();
@@ -257,7 +257,6 @@ public class FujiStaticCorrection implements Operation {
 		this.property = (Properties) property.clone();
 		String date = Utilities.getTemporaryString();
 		outPath = workPath.resolve("staticCorrection" + date + ".dat");
-		// searchWidth = (int) (searchRange * sacSamplingHz);
 		staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 		set();
 	}
@@ -272,12 +271,11 @@ public class FujiStaticCorrection implements Operation {
 	 */
 	public static void main(String[] args) throws Exception {
 		FujiStaticCorrection fsc = new FujiStaticCorrection(Property.parse(args));
-
 		long startTime = System.nanoTime();
-		System.err.println("FujiStaticCorrection is going.");
+		System.err.println(FujiStaticCorrection.class.getName() + " is going.");
 		fsc.run();
-		System.err.println("FujiStaticCorrection finished in " + Utilities.toTimeString(System.nanoTime() - startTime));
-
+		System.err.println(FujiStaticCorrection.class.getName() + " finished in "
+				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 
 	private void output() throws IOException {

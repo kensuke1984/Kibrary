@@ -13,7 +13,7 @@ import java.io.PrintWriter;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.0
+ * @version 0.1.0.1
  * 
  */
 public class SAC extends ExternalProcess implements Closeable {
@@ -24,12 +24,9 @@ public class SAC extends ExternalProcess implements Closeable {
 	}
 
 	public static SAC createProcess() throws IOException {
-		ProcessBuilder builder = null;
 		if (System.getenv("SACAUX") != null && isInPath("sac"))
-			builder = new ProcessBuilder("sac");
-		else
-			throw new RuntimeException("No sac in PATH or No SACAUX is set.");
-		return new SAC(builder.start());
+			return new SAC(new ProcessBuilder("sac").start());
+		throw new RuntimeException("No sac in PATH or No SACAUX is set.");
 	}
 
 	/**

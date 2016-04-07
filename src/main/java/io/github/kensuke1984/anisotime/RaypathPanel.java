@@ -51,7 +51,7 @@ final class RaypathPanel extends JPanel {
 	}
 
 	void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double radius) {
-		EpsGraphics epsGraphics = null;
+		EpsGraphics epsGraphics=null;
 		try {
 			epsGraphics = new EpsGraphics(phase.toString(), outputStream, 0, 0, getWidth(), getHeight(),
 					ColorMode.COLOR_RGB);

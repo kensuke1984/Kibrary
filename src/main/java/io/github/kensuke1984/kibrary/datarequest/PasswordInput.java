@@ -24,7 +24,7 @@ import javax.swing.WindowConstants;
  * is stated in the Kibrary License statement.
  * 
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 class PasswordInput extends JPanel implements ActionListener {
 
@@ -67,10 +67,8 @@ class PasswordInput extends JPanel implements ActionListener {
 		helpButton.setActionCommand(HELP);
 		okButton.addActionListener(this);
 		helpButton.addActionListener(this);
-
 		p.add(okButton);
 		p.add(helpButton);
-
 		return p;
 	}
 
@@ -79,7 +77,6 @@ class PasswordInput extends JPanel implements ActionListener {
 	public String getPassword() throws InterruptedException {
 		while (password == null)
 			Thread.sleep(10);
-
 		return password;
 	}
 

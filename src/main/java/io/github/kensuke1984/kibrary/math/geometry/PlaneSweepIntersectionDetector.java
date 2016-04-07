@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.TreeSet;
 
 /**
- * @version 0.0.1
+ * @version 0.0.1.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class PlaneSweepIntersectionDetector implements IntersectionDetector {
@@ -46,7 +46,7 @@ public class PlaneSweepIntersectionDetector implements IntersectionDetector {
 		// 今回の実装では同一の交点が複数回検出される可能性があるため，HashSetを使って重複を防ぐ
 		Collection<Intersection> result = new HashSet<>();
 
-		Event event = null;
+		Event event;
 		// キューから先頭のイベントを取り出す
 		while ((event = eventQueue.pollFirst()) != null) {
 			double sweepY = event.y;

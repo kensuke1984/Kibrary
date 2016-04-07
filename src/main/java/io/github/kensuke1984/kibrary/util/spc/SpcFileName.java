@@ -23,7 +23,7 @@ import java.nio.file.Path;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.0.1
  * 
  */
 public class SpcFileName extends File {
@@ -81,15 +81,13 @@ public class SpcFileName extends File {
 	}
 
 	private static String getX(String fileName) {
-		if (fileName.split("\\.").length != 7)
-			return null;
-		return fileName.split("\\.")[3];
+		String[] parts = fileName.split("\\.");
+		return parts.length != 7 ? null : parts[3];
 	}
 
 	private static String getY(String fileName) {
-		if (fileName.split("\\.").length != 7)
-			return null;
-		return fileName.split("\\.")[4];
+		String[] parts = fileName.split("\\.");
+		return parts.length != 7 ? null : parts[4];
 	}
 
 	/**

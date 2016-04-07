@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * {@link SpectrumFile})
  * 
  * 
- * @version 0.1.2.3
+ * @version 0.1.2.4
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -421,10 +421,7 @@ public class SACMaker implements Runnable {
 					System.err.println(sacFileName + " already exists..");
 					return;
 				}
-				SAC outSAC = sac.of(component);
-				outSAC = outSAC.setSACData(body.getTimeseries(component));
-				outSAC.writeSAC(sacFileName.toPath());
-				// System.exit(0);
+				sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(sacFileName.toPath());
 			}
 		}
 
@@ -440,8 +437,7 @@ public class SACMaker implements Runnable {
 			body.addBody(secondarySPC.getSpcBodyList().get(0));
 
 		if (temporalDifferentiation) {
-			SpcBody bodyT = null;
-			bodyT = body.copy();
+			SpcBody bodyT = body.copy();
 			bodyT.differentiate(primeSPC.tlen());
 			compute(bodyT);
 			for (SACComponent component : components) {
@@ -450,10 +446,8 @@ public class SACMaker implements Runnable {
 						: SACExtension.valueOfTemporalPartial(component);
 				SACFileName sfnT = new SACFileName(
 						outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + extT));
-				SAC sfT = sac.of(component);
-				sfT.setSACData(bodyT.getTimeseries(component));
 				try {
-					sfT.writeSAC(sfnT.toPath());
+					sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(sfnT.toPath());
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -467,10 +461,8 @@ public class SACMaker implements Runnable {
 					: SACExtension.valueOfSynthetic(component);
 			SACFileName sfn = new SACFileName(
 					outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + ext));
-			SAC outSAC = sac.of(component);
-			outSAC = outSAC.setSACData(body.getTimeseries(component));
 			try {
-				outSAC.writeSAC(sfn.toPath());
+				sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(sfn.toPath());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -575,22 +567,21 @@ public class SACMaker implements Runnable {
 			isOK = false;
 		}
 
-		// double
-		// tlen
+		// double tlen
 		if (spc1.tlen() != spc2.tlen()) {
-			System.out.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
+			System.err.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
 			isOK = false;
 		}
 
 		// 場所
 		if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
-			System.out.println("locations of sources of input spcfiles are different");
-			System.out.println(spc1.getSourceLocation());
-			System.out.println(spc2.getSourceLocation());
+			System.err.println("locations of sources of input spcfiles are different");
+			System.err.println(spc1.getSourceLocation());
+			System.err.println(spc2.getSourceLocation());
 			isOK = false;
 		}
 		if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
-			System.out.println("locations of stations of input spcfiles are different");
+			System.err.println("locations of stations of input spcfiles are different");
 			isOK = false;
 		}
 		return isOK;
@@ -606,7 +597,7 @@ public class SACMaker implements Runnable {
 	 */
 	public static void main(String[] args) throws IOException {
 		if (args == null || args.length != 2) {
-			System.out.println("Usage: psv sh");
+			System.err.println("Usage: psv sh");
 			return;
 		}
 

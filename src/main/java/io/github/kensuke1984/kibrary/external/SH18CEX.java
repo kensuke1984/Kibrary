@@ -12,8 +12,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * @version 0.0.1.1
  * 
- * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class SH18CEX {
@@ -24,7 +23,7 @@ public final class SH18CEX {
 	public static void main(String args[]) {
 		if (args.length != 3)
 			throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
-		Location loc = null;
+		Location loc;
 		try {
 			double r = 0;
 			double lat = 0;
@@ -40,7 +39,6 @@ public final class SH18CEX {
 		double perc = getV(loc);
 		double take = premVs * (1 + perc / 100);
 		System.out.println(loc + " " + take + " " + perc);
-
 	}
 
 	private static final PolynomialStructure ps = PolynomialStructure.PREM;

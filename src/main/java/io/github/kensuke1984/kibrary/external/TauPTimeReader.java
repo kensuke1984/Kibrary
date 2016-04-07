@@ -23,7 +23,7 @@ import io.github.kensuke1984.anisotime.Phase;
  * 
  * PREM is used for travel times.
  * 
- * @version 0.3.2
+ * @version 0.3.2.1
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  * 
  * 
@@ -92,7 +92,7 @@ public final class TauPTimeReader {
 			Process p = pb.start();
 			List<String> outLines = new ArrayList<>();
 			try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-				String line = null;
+				String line;
 				while ((line = br.readLine()) != null)
 					outLines.add(line);
 			}

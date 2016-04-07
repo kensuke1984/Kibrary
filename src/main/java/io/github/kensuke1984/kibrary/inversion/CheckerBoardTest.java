@@ -224,7 +224,6 @@ public class CheckerBoardTest implements Operation {
 	 *            {@link RealVector} of born
 	 */
 	public void output4Iterate(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
-		// bornVec = dVector.getObsVec();
 		if (bornVec == null) {
 			System.out.println("bornVec is not set");
 			return;

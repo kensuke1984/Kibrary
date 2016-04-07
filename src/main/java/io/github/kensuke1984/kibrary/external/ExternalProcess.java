@@ -13,7 +13,7 @@ import java.util.stream.Stream;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1
+ * @version 0.1.0.1
  * 
  */
 public class ExternalProcess {
@@ -83,9 +83,7 @@ public class ExternalProcess {
 	}
 
 	public static ExternalProcess launch(List<String> command) throws IOException {
-		ProcessBuilder builder = new ProcessBuilder(command);
-		return new ExternalProcess(builder.start());
-
+		return new ExternalProcess(new ProcessBuilder(command).start());
 	}
 
 	public int waitFor() {

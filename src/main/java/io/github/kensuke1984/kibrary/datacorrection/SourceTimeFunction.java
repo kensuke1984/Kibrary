@@ -10,6 +10,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.complex.Complex;
@@ -29,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.6
+ * @version 0.0.6.1
  * 
  * @author Kensuke Konishi
  *
@@ -114,8 +115,8 @@ public abstract class SourceTimeFunction {
 	 * The width is determined by the half duration &tau;. <br>
 	 * f(t) = (1-tanh<sup>2</sup>(2t/&tau;))/&tau; (-&tau; &le; t &le; &tau;), 0
 	 * (t &lt; -&tau;, &tau; &lt; t) <br>
-	 * Source time function F(&omega;) =
-	 * (&pi;<sup>2</sup>&omega;&tau;/2)/sinh(&pi;<sup>2</sup>&omega;&tau;/2)<br>
+	 * Source time function F(&omega;) = (&pi;<sup>2</sup>
+	 * &omega;&tau;/2)/sinh(&pi;<sup>2</sup>&omega;&tau;/2)<br>
 	 * 
 	 * @param np
 	 *            the number of steps in frequency domain
@@ -219,8 +220,7 @@ public abstract class SourceTimeFunction {
 	 *             occurs
 	 */
 	public void writeSourceTimeFunction(Path outPath, OpenOption... options) throws IOException {
-		if (sourceTimeFunction == null)
-			throw new RuntimeException("Source time function is not computed yet.");
+		Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
 
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
 			pw.println("#np tlen samplingHz");
@@ -333,8 +333,7 @@ public abstract class SourceTimeFunction {
 	 * @return trace of Source time function in time domain
 	 */
 	public Trace getSourceTimeFunctionInTimeDomain() {
-		if (sourceTimeFunction == null)
-			throw new RuntimeException("Source time function is not computed yet.");
+		Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
 		double[] time = new double[nptsInTimeDomain];
 		Arrays.setAll(time, i -> i / samplingHz);
 
@@ -342,9 +341,7 @@ public abstract class SourceTimeFunction {
 		Arrays.fill(stf, Complex.ZERO);
 		for (int i = 0; i < sourceTimeFunction.length; i++)
 			stf[i] = sourceTimeFunction[i];
-
 		double[] stfInTime = Arrays.stream(inverseFourierTransform(stf)).map(d -> d * samplingHz).toArray();
-
 		return new Trace(time, stfInTime);
 	}
 

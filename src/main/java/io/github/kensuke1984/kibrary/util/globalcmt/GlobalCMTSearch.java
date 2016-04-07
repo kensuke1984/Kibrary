@@ -19,9 +19,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke Konishi
- * @version 0.1.9
- * 
- * 
+ * @version 0.1.9.1
  */
 public class GlobalCMTSearch {
 
@@ -291,7 +289,7 @@ public class GlobalCMTSearch {
 			return null;
 		if (ids.length == 1)
 			return ids[0];
-		GlobalCMTID id = null;
+		GlobalCMTID id;
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(new CloseShieldInputStream(System.in)));) {
 			System.out.println("Which ID do you want to use?");
 			System.out.println("# ID date time latitude longitude depth");
