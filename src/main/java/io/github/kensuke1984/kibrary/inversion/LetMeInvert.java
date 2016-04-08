@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0.1.1
+ * @version 2.0.1.2
  * 
  * @author Kensuke Konishi
  * 
@@ -58,7 +58,7 @@ public class LetMeInvert implements Operation {
 	 * partialIDの入ったファイル
 	 */
 	protected Path partialIDPath;
-	
+
 	/**
 	 * partial波形の入ったファイル
 	 */
@@ -187,10 +187,10 @@ public class LetMeInvert implements Operation {
 	 */
 	private Future<Void> output() throws IOException {
 		// // ステーションの情報の読み込み
-		System.out.print("reading station Information");
+		System.err.print("reading station Information");
 		if (stationSet == null)
 			stationSet = StationInformationFile.read(stationInformationPath);
-		System.out.println(" done");
+		System.err.println(" done");
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {
 			outputDistribution(outPath.resolve("stationEventDistribution.inf"));
@@ -208,19 +208,14 @@ public class LetMeInvert implements Operation {
 		return future;
 	}
 
+	@Override
 	public void run() {
 		if (Files.exists(outPath))
 			throw new RuntimeException(outPath + " already exists.");
 		try {
-			System.out.println("creating the output folder");
-			// outDir.mkdir();
-			// copy information
+			System.err.println("creating the output folder");
 			Files.createDirectories(outPath);
-			// if (parameterPath != null) TODO
-			// Files.copy(getParameterPath(),
-			// outPath.resolve(parameterPath.getFileName()));
-//			if (unknownParameterListPath != null)
-//				Files.copy(unknownParameterListPath, outPath.resolve(unknownParameterListPath.getFileName()));
+			writeProperties(outPath.resolve("lmi.properties"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Can not create " + outPath);
@@ -229,7 +224,7 @@ public class LetMeInvert implements Operation {
 		long start = System.nanoTime();
 
 		// 観測方程式
-		Future<Void> future = null;
+		Future<Void> future;
 		try {
 			future = output();
 		} catch (Exception e) {
@@ -244,10 +239,7 @@ public class LetMeInvert implements Operation {
 		} catch (InterruptedException | ExecutionException e) {
 			e.printStackTrace();
 		}
-		long time = System.nanoTime() - start;
-
-		System.err.println("Inversion is done in " + Utilities.toTimeString(time));
-
+		System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	/**
@@ -464,7 +456,6 @@ public class LetMeInvert implements Operation {
 		RealMatrix p = inverseProblem.getBaseVectors();
 		for (int j = 0; j < eq.getMlength(); j++)
 			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
-
 	}
 
 	/**
@@ -474,14 +465,12 @@ public class LetMeInvert implements Operation {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-
 		LetMeInvert lmi = new LetMeInvert(Property.parse(args));
 		System.out.println(LetMeInvert.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();
 		System.err.println(
 				LetMeInvert.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
-
 	}
 
 	/**
@@ -520,7 +509,6 @@ public class LetMeInvert implements Operation {
 		double[] aic = new double[variance.length];
 		for (int i = 0; i < aic.length; i++)
 			aic[i] = Utilities.computeAIC(variance[i], eq.getDlength() / alpha, i);
-
 		// System.out.println(variance + " " + aic);
 		return aic;
 	}
@@ -609,7 +597,7 @@ public class LetMeInvert implements Operation {
 
 	@Override
 	public Properties getProperties() {
-		return (Properties)property.clone();
+		return (Properties) property.clone();
 	}
 
 }

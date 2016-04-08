@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.2
+ * @version 0.2.0.3
  * 
  * @author Kensuke Konishi
  * 
@@ -67,7 +67,7 @@ public class CheckerBoardTest implements Operation {
 			pw.println("##noise power (1000)");
 			pw.println("#noisePower");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private ObservationEquation eq;
@@ -98,12 +98,15 @@ public class CheckerBoardTest implements Operation {
 			property.setProperty("psvsh", "0");
 		if (!property.containsKey("modelName"))
 			property.setProperty("modelName", "");
+		if (!property.containsKey("noize"))
+			property.setProperty("noize", "false");
+		if(property.getProperty("noize").equals("true")&&property.containsKey("noizePower"))
+			throw new RuntimeException("There is no information about 'noizePower'");
 	}
 
 	private void set() {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
-
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		waveIDPath = getPath("waveIDPath");
@@ -113,9 +116,9 @@ public class CheckerBoardTest implements Operation {
 		unknownParameterListPath = getPath("unknownParameterListPath");
 		inputDataPath = getPath("inputDataPath");
 		noise = Boolean.parseBoolean(property.getProperty("noise"));
+		if(noise)
 		noisePower = Double.parseDouble(property.getProperty("noisePower"));
 		iterate = Boolean.parseBoolean(property.getProperty("iterate"));
-
 	}
 
 	private Path workPath;

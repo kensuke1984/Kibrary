@@ -92,12 +92,7 @@ public class ObservationEquation {
 
 	/**
 	 * Am=dのAを作る まずmとdの情報から Aに必要な偏微分波形を決める。
-	 * 
-	 * 
-	 * 
-	 * 
-	 * @param parameterSet
-	 * @param dvector
+	 * @param ids source for A
 	 */
 	private void readA(PartialID[] ids) {
 		a = new Matrix(dVector.getNpts(), parameterList.size());
