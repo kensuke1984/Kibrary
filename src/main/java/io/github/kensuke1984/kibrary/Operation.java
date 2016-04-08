@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -35,18 +36,15 @@ public interface Operation {
 	Properties getProperties();
 
 	/**
-	 * This method creates a file for the properties under the root. The file
-	 * name will be 'spcsac????.properties'
+	 * This method creates a file for the properties as the path.
 	 * 
-	 * @param root
-	 *            a folder where the file will be created
-	 * @throws IOException if any
+	 * @param path
+	 *            a path for the file (should be *.properties) 
+	 * @throws IOException
+	 *             if any
 	 */
-	default void writeProperties(Path root) throws IOException {
-		getProperties().store(
-				Files.newBufferedWriter(
-						root.resolve(getClass().getName() + Utilities.getTemporaryString() + ".properties")),
-				"This properties for " + getClass().getName());
+	default void writeProperties(Path path, OpenOption... options) throws IOException {
+		getProperties().store(Files.newBufferedWriter(path, options), "This properties for " + getClass().getName());
 	}
 
 	default Path getPath(String key) {
@@ -70,7 +68,7 @@ public interface Operation {
 				throw new NoSuchFileException("No property file is found");
 			System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "]");
 			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-			return list.get(Integer.parseInt(reader.readLine())-1);
+			return list.get(Integer.parseInt(reader.readLine()) - 1);
 		}
 	}
 
@@ -78,7 +76,8 @@ public interface Operation {
 	 * @param args
 	 *            [a name of procedure] (a property file) <br>
 	 *            -l to show the list of procedures
-	 * @throws Exception if any
+	 * @throws Exception
+	 *             if any
 	 * 
 	 */
 	public static void main(String[] args) throws Exception {
