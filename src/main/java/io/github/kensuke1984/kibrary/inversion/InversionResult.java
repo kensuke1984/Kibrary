@@ -160,7 +160,7 @@ public class InversionResult {
 	/**
 	 * @param a
 	 *            assumed redundancy in data points. It is used as n/a, where n
-	 *            is the number of data points.
+	 *            is the number of data points, note that n/a will be (int)(n/a).
 	 * @param inverse
 	 *            the method for the inverse problem
 	 * @param n
@@ -168,7 +168,7 @@ public class InversionResult {
 	 * @return the Akaike Information criterion for the answer
 	 */
 	public double aicOf(double a, InverseMethodEnum inverse, int n) {
-		return Utilities.computeAIC(varianceOf(inverse, n), npts / a, n);
+		return Utilities.computeAIC(varianceOf(inverse, n), (int)(npts / a), n);
 	}
 
 	/**

@@ -101,7 +101,7 @@ public interface Operation {
 			Properties prop = new Properties();
 			prop.load(Files.newBufferedReader(Paths.get(args[0])));
 			if (!prop.containsKey("manhattan"))
-				throw new RuntimeException("'manhatan' is not set in " + args[0]);
+				throw new RuntimeException("'manhattan' is not set in " + args[0]);
 			String manhattan = prop.getProperty("manhattan");
 			if (!EnumUtils.isValidEnum(Manhattan.class, manhattan))
 				throw new RuntimeException(manhattan + " is not a valid name of Manhattan.");
