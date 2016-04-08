@@ -38,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0.1.2
+ * @version 2.0.2
  * 
  * @author Kensuke Konishi
  * 
@@ -87,13 +87,13 @@ public class LetMeInvert implements Operation {
 		if (!property.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
 		if (!property.containsKey("waveIDPath"))
-			throw new IllegalArgumentException("There is no information about waveIDPath.");
+			throw new IllegalArgumentException("There is no information about 'waveIDPath'.");
 		if (!property.containsKey("waveformPath"))
-			throw new IllegalArgumentException("There is no information about waveformPath.");
+			throw new IllegalArgumentException("There is no information about 'waveformPath'.");
 		if (!property.containsKey("partialIDPath"))
-			throw new IllegalArgumentException("There is no information about partialIDPath.");
+			throw new IllegalArgumentException("There is no information about 'partialIDPath'.");
 		if (!property.containsKey("partialPath"))
-			throw new IllegalArgumentException("There is no information about partialPath.");
+			throw new IllegalArgumentException("There is no information about 'partialPath'.");
 		if (!property.containsKey("inverseMethods"))
 			property.setProperty("inverseMethods", "CG SVD");
 	}
@@ -109,8 +109,9 @@ public class LetMeInvert implements Operation {
 		partialPath = getPath("partialPath");
 		partialIDPath = getPath("partialIDPath");
 		unknownParameterListPath = getPath("unknownParameterListPath");
-
-		alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+		if (property.containsKey("alpha"))
+			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
+					.toArray();
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+"))
 				.map(InverseMethodEnum::valueOf).collect(Collectors.toSet());
 	}
@@ -118,13 +119,15 @@ public class LetMeInvert implements Operation {
 	/**
 	 * AIC計算に用いるα 独立データ数はn/αと考える
 	 */
-	protected double[] alpha = { 1, 12.5, 25, 125 };
+	protected double[] alpha;
 
 	private Properties property;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##These properties for LetMeInvert");
+			pw.println("manhattan LetMeInvert");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
 			pw.println("##Path of a waveID file, must be set");
@@ -139,12 +142,12 @@ public class LetMeInvert implements Operation {
 			pw.println("#unknownParameterListPath unknowns.inf");
 			pw.println("##Path of a station information file, must be set");
 			pw.println("#stationInformationPath station.inf");
-			pw.println("##double[] alpha it self, must be set");
-			pw.println("#alpha 1 12.5 25 125");
+			pw.println("##double[] alpha it self, if it is set, compute aic for each alpha.");
+			pw.println("#alpha");
 			pw.println("##inverseMethods[] names of inverse methods, must be capital letters (CG SVD)");
 			pw.println("#inverseMethods");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private Path workPath;
@@ -194,7 +197,6 @@ public class LetMeInvert implements Operation {
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {
 			outputDistribution(outPath.resolve("stationEventDistribution.inf"));
-			// outputEventStation(outPath.resolve("trace"));
 			dVector.outOrder(outPath);
 			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
@@ -204,7 +206,6 @@ public class LetMeInvert implements Operation {
 		FutureTask<Void> future = new FutureTask<>(output);
 
 		new Thread(future).start();
-		// eq.getPartialMatrix().computeAtA();
 		return future;
 	}
 
@@ -488,13 +489,14 @@ public class LetMeInvert implements Operation {
 		for (int i = 0; i < eq.getMlength(); i++)
 			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
 		writeDat(out, variance);
+		if (alpha == null)
+			return;
 		for (int i = 0; i < alpha.length; i++) {
 			out = outPath.resolve("aic" + i + ".txt");
 			double[] aic = computeAIC(variance, alpha[i]);
 			writeDat(out, aic);
 		}
-		out = outPath.resolve("aic.inf");
-		writeDat(out, alpha);
+		writeDat(outPath.resolve("aic.inf"), alpha);
 	}
 
 	/**
@@ -507,9 +509,9 @@ public class LetMeInvert implements Operation {
 	 */
 	private double[] computeAIC(double[] variance, double alpha) {
 		double[] aic = new double[variance.length];
+		int independentN = (int) (eq.getDlength() / alpha);
 		for (int i = 0; i < aic.length; i++)
-			aic[i] = Utilities.computeAIC(variance[i], eq.getDlength() / alpha, i);
-		// System.out.println(variance + " " + aic);
+			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
 		return aic;
 	}
 

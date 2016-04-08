@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.3
+ * @version 0.1.0.4
  * 
  */
 public final class Utilities {
@@ -87,7 +87,7 @@ public final class Utilities {
 	}
 
 	/**
-	 * 独立データn自由度kに対してAICを計算する
+	 * 独立データn, 自由度kに対してAICを計算する
 	 * 
 	 * @param variance
 	 *            variance
@@ -97,7 +97,7 @@ public final class Utilities {
 	 *            自由度
 	 * @return aic
 	 */
-	public static double computeAIC(double variance, double n, double k) {
+	public static double computeAIC(double variance, int n, int k) {
 		final double log2pi = Math.log(2 * Math.PI);
 		return n * (log2pi + Math.log(variance) + 1) + 2 * k + 2;
 	}
