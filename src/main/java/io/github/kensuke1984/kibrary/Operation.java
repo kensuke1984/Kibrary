@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * Main procedures in Kibrary
  * 
- * @version 0.0.2.1
+ * @version 0.0.3
  * @author Kensuke Konishi
  *
  */
@@ -39,7 +39,7 @@ public interface Operation {
 	 * This method creates a file for the properties as the path.
 	 * 
 	 * @param path
-	 *            a path for the file (should be *.properties) 
+	 *            a path for the file (should be *.properties)
 	 * @throws IOException
 	 *             if any
 	 */
@@ -95,11 +95,18 @@ public interface Operation {
 			return;
 		}
 
-		if (!EnumUtils.isValidEnum(Manhattan.class, args[0]))
-			throw new IllegalArgumentException(args[0] + " is not a name of Manhattan");
-
-		String[] pass = args.length == 1 ? new String[0] : new String[] { args[1] };
-		Manhattan.valueOf(args[0]).invokeMain(pass);
+		if (EnumUtils.isValidEnum(Manhattan.class, args[0]))
+			Manhattan.valueOf(args[0]).invokeMain(args.length == 1 ? new String[0] : new String[] { args[1] });
+		else {
+			Properties prop = new Properties();
+			prop.load(Files.newBufferedReader(Paths.get(args[0])));
+			if (!prop.containsKey("manhattan"))
+				throw new RuntimeException("'manhatan' is not set in " + args[0]);
+			String manhattan = prop.getProperty("manhattan");
+			if (!EnumUtils.isValidEnum(Manhattan.class, manhattan))
+				throw new RuntimeException(manhattan + " is not a valid name of Manhattan.");
+			Manhattan.valueOf(manhattan).invokeMain(new String[] { args[0] });
+		}
 
 	}
 
