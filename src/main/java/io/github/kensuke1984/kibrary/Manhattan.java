@@ -27,46 +27,45 @@ import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
  * The list of names of manhattan (operation)
  * 
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @version 0.0.5
  */
 public enum Manhattan {
-	SpcSAC(1, SpcSAC.class), FilterDivider(2, FilterDivider.class), SyntheticDSMInformationFileMaker(3,
-			SyntheticDSMInformationFileMaker.class), SshDSMInformationFileMaker(4,
-					SshDSMInformationFileMaker.class), ObservedSyntheticDatasetMaker(5,
-							ObservedSyntheticDatasetMaker.class), CheckerBoardTest(6,
-									CheckerBoardTest.class), DataRequestor(7, DataRequestor.class), DataSelection(8,
-											DataSelection.class), FirstHandler(9, FirstHandler.class), SecondHandler(10,
-													SecondHandler.class), RaypathDistribution(11,
-															RaypathDistribution.class), FujiStaticCorrection(12,
-																	FujiStaticCorrection.class), InformationFileMaker(
-																			13,
-																			InformationFileMaker.class), LetMeInvert(14,
-																					LetMeInvert.class), TakeuchiStaticCorrection(
-																							15,
-																							TakeuchiStaticCorrection.class), Partial1DDatasetMaker(
-																									16,
-																									Partial1DDatasetMaker.class), PartialDatasetMaker(
-																											17,
-																											PartialDatasetMaker.class), TimewindowMaker(
-																													18,
-																													TimewindowMaker.class),;
+	CheckerBoardTest(1, CheckerBoardTest.class), //
+	DataRequestor(2, DataRequestor.class), //
+	DataSelection(3, DataSelection.class), //
+	FilterDivider(4, FilterDivider.class), //
+	FirstHandler(5, FirstHandler.class), //
+	FujiStaticCorrection(6, FujiStaticCorrection.class), //
+	InformationFileMaker(7, InformationFileMaker.class), //
+	LetMeInvert(8, LetMeInvert.class), //
+	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
+	Partial1DDatasetMaker(10, Partial1DDatasetMaker.class), //
+	PartialDatasetMaker(11, PartialDatasetMaker.class), //
+	RaypathDistribution(12, RaypathDistribution.class), //
+	SecondHandler(13, SecondHandler.class), //
+	SpcSAC(14, SpcSAC.class), //
+	SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
+	SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
+	TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //
+	TimewindowMaker(18, TimewindowMaker.class),//
+	;
 
-	private int value;
-
-	private Class<? extends Operation> c;
-
-	private Manhattan(int n, Class<? extends Operation> c) {
-		value = n;
-		this.c = c;
+	public static void printList() {
+		Arrays.stream(values()).sorted((m1, m2) -> Integer.compare(m1.value, m2.value))
+				.forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
 	}
 
 	static Manhattan valueOf(int n) {
 		return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
 	}
 
-	public static void printList() {
-		Arrays.stream(values()).sorted((m1, m2) -> Integer.compare(m1.value, m2.value))
-				.forEach(m -> System.out.println(m.value + " " + m.c));
+	private Class<? extends Operation> c;
+
+	private int value;
+
+	private Manhattan(int n, Class<? extends Operation> c) {
+		value = n;
+		this.c = c;
 	}
 
 	/**
