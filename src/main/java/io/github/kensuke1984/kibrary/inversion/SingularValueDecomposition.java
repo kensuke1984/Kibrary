@@ -16,14 +16,14 @@ import org.apache.commons.math3.linear.RealVector;
  * SVD inversion
  * 
  * 
- * @version 0.0.7.1
+ * @version 0.0.7.2
  * 
  * 
  * @author Kensuke Konishi
  * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>
  * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
  */
-class SingularValueDecomposition extends InverseProblem {
+public class SingularValueDecomposition extends InverseProblem {
 
 	/**
 	 * Output Vt
@@ -67,12 +67,11 @@ class SingularValueDecomposition extends InverseProblem {
 
 	@Override
 	public void compute() {
-		System.out.print("singular value decomposing AtA");
+		System.err.print("singular value decomposing AtA");
 		svdi = new org.apache.commons.math3.linear.SingularValueDecomposition(ata);
-		System.out.println("  done");
+		System.err.println("  done");
 		RealMatrix vt = svdi.getVT();
 
-		// ////
 		// BtB = VtAtAV VtStSV
 		RealMatrix btb = vt.multiply(ata).multiply(vt.transpose());
 		// sometime btb is too small to be LUdecomposed
@@ -121,7 +120,7 @@ class SingularValueDecomposition extends InverseProblem {
 
 	@Override
 	InverseMethodEnum getEnum() {
-		return InverseMethodEnum.SVD;
+		return InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
 	}
 
 }
