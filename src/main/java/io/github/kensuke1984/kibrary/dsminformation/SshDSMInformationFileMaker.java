@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Information file for SSHSH
  * 
- * @version 0.1.0.1
+ * @version 0.1.1
  * 
  * @author Kensuke Konishi
  *
@@ -49,7 +49,6 @@ public class SshDSMInformationFileMaker implements Operation {
 			property.setProperty("header", "PREM");
 		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").equals(""))
 			throw new RuntimeException("perturbationR must be defined.");
-
 	}
 
 	/**
@@ -120,6 +119,8 @@ public class SshDSMInformationFileMaker implements Operation {
 		Path outPath = Paths
 				.get(SshDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("##These properties for SshDSMInformationFileMaker");
+			pw.println("manhattan SshDSMInformationFileMaker");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
 			pw.println("##Path of a work folder (.)");
@@ -135,7 +136,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			pw.println("##Depths for computations, must be defined");
 			pw.println("#perturbationR 3500 3600");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	@Override
