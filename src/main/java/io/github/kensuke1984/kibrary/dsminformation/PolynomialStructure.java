@@ -22,7 +22,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.1.5
+ * @version 0.2.1.6
  * 
  * @author Kensuke Konishi
  * 
@@ -564,9 +564,9 @@ public class PolynomialStructure {
 	}
 
 	public String[] toSHlines() {
-		String[] outString = new String[3 * (nzone - coreZone) + 4];
 		int zone = nzone - coreZone;
-		outString[0] = String.valueOf(zone) + " nzone";
+		String[] outString = new String[3 * zone + 4];
+		outString[0] = zone + " nzone";
 		outString[1] = "c  --- Radius(km) ---  --- Density (g/cm^3) ---";
 		outString[2] = "c                      ---   Vsv     (km/s) ---";
 		outString[3] = "c                      ---   Vsh     (km/s) ---      - Qmu -";
@@ -587,7 +587,8 @@ public class PolynomialStructure {
 	 * @return string in a form of this
 	 */
 	private static String toLine(PolynomialFunction pf) {
-		return Arrays.stream(pf.getCoefficients()).mapToObj(Double::toString).collect(Collectors.joining(" "));
+		return Arrays.stream(Arrays.copyOf(pf.getCoefficients(), 4)).mapToObj(Double::toString)
+				.collect(Collectors.joining(" "));
 	}
 
 	public String[] toPSVlines() {
