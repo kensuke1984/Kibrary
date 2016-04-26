@@ -39,14 +39,13 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * 
  * @see {@link BasicID}
  * 
- * @since 2013/12/1 or earlier
- * 
- * @version 0.3
+ * @version 0.3.0.1
  * 
  * @author kensuke
  * 
  */
 public final class BasicIDFile {
+	
 	/**
 	 * File size for an ID
 	 */
@@ -60,7 +59,7 @@ public final class BasicIDFile {
 		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.globalCMTID.toString()).distinct().sorted()
 				.collect(Collectors.toList());
 		Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
-		System.out.println(outPath + " is created as a list of global CMT IDs.");
+		System.err.println(outPath + " is created as a list of global CMT IDs.");
 	}
 
 	private static void outputStations(String header, BasicID[] ids) throws IOException {
@@ -125,8 +124,8 @@ public final class BasicIDFile {
 				bis.read(bytes[i]);
 			IntStream.range(0, ids.length).parallel().forEach(i -> {
 				BasicID id = ids[i];
-				double[] data = new double[id.npts];
 				ByteBuffer bb = ByteBuffer.wrap(bytes[i]);
+				double[] data = new double[id.npts];
 				for (int j = 0; j < data.length; j++)
 					data[j] = bb.getDouble();
 				ids[i] = id.setData(data);
