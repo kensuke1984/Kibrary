@@ -10,7 +10,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * Model SH18CEX by Nozomu Takeuchi
  * 
- * @version 0.0.1.1
+ * @version 0.0.1.2
  * 
  * @author Kensuke Konishi
  * 
@@ -25,17 +25,11 @@ public final class SH18CEX {
 			throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
 		Location loc;
 		try {
-			double r = 0;
-			double lat = 0;
-			double lon = 0;
-			r = Double.parseDouble(args[0]);
-			lat = Double.parseDouble(args[1]);
-			lon = Double.parseDouble(args[2]);
-			loc = new Location(lat, lon, r);
+			loc = new Location(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[0]));
 		} catch (Exception e) {
 			throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
 		}
-		double premVs = ps.getVsh(loc.getR());
+		double premVs = ps.getVshAt(loc.getR());
 		double perc = getV(loc);
 		double take = premVs * (1 + perc / 100);
 		System.out.println(loc + " " + take + " " + perc);
@@ -55,7 +49,6 @@ public final class SH18CEX {
 
 		double coef = Math.sqrt((2 * l + 1) / 4.0 / Math.PI / fact);
 		double xlm = coef * plgndr(l, m, x);
-		// System.out.println(coef);
 		return xlm;
 	}
 
@@ -85,7 +78,6 @@ public final class SH18CEX {
 		}
 		return pmmp1;
 
-		// return 0;
 	}
 
 	public static final double getV(Location location) {
@@ -118,13 +110,10 @@ public final class SH18CEX {
 				// System.out.println(xlm);
 			}
 
-		// for(int i=0;i<hh.length;i++)
-		// System.out.println(hh[i]);
-
 		double r = location.getR();
-		double rho = ps.getRho(r);
-		double vs = ps.getVsh(r);
-		double mu = ps.getMu(r);
+		double rho = ps.getRhoAt(r);
+		double vs = ps.getVshAt(r);
+		double mu = ps.computeMu(r);
 		double pert = 0;
 		for (int izpar = 0; izpar < 12; izpar++)
 			if ((modelNode[izpar] <= r && r < modelNode[izpar + 1])
