@@ -3,13 +3,15 @@
  */
 package io.github.kensuke1984.anisotime;
 
+import java.io.Serializable;
+
 /**
  * Structure information for computing traveltime.
  * 
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.1
  */
-public interface VelocityStructure {
+public interface VelocityStructure extends Serializable {
 
 	/**
 	 * @return Transversely isotropic (TI) PREM by Dziewonski & Anderson 1981
@@ -97,15 +99,6 @@ public interface VelocityStructure {
 	 * @return N(r) [GPa] N at r
 	 */
 	double getN(double r);
-
-	// /**
-	// * regions must be in order
-	// *
-	// * r[][] = {{start, end}, {start,end}}
-	// *
-	// * @return radius region of zero shear
-	// */
-	// double[][] zeroShearBoundary();
 
 	/**
 	 * @return radius[km] of CMB
