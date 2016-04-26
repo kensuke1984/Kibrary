@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -22,13 +23,17 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.1.6
+ * @version 0.2.2
  * 
  * @author Kensuke Konishi
  * 
  */
-public class PolynomialStructure {
+public class PolynomialStructure implements Serializable {
 
+	/**
+	 * Serialization identifier 2016/4/25
+	 */
+	private static final long serialVersionUID = 5111509508797962781L;
 	/**
 	 * the number of layers
 	 */
@@ -95,25 +100,22 @@ public class PolynomialStructure {
 	}
 
 	/**
-	 * (2L+N)/(3*rho)
+	 * (2L+N)/(3&rho;)
 	 * 
 	 * @param r
-	 *            radius
+	 *            [km] radius
 	 * @return effective isotropic shear wave velocity
 	 */
-	public double getVs(double r) {
-		double l = computeL(r);
-		double n = computeN(r);
-		double rho = getRho(r);
-		return Math.sqrt((2 * l + n) / 3 / rho);
+	public double computeVs(double r) {
+		return Math.sqrt((2 * computeL(r) + computeN(r)) / 3 / getRhoAt(r));
 	}
 
 	/**
 	 * @param r
-	 *            radius
+	 *            [km] radius
 	 * @return &xi; (N/L)
 	 */
-	public double getXi(double r) {
+	public double computeXi(double r) {
 		return computeN(r) / computeL(r);
 	}
 
@@ -144,7 +146,7 @@ public class PolynomialStructure {
 		ps.rmin = DoubleStream.concat(Arrays.stream(rmin), Arrays.stream(addBoundaries)).sorted().toArray();
 		ps.rmax = DoubleStream.concat(Arrays.stream(rmax), Arrays.stream(addBoundaries)).sorted().toArray();
 		for (double r : addBoundaries) {
-			int izone = rtoZone(r);
+			int izone = zoneOf(r);
 			if (izone < coreZone)
 				ps.coreZone++;
 		}
@@ -152,7 +154,7 @@ public class PolynomialStructure {
 		for (int iZone = 0; iZone < ps.nzone; iZone++) {
 			double rmin = ps.rmin[iZone];
 			// izone in this for rmin
-			int oldIZone = rtoZone(rmin);
+			int oldIZone = zoneOf(rmin);
 			// // 値のコピー
 			// // deeper than r
 			ps.qMu[iZone] = qMu[oldIZone];
@@ -168,25 +170,27 @@ public class PolynomialStructure {
 	}
 
 	/**
-	 * 
-	 * A will be obtained for a radius under TI medium.
+	 * A = &rho;V<sub>PH</sub><sup>2</sup>
 	 * 
 	 * @param r
+	 *            [km] radius
 	 * @return the parameter A under TI approx.
 	 */
 	private double computeA(double r) {
-		double vph = getVph(r);
-		return getRho(r) * vph * vph;
+		double vph = getVphAt(r);
+		return getRhoAt(r) * vph * vph;
 	}
 
 	/**
+	 * C = &rho;V<sub>PV</sub><sup>2</sup>
 	 * 
 	 * @param r
-	 * @return the parameter C under TI approx.
+	 *            [km] radius
+	 * @return the parameter C under TI approximation.
 	 */
 	private double computeC(double r) {
-		double vpv = getVpv(r);
-		return getRho(r) * vpv * vpv;
+		double vpv = getVpvAt(r);
+		return getRhoAt(r) * vpv * vpv;
 	}
 
 	public double getTransverselyIsotropicValue(TransverselyIsotropicParameter ti, double r) {
@@ -210,7 +214,7 @@ public class PolynomialStructure {
 	}
 
 	private double computeEta(double r) {
-		return eta[rtoZone(r)].value(toX(r));
+		return eta[zoneOf(r)].value(toX(r));
 	}
 
 	private double computeF(double r) {
@@ -218,8 +222,8 @@ public class PolynomialStructure {
 	}
 
 	private double computeL(double r) {
-		double vsv = getVsv(r);
-		return getRho(r) * vsv * vsv;
+		double vsv = getVsvAt(r);
+		return getRhoAt(r) * vsv * vsv;
 	}
 
 	/**
@@ -227,52 +231,56 @@ public class PolynomialStructure {
 	 *            [km] radius
 	 * @return &mu; computed by Vs * Vs * &rho;
 	 */
-	public double getMu(double r) {
-		double v = getVs(r);
-		return v * v * getRho(r);
+	public double computeMu(double r) {
+		double v = computeVs(r);
+		return v * v * getRhoAt(r);
 	}
 
-	public double getLambda(double r) {
-		return getRho(r) * getVph(r) * getVph(r) - 2 * getMu(r);
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return &lambda; computed by Vs * Vs * &rho;
+	 */
+	public double computeLambda(double r) {
+		double v = getVphAt(r);
+		return getRhoAt(r) * v * v - 2 * computeMu(r);
 	}
 
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return N computed by Vs * Vs * &rho;
+	 */
 	private double computeN(double r) {
-		double v = getVsh(r);
-		return getRho(r) * v * v;
+		double v = getVshAt(r);
+		return getRhoAt(r) * v * v;
 	}
 
+	/**
+	 * @return number of zones
+	 */
 	public int getNzone() {
 		return nzone;
 	}
 
-	public double getQkappa(double r) {
-		return qKappa[rtoZone(r)];
-	}
-
-	public double[] getQmu() {
-		return qMu.clone();
-	}
-
-	public double getQmu(double r) {
-		return qMu[rtoZone(r)];
+	/**
+	 * @param i
+	 *            index of a zone
+	 * @return Q<sub>&mu;</sub> of the zone
+	 */
+	public double getQMuOf(int i) {
+		return qMu[i];
 	}
 
 	/**
+	 * x = r / earth radius
+	 * 
 	 * @param r
 	 *            [km] radius
 	 * @return a value x to the input r for polynomial functions
 	 */
 	private double toX(double r) {
 		return r / rmax[nzone - 1];
-	}
-
-	/**
-	 * @param r
-	 *            [km] radius
-	 * @return &rho; at the radius r
-	 */
-	public double getRho(double r) {
-		return rho[rtoZone(r)].value(toX(r));
 	}
 
 	public PolynomialStructure setVsv(int izone, PolynomialFunction polynomialFunction) {
@@ -310,37 +318,94 @@ public class PolynomialStructure {
 		return structure;
 	}
 
-	public double[] getRmax() {
-		return rmax.clone();
+	/**
+	 * @param izone
+	 *            index of the zone
+	 * @return minimum radius of the zone
+	 */
+	public double getRMinOf(int izone) {
+		return rmin[izone];
 	}
 
-	public double[] getRmin() {
-		return rmin.clone();
-	}
-
-	public double getVph(double r) {
-		return vph[rtoZone(r)].value(toX(r));
-	}
-
-	public double getVpv(double r) {
-		return vpv[rtoZone(r)].value(toX(r));
-	}
-
-	public double getVsh(double r) {
-		return vsh[rtoZone(r)].value(toX(r));
-	}
-
-	public double getVsv(double r) {
-		return vsv[rtoZone(r)].value(toX(r));
+	/**
+	 * @param izone
+	 *            index of a zone
+	 * @return maximum radius of the zone
+	 */
+	public double getRMaxOf(int izone) {
+		return rmax[izone];
 	}
 
 	/**
 	 * @param r
-	 *            radius [0, rmax]
+	 *            [km] radius
+	 * @return &rho; at the radius r
+	 */
+	public double getRhoAt(double r) {
+		return rho[zoneOf(r)].value(toX(r));
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return V<sub>PV</sub> at the radius r
+	 */
+	public double getVpvAt(double r) {
+		return vpv[zoneOf(r)].value(toX(r));
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return V<sub>PH</sub> at the radius r
+	 */
+	public double getVphAt(double r) {
+		return vph[zoneOf(r)].value(toX(r));
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return V<sub>SV</sub> at the radius r
+	 */
+	public double getVsvAt(double r) {
+		return vsv[zoneOf(r)].value(toX(r));
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return V<sub>SH</sub> at the radius r
+	 */
+	public double getVshAt(double r) {
+		return vsh[zoneOf(r)].value(toX(r));
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return Q<sub>&mu;</sub> at the radius r
+	 */
+	public double getQmuAt(double r) {
+		return qMu[zoneOf(r)];
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius
+	 * @return Q<sub>&kappa;</sub> at the radius r
+	 */
+	public double getQkappaAt(double r) {
+		return qKappa[zoneOf(r)];
+	}
+
+	/**
+	 * @param r
+	 *            [km] radius [0, rmax]
 	 * @return the number of the zone which includes r. Note that the zone will
 	 *         be rmin &le; r &lt; rmax except r = earth radius
 	 */
-	public int rtoZone(double r) {
+	public int zoneOf(double r) {
 		if (r == rmax[nzone - 1])
 			return nzone - 1;
 		return IntStream.range(0, nzone).filter(i -> rmin[i] <= r && r < rmax[i]).findAny()
@@ -637,15 +702,39 @@ public class PolynomialStructure {
 		Files.write(outPath, Arrays.asList(toSHlines()), options);
 	}
 
-	public PolynomialFunction[] getVph() {
-		return vph.clone();
+	/**
+	 * @param izone
+	 *            index of a zone
+	 * @return polynomial function for V<sub>PV</sub> of the zone
+	 */
+	public PolynomialFunction getVpvOf(int izone) {
+		return vpv[izone];
 	}
 
-	public PolynomialFunction[] getVsv() {
-		return vsv.clone();
+	/**
+	 * @param izone
+	 *            index of a zone
+	 * @return polynomial function for V<sub>PH</sub> of the zone
+	 */
+	public PolynomialFunction getVphOf(int izone) {
+		return vph[izone];
 	}
 
-	public PolynomialFunction[] getVsh() {
-		return vsh.clone();
+	/**
+	 * @param izone
+	 *            index of a zone
+	 * @return polynomial function for V<sub>SV</sub> of the zone
+	 */
+	public PolynomialFunction getVsvOf(int izone) {
+		return vsv[izone];
+	}
+
+	/**
+	 * @param izone
+	 *            index of a zone
+	 * @return polynomial function for V<sub>SH</sub> of the zone
+	 */
+	public PolynomialFunction getVshOf(int izone) {
+		return vsh[izone];
 	}
 }
