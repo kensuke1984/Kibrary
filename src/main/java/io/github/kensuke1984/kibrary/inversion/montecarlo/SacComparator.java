@@ -22,8 +22,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
- * SacCompare
- * <b>Assume that there are no stations with the same name but different networks</b>
+ * SacCompare <b>Assume that there are no stations with the same name but
+ * different networks</b>
+ * 
  * @author Kensuke Konishi
  * 
  * @version 0.0.5
@@ -33,7 +34,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 class SacComparator {
 	private static TraveltimeList sList;
 	private static TraveltimeList scsList;
-	private static Set<TimewindowInformation >twInfo;
+	private static Set<TimewindowInformation> twInfo;
 
 	static void set(Path dir) throws IOException {
 		Path sPath = dir.resolve("s.lst");
@@ -43,7 +44,7 @@ class SacComparator {
 			throw new RuntimeException("No files for SacComparator");
 		sList = new TraveltimeList(sPath);
 		scsList = new TraveltimeList(scsPath);
-		twInfo =   TimewindowInformationFile.read(twPath);
+		twInfo = TimewindowInformationFile.read(twPath);
 	}
 
 	private static final double sRange = 20;
@@ -128,12 +129,13 @@ class SacComparator {
 	}
 
 	/**
-	 * TODO 要チェック
-	 * 
 	 * @param sac
+	 *            to be cut
 	 * @param startTime
+	 *            start time
 	 * @param npts
-	 * @return
+	 *            number of points to cut
+	 * @return cut part of SAC file
 	 */
 	private static double[] cutDataSac(SACData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
@@ -145,14 +147,14 @@ class SacComparator {
 	private void findSpeaks() {
 		int npts = (int) (samplingHz * 2 * sRange);
 		double[] syn = cutDataSac(synSac, taupS - 5, npts);
-		RealVector synVector = new ArrayRealVector(syn);
+		RealVector synVector = new ArrayRealVector(syn, false);
 		int minSynIndex = synVector.getMinIndex();
 		int maxSynIndex = synVector.getMaxIndex();
 		upSynSTime = taupS - 5 + maxSynIndex / samplingHz;
 		downSynSTime = taupS - 5 + minSynIndex / samplingHz;
 		// System.out.println(upSynSTime + " " + downSynSTime);
 		double[] obs = cutDataSac(obsSac, taupS - 5, npts);
-		RealVector obsVector = new ArrayRealVector(obs);
+		RealVector obsVector = new ArrayRealVector(obs, false);
 		int minobsIndex = obsVector.getMinIndex();
 		int maxobsIndex = obsVector.getMaxIndex();
 		upObsSTime = taupS - 5 + maxobsIndex / samplingHz;
@@ -168,14 +170,14 @@ class SacComparator {
 	private void findScSpeaks() {
 		int npts = (int) (samplingHz * 2 * scsRange);
 		double[] syn = cutDataSac(synSac, taupScS - 5, npts);
-		RealVector synVector = new ArrayRealVector(syn);
+		RealVector synVector = new ArrayRealVector(syn,false);
 		int minSynIndex = synVector.getMinIndex();
 		int maxSynIndex = synVector.getMaxIndex();
 		upSynScSTime = taupScS - 5 + maxSynIndex / samplingHz;
 		downSynScSTime = taupScS - 5 + minSynIndex / samplingHz;
 		// System.out.println(upSynScSTime + " " + downSynScSTime);
 		double[] obs = cutDataSac(obsSac, taupScS - 5, npts);
-		RealVector obsVector = new ArrayRealVector(obs);
+		RealVector obsVector = new ArrayRealVector(obs,false);
 		int minobsIndex = obsVector.getMinIndex();
 		int maxobsIndex = obsVector.getMaxIndex();
 		upObsScSTime = taupScS - 5 + maxobsIndex / samplingHz;
@@ -196,9 +198,10 @@ class SacComparator {
 		String station = Station.of(obsSac).getStationName();
 
 		GlobalCMTID id = new GlobalCMTID(obsSac.getSACString(SACHeaderEnum.KEVNM));
-		TimewindowInformation window = twInfo .stream()
-				.filter(info -> info.getStation().getStationName().equals(station)).filter(info -> info.getGlobalCMTID().equals(id))
-				.filter(info -> info.getComponent() == SACComponent.T).findAny().get();
+		TimewindowInformation window = twInfo.stream()
+				.filter(info -> info.getStation().getStationName().equals(station))
+				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == SACComponent.T)
+				.findAny().get();
 		tstart = window.getStartTime();
 		tend = window.getEndTime();
 		taupS = sList.getTime(station, id);
@@ -213,9 +216,9 @@ class SacComparator {
 		double[] obsData = obsSac.createTrace().cutWindow(tstart, tend).getY();
 		double[] obsDataShifted = obsSac.createTrace().cutWindow(tstart + shift, tend + shift + 1).getY();
 		double[] synData = synSac.createTrace().cutWindow(tstart, tend).getY();
-		RealVector obsV = new ArrayRealVector(obsData);
+		RealVector obsV = new ArrayRealVector(obsData,false);
 		RealVector obsVShifted = new ArrayRealVector(obsDataShifted, 0, obsData.length);
-		RealVector synV = new ArrayRealVector(synData);
+		RealVector synV = new ArrayRealVector(synData,false);
 		variance = obsV.subtract(synV).getNorm() / obsV.getNorm();
 		correlation = obsV.dotProduct(synV) / obsV.getNorm() / synV.getNorm();
 		variancewTS = obsV.subtract(synV).getNorm() / obsVShifted.getNorm();

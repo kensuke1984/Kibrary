@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.6
+ * @version 0.2.0.7
  * 
  * @author Kensuke Konishi
  * 
@@ -101,7 +101,7 @@ public class CheckerBoardTest implements Operation {
 			property.setProperty("modelName", "");
 		if (!property.containsKey("noize"))
 			property.setProperty("noize", "false");
-		if(property.getProperty("noize").equals("true")&&property.containsKey("noizePower"))
+		if (property.getProperty("noize").equals("true") && property.containsKey("noizePower"))
 			throw new RuntimeException("There is no information about 'noizePower'");
 	}
 
@@ -117,8 +117,8 @@ public class CheckerBoardTest implements Operation {
 		unknownParameterListPath = getPath("unknownParameterListPath");
 		inputDataPath = getPath("inputDataPath");
 		noise = Boolean.parseBoolean(property.getProperty("noise"));
-		if(noise)
-		noisePower = Double.parseDouble(property.getProperty("noisePower"));
+		if (noise)
+			noisePower = Double.parseDouble(property.getProperty("noisePower"));
 		iterate = Boolean.parseBoolean(property.getProperty("iterate"));
 	}
 
@@ -208,7 +208,6 @@ public class CheckerBoardTest implements Operation {
 		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
-			// RealVector[] addVec = dVector.addSyn(pseudoD);
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 				bdw.addBasicID(obsIDs[i].setData(bornPart[i].mapDivide(dVector.getWeighting()[i]).toArray()));
 				bdw.addBasicID(
@@ -229,7 +228,7 @@ public class CheckerBoardTest implements Operation {
 	 */
 	public void output4Iterate(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
 		if (bornVec == null) {
-			System.out.println("bornVec is not set");
+			System.err.println("bornVec is not set");
 			return;
 		}
 		Dvector dVector = eq.getDVector();
@@ -238,25 +237,23 @@ public class CheckerBoardTest implements Operation {
 		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
-			// RealVector[] addVec = dVector.addSyn(pseudoD);
+			double[] weighting = dVector.getWeighting();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
-				bdw.addBasicID(
-						obsIDs[i].setData(dVector.getObsVec()[i].mapDivide(dVector.getWeighting()[i]).toArray()));
-				bdw.addBasicID(synIDs[i].setData(bornPart[i].mapDivide(dVector.getWeighting()[i]).toArray()));
+				bdw.addBasicID(obsIDs[i].setData(dVector.getObsVec()[i].mapDivide(weighting[i]).toArray()));
+				bdw.addBasicID(synIDs[i].setData(bornPart[i].mapDivide(weighting[i]).toArray()));
 			}
 		}
 	}
 
 	/**
-	 * pseudoM を読み込む
+	 * Reads pseudoM
 	 */
 	private RealVector readPseudoM() throws IOException {
 		List<String> lines = Files.readAllLines(inputDataPath);
 		if (lines.size() != eq.getMlength())
 			throw new RuntimeException("input model length is wrong");
-		double[] pseudoM = new double[eq.getMlength()];
-		Arrays.setAll(pseudoM, i -> Double.parseDouble(lines.get(i)));
-		return new ArrayRealVector(pseudoM);
+		double[] pseudoM = lines.stream().mapToDouble(Double::parseDouble).toArray();
+		return new ArrayRealVector(pseudoM, false);
 	}
 
 	/**
