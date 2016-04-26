@@ -11,9 +11,9 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
 /**
- * @author kensuke
+ * @author Kensuke Konishi
  *
- * @version 0.0.3
+ * @version 0.0.3.2
  * 
  * 
  */
@@ -31,11 +31,11 @@ public abstract class InverseProblem {
 
 	/**
 	 * @param i
-	 *            index
+	 *            index (1, 2, ...)
 	 * @return i th answer
 	 */
 	public RealVector getAns(int i) {
-		return ans.getColumnVector(i);
+		return ans.getColumnVector(i-1);
 	}
 
 	/**
@@ -49,7 +49,7 @@ public abstract class InverseProblem {
 	 * @param sigmaD
 	 *            &sigma;<sub>d</sub>
 	 * @param j
-	 *            index
+	 *            index (1, 2, ...)
 	 * @return j番目の解の共分散行列 &sigma;<sub>d</sub> <sup>2</sup> V (&Lambda;
 	 *         <sup>T</sup>&Lambda;) <sup>-1</sup> V<sup>T</sup>
 	 */
@@ -70,10 +70,9 @@ public abstract class InverseProblem {
 	 */
 	public void outputAns(Path outPath) throws IOException {
 		Files.createDirectories(outPath);
-		System.out.println("outputting the answer files in " + outPath);
+		System.err.println("outputting the answer files in " + outPath);
 		for (int i = 0; i < getParN(); i++) {
-			String ii = String.valueOf(i + 1);
-			Path out = outPath.resolve(getEnum() + ii + ".txt");
+			Path out = outPath.resolve(getEnum().simple() + (i+1) + ".txt");
 			double[] m = ans.getColumn(i);
 			writeDat(out, m);
 		}
