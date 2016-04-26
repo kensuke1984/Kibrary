@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.2
  * 
  * @author Kensuke Konishi
  */
@@ -204,7 +204,7 @@ public class Dvector {
 			this.weightingFunction = weightingFunction;
 		else
 			this.weightingFunction = (obs, syn) -> {
-				RealVector obsVec = new ArrayRealVector(obs.getData());
+				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				return 1 / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 		sort();
@@ -428,8 +428,7 @@ public class Dvector {
 			start += npts;
 
 			// 観測波形の読み込み
-			double[] obs = obsIDs[i].getData();
-			obsVec[i] = new ArrayRealVector(obs);
+			obsVec[i] = new ArrayRealVector(obsIDs[i].getData(), false);
 
 			// 観測波形の最大値の逆数で重み付け TODO 重み付けの方法を決める
 			weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
@@ -437,10 +436,9 @@ public class Dvector {
 			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
 
 			// 理論波形の読み込み
-			double[] syn = synIDs[i].getData();
-			synVec[i] = new ArrayRealVector(npts);
-			for (int j = 0; j < npts; j++)
-				synVec[i].setEntry(j, syn[j] * weighting[i]);
+			synVec[i] = new ArrayRealVector(synIDs[i].getData(), false);
+			synVec[i].mapMultiplyToSelf(weighting[i]);
+
 			double denominator = obsVec[i].dotProduct(obsVec[i]);
 			dVec[i] = obsVec[i].subtract(synVec[i]);
 			double numerator = dVec[i].dotProduct(dVec[i]);
