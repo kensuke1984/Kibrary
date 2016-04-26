@@ -55,7 +55,7 @@ public class LeastSquaresMethod extends InverseProblem {
 	public void compute() {
 		double[] diagonals = new double[ata.getColumnDimension()];
 		Arrays.fill(diagonals, lambda);
-		RealMatrix j = ata.add(MatrixUtils.createRealDiagonalMatrix(diagonals)); //TODO
+		RealMatrix j = ata.add(MatrixUtils.createRealDiagonalMatrix(diagonals)); 
 		ans = new Array2DRowRealMatrix(ata.getRowDimension(), 1);
 		ans.setRowVector(0, MatrixUtils.inverse(j).operate(atd));
 	}
