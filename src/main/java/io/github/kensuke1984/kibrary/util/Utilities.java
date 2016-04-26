@@ -12,7 +12,7 @@ import java.io.InputStreamReader;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.4
+ * @version 0.1.0.5
  * 
  */
 public final class Utilities {
@@ -232,10 +232,8 @@ public final class Utilities {
 	 * 
 	 * @return yyyyMMddHHmmss
 	 */
-	public static String getTemporaryString() {
-		ZonedDateTime time = ZonedDateTime.now();
-		DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-		return format.format(time);
+	public synchronized static String getTemporaryString() {
+		return DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
 	}
 
 	/**
@@ -270,7 +268,6 @@ public final class Utilities {
 		int decimalPlaces = (int) Math.round((fixedValue - integerPart) * factor);
 		if (n == 0)
 			return String.valueOf(integerPart);
-
 		return integerPart + "." + StringUtils.leftPad(Integer.toString(decimalPlaces), n, "0");
 	}
 
@@ -320,12 +317,10 @@ public final class Utilities {
 	 */
 	public static String toStringWithD(int n, double d) {
 		int intValue = (int) d;
-
 		double decimal = d - intValue;
 		decimal *= Math.pow(10, n);
 		int decimalInt = (int) Math.round(decimal);
 		return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
-
 	}
 
 	/**
@@ -340,7 +335,6 @@ public final class Utilities {
 			int lat = Double.compare(o1.getLatitude(), o2.getLatitude());
 			return lat == 0 ? Double.compare(o1.getR(), o2.getR()) : lat;
 		}
-
 	};
 
 }
