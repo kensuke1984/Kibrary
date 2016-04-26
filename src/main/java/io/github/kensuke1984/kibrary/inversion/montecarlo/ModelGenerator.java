@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 class ModelGenerator {
 
@@ -41,17 +41,9 @@ class ModelGenerator {
 	}
 
 	/*
-	 * +-4% <br>
-	 * 0:3480-3530 V<br>
-	 * 1:3530-3580 V<br>
-	 * .<br>
-	 * 7:3830-3880 V<br>
+	 * +-4% <br> 0:3480-3530 V<br> 1:3530-3580 V<br> .<br> 7:3830-3880 V<br>
 	 * 
-	 * +- 10%<br>
-	 * 8:3480-3530 Q<br>
-	 * 9:3530-3580 Q<br>
-	 * .<br>
-	 * 15:3830-3880 Q<br>
+	 * +- 10%<br> 8:3480-3530 Q<br> 9:3530-3580 Q<br> .<br> 15:3830-3880 Q<br>
 	 * 
 	 */
 	static PolynomialStructure nextStructure(PolynomialStructure former) {
@@ -93,14 +85,11 @@ class ModelGenerator {
 
 	private static double[] extractPercentage(PolynomialStructure structure) {
 		double[] percentage = new double[16];
-		PolynomialFunction[] vs = structure.getVsh();
-		double[] q = structure.getQmu();
 		for (int i = 0; i < 8; i++)
-			percentage[i] = vs[i + 2].value(0) / 7.15 * 100 - 100;
+			percentage[i] = structure.getVshOf(i + 2).value(0) / 7.15 * 100 - 100;
 
 		for (int i = 8; i < 16; i++)
-			percentage[i] = q[i - 6] / 312 * 100 - 100;
-
+			percentage[i] = structure.getQMuOf(i - 6) / 312 * 100 - 100;
 		return percentage;
 	}
 
