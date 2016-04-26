@@ -16,12 +16,15 @@ import org.apache.commons.math3.linear.RealVector;
  * SVD inversion
  * 
  * 
- * @version 0.0.7.2
+ * @version 0.0.7.4
  * 
  * 
  * @author Kensuke Konishi
- * @see <a href=https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese wiki</a>
- * <a href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English wiki</a>
+ * @see <a href=
+ *      https://ja.wikipedia.org/wiki/%E7%89%B9%E7%95%B0%E5%80%A4%E5%88%86%E8%A7%A3>Japanese
+ *      wiki</a> <a
+ *      href=https://en.wikipedia.org/wiki/Singular_value_decomposition>English
+ *      wiki</a>
  */
 public class SingularValueDecomposition extends InverseProblem {
 
@@ -55,7 +58,7 @@ public class SingularValueDecomposition extends InverseProblem {
 		RealMatrix covarianceMatrix = new Array2DRowRealMatrix(getParN(), getParN());
 		double[] lambda = svdi.getSingularValues();
 		double sigmaD2 = sigmaD * sigmaD;
-		for (int i = 0; i < j + 1; i++) {
+		for (int i = 0; i < j; i++) {
 			double sigmaD2lambda2 = sigmaD2 / lambda[i];
 			RealMatrix v = MatrixUtils.createColumnRealMatrix(svdi.getV().getColumn(i));
 			covarianceMatrix = covarianceMatrix.add(v.multiply(v.transpose()).scalarMultiply(sigmaD2lambda2));
@@ -75,7 +78,7 @@ public class SingularValueDecomposition extends InverseProblem {
 		// BtB = VtAtAV VtStSV
 		RealMatrix btb = vt.multiply(ata).multiply(vt.transpose());
 		// sometime btb is too small to be LUdecomposed
-		double factor = 1 / ata.getEntry(0, ata.getColumnDimension() - 1);
+		final double factor = 1 / ata.getEntry(0, ata.getColumnDimension() - 1);
 		btb = btb.scalarMultiply(factor);
 
 		// Btd = VtAtd
@@ -83,7 +86,7 @@ public class SingularValueDecomposition extends InverseProblem {
 
 		// m = Vp
 		RealVector p = new LUDecomposition(btb).getSolver().getInverse().operate(btd);
-		p = p.mapMultiply(factor);
+		p.mapMultiplyToSelf(factor);
 
 		int parN = getParN();
 
