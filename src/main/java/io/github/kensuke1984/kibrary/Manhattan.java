@@ -51,8 +51,7 @@ public enum Manhattan {
 	;
 
 	public static void printList() {
-		Arrays.stream(values()).sorted((m1, m2) -> Integer.compare(m1.value, m2.value))
-				.forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
+		Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
 	}
 
 	static Manhattan valueOf(int n) {
