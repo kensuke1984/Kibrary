@@ -32,11 +32,15 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Position of a waveform for the ID<br>
  * 
  * 
- * @version 0.3.0
+ * @version 0.3.1
  * @author Kensuke Konishi
  * 
  */
 public class BasicID {
+
+	public boolean containsData() {
+		return data != null;
+	}
 
 	/**
 	 * waveformData
