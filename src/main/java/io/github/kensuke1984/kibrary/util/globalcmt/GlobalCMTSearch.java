@@ -20,8 +20,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke Konishi
- * @version 0.1.10.1
- * TODO thread safe
+ * @version 0.1.10.1 TODO thread safe
  */
 public class GlobalCMTSearch {
 
@@ -55,22 +54,24 @@ public class GlobalCMTSearch {
 	public static void setOutputFormat(DateTimeFormatter outputFormat) {
 		GlobalCMTSearch.outputFormat = outputFormat;
 	}
-	
+
 	/**
-	 * Adds the predicate for another condition. 
-	 * @param predicate {@link Predicate} for {@link GlobalCMTData}
+	 * Adds the predicate for another condition.
+	 * 
+	 * @param predicate
+	 *            {@link Predicate} for {@link GlobalCMTData}
 	 */
-	public void addPredicate(Predicate<GlobalCMTData>predicate){
+	public void addPredicate(Predicate<GlobalCMTData> predicate) {
 		predicateSet.add(predicate);
 	}
 
 	/**
-	 * @return copy of predicate set 
+	 * @return copy of predicate set
 	 */
-	public Set<Predicate<GlobalCMTData>> getPredicateSet(){
+	public Set<Predicate<GlobalCMTData>> getPredicateSet() {
 		return new HashSet<>(predicateSet);
 	}
-	
+
 	/**
 	 * Added predicate set.
 	 */
@@ -297,7 +298,7 @@ public class GlobalCMTSearch {
 	 * @return Set of {@link GlobalCMTID} which fulfill queries
 	 */
 	public Set<GlobalCMTID> search() {
-		return GlobalCMTCatalog.allNDK().parallelStream().filter(ndk -> ndk.fulfill(this)).map(NDK::getID)
+		return GlobalCMTCatalog.allNDK().parallelStream().filter(ndk -> ndk.fulfill(this)).map(NDK::getGlobalCMTID)
 				.collect(Collectors.toSet());
 	}
 
@@ -495,5 +496,5 @@ public class GlobalCMTSearch {
 	public void setUpperTensionAxisPlunge(int upperTensionAxisPlunge) {
 		this.upperTensionAxisPlunge = upperTensionAxisPlunge;
 	}
-	
+
 }
