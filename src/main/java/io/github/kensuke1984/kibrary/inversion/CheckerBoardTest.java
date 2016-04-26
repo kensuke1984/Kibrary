@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.3
+ * @version 0.2.0.6
  * 
  * @author Kensuke Konishi
  * 
@@ -47,6 +47,7 @@ public class CheckerBoardTest implements Operation {
 		Path outPath = Paths.get(CheckerBoardTest.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("##Path of a working folder (.)");
+			pw.println("manhattan CheckerBoardTest");
 			pw.println("#workPath");
 			pw.println("##Path of a waveID file, must be defined");
 			pw.println("#waveIDPath id.dat");
@@ -203,7 +204,7 @@ public class CheckerBoardTest implements Operation {
 
 		Dvector dVector = eq.getDVector();
 		RealVector[] bornPart = dVector.separate(bornVec);
-		System.out.println("outputting " + outIDPath + " " + outDataPath);
+		System.err.println("outputting " + outIDPath + " " + outDataPath);
 		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
@@ -233,7 +234,7 @@ public class CheckerBoardTest implements Operation {
 		}
 		Dvector dVector = eq.getDVector();
 		RealVector[] bornPart = dVector.separate(bornVec);
-		System.out.println("outputting " + outIDPath + " " + outDataPath);
+		System.err.println("outputting " + outIDPath + " " + outDataPath);
 		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
@@ -286,7 +287,7 @@ public class CheckerBoardTest implements Operation {
 	}
 
 	public RealVector getSynVector() {
-		return eq.getDVector().combine(eq.getDVector().getSynVec());
+		return eq.getDVector().getSyn();
 	}
 
 	public RealVector computeRandomNoise() {
