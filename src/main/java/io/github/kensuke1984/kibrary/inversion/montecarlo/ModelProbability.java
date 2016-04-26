@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 class ModelProbability {
 
@@ -214,7 +214,7 @@ class ModelProbability {
 		double[] vs = new double[8];
 		for (int j = 0; j < 8; j++) {
 			double r = 3480 + (j) * 50 + 25;
-			vs[j] = structure.getVsh(r);
+			vs[j] = structure.getVshAt(r);
 		}
 		return vs;
 	}
@@ -223,7 +223,7 @@ class ModelProbability {
 		double[] q = new double[8];
 		for (int j = 0; j < 8; j++) {
 			double r = 3480 + (j) * 50 + 25;
-			q[j] = structure.getQmu(r);
+			q[j] = structure.getQmuAt(r);
 		}
 		return q;
 	}
