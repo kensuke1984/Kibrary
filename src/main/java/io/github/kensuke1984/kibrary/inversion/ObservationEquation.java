@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 /**
  * Am=d
  * 
- * @version 0.2.1
+ * @version 0.2.1.1
  * 
  * 
  * @author Kensuke Konishi
@@ -47,7 +47,7 @@ public class ObservationEquation {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
 		readA(partialIDs);
-		atd = computeAtD(dVector.combine(dVector.getdVec()));
+		atd = computeAtD(dVector.getD());
 	}
 
 	private List<UnknownParameter> parameterList;
@@ -71,7 +71,7 @@ public class ObservationEquation {
 	}
 
 	/**
-	 * Am=d 求めたいのは (d-Am)T(d-Am)/obs**2
+	 * Am=d 求めたいのは (d-Am)T(d-Am)/obs<sup>2</sup>
 	 * 
 	 * (dT-mTAT)(d-Am)=dTd-dTAm-mTATd+mTATAm =dTd-2*(ATd)mT+mT(ATA)m
 	 * 
@@ -92,7 +92,9 @@ public class ObservationEquation {
 
 	/**
 	 * Am=dのAを作る まずmとdの情報から Aに必要な偏微分波形を決める。
-	 * @param ids source for A
+	 * 
+	 * @param ids
+	 *            source for A
 	 */
 	private void readA(PartialID[] ids) {
 		a = new Matrix(dVector.getNpts(), parameterList.size());
