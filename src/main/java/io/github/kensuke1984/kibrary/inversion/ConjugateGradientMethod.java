@@ -87,7 +87,7 @@ public class ConjugateGradientMethod extends InverseProblem {
 	public RealMatrix computeCovariance(double sigmaD, int j) {
 		RealMatrix covariance = MatrixUtils.createRealMatrix(getParN(), getParN());
 		double sigmaD2 = sigmaD * sigmaD;
-		for (int i = 0; i < j + 1; i++) {
+		for (int i = 0; i < j ; i++) {
 			double paap = p.getColumnVector(i).dotProduct(ata.operate(p.getColumnVector(i)));
 			RealMatrix p = this.p.getColumnMatrix(i);
 			double sigmaD2paap = sigmaD2 / paap;
