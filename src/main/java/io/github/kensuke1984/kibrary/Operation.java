@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * Main procedures in Kibrary
  * 
- * @version 0.0.3
+ * @version 0.0.4
  * @author Kensuke Konishi
  *
  */
@@ -44,7 +44,9 @@ public interface Operation {
 	 *             if any
 	 */
 	default void writeProperties(Path path, OpenOption... options) throws IOException {
-		getProperties().store(Files.newBufferedWriter(path, options), "This properties for " + getClass().getName());
+		Properties p = getProperties();
+		p.setProperty("manhattan", getClass().getSimpleName());
+		p.store(Files.newBufferedWriter(path, options), "This properties for " + getClass().getName());
 	}
 
 	default Path getPath(String key) {
