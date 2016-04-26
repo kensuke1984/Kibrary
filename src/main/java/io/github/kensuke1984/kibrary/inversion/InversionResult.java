@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -32,7 +33,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.0.2
+ * @version 0.1.1.1
  */
 public class InversionResult {
 
@@ -69,7 +70,6 @@ public class InversionResult {
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
-
 	}
 
 	public List<UnknownParameter> getUnknownParameterList() {
@@ -77,7 +77,7 @@ public class InversionResult {
 	}
 
 	/**
-	 * @return {@link BasicID}s in order.
+	 * @return List of {@link BasicID} in order.
 	 */
 	public List<BasicID> getBasicIDList() {
 		return basicIDList;
@@ -94,6 +94,7 @@ public class InversionResult {
 	 * type is always obs
 	 * 
 	 * @param parts
+	 *            string array for a basic id.
 	 * @return id
 	 */
 	private static BasicID toBasicID(String[] parts) {
@@ -143,6 +144,44 @@ public class InversionResult {
 			weightingOrder[i] = Double.parseDouble(parts[17]);
 		});
 	}
+	
+	/**
+	 * @return vector of residual (observed-synthetic) waveforms in an observed equation
+	 * @throws IOException if any
+	 */
+	public RealVector getDVector() throws DimensionMismatchException, IOException {
+		return getObservedVector().subtract(getSyntheticVector());
+	}
+	
+	/**
+	 * @return vector of observed waveforms in an observed equation
+	 * @throws IOException if any
+	 */
+	public RealVector getObservedVector() throws IOException {
+		double[] obsv = new double[npts];
+		int i = 0;
+		for (BasicID id : basicIDList) {
+			double[] obs = observedOf(id).getY();
+			System.arraycopy(obs, 0, obsv, i, obs.length);
+			i += obs.length;
+		}
+		return new ArrayRealVector(obsv, false);
+	}
+
+	/**
+	 * @return vector of synthetic waveforms in an observed equation
+	 * @throws IOException if any
+	 */
+	public RealVector getSyntheticVector() throws IOException {
+		double[] synv = new double[npts];
+		int i = 0;
+		for (BasicID id : basicIDList) {
+			double[] syn = syntheticOf(id).getY();
+			System.arraycopy(syn, 0, synv, i, syn.length);
+			i += syn.length;
+		}
+		return new ArrayRealVector(synv, false);
+	}
 
 	/**
 	 * @param inverse
@@ -160,7 +199,8 @@ public class InversionResult {
 	/**
 	 * @param a
 	 *            assumed redundancy in data points. It is used as n/a, where n
-	 *            is the number of data points, note that n/a will be (int)(n/a).
+	 *            is the number of data points, note that n/a will be
+	 *            (int)(n/a).
 	 * @param inverse
 	 *            the method for the inverse problem
 	 * @param n
@@ -168,11 +208,11 @@ public class InversionResult {
 	 * @return the Akaike Information criterion for the answer
 	 */
 	public double aicOf(double a, InverseMethodEnum inverse, int n) {
-		return Utilities.computeAIC(varianceOf(inverse, n), (int)(npts / a), n);
+		return Utilities.computeAIC(varianceOf(inverse, n), (int) (npts / a), n);
 	}
 
 	/**
-	 * @return the number of datapoints;
+	 * @return the number of datapoints (NPTS)
 	 */
 	public int getNumberOfDatapoints() {
 		return npts;
@@ -264,8 +304,9 @@ public class InversionResult {
 	}
 
 	/**
-	 * @param i
-	 *            index of the order in vector
+	 * @param id
+	 *            id of an observed waveform (This ID must be in the list by
+	 *            {@link #getBasicIDList()})
 	 * @return {@link Trace} of n th observed waveforms. Time axis is observed
 	 *         one.
 	 * @throws IOException
@@ -300,7 +341,8 @@ public class InversionResult {
 
 	/**
 	 * @param id
-	 *            ID of the order in vector
+	 *            ID of the order in vector (This ID must be in the list by
+	 *            {@link #getBasicIDList()})
 	 * @return {@link Trace} of n th synthetic waveforms. Time axis is syn
 	 * @throws IOException
 	 *             if an I/O error occurs
@@ -458,7 +500,7 @@ public class InversionResult {
 	 *            vector of observed
 	 * @param another
 	 *            vector of waveform to compute with
-	 * @return (another-obs)**2/obs**2
+	 * @return (another-obs)<sup>2</sup>/obs<sup>2</sup>
 	 */
 	private static double variance(RealVector obs, RealVector another) {
 		RealVector del = obs.subtract(another);
@@ -483,7 +525,7 @@ public class InversionResult {
 	 * @return the variance between obs and syn (initial model)
 	 */
 	public double getVariance() {
-		return answerVarianceMap.get(InverseMethodEnum.CG)[0];
+		return answerVarianceMap.get(InverseMethodEnum.CONJUGATE_GRADIENT)[0];
 	}
 
 	/**
@@ -501,17 +543,14 @@ public class InversionResult {
 			PartialType type) {
 		if (!type.is3D())
 			throw new RuntimeException(type + " is not 3d parameter"); // TODO
-		double value = 0;
 		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
 				Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
-		if (type == PartialType.TIME) {
-			System.out.println("madda");
-			return 0;
-		}
-		if (ansMap.containsKey(location)) {
+		if (type == PartialType.TIME) 
+			throw new RuntimeException("TIME PARTIAL MADADAMEEEEEEEE");
+		if (ansMap.containsKey(location)) 
 			return ansMap.get(location);
-		}
+		
 		Location[] nearLocations = location
 				.getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
 						.map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(Location[]::new));
@@ -520,15 +559,12 @@ public class InversionResult {
 		for (int iPoint = 0; iPoint < nPoints; iPoint++) {
 			r[iPoint] = Math.pow(nearLocations[iPoint].getDistance(location), nPower);
 			rTotal += 1 / r[iPoint];
-			// System.out.println(nearLocations[iPoint]);
-			// System.out.println(r[iPoint]);
 		}
-		for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+		double value = 0;
+		for (int iPoint = 0; iPoint < nPoints; iPoint++) 
 			value += ansMap.get(nearLocations[iPoint]) / r[iPoint];
-			// values[i]= r[iPoint]* ansMap.get(arg0)
-		}
-		value /= rTotal;
-		return value;
+		
+		return value / rTotal;
 	}
 
 }
