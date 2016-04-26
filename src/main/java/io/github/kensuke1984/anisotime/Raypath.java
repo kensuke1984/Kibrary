@@ -4,11 +4,21 @@ import static io.github.kensuke1984.kibrary.math.Integrand.bySimpsonRule;
 import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod3;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * 
@@ -28,11 +38,21 @@ import java.util.List;
  * than event depth but not including region 0 region 2 shallower part than
  * event depth to the surface
  * 
+ * TODO method(r) -> delta?
+ * 
+ * TODO eventR
+ * 
+ * 
  * @author Kensuke Konishi
  * 
- * @version 0.3.11.1
+ * @version 0.3.12b
  */
-public class Raypath {
+public class Raypath implements Serializable {
+
+	/**
+	 * Serialization identifier 2016/4/25
+	 */
+	private static final long serialVersionUID = 8022653087553338902L;
 
 	/**
 	 * when integrate values on boundaries, use the value at point very close to
@@ -59,9 +79,9 @@ public class Raypath {
 	private final double jeffereysEPS;
 
 	/**
-	 * radius of the source
+	 * radius of the source TODO deprecated
 	 */
-	private final double eventR; 
+	private final double eventR;
 
 	public double getEventR() {
 		return eventR;
@@ -71,109 +91,141 @@ public class Raypath {
 		return structure;
 	}
 
-	private double innerCorePDelta;
-
 	/**
-	 * R of innercore for Pwave [layer] ={r1, r2, ....} r1 < r2
+	 * Radius in the inner-core for P
+	 * <p>
+	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) where r <sub>i</sub> <
+	 * r <sub>i+1</sub>
+	 * <p>
+	 * r<sub>0</sub> = P bouncing depth, r<sub>n</sub> = ICB.
 	 */
 	private double[] innerCorePR;
+
 	/**
-	 * 
-	 * each point is R of {@link #innerCorePR} theta from the bottom point of P
-	 * inner core [layer] = { theta1, theta2, ... }theta1 < theta2
+	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to
+	 * {@link #innerCorePR}
+	 * <p>
+	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
+	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
 	 */
 	private double[] innerCorePTheta;
-	private double innerCorePTime;
-	private double innerCoreSDelta;
+
 	/**
-	 * R of innercore for S [layer] ={r1, r2, ....} r1 < r2
+	 * Radius in the inner-core for S
+	 * <p>
+	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) r <sub>i</sub> < r
+	 * <sub>i+1</sub>
+	 * <p>
+	 * r<sub>0</sub> = S bouncing depth, r<sub>n</sub> = ICB.
 	 */
 	private double[] innerCoreSR;
+
 	/**
-	 * each point is R of {@link #innerCorePR} theta from the bottom point of P
-	 * mantle [layer] = { theta1, theta2, ... }theta1 < theta2
+	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to
+	 * {@link #innerCoreSR}
+	 * <p>
+	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
+	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
 	 */
 	private double[] innerCoreSTheta;
-	private double innerCoreSTime;
-
-	private double mantlePDelta;
 
 	/**
-	 * R of mantle [layer] ={r1, r2, ....} r1 < r2
+	 * Radius in the mantle for P
+	 * <p>
+	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) where r <sub>i</sub> <
+	 * r <sub>i+1</sub>
+	 * <p>
+	 * r<sub>0</sub> = P bouncing depth or the depth of the CMB, r<sub>n</sub> =
+	 * Earth surface.
 	 */
 	private double[] mantlePR;
 
 	/**
-	 * each point is R of {@link #mantlePR} theta from the bottom point of P
-	 * mantle [layer] = { theta1, theta2, ... }theta1 < theta2
+	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to {@link #mantlePR}
+	 * <p>
+	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
+	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
 	 */
 	private double[] mantlePTheta;
-	private double mantlePTime;
-	private double mantleSDelta;
 
 	/**
-	 * R of mantle [layer] ={r1, r2, ....} r1 < r2
+	 * Radius in the mantle for S
+	 * <p>
+	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) r <sub>i</sub> < r
+	 * <sub>i+1</sub>
+	 * <p>
+	 * r<sub>0</sub> = S bouncing depth or the depth of the CMB, r<sub>n</sub> =
+	 * Earth surface.
 	 */
 	private double[] mantleSR;
 
 	/**
-	 * each point is R of {@link #mantlePR} theta from the bottom point of S
-	 * mantle [layer] = { theta1, theta2, ... }theta1 < theta2
+	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to {@link #mantleSR}
+	 * <p>
+	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
+	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
 	 */
 	private double[] mantleSTheta;
 
-	private double mantleSTime;
-
-	private double outerCoreDelta;
-
 	/**
-	 * R of outercore [layer] ={r1, r2, ....} r1 < r2
+	 * Radius in the outer-core for K
+	 * <p>
+	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) r <sub>i</sub> < r
+	 * <sub>i+1</sub>
+	 * <p>
+	 * r<sub>0</sub> = K bouncing depth or the depth of ICB, r<sub>n</sub> =
+	 * CMB.
 	 */
 	private double[] outerCoreR;
 
 	/**
-	 * each point is R of {@link #outerCoreR} theta from the bottom point of P
-	 * outer core [layer] = { theta1, theta2, ... }theta1 < theta2
-	 * 
+	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to
+	 * {@link #outerCoreR}
+	 * <p>
+	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
+	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
 	 */
 	private double[] outerCoreTheta;
-
-	private double outerCoreTime;
 
 	/**
 	 * region where P bounces
 	 */
 	private Partition pTurning;
 
-	/**
-	 * radius [km] at which P bounces
-	 */
-	private double pTurningR;
-
 	private final double rayParameter; // rayparameter p = (r * sin(t) )/ v(r)
 
 	private Partition shTurning;
 	private Partition svTurning;
 
+	/**
+	 * Radius [km] at which P bounces
+	 */
+	private double pTurningR;
 	private double svTurningR;
 	private double shTurningR;
-
 	private double kTurningR;
 
-	private final VelocityStructure structure;
+	private final transient VelocityStructure structure;
 
 	/**
-	 * compute SV(true) or SH(false) default SH
+	 * compute SV(true) or SH(false) default SH TODO deprecated
 	 */
 	private boolean sv;
 
 	private double upperPDelta;
-
 	private double upperPTime;
-
 	private double upperSDelta;
-
 	private double upperSTime;
+	private double mantleSDelta;
+	private double mantleSTime;
+	private double mantlePDelta;
+	private double mantlePTime;
+	private double outerCoreDelta;
+	private double outerCoreTime;
+	private double innerCorePDelta;
+	private double innerCorePTime;
+	private double innerCoreSDelta;
+	private double innerCoreSTime;
 
 	/**
 	 * ray parameter p the source is on the surface PREM structure
@@ -206,11 +258,50 @@ public class Raypath {
 	 *            {@link VelocityStructure}
 	 */
 	public Raypath(double rayParameterP, double eventR, VelocityStructure structure) {
-		this(rayParameterP, eventR, structure, false,1,10);
+		this(rayParameterP, eventR, structure, false, 1, 10);
+	}
+
+	public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
+		long t = System.nanoTime();
+		Raypath r = null;
+		for (int i = 0; i < 100; i++) {
+			r = new Raypath(100);
+			r.compute();
+		}
+		System.out.println(Utilities.toTimeString(System.nanoTime() - t));
+		System.out.println(r.pTurningR + " " + r.shTurningR);
+		System.out.println(r.mantlePR.length + " " + r.mantleSR.length);
+
+		// for (int i = 0; i < r.outerCoreR.length; i++)
+		// System.out.println(r.outerCoreR[i] + " " + r.outerCoreTheta[i]);
+		System.out.println(Math.toDegrees(r.computeDelta(Phase.SKiKS)) + " " + r.computeTraveltime(Phase.SKiKS));
+
+		long t1 = System.nanoTime();
+		for (int i = 0; i < 100; i++) {
+			ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(new File("/tmp/path.cls")));
+			os.writeObject(r);
+			os.writeObject(r);
+		}
+		System.out.println(Utilities.toTimeString(System.nanoTime() - t1));
+		long t2 = System.nanoTime();
+		for (int i = 0; i < 100; i++) {
+			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File("/tmp/path.cls")));
+
+			Raypath p = (Raypath) ois.readObject();
+			ois.close();
+		}
+		System.out.println(Utilities.toTimeString(System.nanoTime() - t2));
 	}
 
 	/**
-	
+	 * @param rayParameterP
+	 *            the ray parameter
+	 * @param eventR
+	 *            the radius of the hypocenter
+	 * @param structure
+	 *            {@link VelocityStructure}
+	 * @param sv
+	 *            if true computes SV, else SH
 	 */
 	public Raypath(double rayParameterP, double eventR, VelocityStructure structure, boolean sv) {
 		this(rayParameterP, eventR, structure, sv, 1, 10);
@@ -219,7 +310,6 @@ public class Raypath {
 	/**
 	 * @param rayParameterP
 	 *            the ray parameter
-	 * 
 	 * @param eventR
 	 *            the radius of the hypocenter
 	 * @param structure
@@ -450,7 +540,6 @@ public class Raypath {
 	/*
 	 * Check if the input ray parameter is valid 0<= p <= r/vs(at surface) vs is
 	 * lower one of Vsv and Vsh
-	 * 
 	 */
 	private boolean checkPValidity() {
 		if (rayParameter < 0)
@@ -968,23 +1057,17 @@ public class Raypath {
 
 		if (icbR <= startR) {
 			double jeff = jeffreysPDelta(pTurningR, icbR);
-			innerCorePR = new double[2];
-			innerCorePTheta = new double[2];
-			innerCorePR[0] = pTurningR;
-			innerCorePTheta[0] = jeff;
-			innerCorePR[1] = icbR;
-			innerCorePTheta[1] = 0;
+			innerCorePR = new double[] { pTurningR, icbR };
+			innerCorePTheta = new double[] { jeff, 0 };
 			return jeff;
 		}
 
-		double delta = 0;
 		double[] x = point(startR, icbR - eps, interval);
-		double jeff = jeffreysPDelta(pTurningR, startR);
-		delta += jeff;
+		double delta = jeffreysPDelta(pTurningR, startR);
 		innerCorePR = new double[x.length + 1];
 		innerCorePTheta = new double[x.length + 1];
 		innerCorePR[0] = pTurningR;
-		innerCorePTheta[0] = jeff;
+		innerCorePTheta[0] = delta;
 		for (int i = 0; i < x.length - 1; i++) {
 			innerCorePR[i + 1] = x[i];
 			double simpson = simpsonPDelta(x[i], x[i + 1]);
@@ -1004,19 +1087,15 @@ public class Raypath {
 	 */
 	private double innerCorePTau() {
 		double icbR = structure.innerCoreBoundary();
-		if (pTurningR > icbR || pTurningR < 0)
+		if (icbR < pTurningR || pTurningR < 0)
 			return 0;
 		double startR = pTurningR + jeffereysEPS;
 		if (icbR <= startR)
-			// throw new RuntimeException("eps is too big " + jeffereysEPS);
 			return jeffreysPTau(pTurningR, icbR - eps);
-		double tau = 0;
-		// delta = simpsonPDelta(startR, icbR - eps); //
+		double tau = jeffreysPTau(pTurningR, startR);
 		double[] x = point(startR, icbR - eps, interval);
 		for (int i = 0; i < x.length - 1; i++)
 			tau += simpsonPTau(x[i], x[i + 1]);
-		tau += jeffreysPTau(pTurningR, startR);
-
 		// System.out.println("inner core " + tau + " sec");
 		return tau;
 	}
@@ -1034,22 +1113,16 @@ public class Raypath {
 		double startR = turningR + jeffereysEPS;
 		if (icbR <= startR) {
 			double jeff = jeffreysSDelta(turningR, icbR);
-			innerCoreSR = new double[2];
-			innerCoreSTheta = new double[2];
-			innerCoreSR[0] = turningR;
-			innerCoreSTheta[0] = jeff;
-			innerCoreSR[1] = icbR;
-			innerCoreSTheta[1] = 0;
+			innerCoreSR = new double[] { turningR, icbR };
+			innerCoreSTheta = new double[] { jeff, 0 };
 			return jeff;
 		}
 		double[] x = point(startR, icbR - eps, interval);
 		innerCoreSR = new double[x.length + 1];
 		innerCoreSTheta = new double[x.length + 1];
+		double delta = jeffreysSDelta(turningR, startR);
 		innerCoreSR[0] = turningR;
-		double delta = 0;
-		double jeff = jeffreysSDelta(turningR, startR);
-		innerCoreSTheta[0] = jeff;
-		delta += jeff;
+		innerCoreSTheta[0] = delta;
 		for (int i = 0; i < x.length - 1; i++) {
 			double simpson = simpsonSDelta(x[i], x[i + 1]);
 			innerCoreSR[i + 1] = x[i];
@@ -1057,27 +1130,24 @@ public class Raypath {
 			delta += simpson;
 		}
 		innerCoreSR[innerCoreSR.length - 1] = icbR - eps;
-		innerCoreSTheta[innerCoreSR.length - 1] = 0;
+		// innerCoreSTheta[innerCoreSR.length - 1] = 0;
 		// System.out.println("inner core S delta[deg]" +
 		// Math.toDegrees(delta));
 		return delta;
 	}
 
 	private double innerCoreSTau() {
-		double tau = 0;
 		double icbR = structure.innerCoreBoundary();
 		double turningR = sv ? svTurningR : shTurningR;
-		if (turningR > icbR || turningR < 0)
+		if (icbR < turningR || turningR < 0)
 			return 0;
 		double startR = turningR + jeffereysEPS;
-		if (startR > icbR)
+		if (icbR < startR)
 			return jeffreysSTau(turningR, icbR);
-		// throw new RuntimeException("eps is too big " + jeffereysEPS);
-		// tau = simpsonSTau(startR, structure.innerCoreBoundary() - eps); //
 		double[] x = point(startR, icbR - eps, interval);
+		double tau = jeffreysSTau(turningR, startR);
 		for (int i = 0; i < x.length - 1; i++)
 			tau += simpsonSTau(x[i], x[i + 1]);
-		tau += jeffreysSTau(turningR, startR);
 		// System.out.println("inner core time[s]" + tau);
 		return tau;
 	}
@@ -1202,23 +1272,18 @@ public class Raypath {
 		double startR = mantlePPropagation == Propagation.PENETRATING ? cmb + eps : pTurningR + jeffereysEPS; //
 		if (structure.earthRadius() <= startR) {
 			double jeff = jeffreysPDelta(pTurningR, structure.earthRadius());
-			mantlePR = new double[2];
-			mantlePTheta = new double[2];
-			mantlePR[0] = pTurningR;
-			mantlePR[1] = structure.earthRadius();
-			mantlePTheta[0] = jeff;
-			mantlePTheta[1] = 0;
+			mantlePR = new double[] { pTurningR, structure.earthRadius() };
+			mantlePTheta = new double[] { jeff, 0 };
 			return jeff;
 		}
 		double delta = 0;
 		double[] x = point(startR, structure.earthRadius(), interval);
 		if (mantlePPropagation != Propagation.PENETRATING) {
-			double jeff = jeffreysPDelta(pTurningR, startR);
-			delta += jeff;
+			delta = jeffreysPDelta(pTurningR, startR);
 			mantlePR = new double[x.length + 1];
 			mantlePTheta = new double[x.length + 1];
 			mantlePR[0] = pTurningR;
-			mantlePTheta[0] = jeff;
+			mantlePTheta[0] = delta;
 		} else {
 			mantlePR = new double[x.length];
 			mantlePTheta = new double[x.length];
@@ -1235,7 +1300,7 @@ public class Raypath {
 			delta += dDelta;
 		}
 		mantlePR[mantlePR.length - 1] = structure.earthRadius();
-		mantlePTheta[mantlePR.length - 1] = 0;
+		// mantlePTheta[mantlePR.length - 1] = 0;
 		// System.out.println("mantle P delta[deg]:" + Math.toDegrees(delta));
 		return delta;
 	}
@@ -1249,17 +1314,16 @@ public class Raypath {
 		if (mantlePPropagation == Propagation.NOEXIST || eventR < pTurningR)
 			return Double.NaN;
 
-		double tau = 0;
 		double cmb = structure.coreMantleBoundary();
 		double startR = mantlePPropagation == Propagation.PENETRATING ? cmb + eps : pTurningR + jeffereysEPS;//
 		if (structure.earthRadius() <= startR)
 			return jeffreysPTau(pTurningR, structure.earthRadius());
-		// delta = simpsonPDelta(startR, icbR - eps); //
+		double tau = mantlePPropagation == Propagation.PENETRATING ? 0 : jeffreysPTau(pTurningR, startR);
 		double[] x = point(startR, structure.earthRadius(), interval);
 		for (int i = 0; i < x.length - 1; i++)
 			tau += simpsonPTau(x[i], x[i + 1]);
 		// System.out.println("mantle P time[s]:" + tau);
-		return mantlePPropagation == Propagation.PENETRATING ? tau : tau + jeffreysPTau(pTurningR, startR);
+		return tau;
 	}
 
 	/**
@@ -1275,22 +1339,17 @@ public class Raypath {
 
 		if (structure.earthRadius() <= startR) {
 			double jeff = jeffreysSDelta(turningR, structure.earthRadius());
-			mantleSR = new double[2];
-			mantleSTheta = new double[2];
-			mantleSR[0] = turningR;
-			mantleSR[1] = structure.earthRadius();
-			mantleSTheta[0] = jeff;
-			mantleSTheta[1] = 0;
+			mantleSR = new double[] { turningR, structure.earthRadius() };
+			mantleSTheta = new double[] { jeff, 0 };
 			return jeff;
 		}
 		double delta = 0;
 		double[] x = point(startR, structure.earthRadius(), interval);
 		if (prop != Propagation.PENETRATING) {
-			double jeff = jeffreysSDelta(turningR, startR);
-			delta += jeff;
-			mantleSTheta = new double[x.length];
-			mantleSR = new double[x.length];
-			mantleSTheta[0] = jeff;
+			delta = jeffreysSDelta(turningR, startR);
+			mantleSTheta = new double[x.length + 1];
+			mantleSR = new double[x.length + 1];
+			mantleSTheta[0] = delta;
 			mantleSR[0] = turningR;
 		} else {
 			mantleSTheta = new double[x.length];
@@ -1308,7 +1367,7 @@ public class Raypath {
 			delta += simpson;
 		}
 		mantleSR[mantleSTheta.length - 1] = structure.earthRadius();
-		mantleSTheta[mantleSTheta.length - 1] = 0;
+		// mantleSTheta[mantleSTheta.length - 1] = 0;
 		// System.out.println("Mantle S delta[deg]:" + Math.toDegrees(delta));
 		return delta;
 	}
@@ -1326,11 +1385,11 @@ public class Raypath {
 		if (structure.earthRadius() <= startR)
 			return jeffreysSTau(turningR, structure.earthRadius());
 		double[] x = point(startR, structure.earthRadius(), interval);
-		double tau = 0;
+		double tau = prop == Propagation.PENETRATING ? 0 : jeffreysSTau(turningR, startR);
 		for (int i = 0; i < x.length - 1; i++)
 			tau += simpsonSTau(x[i], x[i + 1]);
 		// System.out.println("mantle S time[s]:" + tau);
-		return prop == Propagation.PENETRATING ? tau : tau + jeffreysSTau(turningR, startR);
+		return tau;
 	}
 
 	/**
@@ -1345,23 +1404,18 @@ public class Raypath {
 		double cmbR = structure.coreMantleBoundary();
 		if (cmbR <= startR) {
 			double jeff = jeffreysOuterCoreDelta(kTurningR, cmbR);
-			outerCoreR = new double[2];
-			outerCoreTheta = new double[2];
-			outerCoreR[0] = kTurningR;
-			outerCoreR[1] = cmbR;
-			outerCoreTheta[0] = jeff;
-			outerCoreTheta[1] = 0;
+			outerCoreR = new double[] { kTurningR, cmbR };
+			outerCoreTheta = new double[] { jeff, 0 };
 			return jeff;
 		}
 		double delta = 0;
 		double[] x = point(startR, cmbR - eps, interval);
 		if (kPropagation == Propagation.BOUNCING) {
-			double jeff = jeffreysOuterCoreDelta(kTurningR, startR);
-			delta += jeff;
+			delta = jeffreysOuterCoreDelta(kTurningR, startR);
 			outerCoreR = new double[x.length + 1];
 			outerCoreTheta = new double[x.length + 1];
 			outerCoreR[0] = kTurningR;
-			outerCoreTheta[0] = jeff;
+			outerCoreTheta[0] = delta;
 		} else {
 			outerCoreR = new double[x.length];
 			outerCoreTheta = new double[x.length];
@@ -1382,7 +1436,7 @@ public class Raypath {
 			delta += simpson;
 		}
 		outerCoreR[outerCoreR.length - 1] = cmbR;
-		outerCoreTheta[outerCoreR.length - 1] = 0;
+		// outerCoreTheta[outerCoreR.length - 1] = 0;
 		// System.out.println("outer core delta[deg]:" + Math.toDegrees(delta));
 		return delta;
 	}
@@ -1416,7 +1470,7 @@ public class Raypath {
 			return jeffreysOuterCoreTau(pTurningR, cmbR);
 
 		double[] x = point(startR, cmbR - eps, interval);
-		double tau = 0;
+		double tau = kPropagation == Propagation.BOUNCING ? jeffreysOuterCoreTau(kTurningR, startR) : 0;
 		for (int i = 0; i < x.length - 1; i++) {
 			double deltax = x[i + 1] - x[i];
 			double a = outerCoreQT(x[i]);
@@ -1425,7 +1479,7 @@ public class Raypath {
 			tau = tau + bySimpsonRule(a, b, c) * deltax;
 		}
 		// System.out.println("Outer core[s]:" + tau);
-		return kPropagation == Propagation.BOUNCING ? tau + jeffreysOuterCoreTau(kTurningR, startR) : tau;
+		return tau;
 	}
 
 	/**
@@ -1440,15 +1494,12 @@ public class Raypath {
 	 * @return Array of radius
 	 */
 	private static double[] point(double startR, double endR, double deltaR) {
-		double length = endR - startR;
-		// System.out.println(startR+" "+endR+" "+deltaR);
-		int n = (int) (length / deltaR);
+		int n = (int) Math.ceil((endR - startR) / deltaR);
 		double[] x = new double[n + 1];
 		for (int i = 0; i < n; i++)
 			x[i] = startR + i * deltaR;
 		x[n] = endR;
 		return x;
-
 	}
 
 	private Propagation mantlePPropagation;
