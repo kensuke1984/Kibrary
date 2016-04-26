@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -38,7 +39,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0.2
+ * @version 2.0.3.1
  * 
  * @author Kensuke Konishi
  * 
@@ -113,7 +114,7 @@ public class LetMeInvert implements Operation {
 			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
 					.toArray();
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+"))
-				.map(InverseMethodEnum::valueOf).collect(Collectors.toSet());
+				.map(InverseMethodEnum::of).collect(Collectors.toSet());
 	}
 
 	/**
@@ -144,7 +145,7 @@ public class LetMeInvert implements Operation {
 			pw.println("#stationInformationPath station.inf");
 			pw.println("##double[] alpha it self, if it is set, compute aic for each alpha.");
 			pw.println("#alpha");
-			pw.println("##inverseMethods[] names of inverse methods, must be capital letters (CG SVD)");
+			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
 		}
 		System.err.println(outPath + " is created.");
@@ -155,16 +156,17 @@ public class LetMeInvert implements Operation {
 	public LetMeInvert(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
-		outPath = workPath.resolve("lmi" + Utilities.getTemporaryString());
+		outPath = Files.createTempDirectory(workPath, "lmi");
 		if (!canGO())
 			throw new RuntimeException();
 		setEquation();
 	}
 
-	public LetMeInvert(Path outPath, Set<Station> stationSet, ObservationEquation equation) {
+	public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
 		eq = equation;
 		this.stationSet = stationSet;
-		this.outPath = outPath;
+		this.outPath = Files.createTempDirectory(workPath, "lmi");
+		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 	}
 
 	private Path outPath;
@@ -211,12 +213,11 @@ public class LetMeInvert implements Operation {
 
 	@Override
 	public void run() {
-		if (Files.exists(outPath))
-			throw new RuntimeException(outPath + " already exists.");
 		try {
-			System.err.println("creating the output folder");
+			System.err.println("The output folder: " + outPath);
 			Files.createDirectories(outPath);
-			writeProperties(outPath.resolve("lmi.properties"));
+			if (property != null)
+				writeProperties(outPath.resolve("lmi.properties"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Can not create " + outPath);
@@ -440,7 +441,9 @@ public class LetMeInvert implements Operation {
 	private void solve() {
 		inverseMethods.forEach(method -> {
 			try {
-				solve(outPath.resolve(method.toString()), method.getMethod(eq.getAtA(), eq.getAtD()));
+				if(method==InverseMethodEnum.LEAST_SQUARES_METHOD)
+					return; // TODO
+				solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
