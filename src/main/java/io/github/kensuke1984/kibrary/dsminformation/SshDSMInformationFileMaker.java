@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Information file for SSHSH
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  * @author Kensuke Konishi
  *
@@ -44,7 +44,7 @@ public class SshDSMInformationFileMaker implements Operation {
 		if (!property.containsKey("tlen"))
 			property.setProperty("tlen", "3276.8");
 		if (!property.containsKey("np"))
-			property.setProperty("np", "1024");
+			property.setProperty("np", "512");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
 		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").equals(""))
@@ -141,7 +141,7 @@ public class SshDSMInformationFileMaker implements Operation {
 
 	@Override
 	public Properties getProperties() {
-		return (Properties) property;
+		return (Properties) property.clone();
 	}
 
 	@Override
