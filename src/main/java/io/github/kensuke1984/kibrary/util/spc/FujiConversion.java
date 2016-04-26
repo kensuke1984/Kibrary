@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * @author Kensuke Konishi
  *
- * @version 0.0.1.2
+ * @version 0.0.1.3
  *
  */
 public final class FujiConversion {
@@ -47,9 +47,9 @@ public final class FujiConversion {
 		if (spectrum.getSpcFileType() != SpcFileType.PAR2)
 			throw new RuntimeException();
 
-		int nbody = spectrum.nbody();
-		int np = spectrum.np();
-		double tlen = spectrum.tlen();
+		final int nbody = spectrum.nbody();
+		final int np = spectrum.np();
+		final double tlen = spectrum.tlen();
 		List<SpcBody> spcBodyList = new ArrayList<>(nbody);
 
 		// data part
@@ -62,8 +62,8 @@ public final class FujiConversion {
 		double omega0 = spectrum.tlen(); // TODO
 		for (int i = 0; i < spectrum.nbody(); i++) {
 			double r = bodyR[i];
-			double q = 1 / structure.getQmu(r);
-			double mu0 = structure.getMu(r);
+			double q = 1 / structure.getQmuAt(r);
+			double mu0 = structure.computeMu(r);
 			SpcBody body = spectrum.getSpcBodyList().get(i);
 			SpcBody newBody = new SpcBody(3, np);
 			for (int ip = 0; ip < np + 1; ip++) {
