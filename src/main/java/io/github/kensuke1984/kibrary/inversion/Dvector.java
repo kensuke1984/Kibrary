@@ -30,30 +30,28 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * basicDataFileから Dvectorを構築する
  * 
  * 
- *        TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
+ * TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  * 
- * @version 0.2.0.1
+ * @version 0.2.1.1
  * 
  * @author Kensuke Konishi
- * 
- * 
- * 
  */
 public class Dvector {
 
 	/**
 	 * @param ids
+	 *            for check
 	 * @return if all the ids have waveform data.
 	 */
 	private static boolean check(BasicID[] ids) {
-		return Arrays.stream(ids).parallel().allMatch(id -> id.getData() != null);
+		return Arrays.stream(ids).parallel().allMatch(BasicID::containsData);
 	}
 
 	/**
 	 * compare id0 and id1 if component npts sampling Hz start time max min
 	 * period station global cmt id are same This method does NOT consider if
-	 * the input ids are observed or synthetic.
-	 * TODO start time
+	 * the input ids are observed or synthetic. TODO start time
+	 * 
 	 * @param id0
 	 *            {@link BasicID}
 	 * @param id1
@@ -120,6 +118,7 @@ public class Dvector {
 	public Map<GlobalCMTID, Double> getEventVariance() {
 		return Collections.unmodifiableMap(eventVariance);
 	}
+
 	/**
 	 * @return map of variance of waveforms for each station
 	 */
@@ -142,9 +141,8 @@ public class Dvector {
 	 */
 	private Set<GlobalCMTID> usedGlobalCMTIDset;
 
-	
 	/**
-	 * Set of stations read in vector. 
+	 * Set of stations read in vector.
 	 */
 	private Set<Station> usedStationSet;
 
@@ -189,8 +187,9 @@ public class Dvector {
 	 * @param basicIDs
 	 *            must contain waveform data
 	 * @param chooser
-	 *            {@link Predicate} used for filtering Observed (not synthetic) ID
-	 *            if one ID is true, then the observed ID and the pair synethetic are used.
+	 *            {@link Predicate} used for filtering Observed (not synthetic)
+	 *            ID if one ID is true, then the observed ID and the pair
+	 *            synethetic are used.
 	 * @param weightingFunction
 	 *            {@link ToDoubleBiFunction} (observed, synthetic)
 	 */
@@ -206,9 +205,7 @@ public class Dvector {
 		else
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData());
-				final double obsMax = Math.abs(obsVec.getMaxValue());
-				final double obsMin = Math.abs(obsVec.getMinValue());
-				return 1 / Math.max(obsMin, obsMax);
+				return 1 / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 		sort();
 		read();
@@ -224,12 +221,11 @@ public class Dvector {
 	public RealVector combine(RealVector[] vectors) {
 		if (vectors.length != nTimeWindow)
 			throw new RuntimeException("the number of input vector is invalid");
-
 		for (int i = 0; i < nTimeWindow; i++)
 			if (vectors[i].getDimension() != obsVec[i].getDimension())
 				throw new RuntimeException("input vector is invalid");
-		RealVector v = new ArrayRealVector(npts);
 
+		RealVector v = new ArrayRealVector(npts);
 		for (int i = 0; i < nTimeWindow; i++)
 			v.setSubVector(startPoints[i], vectors[i]);
 
@@ -237,13 +233,20 @@ public class Dvector {
 	}
 
 	/**
-	 * @return Vectors consisting of dvector. Each vector is each timewindow.
-	 * If you want to get the vector D, you may use {@link #combine(RealVector[])} 
+	 * @return Vectors consisting of dvector(obs-syn). Each vector is each
+	 *         timewindow. If you want to get the vector D, you may use
+	 *         {@link #combine(RealVector[])}
 	 */
 	public RealVector[] getdVec() {
 		return dVec.clone();
 	}
 
+	/**
+	 * @return vectors of residual between observed and synthetics (obs-syn)
+	 */
+	public RealVector getD() {
+		return combine(dVec);
+	}
 
 	/**
 	 * @return 各タイムウインドウの長さ
@@ -275,6 +278,13 @@ public class Dvector {
 	}
 
 	/**
+	 * @return vector of observed waveforms
+	 */
+	public RealVector getObs() {
+		return combine(obsVec);
+	}
+
+	/**
 	 * i番目のウインドウが何ポイント目から始まるか
 	 * 
 	 * @param i
@@ -293,12 +303,19 @@ public class Dvector {
 		return synVec.clone();
 	}
 
+	/**
+	 * @return vector of synthetic waveforms.
+	 */
+	public RealVector getSyn() {
+		return combine(synVec);
+	}
+
 	public Set<GlobalCMTID> getUsedGlobalCMTIDset() {
 		return Collections.unmodifiableSet(usedGlobalCMTIDset);
 	}
 
 	/**
-	 * @return set of stations in vector 
+	 * @return set of stations in vector
 	 */
 	public Set<Station> getUsedStationSet() {
 		return Collections.unmodifiableSet(usedStationSet);
@@ -343,15 +360,13 @@ public class Dvector {
 	 */
 	public void outputVarianceOf(Path outPath, RealVector[] vectors) throws IOException {
 		Files.createDirectories(outPath);
-		Map<Station, Double> stationDenominator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> 0.0));
-		Map<Station, Double> stationNumerator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> 0.0));
+				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> 0.0));
-		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+				.collect(Collectors.toMap(id -> id, id -> 0d));
+		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0d));
 
 		Path eachVariancePath = outPath.resolve("eachVariance.txt");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
@@ -381,10 +396,9 @@ public class Dvector {
 
 		}
 	}
-	
+
 	/**
-	 * Variance of dataset
-	 * |obs-syn|**2/|obs|**2
+	 * Variance of dataset |obs-syn|<sup>2</sup>/|obs|<sup>2</sup>
 	 */
 	private double variance;
 	/**
@@ -396,19 +410,17 @@ public class Dvector {
 	 * |obs-syn|
 	 */
 	private double dNorm;
-	
+
 	private void read() {
 		// double t = System.nanoTime();
 		int start = 0;
-		Map<Station, Double> stationDenominator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> 0.0));
-		Map<Station, Double> stationNumerator = usedStationSet.stream()
-				.collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<GlobalCMTID, Double> eventDenominator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> 0.0));
+				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
-				.collect(Collectors.toMap(id -> id, id -> 0.0));
-		double obs2 =0;
+				.collect(Collectors.toMap(id -> id, id -> 0d));
+		double obs2 = 0;
 		for (int i = 0; i < nTimeWindow; i++) {
 			startPoints[i] = start;
 			int npts = obsIDs[i].getNpts();
@@ -434,8 +446,7 @@ public class Dvector {
 			double numerator = dVec[i].dotProduct(dVec[i]);
 			stationDenominator.put(obsIDs[i].getStation(),
 					stationDenominator.get(obsIDs[i].getStation()) + denominator);
-			stationNumerator.put(obsIDs[i].getStation(),
-					stationNumerator.get(obsIDs[i].getStation()) + numerator);
+			stationNumerator.put(obsIDs[i].getStation(), stationNumerator.get(obsIDs[i].getStation()) + numerator);
 			eventDenominator.put(obsIDs[i].getGlobalCMTID(),
 					eventDenominator.get(obsIDs[i].getGlobalCMTID()) + denominator);
 			eventNumerator.put(obsIDs[i].getGlobalCMTID(), eventNumerator.get(obsIDs[i].getGlobalCMTID()) + numerator);
@@ -450,7 +461,7 @@ public class Dvector {
 		dNorm = Math.sqrt(variance);
 		variance /= obs2;
 		obsNorm = Math.sqrt(obs2);
-		System.err.println("Vector D was created. The variance is " + variance+". The number of points is "+npts);
+		System.err.println("Vector D was created. The variance is " + variance + ". The number of points is " + npts);
 	}
 
 	/**
@@ -461,17 +472,19 @@ public class Dvector {
 	}
 
 	/**
-	 * @return |obs| 
+	 * @return |obs|
 	 */
 	public double getObsNorm() {
 		return obsNorm;
 	}
+
 	/**
-	 * @return |obs-syn| 
+	 * @return |obs-syn|
 	 */
 	public double getDNorm() {
 		return dNorm;
 	}
+
 	/**
 	 * @param vector
 	 *            to separate
