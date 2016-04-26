@@ -134,8 +134,7 @@ public class Trace {
 	 * @return f(x-shift), the values in y is deep copied.
 	 */
 	public Trace shiftX(double shift) {
-		double[] x = Arrays.stream(this.x).map(d -> d + shift).toArray();
-		return new Trace(x, y.clone());
+		return new Trace(Arrays.stream(x).map(d -> d + shift).toArray(), y.clone());
 	}
 
 	/**
@@ -246,7 +245,7 @@ public class Trace {
 				cor += y[i + j] * trace.y[j];
 				y2 += y[i + j] * y[i + j];
 			}
-			cor /=  y2 * compY2;
+			cor /= y2 * compY2;
 			if (corMax < cor) {
 				shift = x[i] - trace.x[0];
 				corMax = cor;

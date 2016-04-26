@@ -372,7 +372,7 @@ public class DataSelection implements Operation {
 		Trace trace = sac.createTrace();
 		double tStart = timeWindow.getStartTime();
 		double tEnd = timeWindow.getEndTime();
-		return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY());
+		return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(),false);
 	}
 	
 	private Path workPath;
