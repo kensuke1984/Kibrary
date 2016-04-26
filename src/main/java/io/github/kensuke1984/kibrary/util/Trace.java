@@ -1,8 +1,12 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -22,11 +26,51 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
- * @version 0.1.0.2
+ * @version 0.1.1.2
  * @author Kensuke Konishi
  * 
  */
 public class Trace {
+
+	/**
+	 * All lines are trimmed. Lines starting with 'c' '!' '#' are ignored.
+	 * 
+	 * @param path
+	 *            of the file you want to read
+	 * @param xColumn
+	 *            indicates which column is x (for the first column &rarr; 0)
+	 * @param yColumn
+	 *            indicates which column is y
+	 * @return Trace made by the file of the path
+	 * @throws IOException
+	 *             if any
+	 */
+	public static Trace createTrace(Path path, int xColumn, int yColumn) throws IOException {
+		List<String> lines = Files.readAllLines(path).stream().map(String::trim).filter(l -> {
+			char first = l.charAt(0);
+			return first != 'c' && first != '#' && first != '!';
+		}).collect(Collectors.toList());
+		int n = lines.size();
+		double[] x = new double[n];
+		double[] y = new double[n];
+		for (int i = 0; i < n; i++) {
+			String[] parts = lines.get(i).split("\\s+");
+			x[i] = Double.parseDouble(parts[xColumn]);
+			y[i] = Double.parseDouble(parts[yColumn]);
+		}
+		return new Trace(x, y);
+	}
+
+	/**
+	 * @param path
+	 *            of a file
+	 * @return Trace of x in the first column and y in the second column
+	 * @throws IOException
+	 *             if any
+	 */
+	public static Trace createTrace(Path path) throws IOException {
+		return createTrace(path, 0, 1);
+	}
 
 	private final double[] x;
 	private final double[] y;
@@ -72,19 +116,14 @@ public class Trace {
 
 		// (1,x,x**2,....)
 		RealMatrix a = new Array2DRowRealMatrix(x.length, n + 1);
-		RealVector b = new ArrayRealVector(x.length);
-		for (int j = 0; j < x.length; j++) {
-			b.setEntry(j, y[j]);
+		for (int j = 0; j < x.length; j++)
 			for (int i = 0; i <= n; i++)
 				a.setEntry(j, i, Math.pow(x[j], i));
-		}
 		RealMatrix at = a.transpose();
 		a = at.multiply(a);
-		b = at.operate(b);
+		RealVector b = at.operate(yVector);
 		RealVector coef = new LUDecomposition(a).getSolver().solve(b);
-		PolynomialFunction pf = new PolynomialFunction(coef.toArray());
-
-		return pf;
+		return new PolynomialFunction(coef.toArray());
 	}
 
 	/**
@@ -109,7 +148,7 @@ public class Trace {
 	 * @return y=f(c)
 	 */
 	public double toValue(int n, double c) {
-		if (x.length < (n + 1))
+		if (x.length < n + 1)
 			throw new IllegalArgumentException("n is too big");
 		if (n < 0)
 			throw new IllegalArgumentException("n is invalid");
@@ -133,7 +172,6 @@ public class Trace {
 				matrix.setEntry(i, k, Math.pow(xi[i], k));
 
 			bb.setEntry(i, y[j[i]]);
-			// b[i] = y[j[i]];
 		}
 
 		return cx.dotProduct(new LUDecomposition(matrix).getSolver().solve(bb));
@@ -149,16 +187,12 @@ public class Trace {
 	}
 
 	/**
-	 * peak is defined as (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) > 0
+	 * peak is defined as 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1]))
 	 * 
 	 * @return index of a peak (ordered)
 	 */
 	public int[] indexOfPeaks() {
-		List<Integer> indexList = new ArrayList<>();
-		for (int i = 1; i < x.length - 1; i++)
-			if (0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]))
-				indexList.add(i);
-		return indexList.stream().mapToInt(Integer::intValue).toArray();
+		return IntStream.range(1, x.length - 1).filter(i -> 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i])).toArray();
 	}
 
 	/**
@@ -167,12 +201,8 @@ public class Trace {
 	 * @return index of downward convex
 	 */
 	public int[] indexOfDownwardConvex() {
-		List<Integer> indexList = new ArrayList<>();
-		for (int i = 1; i < x.length - 1; i++)
-			if (y[i] < y[i - 1] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]))
-				indexList.add(i);
-		return indexList.stream().mapToInt(Integer::intValue).toArray();
-
+		return IntStream.range(1, x.length - 1)
+				.filter(i -> y[i] < y[i - 1] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i])).toArray();
 	}
 
 	/**
@@ -181,12 +211,8 @@ public class Trace {
 	 * @return index of downward convex
 	 */
 	public int[] indexOfUpwardConvex() {
-		List<Integer> indexList = new ArrayList<>();
-		for (int i = 1; i < x.length - 1; i++)
-			if (y[i - 1] < y[i] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i]))
-				indexList.add(i);
-		return indexList.stream().mapToInt(Integer::intValue).toArray();
-
+		return IntStream.range(1, x.length - 1)
+				.filter(i -> y[i - 1] < y[i] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i])).toArray();
 	}
 
 	/**
@@ -220,14 +246,12 @@ public class Trace {
 				cor += y[i + j] * trace.y[j];
 				y2 += y[i + j] * y[i + j];
 			}
-			cor = cor / y2 / compY2;
+			cor /=  y2 * compY2;
 			if (corMax < cor) {
 				shift = x[i] - trace.x[0];
 				corMax = cor;
 			}
-
 		}
-
 		return shift;
 	}
 
@@ -284,8 +308,7 @@ public class Trace {
 
 		int[] xi = new int[n];
 		double[] res = new double[n];
-		for (int i = 0; i < n; i++)
-			res[i] = -1;
+		Arrays.fill(res, -1);
 		for (int i = 0; i < this.x.length; i++) {
 			double residual = Math.abs(this.x[i] - x);
 			for (int j = 0; j < n; j++)
@@ -376,12 +399,18 @@ public class Trace {
 		return yVector.getMinValue();
 	}
 
+	/**
+	 * @return (deep) copy of X
+	 */
 	public RealVector getXVector() {
-		return xVector;
+		return xVector.copy();
 	}
 
+	/**
+	 * @return (deep) copy of Y
+	 */
 	public RealVector getYVector() {
-		return yVector;
+		return yVector.copy();
 	}
 
 	/**
