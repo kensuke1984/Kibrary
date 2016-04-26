@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -19,7 +20,8 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke Konishi
- * @version 0.1.9.1
+ * @version 0.1.10.1
+ * TODO thread safe
  */
 public class GlobalCMTSearch {
 
@@ -38,7 +40,6 @@ public class GlobalCMTSearch {
 		double depth = Math.round((6371 - location.getR()) * 1000) / 1000.0;
 		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth
 				+ " MW:" + event.getCmt().getMw());
-
 	}
 
 	/**
@@ -54,6 +55,26 @@ public class GlobalCMTSearch {
 	public static void setOutputFormat(DateTimeFormatter outputFormat) {
 		GlobalCMTSearch.outputFormat = outputFormat;
 	}
+	
+	/**
+	 * Adds the predicate for another condition. 
+	 * @param predicate {@link Predicate} for {@link GlobalCMTData}
+	 */
+	public void addPredicate(Predicate<GlobalCMTData>predicate){
+		predicateSet.add(predicate);
+	}
+
+	/**
+	 * @return copy of predicate set 
+	 */
+	public Set<Predicate<GlobalCMTData>> getPredicateSet(){
+		return new HashSet<>(predicateSet);
+	}
+	
+	/**
+	 * Added predicate set.
+	 */
+	private Set<Predicate<GlobalCMTData>> predicateSet = new HashSet<>();
 
 	/**
 	 * end date and time for CMT
@@ -68,7 +89,7 @@ public class GlobalCMTSearch {
 	/**
 	 * the lower limit of depth range Default: 0
 	 */
-	private double lowerDepth = 0;
+	private double lowerDepth;
 
 	/**
 	 * the lower limit of latitude range [-90:90] Default: -90
@@ -83,22 +104,22 @@ public class GlobalCMTSearch {
 	/**
 	 * the lower limit of bodywave magnitude Default: 0
 	 */
-	private double lowerMb = 0;
+	private double lowerMb;
 
 	/**
 	 * the lower limit of surface wave magnitude Default: 0
 	 */
-	private double lowerMs = 0;
+	private double lowerMs;
 
 	/**
 	 * the lower limit of moment magnitude Default: 0
 	 */
-	private double lowerMw = 0;
+	private double lowerMw;
 
 	/**
 	 * the lower limit of null axis plunge [0, 90] (degree) Default: 0
 	 */
-	private int lowerNullAxisPlunge = 0;
+	private int lowerNullAxisPlunge;
 
 	/**
 	 * the lower limit of tension axis plunge [0, 90] (degree) Default: 0
@@ -474,5 +495,5 @@ public class GlobalCMTSearch {
 	public void setUpperTensionAxisPlunge(int upperTensionAxisPlunge) {
 		this.upperTensionAxisPlunge = upperTensionAxisPlunge;
 	}
-
+	
 }
