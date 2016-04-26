@@ -20,7 +20,8 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * 
  * Catalog of global CMT solutions.
  * 
- * The catalog contains event list from <b>1976 January</b> to <b>2016 November</b>.
+ * The catalog contains event list from <b>1976 January</b> to <b>2016
+ * November</b>.
  * 
  * @version 0.1.2
  * 
@@ -114,7 +115,7 @@ final class GlobalCMTCatalog {
 	 * @return NDK of the input id
 	 */
 	static NDK getNDK(GlobalCMTID id) {
-		return NDKs.parallelStream().filter(ndk -> ndk.getID().equals(id)).findAny()
+		return NDKs.parallelStream().filter(ndk -> ndk.getGlobalCMTID().equals(id)).findAny()
 				.orElseThrow(() -> new RuntimeException("There is no information for " + id));
 	}
 

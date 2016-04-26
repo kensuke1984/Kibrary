@@ -29,8 +29,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * 
  * ============================================================================
- * ====
- * <br>
+ * ==== <br>
  * Notes (additional information):
  * <p>
  * (1) CMT event names follow two conventions. Older events use an 8-character
@@ -62,14 +61,12 @@ import io.github.kensuke1984.kibrary.util.Location;
  * ============================================================================
  * ====
  * 
- * 
- * @since 2013/11/30
- * 
- * @version 0.0.5.1
+ * @version 0.0.6.1
  * 
  * @author Kensuke Konishi
- * @see <a
- *      href=http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official guide</a>
+ * @see <a href=
+ *      http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
+ *      guide</a>
  */
 final class NDK implements GlobalCMTData {
 
@@ -98,12 +95,10 @@ final class NDK implements GlobalCMTData {
 		return true;
 	}
 
-	// ////////////////////////////
-	// hypocenter
-	//
 	/**
-	 * [1-4] Hypocenter reference catalog (e.g., PDE for USGS location, ISC for
-	 * ISC catalog, SWE for surface-wave location, [Ekstrom, BSSA, 2006])
+	 * hypocenter [1-4] <br>
+	 * Hypocenter reference catalog (e.g., PDE for USGS location, ISC for ISC
+	 * catalog, SWE for surface-wave location, [Ekstrom, BSSA, 2006])
 	 */
 	private String hypocenterReferenceCatalog;
 
@@ -135,11 +130,10 @@ final class NDK implements GlobalCMTData {
 	// Second line: CMT info (1)
 	// ////////////////////
 	/**
-	 * [1-16] CMT event name. This string is a unique CMT-event identifier.
-	 * Older events have 8-character names, current ones have 14-character
-	 * names. See note (1) below for the naming conventions used.
-	 * 
-	 * とりあえず頭文字をなしにする （従来通り）
+	 * [1-16] CMT event name. <br>
+	 * This string is a unique CMT-event identifier. Older events have
+	 * 8-character names, current ones have 14-character names. See note (1)
+	 * below for the naming conventions used. (The first letter is ignored.)
 	 */
 	private GlobalCMTID id;
 
@@ -177,11 +171,8 @@ final class NDK implements GlobalCMTData {
 	private double halfDurationMomentRateFunction;
 	// ///////////////////////////
 
-	// ////////////////////////////
-	// Third line: CMT info (2)
-	// ////////////////////////
 	/**
-	 * 
+	 * Third line: CMT info (2) <br>
 	 * [1-58] Centroid parameters determined in the inversion. Centroid time,
 	 * given with respect to the reference time, centroid latitude, centroid
 	 * longitude, and centroid depth. The value of each variable is followed by
@@ -273,13 +264,6 @@ final class NDK implements GlobalCMTData {
 	private int rake1;
 
 	private NDK() {
-	}
-
-	/**
-	 * @return global cmt ID
-	 */
-	GlobalCMTID getID() {
-		return id;
 	}
 
 	@Override
@@ -397,11 +381,15 @@ final class NDK implements GlobalCMTData {
 
 	/**
 	 * @param search
+	 *            conditions for NDK
 	 * @return if this fulfills "search"
 	 */
 	boolean fulfill(GlobalCMTSearch search) {
 		LocalDateTime cmtDate = getCMTTime();
 		if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate))
+			return false;
+
+		if (!search.getPredicateSet().stream().allMatch(p -> p.test(this)))
 			return false;
 
 		// latitude
