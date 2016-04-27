@@ -18,6 +18,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
@@ -58,7 +60,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * timeshift fileを一つに統一
  * 
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.2
  * @author Kensuke Konishi
  * 
  */
@@ -350,9 +352,7 @@ public class FujiStaticCorrection implements Operation {
 
 		int pointshift = getBestPoint(obs, syn, delta);
 		double timeshift = pointshift * delta;
-
-		// System.out.println(Math.round(timeshift * 100) / 100.0);
-		return Math.round(timeshift * 100) / 100.0;
+		return Precision.round(timeshift, 2);
 
 	}
 

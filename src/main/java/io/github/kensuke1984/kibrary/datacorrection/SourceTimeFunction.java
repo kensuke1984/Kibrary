@@ -17,6 +17,7 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
+import org.apache.commons.math3.util.ArithmeticUtils;
 
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
@@ -30,7 +31,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
  * 
- * @version 0.0.6.1
+ * @version 0.0.6.2
  * 
  * @author Kensuke Konishi
  *
@@ -173,8 +174,8 @@ public abstract class SourceTimeFunction {
 			System.err.println("np must be a power of 2");
 			bool = false;
 		}
-		int tlen10 = (int) Math.round(10 * tlen);
-		if (tlen10 <= 0 || (tlen10 & (tlen10 - 1)) != 0) {
+		long tlen10 =  Math.round(10 * tlen);
+		if (!ArithmeticUtils.isPowerOfTwo(tlen10)) {
 			System.err.println("tlen must be a tenth of a power of 2");
 			bool = false;
 		}

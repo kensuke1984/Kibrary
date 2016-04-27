@@ -16,12 +16,14 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.math3.util.Precision;
+
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.2
  */
 final class RaypathPanel extends JPanel {
 
@@ -51,15 +53,15 @@ final class RaypathPanel extends JPanel {
 	}
 
 	void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double radius) {
-		EpsGraphics epsGraphics=null;
+		EpsGraphics epsGraphics = null;
 		try {
 			epsGraphics = new EpsGraphics(phase.toString(), outputStream, 0, 0, getWidth(), getHeight(),
 					ColorMode.COLOR_RGB);
 			paintComponent(epsGraphics);
-			rayparameter = Math.round(rayparameter * 1000) / 1000.0;
-			delta = Math.round(Math.toDegrees(delta) * 1000) / 1000.0;
-			time = Math.round(time * 1000) / 1000.0;
-			double depth = Math.round((6371 - radius) * 1000.0) / 1000.0;
+			rayparameter = Precision.round(rayparameter, 3);
+			delta = Precision.round(Math.toDegrees(delta), 3);
+			time = Precision.round(time, 3);
+			double depth = Precision.round(6371 - radius, 3);
 			String line = phase.toString() + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
 					+ ", Epicentral distance[deg]: " + delta + ", Travel time[s]: " + time;
 			int startInt = (int) changeX(-line.length() / 2 * 6371 / 45);

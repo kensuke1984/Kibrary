@@ -159,10 +159,10 @@ class SACModifier {
 		// if the gap is bigger than tapertime then skip
 		// if (sacStartTime.after(eventTime)) {
 		if (taperTime < timeGapInMillis) {
-			System.out.println(modifiedSacPath + " starts too late");
+			System.err.println(modifiedSacPath + " starts too late");
 			return false;
 		} else if (0 <= timeGapInMillis) {
-			System.out.println("seismograms start at after the event time... interpolating...");
+			System.err.println("seismograms start at after the event time... interpolating...");
 			// delta [msec]
 			long deltaInMillis = (long) (Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)) * 1000);
 
@@ -254,7 +254,6 @@ class SACModifier {
 		}
 		// ヘッダーの更新
 		this.headerMap = SACUtil.readHeader(modifiedSacPath);
-
 	}
 
 }

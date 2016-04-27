@@ -147,7 +147,7 @@ public class Dvector {
 	private Set<Station> usedStationSet;
 
 	/**
-	 * それぞれのタイムウインドウに対する重み TODO
+	 * weighting for i th timewindow.
 	 */
 	private double[] weighting;
 
@@ -322,10 +322,10 @@ public class Dvector {
 	}
 
 	/**
-	 * @return 重み列
+	 * @return weighting for the i th timewindow.
 	 */
-	public double[] getWeighting() {
-		return weighting.clone();
+	public double getWeighting(int i) {
+		return weighting[i];
 	}
 
 	/**

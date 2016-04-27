@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.7
+ * @version 0.2.0.8
  * 
  * @author Kensuke Konishi
  * 
@@ -209,9 +209,8 @@ public class CheckerBoardTest implements Operation {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
-				bdw.addBasicID(obsIDs[i].setData(bornPart[i].mapDivide(dVector.getWeighting()[i]).toArray()));
-				bdw.addBasicID(
-						synIDs[i].setData(dVector.getSynVec()[i].mapDivide(dVector.getWeighting()[i]).toArray()));
+				bdw.addBasicID(obsIDs[i].setData(bornPart[i].mapDivide(dVector.getWeighting(i)).toArray()));
+				bdw.addBasicID(synIDs[i].setData(dVector.getSynVec()[i].mapDivide(dVector.getWeighting(i)).toArray()));
 			}
 		}
 	}
@@ -237,10 +236,10 @@ public class CheckerBoardTest implements Operation {
 		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
-			double[] weighting = dVector.getWeighting();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
-				bdw.addBasicID(obsIDs[i].setData(dVector.getObsVec()[i].mapDivide(weighting[i]).toArray()));
-				bdw.addBasicID(synIDs[i].setData(bornPart[i].mapDivide(weighting[i]).toArray()));
+				double weighting = dVector.getWeighting(i);
+				bdw.addBasicID(obsIDs[i].setData(dVector.getObsVec()[i].mapDivide(weighting).toArray()));
+				bdw.addBasicID(synIDs[i].setData(bornPart[i].mapDivide(weighting).toArray()));
 			}
 		}
 	}

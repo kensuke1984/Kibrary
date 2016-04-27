@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -39,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0.3.1
+ * @version 2.0.3.2
  * 
  * @author Kensuke Konishi
  * 
@@ -113,8 +114,8 @@ public class LetMeInvert implements Operation {
 		if (property.containsKey("alpha"))
 			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
 					.toArray();
-		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+"))
-				.map(InverseMethodEnum::of).collect(Collectors.toSet());
+		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -324,8 +325,8 @@ public class LetMeInvert implements Operation {
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
-			double gcarc = Math.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)) * 100) / 100.0;
-			double azimuth = Math.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)) * 100) / 100.0;
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
 			Path eventFolder = outPath.resolve(obsIDs[i].getGlobalCMTID().toString());
 			// eventFolder.mkdir();
 			Path plotPath = eventFolder.resolve("recordOBS.plt");
@@ -415,8 +416,8 @@ public class LetMeInvert implements Operation {
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
-			double gcarc = Math.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)) * 100) / 100.0;
-			double azimuth = Math.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)) * 100) / 100.0;
+			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
+			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
 					PrintWriter plotW = new PrintWriter(
 							Files.newBufferedWriter(plotFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
@@ -441,7 +442,7 @@ public class LetMeInvert implements Operation {
 	private void solve() {
 		inverseMethods.forEach(method -> {
 			try {
-				if(method==InverseMethodEnum.LEAST_SQUARES_METHOD)
+				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD)
 					return; // TODO
 				solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
 			} catch (Exception e) {
@@ -586,8 +587,8 @@ public class LetMeInvert implements Operation {
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
 				pw.println(station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " "
-						+ event.getCmtLocation() + " " + Math.round(epicentralDistance * 100) / 100.0 + " "
-						+ Math.round(100 * azimuth) / 100.0);
+						+ event.getCmtLocation() + " " + Precision.round(epicentralDistance ,2) + " "
+						+ Precision.round(azimuth,2) );
 			});
 
 		}

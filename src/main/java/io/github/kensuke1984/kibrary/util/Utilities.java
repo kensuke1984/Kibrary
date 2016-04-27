@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
@@ -40,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.5
+ * @version 0.1.0.6
  * 
  */
 public final class Utilities {
@@ -222,9 +223,7 @@ public final class Utilities {
 				e.printStackTrace();
 			}
 		};
-
 		runEventProcess(path, moveProcess, 30, TimeUnit.MINUTES);
-
 	}
 
 	/**
@@ -247,11 +246,9 @@ public final class Utilities {
 		if (n < 1)
 			throw new RuntimeException("invalid input n");
 
-		double log10 = Math.floor(Math.log10(Math.abs(d)));
-		double power10 = Math.pow(10, log10 - n + 1);
-		double value = power10 < 1 ? Math.round(d / power10) / (1 / power10) : Math.round(d / power10) * power10;
-
-		return value;
+		final long log10 = (long) Math.floor(Math.log10(Math.abs(d)));
+		final double power10 = FastMath.pow(10, log10 - n + 1);
+		return Math.round(d / power10) * power10;
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -25,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * To identify which time window for a waveform, synStartTime is also used.
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  * 
  * @author Kensuke Konishi
@@ -113,9 +115,9 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 		this.station = station;
 		this.eventID = eventID;
 		this.component = component;
-		this.synStartTime = Math.round(synStartTime * 100) / 100.0;
-		this.timeShift = Math.round(timeShift * 100) / 100.0;
-		this.amplitudeRatio = Math.round(amplitudeRatio * 100) / 100.0;
+		this.synStartTime = Precision.round(synStartTime, 2);
+		this.timeShift = Precision.round(timeShift, 2);
+		this.amplitudeRatio = Precision.round(amplitudeRatio, 2);
 	}
 
 	public Station getStation() {

@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -41,8 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see {@link #create(byte[], Station[], GlobalCMTID[])}
  * 
  * 
- * @version 0.3.0.2
- * 
+ * @version 0.3.0.3
  * 
  * @author Kensuke Konishi
  * 
@@ -136,8 +136,8 @@ public final class TimewindowInformationFile {
 				dos.writeShort(stationMap.get(info.getStation()));
 				dos.writeShort(idMap.get(info.getGlobalCMTID()));
 				dos.writeByte(info.getComponent().valueOf());
-				float startTime = (float) (Math.round(info.startTime * 1000) / 1000.0);
-				float endTime = (float) (Math.round(info.endTime * 1000) / 1000.0);
+				float startTime = (float) Precision.round(info.startTime, 3);
+				float endTime = (float) Precision.round(info.endTime, 3);
 				dos.writeFloat(startTime);
 				dos.writeFloat(endTime);
 			}
@@ -206,8 +206,7 @@ public final class TimewindowInformationFile {
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double startTime = bb.getFloat();
 		double endTime = bb.getFloat();
-		TimewindowInformation info = new TimewindowInformation(startTime, endTime, station, id, component);
-		return info;
+		return new TimewindowInformation(startTime, endTime, station, id, component);
 	}
 
 }

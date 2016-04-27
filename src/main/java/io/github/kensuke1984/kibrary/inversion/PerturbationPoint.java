@@ -22,11 +22,11 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * 深さを含んだ実際にインバージョンで求める摂動点情報
  * 
- * dr dlatitude dlongitude で　dVを作る
+ * dr dlatitude dlongitude で dVを作る
  * 
- * TODO 名前のチェック　validity
+ * TODO 名前のチェック validity
  * 
- * @version 0.1.1
+ * @version 0.1.2
  * 
  * @author Kensuke Konishi
  * 
@@ -49,10 +49,9 @@ public class PerturbationPoint extends HorizontalPoint {
 			this.loc = loc;
 		}
 
-	 @Override
+		@Override
 		public void run() {
-			volumeMap.put(loc,
-					GridMaker.getVolume(loc, dR, dLatitude, dLongitude));
+			volumeMap.put(loc, GridMaker.getVolume(loc, dR, dLatitude, dLongitude));
 			System.out.println(loc);
 		}
 
@@ -60,8 +59,7 @@ public class PerturbationPoint extends HorizontalPoint {
 
 	public void printVolumes() {
 		for (int i = 0; i < perturbationLocation.length; i++)
-			System.out.println(perturbationLocation[i] + " "
-					+ volumeMap.get(perturbationLocation[i]));
+			System.out.println(perturbationLocation[i] + " " + volumeMap.get(perturbationLocation[i]));
 	}
 
 	/**
@@ -69,8 +67,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	 */
 	public void computeVolumes() {
 		volumeMap = new HashMap<>();
-		ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime()
-				.availableProcessors());
+		ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		for (int i = 0; i < perturbationLocation.length; i++) {
 			VolumeCalculator vc = new VolumeCalculator(perturbationLocation[i]);
 			es.execute(vc);
@@ -88,13 +85,12 @@ public class PerturbationPoint extends HorizontalPoint {
 
 	// TODO
 	public void createUnknownParameterSetFile(File outFile) throws FileAlreadyExistsException {
-		if (outFile.exists()) 
+		if (outFile.exists())
 			throw new FileAlreadyExistsException(outFile.getPath());
-		
+
 		computeVolumes();
 
-		try (PrintWriter pw = new PrintWriter(new BufferedWriter(
-				new FileWriter(outFile)));) {
+		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)));) {
 			for (int i = 0; i < perturbationLocation.length; i++) {
 				Location loc = perturbationLocation[i];
 				System.out.println(loc);
@@ -124,7 +120,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	}
 
 	/**
-	 * （インバージョンに使う）摂動点の情報（中枢） 　順番も保持
+	 * （インバージョンに使う）摂動点の情報（中枢） 順番も保持
 	 */
 	private Location[] perturbationLocation;
 
@@ -134,7 +130,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	private int pointN;
 
 	/**
-	 * i番目の摂動点の名前　（
+	 * i番目の摂動点の名前 （
 	 */
 	private String[] pointName;
 
@@ -147,9 +143,10 @@ public class PerturbationPoint extends HorizontalPoint {
 	private File perturbationPointFile;
 
 	/**
-	 * @param args dir dR dLatitude dLongitude
-	 * @throws FileAlreadyExistsException 
-	 * @throws NoSuchFileException 
+	 * @param args
+	 *            dir dR dLatitude dLongitude
+	 * @throws FileAlreadyExistsException
+	 * @throws NoSuchFileException
 	 */
 	public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
 		if (args.length != 4) {
@@ -157,8 +154,8 @@ public class PerturbationPoint extends HorizontalPoint {
 			return;
 		}
 		File dir = new File(args[0]);
-		PerturbationPoint pp = new PerturbationPoint(new File(dir,
-				"horizontalPoint.inf"), new File(dir, "perturbationPoint.inf"));
+		PerturbationPoint pp = new PerturbationPoint(new File(dir, "horizontalPoint.inf"),
+				new File(dir, "perturbationPoint.inf"));
 		pp.dR = Double.parseDouble(args[1]);
 		pp.dLatitude = Double.parseDouble(args[2]);
 		pp.dLongitude = Double.parseDouble(args[3]);
@@ -178,36 +175,35 @@ public class PerturbationPoint extends HorizontalPoint {
 	 * 
 	 * 全てのr、水平分布に対しての摂動点情報のperturbationInfoファイルを書く
 	 * 
-	 * @param r array  of radius
-	 * @param horizontalInfo file for {@link HorizontalPoint}
-	 * @param out for output
-	 * @throws NoSuchFileException 
+	 * @param r
+	 *            array of radius
+	 * @param horizontalInfo
+	 *            file for {@link HorizontalPoint}
+	 * @param out
+	 *            for output
+	 * @throws NoSuchFileException
 	 */
-	public static void createPerturbationPoint(double[] r, File horizontalInfo,
-			File out) throws NoSuchFileException {
+	public static void createPerturbationPoint(double[] r, File horizontalInfo, File out) throws NoSuchFileException {
 		HorizontalPoint hp = new HorizontalPoint(horizontalInfo);
 		Set<String> pointNameSet = hp.getHorizontalPointNameSet();
 		// Map<String, HorizontalPosition> pointMap = hp.getPerPointMap();
-		try (PrintWriter pw = new PrintWriter(new BufferedWriter(
-				new FileWriter(out)));) {
-			for (String name : pointNameSet) {
-				for (int ir = 0; ir < r.length; ir++) {
+		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(out)))) {
+			for (String name : pointNameSet) 
+				for (int ir = 0; ir < r.length; ir++) 
 					pw.println(name + " " + r[ir]);
-				}
-
-			}
 		} catch (Exception e) {
 		}
 
 	}
 
 	/**
-	 * @param horizontalPointFile {@link File} for {@link HorizontalPoint}
-	 * @param perturbationPointFile {@link File} for link PerturbationPoint}
-	 * @throws NoSuchFileException 
+	 * @param horizontalPointFile
+	 *            {@link File} for {@link HorizontalPoint}
+	 * @param perturbationPointFile
+	 *            {@link File} for link PerturbationPoint}
+	 * @throws NoSuchFileException
 	 */
-	public PerturbationPoint(File horizontalPointFile,
-			File perturbationPointFile) throws NoSuchFileException {
+	public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws NoSuchFileException {
 		super(horizontalPointFile);
 		this.perturbationPointFile = perturbationPointFile;
 		readPerturbationPointFile();
@@ -217,19 +213,17 @@ public class PerturbationPoint extends HorizontalPoint {
 	 * @return array of radius
 	 */
 	public double[] getR() {
-		double[] r = new double[pointN];
-		for (int i = 0; i < pointN; i++)
-			r[i] = perturbationLocation[i].getR();
-		return r;
+		return Arrays.stream(perturbationLocation).mapToDouble(Location::getR).toArray();
 	}
 
 	/**
 	 * 
-	 * @param i index
+	 * @param i
+	 *            index
 	 * @return i番目の深さ
 	 */
 	public double getR(int i) {
-		return getR()[i];
+		return perturbationLocation[i].getR();
 	}
 
 	/**
@@ -242,8 +236,7 @@ public class PerturbationPoint extends HorizontalPoint {
 			List<String> lines = FileUtils.readLines(perturbationPointFile);
 
 			for (int i = 0; i < lines.size(); i++)
-				if (lines.get(i).trim().length() == 0
-						|| lines.get(i).trim().startsWith("#"))
+				if (lines.get(i).trim().length() == 0 || lines.get(i).trim().startsWith("#"))
 					lines.remove(i);
 			// System.out.println(lines.size());
 			pointN = lines.size();
@@ -254,9 +247,8 @@ public class PerturbationPoint extends HorizontalPoint {
 				String[] parts = lines.get(i).split("\\s+");
 				pointName[i] = parts[0];
 				double r = Double.parseDouble(parts[1]);
-				perturbationLocation[i] = new Location(getHorizontalPosition(
-						pointName[i]).getLatitude(), getHorizontalPosition(
-						pointName[i]).getLongitude(), r);
+				perturbationLocation[i] = new Location(getHorizontalPosition(pointName[i]).getLatitude(),
+						getHorizontalPosition(pointName[i]).getLongitude(), r);
 				// perturbationLocation[i].setR(r);
 			}
 			// System.out.println("hi");
@@ -274,22 +266,16 @@ public class PerturbationPoint extends HorizontalPoint {
 	}
 
 	/**
-	 * @param location {@link Location} for target
+	 * @param location
+	 *            {@link Location} for target
 	 * @return location に近い順でポイントのLocationを返す
 	 */
 	public Location[] getNearestLocation(Location location) {
 		final Location location0 = location;
-		Location[] locations = new Location[perturbationLocation.length];
-		for (int i = 0; i < locations.length; i++)
-			locations[i] = perturbationLocation[i];
-
-		Arrays.sort(locations, (o1, o2)->{
-			double dist1 = o1.getDistance(location0);
-			double dist2 = o2.getDistance(location0);
-			return (int) (Math.round(dist1 - dist2));
+		Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
+		Arrays.sort(locations, (o1, o2) -> {
+			return Double.compare(o1.getDistance(location0), o2.getDistance(location0));
 		});
-		// for(int i=0;i<locations.length;i++)
-		// System.out.println(locations[i]+" "+perturbationLocation[i]+" "+locations[i].getDistance(location));
 		return locations;
 
 	}

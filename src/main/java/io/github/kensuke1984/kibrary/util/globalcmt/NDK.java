@@ -61,7 +61,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * ============================================================================
  * ====
  * 
- * @version 0.0.6.1
+ * @version 0.0.6.2
  * 
  * @author Kensuke Konishi
  * @see <a href=
@@ -345,7 +345,7 @@ final class NDK implements GlobalCMTData {
 		ndk.scalarMoment = Double.parseDouble(parts[10]) * Math.pow(10, ndk.momentExponent);
 		double m0 = ndk.scalarMoment / 100000 / 100;
 		// 10 ^5 dyne = N, 100 cm = 1m
-		double mw = Math.round((Math.log10(m0) - 9.1) / 1.5 * 10) / 10.0;
+		double mw = MomentTensor.toMw(m0);
 		ndk.momentTensor = new MomentTensor(mrr, mtt, mpp, mrt, mrp, mtp, ndk.momentExponent, mw);
 		ndk.eigenValue0 = Double.parseDouble(parts[1]);
 		ndk.eigenValue1 = Double.parseDouble(parts[4]);
@@ -362,7 +362,6 @@ final class NDK implements GlobalCMTData {
 		ndk.strike1 = Integer.parseInt(parts[14]);
 		ndk.dip1 = Integer.parseInt(parts[15]);
 		ndk.rake1 = Integer.parseInt(parts[16]);
-
 		return ndk;
 	}
 

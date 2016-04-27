@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.Location;
 
@@ -20,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke Konishi
- * @version 0.1.10.1 TODO thread safe
+ * @version 0.1.10.2 TODO thread safe
  */
 public class GlobalCMTSearch {
 
@@ -36,7 +37,7 @@ public class GlobalCMTSearch {
 		Location location = event.getCmtLocation();
 		double lat = location.getLatitude();
 		double lon = location.getLongitude();
-		double depth = Math.round((6371 - location.getR()) * 1000) / 1000.0;
+		double depth = Precision.round((6371 - location.getR()), 3);
 		System.out.println(id + " " + event.getCMTTime().format(outputFormat) + " " + lat + " " + lon + " " + depth
 				+ " MW:" + event.getCmt().getMw());
 	}

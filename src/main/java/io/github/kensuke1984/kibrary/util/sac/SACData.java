@@ -11,6 +11,8 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -20,8 +22,8 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * Data in a SAC file.
  * 
  * @author Kensuke Konishi
- * @version 0.0.1
- *  @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
+ * @version 0.0.1.1
+ * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACData extends SACHeaderData {
 	/**
@@ -225,8 +227,8 @@ public interface SACData extends SACHeaderData {
 		double delta = getValue(SACHeaderEnum.DELTA);
 		double b = (int) (getValue(SACHeaderEnum.B) / delta) * delta;
 		int npts = getInt(SACHeaderEnum.NPTS);
-		double[] timeAxis = IntStream.range(0, npts).parallel()
-				.mapToDouble(i -> Math.round(10000 * (i * delta + b)) / 10000.0).toArray();
+		double[] timeAxis = IntStream.range(0, npts).parallel().mapToDouble(i -> Precision.round(i * delta + b, 4))
+				.toArray();
 		return new Trace(timeAxis, getData());
 	}
 

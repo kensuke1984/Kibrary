@@ -2,6 +2,8 @@ package io.github.kensuke1984.kibrary.waveformdata;
 
 import java.util.Arrays;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -227,14 +229,14 @@ public class BasicID {
 			GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, long startByte,
 			boolean convolute, double... waveformData) {
 		this.waveFormType = waveFormType;
-		this.samplingHz = Math.round(samplingHz * 1000) / 1000.0;
-		this.startTime = Math.round(startTime * 1000) / 1000.0;
+		this.samplingHz = Precision.round(samplingHz, 3);
+		this.startTime = Precision.round(startTime, 3);
 		this.npts = npts;
 		this.station = station;
 		this.globalCMTID = globalCMTID;
 		this.sacComponent = sacComponent;
-		this.minPeriod = Math.round(minPeriod * 1000) / 1000.0;
-		this.maxPeriod = Math.round(maxPeriod * 1000) / 1000.0;
+		this.minPeriod = Precision.round(minPeriod, 3);
+		this.maxPeriod = Precision.round(maxPeriod, 3);
 		this.startByte = startByte;
 		this.convolute = convolute;
 		if (waveformData.length != 0 && waveformData.length != npts)

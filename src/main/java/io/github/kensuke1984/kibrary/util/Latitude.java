@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Latitude [-90, 90] The value is rounded off to the fourth decimal position.
@@ -9,7 +10,7 @@ import org.apache.commons.math3.util.FastMath;
  * This class is <b>IMMUTABLE</b>
  * </p>
  * 
- * @version 0.0.6.1
+ * @version 0.0.6.2
  * 
  * @author Kensuke Konishi
  * 
@@ -68,22 +69,16 @@ class Latitude implements Comparable<Latitude> {
 	 */
 	Latitude(double geographicLatitude) {
 		inGeographicLatitude = geographicLatitude;
-		this.geographicLatitude = geographicLatitude;
-		adjust();
+		this.geographicLatitude = Precision.round(geographicLatitude,4);
 		if (!checkLatitude(geographicLatitude))
 			throw new IllegalArgumentException(
 					"The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
-		// this.geographicLatitude=geographicLatitude;
-		this.geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
-		this.theta = 0.5 * Math.PI - geocentricLatitude;
+		geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
+		theta = 0.5 * Math.PI - geocentricLatitude;
 	}
 
 	public double getInGeographicLatitude() {
 		return inGeographicLatitude;
-	}
-
-	private void adjust() {
-		geographicLatitude = FastMath.round(geographicLatitude * 10000) / 10000.0;
 	}
 
 	/**
