@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.dsminformation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.util.ArithmeticUtils;
+
 /**
  * Header part of a file for DSM.
  * 
@@ -62,8 +64,8 @@ class DSMheader {
 	 * @return if tlen is 2<sup>n</sup>/10
 	 */
 	static boolean validTlen(double tlen) {
-		int tlen10 = (int) Math.round(10 * tlen);
-		return 0 < tlen10 && (tlen10 & (tlen10 - 1)) == 0 && tlen10 / 10.0 == tlen;
+		long tlen10 = Math.round(10 * tlen);
+		return ArithmeticUtils.isPowerOfTwo(tlen10) && tlen10 / 10.0 == tlen;
 	}
 
 	/**
@@ -166,7 +168,7 @@ class DSMheader {
 	}
 
 	void setRe(double re) {
-		 relativeError = re;
+		relativeError = re;
 	}
 
 	void setRatc(double ratc) {

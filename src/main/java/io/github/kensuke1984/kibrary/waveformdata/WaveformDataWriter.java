@@ -216,9 +216,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	private long dataLength;
 
 	/**
-	 * 波形データを書き込む
-	 * 
-	 * @param data
+	 * Writes a waveform
+	 * @param data waveform data
 	 */
 	private void addWaveform(double[] data) throws IOException {
 		for (int i = 0; i < data.length; i++)

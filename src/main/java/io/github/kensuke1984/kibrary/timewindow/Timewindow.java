@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
+import org.apache.commons.math3.util.Precision;
+
 /**
  * Time window starting and ending time.<br>
  * <b>Those are round off to the 3rd decimal place.</b>
@@ -7,7 +9,7 @@ package io.github.kensuke1984.kibrary.timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * @author Kensuke Konishi
  *
  */
@@ -58,8 +60,8 @@ public class Timewindow implements Comparable<Timewindow> {
 	public Timewindow(double startTime, double endTime) {
 		if (endTime < startTime)
 			throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
-		this.startTime = Math.round(startTime * 1000) / 1000.0;
-		this.endTime = Math.round(endTime * 1000) / 1000.0;
+		this.startTime = Precision.round(startTime, 3);
+		this.endTime = Precision.round(endTime, 3);
 	}
 
 	@Override

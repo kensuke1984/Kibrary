@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -40,14 +41,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * 
- *  理論波形と観測波形の比較から使えるものを選択する。<br>
+ * 理論波形と観測波形の比較から使えるものを選択する。<br>
  * workDir以下にあるイベントディレクトリの中から選ぶ<br>
  * 振幅比、correlation、variance<br>
  * 
  * {@link TimewindowInformationFile} necessary.
  * 
- * @version 0.1.0.2
- * 
+ * @version 0.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -56,6 +56,7 @@ public class DataSelection implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(DataSelection.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan DataSelection");
 			pw.println("##Sac components to be used (Z R T)");
 			pw.println("#components");
 			pw.println("##Path of a working folder (.)");
@@ -84,7 +85,7 @@ public class DataSelection implements Operation {
 			pw.println("##double ratio (2)");
 			pw.println("#ratio");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private Set<EventFolder> eventDirs;
@@ -198,9 +199,10 @@ public class DataSelection implements Operation {
 	public static void main(String[] args) throws Exception {
 		DataSelection ds = new DataSelection(Property.parse(args));
 		long start = System.nanoTime();
-		System.err.println(DataSelection.class.getName()+" is going");
+		System.err.println(DataSelection.class.getName() + " is going");
 		ds.run();
-		System.err.println(DataSelection.class.getName()+" finished in " + Utilities.toTimeString(System.nanoTime() - start));
+		System.err.println(
+				DataSelection.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	private void output() throws IOException {
@@ -341,15 +343,15 @@ public class DataSelection implements Operation {
 		double syn2 = synU.dotProduct(synU);
 		double cor = obsU.dotProduct(synU);
 		double var = obs2 + syn2 - 2 * cor;
-		double maxRatio = Math.round(synMax / obsMax * 100) / 100.0;
-		double minRatio = Math.round(synMin / obsMin * 100) / 100.0;
+		double maxRatio = Precision.round(synMax / obsMax, 2);
+		double minRatio = Precision.round(synMin / obsMin, 2);
 		double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
 		var /= obs2;
 		cor /= Math.sqrt(obs2 * syn2);
 
-		absRatio = Math.round(absRatio * 100) / 100.0;
-		var = Math.round(var * 100) / 100.0;
-		cor = Math.round(cor * 100) / 100.0;
+		absRatio = Precision.round(absRatio, 2);
+		var = Precision.round(var, 2);
+		cor = Precision.round(cor, 2);
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
 				|| var < minVariance || maxVariance < var);
@@ -372,9 +374,9 @@ public class DataSelection implements Operation {
 		Trace trace = sac.createTrace();
 		double tStart = timeWindow.getStartTime();
 		double tEnd = timeWindow.getEndTime();
-		return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(),false);
+		return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
 	}
-	
+
 	private Path workPath;
 
 	@Override
