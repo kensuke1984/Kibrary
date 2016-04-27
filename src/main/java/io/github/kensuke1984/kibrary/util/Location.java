@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.util.Arrays;
 
-import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * This class rounds off values at the 4th decimal point.
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -41,7 +41,7 @@ public class Location extends HorizontalPosition {
 	 */
 	public Location(double latitude, double longitude, double r) {
 		super(latitude, longitude);
-		this.r = roundR(r);
+		this.r = Precision.round(r,3);
 	}
 
 	/**
@@ -65,14 +65,6 @@ public class Location extends HorizontalPosition {
 	 */
 	public XYZ toXYZ() {
 		return RThetaPhi.toCartesian(r, getTheta(), getPhi());
-	}
-
-	/**
-	 * @param r to round off
-	 * @return the input r rounded off at the 4th decimal point
-	 */
-	private static double roundR(double r) {
-		return FastMath.round(r * 1000) / 1000.0;
 	}
 
 	/**

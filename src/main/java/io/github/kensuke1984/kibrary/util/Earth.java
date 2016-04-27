@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
@@ -10,9 +12,7 @@ import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.0.1
- * 
- * 
+ * @version 0.1.0.2
  */
 public final class Earth {
 	private Earth() {
@@ -31,18 +31,15 @@ public final class Earth {
 	 */
 	public static double getMeridionalParts(double lowerLatitude, double upperLatitude) {
 		if (upperLatitude < lowerLatitude || lowerLatitude < -90 || 90 < lowerLatitude || upperLatitude < -90
-				|| 90 < upperLatitude) {
-			System.err
-					.println("input latitudes lower, upper: " + lowerLatitude + "  " + upperLatitude + " are invalid");
-			return 0;
-		}
+				|| 90 < upperLatitude)
+			throw new IllegalArgumentException(
+					"input latitudes lower, upper: " + lowerLatitude + "  " + upperLatitude + " are invalid");
+
 		if (0 <= lowerLatitude)
 			return getMeridionalParts(upperLatitude) - getMeridionalParts(lowerLatitude);
 		else if (upperLatitude < 0)
 			return getMeridionalParts(lowerLatitude) - getMeridionalParts(upperLatitude);
-		else
-			return getMeridionalParts(lowerLatitude) + getMeridionalParts(upperLatitude);
-
+		return getMeridionalParts(lowerLatitude) + getMeridionalParts(upperLatitude);
 	}
 
 	/**
@@ -55,12 +52,10 @@ public final class Earth {
 	 *         after oval consideration
 	 */
 	public static double getR(HorizontalPosition location) {
-		double r = 1.0;
 		double theta = location.getGeocentricLatitude();
-		r /= FastMath.cos(theta) * FastMath.cos(theta) / EQUATORIAL_RADIUS / EQUATORIAL_RADIUS
-				+ FastMath.sin(theta) * FastMath.sin(theta) / POLAR_RADIUS / POLAR_RADIUS;
-		r = FastMath.sqrt(r);
-		return r;
+		double r = 1 / (FastMath.cos(theta) * FastMath.cos(theta) / EQUATORIAL_RADIUS / EQUATORIAL_RADIUS
+				+ FastMath.sin(theta) * FastMath.sin(theta) / POLAR_RADIUS / POLAR_RADIUS);
+		return FastMath.sqrt(r);
 	}
 
 	/**
@@ -98,11 +93,7 @@ public final class Earth {
 	private static double getMeridionalParts(double latitude) {
 		if (latitude < -90 || 90 < latitude)
 			throw new IllegalArgumentException("input latitude : " + latitude + " is invalid");
-
-		double s = getSUMforMeridionalParts(latitude);
-		// System.out.println(s);
-		s *= EQUATORIAL_RADIUS; // a/(1+n)
-		return s;
+		return getSUMforMeridionalParts(latitude) * EQUATORIAL_RADIUS;
 	}
 
 	/**
@@ -126,11 +117,11 @@ public final class Earth {
 		if (phi < 0)
 			phi *= -1;
 
-		s += (1 + n2 / 4.0 + n4 / 64.0) * phi;
+		s += (1 + n2 / 4 + n4 / 64) * phi;
 
-		s += -1.5 * (N - n3 / 8.0) * FastMath.sin(phi * 2);
+		s += -1.5 * (N - n3 / 8) * FastMath.sin(phi * 2);
 
-		s += 15 / 16.0 * (n2 - 0.25 * n4) * FastMath.sin(4 * phi);
+		s += 15 / 16.0 * (n2 - n4 / 4) * FastMath.sin(4 * phi);
 
 		s += -35 / 48.0 * n3 * FastMath.sin(6 * phi);
 
@@ -164,7 +155,7 @@ public final class Earth {
 	/**
 	 * 第一扁平率 1/298.25
 	 */
-	public final static double FLATTENING = 1.0 / 298.25;
+	public final static double FLATTENING = 1 / 298.25;
 
 	/**
 	 * tire profile 第三扁平率
@@ -297,23 +288,23 @@ public final class Earth {
 			throw new IllegalArgumentException("endA: " + endA + " must be bigger than startA:" + startA);
 
 		if (startLongitude < 0 && 180 < endLongitude) {
-			System.out.println("startLongitude :" + startLongitude);
-			System.out.println("endLongitude :" + endLongitude);
-			System.out.println("Input region must be [0:360] or [-180:180]");
+			System.err.println("startLongitude :" + startLongitude);
+			System.err.println("endLongitude :" + endLongitude);
+			System.err.println("Input region must be [0:360] or [-180:180]");
 		}
 
-		// //longitude
+		// //latitude
 		if (endLatitude <= startLatitude || startLatitude < -90 || 90 < endLatitude) {
-			System.out.println("startLatitude :" + startLatitude + " must be [-90, endLatitude]");
-			System.out.println("endLatitude: " + endLatitude + " must be bigger than startLatitude:" + startLatitude);
-			System.out.println("endLatitude :" + endLatitude + " must be [startLatitude, 90]");
+			System.err.println("startLatitude :" + startLatitude + " must be [-90, endLatitude]");
+			System.err.println("endLatitude: " + endLatitude + " must be bigger than startLatitude:" + startLatitude);
+			System.err.println("endLatitude :" + endLatitude + " must be [startLatitude, 90]");
 			return 0;
 		}
 		// longitude
 		if (startLongitude < -180 || 360 < endLongitude || endLongitude <= startLongitude) {
-			System.out.println("startLongitude :" + startLongitude + " must be [-180, endLongitude)");
-			System.out.println("endLongitude :" + endLongitude + " must be (startLongitude, 360]");
-			System.out
+			System.err.println("startLongitude :" + startLongitude + " must be [-180, endLongitude)");
+			System.err.println("endLongitude :" + endLongitude + " must be (startLongitude, 360]");
+			System.err
 					.println("endLongitude: " + endLongitude + " must be bigger than startLongitude:" + startLongitude);
 			return 0;
 		}
@@ -324,17 +315,14 @@ public final class Earth {
 		// System.out.println("dlatitude"+dLatitude);
 		int nr = (int) ((endA - startA) / dr) + 1;
 		double[] rs = new double[nr];
-
-		for (int i = 0; i < nr - 1; i++)
-			rs[i] = startA + i * dr;
-		if (rs[0] == 0)
-			rs[0] = 0.00000001; // TODO どうするか
+		Arrays.setAll(rs, i -> startA + i * dr);
+		if (startA == 0)
+			rs[0] = 1e-8; // TODO どうするか
 		rs[nr - 1] = endA;
 
 		int nLatitude = (int) ((endLatitude - startLatitude) / dLatitude) + 1;
 		double[] latitudes = new double[nLatitude];
-		for (int i = 0; i < nLatitude - 1; i++)
-			latitudes[i] = startLatitude + i * dLatitude;
+		Arrays.setAll(latitudes, i -> startLatitude + i * dLatitude);
 		latitudes[nLatitude - 1] = endLatitude;
 
 		double v = 0;

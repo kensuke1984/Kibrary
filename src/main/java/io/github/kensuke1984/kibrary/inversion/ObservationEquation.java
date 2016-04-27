@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 /**
  * Am=d
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.2
  * 
  * 
  * @author Kensuke Konishi
@@ -71,9 +71,11 @@ public class ObservationEquation {
 	}
 
 	/**
-	 * Am=d 求めたいのは (d-Am)T(d-Am)/obs<sup>2</sup>
+	 * Am=d 求めたいのは (d-Am)<sup>T</sup>(d-Am)/obs<sup>2</sup>
 	 * 
-	 * (dT-mTAT)(d-Am)=dTd-dTAm-mTATd+mTATAm =dTd-2*(ATd)mT+mT(ATA)m
+	 * (d<sup>T</sup>-m<sup>T</sup>A<sup>T</sup>)(d-Am)= d<sup>T</sup>d-d<sup>T
+	 * </sup>Am-m<sup>T</sup>A<sup>T</sup>d+m<sup>T</sup>A<sup>T</sup>Am =d<sup>T
+	 * </sup>d-2*(A<sup>T</sup>d)m<sup>T</sup>+m<sup>T</sup>(A<sup>T</sup>A)m
 	 * 
 	 * 
 	 * @param m
@@ -112,7 +114,7 @@ public class ObservationEquation {
 			if (k < 0)
 				return;
 			int row = dVector.getStartPoints(k);
-			double weighting = dVector.getWeighting()[k] * parameterList.get(column).getWeighting();
+			double weighting = dVector.getWeighting(k) * parameterList.get(column).getWeighting();
 			double[] partial = id.getData();
 			for (int j = 0; j < partial.length; j++)
 				a.setEntry(row + j, column, partial[j] * weighting);

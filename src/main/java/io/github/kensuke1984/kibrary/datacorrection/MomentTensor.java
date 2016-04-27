@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Moment Tensor<br>
@@ -12,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
  * This class is <b>IMMUTABLE</b>.
  * 
  * 
- * @version 0.0.6.1
+ * @version 0.0.6.2
  * @author Kensuke Konishi
  * 
  */
@@ -104,33 +105,32 @@ public class MomentTensor {
 	public double[] getDSMmt() {
 		double[] dsmMT = new double[6];
 		double factor = FastMath.pow(10, mtEXP - 25);
-
-		dsmMT[0] = FastMath.round(mrr * factor * 100000) / 100000.0;
-		dsmMT[1] = FastMath.round(mrt * factor * 100000) / 100000.0;
-		dsmMT[2] = FastMath.round(mrp * factor * 100000) / 100000.0;
-		dsmMT[3] = FastMath.round(mtt * factor * 100000) / 100000.0;
-		dsmMT[4] = FastMath.round(mtp * factor * 100000) / 100000.0;
-		dsmMT[5] = FastMath.round(mpp * factor * 100000) / 100000.0;
+		dsmMT[0] = Precision.round(mrr * factor, 5);
+		dsmMT[1] = Precision.round(mrt * factor, 5);
+		dsmMT[2] = Precision.round(mrp * factor, 5);
+		dsmMT[3] = Precision.round(mtt * factor, 5);
+		dsmMT[4] = Precision.round(mtp * factor, 5);
+		dsmMT[5] = Precision.round(mpp * factor, 5);
 		return dsmMT;
 	}
 
 	/**
 	 * @param scalarMoment
-	 *            (N*m)
+	 *            M<sub>0</sub> (N*m)
 	 * @return Mw for the scalar Moment
 	 */
 	public static final double toMw(double scalarMoment) {
 		// double mw =0;
 		double m0 = scalarMoment;
 		// 10 ^5 dyne = N, 100 cm = 1m
-		double mw = FastMath.round((FastMath.log10(m0) - 9.1) / 1.5 * 10) / 10.0;
-
-		return mw;
+		double mw = (FastMath.log10(m0) - 9.1) / 1.5;
+		return Precision.round(mw, 1);
 	}
 
 	@Override
 	public String toString() {
-		return "Moment Tensor (in Global CMT project order): Expo=" + mtEXP + " " + mrr + " " + mtt + " " + mpp + " " + mrt + " " + mrp + " " + mtp;
+		return "Moment Tensor (in Global CMT project order): Expo=" + mtEXP + " " + mrr + " " + mtt + " " + mpp + " "
+				+ mrt + " " + mrp + " " + mtp;
 	}
 
 }

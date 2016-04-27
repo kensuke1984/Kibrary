@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * </p>
  * 
  * 
- * @version 0.2
+ * @version 0.2.0.1
  * 
  * @author Kensuke Konishi
  * 
@@ -87,26 +87,20 @@ public class PartialID extends BasicID {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) {
+		if (this == obj)
 			return true;
-		}
-		if (!super.equals(obj)) {
+		if (!super.equals(obj))
 			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (getClass() != obj.getClass())
 			return false;
-		}
 		PartialID other = (PartialID) obj;
-		if (partialType != other.partialType) {
+		if (partialType != other.partialType)
 			return false;
-		}
 		if (pointLocation == null) {
-			if (other.pointLocation != null) {
+			if (other.pointLocation != null)
 				return false;
-			}
-		} else if (!pointLocation.equals(other.pointLocation)) {
+		} else if (!pointLocation.equals(other.pointLocation))
 			return false;
-		}
 		return true;
 	}
 

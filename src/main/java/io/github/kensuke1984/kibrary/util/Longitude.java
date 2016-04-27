@@ -1,12 +1,14 @@
 package io.github.kensuke1984.kibrary.util;
 
 import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * Longitude (-180, 180]
  * 
- * If you input 200, then the value is considered -160. The value is rounded off
- * to the 4th decimal position.
+ * If you input 200, then the value is considered -160.
+ * <p>
+ * The value is rounded off to the 4th decimal position.
  * 
  * <p>
  * This class is <b>IMMUTABLE</b>
@@ -14,7 +16,7 @@ import org.apache.commons.math3.util.FastMath;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * 
  */
 class Longitude implements Comparable<Longitude> {
@@ -42,7 +44,6 @@ class Longitude implements Comparable<Longitude> {
 		if (!checkLongitude(longitude))
 			throw new IllegalArgumentException(
 					"The input longitude: " + longitude + " is invalid (must be [-180, 360).");
-		// longitude = FastMath.round(longitude*10000)/10000.0;
 		inLongitude = longitude;
 		if (180 < longitude) {
 			phi = FastMath.toRadians(longitude - 360);
@@ -51,7 +52,8 @@ class Longitude implements Comparable<Longitude> {
 			phi = FastMath.toRadians(longitude);
 			this.longitude = longitude;
 		}
-		adjust();
+		this.longitude = Precision.round(this.longitude, 4);
+		this.phi = Precision.round(phi, 4);
 	}
 
 	/**
@@ -111,11 +113,6 @@ class Longitude implements Comparable<Longitude> {
 	 */
 	public double getValue() {
 		return inLongitude;
-	}
-
-	private void adjust() {
-		longitude = FastMath.round(longitude * 10000) / 10000.0;
-		phi = FastMath.round(phi * 10000) / 10000.0;
 	}
 
 	@Override

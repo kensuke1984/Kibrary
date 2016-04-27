@@ -9,12 +9,14 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.math3.util.Precision;
+
 /**
  * Turning depth mode
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1.1
+ * @version 0.1.1.2
  * 
  */
 class TurningDepthMode extends Computation {
@@ -51,8 +53,8 @@ class TurningDepthMode extends Computation {
 
 		final double turningR = structure.earthRadius() - travelTimeTool.getMostImportant();
 		if (turningR < 0) {
-			SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null, "Input turning depth "
-					+ Math.round(100 * travelTimeTool.getMostImportant()) / 100.0 + " is invalid."));
+			SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(null,
+					"Input turning depth " + Precision.round(travelTimeTool.getMostImportant(), 2) + " is invalid."));
 			return;
 		}
 		Phase[] samplePhase = travelTimeTool.getSelectedPhases();
