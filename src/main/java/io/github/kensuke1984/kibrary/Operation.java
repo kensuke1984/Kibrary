@@ -13,6 +13,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * Main procedures in Kibrary
  * 
- * @version 0.0.4
+ * @version 0.0.4.1
  * @author Kensuke Konishi
  *
  */
@@ -89,16 +90,15 @@ public interface Operation {
 			args = new String[] { Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).toString() };
 		}
 
-		if (2 < args.length)
-			throw new IllegalArgumentException(
-					"Usage: [a name of procedure] (a property file) or -l to list the names of procedures");
 		if (args[0].equals("-l")) {
 			Manhattan.printList();
 			return;
 		}
 
+		String[] arguments = Arrays.stream(args).skip(1).toArray(String[]::new);
+
 		if (EnumUtils.isValidEnum(Manhattan.class, args[0]))
-			Manhattan.valueOf(args[0]).invokeMain(args.length == 1 ? new String[0] : new String[] { args[1] });
+			Manhattan.valueOf(args[0]).invokeMain(arguments);
 		else {
 			Properties prop = new Properties();
 			prop.load(Files.newBufferedReader(Paths.get(args[0])));

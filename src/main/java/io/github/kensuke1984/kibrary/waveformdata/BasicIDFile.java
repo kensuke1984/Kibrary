@@ -25,17 +25,29 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * Utilities for a pair of an ID file and a waveform file. The files are for
  * observed and synthetic waveforms (NOT partial)<br>
  * 
- * The file contains<br>
- * Numbers of stations, events and period ranges <br>
- * Each station information <br>
- * - name, network, position <br>
- * Each event <br>
- * - Global CMT ID Each period<br>
- * Each period range<br>
- * - min period, max period<br>
- * Each BasicID information<br>
- * - see in {@link #readBasicIDFile(Path)}<br>
+ * The file contains
+ * <p>
+ * (File information)
+ * <dd>Numbers of stations, events and period ranges</dd>
+ * <p>
+ * (All waveforms information)
+ * <dd>
+ * <ul>
+ * <li>Each station information <br>
+ * <ul><li>name, network, position</li></ul></li>
+ * <li>Each event<br>
+ *   <ul><li>Global CMT ID</li></ul></li>  
+ * <li>Each period range<br>
+ *   <ul><li>min period, max period</li></ul></li> </ul>
+ * </dd>
+ * <p>
+ * (Each waveform information)
+ * <ul>
+ * <li>Each BasicID information<br>
+ *  <ul><li>see in {@link #readBasicIDFile(Path)}</li></ul></li><br> </ul>
+ * </dd>
  * 
+ * TODO sampling Hz 
  * 
  * @see {@link BasicID}
  * 
@@ -45,9 +57,9 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * 
  */
 public final class BasicIDFile {
-	
+
 	/**
-	 * File size for an ID
+	 * File size for an ID [byte]
 	 */
 	public static final int oneIDByte = 28;
 
@@ -68,7 +80,7 @@ public final class BasicIDFile {
 				.map(s -> s.getStationName() + " " + s.getNetwork() + " " + s.getPosition())
 				.collect(Collectors.toList());
 		Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
-		System.out.println(outPath + " is created as a list of stations.");
+		System.err.println(outPath + " is created as a list of stations.");
 	}
 
 	/**

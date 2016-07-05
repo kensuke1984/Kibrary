@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
  * 
- * @version 0.2.1.1
+ * @version 0.2.2
  * 
  * @author Kensuke Konishi
  * 
@@ -37,6 +37,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		Path outPath = Paths
 				.get(SyntheticDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan SyntheticDSMInformationFileMaker");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
 			pw.println("##Path of a work folder (.)");
@@ -50,7 +51,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			pw.println("##np must be a power of 2 (1024)");
 			pw.println("#np");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private Properties property;
@@ -66,7 +67,6 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
-
 	}
 
 	/**
@@ -77,7 +77,6 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 	private void set() {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
-
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
@@ -85,19 +84,19 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		np = Integer.parseInt(property.getProperty("np"));
 		tlen = Double.parseDouble(property.getProperty("tlen"));
 		header = property.getProperty("header");
-
 		if (property.containsKey("structureFile"))
 			structurePath = Paths.get(property.getProperty("structureFile"));
-
 	}
 
 	/**
-	 * 周波数ステップ数 2の累乗でないといけない
+	 * Number of steps in frequency domain.
+	 * It must be a power of 2.
 	 */
 	private int np;
 
 	/**
-	 * 時間空間での長さ ２の累乗の１０分の一でないといけない
+	 * Time length [s].
+	 * It must be a power of 2 divided by 10.(2<sup>n</sup>/10)
 	 */
 	private double tlen;
 

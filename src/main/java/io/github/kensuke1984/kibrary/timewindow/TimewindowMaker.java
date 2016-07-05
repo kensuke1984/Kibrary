@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
  * 
- * @version 0.2.1
+ * @version 0.2.2
  * 
  * 
  * @author Kensuke Konishi
@@ -58,9 +58,9 @@ public class TimewindowMaker implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(TimewindowMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("#!java manhattan.timewindow.TimewindowMaker");
 			pw.println("##SacComponents to be used (Z R T)");
-			pw.println("#components ");
+			pw.println("#components");
+			pw.println("manhattan TimewindowMaker");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
 			pw.println("##TauPPhases exPhases (sS)");
@@ -72,7 +72,7 @@ public class TimewindowMaker implements Operation {
 			pw.println("##double time after last phase. If it is 60, then 60 s after arrival (0)");
 			pw.println("#rearShift");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private void checkAndPutDefaults() {
@@ -113,7 +113,7 @@ public class TimewindowMaker implements Operation {
 	}
 
 	private static Set<Phase> phaseSet(String arg) {
-		return arg == null || arg.equals("") ? Collections.emptySet()
+		return arg == null || arg.isEmpty() ? Collections.emptySet()
 				: Arrays.stream(arg.split("\\s+")).map(Phase::create).collect(Collectors.toSet());
 	}
 
