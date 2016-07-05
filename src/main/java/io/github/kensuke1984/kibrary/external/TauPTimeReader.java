@@ -153,5 +153,38 @@ public final class TauPTimeReader {
 		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model prem -ph " + phase;
 		return cmd.split("\\s+");
 	}
-
+/*
+ * 
+	public static TimewindowInformation timewindow(SACFileName sacname) throws IOException, TauModelException {
+		double startTime = 0;
+		double endTime = 0;
+		double GCARC = sacname.readHeader().getValue(SACHeaderEnum.GCARC);
+		Station station = sacname.read().getStation();
+		
+		TauP_Time timetool = new TauP_Time("prem");
+		timetool.parsePhaseList("SKKS");
+		timetool.depthCorrect(Earth.EARTH_RADIUS - sacname.read().getEventLocation().getR());
+		
+		timetool.calculate(GCARC);
+		
+//		List<Double> times = new ArrayList<>();
+//		
+//		timetool.getArrivals().stream()
+//			.filter(arrival -> arrival.getDistDeg() == GCARC)
+//			.forEach(arrival -> times.add(arrival.getTime()));
+//		
+//		Collections.sort(times);
+		
+//		startTime = times.get(0);
+//		endTime = times.get(times.size() - 1);
+		
+		startTime = timetool.getArrival(0).getTime() - 170;
+		endTime = startTime + 340;
+		
+		TimewindowInformation tw = new TimewindowInformation(startTime, endTime
+				, station, sacname.getGlobalCMTID(), sacname.getComponent());
+		
+		return tw;
+	}
+ */
 }

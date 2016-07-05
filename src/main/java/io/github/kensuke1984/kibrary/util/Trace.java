@@ -26,6 +26,9 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * <b>This class is IMMUTABLE</b>
  * </p>
  * 
+ * TODO sorted
+ * 
+ * 
  * @version 0.1.1.2
  * @author Kensuke Konishi
  * 
@@ -304,7 +307,6 @@ public class Trace {
 	private int[] nearPoints(int n, double x) {
 		if (n <= 0 || this.x.length < n)
 			throw new IllegalArgumentException("n is invalid");
-
 		int[] xi = new int[n];
 		double[] res = new double[n];
 		Arrays.fill(res, -1);
@@ -422,7 +424,7 @@ public class Trace {
 	public Trace add(Trace trace) {
 		if (!Arrays.equals(x, trace.x))
 			throw new IllegalArgumentException("Trace to be added has different x axis.");
-		return new Trace(x.clone(), yVector.add(trace.yVector).toArray());
+		return new Trace(x, yVector.add(trace.yVector).toArray());
 	}
 
 	/**
@@ -431,7 +433,7 @@ public class Trace {
 	 * @return Trace which Y is multiplied d
 	 */
 	public Trace multiply(double d) {
-		return new Trace(x.clone(), yVector.mapMultiply(d).toArray());
+		return new Trace(x, yVector.mapMultiply(d).toArray());
 	}
 
 	/**

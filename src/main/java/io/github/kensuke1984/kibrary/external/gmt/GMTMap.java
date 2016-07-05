@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * Helper for use of GMT
  * 
  * 
- * @version 0.0.3.3
+ * @version 0.0.3.4
  * 
  * 
  * @author Kensuke Konishi
@@ -90,7 +90,7 @@ public final class GMTMap {
 		this.maxLongitude = maxLongitude;
 		this.minLatitude = minLatitude;
 		this.maxLatitude = maxLatitude;
-		mapName = title.equals("") ? " " : title;
+		mapName = title.isEmpty() ? " " : title;
 		setROption();
 		epsFileName = "gmt" + Utilities.getTemporaryString() + ".eps";
 		scriptFileName = "gmt" + Utilities.getTemporaryString() + ".sh";
@@ -292,7 +292,7 @@ public final class GMTMap {
 		return out;
 	}
 
-	private void createGrid() {
+	private static void createGrid() {
 		String cmd;
 		String fileName = " hoge.dat ";
 		String gridFileName = " -G hoge.grd "; //

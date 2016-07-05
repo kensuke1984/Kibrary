@@ -26,6 +26,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACData extends SACHeaderData {
+	
 	/**
 	 * @param sacFileName
 	 *            name of an output file

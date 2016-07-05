@@ -186,7 +186,6 @@ class SpectrumFile implements DSMOutput {
 				}
 			return specFile;
 		}
-
 	}
 
 	@Override

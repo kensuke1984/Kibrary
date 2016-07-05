@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * has only one folder, then model name will be set automatically the name of
  * the folder.
  * 
- * @version 0.2.3
+ * @version 0.2.4.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -88,7 +88,7 @@ public final class SpcSAC implements Operation {
 
 		modelName = property.getProperty("modelName");
 
-		if (modelName.equals(""))
+		if (modelName.isEmpty())
 			setModelName();
 
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
@@ -151,9 +151,9 @@ public final class SpcSAC implements Operation {
 		Properties property = Property.parse(args);
 		SpcSAC ss = new SpcSAC(property);
 		long start = System.nanoTime();
-		System.out.println(SpcSAC.class.getName() + " is going.");
+		System.err.println(SpcSAC.class.getName() + " is going.");
 		ss.run();
-		System.out
+		System.err
 				.println(SpcSAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
@@ -189,9 +189,8 @@ public final class SpcSAC implements Operation {
 			eventFolders.addAll(Utilities.eventFolderSet(psvPath));
 		if (shPath != null)
 			eventFolders.addAll(Utilities.eventFolderSet(shPath));
-		Set<String> possibleNames = new HashSet<>();
-		eventFolders.forEach(ef -> Arrays.stream(ef.listFiles()).filter(File::isDirectory).map(File::getName)
-				.forEach(possibleNames::add));
+		Set<String> possibleNames = eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory)))
+				.map(File::getName).collect(Collectors.toSet());
 		if (possibleNames.size() != 1)
 			throw new RuntimeException(
 					"There are no model folder in event folders or more than one folder. You must specify 'modelName' in the case.");
@@ -239,19 +238,20 @@ public final class SpcSAC implements Operation {
 	public void run() throws IOException {
 		int nThread = Runtime.getRuntime().availableProcessors();
 		outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
-		System.out.println("Work folder is " + workPath.toAbsolutePath());
-		System.out.println("Converting SPC files in the work folder to SAC files in " + outPath);
-
+		System.err.println("Work folder is " + workPath.toAbsolutePath());
+		System.err.println("Converting SPC files in the work folder to SAC files in " + outPath);
+		System.err.println("Model name is " + modelName);
 		if (sourceTimeFunction == -1)
 			readUserSourceTimeFunctions();
 		Files.createDirectories(outPath);
 
-		if (psvPath != null)
-			psvSPCs = collectPSVSPCs();
-		if (shPath != null)
-			shSPCs = collectSHSPCs();
-		ExecutorService execs = Executors.newFixedThreadPool(nThread);
+		if (psvPath != null && (psvSPCs = collectPSVSPCs()).isEmpty())
+			throw new RuntimeException("No PSV spector files are found.");
 
+		if (shPath != null && (shSPCs = collectSHSPCs()).isEmpty())
+			throw new RuntimeException("No SH spector files are found.");
+
+		ExecutorService execs = Executors.newFixedThreadPool(nThread);
 		// single
 		if (psvPath == null || shPath == null)
 			for (SpcFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
@@ -259,6 +259,7 @@ public final class SpcSAC implements Operation {
 				Files.createDirectories(outPath.resolve(spc.getSourceID()));
 				execs.execute(createSACMaker(one, null));
 			}
+
 		// both
 		else
 			for (SpcFileName spc : psvSPCs) {
@@ -287,7 +288,8 @@ public final class SpcSAC implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(SpcSAC.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("##SACComponents to be used (Z R T)");
+			pw.println("manhattan SpcSAC");
+			pw.println("##SACComponents for output (Z R T)");
 			pw.println("#components");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
@@ -307,9 +309,8 @@ public final class SpcSAC implements Operation {
 			pw.println("#samplingHz");
 			pw.println("#timePartial If it is true, then temporal partial is computed. (false)");
 			pw.println("#timePartial");
-
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private Path outPath;
