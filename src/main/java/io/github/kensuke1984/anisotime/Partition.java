@@ -4,10 +4,11 @@ package io.github.kensuke1984.anisotime;
  * Enums of egion and boundaries
  * 
  * @author Kensuke Konishi
- * @version 0.0.2.2
+ * @version 0.0.2.3
  */
 enum Partition {
-	MANTLE(0), CORE_MANTLE_BOUNDARY(1), OUTERCORE(2), INNER_CORE_BAUNDARY(3), INNERCORE(4),;
+	SURFACE(0), MANTLE(1), CORE_MANTLE_BOUNDARY(2), OUTERCORE(3), INNER_CORE_BOUNDARY(4), //
+	INNERCORE(5), OUTSIDE(6);
 
 	private final int value;
 
@@ -16,18 +17,19 @@ enum Partition {
 	}
 
 	/**
-	 * @param partition to check
-	 * @return if this is shallower or same as partition
+	 * @param partition
+	 *            to check
+	 * @return If this is shallower or same as partition
 	 */
-	boolean shallow(Partition partition) {
+	boolean isShallowerOrIn(Partition partition) {
 		return value <= partition.value;
 	}
 
 	/**
-	 * @return if this is boundary
+	 * @return If this is the inner-core, core-mantle boundary or the surface.
 	 */
 	boolean isBoundary() {
-		return value == 1 || value == 3;
+		return value == 2 || value == 4 || value == 0;
 	}
 
 }
