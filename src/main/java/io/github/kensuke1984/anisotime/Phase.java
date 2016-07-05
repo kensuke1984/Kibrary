@@ -17,11 +17,13 @@ import java.util.regex.Pattern;
  * ???PdiffXX and ???SdiffXX can be used. XX is positive double XX is
  * diffractionAngle diff must be the last part.
  * 
+ * Diffraction can only happen at the final part.
+ * 
  * 
  * If there is a number (n) in the name. the next letter to the number will be
  * repeated n times. (e.g. S3KS &rarr; SKKKS)
  * 
- * @version 0.1.3.1
+ * @version 0.1.4
  * 
  *          TODO TauP
  * 
@@ -68,10 +70,13 @@ public class Phase {
 	private static final Pattern outercore = Pattern.compile("[PSK]K[PSK]");
 
 	// frequently use
+	public static final Phase p = Phase.create("p");
 	public static final Phase P = Phase.create("P");
 	public static final Phase PcP = Phase.create("PcP");
+	public static final Phase PKP = Phase.create("PKP");
 	public static final Phase PKiKP = Phase.create("PKiKP");
 	public static final Phase PKIKP = Phase.create("PKIKP");
+	public static final Phase s = Phase.create("s");
 	public static final Phase S = Phase.create("S");
 	public static final Phase ScS = Phase.create("ScS");
 	public static final Phase SKS = Phase.create("SKS");
@@ -86,6 +91,9 @@ public class Phase {
 		return result;
 	}
 
+	/**
+	 * Compiled name is same or not.
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -104,6 +112,18 @@ public class Phase {
 	}
 
 	/**
+	 * @return P-SV (true), SH (false)
+	 */
+	public boolean isPSV() {
+		return psv;
+	}
+
+	/**
+	 * If this is P-SV(true) or SH(false).
+	 */
+	private final boolean psv;
+
+	/**
 	 * (input) phase name e.g. (SmKS)
 	 */
 	private final String phaseName;
@@ -113,15 +133,26 @@ public class Phase {
 	 */
 	private final String compiledName;
 
-	private Phase(String phaseName, String compiledName) {
+	/**
+	 * @param phaseName
+	 *            of the phase (e.g. SKKS)
+	 * @param compiledName
+	 *            of the phase (e.g. S2KS)
+	 * @param psv
+	 *            true:P-SV, false:SH
+	 */
+	private Phase(String phaseName, String compiledName, boolean psv) {
 		this.phaseName = phaseName;
 		this.compiledName = compiledName;
-		computeParts();
+		this.psv = psv;
+		countParts();
 		digitalize();
 		setPropagation();
 	}
 
 	/**
+	 * TODO implicit SV
+	 * 
 	 * @param name
 	 *            phase name
 	 * @return phase for input
@@ -131,7 +162,7 @@ public class Phase {
 	public static Phase create(String name) {
 		String compiledName = compile(name);
 		if (isValid(compiledName))
-			return new Phase(name, compiledName);
+			return new Phase(name, compiledName, name.contains("P") || name.contains("K"));
 		throw new IllegalArgumentException("Invalid phase name " + name);
 	}
 
@@ -157,26 +188,23 @@ public class Phase {
 	/**
 	 * the number of Parts part is for each layer and each direction. if there
 	 * is a turning point in one layer the number of parts will increase for
-	 * example S wave has 2 parts.
+	 * example S wave has 2 parts. Sdiff has 3 parts.
 	 * 
 	 */
 	private int nPart;
 
 	/**
-	 * if each part waveforms go deeper or shallower. if waveforms go deeper
-	 * true, if else false.
+	 * If each part waveforms go deeper(true) or shallower(false). When the part
+	 * is diffraction, it is false,
 	 */
 	private boolean[] isDownGoing;
 
 	/**
-	 * if each part is P wave or S wave P:true, S:false
-	 */
-	private boolean[] isP;
-
-	/**
-	 * where waveform is at each part
+	 * Which phase is at each part
 	 */
 	private Partition[] partition;
+
+	private PhasePart[] phaseParts;
 
 	/**
 	 * @return angle of diffraction [rad]
@@ -185,7 +213,7 @@ public class Phase {
 		return diffractionAngle;
 	}
 
-	private void computeParts() {
+	private void countParts() {
 		int reflection = 0;
 		// waveform goes to a deeper part.
 		int zoneMove = 0;
@@ -204,15 +232,17 @@ public class Phase {
 		int dPos = compiledName.indexOf('d');
 		nPart = ((0 < dPos ? dPos : compiledName.length()) - reflection * 2 - zoneMove) * 2;
 		if (compiledName.charAt(0) == 'p' || compiledName.charAt(0) == 's')
-			nPart -= 1;
+			nPart--;
 
 		// diffraction
-		if (0 < dPos && dPos+4<compiledName.length())
-			diffractionAngle = Math.toRadians(Double.parseDouble(compiledName.substring(dPos + 4)));
-
+		if (0 < dPos) {
+			nPart++;
+			if (dPos + 4 < compiledName.length())
+				diffractionAngle = Math.toRadians(Double.parseDouble(compiledName.substring(dPos + 4)));
+		}
 		isDownGoing = new boolean[nPart];
-		isP = new boolean[nPart];
 		partition = new Partition[nPart];
+		phaseParts = new PhasePart[nPart];
 	}
 
 	boolean isDiffracted() {
@@ -228,6 +258,8 @@ public class Phase {
 		// P
 		int iCurrentPart = 0;
 		for (int i = 0; i < compiledName.length(); i++) {
+			final char nextChar = i + 1 == compiledName.length() ? 0 : compiledName.charAt(i + 1);
+			final char beforeChar = i == 0 ? 0 : compiledName.charAt(i - 1);
 			switch (compiledName.charAt(i)) {
 			case 'd':
 				break;
@@ -236,120 +268,164 @@ public class Phase {
 			case 'i':
 				continue;
 			case 'p':
-				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = false;
 				partition[iCurrentPart] = Partition.MANTLE;
+				phaseParts[iCurrentPart] = PhasePart.P;
 				iCurrentPart++;
 				break;
 			case 's':
-				isP[iCurrentPart] = false;
 				isDownGoing[iCurrentPart] = false;
 				partition[iCurrentPart] = Partition.MANTLE;
+				phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
 				iCurrentPart++;
 				break;
 			case 'P':
-				isP[iCurrentPart] = true;
 				partition[iCurrentPart] = Partition.MANTLE;
-				isDownGoing[iCurrentPart] = i == 0
-						|| (compiledName.charAt(i - 1) != 'K' && compiledName.charAt(i - 1) != 'c');
-				if (i == 0 || ((compiledName.charAt(i - 1) != 'c' && compiledName.charAt(i - 1) != 'K')))
-					if ((i + 1) == compiledName.length()
-							|| (compiledName.charAt(i + 1) != 'c' && compiledName.charAt(i + 1) != 'K')) {
+				phaseParts[iCurrentPart] = PhasePart.P;
+				isDownGoing[iCurrentPart] = i == 0 || (beforeChar != 'K' && beforeChar != 'c');
+				if (isDownGoing[iCurrentPart])
+					// ^P$ [psPS]P[PS]...
+					if (i + 1 == compiledName.length() || (nextChar != 'c' && nextChar != 'K')) {
 						iCurrentPart++;
 						isDownGoing[iCurrentPart] = false;
-						isP[iCurrentPart] = true;
-						partition[iCurrentPart] = Partition.MANTLE;
+						phaseParts[iCurrentPart] = PhasePart.P;
+						if (nextChar != 'd')
+							partition[iCurrentPart] = Partition.MANTLE;
+						else {
+							partition[iCurrentPart] = Partition.CORE_MANTLE_BOUNDARY;
+							iCurrentPart++;
+							isDownGoing[iCurrentPart] = false;
+							partition[iCurrentPart] = Partition.MANTLE;
+							phaseParts[iCurrentPart] = PhasePart.P;
+						}
 					}
 				iCurrentPart++;
 				break;
 			case 'S':
-				isP[iCurrentPart] = false;
-				isDownGoing[iCurrentPart] = i == 0
-						|| (compiledName.charAt(i - 1) != 'K' && compiledName.charAt(i - 1) != 'c');
+				isDownGoing[iCurrentPart] = i == 0 || (beforeChar != 'K' && beforeChar != 'c');
 				partition[iCurrentPart] = Partition.MANTLE;
-				if (i == 0 || ((compiledName.charAt(i - 1) != 'c' && compiledName.charAt(i - 1) != 'K')))
-					if ((i + 1) == compiledName.length()
-							|| (compiledName.charAt(i + 1) != 'c' && compiledName.charAt(i + 1) != 'K')) {
+				phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
+				if (isDownGoing[iCurrentPart])
+					if (i + 1 == compiledName.length() || (nextChar != 'c' && nextChar != 'K')) {
 						iCurrentPart++;
 						partition[iCurrentPart] = Partition.MANTLE;
-						isP[iCurrentPart] = false;
 						isDownGoing[iCurrentPart] = false;
+						phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
+						if (nextChar != 'd')
+							partition[iCurrentPart] = Partition.MANTLE;
+						else {
+							partition[iCurrentPart] = Partition.CORE_MANTLE_BOUNDARY;
+							iCurrentPart++;
+							isDownGoing[iCurrentPart] = false;
+							partition[iCurrentPart] = Partition.MANTLE;
+							phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
+						}
 					}
 				iCurrentPart++;
 				break;
 			case 'I':
-				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = true;
 				partition[iCurrentPart] = Partition.INNERCORE;
+				phaseParts[iCurrentPart] = PhasePart.I;
 				iCurrentPart++;
-				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = false;
 				partition[iCurrentPart] = Partition.INNERCORE;
+				phaseParts[iCurrentPart] = PhasePart.I;
 				iCurrentPart++;
 				break;
 			case 'J':
-				isP[iCurrentPart] = false;
 				isDownGoing[iCurrentPart] = true;
 				partition[iCurrentPart] = Partition.INNERCORE;
+				phaseParts[iCurrentPart] = psv ? PhasePart.JV : PhasePart.JH;
 				iCurrentPart++;
-				isP[iCurrentPart] = false;
 				isDownGoing[iCurrentPart] = false;
 				partition[iCurrentPart] = Partition.INNERCORE;
+				phaseParts[iCurrentPart] = psv ? PhasePart.JV : PhasePart.JH;
 				iCurrentPart++;
 				break;
 			case 'K':
-				isP[iCurrentPart] = true;
 				isDownGoing[iCurrentPart] = compiledName.charAt(i - 1) != 'i' && compiledName.charAt(i - 1) != 'I'
 						&& compiledName.charAt(i - 1) != 'J';
 				partition[iCurrentPart] = Partition.OUTERCORE;
+				phaseParts[iCurrentPart] = PhasePart.K;
 				if (compiledName.charAt(i - 1) != 'i' && compiledName.charAt(i - 1) != 'I'
 						&& compiledName.charAt(i - 1) != 'J')
 					if (compiledName.charAt(i + 1) != 'i' && compiledName.charAt(i + 1) != 'I'
 							&& compiledName.charAt(i + 1) != 'J') {
 						iCurrentPart++;
 						isDownGoing[iCurrentPart] = false;
-						isP[iCurrentPart] = true;
 						partition[iCurrentPart] = Partition.OUTERCORE;
+						phaseParts[iCurrentPart] = PhasePart.K;
 					}
 				iCurrentPart++;
 				break;
 			}
 		}
-
 	}
 
 	private void setPropagation() {
-		if (compiledName.contains("P"))
-			mantlePPropagation = Propagation.BOUNCING;
-		if (compiledName.contains("PK") || compiledName.contains("Pc") || compiledName.contains("KP")
+		if (compiledName.contains("Pdiff"))
+			mantlePPropagation = Propagation.DIFFRACTION;
+		else if (compiledName.contains("PK") || compiledName.contains("Pc") || compiledName.contains("KP")
 				|| compiledName.contains("cP"))
 			mantlePPropagation = Propagation.PENETRATING;
-		if(compiledName.contains("Pdiff"))
-			mantlePPropagation = Propagation.DIFFRACTION;
-		
-		if (compiledName.contains("S"))
-			mantleSPropagation = Propagation.BOUNCING;
-		if (compiledName.contains("SK") || compiledName.contains("Sc") || compiledName.contains("KS")
+		else
+			mantlePPropagation = compiledName.contains("P") ? Propagation.BOUNCING : Propagation.NOEXIST;
+
+		if (compiledName.contains("Sdiff"))
+			mantleSPropagation = Propagation.DIFFRACTION;
+		else if (compiledName.contains("SK") || compiledName.contains("Sc") || compiledName.contains("KS")
 				|| compiledName.contains("cS"))
 			mantleSPropagation = Propagation.PENETRATING;
-		if( compiledName.contains("Sdiff"))
-			mantleSPropagation=Propagation.DIFFRACTION;
-		
+		else
+			mantleSPropagation = compiledName.contains("S") ? Propagation.BOUNCING : Propagation.NOEXIST;
+
 		if (compiledName.contains("I") || compiledName.contains("J") || compiledName.contains("i"))
 			kPropagation = Propagation.PENETRATING;
-		else if (compiledName.contains("K"))
-			kPropagation = Propagation.BOUNCING;
+		else
+			kPropagation = compiledName.contains("K") ? Propagation.BOUNCING : Propagation.NOEXIST;
 
-		if (compiledName.contains("I"))
-			innerCorePPropagation = Propagation.BOUNCING;
+		innerCorePPropagation = compiledName.contains("I") ? Propagation.BOUNCING : Propagation.NOEXIST;
 
-		if (compiledName.contains("J"))
-			innerCoreSPropagation = Propagation.BOUNCING;
+		innerCoreSPropagation = compiledName.contains("J") ? Propagation.BOUNCING : Propagation.NOEXIST;
+
+		if (compiledName.charAt(0) == 'p')
+			mantlePTravel = -0.5;
+		if (compiledName.charAt(0) == 's')
+			mantleSTravel = -0.5;
+
+		for (int i = 0; i < nPart; i++) {
+			switch (phaseParts[i]) {
+			case I:
+				innerCorePTravel += 0.5;
+				break;
+			case JH:
+			case JV:
+				innerCoreSTravel += 0.5;
+				break;
+			case K:
+				outerCoreTravel += 0.5;
+				break;
+			case P:
+				mantlePTravel += 0.5;
+				break;
+			case SH:
+			case SV:
+				mantleSTravel += 0.5;
+				break;
+			default:
+				throw new RuntimeException("UnexpectEd");
+			}
+		}
 
 	}
 
 	public static void main(String[] args) {
-		System.out.println(Phase.create("2PSdiff900"));
+		// System.out.println(Phase.create("2PSdiff900"));
+		Phase p = Phase.create("SS");
+		System.out.println(p.innerCoreSTravel);
+		for (int i = 0; i < p.nPart; i++)
+			System.out.println(p.phaseParts[i]);
 		// System.out.println(isValid("PKPScPSdiff10000"));
 	}
 
@@ -359,7 +435,7 @@ public class Phase {
 	 * @return if is well known phase?
 	 */
 	static boolean isValid(String phase) {
-		if (phase.equals(""))
+		if (phase.isEmpty())
 			return false;
 		// diffraction phase
 		if (diffRule.matcher(phase).find())
@@ -446,23 +522,18 @@ public class Phase {
 	 * @return if the input turning points are valid for this
 	 */
 	boolean exists(Raypath ray) {
-		if (mantlePPropagation != null && ray.getMantlePPropagation() != mantlePPropagation)
+		if (mantlePPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.P) != mantlePPropagation)
 			return false;
-		if (kPropagation != null && ray.getkPropagation() != kPropagation)
+		if (mantleSPropagation != Propagation.NOEXIST
+				&& ray.getPropagation(psv ? PhasePart.SV : PhasePart.SH) != mantleSPropagation)
 			return false;
-		if (innerCorePPropagation != null && ray.getInnerCorePPropagation() != innerCorePPropagation)
+		if (kPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.K) != kPropagation)
 			return false;
-		if (ray.isSv()) {
-			if (mantleSPropagation != null && ray.getMantleSVPropagation() != mantleSPropagation)
-				return false;
-			if (innerCoreSPropagation != null && ray.getInnerCoreSVPropagation() != innerCoreSPropagation)
-				return false;
-		} else {
-			if (mantleSPropagation != null && ray.getMantleSHPropagation() != mantleSPropagation)
-				return false;
-			if (innerCoreSPropagation != null && ray.getInnerCoreSHPropagation() != innerCoreSPropagation)
-				return false;
-		}
+		if (innerCorePPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.I) == Propagation.NOEXIST)
+			return false;
+		if (innerCoreSPropagation != Propagation.NOEXIST
+				&& ray.getPropagation(psv ? PhasePart.JV : PhasePart.JH) == Propagation.NOEXIST)
+			return false;
 		return true;
 	}
 
@@ -477,7 +548,7 @@ public class Phase {
 		if (compiledName.contains("I"))
 			return Partition.INNERCORE;
 		if (compiledName.contains("i") || compiledName.contains("J"))
-			return Partition.INNER_CORE_BAUNDARY;
+			return Partition.INNER_CORE_BOUNDARY;
 		if (compiledName.contains("K"))
 			return Partition.OUTERCORE;
 		if (!compiledName.contains("P") && !compiledName.contains("p"))
@@ -504,15 +575,74 @@ public class Phase {
 	}
 
 	/**
+	 * Number of P wave parts in the path. Each down or upgoing is 0.5
+	 */
+	private double mantlePTravel;
+
+	/**
+	 * @see #mantlePTravel
+	 */
+	private double mantleSTravel;
+
+	/**
+	 * @see #mantlePTravel
+	 */
+	private double outerCoreTravel;
+
+	/**
+	 * @see #mantlePTravel
+	 */
+	private double innerCorePTravel;
+
+	/**
+	 * @see #mantlePTravel
+	 */
+	private double innerCoreSTravel;
+
+	/**
 	 * @return how many times P wave travels in the mantle. each down or upgoing
 	 *         is 0.5
 	 */
-	double mantleP() {
-		double pNum = 0;
-		for (int i = 0; i < nPart; i++)
-			if (partition[i].equals(Partition.MANTLE) && isP[i])
-				pNum += 0.5;
-		return compiledName.charAt(0) == 'p' ? pNum - 0.5 : pNum;
+	double getCountOfP() {
+		return mantlePTravel;
+	}
+
+	/**
+	 * @return how many times S wave travels in the mantle. each down or upgoing
+	 *         is 0.5
+	 */
+	double getCountOfS() {
+		return mantleSTravel;
+	}
+
+	/**
+	 * how many times wave travels in the outer core. Each down or up going is
+	 * considered as 0.5
+	 * 
+	 * @return the times K phase travels in the outer core.
+	 */
+	double getCountOfK() {
+		return outerCoreTravel;
+	}
+
+	/**
+	 * how many times P wave travels in the inner core. Each down or upgoing is
+	 * considered as 0.5
+	 * 
+	 * @return the times P wave travels in the inner core
+	 */
+	double getCountOfI() {
+		return innerCorePTravel;
+	}
+
+	/**
+	 * how many times S wave travels in the inner core. Each down or up going is
+	 * considered as 0.5
+	 * 
+	 * @return the times S wave travels in the inner core.
+	 */
+	double getCountOfJ() {
+		return innerCoreSTravel;
 	}
 
 	/**
@@ -524,13 +654,8 @@ public class Phase {
 		return nPart;
 	}
 
-	/**
-	 * @param i
-	 *            index of the target part
-	 * @return if it is p phase in i th part.
-	 */
-	boolean partIsP(int i) {
-		return isP[i];
+	PhasePart phasePartOf(int i) {
+		return phasePartOf(i);
 	}
 
 	/**
@@ -545,59 +670,10 @@ public class Phase {
 	/**
 	 * @param i
 	 *            index of the target
-	 * @return the partition in which i th part is
+	 * @return the partition where the i th part travels
 	 */
-	Partition partIs(int i) {
+	Partition partitionOf(int i) {
 		return partition[i];
-	}
-
-	/**
-	 * how many times S wave travels in the mantle. each down or upgoing is 0.5
-	 * 
-	 * @return
-	 */
-	double mantleS() {
-		double sNum = 0;
-		for (int i = 0; i < nPart; i++)
-			if (partition[i].equals(Partition.MANTLE) && !isP[i])
-				sNum += 0.5;
-
-		return compiledName.charAt(0) == 's' ? sNum - 0.5 : sNum;
-	}
-
-	/**
-	 * how many times wave travels in the outer core. Each down or up going is
-	 * considered as 0.5
-	 * 
-	 * @return the times K phase travels in the outer core.
-	 */
-	double outerCore() {
-		double outerCoreNum = 0;
-		for (int i = 0; i < nPart; i++)
-			if (partition[i].equals(Partition.OUTERCORE))
-				outerCoreNum += 0.5;
-
-		return outerCoreNum;
-	}
-
-	/**
-	 * how many times P wave travels in the inner core. Each down or upgoing is
-	 * considered as 0.5
-	 * 
-	 * @return the times P wave travels in the inner core
-	 */
-	double innerCoreP() {
-		return compiledName.chars().filter(c -> c == 'I').count();
-	}
-
-	/**
-	 * how many times S wave travels in the inner core. Each down or up going is
-	 * considered as 0.5
-	 * 
-	 * @return the times S wave travels in the inner core.
-	 */
-	double innerCoreS() {
-		return compiledName.chars().filter(c -> c == 'J').count();
 	}
 
 	@Override
