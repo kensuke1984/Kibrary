@@ -8,7 +8,7 @@ import javax.swing.SwingUtilities;
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 0.3.8
+ * @version 0.4b
  * 
  */
 final class ANISOtime extends TravelTimeGUI {
@@ -37,15 +37,12 @@ final class ANISOtime extends TravelTimeGUI {
 		currentComputationMode.outputPath();
 	}
 
-	/**
-	 * when the button "Compute" is clicked.
-	 */
 	@Override
 	void compute() {
 		createNewRaypathTabs();
 		switch (selectedMode()) {
 		case RAYPARAMETER:
-			Raypath raypath = new Raypath(getMostImportant(), getEventR(), getStructure(), false);
+			Raypath raypath = new Raypath(getMostImportant(), getStructure()); //TODO SH SV
 			RayparameterMode normalMode = new RayparameterMode(this, raypath);
 			currentComputationMode = normalMode;
 			break;

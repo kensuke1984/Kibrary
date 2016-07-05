@@ -10,7 +10,7 @@ import java.util.List;
  * Rayparameter mode
  * 
  * @author Kensuke Konishi
- * @version 0.1.2.1
+ * @version 0.2b
  * 
  */
 final class RayparameterMode extends Computation {
@@ -28,10 +28,15 @@ final class RayparameterMode extends Computation {
 	}
 
 	@Override
+	/** 
+	 * Computes for parameters when compute button is pushed
+	 * @see java.lang.Runnable#run()
+	 */
 	public void run() {
 		int polarization = travelTimeTool.getPolarization();
 		boolean psv = false;
 		boolean sh = false;
+		double eventR = travelTimeTool.getEventR();
 		switch (polarization) {
 		case 0:
 			psv = true;
@@ -46,21 +51,21 @@ final class RayparameterMode extends Computation {
 		default:
 			throw new RuntimeException("Unexpected happens");
 		}
-		Raypath psvPath = new Raypath(raypath.getRayParameter(), raypath.getEventR(), raypath.getVelocityStructure(),
-				true);
+		Raypath psvPath = new Raypath(raypath.getRayParameter(), raypath.getVelocityStructure()
+				);//TODO
 		psvPath.compute();
-		Raypath shPath = new Raypath(raypath.getRayParameter(), raypath.getEventR(), raypath.getVelocityStructure(),
-				false);
+		Raypath shPath = new Raypath(raypath.getRayParameter(), raypath.getVelocityStructure()
+				);
 		shPath.compute();
 		Phase[] selectedPhases = travelTimeTool.getSelectedPhases();
 		List<Raypath> raypathList = new ArrayList<>();
 		List<Phase> phaseList = new ArrayList<>();
 		for (Phase phase : selectedPhases) {
-			if (psv && psvPath.exists(phase)) {
+			if (psv && psvPath.exists(eventR,phase)) {
 				raypathList.add(psvPath);
 				phaseList.add(phase);
 			}
-			if (sh && phase.pReaches() == null && shPath.exists(phase)) {
+			if (sh && phase.pReaches() == null && shPath.exists(eventR,phase)) {
 				raypathList.add(shPath);
 				phaseList.add(phase);
 			}

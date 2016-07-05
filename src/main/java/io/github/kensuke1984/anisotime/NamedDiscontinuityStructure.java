@@ -10,7 +10,7 @@ import java.nio.file.Path;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.5
+ * @version 0.0.7
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
@@ -22,10 +22,27 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 			double vsA = structure.getVsA(i);
 			double vsB = structure.getVsB(i);
 			double r = Math.pow(1 / (vsA * rayParameter), 1 / (vsB - 1));
-			if (structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
+			if (coreMantleBoundary() <= r && structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
 				return r;
 		}
-		return -1;
+		return Double.NaN;
+	}
+
+	@Override
+	public double jhTurningR(double rayParameter) {
+		for (int i = structure.getNzone() - 1; 0 <= i; i--) {
+			double vsA = structure.getVsA(i);
+			double vsB = structure.getVsB(i);
+			double r = Math.pow(1 / (vsA * rayParameter), 1 / (vsB - 1));
+			if (r <= innerCoreBoundary() && structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
+				return r;
+		}
+		return Double.NaN;
+	}
+
+	@Override
+	public double jvTurningR(double rayParameter) {
+		return jhTurningR(rayParameter);
 	}
 
 	@Override
@@ -48,10 +65,22 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 			double vpA = structure.getVpA(i);
 			double vpB = structure.getVpB(i);
 			double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
-			if (structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1))
+			if (coreMantleBoundary() <= r && structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1))
 				return r;
 		}
-		return -1;
+		return Double.NaN;
+	}
+
+	@Override
+	public double iTurningR(double rayParameter) {
+		for (int i = structure.getNzone() - 1; 0 <= i; i--) {
+			double vpA = structure.getVpA(i);
+			double vpB = structure.getVpB(i);
+			double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
+			if (r <= innerCoreBoundary() && structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1))
+				return r;
+		}
+		return Double.NaN;
 	}
 
 	NamedDiscontinuityStructure(Path path) {
@@ -115,7 +144,7 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 					&& innerCoreBoundary() < r)
 				return r;
 		}
-		return -1;
+		return Double.NaN;
 	}
 
 }

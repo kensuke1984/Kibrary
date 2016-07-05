@@ -10,7 +10,7 @@ import java.util.List;
  * Mode for diffracted waves such as Pdiff, Sdiff...
  * 
  * @author Kensuke Konishi
- * @version 0.1.5
+ * @version 0.2b
  */
 class DiffractionMode extends Computation {
 
@@ -47,7 +47,7 @@ class DiffractionMode extends Computation {
 		List<Phase> phaseList = new ArrayList<>();
 		Raypath pRaypath = RaypathSearch.pDiffRaypath(structure, eventR);
 		Raypath svRaypath = RaypathSearch.sDiffRaypath(structure, eventR, true);
-		Raypath shRaypath = RaypathSearch.sDiffRaypath(structure, eventR, false);
+		Raypath shRaypath = RaypathSearch.sDiffRaypath(structure, eventR, false); //TODO
 		pRaypath.compute();
 		svRaypath.compute();
 		shRaypath.compute();

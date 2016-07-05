@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * 
  */
 abstract class Computation implements Runnable {
@@ -30,9 +30,9 @@ abstract class Computation implements Runnable {
 	}
 
 	private static void showRayPath(final TravelTimeGUI travelTimeGUI, final Raypath raypath, final Phase phase) {
-		if (!raypath.exists(phase))
+		if (!raypath.exists(travelTimeGUI.getEventR(), phase))
 			return;
-		double[][] points = raypath.getRouteXY(phase);
+		double[][] points = raypath.getRouteXY(travelTimeGUI.getEventR(), phase);
 		if (points != null) {
 			double[] x = new double[points.length];
 			double[] y = new double[points.length];
@@ -50,6 +50,7 @@ abstract class Computation implements Runnable {
 	}
 
 	void outputPath() {
+		double eventR = travelTimeTool.getEventR();
 		Runnable output = new Runnable() {
 			Path outputDirectory;
 
@@ -70,13 +71,13 @@ abstract class Computation implements Runnable {
 					if (raypaths.size() != phases.size())
 						throw new RuntimeException("UNEXPECTED");
 					for (int i = 0; i < raypaths.size(); i++) {
-						String name = raypaths.get(i).isSv() ? phases.get(i) + "_PSV" : phases.get(i) + "_SH";
+						String name = phases.get(i).isPSV() ? phases.get(i) + "_PSV" : phases.get(i) + "_SH";
 						Path outEPSFile = outputDirectory.resolve(name + ".eps");
 						Path outInfoFile = outputDirectory.resolve(name + ".inf");
 						Path outDataFile = outputDirectory.resolve(name + ".dat");
-						raypaths.get(i).outputEPS(outEPSFile, phases.get(i));
-						raypaths.get(i).outputInfo(outInfoFile, phases.get(i));
-						raypaths.get(i).outputDat(outDataFile, phases.get(i));
+						raypaths.get(i).outputEPS(eventR, outEPSFile, phases.get(i));
+						raypaths.get(i).outputInfo(outInfoFile, eventR, phases.get(i));
+						raypaths.get(i).outputDat(outDataFile, eventR, phases.get(i));
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -117,17 +118,18 @@ abstract class Computation implements Runnable {
 		if (raypathList.size() != phaseList.size())
 			throw new RuntimeException("UNEXPECTED");
 		// System.out.println(SwingUtilities.isEventDispatchThread());
+		double eventR =travelTimeTool.getEventR();
 		for (int i = 0; i < phaseList.size(); i++) {
 			Raypath raypath = raypathList.get(i);
 			Phase phase = phaseList.get(i);
-			if (!raypath.exists(phase))
+			if (!raypath.exists(eventR, phase))
 				continue;
 			// travelTimeTool.addPanels(panel);
-			double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase));
-			double travelTime = raypath.computeTraveltime(phase);
+			double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR,phase));
+			double travelTime = raypath.computeT(eventR,phase);
 			// System.out.println(epicentralDistance+" "+travelTime);
-			String title = raypath.isSv() ? phase + " (P-SV)" : phase + " (SH)";
-			double depth = raypath.earthRadius() - raypath.getEventR();
+			String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
+			double depth = raypath.earthRadius() - travelTimeTool.getEventR();
 
 			if (delta == null) {
 				travelTimeTool.addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
@@ -138,8 +140,8 @@ abstract class Computation implements Runnable {
 				double targetDelta = Math.toDegrees(delta[i]);
 				if (!phase.isDiffracted())
 					try {
-						while ((time = RaypathSearch.travelTimeByThreePointInterpolate(targetDelta, raypath, phase,
-								interval)) < 0)
+						while ((time = RaypathSearch.travelTimeByThreePointInterpolate(targetDelta, raypath,
+								travelTimeTool.getEventR(), phase, interval)) < 0)
 							interval *= 10;
 					} catch (Exception e) {
 						// e.printStackTrace();
