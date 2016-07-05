@@ -12,8 +12,7 @@ import java.util.stream.IntStream;
  * Epicentral distance mode.
  * 
  * @author Kensuke Konishi
- * @version 0.1.2.1
- * 
+ * @version 0.2b
  * 
  */
 class EpicentralDistanceMode extends Computation {
@@ -38,8 +37,8 @@ class EpicentralDistanceMode extends Computation {
 	 * @param eventR
 	 *            radius (not depth) [km]
 	 */
-	EpicentralDistanceMode(ANISOtime travelTimeTool, Phase[] targetPhases, double epicentralDistance, VelocityStructure structure,
-			double eventR) {
+	EpicentralDistanceMode(ANISOtime travelTimeTool, Phase[] targetPhases, double epicentralDistance,
+			VelocityStructure structure, double eventR) {
 		super(travelTimeTool);
 		this.structure = structure;
 		this.eventR = eventR;
@@ -73,7 +72,7 @@ class EpicentralDistanceMode extends Computation {
 		for (Phase phase : targetPhases) {
 			if (psv) {
 				List<Raypath> possibleRaypathArray = RaypathSearch.lookFor(phase, structure, eventR, epicentralDistance,
-						deltaR, true);
+						deltaR);
 				if (possibleRaypathArray.isEmpty())
 					continue;
 				raypaths.addAll(possibleRaypathArray);
@@ -81,19 +80,19 @@ class EpicentralDistanceMode extends Computation {
 			}
 			if (sh && phase.pReaches() == null) {
 				List<Raypath> possibleRaypathArray = RaypathSearch.lookFor(phase, structure, eventR, epicentralDistance,
-						deltaR, false);
+						deltaR);
 				if (possibleRaypathArray.isEmpty())
 					continue;
 				raypaths.addAll(possibleRaypathArray);
-				IntStream.range(0, possibleRaypathArray.size()).forEach(i ->  phases.add(phase));
+				IntStream.range(0, possibleRaypathArray.size()).forEach(i -> phases.add(phase));
 			}
 		}
-		for (int i = 0; i <  phases.size(); i++) {
+		for (int i = 0; i < phases.size(); i++) {
 			Phase phase = phases.get(i);
 			if (!phase.isDiffracted())
 				continue;
 			Raypath raypath = raypaths.get(i);
-			double delta = raypath.computeDelta(phase);
+			double delta = raypath.computeDelta(eventR, phase);
 			double dDelta = Math.toDegrees(epicentralDistance - delta);
 			phases.set(i, Phase.create(phase.toString() + dDelta));
 		}
@@ -101,7 +100,7 @@ class EpicentralDistanceMode extends Computation {
 		// System.out.println("Whats done is done");
 		double[] delta = new double[n];
 		Arrays.fill(delta, epicentralDistance);
-		showResult(delta, raypaths,  phases);
+		showResult(delta, raypaths, phases);
 
 	}
 

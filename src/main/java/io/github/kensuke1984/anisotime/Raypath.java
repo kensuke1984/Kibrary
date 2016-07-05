@@ -1,13 +1,9 @@
 package io.github.kensuke1984.anisotime;
 
 import static io.github.kensuke1984.kibrary.math.Integrand.bySimpsonRule;
-import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod3;
+import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -16,14 +12,21 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.DoubleFunction;
+import java.util.function.Function;
 
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.kibrary.math.Integrand;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * 
- * Every depth is written as <b>radius [km]</b>. The raypath is of a given ray
- * parameter p.
+ * Every depth is written as <b>radius [km]</b>. Every angle value returns in
+ * [rad]. The raypath is of a given ray parameter p.
  * 
  * Cannot compute travel time for structures that have layers with 0 velocity
  * and non zero velocity. Layers must have only non zero velocity or zero
@@ -37,195 +40,287 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * depth (eps +turningDepth) will be calculated by Geffreys region 1 deeper part
  * than event depth but not including region 0 region 2 shallower part than
  * event depth to the surface
+ * <p>
+ * &Delta; (delta) denotes epicentral distance.<br>
+ * T (time) denotes travel time. &tau; (tau) denotes tau. Q<sub>T</sub>&ne;Q
+ * <sub>&tau;</sub>
  * 
- * TODO method(r) -> delta?
- * 
- * TODO eventR
+ * TODO if rstart and rend is too close, ...
+ * <p>
+ * P: P wave in the mantle<br>
+ * SV,SH: S wave (SV, SH) in the mantle<br>
+ * K: P(K) wave in the outer-core<br>
+ * I: P(I) wave in the inner-core<br>
+ * JV,JH: SV, SH(J) wave in the inner-core<br>
  * 
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.3.12b
+ * @version 0.4.1b
+ * @see Woodhouse, 1981
  */
-public class Raypath implements Serializable {
+public class Raypath implements Serializable, Comparable<Raypath> {
 
 	/**
-	 * Serialization identifier 2016/4/25
+	 * generated on 2016/5/11
 	 */
-	private static final long serialVersionUID = 8022653087553338902L;
-
-	/**
-	 * when integrate values on boundaries, use the value at point very close to
-	 * the boundaries by eps. Default value is 1e-7
-	 */
-	static final double eps = 1e-7;
+	private static final long serialVersionUID = -4590397277743992353L;
 
 	/**
 	 * If the gap between the CMB and the turning r is under this value, then
 	 * diffracted phase can be computed.
 	 */
-	static final double permissibleGapForDiff = 1e-9;
+	static final double permissibleGapForDiff = 1e-5;
 
 	/**
-	 * the interval of calculation points (/km)
+	 * @return {@link VelocityStructure} of this raypath.
 	 */
-	private final double interval;
-
-	/**
-	 * the region near the turning point. the integral for this region is
-	 * obtained by Jeffereys eps cannot be big. If it if big... might be ignored
-	 * like the case if turningR is closer to boundaries
-	 */
-	private final double jeffereysEPS;
-
-	/**
-	 * radius of the source TODO deprecated
-	 */
-	private final double eventR;
-
-	public double getEventR() {
-		return eventR;
-	}
-
 	VelocityStructure getStructure() {
-		return structure;
+		return WOODHOUSE.getStructure();
 	}
 
 	/**
-	 * Radius in the inner-core for P
+	 * &delta;&Delta;<sub>i</sub> at r<sub>i</sub> &le; r &le; r<sub>i+1</sub>
+	 * (i = 0, 1, ..., n-1)
 	 * <p>
-	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) where r <sub>i</sub> <
-	 * r <sub>i+1</sub>
+	 * r<sub>i</sub> is in {@link ComputationalMesh}<br>
+	 * r<sub>0</sub> = core-mantle boundary, r<sub>n</sub> = surface. <u>The
+	 * number of &delta;$Delta; is 1 less than the number of the mesh.</u>
 	 * <p>
-	 * r<sub>0</sub> = P bouncing depth, r<sub>n</sub> = ICB.
+	 * &delta;&Delta; = 0 where the raypath does not reach or the range is in
+	 * the Jefferey's range.
 	 */
-	private double[] innerCorePR;
+	private transient double[] thetaP;
 
 	/**
-	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to
-	 * {@link #innerCorePR}
-	 * <p>
-	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
-	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
+	 * Same as {@link #thetaP}
 	 */
-	private double[] innerCorePTheta;
+	private transient double[] thetaSV;
 
 	/**
-	 * Radius in the inner-core for S
-	 * <p>
-	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) r <sub>i</sub> < r
-	 * <sub>i+1</sub>
-	 * <p>
-	 * r<sub>0</sub> = S bouncing depth, r<sub>n</sub> = ICB.
+	 * Same as {@link #thetaP}
 	 */
-	private double[] innerCoreSR;
+	private transient double[] thetaSH;
 
 	/**
-	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to
-	 * {@link #innerCoreSR}
-	 * <p>
-	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
-	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
+	 * Same as {@link #thetaP}
 	 */
-	private double[] innerCoreSTheta;
+	private transient double[] thetaK;
 
 	/**
-	 * Radius in the mantle for P
-	 * <p>
-	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) where r <sub>i</sub> <
-	 * r <sub>i+1</sub>
-	 * <p>
-	 * r<sub>0</sub> = P bouncing depth or the depth of the CMB, r<sub>n</sub> =
-	 * Earth surface.
+	 * Same as {@link #thetaP}
 	 */
-	private double[] mantlePR;
+	private transient double[] thetaI;
 
 	/**
-	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to {@link #mantlePR}
-	 * <p>
-	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
-	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
+	 * Same as {@link #thetaP}
 	 */
-	private double[] mantlePTheta;
+	private transient double[] thetaJH;
 
 	/**
-	 * Radius in the mantle for S
-	 * <p>
-	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) r <sub>i</sub> < r
-	 * <sub>i+1</sub>
-	 * <p>
-	 * r<sub>0</sub> = S bouncing depth or the depth of the CMB, r<sub>n</sub> =
-	 * Earth surface.
+	 * Same as {@link #thetaP}
 	 */
-	private double[] mantleSR;
+	private transient double[] thetaJV;
 
 	/**
-	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to {@link #mantleSR}
+	 * 
+	 * &delta;T<sub>i</sub> at r<sub>i</sub>&le; r &le; r<sub>i+1</sub> (i = 0,
+	 * 1, ..., n-1)
 	 * <p>
-	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
-	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
-	 */
-	private double[] mantleSTheta;
-
-	/**
-	 * Radius in the outer-core for K
+	 * r<sub>i</sub> is in {@link ComputationalMesh}<br>
+	 * r<sub>0</sub> = core-mantle boundary, r<sub>n</sub> = surface. <u>The
+	 * number of d&Delta; is 1 less than the number of the mesh.</u>
 	 * <p>
-	 * (r<sub>0</sub>, r<sub>1</sub>, ..., r<sub>n</sub>) r <sub>i</sub> < r
-	 * <sub>i+1</sub>
+	 * &delta;T = 0 where the raypath does not reach or the range is in the
+	 * Jefferey's range.
+	 */
+	private transient double[] dTP;
+
+	/**
+	 * Same as {@link #dTP}
+	 */
+	private transient double[] dTSV;
+
+	/**
+	 * Same as {@link #dTP}
+	 */
+	private transient double[] dTSH;
+
+	/**
+	 * Same as {@link #dTP}
+	 */
+	private transient double[] dTK;
+
+	/**
+	 * Same as {@link #dTP}
+	 */
+	private transient double[] dTI;
+
+	/**
+	 * Same as {@link #dTP}
+	 */
+	private transient double[] dTJV;
+
+	/**
+	 * Same as {@link #dTP}
+	 */
+	private transient double[] dTJH;
+
+	private final double RAYPARAMETER; // rayparameter p = (r * sin(t) )/ v(r)
+
+	/**
+	 * Radius [km] at which P bounces. The value can be only in mantle. If there
+	 * is no bouncing point, the value is {@link Double#NaN}
+	 */
+	private transient double pTurningR;
+
+	/**
+	 * Turning radius for SV (mantle). Same as {@link #pTurningR}
+	 */
+	private transient double svTurningR;
+
+	/**
+	 * Turning radius for SH (mantle). Same as {@link #pTurningR}
+	 */
+	private transient double shTurningR;
+
+	/**
+	 * Radius [km] at which K bounces. The value can be in the outer-core. If
+	 * there is no bouncing point, the value is {@link Double#NaN}
+	 */
+	private transient double kTurningR;
+
+	/**
+	 * Same as {@link #pTurningR}. Turning radius for I.
+	 */
+	private transient double iTurningR;
+	/**
+	 * Turning radius for JV. Same as {@link #pTurningR}
+	 */
+	private transient double jvTurningR;
+	/**
+	 * Turning radius for JH. Same as {@link #pTurningR}
+	 */
+	private transient double jhTurningR;
+
+	private final Woodhouse1981 WOODHOUSE;
+
+	/**
+	 * &Delta; of P in the mantle
+	 */
+	private transient double deltaP = Double.NaN;
+	/**
+	 * &Delta; of SV in the mantle
+	 */
+	private transient double deltaSV = Double.NaN;
+	/**
+	 * &Delta; of SH in the mantle
+	 */
+	private transient double deltaSH = Double.NaN;
+	/**
+	 * &Delta; of K in the outer-core
+	 */
+	private transient double deltaK = Double.NaN;
+	/**
+	 * &Delta; of I in the inner-core
+	 */
+	private transient double deltaI = Double.NaN;
+	/**
+	 * &Delta; of JV in the inner-core
+	 */
+	private transient double deltaJV = Double.NaN;
+	/**
+	 * &Delta; of JH in the inner-core
+	 */
+	private transient double deltaJH = Double.NaN;
+
+	/**
+	 * T of P in the mantle
+	 */
+	private transient double timeP = Double.NaN;
+	/**
+	 * T of SV in the mantle
+	 */
+	private transient double timeSV = Double.NaN;
+	/**
+	 * T of SH in the mantle
+	 */
+	private transient double timeSH = Double.NaN;
+	/**
+	 * T of K in the outer-core
+	 */
+	private transient double timeK = Double.NaN;
+	/**
+	 * T of I in the inner-core
+	 */
+	private transient double timeI = Double.NaN;
+	/**
+	 * T of JV in the inner-core
+	 */
+	private transient double timeJV = Double.NaN;
+	/**
+	 * T of JH in the inner-core
+	 */
+	private transient double timeJH = Double.NaN;
+
+	private transient double jeffreysPDelta = Double.NaN;
+	private transient double jeffreysSVDelta = Double.NaN;
+	private transient double jeffreysSHDelta = Double.NaN;
+	private transient double jeffreysKDelta = Double.NaN;
+	private transient double jeffreysIDelta = Double.NaN;
+	private transient double jeffreysJVDelta = Double.NaN;
+	private transient double jeffreysJHDelta = Double.NaN;
+
+	private transient double jeffreysPT = Double.NaN;
+	private transient double jeffreysSVT = Double.NaN;
+	private transient double jeffreysSHT = Double.NaN;
+	private transient double jeffreysKT = Double.NaN;
+	private transient double jeffreysIT = Double.NaN;
+	private transient double jeffreysJVT = Double.NaN;
+	private transient double jeffreysJHT = Double.NaN;
+
+	/**
+	 * Maximum radius of the Jeffrey's range for P integration. (
+	 * {@link #pTurningR} + {@link #JEFFREYS_EPS})
 	 * <p>
-	 * r<sub>0</sub> = K bouncing depth or the depth of ICB, r<sub>n</sub> =
-	 * CMB.
+	 * If either CMB or ICB is in the Jeffrey's range, the boundary is it.
 	 */
-	private double[] outerCoreR;
+	private transient double jeffreysPBoundary;
 
 	/**
-	 * d&Delta;<sub>i</sub> at r<sub>i</sub> corresponding to
-	 * {@link #outerCoreR}
-	 * <p>
-	 * Precisely, the value d&Delta;<sub>i</sub> is for r<sub>i</sub> &le; r
-	 * &le; r<sub>i+1</sub> and d&Delta;<sub>n</sub> = 0.
+	 * Same as {@link #jeffreysPBoundary}
 	 */
-	private double[] outerCoreTheta;
+	private transient double jeffreysSVBoundary;
 
 	/**
-	 * region where P bounces
+	 * Same as {@link #jeffreysPBoundary}
 	 */
-	private Partition pTurning;
-
-	private final double rayParameter; // rayparameter p = (r * sin(t) )/ v(r)
-
-	private Partition shTurning;
-	private Partition svTurning;
+	private transient double jeffreysSHBoundary;
 
 	/**
-	 * Radius [km] at which P bounces
+	 * Same as {@link #jeffreysPBoundary}
 	 */
-	private double pTurningR;
-	private double svTurningR;
-	private double shTurningR;
-	private double kTurningR;
-
-	private final transient VelocityStructure structure;
+	private transient double jeffreysKBoundary;
 
 	/**
-	 * compute SV(true) or SH(false) default SH TODO deprecated
+	 * Same as {@link #jeffreysPBoundary}
 	 */
-	private boolean sv;
+	private transient double jeffreysIBoundary;
 
-	private double upperPDelta;
-	private double upperPTime;
-	private double upperSDelta;
-	private double upperSTime;
-	private double mantleSDelta;
-	private double mantleSTime;
-	private double mantlePDelta;
-	private double mantlePTime;
-	private double outerCoreDelta;
-	private double outerCoreTime;
-	private double innerCorePDelta;
-	private double innerCorePTime;
-	private double innerCoreSDelta;
-	private double innerCoreSTime;
+	/**
+	 * Same as {@link #jeffreysPBoundary}
+	 */
+	private transient double jeffreysJVBoundary;
+
+	/**
+	 * Same as {@link #jeffreysPBoundary}
+	 */
+	private transient double jeffreysJHBoundary;
+
+	/**
+	 * Mesh for integration
+	 */
+	private final ComputationalMesh MESH;
 
 	/**
 	 * ray parameter p the source is on the surface PREM structure
@@ -234,109 +329,39 @@ public class Raypath implements Serializable {
 	 *            a ray parameter
 	 */
 	public Raypath(double rayParameterP) {
-		this(rayParameterP, 0, PolynomialStructure.PREM, false);
-	}
-
-	/**
-	 * ray parameter p PREM structure
-	 * 
-	 * @param rayParameterP
-	 *            a ray parameter
-	 * @param eventR
-	 *            the radius of the hypocenter
-	 */
-	public Raypath(double rayParameterP, double eventR) {
-		this(rayParameterP, eventR, PolynomialStructure.PREM, false);
+		this(rayParameterP, PolynomialStructure.PREM);
 	}
 
 	/**
 	 * @param rayParameterP
 	 *            the ray parameter
-	 * @param eventR
-	 *            the radius of the hypocenter
 	 * @param structure
 	 *            {@link VelocityStructure}
 	 */
-	public Raypath(double rayParameterP, double eventR, VelocityStructure structure) {
-		this(rayParameterP, eventR, structure, false, 1, 10);
-	}
-
-	public static void main(String[] args) throws FileNotFoundException, IOException, ClassNotFoundException {
-		long t = System.nanoTime();
-		Raypath r = null;
-		for (int i = 0; i < 100; i++) {
-			r = new Raypath(100);
-			r.compute();
-		}
-		System.out.println(Utilities.toTimeString(System.nanoTime() - t));
-		System.out.println(r.pTurningR + " " + r.shTurningR);
-		System.out.println(r.mantlePR.length + " " + r.mantleSR.length);
-
-		// for (int i = 0; i < r.outerCoreR.length; i++)
-		// System.out.println(r.outerCoreR[i] + " " + r.outerCoreTheta[i]);
-		System.out.println(Math.toDegrees(r.computeDelta(Phase.SKiKS)) + " " + r.computeTraveltime(Phase.SKiKS));
-
-		long t1 = System.nanoTime();
-		for (int i = 0; i < 100; i++) {
-			ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(new File("/tmp/path.cls")));
-			os.writeObject(r);
-			os.writeObject(r);
-		}
-		System.out.println(Utilities.toTimeString(System.nanoTime() - t1));
-		long t2 = System.nanoTime();
-		for (int i = 0; i < 100; i++) {
-			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File("/tmp/path.cls")));
-
-			Raypath p = (Raypath) ois.readObject();
-			ois.close();
-		}
-		System.out.println(Utilities.toTimeString(System.nanoTime() - t2));
+	public Raypath(double rayParameterP, VelocityStructure structure) {
+		this(rayParameterP, structure, null);
 	}
 
 	/**
 	 * @param rayParameterP
 	 *            the ray parameter
-	 * @param eventR
-	 *            the radius of the hypocenter
 	 * @param structure
 	 *            {@link VelocityStructure}
-	 * @param sv
-	 *            if true computes SV, else SH
-	 */
-	public Raypath(double rayParameterP, double eventR, VelocityStructure structure, boolean sv) {
-		this(rayParameterP, eventR, structure, sv, 1, 10);
-	}
-
-	/**
-	 * @param rayParameterP
-	 *            the ray parameter
-	 * @param eventR
-	 *            the radius of the hypocenter
-	 * @param structure
-	 *            {@link VelocityStructure}
-	 * @param sv
-	 *            if true computes SV, else SH
 	 * @param interval
 	 *            [km] interval for computation points
 	 * @param jeffereysEPS
 	 *            [km] range for jeffreys computation
 	 */
-	public Raypath(double rayParameter, double eventR, VelocityStructure structure, boolean sv, double interval,
-			double jeffereysEPS) {
-		this.rayParameter = rayParameter;
-		this.eventR = 0 < eventR ? eventR : structure.earthRadius();
-		this.structure = structure;
-		this.sv = sv;
-		this.interval = interval;
-		this.jeffereysEPS = jeffereysEPS;
-		if (!checkPValidity())
-			throw new RuntimeException("Input p is invalid.");
-
-		setTurningRs();
+	public Raypath(double rayParameter, VelocityStructure structure, ComputationalMesh mesh) {
+		this(rayParameter, new Woodhouse1981(structure), mesh);
 	}
 
-	public boolean isSv() {
-		return sv;
+	Raypath(double rayParameter, Woodhouse1981 woodhouse, ComputationalMesh mesh) {
+		RAYPARAMETER = rayParameter;
+		WOODHOUSE = woodhouse;
+		MESH = mesh == null ? ComputationalMesh.simple() : mesh;
+		setTurningRs();
+		computeJeffreysRange();
 	}
 
 	/**
@@ -347,19 +372,21 @@ public class Raypath implements Serializable {
 	double bottomingR(Phase phase) {
 		Partition pReach = phase.pReaches();
 		Partition sReach = phase.sReaches();
-		double sBottom = structure.earthRadius();
-		double pBottom = structure.earthRadius();
+		double sBottom = earthRadius();
+		double pBottom = earthRadius();
 		if (sReach != null)
 			switch (sReach) {
 			case CORE_MANTLE_BOUNDARY:
-				sBottom = structure.coreMantleBoundary();
+				sBottom = coreMantleBoundary();
 				break;
-			case INNER_CORE_BAUNDARY:
-				sBottom = structure.innerCoreBoundary();
+			case INNER_CORE_BOUNDARY:
+				sBottom = innerCoreBoundary();
 				break;
 			case MANTLE:
+				sBottom = phase.isPSV() ? svTurningR : shTurningR;
+				break;
 			case INNERCORE:
-				sBottom = getSTurningR();
+				sBottom = phase.isPSV() ? jvTurningR : jhTurningR;
 				break;
 			default:
 				throw new RuntimeException("UNEXPECTED");
@@ -367,10 +394,10 @@ public class Raypath implements Serializable {
 		if (pReach != null)
 			switch (pReach) {
 			case CORE_MANTLE_BOUNDARY:
-				pBottom = structure.coreMantleBoundary();
+				pBottom = coreMantleBoundary();
 				break;
-			case INNER_CORE_BAUNDARY:
-				pBottom = structure.innerCoreBoundary();
+			case INNER_CORE_BOUNDARY:
+				pBottom = innerCoreBoundary();
 				break;
 			case INNERCORE:
 			case MANTLE:
@@ -383,24 +410,6 @@ public class Raypath implements Serializable {
 		return pBottom < sBottom ? pBottom : sBottom;
 	}
 
-	private double calcQDeltaP(double r) {
-		double r2 = r * r;
-		return rayParameter / r2 / calcQTauP(r)
-				* (calcS3(r) + (calcS4(r) * rayParameter * rayParameter / r2 + calcS5(r)) / calcR(r));
-	}
-
-	private double calcQDeltaS(double r) {
-		double r2 = r * r;
-		return sv
-				? rayParameter / r2 / calcQTauSV(r)
-						* (calcS3(r) - (calcS4(r) * rayParameter * rayParameter / r2 + calcS5(r)) / calcR(r))
-				: rayParameter * structure.getN(r) / structure.getL(r) / calcQTauSH(r) / r2;
-	}
-
-	private double calcQTauP(double r) {
-		return Math.sqrt(calcS1(r) - calcS3(r) * rayParameter * rayParameter / r / r - calcR(r));
-	}
-
 	/**
 	 * Create an information file of {@link Phase}
 	 * 
@@ -410,12 +419,12 @@ public class Raypath implements Serializable {
 	 * @param phase
 	 *            Seismic {@link Phase}
 	 */
-	public void outputInfo(Path informationFile, Phase phase) {
+	public void outputInfo(Path informationFile, double eventR, Phase phase) {
 		try (PrintWriter pw = new PrintWriter(informationFile.toFile())) {
 			pw.println("Phase: " + phase);
-			pw.println("Ray parameter: " + rayParameter);
-			pw.println("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(phase)));
-			pw.println("Travel time[s]: " + computeTraveltime(phase));
+			pw.println("Ray parameter: " + RAYPARAMETER);
+			pw.println("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(eventR, phase)));
+			pw.println("Travel time[s]: " + computeT(eventR, phase));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -427,11 +436,11 @@ public class Raypath implements Serializable {
 	 * @param phase
 	 *            to output
 	 */
-	public void outputDat(Path dataFile, Phase phase) {
-		if (!exists(phase))
+	public void outputDat(Path dataFile, double eventR, Phase phase) {
+		if (!exists(eventR, phase))
 			return;
 		try (PrintWriter os = new PrintWriter(dataFile.toFile())) {
-			double[][] points = getRoute(phase);
+			double[][] points = getRoute(eventR, phase);
 			os.println("#Radius[km] Theta[deg]");
 			if (points != null)
 				for (int i = 0; i < points.length; i++)
@@ -449,14 +458,14 @@ public class Raypath implements Serializable {
 	 * @param phase
 	 *            Seismic {@link Phase}
 	 */
-	public void outputEPS(Path epsFile, Phase phase) {
-		if (!exists(phase))
+	public void outputEPS(double eventR, Path epsFile, Phase phase) {
+		if (!exists(eventR, phase))
 			return;
 		try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(epsFile))) {
 			RaypathPanel panel = new RaypathPanel(earthRadius(), coreMantleBoundary(), innerCoreBoundary());
 			// panel.setResults(rayParameter, computeDelta(phase),
 			// computeTraveltime(phase));
-			double[][] points = getRouteXY(phase);
+			double[][] points = getRouteXY(eventR, phase);
 			if (points != null) {
 				double[] x = new double[points.length];
 				double[] y = new double[points.length];
@@ -468,223 +477,635 @@ public class Raypath implements Serializable {
 				}
 				panel.addPath(x, y);
 			}
-			panel.toEPS(os, phase, rayParameter, computeDelta(phase), computeTraveltime(phase), eventR);
+			panel.toEPS(os, phase, RAYPARAMETER, computeDelta(eventR, phase), computeT(eventR, phase), eventR);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
-	 * q=(Rho/L-NP<sup>2</sup>/(Lr<sup>2</sup>))<sup>0.5</sup>
-	 * 
-	 * @param r
-	 *            radius [km]
-	 * @return Q<sub>&tau;</sub>S
-	 */
-	private double calcQTauSH(double r) {
-		double L = structure.getL(r);
-		double r2 = r * r;
-		return Math.sqrt(structure.getRho(r) / L - structure.getN(r) * rayParameter * rayParameter / L / r2);
-	}
-
-	private double calcQTauSV(double r) {
-		double r2 = r * r;
-		return Math.sqrt(calcS1(r) - calcS3(r) * rayParameter * rayParameter / r2 + calcR(r));
-	}
-
-	private double calcQTP(double r) {
-		double s2 = calcS2(r);
-		return (calcS1(r) - (calcS5(r) * rayParameter * rayParameter / r / r + s2 * s2) / calcR(r)) / calcQTauP(r);
-	}
-
-	private double calcQTS(double r) {
-		if (sv) {
-			double s2 = calcS2(r);
-			return (calcS1(r) + (calcS5(r) * rayParameter * rayParameter / r / r + s2 * s2) / calcR(r)) / calcQTauSV(r);
-		}
-		return structure.getRho(r) / structure.getL(r) / calcQTauSH(r);
-	}
-
-	private double calcR(double r) {
-		double s2 = calcS2(r);
-		double por = rayParameter / r;
-		double por2 = por * por;
-		return Math.sqrt(calcS4(r) * por2 * por2 + 2 * calcS5(r) * por2 + s2 * s2);
-	}
-
-	private double calcS1(double r) {
-		return 0.5 * structure.getRho(r) * (1 / structure.getL(r) + 1 / structure.getC(r));
-	}
-
-	private double calcS2(double r) {
-		return 0.5 * structure.getRho(r) * (1 / structure.getL(r) - 1 / structure.getC(r));
-	}
-
-	private double calcS3(double r) {
-		double c = structure.getC(r);
-		double f = structure.getF(r);
-		double l = structure.getL(r);
-		return 0.5 / l / c * (structure.getA(r) * c - f * f - 2 * l * f);
-	}
-
-	private double calcS4(double r) {
-		double s3 = calcS3(r);
-		return s3 * s3 - structure.getA(r) / structure.getC(r);
-	}
-
-	private double calcS5(double r) {
-		return 0.5 * structure.getRho(r) / structure.getC(r) * (1 + structure.getA(r) / structure.getL(r))
-				- calcS1(r) * calcS3(r);
-	}
-
-	/*
-	 * Check if the input ray parameter is valid 0<= p <= r/vs(at surface) vs is
-	 * lower one of Vsv and Vsh
-	 */
-	private boolean checkPValidity() {
-		if (rayParameter < 0)
-			return false;
-		double rho = structure.getRho(structure.earthRadius());
-		double vsv = Math.sqrt(structure.getL(structure.earthRadius()) / rho);
-		double vsh = Math.sqrt(structure.getN(structure.earthRadius()) / rho);
-		double pMax = structure.earthRadius() / (vsv < vsh ? vsv : vsh);
-		return rayParameter < pMax;
-	}
-
-	/**
 	 * Compute travel times and deltas in layers. This method must be done
 	 * before {@link #computeDelta(Phase)} or {@link #computeTraveltime(Phase)}.
+	 * If once this method is called, it does not compute anymore in the future.
 	 */
 	public void compute() {
-		computeDelta();
-		computeTraveltime();
-	}
-
-	void computeDelta() {
-		mantlePDelta = mantlePDelta();
-		outerCoreDelta = outerCoreDelta();
-		innerCorePDelta = innerCorePDelta();
-		mantleSDelta = mantleSDelta();
-		innerCoreSDelta = innerCoreSDelta();
-		upperPDelta = 0;
-		upperSDelta = 0;
-		double[] upperR = point(eventR, structure.earthRadius(), interval);
-		for (int i = 0; i < upperR.length - 1; i++) {
-			upperPDelta += simpsonPDelta(upperR[i], upperR[i + 1]);
-			upperSDelta += simpsonSDelta(upperR[i], upperR[i + 1]);
+		if (isComputed)
+			return;
+		synchronized (this) {
+			if (isComputed)
+				return;
+			computeTransients();
+			isComputed = true;
+			hasTransients = true;
 		}
 	}
 
-	void computeTraveltime() {
-		mantlePTime = mantlePTau();
-		outerCoreTime = outerCoreTau();
-		innerCorePTime = innerCorePTau();
-		mantleSTime = mantleSTau();
-		innerCoreSTime = innerCoreSTau();
-		double[] upperR = point(eventR, structure.earthRadius(), interval);
-		upperPTime = 0;
-		upperSTime = 0;
-		for (int i = 0; i < upperR.length - 1; i++) {
-			upperPTime += simpsonPTau(upperR[i], upperR[i + 1]);
-			upperSTime += simpsonSTau(upperR[i], upperR[i + 1]);
-		}
+	public static void main(String[] args) throws Exception { // 0
+																// PKIKP
+		// TODO p小さい時
+		long t = System.nanoTime(); // TODO
+		Raypath r = new Raypath(3, VelocityStructure.prem(), new ComputationalMesh(VelocityStructure.prem(), 1, 1, 1));
+		// System.exit(0);
+		r.compute();
+		r.printTurningPoints();
+		r.printDelta();
+		r.printT();
+		Phase phase = Phase.PKIKP;
+		System.out.println(phase + " " + Math.toDegrees(r.computeDelta(6371, phase)) + " " + r.computeT(6371, phase));
+		// writeTest();
+		// readTest();
+		System.out.println(Math.toDegrees(r.jeffreysIDelta));
+		System.out.println(Utilities.toTimeString(System.nanoTime() - t));
 	}
 
-	/**
-	 * Computes delta for an input phase. The source for the raypath is assumed
-	 * to be on the surface. If, for instance, an input phase is a depth phase,
-	 * then ignore the first upper going part and else if uppergoing part is
-	 * added.
-	 * 
-	 * @param phase
-	 *            Seismic {@link Phase}
-	 * @return delta[rad] for phase &pm; upper going delta
-	 */
-	public double computeExtendedDelta(Phase phase) {
-		double delta = computeDelta(phase);
-		char first = phase.toString().charAt(0);
-		switch (first) {
-		case 'p':
-			return delta - upperPDelta;
-		case 'P':
-			return delta + upperPDelta;
-		case 's':
-			return delta - upperSDelta;
-		case 'S':
-			return delta + upperSDelta;
-		default:
-			return 0;
+	private void computeTransients() {
+		if (hasTransients)
+			return;
+		synchronized (this) {
+			if (hasTransients)
+				return;
+			computeDelta();
+			computeT();
+			isComputed = true;
+			hasTransients = true;
 		}
 	}
 
 	/**
-	 * Computes traveltime for an input phase. The source for the raypath is
-	 * assumed to be on the surface. If, for instance, an input phase is a depth
-	 * phase, then ignore the first upper going part and else if uppergoing part
-	 * is added.
+	 * When the instance is deserialized, turning Rs and Jeffreys range must be
+	 * computed. They are done here.
 	 * 
-	 * @param phase
-	 *            Seismic {@link Phase}
-	 * @return travel time for phase &pm; upper going traveltime
+	 * @serialData
+	 * @param stream
+	 *            to be read
+	 * @throws ClassNotFoundException
+	 *             if happens
+	 * @throws IOException
+	 *             if any
 	 */
-	public double computeExtendedTraveltime(Phase phase) {
-		double traveltime = computeTraveltime(phase);
-		char first = phase.toString().charAt(0);
-		switch (first) {
-		case 'p':
-			return traveltime - upperPTime;
-		case 'P':
-			return traveltime + upperPTime;
-		case 's':
-			return traveltime - upperSTime;
-		case 'S':
-			return traveltime + upperSTime;
-		default:
-			return 0;
+	private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
+		stream.defaultReadObject();
+		int flag = stream.readByte();
+		deltaP = Double.NaN;
+		timeP = Double.NaN;
+		deltaSV = Double.NaN;
+		timeSV = Double.NaN;
+		deltaSH = Double.NaN;
+		timeSH = Double.NaN;
+		deltaK = Double.NaN;
+		timeK = Double.NaN;
+		deltaI = Double.NaN;
+		timeI = Double.NaN;
+		deltaJV = Double.NaN;
+		timeJV = Double.NaN;
+		deltaJH = Double.NaN;
+		timeJH = Double.NaN;
+		if ((flag & 1) != 0) {
+			deltaP = stream.readDouble();
+			timeP = stream.readDouble();
 		}
+		if ((flag & 2) != 0) {
+			deltaSV = stream.readDouble();
+			timeSV = stream.readDouble();
+		}
+		if ((flag & 4) != 0) {
+			deltaSH = stream.readDouble();
+			timeSH = stream.readDouble();
+		}
+		if ((flag & 8) != 0) {
+			deltaK = stream.readDouble();
+			timeK = stream.readDouble();
+		}
+		if ((flag & 16) != 0) {
+			deltaI = stream.readDouble();
+			timeI = stream.readDouble();
+		}
+		if ((flag & 32) != 0) {
+			deltaJV = stream.readDouble();
+			timeJV = stream.readDouble();
+		}
+		if ((flag & 64) != 0) {
+			deltaJH = stream.readDouble();
+			timeJH = stream.readDouble();
+		}
+		setTurningRs();
+		computeJeffreysRange();
+	}
+
+	private void writeObject(ObjectOutputStream stream) throws IOException {
+		stream.defaultWriteObject();
+		byte flag = 0;
+		List<Double> outputList = new ArrayList<>();
+		if (propagationP != Propagation.NOEXIST) {
+			flag |= 1;
+			outputList.add(deltaP);
+			outputList.add(timeP);
+		}
+		if (propagationSV != Propagation.NOEXIST) {
+			flag |= 2;
+			outputList.add(deltaSV);
+			outputList.add(timeSV);
+		}
+		if (propagationSH != Propagation.NOEXIST) {
+			flag |= 4;
+			outputList.add(deltaSH);
+			outputList.add(timeSH);
+		}
+		if (propagationK != Propagation.NOEXIST) {
+			flag |= 8;
+			outputList.add(deltaK);
+			outputList.add(timeK);
+		}
+		if (propagationI != Propagation.NOEXIST) {
+			flag |= 16;
+			outputList.add(deltaI);
+			outputList.add(timeI);
+		}
+		if (propagationJV != Propagation.NOEXIST) {
+			flag |= 32;
+			outputList.add(deltaJV);
+			outputList.add(timeJV);
+		}
+		if (propagationJH != Propagation.NOEXIST) {
+			flag |= 64;
+			outputList.add(deltaJH);
+			outputList.add(timeJH);
+		}
+		stream.writeByte(flag);
+		for (double value : outputList)
+			stream.writeDouble(value);
+	}
+
+	/**
+	 * If this method has &Delta; and T for partitions.
+	 */
+	private boolean isComputed;
+
+	/**
+	 * If this has transient values the route theta and time.
+	 */
+	private transient boolean hasTransients;
+
+	/**
+	 * TODO Range is from the turning point to a radius which is good enough for
+	 * a given mesh threshold ({@link ComputationalMesh#integralThreshold}).
+	 * 
+	 * Each boundary is one of the radius set in {@link #MESH}.
+	 */
+	private void computeJeffreysRange() {
+		jeffreysPBoundary = Double.NaN;
+		jeffreysSVBoundary = Double.NaN;
+		jeffreysSHBoundary = Double.NaN;
+		jeffreysKBoundary = Double.NaN;
+		jeffreysIBoundary = Double.NaN;
+		jeffreysJVBoundary = Double.NaN;
+		jeffreysJHBoundary = Double.NaN;
+
+		Function<PhasePart, Double> candidate = pp -> {
+			int index = MESH.getNextIndexOf(turningROf(pp), pp.whichPartition());
+			RealVector mesh = MESH.getMesh(pp.whichPartition());
+			double boundary = mesh.getEntry(index);
+			while (++index < mesh.getDimension()) {
+				double next = mesh.getEntry(index);
+				double q = WOODHOUSE.computeQT(pp, RAYPARAMETER, boundary);
+				double qNext = WOODHOUSE.computeQT(pp, RAYPARAMETER, next);
+				double ratio = q < qNext ? q / qNext : qNext / q;
+				if (MESH.integralThreshold < ratio)
+					break;
+				boundary = next;
+			}
+			return boundary;
+		};
+
+		// P
+		if (!Double.isNaN(pTurningR)) {
+			jeffreysPBoundary = candidate.apply(PhasePart.P);
+			jeffreysPDelta = jeffreysDelta(PhasePart.P, jeffreysPBoundary);
+			jeffreysPT = jeffreysT(PhasePart.P, jeffreysPBoundary);
+		}
+
+		// SV
+		if (!Double.isNaN(svTurningR)) {
+			jeffreysSVBoundary = candidate.apply(PhasePart.SV);
+			jeffreysSVDelta = jeffreysDelta(PhasePart.SV, jeffreysSVBoundary);
+			jeffreysSVT = jeffreysT(PhasePart.SV, jeffreysSVBoundary);
+		}
+
+		// SH
+		if (!Double.isNaN(shTurningR)) {
+			jeffreysSHBoundary = candidate.apply(PhasePart.SH);
+			jeffreysSHDelta = jeffreysDelta(PhasePart.SH, jeffreysSHBoundary);
+			jeffreysSHT = jeffreysT(PhasePart.SH, jeffreysSHBoundary);
+		}
+
+		// K
+		if (!Double.isNaN(kTurningR)) {
+			jeffreysKBoundary = candidate.apply(PhasePart.K);
+			jeffreysKDelta = jeffreysDelta(PhasePart.K, jeffreysKBoundary);
+			jeffreysKT = jeffreysT(PhasePart.K, jeffreysKBoundary);
+		}
+
+		// I
+		if (!Double.isNaN(iTurningR) && propagationI != Propagation.PENETRATING) {
+			jeffreysIBoundary = candidate.apply(PhasePart.I);
+			jeffreysIDelta = jeffreysDelta(PhasePart.I, jeffreysIBoundary);
+			jeffreysIT = jeffreysT(PhasePart.I, jeffreysIBoundary);
+		}
+
+		// JV
+		if (!Double.isNaN(jvTurningR) && propagationJV != Propagation.PENETRATING) {
+			jeffreysJVBoundary = candidate.apply(PhasePart.JV);
+			jeffreysJVDelta = jeffreysDelta(PhasePart.JV, jeffreysJVBoundary);
+			jeffreysJVT = jeffreysT(PhasePart.JV, jeffreysJVBoundary);
+		}
+
+		// JH
+		if (!Double.isNaN(jhTurningR) && propagationJH != Propagation.PENETRATING) {
+			jeffreysJHBoundary = candidate.apply(PhasePart.JH);
+			jeffreysJHDelta = jeffreysDelta(PhasePart.JH, jeffreysJHBoundary);
+			jeffreysJHT = jeffreysT(PhasePart.JH, jeffreysJHBoundary);
+		}
+	}
+
+	private double[] getDT(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return dTI;
+		case JH:
+			return dTJH;
+		case JV:
+			return dTJV;
+		case K:
+			return dTK;
+		case P:
+			return dTP;
+		case SH:
+			return dTSH;
+		case SV:
+			return dTSV;
+		default:
+			throw new RuntimeException("uNexpected");
+		}
+	}
+
+	private double[] getDTheta(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return thetaI;
+		case JH:
+			return thetaJH;
+		case JV:
+			return thetaJV;
+		case K:
+			return thetaK;
+		case P:
+			return thetaP;
+		case SH:
+			return thetaSH;
+		case SV:
+			return thetaSV;
+		default:
+			throw new RuntimeException("uNexpected");
+		}
+	}
+
+	private void setT(PhasePart pp, double t) {
+		switch (pp) {
+		case I:
+			timeI = t;
+			return;
+		case JH:
+			timeJH = t;
+			return;
+		case JV:
+			timeJV = t;
+			return;
+		case K:
+			timeK = t;
+			return;
+		case P:
+			timeP = t;
+			return;
+		case SH:
+			timeSH = t;
+			return;
+		case SV:
+			timeSV = t;
+			return;
+		default:
+			throw new RuntimeException("unexpecteD");
+		}
+	}
+
+	private void setDelta(PhasePart pp, double t) {
+		switch (pp) {
+		case I:
+			deltaI = t;
+			return;
+		case JH:
+			deltaJH = t;
+			return;
+		case JV:
+			deltaJV = t;
+			return;
+		case K:
+			deltaK = t;
+			return;
+		case P:
+			deltaP = t;
+			return;
+		case SH:
+			deltaSH = t;
+			return;
+		case SV:
+			deltaSV = t;
+			return;
+		default:
+			throw new RuntimeException("unexpecteD");
+		}
+	}
+
+	/**
+	 * Computes T (travel time) for the mantle, outer-core and inner-core. It
+	 * also computes transient arrays of &delta;&Delta; and &delta;T.
+	 */
+	private void computeT() {
+		RealVector mantleMesh = MESH.getMesh(Partition.MANTLE);
+		RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
+		RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
+		int mantle = mantleMesh.getDimension() - 1;
+		int outerCore = outerCoreMesh.getDimension() - 1;
+		int innerCore = innerCoreMesh.getDimension() - 1;
+
+		Function<PhasePart, Thread> createThread = pp -> {
+			RealVector mesh = MESH.getMesh(pp.whichPartition());
+			double[] dT = getDT(pp);
+			return new Thread(() -> {
+				double jeffreysBoundary = getJeffreysBoundary(pp);
+				for (int i = 0; i < dT.length; i++) {
+					if (mesh.getEntry(i) < jeffreysBoundary)
+						continue;
+					dT[i] = simpsonT(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
+				}
+				setT(pp, computeT(pp, getPropagation(pp) == Propagation.PENETRATING ? mesh.getEntry(0) : turningROf(pp),
+						mesh.getEntry(dT.length)));
+			});
+		};
+
+		List<Thread> runningThread = new ArrayList<>(7);
+		// mantle P
+		Thread pThread;
+		if (propagationP != Propagation.NOEXIST) {
+			dTP = new double[mantle];
+			pThread = createThread.apply(PhasePart.P);
+			runningThread.add(pThread);
+		}
+
+		// mantle S
+		Thread svThread;
+		if (propagationSV != Propagation.NOEXIST) {
+			dTSV = new double[mantle];
+			svThread = createThread.apply(PhasePart.SV);
+			runningThread.add(svThread);
+		}
+
+		Thread shThread;
+		if (propagationSH != Propagation.NOEXIST) {
+			dTSH = new double[mantle];
+			shThread = createThread.apply(PhasePart.SH);
+			runningThread.add(shThread);
+		}
+
+		// outer-core
+		Thread kThread;
+		if (propagationK != Propagation.NOEXIST) {
+			dTK = new double[outerCore];
+			kThread = createThread.apply(PhasePart.K);
+			runningThread.add(kThread);
+		}
+
+		// inner-core P
+		Thread iThread;
+		if (propagationI != Propagation.NOEXIST) {
+			dTI = new double[innerCore];
+			iThread = createThread.apply(PhasePart.I);
+			runningThread.add(iThread);
+		}
+
+		// inner-core S
+		Thread jvThread;
+		if (propagationJV != Propagation.NOEXIST) {
+			dTJV = new double[innerCore];
+			jvThread = createThread.apply(PhasePart.JV);
+			runningThread.add(jvThread);
+		}
+
+		Thread jhThread;
+		if (propagationJH != Propagation.NOEXIST) {
+			dTJH = new double[innerCore];
+			jhThread = createThread.apply(PhasePart.JH);
+			runningThread.add(jhThread);
+		}
+		runningThread.forEach(Thread::start);
+
+		try {
+			for (Thread t : runningThread)
+				t.join();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Could not compute travel time.");
+		}
+	}
+
+	private double getJeffreysBoundary(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return jeffreysIBoundary;
+		case JH:
+			return jeffreysJHBoundary;
+		case JV:
+			return jeffreysJVBoundary;
+		case K:
+			return jeffreysKBoundary;
+		case P:
+			return jeffreysPBoundary;
+		case SH:
+			return jeffreysSHBoundary;
+		case SV:
+			return jeffreysSVBoundary;
+		default:
+			throw new RuntimeException("UNEXpected");
+		}
+	}
+
+	private double getJeffreysDelta(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return jeffreysIDelta;
+		case JH:
+			return jeffreysJHDelta;
+		case JV:
+			return jeffreysJVDelta;
+		case K:
+			return jeffreysKDelta;
+		case P:
+			return jeffreysPDelta;
+		case SH:
+			return jeffreysSHDelta;
+		case SV:
+			return jeffreysSVDelta;
+		default:
+			throw new RuntimeException("UNEXpected");
+		}
+	}
+
+	private double getJeffreysT(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return jeffreysIT;
+		case JH:
+			return jeffreysJHT;
+		case JV:
+			return jeffreysJVT;
+		case K:
+			return jeffreysKT;
+		case P:
+			return jeffreysPT;
+		case SH:
+			return jeffreysSHT;
+		case SV:
+			return jeffreysSVT;
+		default:
+			throw new RuntimeException("UNEXpected");
+		}
+	}
+
+	/**
+	 * This method computes T. The rStart and rEnd must be in the same partition
+	 * (mantle or inner-core).
+	 * 
+	 * @param startR
+	 *            start value of integration
+	 * @param endR
+	 *            end value of integration
+	 * @return T for startR &le; r &le; endR
+	 */
+	private double computeT(PhasePart pp, double startR, double endR) {
+		Partition partition = pp.whichPartition();
+		RealVector radii = MESH.getMesh(partition);
+		double minR = radii.getEntry(0);
+		double maxR = radii.getEntry(radii.getDimension() - 1);
+		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR)
+			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
+
+		if (startR < turningROf(pp))
+			throw new IllegalArgumentException("Input rStart is deeper than the boucing point.");
+
+		if (getPropagation(pp) == Propagation.NOEXIST)
+			return Double.NaN;
+
+		if (endR - startR < ComputationalMesh.eps)
+			return 0;
+
+		startR = Math.max(startR, minR);
+		endR = Math.min(endR, maxR);
+
+		double jeffreysBoundary = getJeffreysBoundary(pp);
+		double jeffreysT = getJeffreysT(pp);
+
+		// might be NaN
+		if (endR <= jeffreysBoundary)
+			return jeffreysT(pp, endR) - jeffreysT(pp, startR);
+
+		int beginIndex = MESH.getNextIndexOf(startR, partition) + 1;
+		int endIndex = MESH.getNextIndexOf(endR, partition);
+		if (endIndex < beginIndex) {
+			if (jeffreysBoundary <= startR)
+				return simpsonT(pp, startR, endR);
+			double delta = simpsonT(pp, jeffreysBoundary, endR);
+			double jeff = jeffreysT - jeffreysT(pp, startR);
+			if (Double.isNaN(jeff))
+				throw new RuntimeException("YoCHECK");
+			return delta + jeff;
+		}
+
+		double nextREnd = radii.getEntry(endIndex);
+		double time = simpsonT(pp, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
+		for (int i = beginIndex; i < endIndex; i++) {
+			if (radii.getEntry(i) < jeffreysBoundary)
+				continue;
+			time += simpsonT(pp, radii.getEntry(i), radii.getEntry(i + 1));
+		}
+
+		if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
+			return time + simpsonT(pp, startR, radii.getEntry(beginIndex));
+
+		int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
+		time += simpsonT(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
+
+		double jeffreys = jeffreysT - jeffreysT(pp, startR);
+		if (Double.isNaN(jeffreys))
+			throw new RuntimeException("youcheckya");
+		return time + jeffreys;
+	}
+
+	public void printDelta() {
+		System.out.println("Delta[deg] P:" + Precision.round(Math.toDegrees(deltaP), 3) + " SV:"
+				+ Precision.round(Math.toDegrees(deltaSV), 3) + " SH:" + Precision.round(Math.toDegrees(deltaSH), 3)
+				+ " K:" + Precision.round(Math.toDegrees(deltaK), 3) + " I:"
+				+ Precision.round(Math.toDegrees(deltaI), 3) + " JV:" + Precision.round(Math.toDegrees(deltaJV), 3)
+				+ " JH:" + Precision.round(Math.toDegrees(deltaJH), 3));
+	}
+
+	public void printT() {
+		System.out.println("T[s] P:" + Precision.round(timeP, 3) + " SV:" + Precision.round(timeSV, 3) + " SH:"
+				+ Precision.round(timeSH, 3) + " K:" + Precision.round(timeK, 3) + " I:" + Precision.round(timeI, 3)
+				+ " JV:" + Precision.round(timeJV, 3) + " JH:" + Precision.round(timeJH, 3));
 	}
 
 	/**
 	 * Compute delta for a input {@link Phase}
 	 * 
+	 * @param eventR
+	 *            [km] must be in the mantle
 	 * @param phase
 	 *            Seismic {@link Phase}
 	 * @return Epicentral distance[rad] for the phase if the phase does not
 	 *         exist or anything wrong, returns Double.NaN
 	 */
-	public double computeDelta(Phase phase) {
-		if (!exists(phase))
+	public double computeDelta(double eventR, Phase phase) {
+		if (!exists(eventR, phase))
 			return Double.NaN;
 
-		double mp = phase.mantleP();
-		double ms = phase.mantleS();
-		double oc = phase.outerCore();
-		double icp = phase.innerCoreP();
-		double ics = phase.innerCoreS();
+		double mp = phase.getCountOfP();
+		double ms = phase.getCountOfS();
+		double oc = phase.getCountOfK();
+		double icp = phase.getCountOfI();
+		double ics = phase.getCountOfJ();
+
 		// System.out.println(mp+" "+ms+" "+oc+" "+icp+" "+ics);
-		double mantleP = 0 < mp ? mantlePDelta * mp * 2 : 0;
-		double mantleS = 0 < ms ? mantleSDelta * ms * 2 : 0;
-		double outerCore = 0 < oc ? outerCoreDelta * oc * 2 : 0;
-		double innerCoreP = 0 < icp ? innerCorePDelta * icp * 2 : 0;
-		double innerCoreS = 0 < ics ? innerCoreSDelta * ics * 2 : 0;
-		// System.out.println(mantleP + " " + mantleS + " " + outerCore + " " +
-		// innerCoreP + " " + innerCoreS);
-		double delta = mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
-		// System.out.println(delta + " delta" + upperSDelta);
+		double p = 0 < mp ? deltaP * mp * 2 : 0;
+		double s = 0 < ms ? (phase.isPSV() ? deltaSV : deltaSH) * ms * 2 : 0;
+		double k = 0 < oc ? deltaK * oc * 2 : 0;
+		double i = 0 < icp ? deltaI * icp * 2 : 0;
+		double j = 0 < ics ? (phase.isPSV() ? deltaJV : deltaJH) * ics * 2 : 0;
+		double delta = p + s + k + i + j;
 
 		if (phase.isDiffracted())
 			delta += phase.getDiffractionAngle();
 
-		char first = phase.toString().charAt(0);
-		switch (first) {
+		if (Math.abs(eventR - earthRadius()) < ComputationalMesh.eps)
+			return delta;
+
+		switch (phase.toString().charAt(0)) {
 		case 'p':
-			return delta + upperPDelta;
+			return delta + computeDelta(PhasePart.P, eventR, earthRadius());
 		case 'P':
-			return delta - upperPDelta;
+			return delta - computeDelta(PhasePart.P, eventR, earthRadius());
 		case 's':
-			return delta + upperSDelta;
+			return delta + computeDelta(phase.isPSV() ? PhasePart.SV : PhasePart.SH, eventR, earthRadius());
 		case 'S':
-			return delta - upperSDelta;
+			return delta - computeDelta(phase.isPSV() ? PhasePart.SV : PhasePart.SH, eventR, earthRadius());
 		}
 		return delta;
 	}
@@ -694,55 +1115,58 @@ public class Raypath implements Serializable {
 	 *            Seismic {@link Phase}
 	 * @return Travel time[s] for the phase
 	 */
-	public double computeTraveltime(Phase phase) {
-		if (!exists(phase))
+	public double computeT(double eventR, Phase phase) {
+		if (!exists(eventR, phase))
 			return Double.NaN;
 
-		double mp = phase.mantleP();
-		double ms = phase.mantleS();
-		double oc = phase.outerCore();
-		double icp = phase.innerCoreP();
-		double ics = phase.innerCoreS();
+		double mp = phase.getCountOfP();
+		double ms = phase.getCountOfS();
+		double oc = phase.getCountOfK();
+		double icp = phase.getCountOfI();
+		double ics = phase.getCountOfJ();
 
-		double mantleP = 0 < mp ? mantlePTime * mp * 2 : 0;
-		double mantleS = 0 < ms ? mantleSTime * ms * 2 : 0;
-		double outerCore = 0 < oc ? outerCoreTime * oc * 2 : 0;
-		double innerCoreP = 0 < icp ? innerCorePTime * icp * 2 : 0;
-		double innerCoreS = 0 < ics ? innerCoreSTime * ics * 2 : 0;
-		double traveltime = mantleP + mantleS + outerCore + innerCoreP + innerCoreS;
-
+		double p = 0 < mp ? timeP * mp * 2 : 0;
+		double s = 0 < ms ? (phase.isPSV() ? timeSV : timeSH) * ms * 2 : 0;
+		double k = 0 < oc ? timeK * oc * 2 : 0;
+		double i = 0 < icp ? timeI * icp * 2 : 0;
+		double j = 0 < ics ? (phase.isPSV() ? timeJV : timeJH) * ics * 2 : 0;
+		double time = p + s + k + i + j;
 		if (phase.isDiffracted()) {
 			double deltaOnCMB = phase.getDiffractionAngle();
-			traveltime += phase.toString().contains("Pdiff") ? pTimeAlongCMB(deltaOnCMB) : sTimeAlongCMB(deltaOnCMB);
+			time += phase.toString().contains("Pdiff")
+					? computeTimePAlongBoundary(coreMantleBoundary(), deltaOnCMB, true)
+					: computeTimeSAlongBoundary(phase.isPSV(), coreMantleBoundary(), deltaOnCMB, true);
 		}
 
-		char first = phase.toString().charAt(0);
-		switch (first) {
+		if (Math.abs(eventR - earthRadius()) <= ComputationalMesh.eps)
+			return time;
+
+		switch (phase.toString().charAt(0)) {
 		case 'p':
-			return traveltime + upperPTime;
+			return time + computeT(PhasePart.P, eventR, earthRadius());
 		case 'P':
-			return traveltime - upperPTime;
+			return time - computeT(PhasePart.P, eventR, earthRadius());
 		case 's':
-			return traveltime + upperSTime;
+			return time + computeT(phase.isPSV() ? PhasePart.SV : PhasePart.SH, eventR, earthRadius());
 		case 'S':
-			return traveltime - upperSTime;
+			return time - computeT(phase.isPSV() ? PhasePart.SV : PhasePart.SH, eventR, earthRadius());
 		}
 
-		return traveltime;
+		return time;
 	}
 
 	/**
 	 * @return Radius of the core mantle boundary[km]
 	 */
 	double coreMantleBoundary() {
-		return structure.coreMantleBoundary();
+		return WOODHOUSE.getStructure().coreMantleBoundary();
 	}
 
 	/**
 	 * @return Earth radius [km]
 	 */
 	double earthRadius() {
-		return structure.earthRadius();
+		return WOODHOUSE.getStructure().earthRadius();
 	}
 
 	/**
@@ -750,231 +1174,218 @@ public class Raypath implements Serializable {
 	 *            Seismic {@link Phase}
 	 * @return if name exists for the rayparameter
 	 */
-	public boolean exists(Phase phase) {
+	public boolean exists(double eventR, Phase phase) {
 		String nameStr = phase.toString();
 		if (nameStr.contains("Pdiff"))
-			return Math.abs(getPTurningR() - structure.coreMantleBoundary()) < permissibleGapForDiff;
+			return getPropagation(PhasePart.P) == Propagation.DIFFRACTION;
 		if (nameStr.contains("Sdiff"))
-			return Math.abs(getSTurningR() - structure.coreMantleBoundary()) < permissibleGapForDiff;
+			return getPropagation(phase.isPSV() ? PhasePart.SV : PhasePart.SH) == Propagation.DIFFRACTION;
 
 		if (nameStr.startsWith("p") || nameStr.startsWith("s"))
-			if (eventR == structure.earthRadius())
+			if (Math.abs(eventR - earthRadius()) < ComputationalMesh.eps)
 				return false;
-
 		if (nameStr.contains("P"))
 			if (eventR < pTurningR)
 				return false;
 		if (nameStr.contains("S"))
-			if (eventR < (sv ? svTurningR : shTurningR)) //
+			if (eventR < (phase.isPSV() ? svTurningR : shTurningR)) //
 				return false;
 		return phase.exists(this);
 	}
 
 	/**
-	 * @return {@link Partition} where P wave turns
+	 * @return radius of turning point
 	 */
-	public Partition getPTurning() {
-		return pTurning;
-	}
-
-	/**
-	 * @return radius of P wave turning point
-	 */
-	public double getPTurningR() {
-		return pTurningR;
-	}
-
-	/**
-	 * @return radius at which K phase bounces
-	 */
-	public double getKTurningR() {
-		return kTurningR;
+	public double getTurningR(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return iTurningR;
+		case JH:
+			return jhTurningR;
+		case JV:
+			return jvTurningR;
+		case K:
+			return kTurningR;
+		case P:
+			return pTurningR;
+		case SH:
+			return shTurningR;
+		case SV:
+			return svTurningR;
+		default:
+			throw new RuntimeException("uNeXpected");
+		}
 	}
 
 	/**
 	 * @return ray parameter
 	 */
 	public double getRayParameter() {
-		return rayParameter;
+		return RAYPARAMETER;
 	}
 
 	/**
 	 * 
+	 * rList must not be empty. &Delta; and T is computed for range rStart &le;
+	 * r &le; nextR. rStart is the last entry of rList. (The $Delta; + the last
+	 * entry of thetaList) is added to the thetaList. T is same. The nextR and
+	 * the last entry of rList must be in a same partition.
+	 * 
+	 * 
+	 * @param nextR
+	 *            [km]
+	 * @param rList
+	 *            to add nextR
+	 * @param thetaList
+	 *            to add &Delta;
+	 * @param travelTimeList
+	 *            to add T
+	 */
+	private void addRThetaTime(double nextR, PhasePart pp, List<Double> rList, List<Double> thetaList,
+			List<Double> travelTimeList) {
+		double beforeR = rList.get(rList.size() - 1);
+		if (Math.abs(beforeR - coreMantleBoundary()) < ComputationalMesh.eps
+				&& Math.abs(nextR - coreMantleBoundary()) < ComputationalMesh.eps)
+			throw new RuntimeException("korekarayaruo");
+
+		double smallerR = Math.min(beforeR, nextR);
+		double biggerR = Math.max(beforeR, nextR);
+		double theta = computeDelta(pp, smallerR, biggerR);
+		double time = computeT(pp, smallerR, biggerR);
+		int lastIndex = rList.size() - 1;
+		rList.add(nextR);
+		thetaList.add(theta + thetaList.get(lastIndex));
+		travelTimeList.add(time + travelTimeList.get(lastIndex));
+	}
+
+	/**
+	 * 
+	 * @param eventR
+	 *            [km] must be in the mantle
 	 * @param phase
 	 *            Seismic {@link Phase}
-	 * @return [point]{r, theta}
+	 * @return route[point]{r, theta} <br>
+	 *         r[km], theta[rad]<br>
+	 *         route [i] is a set of radius([i][0]), theta([i][1]), travel
+	 *         time([i][2]).<br>
+	 *         theta of ith point indicates the $Delta; between i th point and
+	 *         epicenter. trravel time is same. 0 th point is epicenter.
 	 */
-	public double[][] getRoute(Phase phase) {
-		if (!exists(phase)) {
-			System.err.println(phase + " does not exist.");
-			return null;
-		}
+	public double[][] getRoute(double eventR, Phase phase) {
+		if (earthRadius() < eventR || eventR <= coreMantleBoundary())
+			throw new IllegalArgumentException("Input eventR:" + eventR + " is out of the mantle.");
+		if (!exists(eventR, phase))
+			throw new RuntimeException(phase + " does not exist.");
 
-		if (mantlePR == null && mantleSR == null)
-			throw new RuntimeException("It looks like the Raypath is not computed yet");
-
-		// System.out.println(phase+" "+ shTurningR);
-		double[][] points;
-		List<Double> thetaList = new ArrayList<>();
 		List<Double> rList = new ArrayList<>();
-		double currentTheta = 0;
+		List<Double> thetaList = new ArrayList<>();
+		List<Double> travelTimeList = new ArrayList<>();
+		RealVector mantleMesh = MESH.getMesh(Partition.MANTLE);
 
-		if (phase.isDiffracted()) {
-			boolean isDepthPhase = phase.getNPart() == 3;
-			// upper part of depth phase
-			if (isDepthPhase) {
-				boolean isP = phase.partIsP(0);
-				int nR = isP ? mantlePR.length : mantleSR.length;
-				for (int iR = 0; iR < nR; iR++) {
-					double r = isP ? mantlePR[iR] : mantleSR[iR];
-					if (r < eventR)
-						continue;
-					rList.add(r);
-					thetaList.add(currentTheta);
-					currentTheta += isP ? mantlePTheta[iR] : mantleSTheta[iR];
+		// First phase because we must take care of the eventR
+		// [eventR, bottomR (turningR or CMB)]
+		rList.add(eventR);
+		thetaList.add(0d);
+		travelTimeList.add(0d);
+		if (phase.partIsDownGoing(0)) {
+			int indexEventR = MESH.getNextIndexOf(eventR, Partition.MANTLE);
+			if (mantleMesh.getEntry(indexEventR) == eventR)
+				indexEventR--;
+			PhasePart pp = phase.phasePartOf(0);
+			if (getPropagation(pp) == Propagation.PENETRATING)
+				for (int iR = indexEventR; 0 <= iR; iR--)
+					addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+			else {
+				double jeffreysBoundary = getJeffreysBoundary(pp);
+				int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.MANTLE);
+				for (int iR = indexEventR; bottomIndex < iR; iR--)
+					addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+				addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
+				addRThetaTime(turningROf(pp), pp, rList, thetaList, travelTimeList);
+			}
+		} else
+			for (int iR = MESH.getNextIndexOf(eventR, Partition.MANTLE) + 1, n = mantleMesh
+					.getDimension(); iR < n; iR++)
+				addRThetaTime(mantleMesh.getEntry(iR), phase.phasePartOf(0), rList, thetaList, travelTimeList);
+
+		for (int i = 1; i < phase.getNPart(); i++) {
+			boolean isDownGoing = phase.partIsDownGoing(i);
+			PhasePart pp = phase.phasePartOf(i);
+			switch (phase.partitionOf(i)) {
+			case CORE_MANTLE_BOUNDARY:
+				addRThetaTime(coreMantleBoundary(), pp, rList, thetaList, travelTimeList);
+				break;
+			case MANTLE:
+				if (getPropagation(pp) == Propagation.PENETRATING)
+					if (isDownGoing)
+						for (int iR = mantleMesh.getDimension() - 2; 0 <= iR; iR--)
+							addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+					else
+						for (int iR = 1, n = mantleMesh.getDimension(); iR < n; iR++)
+							addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+				else {
+					double jeffreysBoundary = getJeffreysBoundary(pp);
+					int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.MANTLE);
+					if (isDownGoing) {
+						for (int iR = mantleMesh.getDimension() - 2; bottomIndex < iR; iR--)
+							addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+						addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
+						addRThetaTime(getTurningR(pp), pp, rList, thetaList, travelTimeList);
+					} else {
+						addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
+						for (int iR = bottomIndex + 1, n = mantleMesh.getDimension(); iR < n; iR++)
+							addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+					}
 				}
-			}
-
-			boolean p = phase.partIsP(0);
-			int nR = p ? mantlePR.length : mantleSR.length;
-			double diffractionDelta = phase.getDiffractionAngle();
-			// former half of Pdiff or Sdiff
-			for (int iR = 0; iR < nR; iR++) {
-				int j = nR - 1 - iR;
-				double r = p ? mantlePR[j] : mantleSR[j];
-				if (!isDepthPhase && eventR < r)
-					continue;
-				// System.out.println(name.partIsDownGoing(i)+" "+eventR+" "+r);
-				rList.add(r);
-				currentTheta += p ? mantlePTheta[j] : mantleSTheta[j];
-				thetaList.add(currentTheta);
-			}
-			// System.out.println(diffractionDelta);
-			// double startTheta = currentTheta;
-			double endTheta = currentTheta + diffractionDelta;
-			double dTheta = Math.toRadians(0.5);
-			while (currentTheta < endTheta) {
-				rList.add(coreMantleBoundary());
-				thetaList.add(currentTheta);
-				currentTheta += dTheta;
-			}
-			for (int iR = 0; iR < nR; iR++) {
-				int j = iR;
-				double r = p ? mantlePR[j] : mantleSR[j];
-				// System.out.println(name.partIsDownGoing(i)+" "+eventR+" "+r);
-				rList.add(r);
-				thetaList.add(currentTheta);
-				currentTheta += p ? mantlePTheta[j] : mantleSTheta[j];
-			}
-
-		} else {
-			// not diffracted
-			// p s first exception
-			double[] firstR;
-			double[] firstTheta;
-			if (phase.partIsP(0)) {
-				firstR = mantlePR;
-				firstTheta = mantlePTheta;
-			} else {
-				firstR = mantleSR;
-				firstTheta = mantleSTheta;
-			}
-			for (int iR = 0; iR < firstR.length; iR++) {
-				int j = phase.partIsDownGoing(0) ? firstR.length - iR - 1 : iR;
-				double r = firstR[j];
-				if (eventR < r && phase.partIsDownGoing(0))
-					continue;
-				if (r < eventR && !phase.partIsDownGoing(0))
-					continue;
-				// System.out.println(name.partIsDownGoing(i)+" "+eventR+" "+r);
-				rList.add(r);
-				if (phase.partIsDownGoing(0)) {
-					currentTheta += firstTheta[j];
-					thetaList.add(currentTheta);
+				break;
+			case OUTERCORE:
+				RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
+				if (propagationK == Propagation.PENETRATING) {
+					if (isDownGoing)
+						for (int iR = outerCoreMesh.getDimension() - 2; 0 <= iR; iR--)
+							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+					else
+						for (int iR = 1, n = outerCoreMesh.getDimension(); iR < n; iR++)
+							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 				} else {
-					thetaList.add(currentTheta);
-					currentTheta += firstTheta[j];
-				}
-			}
-
-			for (int i = 1; i < phase.getNPart(); i++) {
-				// System.out.println("hi" + i);
-				switch (phase.partIs(i)) {
-				case MANTLE: {
-					double[] mantleR;
-					double[] mantleTheta;
-					if (phase.partIsP(i)) {
-						mantleR = mantlePR;
-						mantleTheta = mantlePTheta;
+					int bottomIndex = MESH.getNextIndexOf(jeffreysKBoundary, Partition.OUTERCORE);
+					if (isDownGoing) {
+						for (int iR = outerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
+							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+						addRThetaTime(jeffreysKBoundary, pp, rList, thetaList, travelTimeList);
+						addRThetaTime(kTurningR, pp, rList, thetaList, travelTimeList);
 					} else {
-						mantleR = mantleSR;
-						mantleTheta = mantleSTheta;
-					}
-					currentTheta += mantleTheta[phase.partIsDownGoing(i) ? mantleR.length - 1 : 0];
-					for (int iR = 1; iR < mantleR.length; iR++) {
-						int j = phase.partIsDownGoing(i) ? mantleR.length - 1 - iR : iR;
-						rList.add(mantleR[j]);
-						if (phase.partIsDownGoing(i)) {
-							currentTheta += mantleTheta[j];
-							thetaList.add(currentTheta);
-						} else {
-							thetaList.add(currentTheta);
-							currentTheta += mantleTheta[j];
-						}
-
+						addRThetaTime(jeffreysKBoundary, pp, rList, thetaList, travelTimeList);
+						for (int iR = bottomIndex + 1, n = outerCoreMesh.getDimension(); iR < n; iR++)
+							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 					}
 				}
-					break;
-				case OUTERCORE:
-					currentTheta += outerCoreTheta[phase.partIsDownGoing(i) ? outerCoreR.length - 1 : 0];
-					for (int iR = 1; iR < outerCoreR.length; iR++) {
-						int j = phase.partIsDownGoing(i) ? outerCoreR.length - 1 - iR : iR;
-						rList.add(outerCoreR[j]);
-						if (phase.partIsDownGoing(i)) {
-							currentTheta += outerCoreTheta[j];
-							thetaList.add(currentTheta);
-						} else {
-							thetaList.add(currentTheta);
-							currentTheta += outerCoreTheta[j];
-						}
-					}
-					break;
-				case INNERCORE: {
-					double[] innerCoreR;
-					double[] innerCoreTheta;
-					if (phase.partIsP(i)) {
-						innerCoreR = innerCorePR;
-						innerCoreTheta = innerCorePTheta;
-					} else {
-						innerCoreR = innerCoreSR;
-						innerCoreTheta = innerCoreSTheta;
-					}
-					currentTheta += innerCoreTheta[phase.partIsDownGoing(i) ? innerCoreTheta.length - 1 : 0];
-					for (int iR = 1; iR < innerCoreR.length; iR++) {
-						if (rayParameter == 0 && iR == 0 && !phase.partIsDownGoing(i))
-							currentTheta += Math.PI;
-						int j = phase.partIsDownGoing(i) ? innerCoreR.length - iR - 1 : iR;
-						rList.add(innerCoreR[j]);
-						if (phase.partIsDownGoing(0)) {
-							currentTheta += innerCoreTheta[j];
-							thetaList.add(currentTheta);
-						} else {
-							thetaList.add(currentTheta);
-							currentTheta += innerCoreTheta[j];
-						}
-					}
+				break;
+			case INNERCORE:
+				double jeffreysBoundary = getJeffreysBoundary(pp);
+				RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
+				int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.INNERCORE);
+				if (isDownGoing) {
+					for (int iR = innerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
+						addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+					addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
+					addRThetaTime(getTurningR(pp), pp, rList, thetaList, travelTimeList);
+				} else {
+					addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
+					for (int iR = bottomIndex + 1, n = innerCoreMesh.getDimension(); iR < n; iR++)
+						addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 				}
-					break;
-				default:
-					throw new RuntimeException("souteigai");
-				}
+				break;
+			default:
+				throw new RuntimeException("souteigai");
 			}
 		}
-		points = new double[thetaList.size()][2];
-		for (int i = 0; i < points.length; i++) {
-			double r = rList.get(i);
-			double theta = thetaList.get(i);
-			points[i] = new double[] { r, theta };
+		double[][] points = new double[rList.size()][3];
+		points[0][0] = eventR;
+		for (int i = 1; i < points.length; i++) {
+			points[i][0] = rList.get(i);
+			points[i][1] = thetaList.get(i);
+			points[i][2] = travelTimeList.get(i);
 		}
 
 		return points;
@@ -987,13 +1398,13 @@ public class Raypath implements Serializable {
 	 *            Seismic {@link Phase}
 	 * @return [point]{x, y} coordinates of the path
 	 */
-	public double[][] getRouteXY(Phase phase) {
-		if (!exists(phase)) {
+	public double[][] getRouteXY(double eventR, Phase phase) {
+		if (!exists(eventR, phase)) {
 			System.err.println(phase + " does not exist.");
 			return null;
 		}
 		// System.out.println(phase+" "+ shTurningR);
-		double[][] rTheta = getRoute(phase);
+		double[][] rTheta = getRoute(eventR, phase);
 		double[][] points = new double[rTheta.length][2];
 		for (int i = 0; i < points.length; i++) {
 			double x = rTheta[i][0] * Math.sin(rTheta[i][1]);
@@ -1004,705 +1415,503 @@ public class Raypath implements Serializable {
 		return points;
 	}
 
-	Partition getSHTurning() {
-		return shTurning;
-	}
-
-	double getSHTurningR() {
-		return shTurningR;
-	}
-
-	/**
-	 * @return {@link Partition} where S wave turns
-	 */
-	public Partition getSTurning() {
-		return sv ? svTurning : shTurning;
-	}
-
-	/**
-	 * @return [km] radius of a S wave turning point
-	 */
-	public double getSTurningR() {
-		return sv ? svTurningR : shTurningR;
-	}
-
-	Partition getSVTurning() {
-		return svTurning;
-	}
-
-	double getSVTurningR() {
-		return svTurningR;
-	}
-
 	VelocityStructure getVelocityStructure() {
-		return structure;
+		return WOODHOUSE.getStructure();
 	}
 
 	/**
 	 * @return Radius of the inner core boundary [km]
 	 */
 	double innerCoreBoundary() {
-		return structure.innerCoreBoundary();
+		return WOODHOUSE.getStructure().innerCoreBoundary();
 	}
 
-	/**
-	 * 
-	 * @return (Half)Delta in inner core
-	 */
-	private double innerCorePDelta() {
-		if (innerCorePPropagation == Propagation.NOEXIST)
-			return Double.NaN;
-		double icbR = structure.innerCoreBoundary();
-		double startR = pTurningR + jeffereysEPS;
-
-		if (icbR <= startR) {
-			double jeff = jeffreysPDelta(pTurningR, icbR);
-			innerCorePR = new double[] { pTurningR, icbR };
-			innerCorePTheta = new double[] { jeff, 0 };
-			return jeff;
+	private double turningROf(PhasePart pp) {
+		switch (pp) {
+		case P:
+			return pTurningR;
+		case I:
+			return iTurningR;
+		case JH:
+			return jhTurningR;
+		case JV:
+			return jvTurningR;
+		case K:
+			return kTurningR;
+		case SH:
+			return shTurningR;
+		case SV:
+			return svTurningR;
+		default:
+			throw new RuntimeException("UNExpECTED");
 		}
-
-		double[] x = point(startR, icbR - eps, interval);
-		double delta = jeffreysPDelta(pTurningR, startR);
-		innerCorePR = new double[x.length + 1];
-		innerCorePTheta = new double[x.length + 1];
-		innerCorePR[0] = pTurningR;
-		innerCorePTheta[0] = delta;
-		for (int i = 0; i < x.length - 1; i++) {
-			innerCorePR[i + 1] = x[i];
-			double simpson = simpsonPDelta(x[i], x[i + 1]);
-			innerCorePTheta[i + 1] = simpson;
-			delta += simpson;
-		}
-		innerCorePR[innerCorePR.length - 1] = icbR - eps;
-		innerCorePTheta[innerCorePR.length - 1] = 0;
-		// System.out.println("inner core P delta[deg]:" +
-		// Math.toDegrees(delta));
-		return delta;
 	}
 
-	/**
-	 * 
-	 * @return (Half)travel time in inner core
-	 */
-	private double innerCorePTau() {
-		double icbR = structure.innerCoreBoundary();
-		if (icbR < pTurningR || pTurningR < 0)
+	private double jeffreysDelta(PhasePart pp, double rEnd) {
+		double turningR = turningROf(pp);
+		if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps)
 			return 0;
-		double startR = pTurningR + jeffereysEPS;
-		if (icbR <= startR)
-			return jeffreysPTau(pTurningR, icbR - eps);
-		double tau = jeffreysPTau(pTurningR, startR);
-		double[] x = point(startR, icbR - eps, interval);
-		for (int i = 0; i < x.length - 1; i++)
-			tau += simpsonPTau(x[i], x[i + 1]);
-		// System.out.println("inner core " + tau + " sec");
-		return tau;
+		DoubleFunction<Double> rToY = r -> WOODHOUSE.computeQDelta(pp, RAYPARAMETER, r) * drdx(pp, r);
+		double rCenter = (rEnd + turningR) / 2;
+		double modifiedR = rCenter + (toX(pp, rEnd) / 2 - toX(pp, rCenter)) * drdx(pp, rCenter);
+		if (Double.isNaN(modifiedR) || modifiedR <= turningR || rEnd <= modifiedR)
+			modifiedR = rCenter;
+		return jeffreysMethod1(toX(pp, modifiedR), rToY.apply(modifiedR), rToY.apply(rEnd));
 	}
 
-	/**
-	 * 
-	 * @return (Half) Delta in inner core
-	 */
-	private double innerCoreSDelta() {
-		double icbR = structure.innerCoreBoundary();
-		double turningR = sv ? svTurningR : shTurningR;
-		Propagation prop = sv ? innerCoreSVPropagation : innerCoreSHPropagation;
-		if (prop == Propagation.NOEXIST)
-			return Double.NaN;
-		double startR = turningR + jeffereysEPS;
-		if (icbR <= startR) {
-			double jeff = jeffreysSDelta(turningR, icbR);
-			innerCoreSR = new double[] { turningR, icbR };
-			innerCoreSTheta = new double[] { jeff, 0 };
-			return jeff;
-		}
-		double[] x = point(startR, icbR - eps, interval);
-		innerCoreSR = new double[x.length + 1];
-		innerCoreSTheta = new double[x.length + 1];
-		double delta = jeffreysSDelta(turningR, startR);
-		innerCoreSR[0] = turningR;
-		innerCoreSTheta[0] = delta;
-		for (int i = 0; i < x.length - 1; i++) {
-			double simpson = simpsonSDelta(x[i], x[i + 1]);
-			innerCoreSR[i + 1] = x[i];
-			innerCoreSTheta[i + 1] = simpson;
-			delta += simpson;
-		}
-		innerCoreSR[innerCoreSR.length - 1] = icbR - eps;
-		// innerCoreSTheta[innerCoreSR.length - 1] = 0;
-		// System.out.println("inner core S delta[deg]" +
-		// Math.toDegrees(delta));
-		return delta;
-	}
-
-	private double innerCoreSTau() {
-		double icbR = structure.innerCoreBoundary();
-		double turningR = sv ? svTurningR : shTurningR;
-		if (icbR < turningR || turningR < 0)
+	private double jeffreysT(PhasePart pp, double rEnd) {
+		double turningR = turningROf(pp);
+		if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps)
 			return 0;
-		double startR = turningR + jeffereysEPS;
-		if (icbR < startR)
-			return jeffreysSTau(turningR, icbR);
-		double[] x = point(startR, icbR - eps, interval);
-		double tau = jeffreysSTau(turningR, startR);
-		for (int i = 0; i < x.length - 1; i++)
-			tau += simpsonSTau(x[i], x[i + 1]);
-		// System.out.println("inner core time[s]" + tau);
-		return tau;
+		DoubleFunction<Double> rToY = r -> WOODHOUSE.computeQT(pp, RAYPARAMETER, r) * drdx(pp, r);
+		double rCenter = (rEnd + turningR) / 2;
+		double modifiedR = rCenter + (toX(pp, rEnd) / 2 - toX(pp, rCenter)) * drdx(pp, rCenter);
+		if (Double.isNaN(modifiedR) || modifiedR <= turningR || rEnd <= modifiedR)
+			modifiedR = rCenter;
+		return jeffreysMethod1(toX(pp, modifiedR), rToY.apply(modifiedR), rToY.apply(rEnd));
+	}
+
+	private double[] getTheta(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return thetaI;
+		case JH:
+			return thetaJH;
+		case JV:
+			return thetaJV;
+		case K:
+			return thetaK;
+		case P:
+			return thetaP;
+		case SH:
+			return thetaSH;
+		case SV:
+			return thetaSV;
+		default:
+			throw new RuntimeException("uNeXpected");
+		}
 	}
 
 	/**
-	 * computes delta by Jeffreys from rStart to rEnd at r= rStart qdeltap is
-	 * singular
+	 * x &equiv; q<sub>&tau;</sub><sup>2</sup>
 	 * 
-	 * @param rStart
-	 * @param rEnd
-	 * @return
+	 * @param r
+	 *            [km]
+	 * @return x for P
 	 */
-	private double jeffreysOuterCoreDelta(double turningR, double rEnd) {
-		double[] x = new double[3];
-		double dr = (rEnd - turningR) / 3;
-		for (int i = 0; i < 3; i++) {
-			double r = turningR + dr * (i + 1);
-			x[i] = outerCoreQDelta(r);
+	private double toX(PhasePart pp, double r) {
+		switch (pp) {
+		case P:
+		case I:
+		case SV:
+		case JV:
+		case SH:
+		case JH:
+			return Math.pow(WOODHOUSE.computeQTau(pp, RAYPARAMETER, r), 2);
+		case K:
+			return 1 - Math.pow(RAYPARAMETER * Math.sqrt(getStructure().getA(r) / getStructure().getRho(r)) / r, 2);
 		}
-		return jeffreysMethod3(x) * dr * 3;
+		throw new RuntimeException("unEXPeCteD");
+	}
+
+	private double drdx(PhasePart pp, double r) {
+		return ComputationalMesh.eps / (toX(pp, r + ComputationalMesh.eps) - toX(pp, r));
 	}
 
 	/**
-	 * computes traveltime by Jeffreys from rStart to rEnd at r= rStart qtp is
-	 * singular
-	 * 
-	 * @param rStart
-	 * @param rEnd
-	 * @return
-	 */
-	private double jeffreysOuterCoreTau(double turningR, double rEnd) {
-		double[] x = new double[3];
-		double dr = (rEnd - turningR) / 3;
-		for (int i = 0; i < 3; i++) {
-			double r = turningR + dr * (i + 1);
-			x[i] = outerCoreQT(r);
-		}
-		return jeffreysMethod3(x) * dr * 3;
-	}
-
-	/**
-	 * computes delta by Jeffreys from rStart to rEnd at r= rStart qdeltap is
-	 * singular
-	 * 
-	 * @param rStart
-	 * @param rEnd
-	 * @return
-	 */
-	private double jeffreysPDelta(double rStart, double rEnd) {
-		double[] x = new double[3];
-		double dr = (rEnd - rStart) / 3;
-		for (int i = 0; i < 3; i++) {
-			double r = rStart + dr * (i + 1);
-			x[i] = calcQDeltaP(r);
-		}
-		return jeffreysMethod3(x) * dr * 3;
-	}
-
-	/**
-	 * computes traveltime by Jeffreys from rStart to rEnd at r= rStart qtp is
-	 * singular
-	 * 
-	 * @param rStart
-	 * @param rEnd
-	 * @return
-	 */
-	private double jeffreysPTau(double rStart, double rEnd) {
-		double[] x = new double[3];
-		final double dr = (rEnd - rStart) / 3;
-		for (int i = 0; i < 3; i++) {
-			double r = rStart + dr * (i + 1);
-			x[i] = calcQTP(r);
-		}
-		return jeffreysMethod3(x) * dr * 3;
-	}
-
-	/**
-	 * computes delta by Jeffreys from rStart to rEnd at r= rStart qdeltaS is
-	 * singular
-	 * 
-	 * @param rStart
-	 * @param rEnd
-	 * @return
-	 */
-	private double jeffreysSDelta(double rStart, double rEnd) {
-		double[] x = new double[3];
-		final double dr = (rEnd - rStart) / 3;
-		for (int i = 0; i < 3; i++) {
-			double r = rStart + dr * (i + 1);
-			x[i] = calcQDeltaS(r);
-		}
-		return jeffreysMethod3(x) * dr * 3;
-	}
-
-	/**
-	 * computes travel time by Jeffreys from rStart to rEnd at r= rStart qts is
-	 * singular
-	 * 
-	 * @param rStart
-	 * @param rEnd
-	 * @return
-	 */
-	private double jeffreysSTau(double rStart, double rEnd) {
-		double[] x = new double[3];
-		final double dr = (rEnd - rStart) / 3;
-		for (int i = 0; i < 3; i++) {
-			double r = rStart + dr * (i + 1);
-			x[i] = calcQTS(r);
-		}
-		return jeffreysMethod3(x) * dr * 3;
-	}
-
-	/**
-	 * (Half) Delta of mantle part
-	 * 
-	 * @return
-	 */
-	private double mantlePDelta() {
-		if (mantlePPropagation == Propagation.NOEXIST || eventR < pTurningR)
-			return Double.NaN;
-		double cmb = structure.coreMantleBoundary();
-		double startR = mantlePPropagation == Propagation.PENETRATING ? cmb + eps : pTurningR + jeffereysEPS; //
-		if (structure.earthRadius() <= startR) {
-			double jeff = jeffreysPDelta(pTurningR, structure.earthRadius());
-			mantlePR = new double[] { pTurningR, structure.earthRadius() };
-			mantlePTheta = new double[] { jeff, 0 };
-			return jeff;
-		}
-		double delta = 0;
-		double[] x = point(startR, structure.earthRadius(), interval);
-		if (mantlePPropagation != Propagation.PENETRATING) {
-			delta = jeffreysPDelta(pTurningR, startR);
-			mantlePR = new double[x.length + 1];
-			mantlePTheta = new double[x.length + 1];
-			mantlePR[0] = pTurningR;
-			mantlePTheta[0] = delta;
-		} else {
-			mantlePR = new double[x.length];
-			mantlePTheta = new double[x.length];
-		}
-		for (int i = 0; i < x.length - 1; i++) {
-			double dDelta = simpsonPDelta(x[i], x[i + 1]);
-			if (mantlePPropagation != Propagation.PENETRATING) {
-				mantlePR[i + 1] = x[i];
-				mantlePTheta[i + 1] = dDelta;
-			} else {
-				mantlePR[i] = x[i];
-				mantlePTheta[i] = dDelta;
-			}
-			delta += dDelta;
-		}
-		mantlePR[mantlePR.length - 1] = structure.earthRadius();
-		// mantlePTheta[mantlePR.length - 1] = 0;
-		// System.out.println("mantle P delta[deg]:" + Math.toDegrees(delta));
-		return delta;
-	}
-
-	/**
-	 * (Half) travel time in mantle
-	 * 
-	 * @return
-	 */
-	private double mantlePTau() {
-		if (mantlePPropagation == Propagation.NOEXIST || eventR < pTurningR)
-			return Double.NaN;
-
-		double cmb = structure.coreMantleBoundary();
-		double startR = mantlePPropagation == Propagation.PENETRATING ? cmb + eps : pTurningR + jeffereysEPS;//
-		if (structure.earthRadius() <= startR)
-			return jeffreysPTau(pTurningR, structure.earthRadius());
-		double tau = mantlePPropagation == Propagation.PENETRATING ? 0 : jeffreysPTau(pTurningR, startR);
-		double[] x = point(startR, structure.earthRadius(), interval);
-		for (int i = 0; i < x.length - 1; i++)
-			tau += simpsonPTau(x[i], x[i + 1]);
-		// System.out.println("mantle P time[s]:" + tau);
-		return tau;
-	}
-
-	/**
-	 * @return (Half) Delta of delta in mantle part
-	 */
-	private double mantleSDelta() {
-		Propagation prop = sv ? mantleSVPropagation : mantleSHPropagation;
-		double turningR = sv ? svTurningR : shTurningR;
-		if (prop == Propagation.NOEXIST || eventR < turningR)
-			return Double.NaN;
-		double cmb = structure.coreMantleBoundary();
-		double startR = prop == Propagation.PENETRATING ? cmb + eps : turningR + jeffereysEPS; //
-
-		if (structure.earthRadius() <= startR) {
-			double jeff = jeffreysSDelta(turningR, structure.earthRadius());
-			mantleSR = new double[] { turningR, structure.earthRadius() };
-			mantleSTheta = new double[] { jeff, 0 };
-			return jeff;
-		}
-		double delta = 0;
-		double[] x = point(startR, structure.earthRadius(), interval);
-		if (prop != Propagation.PENETRATING) {
-			delta = jeffreysSDelta(turningR, startR);
-			mantleSTheta = new double[x.length + 1];
-			mantleSR = new double[x.length + 1];
-			mantleSTheta[0] = delta;
-			mantleSR[0] = turningR;
-		} else {
-			mantleSTheta = new double[x.length];
-			mantleSR = new double[x.length];
-		}
-		for (int i = 0; i < x.length - 1; i++) {
-			double simpson = simpsonSDelta(x[i], x[i + 1]);
-			if (prop != Propagation.PENETRATING) {
-				mantleSTheta[i + 1] = simpson;
-				mantleSR[i + 1] = x[i];
-			} else {
-				mantleSTheta[i] = simpson;
-				mantleSR[i] = x[i];
-			}
-			delta += simpson;
-		}
-		mantleSR[mantleSTheta.length - 1] = structure.earthRadius();
-		// mantleSTheta[mantleSTheta.length - 1] = 0;
-		// System.out.println("Mantle S delta[deg]:" + Math.toDegrees(delta));
-		return delta;
-	}
-
-	/**
-	 * @return (Half)travel time in mantle
-	 */
-	private double mantleSTau() {
-		double cmb = structure.coreMantleBoundary();
-		double turningR = sv ? svTurningR : shTurningR;
-		Propagation prop = sv ? mantleSVPropagation : mantleSHPropagation;
-		if (prop == Propagation.NOEXIST || eventR < turningR)
-			return Double.NaN;
-		double startR = prop == Propagation.PENETRATING ? cmb + eps : turningR + jeffereysEPS;//
-		if (structure.earthRadius() <= startR)
-			return jeffreysSTau(turningR, structure.earthRadius());
-		double[] x = point(startR, structure.earthRadius(), interval);
-		double tau = prop == Propagation.PENETRATING ? 0 : jeffreysSTau(turningR, startR);
-		for (int i = 0; i < x.length - 1; i++)
-			tau += simpsonSTau(x[i], x[i + 1]);
-		// System.out.println("mantle S time[s]:" + tau);
-		return tau;
-	}
-
-	/**
-	 * 
-	 * @return &Delta; [rad] in the outer core
-	 */
-	private double outerCoreDelta() {
-		if (kPropagation == Propagation.NOEXIST)
-			return Double.NaN;
-		double icb = structure.innerCoreBoundary();
-		double startR = kPropagation == Propagation.PENETRATING ? icb + eps : kTurningR + jeffereysEPS;
-		double cmbR = structure.coreMantleBoundary();
-		if (cmbR <= startR) {
-			double jeff = jeffreysOuterCoreDelta(kTurningR, cmbR);
-			outerCoreR = new double[] { kTurningR, cmbR };
-			outerCoreTheta = new double[] { jeff, 0 };
-			return jeff;
-		}
-		double delta = 0;
-		double[] x = point(startR, cmbR - eps, interval);
-		if (kPropagation == Propagation.BOUNCING) {
-			delta = jeffreysOuterCoreDelta(kTurningR, startR);
-			outerCoreR = new double[x.length + 1];
-			outerCoreTheta = new double[x.length + 1];
-			outerCoreR[0] = kTurningR;
-			outerCoreTheta[0] = delta;
-		} else {
-			outerCoreR = new double[x.length];
-			outerCoreTheta = new double[x.length];
-		}
-		for (int i = 0; i < x.length - 1; i++) {
-			double deltax = x[i + 1] - x[i];
-			double a = outerCoreQDelta(x[i]);
-			double b = outerCoreQDelta(x[i] + 0.5 * deltax);
-			double c = outerCoreQDelta(x[i + 1]);
-			double simpson = bySimpsonRule(a, b, c) * deltax;
-			if (kPropagation == Propagation.BOUNCING) {
-				outerCoreR[i + 1] = x[i];
-				outerCoreTheta[i + 1] = simpson;
-			} else {
-				outerCoreR[i] = x[i];
-				outerCoreTheta[i] = simpson;
-			}
-			delta += simpson;
-		}
-		outerCoreR[outerCoreR.length - 1] = cmbR;
-		// outerCoreTheta[outerCoreR.length - 1] = 0;
-		// System.out.println("outer core delta[deg]:" + Math.toDegrees(delta));
-		return delta;
-	}
-
-	private double outerCoreQDelta(double r) {
-		double v = Math.sqrt(structure.getA(r) / structure.getRho(r));
-		double sin = rayParameter * v / r;
-		double cos = Math.sqrt(1 - sin * sin);
-		return sin / cos / r;
-	}
-
-	private double outerCoreQT(double r) {
-		double v = Math.sqrt(structure.getA(r) / structure.getRho(r));
-		double sin = rayParameter * v / r;
-		double cos = Math.sqrt(1 - sin * sin);
-		return 1 / v / cos;
-	}
-
-	/**
-	 * (Half)travel time in outer core
-	 * 
-	 * @return
-	 */
-	private double outerCoreTau() {
-		if (kPropagation == Propagation.NOEXIST)
-			return Double.NaN;
-		double cmbR = structure.coreMantleBoundary();
-		double icb = structure.innerCoreBoundary();
-		double startR = kPropagation == Propagation.PENETRATING ? icb + eps : kTurningR + jeffereysEPS; //
-		if (cmbR <= startR)
-			return jeffreysOuterCoreTau(pTurningR, cmbR);
-
-		double[] x = point(startR, cmbR - eps, interval);
-		double tau = kPropagation == Propagation.BOUNCING ? jeffreysOuterCoreTau(kTurningR, startR) : 0;
-		for (int i = 0; i < x.length - 1; i++) {
-			double deltax = x[i + 1] - x[i];
-			double a = outerCoreQT(x[i]);
-			double b = outerCoreQT(x[i] + 0.5 * deltax);
-			double c = outerCoreQT(x[i + 1]);
-			tau = tau + bySimpsonRule(a, b, c) * deltax;
-		}
-		// System.out.println("Outer core[s]:" + tau);
-		return tau;
-	}
-
-	/**
-	 * Interval of integration startR to endR is divided by deltaR
+	 * This method computes &Delta; by precomputed values. The rStart and rEnd
+	 * must be in the mantle.
 	 * 
 	 * @param startR
 	 *            [km]
 	 * @param endR
 	 *            [km]
-	 * @param deltaR
-	 *            [km]
-	 * @return Array of radius
+	 * @return &Delta; for rStart &le; r &le; rEnd
 	 */
-	private static double[] point(double startR, double endR, double deltaR) {
-		int n = (int) Math.ceil((endR - startR) / deltaR);
-		double[] x = new double[n + 1];
-		for (int i = 0; i < n; i++)
-			x[i] = startR + i * deltaR;
-		x[n] = endR;
-		return x;
+	private double computeDelta(PhasePart pp, double startR, double endR) {
+		Partition partition = pp.whichPartition();
+		RealVector radii = MESH.getMesh(partition);
+		double minR = radii.getEntry(0);
+		double maxR = radii.getEntry(radii.getDimension() - 1);
+		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR)
+			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
+
+		if (startR < turningROf(pp))
+			throw new IllegalArgumentException("Input rStart is deeper than the boucing point.");
+
+		if (getPropagation(pp) == Propagation.NOEXIST)
+			return Double.NaN;
+
+		if (endR - startR < ComputationalMesh.eps)
+			return 0;
+
+		startR = Math.max(startR, minR);
+		endR = Math.min(endR, maxR);
+
+		double jeffreysBoundary = getJeffreysBoundary(pp);
+		double jeffreysDelta = getJeffreysDelta(pp);
+		// might be NaN
+		if (endR <= jeffreysBoundary)
+			return jeffreysDelta(pp, endR) - jeffreysDelta(pp, startR);
+
+		int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
+		int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
+		if (endIndexForMemory < firstIndexForMemory) {
+			if (jeffreysBoundary <= startR)
+				return simpsonDelta(pp, startR, endR);
+			double delta = simpsonDelta(pp, jeffreysBoundary, endR);
+			double jeff = jeffreysDelta - jeffreysDelta(pp, startR);
+			if (Double.isNaN(jeff))
+				throw new RuntimeException("YoCHECK");
+			return delta + jeff;
+		}
+		double nextREnd = radii.getEntry(endIndexForMemory);
+		double delta = simpsonDelta(pp, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
+		double[] theta = getTheta(pp);
+		for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
+			delta += theta[i];
+
+		if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
+			return delta + simpsonDelta(pp, startR, radii.getEntry(firstIndexForMemory));
+		int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
+		delta += simpsonDelta(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
+
+		double jeffreys = jeffreysDelta - jeffreysDelta(pp, startR);
+		if (Double.isNaN(jeffreys))
+			throw new RuntimeException("youtcheckya");
+		return delta + jeffreys;
 	}
 
-	private Propagation mantlePPropagation;
-	private Propagation innerCorePPropagation;
-	private Propagation kPropagation;
+	/**
+	 * Computes &Delta; for the mesh and compute the ones for the mantle,
+	 * outer-core and inner-core. If one does not exist, the value is default (
+	 * {@link Double#NaN}).
+	 * 
+	 * TODO boundary value
+	 */
+	private void computeDelta() {
+		RealVector mantleMesh = MESH.getMesh(Partition.MANTLE);
+		RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
+		RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
+		int mantle = mantleMesh.getDimension() - 1;
+		int outerCore = outerCoreMesh.getDimension() - 1;
+		int innerCore = innerCoreMesh.getDimension() - 1;
+		Function<PhasePart, Thread> createThread = pp -> {
+			RealVector mesh = MESH.getMesh(pp.whichPartition());
+			double[] dTheta = getDTheta(pp);
+			return new Thread(() -> {
+				double jeffreysBoundary = getJeffreysBoundary(pp);
+				for (int i = 0; i < dTheta.length; i++) {
+					if (mesh.getEntry(i) < jeffreysBoundary)
+						continue;
+					dTheta[i] = simpsonDelta(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
+				}
+				setDelta(pp,
+						computeDelta(pp,
+								getPropagation(pp) == Propagation.PENETRATING ? mesh.getEntry(0) : turningROf(pp),
+								mesh.getEntry(dTheta.length)));
+			});
+		};
 
-	private Propagation mantleSHPropagation;
-	private Propagation innerCoreSHPropagation;
-	private Propagation mantleSVPropagation;
-	private Propagation innerCoreSVPropagation;
+		List<Thread> runningThread = new ArrayList<>(7);
+		// mantle P
+		Thread pThread;
+		if (propagationP != Propagation.NOEXIST) {
+			thetaP = new double[mantle];
+			pThread = createThread.apply(PhasePart.P);
+			runningThread.add(pThread);
+		}
 
-	Propagation getMantlePPropagation() {
-		return mantlePPropagation;
+		// mantle S
+		Thread svThread;
+		if (propagationSV != Propagation.NOEXIST) {
+			thetaSV = new double[mantle];
+			svThread = createThread.apply(PhasePart.SV);
+			runningThread.add(svThread);
+		}
+		Thread shThread;
+		if (propagationSH != Propagation.NOEXIST) {
+			thetaSH = new double[mantle];
+			shThread = createThread.apply(PhasePart.SH);
+			runningThread.add(shThread);
+		}
+
+		// outer-core
+		Thread kThread;
+		if (propagationK != Propagation.NOEXIST) {
+			thetaK = new double[outerCore];
+			kThread = createThread.apply(PhasePart.K);
+			runningThread.add(kThread);
+		}
+
+		// inner-core P
+		Thread iThread;
+		if (propagationI != Propagation.NOEXIST) {
+			thetaI = new double[innerCore];
+			iThread = createThread.apply(PhasePart.I);
+			runningThread.add(iThread);
+		}
+
+		// inner-core S
+		Thread jvThread;
+		if (propagationJV != Propagation.NOEXIST) {
+			thetaJV = new double[innerCore];
+			jvThread = createThread.apply(PhasePart.JV);
+			runningThread.add(jvThread);
+		}
+		Thread jhThread;
+		if (propagationJH != Propagation.NOEXIST) {
+			thetaJH = new double[innerCore];
+			jhThread = createThread.apply(PhasePart.JH);
+			runningThread.add(jhThread);
+		}
+		runningThread.forEach(Thread::start);
+		try {
+			for (Thread t : runningThread)
+				t.join();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Could not compute epicentral distances.");
+		}
 	}
 
-	Propagation getInnerCorePPropagation() {
-		return innerCorePPropagation;
-	}
+	private transient Propagation propagationP;
+	private transient Propagation propagationI;
+	private transient Propagation propagationK;
 
-	Propagation getkPropagation() {
-		return kPropagation;
-	}
+	private transient Propagation propagationSV;
+	private transient Propagation propagationSH;
+	private transient Propagation propagationJV;
+	private transient Propagation propagationJH;
 
-	Propagation getMantleSHPropagation() {
-		return mantleSHPropagation;
-	}
-
-	Propagation getInnerCoreSHPropagation() {
-		return innerCoreSHPropagation;
-	}
-
-	Propagation getMantleSVPropagation() {
-		return mantleSVPropagation;
-	}
-
-	Propagation getInnerCoreSVPropagation() {
-		return innerCoreSVPropagation;
+	/**
+	 * @param sv
+	 *            true:SV, false:SH
+	 * @return propagation of S in the inner-core
+	 */
+	Propagation getPropagation(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return propagationI;
+		case JH:
+			return propagationJH;
+		case JV:
+			return propagationJV;
+		case K:
+			return propagationK;
+		case P:
+			return propagationP;
+		case SH:
+			return propagationSH;
+		case SV:
+			return propagationSV;
+		default:
+			throw new RuntimeException("UNEXpected");
+		}
 	}
 
 	/**
 	 * computes turning radius
+	 * 
+	 * TODO turningr is now separated maybe if sentence can be reduced in the
+	 * latrepart
 	 */
 	private void setTurningRs() {
+		VelocityStructure vstructure = getStructure();
+		pTurningR = vstructure.pTurningR(RAYPARAMETER);
+		svTurningR = vstructure.svTurningR(RAYPARAMETER);
+		shTurningR = vstructure.shTurningR(RAYPARAMETER);
+		kTurningR = vstructure.kTurningR(RAYPARAMETER);
+		iTurningR = vstructure.iTurningR(RAYPARAMETER);
+		jvTurningR = vstructure.jvTurningR(RAYPARAMETER);
+		jhTurningR = vstructure.jhTurningR(RAYPARAMETER);
 
-		pTurningR = structure.pTurningR(rayParameter);
-		shTurningR = structure.shTurningR(rayParameter);
-		svTurningR = structure.svTurningR(rayParameter);
-		kTurningR = structure.kTurningR(rayParameter);
-
-		if (0 < kTurningR)
-			kPropagation = Propagation.BOUNCING;
+		if (!Double.isNaN(kTurningR))
+			propagationK = Propagation.BOUNCING;
 		else
-			kPropagation = Double.isNaN(outerCoreQDelta(structure.innerCoreBoundary() + eps)) ? Propagation.NOEXIST
-					: Propagation.PENETRATING;
-		innerCorePPropagation = Double.isNaN(calcQTauP(eps)) ? Propagation.NOEXIST : Propagation.PENETRATING;
-		mantlePPropagation = Double.isNaN(calcQTauP(coreMantleBoundary() + eps)) ? Propagation.NOEXIST
-				: Propagation.PENETRATING;
+			propagationK = Double
+					.isNaN(WOODHOUSE.computeQT(PhasePart.K, RAYPARAMETER, innerCoreBoundary() + ComputationalMesh.eps))
+							? Propagation.NOEXIST : Propagation.PENETRATING;
+
+		propagationI = Double.isNaN(WOODHOUSE.computeQT(PhasePart.I, RAYPARAMETER, ComputationalMesh.eps))
+				? Propagation.NOEXIST : Propagation.PENETRATING;
+		propagationP = Double
+				.isNaN(WOODHOUSE.computeQT(PhasePart.P, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
+						? Propagation.NOEXIST : Propagation.PENETRATING;
 
 		if (coreMantleBoundary() + permissibleGapForDiff < pTurningR)
-			mantlePPropagation = Propagation.BOUNCING;
-		else if (0 < pTurningR && pTurningR < innerCoreBoundary())
-			innerCorePPropagation = Propagation.BOUNCING;
+			propagationP = Propagation.BOUNCING;
 		else if (coreMantleBoundary() <= pTurningR)
-			mantlePPropagation = Propagation.DIFFRACTION;
+			propagationP = Propagation.DIFFRACTION;
 
-		innerCoreSHPropagation = Double.isNaN(calcQTauSH(eps)) ? Propagation.NOEXIST : Propagation.PENETRATING;
-		mantleSHPropagation = Double.isNaN(calcQTauSH(coreMantleBoundary() + eps)) ? Propagation.NOEXIST
-				: Propagation.PENETRATING;
+		if (!Double.isNaN(iTurningR))
+			propagationI = Propagation.BOUNCING;
 
-		innerCoreSVPropagation = Double.isNaN(calcQTauSV(eps)) ? Propagation.NOEXIST : Propagation.PENETRATING;
-		mantleSVPropagation = Double.isNaN(calcQTauSV(coreMantleBoundary() + eps)) ? Propagation.NOEXIST
-				: Propagation.PENETRATING;
+		propagationJV = Double.isNaN(WOODHOUSE.computeQT(PhasePart.JV, RAYPARAMETER, ComputationalMesh.eps))
+				? Propagation.NOEXIST : Propagation.PENETRATING;
+		propagationSV = Double
+				.isNaN(WOODHOUSE.computeQT(PhasePart.SV, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
+						? Propagation.NOEXIST : Propagation.PENETRATING;
 
-		if (coreMantleBoundary() + permissibleGapForDiff < shTurningR)
-			mantleSHPropagation = Propagation.BOUNCING;
-		else if (0 < shTurningR && shTurningR < innerCoreBoundary())
-			innerCoreSHPropagation = Propagation.BOUNCING;
-		else if (coreMantleBoundary() <= shTurningR)
-			mantleSHPropagation = Propagation.DIFFRACTION;
+		propagationJH = Double.isNaN(WOODHOUSE.computeQT(PhasePart.JH, RAYPARAMETER, ComputationalMesh.eps))
+				? Propagation.NOEXIST : Propagation.PENETRATING;
+		propagationSH = Double
+				.isNaN(WOODHOUSE.computeQT(PhasePart.SH, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
+						? Propagation.NOEXIST : Propagation.PENETRATING;
 
 		if (coreMantleBoundary() + permissibleGapForDiff < svTurningR)
-			mantleSVPropagation = Propagation.BOUNCING;
-		else if (0 < svTurningR && svTurningR < innerCoreBoundary())
-			innerCoreSVPropagation = Propagation.BOUNCING;
+			propagationSV = Propagation.BOUNCING;
 		else if (coreMantleBoundary() <= svTurningR)
-			mantleSVPropagation = Propagation.DIFFRACTION;
+			propagationSV = Propagation.DIFFRACTION;
+		if (!Double.isNaN(jvTurningR))
+			propagationJV = Propagation.BOUNCING;
 
-		pTurning = structure.whichPartition(pTurningR);
-		shTurning = structure.whichPartition(shTurningR);
-		svTurning = structure.whichPartition(svTurningR);
-		// System.out.println("Turning Rs P:" + pTurning + " " + pTurningR + ",
-		// SV:" + svTurning + " " + svTurningR
-		// + ", SH:" + shTurning + " " + shTurningR + ", K:" + kTurningR);
+		if (coreMantleBoundary() + permissibleGapForDiff < shTurningR)
+			propagationSH = Propagation.BOUNCING;
+		else if (coreMantleBoundary() <= shTurningR)
+			propagationSH = Propagation.DIFFRACTION;
+		if (!Double.isNaN(jhTurningR))
+			propagationJH = Propagation.BOUNCING;
+
+		if (propagationP == Propagation.BOUNCING
+				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.P, RAYPARAMETER, pTurningR + ComputationalMesh.eps)))
+			propagationP = Propagation.NOEXIST;
+
+		if (propagationSV == Propagation.BOUNCING
+				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.SV, RAYPARAMETER, svTurningR + ComputationalMesh.eps)))
+			propagationSV = Propagation.NOEXIST;
+
+		if (propagationSH == Propagation.BOUNCING
+				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.SH, RAYPARAMETER, shTurningR + ComputationalMesh.eps)))
+			propagationSH = Propagation.NOEXIST;
+
+		if (propagationK == Propagation.BOUNCING
+				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.K, RAYPARAMETER, kTurningR + ComputationalMesh.eps)))
+			propagationK = Propagation.NOEXIST;
+
+		if (propagationJV == Propagation.BOUNCING
+				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.JV, RAYPARAMETER, jvTurningR + ComputationalMesh.eps)))
+			propagationJV = Propagation.NOEXIST;
+
+		if (propagationJH == Propagation.BOUNCING
+				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.JH, RAYPARAMETER, jhTurningR + ComputationalMesh.eps)))
+			propagationJH = Propagation.NOEXIST;
+	}
+
+	public void printTurningPoints() {
+		System.out.println("#Turning points");
+		System.out.println("#Phase radius, Jeffrey boundary");
+		System.out.println("P:" + pTurningR + " " + jeffreysPBoundary);
+		System.out.println("SV:" + svTurningR + " " + jeffreysSVBoundary);
+		System.out.println("SH:" + shTurningR + " " + jeffreysSHBoundary);
+		System.out.println("K:" + kTurningR + " " + jeffreysKBoundary);
+		System.out.println("I:" + iTurningR + " " + jeffreysIBoundary);
+		System.out.println("JV:" + jvTurningR + " " + jeffreysJVBoundary);
+		System.out.println("JH:" + jhTurningR + " " + jeffreysJHBoundary);
+		System.out.println("#Propagation");
+		System.out.println("P:" + propagationP + " SV:" + propagationSV + " SH:" + propagationSH + " K:" + propagationK
+				+ " I:" + propagationI + " JV:" + propagationJV + " JH:" + propagationJH);
 	}
 
 	/**
-	 * integrate delta from startR to end R by Simpson Rule
+	 * Integrates &Delta; by Simpson's Rule
 	 * 
+	 * @param pp
+	 *            target phase
 	 * @param startR
+	 *            [km]
 	 * @param endR
-	 * @return
+	 *            [km]
+	 * @return &Delta; for startR &le; r &le; endR
+	 * @see Integrand#bySimpsonRule(double, double, double)
 	 */
-	private double simpsonPDelta(double startR, double endR) {
+	private double simpsonDelta(PhasePart pp, double startR, double endR) {
 		double deltax = endR - startR;
-		if (deltax <= 0)
-			throw new RuntimeException("integral interval is invalid.");
-		double a = calcQDeltaP(startR);
-		double b = calcQDeltaP(startR + 0.5 * deltax);
-		double c = calcQDeltaP(endR);
-		return bySimpsonRule(a, b, c) * deltax;
+		double a = WOODHOUSE.computeQDelta(pp, RAYPARAMETER, startR);
+		double b = WOODHOUSE.computeQDelta(pp, RAYPARAMETER, startR + 0.5 * deltax);
+		double c = WOODHOUSE.computeQDelta(pp, RAYPARAMETER, endR);
+		return bySimpsonRule(a, b, c, deltax);
 	}
 
 	/**
-	 * integrate traveltime from startR to end R by Simpson Rule
+	 * Integrates traveltime by Simpson's Rule
 	 * 
+	 * @param pp
+	 *            target phase
 	 * @param startR
+	 *            [km]
 	 * @param endR
-	 * @return
+	 *            [km]
+	 * @return traveltime for startR &le; r &le; endR
+	 * @see Integrand#bySimpsonRule(double, double, double)
 	 */
-	private double simpsonPTau(double startR, double endR) {
+	private double simpsonT(PhasePart pp, double startR, double endR) {
 		double deltax = endR - startR;
-		double a = calcQTP(startR);
-		double b = calcQTP(startR + 0.5 * deltax);
-		double c = calcQTP(endR);
-		return bySimpsonRule(a, b, c) * deltax;
+		double a = WOODHOUSE.computeQT(pp, RAYPARAMETER, startR);
+		double b = WOODHOUSE.computeQT(pp, RAYPARAMETER, startR + 0.5 * deltax);
+		double c = WOODHOUSE.computeQT(pp, RAYPARAMETER, endR);
+		return bySimpsonRule(a, b, c, deltax);
 	}
 
 	/**
-	 * integrate delta from startR to end R by Simpson Rule
+	 * Computes diffraction on a boundary at r. The velocity is considered as
+	 * the one at r &pm; {@link ComputationalMesh#eps}
 	 * 
-	 * @param startR
-	 * @param endR
-	 * @return
-	 */
-	private double simpsonSDelta(double startR, double endR) {
-		double deltax = endR - startR;
-		double a = calcQDeltaS(startR);
-		double b = calcQDeltaS(startR + 0.5 * deltax);
-		double c = calcQDeltaS(endR);
-		return bySimpsonRule(a, b, c) * deltax;
-	}
-
-	/**
-	 * integral SH Q_T from the startR to the endR startR < endR
-	 * 
-	 * @param startR
-	 * @param endR
-	 * @return
-	 */
-	private double simpsonSTau(double startR, double endR) {
-		if (startR == endR)
-			return 0;
-		if (endR < startR)
-			throw new RuntimeException("Invalid Rs");
-		double deltax = endR - startR;
-		double a = calcQTS(startR);
-		double b = calcQTS(startR + 0.5 * deltax);
-		double c = calcQTS(endR);
-		return bySimpsonRule(a, b, c) * deltax;
-	}
-
-	/**
-	 * Computation for diffracted waves.
-	 * 
-	 * @param deltaOnCMB
+	 * @param sv
+	 *            true:SV, false:SH
+	 * @param boundaryR
+	 *            [km]
+	 * @param deltaOnBoundary
 	 *            [rad]
-	 * @return P wave traveltime along the CMB
+	 * @param shallower
+	 *            The diffraction happens true:shallower or false:deeper side.
+	 *            Shallower means larger radius.
+	 * @return S wave traveltime along the boundary
+	 * @throws RuntimeException
+	 *             If the structure has no boundary at r.
 	 */
-	private double pTimeAlongCMB(double deltaOnCMB) {
-		// radius which avoids 0 on cmb
-		double r = structure.coreMantleBoundary() + eps;
-		double s = r * deltaOnCMB;
-		double velocity = Math.sqrt(structure.getA(r) / structure.getRho(r));
+	private double computeTimeSAlongBoundary(boolean sv, double boundaryR, double deltaOnBoundary, boolean shallower) {
+		if (ComputationalMesh.eps < Math.abs(coreMantleBoundary() - boundaryR)
+				&& ComputationalMesh.eps < Math.abs(innerCoreBoundary() - boundaryR)
+				&& Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())
+						.allMatch(b -> ComputationalMesh.eps < Math.abs(b - boundaryR)))
+			throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
+		double s = boundaryR * deltaOnBoundary;
+		double r = boundaryR + (shallower ? ComputationalMesh.eps : -ComputationalMesh.eps);
+		double velocity = Math.sqrt((sv ? WOODHOUSE.getStructure().getL(r) : WOODHOUSE.getStructure().getN(r))
+				/ WOODHOUSE.getStructure().getRho(r));
 		return s / velocity;
 	}
 
 	/**
-	 * Computation for diffracted waves.
+	 * Computes diffraction on a boundary at r. The velocity is considered as
+	 * the one at r &pm; {@link ComputationalMesh#eps}
 	 * 
-	 * @param deltaOnCMB
+	 * @param boundaryR
+	 *            [km]
+	 * @param deltaOnBoundary
 	 *            [rad]
-	 * @return S wave traveltime along the CMB
+	 * @param shallower
+	 *            The diffraction happens true:shallower or false:deeper side.
+	 *            Shallower means larger radius.
+	 * @return P wave traveltime along the boundary at the boundaryR
+	 * @throws RuntimeException
+	 *             If the structure has no boundary at r.
 	 */
-	private double sTimeAlongCMB(double deltaOnCMB) {
-		// radius which avoids 0 on cmb
-		double r = structure.coreMantleBoundary() + eps;
-		double s = r * deltaOnCMB;
-		double velocity = Math.sqrt((sv ? structure.getL(r) : structure.getN(r)) / structure.getRho(r));
+	private double computeTimePAlongBoundary(double boundaryR, double deltaOnBoundary, boolean shallower) {
+		if (ComputationalMesh.eps < Math.abs(coreMantleBoundary() - boundaryR)
+				&& ComputationalMesh.eps < Math.abs(innerCoreBoundary() - boundaryR)
+				&& Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())
+						.allMatch(b -> ComputationalMesh.eps < Math.abs(b - boundaryR)))
+			throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
+		double r = boundaryR + (shallower ? ComputationalMesh.eps : -ComputationalMesh.eps);
+		double s = boundaryR * deltaOnBoundary;
+		double velocity = Math.sqrt(WOODHOUSE.getStructure().getA(r) / WOODHOUSE.getStructure().getRho(r));
 		return s / velocity;
 	}
 
-	/**
-	 * switch system to compute SH
-	 */
-	public void switchSH() {
-		sv = false;
+	@Override
+	public int compareTo(Raypath o) {
+		return Double.compare(RAYPARAMETER, o.RAYPARAMETER);
 	}
-
-	/**
-	 * switch system to compute SV
-	 */
-	public void switchSV() {
-		sv = true;
-	}
-
 }

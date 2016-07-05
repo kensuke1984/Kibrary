@@ -16,7 +16,7 @@ import org.apache.commons.math3.util.Precision;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1.2
+ * @version 0.1.1.3
  * 
  */
 class TurningDepthMode extends Computation {
@@ -71,7 +71,7 @@ class TurningDepthMode extends Computation {
 					continue;
 				Raypath raypath = RaypathSearch.raypathByPTurningR(structure, turningR, PERMISSIBLE_GAP, eventR);
 				if (raypath != null) {
-					switch (raypath.getPTurning()) {
+					switch (structure.whichPartition(turningR)) {
 					case MANTLE:
 						break;
 					case CORE_MANTLE_BOUNDARY:
@@ -80,7 +80,7 @@ class TurningDepthMode extends Computation {
 					case OUTERCORE:
 						phase = Phase.create("PKP");
 						break;
-					case INNER_CORE_BAUNDARY:
+					case INNER_CORE_BOUNDARY:
 						phase = Phase.create("PKiKP");
 						break;
 					case INNERCORE:
@@ -98,7 +98,7 @@ class TurningDepthMode extends Computation {
 					Raypath raypath = RaypathSearch.raypathBySTurningR(structure, turningR, PERMISSIBLE_GAP, eventR,
 							true);
 					if (raypath != null) {
-						switch (raypath.getSTurning()) {
+						switch (structure.whichPartition(turningR)) {
 						case MANTLE:
 							phase = Phase.create("S");
 							break;
@@ -106,8 +106,7 @@ class TurningDepthMode extends Computation {
 							phase = Phase.create("ScS");
 							break;
 						case INNERCORE:
-							if (raypath.getPTurning().equals(Partition.INNERCORE))
-								phase = Phase.create("SKJKS");
+							phase = Phase.create("SKJKS");
 							break;
 						default:
 							continue;
@@ -121,7 +120,7 @@ class TurningDepthMode extends Computation {
 					Raypath raypath = RaypathSearch.raypathBySTurningR(structure, turningR, PERMISSIBLE_GAP, eventR,
 							false);
 					if (raypath != null) {
-						switch (raypath.getSTurning()) {
+						switch (structure.whichPartition(turningR)) {
 						case MANTLE:
 							phase = Phase.create("S");
 							break;

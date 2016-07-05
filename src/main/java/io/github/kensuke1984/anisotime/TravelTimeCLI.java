@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1.2.4
+ * @version 0.2b
  * 
  */
 final class TravelTimeCLI {
@@ -84,11 +84,11 @@ final class TravelTimeCLI {
 				double rayParameter = readRayparameter(cmd);
 				if (rayParameter < 0)
 					return;
-				Raypath raypath = new Raypath(rayParameter, eventR, structure, sv);
+				Raypath raypath = new Raypath(rayParameter, structure);
 				raypath.compute();
-				printResults(-1, cmd, raypath, targetPhase);
+				printResults(-1, cmd,eventR, raypath, targetPhase);
 				if (cmd.hasOption("eps"))
-					raypath.outputEPS(Paths.get(targetPhase + ".eps"), targetPhase);
+					raypath.outputEPS(eventR,Paths.get(targetPhase + ".eps"), targetPhase);
 				return;
 			}
 
@@ -100,29 +100,29 @@ final class TravelTimeCLI {
 				} catch (Exception e) {
 					throw new RuntimeException("The value dR is invalid " + cmd.getOptionValue("dR"));
 				}
-			List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase, structure, eventR, targetDelta, interval, sv);
+			List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase, structure, eventR, targetDelta, interval);
 			if (raypaths.isEmpty()) {
 				System.out.println("No raypaths satisfying the input condition");
 				return;
 			}
 			if (targetPhase.isDiffracted()) {
 				Raypath raypath = raypaths.get(0);
-				double delta = raypath.computeDelta(targetPhase);
+				double delta = raypath.computeDelta(eventR,targetPhase);
 				double dDelta = Math.toDegrees(targetDelta - delta);
 				Phase diffPhase = Phase.create(targetPhase.toString() + dDelta);
-				printResults(-1, cmd, raypath, diffPhase);
+				printResults(-1, cmd,eventR, raypath, diffPhase);
 				if (cmd.hasOption("eps"))
-					raypath.outputEPS(Paths.get(targetPhase + ".eps"), diffPhase);
+					raypath.outputEPS(eventR,Paths.get(targetPhase + ".eps"), diffPhase);
 				return;
 			}
 			for (Raypath raypath : raypaths) {
-				printResults(Math.toDegrees(targetDelta), cmd, raypath, targetPhase);
+				printResults(Math.toDegrees(targetDelta), cmd, eventR,raypath, targetPhase);
 				int j = 0;
 				if (cmd.hasOption("eps"))
 					if (raypaths.size() == 1)
-						raypath.outputEPS(Paths.get(targetPhase.toString() + ".eps"), targetPhase);
+						raypath.outputEPS(eventR,Paths.get(targetPhase.toString() + ".eps"), targetPhase);
 					else
-						raypath.outputEPS(Paths.get(targetPhase.toString() + "." + j++ + ".eps"), targetPhase);
+						raypath.outputEPS(eventR,Paths.get(targetPhase.toString() + "." + j++ + ".eps"), targetPhase);
 			}
 
 		} catch (Exception e) {
@@ -158,16 +158,16 @@ final class TravelTimeCLI {
 	/**
 	 * print result according to options
 	 * 
-	 * @param delta
+	 * @param delta1
 	 *            [deg]
 	 * @param cmd
 	 * @param raypath
 	 * @param phase
 	 */
-	private static void printResults(double delta1, CommandLine cmd, Raypath raypath, Phase phase) {
+	private static void printResults(double delta1, CommandLine cmd, double eventR, Raypath raypath, Phase phase) {
 		double p0 = raypath.getRayParameter();
-		double delta0 = raypath.computeDelta(phase);
-		double time0 = raypath.computeTraveltime(phase);
+		double delta0 = raypath.computeDelta(eventR,phase);
+		double time0 = raypath.computeT(eventR,phase);
 		if (Double.isNaN(delta0) || Double.isNaN(time0)) {
 			System.out.println(delta0 + " " + time0);
 			return;
@@ -178,7 +178,7 @@ final class TravelTimeCLI {
 
 		if (0 < delta1) {
 			try {
-				while ((time1 = RaypathSearch.travelTimeByThreePointInterpolate(delta1, raypath, phase, pInterval)) < 0)
+				while ((time1 = RaypathSearch.travelTimeByThreePointInterpolate(delta1, raypath, eventR,phase, pInterval)) < 0)
 					pInterval *= 10;
 			} catch (Exception e) {
 			}
