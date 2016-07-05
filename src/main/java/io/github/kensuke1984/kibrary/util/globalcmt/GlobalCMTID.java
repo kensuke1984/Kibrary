@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * Identifier of an event listed in Global CMT project.
  * 
- * @version 0.1.0.2
+ * @version 0.1.1
  * @author Kensuke Konishi
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
@@ -124,7 +124,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 	/**
 	 * if once {@link #getEvent()} is invoked, this holds it.
 	 */
-	private NDK ndk;
+	private volatile NDK ndk;
 
 	/**
 	 * @param args

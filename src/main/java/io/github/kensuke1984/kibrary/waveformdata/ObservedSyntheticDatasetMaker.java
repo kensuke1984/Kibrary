@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -66,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * network in one event</b>
  * 
  * 
- * @version 0.2.0.4
+ * @version 0.2.1
  * 
  * @author Kensuke Konishi
  * 
@@ -75,6 +76,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 	private Path workPath;
 	private Properties property;
+
 	/**
 	 * components to be included in the dataset
 	 */
@@ -106,7 +108,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			property.setProperty("sacSamplingHz", "20");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
-
 	}
 
 	private void set() throws NoSuchFileException {
@@ -142,6 +143,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		Path outPath = Paths
 				.get(ObservedSyntheticDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan ObservedSyntheticDatasetMaker");
 			pw.println("##Path of a working directory (.)");
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
@@ -166,7 +168,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("##double value of sampling Hz in output files (1)");
 			pw.println("#finalSamplingHz");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	/**
@@ -271,7 +273,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		long startT = System.nanoTime();
 		System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " is running.");
 		osdm.run();
-		System.err.println("\n" + ObservedSyntheticDatasetMaker.class.getName() + " finished in "
+		System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startT));
 
 	}
@@ -304,11 +306,16 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			execs.shutdown();
 			while (!execs.isTerminated())
 				Thread.sleep(1000);
-
+			System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * number of OUTPUT pairs. (excluding ignored traces)
+	 */
+	private AtomicInteger numberOfPairs = new AtomicInteger();
 
 	/**
 	 * 与えられたイベントフォルダの観測波形と理論波形を書き込む 両方ともが存在しないと書き込まない
@@ -321,7 +328,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		private EventFolder obsEventDir;
 
 		private Worker(EventFolder eventDir) {
-			 obsEventDir = eventDir;
+			obsEventDir = eventDir;
 		}
 
 		@Override
@@ -431,12 +438,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					try {
 						dataWriter.addBasicID(obsID);
 						dataWriter.addBasicID(synID);
+						numberOfPairs.incrementAndGet();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
-
 				}
-
 			}
 			System.err.print(".");
 		}

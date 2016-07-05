@@ -23,7 +23,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -43,7 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.1
  * 
  */
 public class RaypathDistribution implements Operation {
@@ -51,6 +50,7 @@ public class RaypathDistribution implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(RaypathDistribution.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan RaypathDistribution");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
 			pw.println("##Work folder (.)");
@@ -63,7 +63,7 @@ public class RaypathDistribution implements Operation {
 			pw.println("##If it exists, draw raypaths in the file");
 			pw.println("#timeWindowInformationPath");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private Set<GlobalCMTID> ids;

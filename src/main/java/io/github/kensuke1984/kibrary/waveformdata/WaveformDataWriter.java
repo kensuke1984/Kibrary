@@ -217,7 +217,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
 
 	/**
 	 * Writes a waveform
-	 * @param data waveform data
+	 * 
+	 * @param data
+	 *            waveform data
 	 */
 	private void addWaveform(double[] data) throws IOException {
 		for (int i = 0; i < data.length; i++)
@@ -252,11 +254,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		idStream.writeByte(basicID.sacComponent.valueOf());
 		idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod));
 
-		// 4Byte
-		idStream.writeFloat((float) basicID.getStartTime()); // start time 4Byte
-		idStream.writeInt(basicID.getNpts()); // データポイント数 4Byte
-		idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz 4
-		// Byte
+		// 4Byte * 3
+		idStream.writeFloat((float) basicID.getStartTime()); // start time 
+		idStream.writeInt(basicID.getNpts()); // number of points
+		idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz
+		
+		
 		// convolutionされているか 観測波形なら true
 		idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.convolute); // 1Byte
 		idStream.writeLong(startByte); // データの格納場所 8 Byte

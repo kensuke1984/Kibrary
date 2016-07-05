@@ -23,7 +23,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.2
+ * @version 0.2.2.1
  * 
  * @author Kensuke Konishi
  * 
@@ -217,10 +217,24 @@ public class PolynomialStructure implements Serializable {
 		return eta[zoneOf(r)].value(toX(r));
 	}
 
+	/**
+	 * F = &eta;(A-2*L)
+	 * 
+	 * @param r
+	 *            [km]
+	 * @return the parameter F under TI approx.
+	 */
 	private double computeF(double r) {
 		return computeEta(r) * (computeA(r) - 2 * computeL(r));
 	}
 
+	/**
+	 * L = &rho;V<sub>SV</sub><sup>2</sup>
+	 * 
+	 * @param r
+	 *            [km]
+	 * @return the parameter L under TI approx.
+	 */
 	private double computeL(double r) {
 		double vsv = getVsvAt(r);
 		return getRhoAt(r) * vsv * vsv;
@@ -247,9 +261,11 @@ public class PolynomialStructure implements Serializable {
 	}
 
 	/**
+	 * N = &rho;V<sub>SH</sub><sup>2</sup>
+	 * 
 	 * @param r
-	 *            [km] radius
-	 * @return N computed by Vs * Vs * &rho;
+	 *            [km]
+	 * @return the parameter N under TI approx.
 	 */
 	private double computeN(double r) {
 		double v = getVshAt(r);
@@ -578,18 +594,17 @@ public class PolynomialStructure implements Serializable {
 	 *            lines for a structure
 	 */
 	private void readLines(String[] structureLines) {
-		String space = "\\s+";
-		nzone = Integer.parseInt(structureLines[0].split(space)[0]);
+		nzone = Integer.parseInt(structureLines[0].split("\\s+")[0]);
 		if (structureLines.length != (nzone * 6 + 1))
 			throw new IllegalArgumentException("Invalid lines");
 		initialize();
 		for (int i = 0; i < nzone; i++) {
-			String[] rangeRhoParts = structureLines[i * 6 + 1].split(space);
-			String[] vpvParts = structureLines[i * 6 + 2].split(space);
-			String[] vphParts = structureLines[i * 6 + 3].split(space);
-			String[] vsvParts = structureLines[i * 6 + 4].split(space);
-			String[] vshParts = structureLines[i * 6 + 5].split(space);
-			String[] etaParts = structureLines[i * 6 + 6].split(space);
+			String[] rangeRhoParts = structureLines[i * 6 + 1].split("\\s+");
+			String[] vpvParts = structureLines[i * 6 + 2].split("\\s+");
+			String[] vphParts = structureLines[i * 6 + 3].split("\\s+");
+			String[] vsvParts = structureLines[i * 6 + 4].split("\\s+");
+			String[] vshParts = structureLines[i * 6 + 5].split("\\s+");
+			String[] etaParts = structureLines[i * 6 + 6].split("\\s+");
 			rmin[i] = Double.parseDouble(rangeRhoParts[0]);
 			rmax[i] = Double.parseDouble(rangeRhoParts[1]);
 			double[] rho = new double[4];

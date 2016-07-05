@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Information file for SSHSH
  * 
- * @version 0.1.1.1
+ * @version 0.1.1.2
  * 
  * @author Kensuke Konishi
  *
@@ -47,7 +47,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			property.setProperty("np", "512");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
-		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").equals(""))
+		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
 			throw new RuntimeException("perturbationR must be defined.");
 	}
 
