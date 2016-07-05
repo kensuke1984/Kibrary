@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see in {@link #read(Path)}<br>
  * 
  * 
- * @version 0.2.0.4
+ * @version 0.2.0.5
  * 
  * @author Kensuke Konishi
  * 
@@ -178,7 +178,7 @@ public final class StaticCorrectionFile {
 			scf = StaticCorrectionFile.read(Paths.get(args[0]));
 		else {
 			String s = JOptionPane.showInputDialog("file?");
-			if (s == null || s.equals(""))
+			if (s == null || s.isEmpty())
 				return;
 			scf = StaticCorrectionFile.read(Paths.get(s));
 		}
