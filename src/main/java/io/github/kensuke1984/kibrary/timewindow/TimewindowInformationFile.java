@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see {@link #create(byte[], Station[], GlobalCMTID[])}
  * 
  * 
- * @version 0.3.0.3
+ * @version 0.3.0.4
  * 
  * @author Kensuke Konishi
  * 
@@ -72,7 +72,7 @@ public final class TimewindowInformationFile {
 			Path f;
 			do {
 				s = JOptionPane.showInputDialog("file?", s);
-				if (s == null || s.equals(""))
+				if (s == null || s.isEmpty())
 					return;
 				f = Paths.get(s);
 			} while (!Files.exists(f) || Files.isDirectory(f));
