@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * {@link SeedSAC}内で行うSacの修正
  * 
  * 
- * @version 0.1.8
+ * @version 0.1.8.1
  * 
  * @author Kensuke Konishi
  * 
@@ -76,7 +76,7 @@ class SACModifier {
 
 		// check "khole" value
 		String khole = headerMap.get(SACHeaderEnum.KHOLE);
-		return khole.equals("") || khole.equals("00")||khole.equals("01");
+		return khole.isEmpty() || khole.equals("00") || khole.equals("01");
 	}
 
 	/**
@@ -107,7 +107,6 @@ class SACModifier {
 	boolean canInterpolate() {
 		LocalDateTime eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
 		return eventTime.until(initialSacStartTime, ChronoUnit.MILLIS) < taperTime;
-
 	}
 
 	/**
@@ -179,8 +178,8 @@ class SACModifier {
 			// 0で補完する
 			double[] neosacdata = new double[sacdata.length + gapPoint];
 			// gapの部分は０で
-//			for (int i = 0; i < gapPoint; i++)
-//				neosacdata[i] = 0;
+			// for (int i = 0; i < gapPoint; i++)
+			// neosacdata[i] = 0;
 			// taperをかけたsacdataをくっつける
 			for (int i = gapPoint; i < neosacdata.length; i++)
 				neosacdata[i] = sacdata[i - gapPoint];

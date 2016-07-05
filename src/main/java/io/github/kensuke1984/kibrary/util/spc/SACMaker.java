@@ -32,8 +32,11 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * This class create SAC files from one or two spector files(
  * {@link SpectrumFile})
  * 
+ * SPC file name must be station.eventID(PSV, SH).spc If the eventID is included
+ * in Global CMT catalogue, the information for the event is written in SAC.
  * 
- * @version 0.1.2.4
+ * 
+ * @version 0.1.5
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -60,6 +63,7 @@ public class SACMaker implements Runnable {
 		initialMap.put(SACHeaderEnum.T8, "-12345.0");
 		initialMap.put(SACHeaderEnum.T9, "-12345.0");
 		initialMap.put(SACHeaderEnum.F, "-12345.0");
+
 		initialMap.put(SACHeaderEnum.RESP0, "-12345.0");
 		initialMap.put(SACHeaderEnum.RESP1, "-12345.0");
 		initialMap.put(SACHeaderEnum.RESP2, "-12345.0");
@@ -98,6 +102,12 @@ public class SACMaker implements Runnable {
 		initialMap.put(SACHeaderEnum.NWFID, "-12345");
 		initialMap.put(SACHeaderEnum.NXSIZE, "-12345");
 		initialMap.put(SACHeaderEnum.NYSIZE, "-12345");
+		initialMap.put(SACHeaderEnum.NZYEAR, "-12345");
+		initialMap.put(SACHeaderEnum.NZJDAY, "-12345");
+		initialMap.put(SACHeaderEnum.NZHOUR, "-12345");
+		initialMap.put(SACHeaderEnum.NZMIN, "-12345");
+		initialMap.put(SACHeaderEnum.NZSEC, "-12345");
+		initialMap.put(SACHeaderEnum.NZMSEC, "-12345");
 		initialMap.put(SACHeaderEnum.IFTYPE, "1");
 		initialMap.put(SACHeaderEnum.IDEP, "5");
 		initialMap.put(SACHeaderEnum.IZTYPE, "-12345");
@@ -278,7 +288,7 @@ public class SACMaker implements Runnable {
 
 		@Override
 		public double[] getData() {
-			return waveData;
+			return waveData.clone();
 		}
 
 	}
@@ -324,10 +334,14 @@ public class SACMaker implements Runnable {
 	 */
 	public SACMaker(DSMOutput oneSPC, DSMOutput pairSPC, SourceTimeFunction sourceTimeFunction) {
 		if (pairSPC != null && !check(oneSPC, pairSPC))
-			throw new RuntimeException("Input spc are not a pair.");
+			throw new RuntimeException("Input spc files are not a pair.");
 		primeSPC = oneSPC;
 		secondarySPC = pairSPC;
-		globalCMTID = new GlobalCMTID(oneSPC.getSourceID());
+		try {
+			globalCMTID = new GlobalCMTID(oneSPC.getSourceID());
+		} catch (Exception e) {
+			System.err.println(oneSPC.getSourceID() + " is not in Global CMT catalogue.");
+		}
 		this.sourceTimeFunction = sourceTimeFunction;
 	}
 
@@ -377,12 +391,15 @@ public class SACMaker implements Runnable {
 
 	private void setInformation() {
 		station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition(), "DSM");
-
 		path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
-		beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();
+		if (globalCMTID != null)
+			try {
+				beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();
+			} catch (Exception e) {
+				System.err.println("Information for " + globalCMTID + " is not found.");
+			}
 		npts = findNPTS();
 		lsmooth = findLsmooth();
-		// npts = lsmooth * primeSPC.np * 2;
 		delta = primeSPC.tlen() / npts;
 	}
 
@@ -436,6 +453,20 @@ public class SACMaker implements Runnable {
 		if (secondarySPC != null)
 			body.addBody(secondarySPC.getSpcBodyList().get(0));
 
+		compute(body);
+
+		for (SACComponent component : components) {
+			// System.out.println(component);
+			SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
+					: SACExtension.valueOfSynthetic(component);
+			try {
+				sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
+						outDirectoryPath.resolve(station.getStationName() + "." + primeSPC.getSourceID() + "." + ext));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
 		if (temporalDifferentiation) {
 			SpcBody bodyT = body.copy();
 			bodyT.differentiate(primeSPC.tlen());
@@ -444,30 +475,14 @@ public class SACMaker implements Runnable {
 				SACExtension extT = sourceTimeFunction != null
 						? SACExtension.valueOfConvolutedTemporalPartial(component)
 						: SACExtension.valueOfTemporalPartial(component);
-				SACFileName sfnT = new SACFileName(
-						outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + extT));
 				try {
-					sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(sfnT.toPath());
+					sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
+							outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + extT));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			}
 		}
-		compute(body);
-
-		for (SACComponent component : components) {
-			// System.out.println(component);
-			SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
-					: SACExtension.valueOfSynthetic(component);
-			SACFileName sfn = new SACFileName(
-					outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + ext));
-			try {
-				sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(sfn.toPath());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
 	}
 
 	/**
@@ -484,7 +499,7 @@ public class SACMaker implements Runnable {
 
 		sac.setStation(station);
 		sac.setEventLocation(primeSPC.getSourceLocation());
-		sac.setSACString(SACHeaderEnum.KEVNM, globalCMTID.toString());
+		sac.setSACString(SACHeaderEnum.KEVNM, primeSPC.getSourceID());
 
 		sac.setValue(SACHeaderEnum.GCARC, FastMath.toDegrees(path.getEpicentralDistance()));
 		sac.setValue(SACHeaderEnum.AZ, FastMath.toDegrees(path.getAzimuth()));
@@ -502,7 +517,6 @@ public class SACMaker implements Runnable {
 	 * @param body
 	 */
 	private void compute(SpcBody body) {
-
 		if (sourceTimeFunction != null)
 			body.applySourceTimeFunction(sourceTimeFunction);
 		body.toTimeDomain(lsmooth);
@@ -520,9 +534,7 @@ public class SACMaker implements Runnable {
 			np *= 2;
 		int lsmooth = npts / np / 2;
 		int i = Integer.highestOneBit(lsmooth);
-		if (i < lsmooth)
-			i *= 2;
-		return i;
+		return i < lsmooth ? i * 2 : i;
 	}
 
 	/**
@@ -534,10 +546,8 @@ public class SACMaker implements Runnable {
 	}
 
 	/**
-	 * TODO
-	 * 
-	 * @param spc1
-	 * @param spc2
+	 * @param spc1 primary
+	 * @param spc2 secondary
 	 * @return if spc1 and spc2 have same information
 	 */
 	private static boolean check(DSMOutput spc1, DSMOutput spc2) {
@@ -552,6 +562,12 @@ public class SACMaker implements Runnable {
 			System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
 			isOK = false;
 		}
+		
+		if (!spc1.getObserverID().equals(spc2.getObserverID())) {
+			System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
+			isOK = false;
+		}
+		
 		if (isOK) {
 			if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR()))
 				isOK = false;
@@ -559,7 +575,7 @@ public class SACMaker implements Runnable {
 			if (!isOK) {
 				System.err.println("the depths are invalid(different) as below  fp : bp");
 				for (int i = 0; i < spc1.nbody(); i++)
-					System.out.println(spc1.getBodyR()[i] + " : " + spc2.getBodyR()[i]);
+					System.err.println(spc1.getBodyR()[i] + " : " + spc2.getBodyR()[i]);
 			}
 		}
 		if (spc1.np() != spc2.np()) {
@@ -573,13 +589,12 @@ public class SACMaker implements Runnable {
 			isOK = false;
 		}
 
-		// 場所
 		if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
 			System.err.println("locations of sources of input spcfiles are different");
-			System.err.println(spc1.getSourceLocation());
-			System.err.println(spc2.getSourceLocation());
+			System.err.println(spc1.getSourceLocation()+" "+spc2.getSourceLocation());
 			isOK = false;
 		}
+		
 		if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
 			System.err.println("locations of stations of input spcfiles are different");
 			isOK = false;
@@ -596,17 +611,19 @@ public class SACMaker implements Runnable {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		if (args == null || args.length != 2) {
-			System.err.println("Usage: psv sh");
+		if (args == null || args.length == 0) {
+			System.err.println("Usage: spcfile1 (spcfile2)");
 			return;
 		}
 
 		SpcFileName oneName = new SpcFileName(args[0]);
-		SpcFileName pairName = new SpcFileName(args[1]);
-
-		SpectrumFile pairSPC = SpectrumFile.getInstance(pairName);
 		SpectrumFile oneSPC = SpectrumFile.getInstance(oneName);
 
+		SpectrumFile pairSPC = null;
+		if (1 < args.length) {
+			SpcFileName pairName = new SpcFileName(args[1]);
+			pairSPC = SpectrumFile.getInstance(pairName);
+		}
 		SACMaker sm = new SACMaker(oneSPC, pairSPC);
 		sm.setOutPath(Paths.get(System.getProperty("user.dir")));
 		sm.run();
