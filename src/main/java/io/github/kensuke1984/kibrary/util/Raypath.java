@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
  * 
  * 
  * 
- * @version 0.0.5.1
+ * @version 0.0.6
  * 
  * 
  * @author Kensuke Konishi
@@ -161,7 +161,7 @@ public class Raypath {
 			throw new RuntimeException("No raypath");
 		if (1 < rays.size())
 			throw new RuntimeException("multiples");
-		return rays.get(0).computeExtendedDelta(phase);
+		return rays.get(0).computeDelta(structure.earthRadius(), phase); //TODO check
 	}
 
 	/**

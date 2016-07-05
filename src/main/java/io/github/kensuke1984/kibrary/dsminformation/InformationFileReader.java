@@ -40,7 +40,7 @@ class InformationFileReader {
 	/**
 	 * indicators for comment lines
 	 */
-	private String[] commentOutFlag = { "c", "C", "!", "#" };
+	private static final char[] commentOutFlag = { 'c', 'C', '!', '#' };
 
 	/**
 	 * the number of total lines
@@ -51,8 +51,8 @@ class InformationFileReader {
 	 * if the next line is a comment line, it will be skipped. (c#!...) the line
 	 * will be returned after trimmed
 	 * 
-	 * @return the next line to the line already read ,returns null if all
-	 *         lines are already read
+	 * @return the next line to the line already read ,returns null if all lines
+	 *         are already read
 	 */
 	String next() {
 		if (readlineNum == linesNum)
@@ -85,12 +85,11 @@ class InformationFileReader {
 	 * @param line
 	 * @return if the input line is comment line or not
 	 */
-	private boolean isComment(String line) {
-		line = line.trim();
-		if (line.isEmpty())
+	private static boolean isComment(String line) {
+		if ((line = line.trim()).isEmpty())
 			return true;
-		for (String flag : commentOutFlag)
-			if (line.startsWith(flag))
+		for (char flag : commentOutFlag)
+			if (line.charAt(0) == flag)
 				return true;
 		return false;
 	}
@@ -99,19 +98,20 @@ class InformationFileReader {
 	 * @return String[] made of non comment lines
 	 */
 	String[] getNonCommentLines() {
-		return lines.stream().filter(line -> !isComment(line)).toArray(String[]::new);
+		return lines.stream().filter(line -> !isComment(line)).map(String::trim).toArray(String[]::new);
 	}
 
 	/**
 	 * @param args
 	 *            [information file name]
-	 * @throws IOException if any
+	 * @throws IOException
+	 *             if any
 	 */
 	public static void main(String[] args) throws IOException {
 		if (args.length == 1) {
 			InformationFileReader ifr = new InformationFileReader(Paths.get(args[0]));
 			String line;
-			while(null!=(line=ifr.next()))
+			while (null != (line = ifr.next()))
 				System.out.println(line);
 		}
 	}

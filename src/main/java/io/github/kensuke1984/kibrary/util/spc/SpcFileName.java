@@ -23,7 +23,7 @@ import java.nio.file.Path;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.0.3
  * 
  */
 public class SpcFileName extends File {
@@ -69,11 +69,7 @@ public class SpcFileName extends File {
 	private static SpcFileType getFileType(String fileName) {
 		if (fileName.split("\\.").length != 7)
 			return SpcFileType.SYNTHETIC;
-		String typeStr = fileName.split("\\.")[2];
-
-		typeStr = typeStr.replace("par", "PAR");
-
-		return SpcFileType.valueOf(typeStr);
+		return SpcFileType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
 	}
 
 	private static String getObserverID(String fileName) {
@@ -97,13 +93,7 @@ public class SpcFileName extends File {
 	 *             if spc file has no indication of its mode.
 	 */
 	private static SpcFileComponent getMode(String fileName) {
-		if (fileName.endsWith("PSV.spc"))
-			return SpcFileComponent.PSV;
-		else if (fileName.endsWith("SH.spc"))
-			return SpcFileComponent.SH;
-		else
-			throw new RuntimeException(
-					"A name of SPC file must end with PSV.spc or SH.spc (psv, sh not allowed anymore)");
+		return fileName.endsWith("PSV.spc") ? SpcFileComponent.PSV : SpcFileComponent.SH;
 	}
 
 	private String observerID;
@@ -162,10 +152,10 @@ public class SpcFileName extends File {
 	private String sourceID;
 
 	private void readName(String fileName) {
+		if (!isSpcFileName(fileName))
+			throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
 		sourceID = getEventID(fileName);
 		observerID = getObserverID(fileName);
-		if (8 < observerID.length())
-			throw new IllegalArgumentException("Station name must not be more than 8 letters.");
 		fileType = getFileType(fileName);
 		mode = getMode(fileName);
 		x = getX(fileName);
@@ -189,7 +179,7 @@ public class SpcFileName extends File {
 	 * @return if the filePath is a valid {@link SpcFileName}
 	 */
 	public static boolean isSpcFileName(Path path) {
-		return isSpcFileName(path.toFile());
+		return isSpcFileName(path.getFileName().toString());
 	}
 
 	/**
@@ -199,17 +189,25 @@ public class SpcFileName extends File {
 	 * @return if the file is a valid {@link SpcFileName}
 	 */
 	public static boolean isSpcFileName(File file) {
-		String name = file.getName();
+		return isSpcFileName(file.getName());
+	}
+
+	private static boolean isSpcFileName(String name) {
+		if (!name.endsWith("PSV.spc") && !name.endsWith("SH.spc")) {
+			System.err.println("A name of SPC file must end with PSV.spc or SH.spc (psv, sh not allowed anymore)");
+			return false;
+		}
 		String[] parts = name.split("\\.");
-		if (!file.getName().endsWith("PSV.spc") && !file.getName().endsWith("SH.spc"))
+		if (parts.length != 3 && parts.length != 7) {
+			System.err.println("Name of a spcfile must be station.GlobalCMTID(PSV, SV).spc or "
+					+ "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
 			return false;
+		}
 
-		if (parts.length != 3 && parts.length != 7)
+		if (8 < getObserverID(name).length()) {
+			System.err.println("Name of station cannot be over 8 characters.");
 			return false;
-
-		// station name can't has over 8 letters.
-		if (8 < parts[0].length())
-			return false;
+		}
 
 		return true;
 	}
@@ -234,7 +232,7 @@ public class SpcFileName extends File {
 	 * @return 理論波形（非偏微分波形）かどうか
 	 */
 	public boolean isSynthetic() {
-		return getName().split("\\.").length == 3;
+		return isSynthetic(getName());
 	}
 
 	/**
