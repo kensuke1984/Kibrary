@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
@@ -233,7 +234,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	 */
 	private void readPerturbationPointFile() {
 		try {
-			List<String> lines = FileUtils.readLines(perturbationPointFile);
+			List<String> lines = FileUtils.readLines(perturbationPointFile,Charset.defaultCharset());
 
 			for (int i = 0; i < lines.size(); i++)
 				if (lines.get(i).trim().length() == 0 || lines.get(i).trim().startsWith("#"))
