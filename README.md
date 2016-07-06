@@ -55,7 +55,7 @@ Last updated Feb 26,2016
 
 [release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
 [release]:https://en.wikipedia.org/wiki/Sahuagin
-[version-image]:https://img.shields.io/badge/version-0.3.1-yellow.svg
+[version-image]:https://img.shields.io/badge/version-0.4-yellow.svg
 
 [alicense-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: http://www.apache.org/licenses/LICENSE-2.0
