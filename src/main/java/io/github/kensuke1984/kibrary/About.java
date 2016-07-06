@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary;
 
 import java.awt.GraphicsEnvironment;
+import java.nio.charset.Charset;
 
 import org.apache.commons.io.IOUtils;
 
@@ -15,7 +16,7 @@ import org.apache.commons.io.IOUtils;
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  * 
  * @author Kensuke Konishi
- * @version 0.3.2
+ * @version 0.3.2.1
  * 
  * 
  */
@@ -59,7 +60,8 @@ final class About extends javax.swing.JFrame {
 
 	static {
 		try {
-			line = String.join("\n", IOUtils.readLines(About.class.getClassLoader().getResourceAsStream("LICENSE")));
+			line = String.join("\n", IOUtils.readLines(About.class.getClassLoader().getResourceAsStream("LICENSE"),
+					Charset.defaultCharset()));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
