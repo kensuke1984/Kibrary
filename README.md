@@ -50,7 +50,7 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 ##Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
-Last updated Feb 26,2016
+Last updated Jul 6, 2016
 
 
 [release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
