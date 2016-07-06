@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,7 +24,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * The catalog contains event list from <b>1976 January</b> to <b>2016
  * November</b>.
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  * @author Kensuke Konishi
  * 
@@ -61,8 +62,9 @@ final class GlobalCMTCatalog {
 
 	private static Set<NDK> readJar() {
 		try {
-			List<String> lines = IOUtils
-					.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"));
+			List<String> lines = IOUtils.readLines(
+					GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
+					Charset.defaultCharset());
 			if (lines.size() % 5 != 0)
 				throw new Exception("Global CMT catalog contained in the jar file is broken");
 			return IntStream
