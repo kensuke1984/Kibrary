@@ -15,7 +15,7 @@ final class ANISOtime extends TravelTimeGUI {
 	
 	static final String codename = "Promyvion";
 	
-	static final String version ="0.3.8b";
+	static final String version ="0.4b";
 	
 	private static final long serialVersionUID = -4093263118460123169L;
 
