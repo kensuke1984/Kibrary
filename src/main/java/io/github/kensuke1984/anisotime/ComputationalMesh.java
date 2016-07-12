@@ -37,10 +37,10 @@ class ComputationalMesh implements Serializable {
 
 	public static void main(String[] args) {
 		ComputationalMesh mesh = new ComputationalMesh(VelocityStructure.prem(), 100, 100, 100);
-		for (int i = 0; i < mesh.outerCoreMesh.getDimension(); i++)
-			System.out.println(mesh.outerCoreMesh.getEntry(i));
-		
-		
+		RealVector partMesh = mesh.mantleMesh;
+		for (int i = 0; i < partMesh.getDimension(); i++)
+			System.out.println(partMesh.getEntry(i));
+
 	}
 
 	/**

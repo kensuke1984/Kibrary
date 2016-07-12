@@ -52,7 +52,7 @@ public class UnknownParameterFile {
 				line = line.trim();
 				if (line.length() == 0 || line.startsWith("#"))
 					continue;
-				String[] parts = line.trim().split("\\s+");
+				String[] parts = line.split("\\s+");
 				PartialType type = PartialType.valueOf(parts[0]);
 				UnknownParameter unknown;
 				switch (type) {

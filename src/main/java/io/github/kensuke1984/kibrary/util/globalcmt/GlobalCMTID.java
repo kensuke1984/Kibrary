@@ -135,7 +135,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 			throw new IllegalArgumentException("Usage: [Global CMT IDs]");
 		for (String idString : args) {
 			if (!GlobalCMTID.isGlobalCMTID(idString)) {
-				System.out.println(idString + " is not a global CMT ID.");
+				System.err.println(idString + " is not a global CMT ID.");
 				continue;
 			}
 

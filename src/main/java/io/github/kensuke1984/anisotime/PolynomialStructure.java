@@ -3,6 +3,8 @@ package io.github.kensuke1984.anisotime;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.IntStream;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.complex.Complex;
@@ -14,7 +16,7 @@ import io.github.kensuke1984.kibrary.math.LinearEquation;
  * Polynomial structure.
  * 
  * 
- * @version 0.0.9.1
+ * @version 0.0.9.2
  * 
  * @author Kensuke Konishi
  *
@@ -80,8 +82,8 @@ public class PolynomialStructure implements VelocityStructure {
 			return rmin <= radius && radius < rmax ? radius : -1;
 		}
 
-		return Arrays.stream(answer).mapToDouble(a -> a.getReal() * earthRadius()).sorted()
-				.filter(x -> rmin <= x && x < rmax).findFirst().orElse(-1);
+		return Arrays.stream(answer).map(a -> a.getReal() * earthRadius()).sorted(Comparator.reverseOrder())
+				.filter(x -> rmin <= x && x < rmax).findFirst().orElse(-1d);
 	}
 
 	@Override
@@ -92,6 +94,16 @@ public class PolynomialStructure implements VelocityStructure {
 	@Override
 	public double innerCoreBoundary() {
 		return 1221.5; // TODO
+	}
+
+	@Override
+	public double coreMantleBoundary() {
+		return STRUCTURE.getRMinOf(STRUCTURE.getCoreZone());
+	}
+
+	@Override
+	public double[] additionalBoundaries() {
+		return IntStream.range(1, STRUCTURE.getNzone()).mapToDouble(STRUCTURE::getRMinOf).toArray();
 	}
 
 	/*
@@ -218,11 +230,6 @@ public class PolynomialStructure implements VelocityStructure {
 	@Override
 	public double getN(double r) {
 		return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.N, r);
-	}
-
-	@Override
-	public double coreMantleBoundary() {
-		return 3480; // TODO
 	}
 
 }

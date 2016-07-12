@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -319,19 +318,5 @@ public final class Utilities {
 		int decimalInt = (int) Math.round(decimal);
 		return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
 	}
-
-	/**
-	 * Comparator of Location. Sorting order is longitude, latitude, radius.
-	 */
-	public static final Comparator<Location> locationComparator = new Comparator<Location>() {
-		@Override
-		public int compare(Location o1, Location o2) {
-			int lon = Double.compare(o1.getLongitude(), o2.getLongitude());
-			if (lon != 0)
-				return lon;
-			int lat = Double.compare(o1.getLatitude(), o2.getLatitude());
-			return lat == 0 ? Double.compare(o1.getR(), o2.getR()) : lat;
-		}
-	};
 
 }
