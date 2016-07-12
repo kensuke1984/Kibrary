@@ -24,9 +24,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
 	/**
-	 * 
-	 * Latitude &rarr; Longitude
-	 * 
+	 * Sorting order is Latitude &rarr; Longitude
 	 */
 	@Override
 	public int compareTo(HorizontalPosition o) {

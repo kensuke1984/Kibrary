@@ -304,6 +304,7 @@ public final class RaypathSearch {
 			diffRay.compute();
 			return new ArrayList<>(Arrays.asList(diffRay));
 		}
+		
 		// long startTime = System.nanoTime();
 		final List<Raypath> searchPathlist = makeRaypathCandidates(targetPhase, structure, targetPhase.isPSV(), eventR,
 				targetDelta, deltaR);

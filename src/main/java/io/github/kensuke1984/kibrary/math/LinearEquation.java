@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.math;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.complex.Complex;
@@ -8,8 +9,10 @@ import org.apache.commons.math3.complex.Complex;
 /**
  * 
  * Solver for cubic equations with coefficients of real numbers.
- * <p>This class is <b>immutable</b>
- * @version 0.1.2
+ * <p>
+ * This class is <b>immutable</b>
+ * 
+ * @version 0.1.2.1
  * @author Kensuke Konishi
  *
  */
@@ -40,7 +43,8 @@ public class LinearEquation {
 	/**
 	 * Solver for polynomial function = 0
 	 * 
-	 * @param pf polynomial functions for equations
+	 * @param pf
+	 *            polynomial functions for equations
 	 */
 	public LinearEquation(PolynomialFunction pf) {
 		this.pf = pf;
@@ -116,12 +120,8 @@ public class LinearEquation {
 		double q = c - b * b / 3;
 		double r = d - b * c / 3 + 2 * b * b * b / 27;
 		double rr = r * r / 4 + q * q * q / 27;
-		Complex zr = new Complex(rr, 0);
-		Complex sr;
-		if (rr == 0)
-			sr = Complex.ZERO;
-		else
-			sr = zr.sqrt();
+		Complex zr = new Complex(rr);
+		Complex sr = rr == 0 ? Complex.ZERO : zr.sqrt();
 		if (0 < r && sr.abs() != 0)
 			sr = sr.multiply(-1);
 		sr = sr.add(-r / 2);
@@ -132,16 +132,13 @@ public class LinearEquation {
 			u = sr.pow(1.0 / 3);
 		if (u.abs() == 0)
 			return new Complex[] { Complex.valueOf(-b / 3) };
-		Complex v = new Complex(-q / 3, 0);
-		v = v.divide(u);
+		Complex v = new Complex(-q / 3).divide(u);
 		Complex[] x = new Complex[3];
 		double b3 = b / 3;
 		x[0] = u.add(v).subtract(b3);
 		x[1] = u.multiply(omega).add(v.multiply(omega2)).subtract(b3);
 		x[2] = u.multiply(omega2).add(v.multiply(omega)).subtract(b3);
-		Arrays.sort(x, (o1, o2) -> {
-			return Double.compare(Math.abs(o1.getImaginary()), Math.abs(o2.getImaginary()));
-		});
+		Arrays.sort(x, Comparator.comparingDouble(o -> Math.abs(o.getImaginary())));
 
 		return x;
 

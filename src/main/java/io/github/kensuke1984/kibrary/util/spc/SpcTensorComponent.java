@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import java.util.Arrays;
+
 /**
  * Tensor components of a spc file
  * <p>
@@ -15,8 +17,7 @@ package io.github.kensuke1984.kibrary.util.spc;
  * 9: rpp 10: trr 11: trt 12: trp 13: ttr 14: ttt 15: ttp 16: tpr 17: tpt 18:
  * tpp 19: prr 20: prt 21: prp 22: ptr 23: ptt 24: ptp 25: ppr 26: ppt 27: ppp
  * 
- * @version 0.1.1
- * TODO
+ * @version 0.1.1.1 TODO
  * 
  * @author Kensuke Konishi
  * 
@@ -49,10 +50,10 @@ enum SpcTensorComponent {
 	 * @return SpcTensorComponent for the input i r s
 	 */
 	public static SpcTensorComponent valueOfBP(int i, int r, int s) {
-		for (SpcTensorComponent stc : values())
-			if (stc.value == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3)
-				return stc;
-		throw new IllegalArgumentException("input i, r, s: " + i + " " + r + " " + s + " are invalid.");
+		return Arrays.stream(values())
+				.filter(stc -> stc.value == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3).findAny()
+				.orElseThrow(() -> new IllegalArgumentException(
+						"input i, r, s: " + i + " " + r + " " + s + " are invalid."));
 	}
 
 	/**
@@ -65,10 +66,8 @@ enum SpcTensorComponent {
 	 * @return SpcTensorComponent for the input p q
 	 */
 	public static SpcTensorComponent valueOfFP(int p, int q) {
-		for (SpcTensorComponent stc : values())
-			if (stc.value == (p - 1) * 3 + q && stc.name().length() == 2)
-				return stc;
-		throw new IllegalArgumentException("input p, q: " + p + " " + q + " are invalid.");
+		return Arrays.stream(values()).filter(stc -> stc.value == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
+				.orElseThrow(() -> new IllegalArgumentException("input p, q: " + p + " " + q + " are invalid."));
 	}
 
 }

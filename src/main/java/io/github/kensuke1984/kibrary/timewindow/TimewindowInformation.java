@@ -1,24 +1,41 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
-
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
  * Timewindow for a raypath (a pair of a source and a receiver).
- * <p>This class is <b>IMMUTABLE</b></p>
+ * <p>
+ * This class is <b>IMMUTABLE</b>
+ * </p>
  * 
  * The information contains a component, a station and a global CMT ID.
  * 
  * 
- * @version 0.1.2
+ * @version 0.1.3
  * 
  * @author Kensuke Konishi
  */
 public class TimewindowInformation extends Timewindow {
 
-	
+	@Override
+	public int compareTo(Timewindow o) {
+		if (!(o instanceof TimewindowInformation))
+			return super.compareTo(o);
+		TimewindowInformation ot = (TimewindowInformation) o;
+		int sta = getStation().compareTo(ot.getStation());
+		if (sta != 0)
+			return sta;
+		int id = getGlobalCMTID().compareTo(ot.getGlobalCMTID());
+		if (id != 0)
+			return id;
+		int comp = getComponent().compareTo(ot.getComponent());
+		if (comp != 0)
+			return comp;
+		return super.compareTo(o);
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -54,7 +71,7 @@ public class TimewindowInformation extends Timewindow {
 	}
 
 	/**
-	 * station 
+	 * station
 	 */
 	private final Station station;
 
@@ -76,11 +93,10 @@ public class TimewindowInformation extends Timewindow {
 		this.station = station;
 	}
 
-	public Station getStation(){
+	public Station getStation() {
 		return station;
 	}
-	
-	
+
 	public GlobalCMTID getGlobalCMTID() {
 		return id;
 	}

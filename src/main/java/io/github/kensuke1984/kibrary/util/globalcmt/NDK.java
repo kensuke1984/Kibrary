@@ -293,8 +293,8 @@ final class NDK implements GlobalCMTData {
 		ndk.mb = Double.parseDouble(parts[6]);
 		ndk.ms = Double.parseDouble(parts[7]);
 		// System.out.println(mb + " " + ms);
-		ndk.geographicalLocation = lines[0].substring(56, lines[0].length()).trim();
-		// System.out.println(geographicalLocation + " " + lines[0].length());
+		ndk.geographicalLocation = lines[0].substring(56).trim();
+//		 System.out.println(ndk.geographicalLocation + " " + lines[0].length());
 
 		// line2
 		parts = lines[1].split("\\s+");

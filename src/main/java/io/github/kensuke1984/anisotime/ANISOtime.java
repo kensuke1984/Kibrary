@@ -10,6 +10,9 @@ import javax.swing.SwingUtilities;
  * @author Kensuke Konishi
  * @version 0.4b
  * 
+ * TODO
+ * triplication 
+ * 
  */
 final class ANISOtime extends TravelTimeGUI {
 	
