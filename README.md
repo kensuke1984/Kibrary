@@ -16,7 +16,7 @@ If you are not sure about the version you have, click <a href="https://www.java.
 
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
-you will see a jar file of *Kibrary* in build/libs.
+you will see a jar file of *Kibrary* in build/libs, which you might want to move into CLASSPATH.
 
 Here is the flow.
 ```bash
@@ -25,6 +25,7 @@ Here is the flow.
  % ./gradlew
  % ./gradlew build 
 ```
+
 
 If you want to have Kibrary-goblin, you try the above flow with *goblin.tar* instead of *gradlew.tar*
 
