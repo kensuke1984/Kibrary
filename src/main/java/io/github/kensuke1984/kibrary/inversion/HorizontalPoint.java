@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.NoSuchFileException;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -18,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
  * TODO DSM informationとして書き出す
  * 
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  * @author Kensuke Konishi
  * 
@@ -40,7 +41,7 @@ public class HorizontalPoint {
 	}
 
 	public HorizontalPoint(File infoFile) throws NoSuchFileException {
-		if (!infoFile.exists()) 
+		if (!infoFile.exists())
 			throw new NoSuchFileException(infoFile.getPath());
 		this.infoFile = infoFile;
 		readFile();
@@ -108,13 +109,8 @@ public class HorizontalPoint {
 	 * @return positionに近い順でポイントを返す
 	 */
 	public String[] getNearestPoints(HorizontalPosition position) {
-		return perPointMap.keySet().stream().sorted((o1, o2) -> {
-			HorizontalPosition hp1 = perPointMap.get(o1);
-			HorizontalPosition hp2 = perPointMap.get(o2);
-			double dist1 = hp1.getEpicentralDistance(position);
-			double dist2 = hp2.getEpicentralDistance(position);
-			return Double.compare(dist1, dist2);
-		}).toArray(String[]::new);
+		return perPointMap.keySet().stream()
+				.sorted(Comparator.comparingDouble(o -> perPointMap.get(o).getEpicentralDistance(position)))
+				.toArray(String[]::new);
 	}
-
 }

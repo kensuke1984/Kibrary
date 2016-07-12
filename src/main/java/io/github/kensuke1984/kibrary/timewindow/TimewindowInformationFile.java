@@ -78,20 +78,7 @@ public final class TimewindowInformationFile {
 			} while (!Files.exists(f) || Files.isDirectory(f));
 			set = TimewindowInformationFile.read(f);
 		}
-		set.stream().sorted(TimewindowInformationFile::compare).forEach(System.out::println);
-	}
-
-	private static int compare(TimewindowInformation o1, TimewindowInformation o2) {
-		int sta = o1.getStation().compareTo(o2.getStation());
-		if (sta != 0)
-			return sta;
-		int id = o1.getGlobalCMTID().compareTo(o2.getGlobalCMTID());
-		if (id != 0)
-			return id;
-		int comp = o1.getComponent().compareTo(o2.getComponent());
-		if (comp != 0)
-			return comp;
-		return o1.compareTo(o2);
+		set.stream().sorted().forEach(System.out::println);
 	}
 
 	/**

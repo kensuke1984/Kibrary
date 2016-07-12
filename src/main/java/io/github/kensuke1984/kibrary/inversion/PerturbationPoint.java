@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * TODO 名前のチェック validity
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  * @author Kensuke Konishi
  * 
@@ -189,8 +189,8 @@ public class PerturbationPoint extends HorizontalPoint {
 		Set<String> pointNameSet = hp.getHorizontalPointNameSet();
 		// Map<String, HorizontalPosition> pointMap = hp.getPerPointMap();
 		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(out)))) {
-			for (String name : pointNameSet) 
-				for (int ir = 0; ir < r.length; ir++) 
+			for (String name : pointNameSet)
+				for (int ir = 0; ir < r.length; ir++)
 					pw.println(name + " " + r[ir]);
 		} catch (Exception e) {
 		}
@@ -234,12 +234,9 @@ public class PerturbationPoint extends HorizontalPoint {
 	 */
 	private void readPerturbationPointFile() {
 		try {
-			List<String> lines = FileUtils.readLines(perturbationPointFile,Charset.defaultCharset());
-
-			for (int i = 0; i < lines.size(); i++)
-				if (lines.get(i).trim().length() == 0 || lines.get(i).trim().startsWith("#"))
-					lines.remove(i);
-			// System.out.println(lines.size());
+			List<String> lines = FileUtils.readLines(perturbationPointFile, Charset.defaultCharset());
+			lines.removeIf(line -> line.trim().length() == 0 || line.trim().startsWith("#"));
+			
 			pointN = lines.size();
 			perturbationLocation = new Location[pointN];
 			pointName = new String[pointN];
@@ -252,7 +249,6 @@ public class PerturbationPoint extends HorizontalPoint {
 						getHorizontalPosition(pointName[i]).getLongitude(), r);
 				// perturbationLocation[i].setR(r);
 			}
-			// System.out.println("hi");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

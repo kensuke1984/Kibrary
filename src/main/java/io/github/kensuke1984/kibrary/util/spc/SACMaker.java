@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -305,8 +305,7 @@ public class SACMaker implements Runnable {
 	/**
 	 * 書き出す成分 デフォルトでは R, T, Z （すべて）
 	 */
-	private Set<SACComponent> components = new HashSet<>(Arrays.asList(SACComponent.values()));
-
+	private Set<SACComponent> components = EnumSet.allOf(SACComponent.class);
 	/**
 	 * SACを書き出すディレクトリ
 	 */
@@ -546,8 +545,10 @@ public class SACMaker implements Runnable {
 	}
 
 	/**
-	 * @param spc1 primary
-	 * @param spc2 secondary
+	 * @param spc1
+	 *            primary
+	 * @param spc2
+	 *            secondary
 	 * @return if spc1 and spc2 have same information
 	 */
 	private static boolean check(DSMOutput spc1, DSMOutput spc2) {
@@ -562,12 +563,12 @@ public class SACMaker implements Runnable {
 			System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
 			isOK = false;
 		}
-		
+
 		if (!spc1.getObserverID().equals(spc2.getObserverID())) {
 			System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
 			isOK = false;
 		}
-		
+
 		if (isOK) {
 			if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR()))
 				isOK = false;
@@ -591,10 +592,10 @@ public class SACMaker implements Runnable {
 
 		if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
 			System.err.println("locations of sources of input spcfiles are different");
-			System.err.println(spc1.getSourceLocation()+" "+spc2.getSourceLocation());
+			System.err.println(spc1.getSourceLocation() + " " + spc2.getSourceLocation());
 			isOK = false;
 		}
-		
+
 		if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
 			System.err.println("locations of stations of input spcfiles are different");
 			isOK = false;

@@ -11,11 +11,20 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.DoubleFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
@@ -45,7 +54,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * T (time) denotes travel time. &tau; (tau) denotes tau. Q<sub>T</sub>&ne;Q
  * <sub>&tau;</sub>
  * 
- * TODO if rstart and rend is too close, ...
  * <p>
  * P: P wave in the mantle<br>
  * SV,SH: S wave (SV, SH) in the mantle<br>
@@ -56,7 +64,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1b
+ * @version 0.4.1.1b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -85,42 +93,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * <p>
 	 * r<sub>i</sub> is in {@link ComputationalMesh}<br>
 	 * r<sub>0</sub> = core-mantle boundary, r<sub>n</sub> = surface. <u>The
-	 * number of &delta;$Delta; is 1 less than the number of the mesh.</u>
+	 * number of &delta;&Delta; is 1 less than the number of the mesh.</u>
 	 * <p>
 	 * &delta;&Delta; = 0 where the raypath does not reach or the range is in
 	 * the Jefferey's range.
 	 */
-	private transient double[] thetaP;
-
-	/**
-	 * Same as {@link #thetaP}
-	 */
-	private transient double[] thetaSV;
-
-	/**
-	 * Same as {@link #thetaP}
-	 */
-	private transient double[] thetaSH;
-
-	/**
-	 * Same as {@link #thetaP}
-	 */
-	private transient double[] thetaK;
-
-	/**
-	 * Same as {@link #thetaP}
-	 */
-	private transient double[] thetaI;
-
-	/**
-	 * Same as {@link #thetaP}
-	 */
-	private transient double[] thetaJH;
-
-	/**
-	 * Same as {@link #thetaP}
-	 */
-	private transient double[] thetaJV;
+	private transient Map<PhasePart, double[]> dThetaMap;
 
 	/**
 	 * 
@@ -134,150 +112,30 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * &delta;T = 0 where the raypath does not reach or the range is in the
 	 * Jefferey's range.
 	 */
-	private transient double[] dTP;
-
-	/**
-	 * Same as {@link #dTP}
-	 */
-	private transient double[] dTSV;
-
-	/**
-	 * Same as {@link #dTP}
-	 */
-	private transient double[] dTSH;
-
-	/**
-	 * Same as {@link #dTP}
-	 */
-	private transient double[] dTK;
-
-	/**
-	 * Same as {@link #dTP}
-	 */
-	private transient double[] dTI;
-
-	/**
-	 * Same as {@link #dTP}
-	 */
-	private transient double[] dTJV;
-
-	/**
-	 * Same as {@link #dTP}
-	 */
-	private transient double[] dTJH;
+	private transient Map<PhasePart, double[]> dTMap;
 
 	private final double RAYPARAMETER; // rayparameter p = (r * sin(t) )/ v(r)
 
 	/**
-	 * Radius [km] at which P bounces. The value can be only in mantle. If there
-	 * is no bouncing point, the value is {@link Double#NaN}
+	 * Radius of bouncing points for all phase parts.
 	 */
-	private transient double pTurningR;
-
-	/**
-	 * Turning radius for SV (mantle). Same as {@link #pTurningR}
-	 */
-	private transient double svTurningR;
-
-	/**
-	 * Turning radius for SH (mantle). Same as {@link #pTurningR}
-	 */
-	private transient double shTurningR;
-
-	/**
-	 * Radius [km] at which K bounces. The value can be in the outer-core. If
-	 * there is no bouncing point, the value is {@link Double#NaN}
-	 */
-	private transient double kTurningR;
-
-	/**
-	 * Same as {@link #pTurningR}. Turning radius for I.
-	 */
-	private transient double iTurningR;
-	/**
-	 * Turning radius for JV. Same as {@link #pTurningR}
-	 */
-	private transient double jvTurningR;
-	/**
-	 * Turning radius for JH. Same as {@link #pTurningR}
-	 */
-	private transient double jhTurningR;
+	private transient Map<PhasePart, Double> turningRMap;
 
 	private final Woodhouse1981 WOODHOUSE;
 
 	/**
-	 * &Delta; of P in the mantle
+	 * &Delta; of phase parts
 	 */
-	private transient double deltaP = Double.NaN;
-	/**
-	 * &Delta; of SV in the mantle
-	 */
-	private transient double deltaSV = Double.NaN;
-	/**
-	 * &Delta; of SH in the mantle
-	 */
-	private transient double deltaSH = Double.NaN;
-	/**
-	 * &Delta; of K in the outer-core
-	 */
-	private transient double deltaK = Double.NaN;
-	/**
-	 * &Delta; of I in the inner-core
-	 */
-	private transient double deltaI = Double.NaN;
-	/**
-	 * &Delta; of JV in the inner-core
-	 */
-	private transient double deltaJV = Double.NaN;
-	/**
-	 * &Delta; of JH in the inner-core
-	 */
-	private transient double deltaJH = Double.NaN;
+	private transient Map<PhasePart, Double> deltaMap;
 
 	/**
-	 * T of P in the mantle
+	 * T of phase parts
 	 */
-	private transient double timeP = Double.NaN;
-	/**
-	 * T of SV in the mantle
-	 */
-	private transient double timeSV = Double.NaN;
-	/**
-	 * T of SH in the mantle
-	 */
-	private transient double timeSH = Double.NaN;
-	/**
-	 * T of K in the outer-core
-	 */
-	private transient double timeK = Double.NaN;
-	/**
-	 * T of I in the inner-core
-	 */
-	private transient double timeI = Double.NaN;
-	/**
-	 * T of JV in the inner-core
-	 */
-	private transient double timeJV = Double.NaN;
-	/**
-	 * T of JH in the inner-core
-	 */
-	private transient double timeJH = Double.NaN;
+	private transient Map<PhasePart, Double> timeMap;
 
-	private transient double jeffreysPDelta = Double.NaN;
-	private transient double jeffreysSVDelta = Double.NaN;
-	private transient double jeffreysSHDelta = Double.NaN;
-	private transient double jeffreysKDelta = Double.NaN;
-	private transient double jeffreysIDelta = Double.NaN;
-	private transient double jeffreysJVDelta = Double.NaN;
-	private transient double jeffreysJHDelta = Double.NaN;
+	private transient Map<PhasePart, Double> jeffreysDeltaMap;
 
-	private transient double jeffreysPT = Double.NaN;
-	private transient double jeffreysSVT = Double.NaN;
-	private transient double jeffreysSHT = Double.NaN;
-	private transient double jeffreysKT = Double.NaN;
-	private transient double jeffreysIT = Double.NaN;
-	private transient double jeffreysJVT = Double.NaN;
-	private transient double jeffreysJHT = Double.NaN;
+	private transient Map<PhasePart, Double> jeffreysTMap;
 
 	/**
 	 * Maximum radius of the Jeffrey's range for P integration. (
@@ -285,37 +143,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * <p>
 	 * If either CMB or ICB is in the Jeffrey's range, the boundary is it.
 	 */
-	private transient double jeffreysPBoundary;
-
-	/**
-	 * Same as {@link #jeffreysPBoundary}
-	 */
-	private transient double jeffreysSVBoundary;
-
-	/**
-	 * Same as {@link #jeffreysPBoundary}
-	 */
-	private transient double jeffreysSHBoundary;
-
-	/**
-	 * Same as {@link #jeffreysPBoundary}
-	 */
-	private transient double jeffreysKBoundary;
-
-	/**
-	 * Same as {@link #jeffreysPBoundary}
-	 */
-	private transient double jeffreysIBoundary;
-
-	/**
-	 * Same as {@link #jeffreysPBoundary}
-	 */
-	private transient double jeffreysJVBoundary;
-
-	/**
-	 * Same as {@link #jeffreysPBoundary}
-	 */
-	private transient double jeffreysJHBoundary;
+	private transient Map<PhasePart, Double> jeffreysBoundaryMap;
 
 	/**
 	 * Mesh for integration
@@ -383,10 +211,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 				sBottom = innerCoreBoundary();
 				break;
 			case MANTLE:
-				sBottom = phase.isPSV() ? svTurningR : shTurningR;
+				sBottom = phase.isPSV() ? turningRMap.get(PhasePart.SV) : turningRMap.get(PhasePart.SH);
 				break;
 			case INNERCORE:
-				sBottom = phase.isPSV() ? jvTurningR : jhTurningR;
+				sBottom = phase.isPSV() ? turningRMap.get(PhasePart.JV) : turningRMap.get(PhasePart.JH);
 				break;
 			default:
 				throw new RuntimeException("UNEXPECTED");
@@ -402,7 +230,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			case INNERCORE:
 			case MANTLE:
 			case OUTERCORE:
-				pBottom = pTurningR;
+				pBottom = turningRMap.get(PhasePart.P);
 				break;
 			default:
 				throw new RuntimeException("UNEXPECTED");
@@ -501,20 +329,39 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	}
 
 	public static void main(String[] args) throws Exception { // 0
-																// PKIKP
+		Raypath r0 = new Raypath(702.6021977759755);
+		r0.compute();
+
+//		RaypathSearch.lookFor(Phase.S, VelocityStructure.prem(), 6371, Math.toRadians(20), 10);
+
+		System.exit(0);
+		PolynomialStructure ps = new PolynomialStructure(Paths.get("/home/kensuke/data/travelTime/TBL_ANI200.poly"));
+		double rayParameterP = 100;
+		double eventR = 6371;
+		Raypath diff = RaypathSearch.sDiffRaypath(ps, 6371, false);
+		// diff = new Raypath(100);
+		diff.compute();
+		diff.printInfo();
+		// System.out.println(diff.computeDelta(eventR, Phase.S));
+		System.out.println(Math.toDegrees(diff.computeDelta(6371, Phase.create("Sdiff"))) + " "
+				+ Math.toDegrees(diff.computeDelta(6371, Phase.create("Sdiff"))));
+		System.out.println(diff.computeT(6371, Phase.create("Sdiff")));
+		double[][] xy = diff.getRouteXY(eventR, Phase.create("Sdiff10"));
+		for (double[] point : xy) {
+			// System.out.println(point[0] + " " + point[1]);
+		}
+		System.exit(0);
+		// PKIKP
 		// TODO p小さい時
 		long t = System.nanoTime(); // TODO
 		Raypath r = new Raypath(3, VelocityStructure.prem(), new ComputationalMesh(VelocityStructure.prem(), 1, 1, 1));
 		// System.exit(0);
 		r.compute();
-		r.printTurningPoints();
-		r.printDelta();
-		r.printT();
+		r.printInfo();
 		Phase phase = Phase.PKIKP;
 		System.out.println(phase + " " + Math.toDegrees(r.computeDelta(6371, phase)) + " " + r.computeT(6371, phase));
 		// writeTest();
 		// readTest();
-		System.out.println(Math.toDegrees(r.jeffreysIDelta));
 		System.out.println(Utilities.toTimeString(System.nanoTime() - t));
 	}
 
@@ -546,92 +393,31 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
 		stream.defaultReadObject();
 		int flag = stream.readByte();
-		deltaP = Double.NaN;
-		timeP = Double.NaN;
-		deltaSV = Double.NaN;
-		timeSV = Double.NaN;
-		deltaSH = Double.NaN;
-		timeSH = Double.NaN;
-		deltaK = Double.NaN;
-		timeK = Double.NaN;
-		deltaI = Double.NaN;
-		timeI = Double.NaN;
-		deltaJV = Double.NaN;
-		timeJV = Double.NaN;
-		deltaJH = Double.NaN;
-		timeJH = Double.NaN;
-		if ((flag & 1) != 0) {
-			deltaP = stream.readDouble();
-			timeP = stream.readDouble();
-		}
-		if ((flag & 2) != 0) {
-			deltaSV = stream.readDouble();
-			timeSV = stream.readDouble();
-		}
-		if ((flag & 4) != 0) {
-			deltaSH = stream.readDouble();
-			timeSH = stream.readDouble();
-		}
-		if ((flag & 8) != 0) {
-			deltaK = stream.readDouble();
-			timeK = stream.readDouble();
-		}
-		if ((flag & 16) != 0) {
-			deltaI = stream.readDouble();
-			timeI = stream.readDouble();
-		}
-		if ((flag & 32) != 0) {
-			deltaJV = stream.readDouble();
-			timeJV = stream.readDouble();
-		}
-		if ((flag & 64) != 0) {
-			deltaJH = stream.readDouble();
-			timeJH = stream.readDouble();
-		}
+		for (PhasePart pp : PhasePart.values())
+			if ((flag & pp.getFlag()) == 0) {
+				deltaMap.put(pp, Double.NaN);
+				timeMap.put(pp, Double.NaN);
+			} else {
+				deltaMap.put(pp, stream.readDouble());
+				timeMap.put(pp, stream.readDouble());
+			}
+
 		setTurningRs();
+
 		computeJeffreysRange();
+
 	}
 
 	private void writeObject(ObjectOutputStream stream) throws IOException {
 		stream.defaultWriteObject();
-		byte flag = 0;
+		AtomicInteger ai = new AtomicInteger();
 		List<Double> outputList = new ArrayList<>();
-		if (propagationP != Propagation.NOEXIST) {
-			flag |= 1;
-			outputList.add(deltaP);
-			outputList.add(timeP);
-		}
-		if (propagationSV != Propagation.NOEXIST) {
-			flag |= 2;
-			outputList.add(deltaSV);
-			outputList.add(timeSV);
-		}
-		if (propagationSH != Propagation.NOEXIST) {
-			flag |= 4;
-			outputList.add(deltaSH);
-			outputList.add(timeSH);
-		}
-		if (propagationK != Propagation.NOEXIST) {
-			flag |= 8;
-			outputList.add(deltaK);
-			outputList.add(timeK);
-		}
-		if (propagationI != Propagation.NOEXIST) {
-			flag |= 16;
-			outputList.add(deltaI);
-			outputList.add(timeI);
-		}
-		if (propagationJV != Propagation.NOEXIST) {
-			flag |= 32;
-			outputList.add(deltaJV);
-			outputList.add(timeJV);
-		}
-		if (propagationJH != Propagation.NOEXIST) {
-			flag |= 64;
-			outputList.add(deltaJH);
-			outputList.add(timeJH);
-		}
-		stream.writeByte(flag);
+		Arrays.stream(PhasePart.values()).filter(pp -> propagationMap.get(pp) != Propagation.NOEXIST).forEach(pp -> {
+			ai.set(ai.get() | pp.getFlag());
+			outputList.add(deltaMap.get(pp));
+			outputList.add(timeMap.get(pp));
+		});
+		stream.writeByte(ai.get());
 		for (double value : outputList)
 			stream.writeDouble(value);
 	}
@@ -653,16 +439,20 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * Each boundary is one of the radius set in {@link #MESH}.
 	 */
 	private void computeJeffreysRange() {
-		jeffreysPBoundary = Double.NaN;
-		jeffreysSVBoundary = Double.NaN;
-		jeffreysSHBoundary = Double.NaN;
-		jeffreysKBoundary = Double.NaN;
-		jeffreysIBoundary = Double.NaN;
-		jeffreysJVBoundary = Double.NaN;
-		jeffreysJHBoundary = Double.NaN;
+		jeffreysBoundaryMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		jeffreysDeltaMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		jeffreysTMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
 
-		Function<PhasePart, Double> candidate = pp -> {
-			int index = MESH.getNextIndexOf(turningROf(pp), pp.whichPartition());
+		Arrays.stream(PhasePart.values()).forEach(pp -> {
+			jeffreysBoundaryMap.put(pp, Double.NaN);
+			jeffreysDeltaMap.put(pp, Double.NaN);
+			jeffreysTMap.put(pp, Double.NaN);
+		});
+
+		Consumer<PhasePart> compute = pp -> {
+			if (Double.isNaN(turningRMap.get(pp)) || propagationMap.get(pp) == Propagation.PENETRATING)
+				return;
+			int index = MESH.getNextIndexOf(turningRMap.get(pp), pp.whichPartition());
 			RealVector mesh = MESH.getMesh(pp.whichPartition());
 			double boundary = mesh.getEntry(index);
 			while (++index < mesh.getDimension()) {
@@ -674,155 +464,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 					break;
 				boundary = next;
 			}
-			return boundary;
+			jeffreysBoundaryMap.put(pp, boundary);
+			jeffreysDeltaMap.put(pp, jeffreysDelta(pp, boundary));
+			jeffreysTMap.put(pp, jeffreysT(pp, boundary));
 		};
 
-		// P
-		if (!Double.isNaN(pTurningR)) {
-			jeffreysPBoundary = candidate.apply(PhasePart.P);
-			jeffreysPDelta = jeffreysDelta(PhasePart.P, jeffreysPBoundary);
-			jeffreysPT = jeffreysT(PhasePart.P, jeffreysPBoundary);
-		}
+		Arrays.stream(PhasePart.values()).forEach(compute::accept);
 
-		// SV
-		if (!Double.isNaN(svTurningR)) {
-			jeffreysSVBoundary = candidate.apply(PhasePart.SV);
-			jeffreysSVDelta = jeffreysDelta(PhasePart.SV, jeffreysSVBoundary);
-			jeffreysSVT = jeffreysT(PhasePart.SV, jeffreysSVBoundary);
-		}
-
-		// SH
-		if (!Double.isNaN(shTurningR)) {
-			jeffreysSHBoundary = candidate.apply(PhasePart.SH);
-			jeffreysSHDelta = jeffreysDelta(PhasePart.SH, jeffreysSHBoundary);
-			jeffreysSHT = jeffreysT(PhasePart.SH, jeffreysSHBoundary);
-		}
-
-		// K
-		if (!Double.isNaN(kTurningR)) {
-			jeffreysKBoundary = candidate.apply(PhasePart.K);
-			jeffreysKDelta = jeffreysDelta(PhasePart.K, jeffreysKBoundary);
-			jeffreysKT = jeffreysT(PhasePart.K, jeffreysKBoundary);
-		}
-
-		// I
-		if (!Double.isNaN(iTurningR) && propagationI != Propagation.PENETRATING) {
-			jeffreysIBoundary = candidate.apply(PhasePart.I);
-			jeffreysIDelta = jeffreysDelta(PhasePart.I, jeffreysIBoundary);
-			jeffreysIT = jeffreysT(PhasePart.I, jeffreysIBoundary);
-		}
-
-		// JV
-		if (!Double.isNaN(jvTurningR) && propagationJV != Propagation.PENETRATING) {
-			jeffreysJVBoundary = candidate.apply(PhasePart.JV);
-			jeffreysJVDelta = jeffreysDelta(PhasePart.JV, jeffreysJVBoundary);
-			jeffreysJVT = jeffreysT(PhasePart.JV, jeffreysJVBoundary);
-		}
-
-		// JH
-		if (!Double.isNaN(jhTurningR) && propagationJH != Propagation.PENETRATING) {
-			jeffreysJHBoundary = candidate.apply(PhasePart.JH);
-			jeffreysJHDelta = jeffreysDelta(PhasePart.JH, jeffreysJHBoundary);
-			jeffreysJHT = jeffreysT(PhasePart.JH, jeffreysJHBoundary);
-		}
-	}
-
-	private double[] getDT(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return dTI;
-		case JH:
-			return dTJH;
-		case JV:
-			return dTJV;
-		case K:
-			return dTK;
-		case P:
-			return dTP;
-		case SH:
-			return dTSH;
-		case SV:
-			return dTSV;
-		default:
-			throw new RuntimeException("uNexpected");
-		}
-	}
-
-	private double[] getDTheta(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return thetaI;
-		case JH:
-			return thetaJH;
-		case JV:
-			return thetaJV;
-		case K:
-			return thetaK;
-		case P:
-			return thetaP;
-		case SH:
-			return thetaSH;
-		case SV:
-			return thetaSV;
-		default:
-			throw new RuntimeException("uNexpected");
-		}
-	}
-
-	private void setT(PhasePart pp, double t) {
-		switch (pp) {
-		case I:
-			timeI = t;
-			return;
-		case JH:
-			timeJH = t;
-			return;
-		case JV:
-			timeJV = t;
-			return;
-		case K:
-			timeK = t;
-			return;
-		case P:
-			timeP = t;
-			return;
-		case SH:
-			timeSH = t;
-			return;
-		case SV:
-			timeSV = t;
-			return;
-		default:
-			throw new RuntimeException("unexpecteD");
-		}
-	}
-
-	private void setDelta(PhasePart pp, double t) {
-		switch (pp) {
-		case I:
-			deltaI = t;
-			return;
-		case JH:
-			deltaJH = t;
-			return;
-		case JV:
-			deltaJV = t;
-			return;
-		case K:
-			deltaK = t;
-			return;
-		case P:
-			deltaP = t;
-			return;
-		case SH:
-			deltaSH = t;
-			return;
-		case SV:
-			deltaSV = t;
-			return;
-		default:
-			throw new RuntimeException("unexpecteD");
-		}
 	}
 
 	/**
@@ -830,82 +478,31 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * also computes transient arrays of &delta;&Delta; and &delta;T.
 	 */
 	private void computeT() {
-		RealVector mantleMesh = MESH.getMesh(Partition.MANTLE);
-		RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
-		RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
-		int mantle = mantleMesh.getDimension() - 1;
-		int outerCore = outerCoreMesh.getDimension() - 1;
-		int innerCore = innerCoreMesh.getDimension() - 1;
-
+		timeMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		Arrays.stream(PhasePart.values()).forEach(pp -> timeMap.put(pp, Double.NaN));
 		Function<PhasePart, Thread> createThread = pp -> {
 			RealVector mesh = MESH.getMesh(pp.whichPartition());
-			double[] dT = getDT(pp);
+			double[] dT = new double[mesh.getDimension() - 1];
+			dTMap.put(pp, dT);
 			return new Thread(() -> {
-				double jeffreysBoundary = getJeffreysBoundary(pp);
+				double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 				for (int i = 0; i < dT.length; i++) {
 					if (mesh.getEntry(i) < jeffreysBoundary)
 						continue;
 					dT[i] = simpsonT(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
 				}
-				setT(pp, computeT(pp, getPropagation(pp) == Propagation.PENETRATING ? mesh.getEntry(0) : turningROf(pp),
+				timeMap.put(pp, computeT(pp,
+						getPropagation(pp) == Propagation.PENETRATING || getPropagation(pp) == Propagation.DIFFRACTION
+								? mesh.getEntry(0) : turningRMap.get(pp),
 						mesh.getEntry(dT.length)));
 			});
 		};
 
-		List<Thread> runningThread = new ArrayList<>(7);
-		// mantle P
-		Thread pThread;
-		if (propagationP != Propagation.NOEXIST) {
-			dTP = new double[mantle];
-			pThread = createThread.apply(PhasePart.P);
-			runningThread.add(pThread);
-		}
+		dTMap = new EnumMap<>(PhasePart.class);
+		List<Thread> runningThread = Arrays.stream(PhasePart.values())
+				.filter(pp -> propagationMap.get(pp) != Propagation.NOEXIST).map(createThread::apply)
+				.collect(Collectors.toList());
 
-		// mantle S
-		Thread svThread;
-		if (propagationSV != Propagation.NOEXIST) {
-			dTSV = new double[mantle];
-			svThread = createThread.apply(PhasePart.SV);
-			runningThread.add(svThread);
-		}
-
-		Thread shThread;
-		if (propagationSH != Propagation.NOEXIST) {
-			dTSH = new double[mantle];
-			shThread = createThread.apply(PhasePart.SH);
-			runningThread.add(shThread);
-		}
-
-		// outer-core
-		Thread kThread;
-		if (propagationK != Propagation.NOEXIST) {
-			dTK = new double[outerCore];
-			kThread = createThread.apply(PhasePart.K);
-			runningThread.add(kThread);
-		}
-
-		// inner-core P
-		Thread iThread;
-		if (propagationI != Propagation.NOEXIST) {
-			dTI = new double[innerCore];
-			iThread = createThread.apply(PhasePart.I);
-			runningThread.add(iThread);
-		}
-
-		// inner-core S
-		Thread jvThread;
-		if (propagationJV != Propagation.NOEXIST) {
-			dTJV = new double[innerCore];
-			jvThread = createThread.apply(PhasePart.JV);
-			runningThread.add(jvThread);
-		}
-
-		Thread jhThread;
-		if (propagationJH != Propagation.NOEXIST) {
-			dTJH = new double[innerCore];
-			jhThread = createThread.apply(PhasePart.JH);
-			runningThread.add(jhThread);
-		}
 		runningThread.forEach(Thread::start);
 
 		try {
@@ -914,69 +511,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not compute travel time.");
-		}
-	}
-
-	private double getJeffreysBoundary(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return jeffreysIBoundary;
-		case JH:
-			return jeffreysJHBoundary;
-		case JV:
-			return jeffreysJVBoundary;
-		case K:
-			return jeffreysKBoundary;
-		case P:
-			return jeffreysPBoundary;
-		case SH:
-			return jeffreysSHBoundary;
-		case SV:
-			return jeffreysSVBoundary;
-		default:
-			throw new RuntimeException("UNEXpected");
-		}
-	}
-
-	private double getJeffreysDelta(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return jeffreysIDelta;
-		case JH:
-			return jeffreysJHDelta;
-		case JV:
-			return jeffreysJVDelta;
-		case K:
-			return jeffreysKDelta;
-		case P:
-			return jeffreysPDelta;
-		case SH:
-			return jeffreysSHDelta;
-		case SV:
-			return jeffreysSVDelta;
-		default:
-			throw new RuntimeException("UNEXpected");
-		}
-	}
-
-	private double getJeffreysT(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return jeffreysIT;
-		case JH:
-			return jeffreysJHT;
-		case JV:
-			return jeffreysJVT;
-		case K:
-			return jeffreysKT;
-		case P:
-			return jeffreysPT;
-		case SH:
-			return jeffreysSHT;
-		case SV:
-			return jeffreysSVT;
-		default:
-			throw new RuntimeException("UNEXpected");
 		}
 	}
 
@@ -995,10 +529,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		RealVector radii = MESH.getMesh(partition);
 		double minR = radii.getEntry(0);
 		double maxR = radii.getEntry(radii.getDimension() - 1);
-		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR)
+		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR) {
+			System.out.println(startR + " " + minR + " " + endR + " " + maxR + " " + turningRMap.get(pp) + " "
+					+ propagationMap.get(pp));
 			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
+		}
 
-		if (startR < turningROf(pp))
+		if (startR < turningRMap.get(pp))
 			throw new IllegalArgumentException("Input rStart is deeper than the boucing point.");
 
 		if (getPropagation(pp) == Propagation.NOEXIST)
@@ -1010,8 +547,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		startR = Math.max(startR, minR);
 		endR = Math.min(endR, maxR);
 
-		double jeffreysBoundary = getJeffreysBoundary(pp);
-		double jeffreysT = getJeffreysT(pp);
+		double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
+		double jeffreysT = jeffreysTMap.get(pp);
 
 		// might be NaN
 		if (endR <= jeffreysBoundary)
@@ -1049,20 +586,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		return time + jeffreys;
 	}
 
-	public void printDelta() {
-		System.out.println("Delta[deg] P:" + Precision.round(Math.toDegrees(deltaP), 3) + " SV:"
-				+ Precision.round(Math.toDegrees(deltaSV), 3) + " SH:" + Precision.round(Math.toDegrees(deltaSH), 3)
-				+ " K:" + Precision.round(Math.toDegrees(deltaK), 3) + " I:"
-				+ Precision.round(Math.toDegrees(deltaI), 3) + " JV:" + Precision.round(Math.toDegrees(deltaJV), 3)
-				+ " JH:" + Precision.round(Math.toDegrees(deltaJH), 3));
-	}
-
-	public void printT() {
-		System.out.println("T[s] P:" + Precision.round(timeP, 3) + " SV:" + Precision.round(timeSV, 3) + " SH:"
-				+ Precision.round(timeSH, 3) + " K:" + Precision.round(timeK, 3) + " I:" + Precision.round(timeI, 3)
-				+ " JV:" + Precision.round(timeJV, 3) + " JH:" + Precision.round(timeJH, 3));
-	}
-
 	/**
 	 * Compute delta for a input {@link Phase}
 	 * 
@@ -1074,6 +597,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 *         exist or anything wrong, returns Double.NaN
 	 */
 	public double computeDelta(double eventR, Phase phase) {
+		if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
+			throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
 		if (!exists(eventR, phase))
 			return Double.NaN;
 
@@ -1084,11 +609,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		double ics = phase.getCountOfJ();
 
 		// System.out.println(mp+" "+ms+" "+oc+" "+icp+" "+ics);
-		double p = 0 < mp ? deltaP * mp * 2 : 0;
-		double s = 0 < ms ? (phase.isPSV() ? deltaSV : deltaSH) * ms * 2 : 0;
-		double k = 0 < oc ? deltaK * oc * 2 : 0;
-		double i = 0 < icp ? deltaI * icp * 2 : 0;
-		double j = 0 < ics ? (phase.isPSV() ? deltaJV : deltaJH) * ics * 2 : 0;
+		double p = 0 < mp ? deltaMap.get(PhasePart.P) * mp * 2 : 0;
+		double s = 0 < ms ? deltaMap.get((phase.isPSV() ? PhasePart.SV : PhasePart.SH)) * ms * 2 : 0;
+		double k = 0 < oc ? deltaMap.get(PhasePart.K) * oc * 2 : 0;
+		double i = 0 < icp ? deltaMap.get(PhasePart.I) * icp * 2 : 0;
+		double j = 0 < ics ? deltaMap.get((phase.isPSV() ? PhasePart.JV : PhasePart.JH)) * ics * 2 : 0;
 		double delta = p + s + k + i + j;
 
 		if (phase.isDiffracted())
@@ -1125,16 +650,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		double icp = phase.getCountOfI();
 		double ics = phase.getCountOfJ();
 
-		double p = 0 < mp ? timeP * mp * 2 : 0;
-		double s = 0 < ms ? (phase.isPSV() ? timeSV : timeSH) * ms * 2 : 0;
-		double k = 0 < oc ? timeK * oc * 2 : 0;
-		double i = 0 < icp ? timeI * icp * 2 : 0;
-		double j = 0 < ics ? (phase.isPSV() ? timeJV : timeJH) * ics * 2 : 0;
+		double p = 0 < mp ? timeMap.get(PhasePart.P) * mp * 2 : 0;
+		double s = 0 < ms ? timeMap.get((phase.isPSV() ? PhasePart.SV : PhasePart.SH)) * ms * 2 : 0;
+		double k = 0 < oc ? timeMap.get(PhasePart.K) * oc * 2 : 0;
+		double i = 0 < icp ? timeMap.get(PhasePart.I) * icp * 2 : 0;
+		double j = 0 < ics ? timeMap.get((phase.isPSV() ? PhasePart.JV : PhasePart.JH)) * ics * 2 : 0;
+
 		double time = p + s + k + i + j;
 		if (phase.isDiffracted()) {
 			double deltaOnCMB = phase.getDiffractionAngle();
-			time += phase.toString().contains("Pdiff")
-					? computeTimePAlongBoundary(coreMantleBoundary(), deltaOnCMB, true)
+			time += phase.toString().contains("Pdiff")// TODO
+					? computeTimePAlongBoundary(PhasePart.P, coreMantleBoundary(), deltaOnCMB, true)
 					: computeTimeSAlongBoundary(phase.isPSV(), coreMantleBoundary(), deltaOnCMB, true);
 		}
 
@@ -1185,36 +711,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			if (Math.abs(eventR - earthRadius()) < ComputationalMesh.eps)
 				return false;
 		if (nameStr.contains("P"))
-			if (eventR < pTurningR)
+			if (eventR < turningRMap.get(PhasePart.P))
 				return false;
 		if (nameStr.contains("S"))
-			if (eventR < (phase.isPSV() ? svTurningR : shTurningR)) //
+			if (eventR < (phase.isPSV() ? turningRMap.get(PhasePart.SV) : turningRMap.get(PhasePart.SH))) //
 				return false;
 		return phase.exists(this);
-	}
-
-	/**
-	 * @return radius of turning point
-	 */
-	public double getTurningR(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return iTurningR;
-		case JH:
-			return jhTurningR;
-		case JV:
-			return jvTurningR;
-		case K:
-			return kTurningR;
-		case P:
-			return pTurningR;
-		case SH:
-			return shTurningR;
-		case SV:
-			return svTurningR;
-		default:
-			throw new RuntimeException("uNeXpected");
-		}
 	}
 
 	/**
@@ -1241,24 +743,22 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * @param travelTimeList
 	 *            to add T
 	 */
-	private void addRThetaTime(double nextR, PhasePart pp, List<Double> rList, List<Double> thetaList,
-			List<Double> travelTimeList) {
+	private void addRThetaTime(double nextR, PhasePart pp, LinkedList<Double> rList, LinkedList<Double> thetaList,
+			LinkedList<Double> travelTimeList) {
 		double beforeR = rList.get(rList.size() - 1);
-		if (Math.abs(beforeR - coreMantleBoundary()) < ComputationalMesh.eps
-				&& Math.abs(nextR - coreMantleBoundary()) < ComputationalMesh.eps)
-			throw new RuntimeException("korekarayaruo");
-
 		double smallerR = Math.min(beforeR, nextR);
 		double biggerR = Math.max(beforeR, nextR);
 		double theta = computeDelta(pp, smallerR, biggerR);
 		double time = computeT(pp, smallerR, biggerR);
-		int lastIndex = rList.size() - 1;
 		rList.add(nextR);
-		thetaList.add(theta + thetaList.get(lastIndex));
-		travelTimeList.add(time + travelTimeList.get(lastIndex));
+		thetaList.add(theta + thetaList.getLast());
+		travelTimeList.add(time + travelTimeList.getLast());
 	}
 
 	/**
+	 * 
+	 * TODO arbitrary boundaries
+	 * 
 	 * 
 	 * @param eventR
 	 *            [km] must be in the mantle
@@ -1276,12 +776,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			throw new IllegalArgumentException("Input eventR:" + eventR + " is out of the mantle.");
 		if (!exists(eventR, phase))
 			throw new RuntimeException(phase + " does not exist.");
-
-		List<Double> rList = new ArrayList<>();
-		List<Double> thetaList = new ArrayList<>();
-		List<Double> travelTimeList = new ArrayList<>();
+		// radius [km]
+		LinkedList<Double> rList = new LinkedList<>();
+		// theta [rad]
+		LinkedList<Double> thetaList = new LinkedList<>();
+		// time [s]
+		LinkedList<Double> travelTimeList = new LinkedList<>();
 		RealVector mantleMesh = MESH.getMesh(Partition.MANTLE);
-
 		// First phase because we must take care of the eventR
 		// [eventR, bottomR (turningR or CMB)]
 		rList.add(eventR);
@@ -1289,19 +790,19 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		travelTimeList.add(0d);
 		if (phase.partIsDownGoing(0)) {
 			int indexEventR = MESH.getNextIndexOf(eventR, Partition.MANTLE);
-			if (mantleMesh.getEntry(indexEventR) == eventR)
+			if (eventR - mantleMesh.getEntry(indexEventR) < ComputationalMesh.eps)
 				indexEventR--;
 			PhasePart pp = phase.phasePartOf(0);
 			if (getPropagation(pp) == Propagation.PENETRATING)
 				for (int iR = indexEventR; 0 <= iR; iR--)
 					addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 			else {
-				double jeffreysBoundary = getJeffreysBoundary(pp);
+				double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 				int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.MANTLE);
 				for (int iR = indexEventR; bottomIndex < iR; iR--)
 					addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 				addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-				addRThetaTime(turningROf(pp), pp, rList, thetaList, travelTimeList);
+				addRThetaTime(turningRMap.get(pp), pp, rList, thetaList, travelTimeList);
 			}
 		} else
 			for (int iR = MESH.getNextIndexOf(eventR, Partition.MANTLE) + 1, n = mantleMesh
@@ -1313,7 +814,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			PhasePart pp = phase.phasePartOf(i);
 			switch (phase.partitionOf(i)) {
 			case CORE_MANTLE_BOUNDARY:
-				addRThetaTime(coreMantleBoundary(), pp, rList, thetaList, travelTimeList);
+				rList.add(coreMantleBoundary() + permissibleGapForDiff); // TODO
+				thetaList.add(thetaList.getLast() + phase.getDiffractionAngle());
+				double time = 0; // TODO
+				travelTimeList.add(time + travelTimeList.getLast());
 				break;
 			case MANTLE:
 				if (getPropagation(pp) == Propagation.PENETRATING)
@@ -1324,13 +828,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 						for (int iR = 1, n = mantleMesh.getDimension(); iR < n; iR++)
 							addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 				else {
-					double jeffreysBoundary = getJeffreysBoundary(pp);
+					double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 					int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.MANTLE);
 					if (isDownGoing) {
 						for (int iR = mantleMesh.getDimension() - 2; bottomIndex < iR; iR--)
 							addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 						addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-						addRThetaTime(getTurningR(pp), pp, rList, thetaList, travelTimeList);
+						addRThetaTime(turningRMap.get(pp), pp, rList, thetaList, travelTimeList);
 					} else {
 						addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
 						for (int iR = bottomIndex + 1, n = mantleMesh.getDimension(); iR < n; iR++)
@@ -1340,7 +844,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 				break;
 			case OUTERCORE:
 				RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
-				if (propagationK == Propagation.PENETRATING) {
+				if (propagationMap.get(PhasePart.K) == Propagation.PENETRATING) {
 					if (isDownGoing)
 						for (int iR = outerCoreMesh.getDimension() - 2; 0 <= iR; iR--)
 							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
@@ -1348,28 +852,29 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 						for (int iR = 1, n = outerCoreMesh.getDimension(); iR < n; iR++)
 							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 				} else {
-					int bottomIndex = MESH.getNextIndexOf(jeffreysKBoundary, Partition.OUTERCORE);
+					double kBoundary = jeffreysBoundaryMap.get(PhasePart.K);
+					int bottomIndex = MESH.getNextIndexOf(kBoundary, Partition.OUTERCORE);
 					if (isDownGoing) {
 						for (int iR = outerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
 							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-						addRThetaTime(jeffreysKBoundary, pp, rList, thetaList, travelTimeList);
-						addRThetaTime(kTurningR, pp, rList, thetaList, travelTimeList);
+						addRThetaTime(kBoundary, pp, rList, thetaList, travelTimeList);
+						addRThetaTime(turningRMap.get(PhasePart.K), pp, rList, thetaList, travelTimeList);
 					} else {
-						addRThetaTime(jeffreysKBoundary, pp, rList, thetaList, travelTimeList);
+						addRThetaTime(kBoundary, pp, rList, thetaList, travelTimeList);
 						for (int iR = bottomIndex + 1, n = outerCoreMesh.getDimension(); iR < n; iR++)
 							addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 					}
 				}
 				break;
 			case INNERCORE:
-				double jeffreysBoundary = getJeffreysBoundary(pp);
+				double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 				RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
 				int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.INNERCORE);
 				if (isDownGoing) {
 					for (int iR = innerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
 						addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
 					addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-					addRThetaTime(getTurningR(pp), pp, rList, thetaList, travelTimeList);
+					addRThetaTime(turningRMap.get(pp), pp, rList, thetaList, travelTimeList);
 				} else {
 					addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
 					for (int iR = bottomIndex + 1, n = innerCoreMesh.getDimension(); iR < n; iR++)
@@ -1426,29 +931,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		return WOODHOUSE.getStructure().innerCoreBoundary();
 	}
 
-	private double turningROf(PhasePart pp) {
-		switch (pp) {
-		case P:
-			return pTurningR;
-		case I:
-			return iTurningR;
-		case JH:
-			return jhTurningR;
-		case JV:
-			return jvTurningR;
-		case K:
-			return kTurningR;
-		case SH:
-			return shTurningR;
-		case SV:
-			return svTurningR;
-		default:
-			throw new RuntimeException("UNExpECTED");
-		}
-	}
-
 	private double jeffreysDelta(PhasePart pp, double rEnd) {
-		double turningR = turningROf(pp);
+		double turningR = turningRMap.get(pp);
 		if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps)
 			return 0;
 		DoubleFunction<Double> rToY = r -> WOODHOUSE.computeQDelta(pp, RAYPARAMETER, r) * drdx(pp, r);
@@ -1460,7 +944,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	}
 
 	private double jeffreysT(PhasePart pp, double rEnd) {
-		double turningR = turningROf(pp);
+		double turningR = turningRMap.get(pp);
 		if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps)
 			return 0;
 		DoubleFunction<Double> rToY = r -> WOODHOUSE.computeQT(pp, RAYPARAMETER, r) * drdx(pp, r);
@@ -1469,27 +953,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		if (Double.isNaN(modifiedR) || modifiedR <= turningR || rEnd <= modifiedR)
 			modifiedR = rCenter;
 		return jeffreysMethod1(toX(pp, modifiedR), rToY.apply(modifiedR), rToY.apply(rEnd));
-	}
-
-	private double[] getTheta(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return thetaI;
-		case JH:
-			return thetaJH;
-		case JV:
-			return thetaJV;
-		case K:
-			return thetaK;
-		case P:
-			return thetaP;
-		case SH:
-			return thetaSH;
-		case SV:
-			return thetaSV;
-		default:
-			throw new RuntimeException("uNeXpected");
-		}
 	}
 
 	/**
@@ -1536,7 +999,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR)
 			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
 
-		if (startR < turningROf(pp))
+		if (startR < turningRMap.get(pp))
 			throw new IllegalArgumentException("Input rStart is deeper than the boucing point.");
 
 		if (getPropagation(pp) == Propagation.NOEXIST)
@@ -1548,8 +1011,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		startR = Math.max(startR, minR);
 		endR = Math.min(endR, maxR);
 
-		double jeffreysBoundary = getJeffreysBoundary(pp);
-		double jeffreysDelta = getJeffreysDelta(pp);
+		double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
+		double jeffreysDelta = jeffreysDeltaMap.get(pp);
 		// might be NaN
 		if (endR <= jeffreysBoundary)
 			return jeffreysDelta(pp, endR) - jeffreysDelta(pp, startR);
@@ -1567,7 +1030,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		}
 		double nextREnd = radii.getEntry(endIndexForMemory);
 		double delta = simpsonDelta(pp, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
-		double[] theta = getTheta(pp);
+		double[] theta = dThetaMap.get(pp);
 		for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
 			delta += theta[i];
 
@@ -1590,81 +1053,31 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * TODO boundary value
 	 */
 	private void computeDelta() {
-		RealVector mantleMesh = MESH.getMesh(Partition.MANTLE);
-		RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
-		RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
-		int mantle = mantleMesh.getDimension() - 1;
-		int outerCore = outerCoreMesh.getDimension() - 1;
-		int innerCore = innerCoreMesh.getDimension() - 1;
+		deltaMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		Arrays.stream(PhasePart.values()).forEach(pp -> deltaMap.put(pp, Double.NaN));
 		Function<PhasePart, Thread> createThread = pp -> {
 			RealVector mesh = MESH.getMesh(pp.whichPartition());
-			double[] dTheta = getDTheta(pp);
+			double[] dTheta = new double[mesh.getDimension() - 1];
+			dThetaMap.put(pp, dTheta);
 			return new Thread(() -> {
-				double jeffreysBoundary = getJeffreysBoundary(pp);
+				double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 				for (int i = 0; i < dTheta.length; i++) {
 					if (mesh.getEntry(i) < jeffreysBoundary)
 						continue;
 					dTheta[i] = simpsonDelta(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
 				}
-				setDelta(pp,
-						computeDelta(pp,
-								getPropagation(pp) == Propagation.PENETRATING ? mesh.getEntry(0) : turningROf(pp),
-								mesh.getEntry(dTheta.length)));
+				deltaMap.put(pp, computeDelta(pp,
+						getPropagation(pp) == Propagation.PENETRATING || getPropagation(pp) == Propagation.DIFFRACTION
+								? mesh.getEntry(0) : turningRMap.get(pp),
+						mesh.getEntry(dTheta.length)));
 			});
 		};
 
-		List<Thread> runningThread = new ArrayList<>(7);
-		// mantle P
-		Thread pThread;
-		if (propagationP != Propagation.NOEXIST) {
-			thetaP = new double[mantle];
-			pThread = createThread.apply(PhasePart.P);
-			runningThread.add(pThread);
-		}
+		dThetaMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		List<Thread> runningThread = Arrays.stream(PhasePart.values())
+				.filter(pp -> propagationMap.get(pp) != Propagation.NOEXIST).map(createThread::apply)
+				.collect(Collectors.toList());
 
-		// mantle S
-		Thread svThread;
-		if (propagationSV != Propagation.NOEXIST) {
-			thetaSV = new double[mantle];
-			svThread = createThread.apply(PhasePart.SV);
-			runningThread.add(svThread);
-		}
-		Thread shThread;
-		if (propagationSH != Propagation.NOEXIST) {
-			thetaSH = new double[mantle];
-			shThread = createThread.apply(PhasePart.SH);
-			runningThread.add(shThread);
-		}
-
-		// outer-core
-		Thread kThread;
-		if (propagationK != Propagation.NOEXIST) {
-			thetaK = new double[outerCore];
-			kThread = createThread.apply(PhasePart.K);
-			runningThread.add(kThread);
-		}
-
-		// inner-core P
-		Thread iThread;
-		if (propagationI != Propagation.NOEXIST) {
-			thetaI = new double[innerCore];
-			iThread = createThread.apply(PhasePart.I);
-			runningThread.add(iThread);
-		}
-
-		// inner-core S
-		Thread jvThread;
-		if (propagationJV != Propagation.NOEXIST) {
-			thetaJV = new double[innerCore];
-			jvThread = createThread.apply(PhasePart.JV);
-			runningThread.add(jvThread);
-		}
-		Thread jhThread;
-		if (propagationJH != Propagation.NOEXIST) {
-			thetaJH = new double[innerCore];
-			jhThread = createThread.apply(PhasePart.JH);
-			runningThread.add(jhThread);
-		}
 		runningThread.forEach(Thread::start);
 		try {
 			for (Thread t : runningThread)
@@ -1675,14 +1088,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		}
 	}
 
-	private transient Propagation propagationP;
-	private transient Propagation propagationI;
-	private transient Propagation propagationK;
-
-	private transient Propagation propagationSV;
-	private transient Propagation propagationSH;
-	private transient Propagation propagationJV;
-	private transient Propagation propagationJH;
+	private transient Map<PhasePart, Propagation> propagationMap;
 
 	/**
 	 * @param sv
@@ -1690,127 +1096,75 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * @return propagation of S in the inner-core
 	 */
 	Propagation getPropagation(PhasePart pp) {
-		switch (pp) {
-		case I:
-			return propagationI;
-		case JH:
-			return propagationJH;
-		case JV:
-			return propagationJV;
-		case K:
-			return propagationK;
-		case P:
-			return propagationP;
-		case SH:
-			return propagationSH;
-		case SV:
-			return propagationSV;
-		default:
-			throw new RuntimeException("UNEXpected");
-		}
+		return propagationMap.get(pp);
 	}
 
 	/**
 	 * computes turning radius
 	 * 
-	 * TODO turningr is now separated maybe if sentence can be reduced in the
-	 * latrepart
 	 */
 	private void setTurningRs() {
-		VelocityStructure vstructure = getStructure();
-		pTurningR = vstructure.pTurningR(RAYPARAMETER);
-		svTurningR = vstructure.svTurningR(RAYPARAMETER);
-		shTurningR = vstructure.shTurningR(RAYPARAMETER);
-		kTurningR = vstructure.kTurningR(RAYPARAMETER);
-		iTurningR = vstructure.iTurningR(RAYPARAMETER);
-		jvTurningR = vstructure.jvTurningR(RAYPARAMETER);
-		jhTurningR = vstructure.jhTurningR(RAYPARAMETER);
+		turningRMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		propagationMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		if (RAYPARAMETER == 0) {
+			Arrays.stream(PhasePart.values()).forEach(pp -> {
+				turningRMap.put(pp, Double.NaN);
+				propagationMap.put(pp, Propagation.PENETRATING);
+			});
+			return;
+		}
 
-		if (!Double.isNaN(kTurningR))
-			propagationK = Propagation.BOUNCING;
+		Arrays.stream(PhasePart.values())
+				.forEach(pp -> turningRMap.put(pp, getStructure().getTurningR(pp, RAYPARAMETER)));
+
+		if (!Double.isNaN(turningRMap.get(PhasePart.K)))
+			propagationMap.put(PhasePart.K, Propagation.BOUNCING);
 		else
-			propagationK = Double
-					.isNaN(WOODHOUSE.computeQT(PhasePart.K, RAYPARAMETER, innerCoreBoundary() + ComputationalMesh.eps))
+			propagationMap.put(PhasePart.K,
+					Double.isNaN(
+							WOODHOUSE.computeQT(PhasePart.K, RAYPARAMETER, innerCoreBoundary() + ComputationalMesh.eps))
+									? Propagation.NOEXIST : Propagation.PENETRATING);
+
+		Stream.of(PhasePart.P, PhasePart.SV, PhasePart.SH).forEach(pp -> {
+			Propagation propagation = Double
+					.isNaN(WOODHOUSE.computeQT(pp, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
 							? Propagation.NOEXIST : Propagation.PENETRATING;
+			double turningR = turningRMap.get(pp);
+			if (coreMantleBoundary() + permissibleGapForDiff < turningR)
+				propagation = Propagation.BOUNCING;
+			else if (coreMantleBoundary() <= turningR)
+				propagation = Propagation.DIFFRACTION;
+			if (propagation == Propagation.BOUNCING
+					&& Double.isNaN(WOODHOUSE.computeQT(pp, RAYPARAMETER, turningR + ComputationalMesh.eps)))
+				propagation = Propagation.NOEXIST;
+			propagationMap.put(pp, propagation);
+		});
 
-		propagationI = Double.isNaN(WOODHOUSE.computeQT(PhasePart.I, RAYPARAMETER, ComputationalMesh.eps))
-				? Propagation.NOEXIST : Propagation.PENETRATING;
-		propagationP = Double
-				.isNaN(WOODHOUSE.computeQT(PhasePart.P, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
-						? Propagation.NOEXIST : Propagation.PENETRATING;
+		Stream.of(PhasePart.I, PhasePart.JV, PhasePart.JH).forEach(pp -> {
+			Propagation propagation = Double.isNaN(WOODHOUSE.computeQT(pp, RAYPARAMETER, ComputationalMesh.eps))
+					? Propagation.NOEXIST : Propagation.PENETRATING;
+			double turningR = turningRMap.get(pp);
+			if (!Double.isNaN(turningR))
+				propagation = Propagation.BOUNCING;
+			if (propagation == Propagation.BOUNCING
+					&& Double.isNaN(WOODHOUSE.computeQT(pp, RAYPARAMETER, turningR + ComputationalMesh.eps)))
+				propagation = Propagation.NOEXIST;
+			propagationMap.put(pp, propagation);
+		});
 
-		if (coreMantleBoundary() + permissibleGapForDiff < pTurningR)
-			propagationP = Propagation.BOUNCING;
-		else if (coreMantleBoundary() <= pTurningR)
-			propagationP = Propagation.DIFFRACTION;
-
-		if (!Double.isNaN(iTurningR))
-			propagationI = Propagation.BOUNCING;
-
-		propagationJV = Double.isNaN(WOODHOUSE.computeQT(PhasePart.JV, RAYPARAMETER, ComputationalMesh.eps))
-				? Propagation.NOEXIST : Propagation.PENETRATING;
-		propagationSV = Double
-				.isNaN(WOODHOUSE.computeQT(PhasePart.SV, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
-						? Propagation.NOEXIST : Propagation.PENETRATING;
-
-		propagationJH = Double.isNaN(WOODHOUSE.computeQT(PhasePart.JH, RAYPARAMETER, ComputationalMesh.eps))
-				? Propagation.NOEXIST : Propagation.PENETRATING;
-		propagationSH = Double
-				.isNaN(WOODHOUSE.computeQT(PhasePart.SH, RAYPARAMETER, coreMantleBoundary() + ComputationalMesh.eps))
-						? Propagation.NOEXIST : Propagation.PENETRATING;
-
-		if (coreMantleBoundary() + permissibleGapForDiff < svTurningR)
-			propagationSV = Propagation.BOUNCING;
-		else if (coreMantleBoundary() <= svTurningR)
-			propagationSV = Propagation.DIFFRACTION;
-		if (!Double.isNaN(jvTurningR))
-			propagationJV = Propagation.BOUNCING;
-
-		if (coreMantleBoundary() + permissibleGapForDiff < shTurningR)
-			propagationSH = Propagation.BOUNCING;
-		else if (coreMantleBoundary() <= shTurningR)
-			propagationSH = Propagation.DIFFRACTION;
-		if (!Double.isNaN(jhTurningR))
-			propagationJH = Propagation.BOUNCING;
-
-		if (propagationP == Propagation.BOUNCING
-				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.P, RAYPARAMETER, pTurningR + ComputationalMesh.eps)))
-			propagationP = Propagation.NOEXIST;
-
-		if (propagationSV == Propagation.BOUNCING
-				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.SV, RAYPARAMETER, svTurningR + ComputationalMesh.eps)))
-			propagationSV = Propagation.NOEXIST;
-
-		if (propagationSH == Propagation.BOUNCING
-				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.SH, RAYPARAMETER, shTurningR + ComputationalMesh.eps)))
-			propagationSH = Propagation.NOEXIST;
-
-		if (propagationK == Propagation.BOUNCING
-				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.K, RAYPARAMETER, kTurningR + ComputationalMesh.eps)))
-			propagationK = Propagation.NOEXIST;
-
-		if (propagationJV == Propagation.BOUNCING
-				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.JV, RAYPARAMETER, jvTurningR + ComputationalMesh.eps)))
-			propagationJV = Propagation.NOEXIST;
-
-		if (propagationJH == Propagation.BOUNCING
-				&& Double.isNaN(WOODHOUSE.computeQT(PhasePart.JH, RAYPARAMETER, jhTurningR + ComputationalMesh.eps)))
-			propagationJH = Propagation.NOEXIST;
 	}
 
-	public void printTurningPoints() {
-		System.out.println("#Turning points");
-		System.out.println("#Phase radius, Jeffrey boundary");
-		System.out.println("P:" + pTurningR + " " + jeffreysPBoundary);
-		System.out.println("SV:" + svTurningR + " " + jeffreysSVBoundary);
-		System.out.println("SH:" + shTurningR + " " + jeffreysSHBoundary);
-		System.out.println("K:" + kTurningR + " " + jeffreysKBoundary);
-		System.out.println("I:" + iTurningR + " " + jeffreysIBoundary);
-		System.out.println("JV:" + jvTurningR + " " + jeffreysJVBoundary);
-		System.out.println("JH:" + jhTurningR + " " + jeffreysJHBoundary);
-		System.out.println("#Propagation");
-		System.out.println("P:" + propagationP + " SV:" + propagationSV + " SH:" + propagationSH + " K:" + propagationK
-				+ " I:" + propagationI + " JV:" + propagationJV + " JH:" + propagationJH);
+	public void printInfo() {
+		System.out.println("#Phase:Turning points[km] Jeffrey boundary[km] Propagation delta[deg] time[s]");
+		Arrays.stream(PhasePart.values())
+				.forEach(pp -> System.out.println(
+						pp + ": " + Precision.round(turningRMap.get(pp), 3) + " " + jeffreysBoundaryMap.get(pp) + " "
+								+ propagationMap.get(pp) + " " + Precision.round(Math.toDegrees(deltaMap.get(pp)), 3)
+								+ " " + Precision.round(timeMap.get(pp), 3)));
+	}
+
+	public double getTurningR(PhasePart pp) {
+		return turningRMap.get(pp);
 	}
 
 	/**
@@ -1887,6 +1241,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * Computes diffraction on a boundary at r. The velocity is considered as
 	 * the one at r &pm; {@link ComputationalMesh#eps}
 	 * 
+	 * @param pp
+	 *            which phase diffracts
 	 * @param boundaryR
 	 *            [km]
 	 * @param deltaOnBoundary
@@ -1898,7 +1254,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * @throws RuntimeException
 	 *             If the structure has no boundary at r.
 	 */
-	private double computeTimePAlongBoundary(double boundaryR, double deltaOnBoundary, boolean shallower) {
+	private double computeTimePAlongBoundary(PhasePart pp, double boundaryR, double deltaOnBoundary,
+			boolean shallower) {
 		if (ComputationalMesh.eps < Math.abs(coreMantleBoundary() - boundaryR)
 				&& ComputationalMesh.eps < Math.abs(innerCoreBoundary() - boundaryR)
 				&& Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())

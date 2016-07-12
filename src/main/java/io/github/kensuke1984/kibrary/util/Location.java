@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -19,12 +20,23 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * This class rounds off values at the 4th decimal point.
  * 
- * @version 0.1.1.1
+ * @version 0.1.1.2
  * 
  * @author Kensuke Konishi
  * 
  */
 public class Location extends HorizontalPosition {
+
+	/**
+	 * Sorting order is latitude &rarr; longitude &rarr; radius.
+	 */
+	@Override
+	public int compareTo(HorizontalPosition o) {
+		int horizontalCompare = super.compareTo(o);
+		if (horizontalCompare != 0 || !(o instanceof Location))
+			return horizontalCompare;
+		return Double.compare(r,  ((Location) o).r);
+	}
 
 	/**
 	 * 小数点4桁目を四捨五入
@@ -41,7 +53,7 @@ public class Location extends HorizontalPosition {
 	 */
 	public Location(double latitude, double longitude, double r) {
 		super(latitude, longitude);
-		this.r = Precision.round(r,3);
+		this.r = Precision.round(r, 3);
 	}
 
 	/**
@@ -61,6 +73,7 @@ public class Location extends HorizontalPosition {
 
 	/**
 	 * Cartesian coordinate
+	 * 
 	 * @return {@link XYZ} of this
 	 */
 	public XYZ toXYZ() {
@@ -75,7 +88,6 @@ public class Location extends HorizontalPosition {
 	public double getDistance(Location location) {
 		XYZ xyz0 = toXYZ();
 		XYZ xyz = location.toXYZ();
-
 		return xyz.getDistance(xyz0);
 	}
 
@@ -110,13 +122,8 @@ public class Location extends HorizontalPosition {
 	 */
 	public Location[] getNearestLocation(Location[] locations) {
 		Location[] newLocations = locations.clone();
-		Arrays.sort(newLocations, (o1, o2) -> {
-			double dist1 = o1.getDistance(this);
-			double dist2 = o2.getDistance(this);
-			return Double.compare(dist1, dist2);
-		});
+		Arrays.sort(newLocations, Comparator.comparingDouble(o -> o.getDistance(this)));
 		return newLocations;
-
 	}
 
 	public static double toLatitude(double theta) {

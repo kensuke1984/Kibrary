@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.2b
+ * @version 0.2.1b
  * 
  */
 final class TravelTimeCLI {
@@ -54,13 +54,14 @@ final class TravelTimeCLI {
 			About.main(null);
 			return;
 		}
-		// add options
-		setBooleanOptions();
-		setArgumentOptions();
 		if (Arrays.stream(args).anyMatch("-help"::equals)) {
 			printHelp();
 			return;
 		}
+
+		// add options
+		setBooleanOptions();
+		setArgumentOptions();
 		exec(args);
 	}
 
@@ -75,22 +76,26 @@ final class TravelTimeCLI {
 				return;
 
 			VelocityStructure structure = createVelocityStructure(cmd);
-			Phase targetPhase = createPhase(cmd);
+			// multiple
+			Phase targetPhase = cmd.hasOption("ph") ? Phase.create(cmd.getOptionValue("ph"), cmd.hasOption("SV"))
+					: Phase.S;
 
-			boolean sv = cmd.hasOption("SV");
-			double eventR = setDepth(cmd);
-			double targetDelta = setDelta(cmd);
+			double eventR = cmd.hasOption("h") ? structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h"))
+					: structure.earthRadius();
+
 			if (cmd.hasOption("p")) {
 				double rayParameter = readRayparameter(cmd);
 				if (rayParameter < 0)
 					return;
 				Raypath raypath = new Raypath(rayParameter, structure);
 				raypath.compute();
-				printResults(-1, cmd,eventR, raypath, targetPhase);
+				printResults(-1, cmd, eventR, raypath, targetPhase);
 				if (cmd.hasOption("eps"))
-					raypath.outputEPS(eventR,Paths.get(targetPhase + ".eps"), targetPhase);
+					raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
 				return;
 			}
+
+			double targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg")));
 
 			double interval = 10;
 			if (cmd.hasOption("dR"))
@@ -107,22 +112,22 @@ final class TravelTimeCLI {
 			}
 			if (targetPhase.isDiffracted()) {
 				Raypath raypath = raypaths.get(0);
-				double delta = raypath.computeDelta(eventR,targetPhase);
+				double delta = raypath.computeDelta(eventR, targetPhase);
 				double dDelta = Math.toDegrees(targetDelta - delta);
 				Phase diffPhase = Phase.create(targetPhase.toString() + dDelta);
-				printResults(-1, cmd,eventR, raypath, diffPhase);
+				printResults(-1, cmd, eventR, raypath, diffPhase);
 				if (cmd.hasOption("eps"))
-					raypath.outputEPS(eventR,Paths.get(targetPhase + ".eps"), diffPhase);
+					raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), diffPhase);
 				return;
 			}
 			for (Raypath raypath : raypaths) {
-				printResults(Math.toDegrees(targetDelta), cmd, eventR,raypath, targetPhase);
+				printResults(Math.toDegrees(targetDelta), cmd, eventR, raypath, targetPhase);
 				int j = 0;
 				if (cmd.hasOption("eps"))
 					if (raypaths.size() == 1)
-						raypath.outputEPS(eventR,Paths.get(targetPhase.toString() + ".eps"), targetPhase);
+						raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + ".eps"), targetPhase);
 					else
-						raypath.outputEPS(eventR,Paths.get(targetPhase.toString() + "." + j++ + ".eps"), targetPhase);
+						raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + "." + j++ + ".eps"), targetPhase);
 			}
 
 		} catch (Exception e) {
@@ -166,8 +171,8 @@ final class TravelTimeCLI {
 	 */
 	private static void printResults(double delta1, CommandLine cmd, double eventR, Raypath raypath, Phase phase) {
 		double p0 = raypath.getRayParameter();
-		double delta0 = raypath.computeDelta(eventR,phase);
-		double time0 = raypath.computeT(eventR,phase);
+		double delta0 = raypath.computeDelta(eventR, phase);
+		double time0 = raypath.computeT(eventR, phase);
 		if (Double.isNaN(delta0) || Double.isNaN(time0)) {
 			System.out.println(delta0 + " " + time0);
 			return;
@@ -178,7 +183,8 @@ final class TravelTimeCLI {
 
 		if (0 < delta1) {
 			try {
-				while ((time1 = RaypathSearch.travelTimeByThreePointInterpolate(delta1, raypath, eventR,phase, pInterval)) < 0)
+				while ((time1 = RaypathSearch.travelTimeByThreePointInterpolate(delta1, raypath, eventR, phase,
+						pInterval)) < 0)
 					pInterval *= 10;
 			} catch (Exception e) {
 			}
@@ -207,35 +213,29 @@ final class TravelTimeCLI {
 		}
 	}
 
-	private static Phase createPhase(CommandLine cmd) {
-		return cmd.hasOption("ph") ? Phase.create(cmd.getOptionValue("ph")) : Phase.S;
-	}
-
-	/**
-	 * @param cmd
-	 *            input options
-	 * @return target delta [rad]
-	 */
-	private static double setDelta(CommandLine cmd) {
-		return cmd.hasOption("deg") ? Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg"))) : 0;
-	}
-
-	private static double setDepth(CommandLine cmd) {
-		return cmd.hasOption("h") ? 6371 - Double.parseDouble(cmd.getOptionValue("h")) : 6371;
-	}
-
 	private static void printHelp() {
 		helpFormatter.printHelp("Travel time", options);
 	}
 
+	/**
+	 * According to the arguments in the command line(cmd), a velocity structure
+	 * is given.
+	 * 
+	 * @param cmd
+	 *            input command
+	 * @return velocity structure
+	 */
 	private static VelocityStructure createVelocityStructure(CommandLine cmd) {
 		Path modelPath;
 		if (cmd.hasOption("mod"))
 			switch (cmd.getOptionValue("mod")) {
+			case "ak135":
 			case "AK135":
 				return PolynomialStructure.AK135;
+			case "prem":
 			case "PREM":
 				return PolynomialStructure.PREM;
+			case "iprem":
 			case "iPREM":
 				return PolynomialStructure.ISO_PREM;
 			default:
@@ -257,7 +257,7 @@ final class TravelTimeCLI {
 			}
 			throw new RuntimeException("Input model file is not acceptable.");
 		}
-		throw new RuntimeException("No input model file " + modelPath);
+		throw new RuntimeException("No input model file " + modelPath + " is found.");
 	}
 
 	private static void setBooleanOptions() {
@@ -277,7 +277,7 @@ final class TravelTimeCLI {
 		Option deg = new Option("deg", true, "epicentral distance [deg]");
 		options.addOption(deg);
 		Option phase = new Option("ph", true, "seismic phase (necessary)");
-		phase.setRequired(true);
+		// phase.setRequired(true);
 		options.addOption(phase);
 		Option model = new Option("mod", true, "structure (e.g. PREM) (default:PREM)");
 		options.addOption(model);

@@ -23,7 +23,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.2.1
+ * @version 0.2.2.2
  * 
  * @author Kensuke Konishi
  * 
@@ -38,7 +38,19 @@ public class PolynomialStructure implements Serializable {
 	 * the number of layers
 	 */
 	private int nzone;
+
+	/**
+	 * Number of zones of cores.
+	 */
 	private int coreZone = 2; // TODO
+
+	/**
+	 * @return Number of core zones.
+	 */
+	public int getCoreZone() {
+		return coreZone;
+	}
+
 	private double[] rmin;
 	private double[] rmax;
 	private PolynomialFunction[] rho;
@@ -145,18 +157,13 @@ public class PolynomialStructure implements Serializable {
 		ps.initialize();
 		ps.rmin = DoubleStream.concat(Arrays.stream(rmin), Arrays.stream(addBoundaries)).sorted().toArray();
 		ps.rmax = DoubleStream.concat(Arrays.stream(rmax), Arrays.stream(addBoundaries)).sorted().toArray();
-		for (double r : addBoundaries) {
-			int izone = zoneOf(r);
-			if (izone < coreZone)
-				ps.coreZone++;
-		}
+		ps.coreZone += Arrays.stream(addBoundaries).filter(r -> r < rmin[coreZone]).count();
 
 		for (int iZone = 0; iZone < ps.nzone; iZone++) {
 			double rmin = ps.rmin[iZone];
 			// izone in this for rmin
 			int oldIZone = zoneOf(rmin);
 			// // 値のコピー
-			// // deeper than r
 			ps.qMu[iZone] = qMu[oldIZone];
 			ps.qKappa[iZone] = qKappa[oldIZone];
 			ps.rho[iZone] = rho[oldIZone];
