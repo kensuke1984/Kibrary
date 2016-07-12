@@ -6,7 +6,7 @@
 [![Java8][Java8-image]] [Java8]  
 Library for waveform inversion.   
 
-It bundles [ANISOtime][ANISOtime] package.  
+It bundles [ANISOtime](wiki/ANISOtime) ([ANISOtime][ANISOtime]) package.  
 
 
 ##<a name="installation">Installation
