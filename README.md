@@ -15,6 +15,10 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <link href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</link> to check.  
 
+<Link to="myRoute" params={myParams} target="_blank">
+
+
+
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs, which you might want to move into CLASSPATH.
