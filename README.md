@@ -18,7 +18,7 @@ Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
 you will see a jar file of *Kibrary* in build/libs, which you might want to move into CLASSPATH.
 
-Here is the flow.
+Here is the flow to download source codes and build *ANISOtime*.
 ```bash
  % wget http://kensuke1984.github.io/gradlew.tar
  % tar xf gradlew.tar
@@ -26,6 +26,16 @@ Here is the flow.
  % ./gradlew build 
 ```
 
+You can add *ANISOtime* in CLASSPATH as follows:
+```bash
+ % mv build/libs/kibrary-*.jar /path/to/kibrary.jar
+ % export CLASSPATH=$CLASSPATH:/path/to/kibrary.jar
+ (/path/to/ should be the absolute path.)
+```
+If you use csh, tcsh or so,
+```tcsh
+% setenv CLASSPATH ${CLASSPATH}:/path/to/kibrary.jar
+```
 
 If you want to have Kibrary-goblin, you try the above flow with *goblin.tar* instead of *gradlew.tar*
 
