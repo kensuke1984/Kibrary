@@ -15,7 +15,7 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <link href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</link> to check.  
 
-<Link to="https://www.java.com/en/download/installed8.jsp" target="_blank"> i</a>
+<Link to="https://www.java.com/en/download/installed8.jsp" target="_blank"> i</l>
 
 
 
