@@ -33,7 +33,7 @@ You can add *ANISOtime* in CLASSPATH as follows:
  (/path/to/ should be the absolute path.)
 ```
 If you use csh, tcsh or so,
-```tcsh
+```csh
 % setenv CLASSPATH ${CLASSPATH}:/path/to/kibrary.jar
 ```
 
