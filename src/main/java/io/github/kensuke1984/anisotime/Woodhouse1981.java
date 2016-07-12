@@ -3,15 +3,19 @@ package io.github.kensuke1984.anisotime;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * The class is calculator of the formulation in Woodhouse (1981).
  * 
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @version 0.0.3
  * @see <a href=
  *      http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  *      1981</a>
@@ -23,22 +27,39 @@ class Woodhouse1981 implements Serializable {
 		createCache();
 	}
 
-	private final VelocityStructure structure;
+	private final static Set<Woodhouse1981> WOODHOUSE_CACHE = new HashSet<>();
+	static {
+		WOODHOUSE_CACHE.addAll(Arrays.asList(new Woodhouse1981(VelocityStructure.prem()),
+				new Woodhouse1981(VelocityStructure.ak135()), new Woodhouse1981(VelocityStructure.isoPREM())));
+	}
+	private final VelocityStructure STRUCTURE;
 
 	/**
 	 * @param structure
 	 *            for Woodhouse computation
 	 */
 	public Woodhouse1981(VelocityStructure structure) {
-		this.structure = structure;
-		createCache();
+		Optional<Woodhouse1981> inCache = WOODHOUSE_CACHE.stream().filter(w -> w.STRUCTURE == structure).findFirst();
+		if (inCache.isPresent())
+			copyCache(inCache.get());
+		else
+			createCache();
+		STRUCTURE = structure;
+		WOODHOUSE_CACHE.add(this);
+	}
+
+	public static void main(String[] args) {
+		VelocityStructure v1 = VelocityStructure.prem();
+		VelocityStructure v = PolynomialStructure.ISO_PREM;
+		Woodhouse1981 w1 = new Woodhouse1981(v1);
+		Woodhouse1981 w = new Woodhouse1981(v);
 	}
 
 	/**
 	 * @return VelocityStructure
 	 */
 	public VelocityStructure getStructure() {
-		return structure;
+		return STRUCTURE;
 	}
 
 	/**
@@ -64,9 +85,9 @@ class Woodhouse1981 implements Serializable {
 					- (computeS4(r) * rayParameter * rayParameter / r2 + computeS5(r)) / computeR(rayParameter, r));
 		case SH:
 		case JH:
-			return rayParameter * structure.getN(r) / structure.getL(r) / computeQTau(pp, rayParameter, r) / r2;
+			return rayParameter * STRUCTURE.getN(r) / STRUCTURE.getL(r) / computeQTau(pp, rayParameter, r) / r2;
 		case K:
-			double v = Math.sqrt(structure.getA(r) / structure.getRho(r));
+			double v = Math.sqrt(STRUCTURE.getA(r) / STRUCTURE.getRho(r));
 			double sin = rayParameter * v / r;
 			double cos = Math.sqrt(1 - sin * sin);
 			return sin / cos / r;
@@ -85,7 +106,7 @@ class Woodhouse1981 implements Serializable {
 	double computeQT(PhasePart pp, double rayParameter, double r) {
 		switch (pp) {
 		case K:
-			double v = Math.sqrt(structure.getA(r) / structure.getRho(r));
+			double v = Math.sqrt(STRUCTURE.getA(r) / STRUCTURE.getRho(r));
 			double sin = rayParameter * v / r;
 			double cos = Math.sqrt(1 - sin * sin);
 			return 1 / v / cos;
@@ -98,7 +119,7 @@ class Woodhouse1981 implements Serializable {
 		}
 		case SH:
 		case JH:
-			return structure.getRho(r) / structure.getL(r) / computeQTau(pp, rayParameter, r);
+			return STRUCTURE.getRho(r) / STRUCTURE.getL(r) / computeQTau(pp, rayParameter, r);
 		case SV:
 		case JV:
 			double s2 = computeS2(r);
@@ -135,8 +156,8 @@ class Woodhouse1981 implements Serializable {
 					.sqrt(computeS1(r) - computeS3(r) * rayParameter * rayParameter / r2 - computeR(rayParameter, r));
 		case SH:
 		case JH:
-			double L = structure.getL(r);
-			return Math.sqrt(structure.getRho(r) / L - structure.getN(r) * rayParameter * rayParameter / L / r2);
+			double L = STRUCTURE.getL(r);
+			return Math.sqrt(STRUCTURE.getRho(r) / L - STRUCTURE.getN(r) * rayParameter * rayParameter / L / r2);
 		case SV:
 		case JV:
 			return Math
@@ -167,6 +188,23 @@ class Woodhouse1981 implements Serializable {
 	private transient Map<Double, Double> s4;
 	private transient Map<Double, Double> s5;
 
+	/**
+	 * Copies cash for s1-s5
+	 * 
+	 * @param woodhouse
+	 *            source map
+	 */
+	private void copyCache(Woodhouse1981 woodhouse) {
+		s1 = woodhouse.s1;
+		s2 = woodhouse.s2;
+		s3 = woodhouse.s3;
+		s4 = woodhouse.s4;
+		s5 = woodhouse.s5;
+	}
+
+	/**
+	 * Creates new cache maps
+	 */
 	private void createCache() {
 		s1 = Collections.synchronizedMap(new HashMap<>());
 		s2 = Collections.synchronizedMap(new HashMap<>());
@@ -181,7 +219,7 @@ class Woodhouse1981 implements Serializable {
 	 * @return S<sub>1</sub>
 	 */
 	private double computeS1(double r) {
-		return s1.computeIfAbsent(r, x -> 0.5 * structure.getRho(x) * (1 / structure.getL(x) + 1 / structure.getC(x)));
+		return s1.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(x) * (1 / STRUCTURE.getL(x) + 1 / STRUCTURE.getC(x)));
 	}
 
 	/**
@@ -190,7 +228,7 @@ class Woodhouse1981 implements Serializable {
 	 * @return S<sub>2</sub>
 	 */
 	private double computeS2(double r) {
-		return s2.computeIfAbsent(r, x -> 0.5 * structure.getRho(x) * (1 / structure.getL(x) - 1 / structure.getC(x)));
+		return s2.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(x) * (1 / STRUCTURE.getL(x) - 1 / STRUCTURE.getC(x)));
 	}
 
 	/**
@@ -200,10 +238,10 @@ class Woodhouse1981 implements Serializable {
 	 */
 	private double computeS3(double r) {
 		return s3.computeIfAbsent(r, x -> {
-			double c = structure.getC(x);
-			double f = structure.getF(x);
-			double l = structure.getL(x);
-			return 0.5 / l / c * (structure.getA(x) * c - f * f - 2 * l * f);
+			double c = STRUCTURE.getC(x);
+			double f = STRUCTURE.getF(x);
+			double l = STRUCTURE.getL(x);
+			return 0.5 / l / c * (STRUCTURE.getA(x) * c - f * f - 2 * l * f);
 		});
 	}
 
@@ -215,7 +253,7 @@ class Woodhouse1981 implements Serializable {
 	private double computeS4(double r) {
 		return s4.computeIfAbsent(r, x -> {
 			double s3 = computeS3(r);
-			return s3 * s3 - structure.getA(r) / structure.getC(r);
+			return s3 * s3 - STRUCTURE.getA(r) / STRUCTURE.getC(r);
 		});
 	}
 
@@ -226,7 +264,7 @@ class Woodhouse1981 implements Serializable {
 	 */
 	private double computeS5(double r) {
 		return s5.computeIfAbsent(r,
-				x -> 0.5 * structure.getRho(x) / structure.getC(x) * (1 + structure.getA(x) / structure.getL(x))
+				x -> 0.5 * STRUCTURE.getRho(x) / STRUCTURE.getC(x) * (1 + STRUCTURE.getA(x) / STRUCTURE.getL(x))
 						- computeS1(x) * computeS3(x));
 	}
 
