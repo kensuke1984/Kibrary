@@ -3,6 +3,7 @@ package io.github.kensuke1984.anisotime;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 /**
  * <p>
@@ -23,9 +24,9 @@ import java.util.regex.Pattern;
  * If there is a number (n) in the name. the next letter to the number will be
  * repeated n times. (e.g. S3KS &rarr; SKKKS)
  * 
- * @version 0.1.4
+ * @version 0.1.5
  * 
- *          TODO TauP
+ *          TODO TauP のように 任意の深さの反射 ADDEDBOUNDARY
  * 
  * @author Kensuke Konishi
  * 
@@ -151,18 +152,21 @@ public class Phase {
 	}
 
 	/**
-	 * TODO implicit SV
-	 * 
 	 * @param name
 	 *            phase name
+	 * @param sv
+	 *            true:P-SV, false:SH. If the phase contains "P" or "K", it is
+	 *            ignored and always is true.
 	 * @return phase for input
 	 * @throws IllegalArgumentException
 	 *             if the phase is invalid
 	 */
-	public static Phase create(String name) {
+	public static Phase create(String name, boolean... sv) {
+		if (1 < sv.length)
+			throw new IllegalArgumentException("SV or not");
 		String compiledName = compile(name);
 		if (isValid(compiledName))
-			return new Phase(name, compiledName, name.contains("P") || name.contains("K"));
+			return new Phase(name, compiledName, name.contains("P") || name.contains("K") || (sv.length != 0 && sv[0]));
 		throw new IllegalArgumentException("Invalid phase name " + name);
 	}
 
@@ -207,7 +211,7 @@ public class Phase {
 	private PhasePart[] phaseParts;
 
 	/**
-	 * @return angle of diffraction [rad]
+	 * @return angle of diffraction [rad] TODO
 	 */
 	double getDiffractionAngle() {
 		return diffractionAngle;
@@ -286,18 +290,18 @@ public class Phase {
 				if (isDownGoing[iCurrentPart])
 					// ^P$ [psPS]P[PS]...
 					if (i + 1 == compiledName.length() || (nextChar != 'c' && nextChar != 'K')) {
-						iCurrentPart++;
-						isDownGoing[iCurrentPart] = false;
-						phaseParts[iCurrentPart] = PhasePart.P;
-						if (nextChar != 'd')
-							partition[iCurrentPart] = Partition.MANTLE;
-						else {
-							partition[iCurrentPart] = Partition.CORE_MANTLE_BOUNDARY;
-							iCurrentPart++;
-							isDownGoing[iCurrentPart] = false;
-							partition[iCurrentPart] = Partition.MANTLE;
-							phaseParts[iCurrentPart] = PhasePart.P;
-						}
+					iCurrentPart++;
+					isDownGoing[iCurrentPart] = false;
+					phaseParts[iCurrentPart] = PhasePart.P;
+					if (nextChar != 'd')
+					partition[iCurrentPart] = Partition.MANTLE;
+					else {
+					partition[iCurrentPart] = Partition.CORE_MANTLE_BOUNDARY;
+					iCurrentPart++;
+					isDownGoing[iCurrentPart] = false;
+					partition[iCurrentPart] = Partition.MANTLE;
+					phaseParts[iCurrentPart] = PhasePart.P;
+					}
 					}
 				iCurrentPart++;
 				break;
@@ -395,6 +399,8 @@ public class Phase {
 			mantleSTravel = -0.5;
 
 		for (int i = 0; i < nPart; i++) {
+			if (partition[i].isBoundary())
+				continue;
 			switch (phaseParts[i]) {
 			case I:
 				innerCorePTravel += 0.5;
@@ -422,11 +428,14 @@ public class Phase {
 
 	public static void main(String[] args) {
 		// System.out.println(Phase.create("2PSdiff900"));
-		Phase p = Phase.create("SS");
+		Phase p = Phase.create("ScS");
 		System.out.println(p.innerCoreSTravel);
-		for (int i = 0; i < p.nPart; i++)
-			System.out.println(p.phaseParts[i]);
-		// System.out.println(isValid("PKPScPSdiff10000"));
+		p.printInformation();
+	}
+
+	void printInformation() {
+		IntStream.range(0, nPart)
+				.forEach(i -> System.out.println(phaseParts[i] + " " + isDownGoing[i] + " " + partition[i]));
 	}
 
 	/**
@@ -654,8 +663,13 @@ public class Phase {
 		return nPart;
 	}
 
+	/**
+	 * @param i
+	 *            index of the phase 0 for the first phase part
+	 * @return phase part for the index
+	 */
 	PhasePart phasePartOf(int i) {
-		return phasePartOf(i);
+		return phaseParts[i];
 	}
 
 	/**
