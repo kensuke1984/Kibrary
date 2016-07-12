@@ -15,7 +15,7 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <link href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</link> to check.  
 
-<Link to="myRoute" params={myParams} target="_blank">
+<Link to="myRoute" params={myParams} target="_blank"> i</Link>
 
 
 
