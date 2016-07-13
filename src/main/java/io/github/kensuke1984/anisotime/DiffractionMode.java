@@ -10,7 +10,7 @@ import java.util.List;
  * Mode for diffracted waves such as Pdiff, Sdiff...
  * 
  * @author Kensuke Konishi
- * @version 0.2b
+ * @version 0.2.1b
  */
 class DiffractionMode extends Computation {
 
@@ -45,9 +45,12 @@ class DiffractionMode extends Computation {
 		Phase[] targetPhases = travelTimeTool.getSelectedPhases();
 		List<Raypath> raypathList = new ArrayList<>();
 		List<Phase> phaseList = new ArrayList<>();
-		Raypath pRaypath = RaypathSearch.pDiffRaypath(structure, eventR);
-		Raypath svRaypath = RaypathSearch.sDiffRaypath(structure, eventR, true);
-		Raypath shRaypath = RaypathSearch.sDiffRaypath(structure, eventR, false); //TODO
+		Raypath pRaypath = RaypathSearch.diffRaypath(PhasePart.P,
+				structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100, true, structure, eventR);
+		Raypath svRaypath = RaypathSearch.diffRaypath(PhasePart.SV,
+				structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100, true, structure, eventR);
+		Raypath shRaypath = RaypathSearch.diffRaypath(PhasePart.SH,
+				structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100, true, structure, eventR);
 		pRaypath.compute();
 		svRaypath.compute();
 		shRaypath.compute();

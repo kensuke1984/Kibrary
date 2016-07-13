@@ -609,49 +609,30 @@ public class Phase {
 	private double innerCoreSTravel;
 
 	/**
-	 * @return how many times P wave travels in the mantle. each down or upgoing
-	 *         is 0.5
-	 */
-	double getCountOfP() {
-		return mantlePTravel;
-	}
-
-	/**
-	 * @return how many times S wave travels in the mantle. each down or upgoing
-	 *         is 0.5
-	 */
-	double getCountOfS() {
-		return mantleSTravel;
-	}
-
-	/**
-	 * how many times wave travels in the outer core. Each down or up going is
-	 * considered as 0.5
-	 * 
-	 * @return the times K phase travels in the outer core.
-	 */
-	double getCountOfK() {
-		return outerCoreTravel;
-	}
-
-	/**
 	 * how many times P wave travels in the inner core. Each down or upgoing is
 	 * considered as 0.5
 	 * 
+	 * @param pp
 	 * @return the times P wave travels in the inner core
 	 */
-	double getCountOfI() {
-		return innerCorePTravel;
-	}
+	double getCountOf(PhasePart pp) {
+		switch (pp) {
+		case I:
+			return innerCorePTravel;
+		case JH:
+		case JV:
+			return innerCoreSTravel;
+		case K:
+			return outerCoreTravel;
+		case P:
+			return mantlePTravel;
+		case SH:
+		case SV:
+			return mantleSTravel;
+		default:
+			throw new RuntimeException("unikspected");
+		}
 
-	/**
-	 * how many times S wave travels in the inner core. Each down or up going is
-	 * considered as 0.5
-	 * 
-	 * @return the times S wave travels in the inner core.
-	 */
-	double getCountOfJ() {
-		return innerCoreSTravel;
 	}
 
 	/**
