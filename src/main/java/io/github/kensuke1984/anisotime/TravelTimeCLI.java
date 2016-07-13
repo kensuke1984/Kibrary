@@ -54,14 +54,14 @@ final class TravelTimeCLI {
 			About.main(null);
 			return;
 		}
-		if (Arrays.stream(args).anyMatch("-help"::equals)) {
-			printHelp();
-			return;
-		}
 
 		// add options
 		setBooleanOptions();
 		setArgumentOptions();
+		if (Arrays.stream(args).anyMatch("-help"::equals)) {
+			printHelp();
+			return;
+		}
 		exec(args);
 	}
 

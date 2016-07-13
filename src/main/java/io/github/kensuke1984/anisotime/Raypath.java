@@ -64,7 +64,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1.1b
+ * @version 0.4.1.3b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -329,27 +329,18 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	}
 
 	public static void main(String[] args) throws Exception { // 0
-		Raypath r0 = new Raypath(702.6021977759755);
+		Raypath r0 = new Raypath(479.03198707484063);
+		// System.exit(0);
 		r0.compute();
-
-//		RaypathSearch.lookFor(Phase.S, VelocityStructure.prem(), 6371, Math.toRadians(20), 10);
-
+		r0.printInfo();
+		System.out.println(r0.getTurningR(PhasePart.SH));
+		// RaypathSearch.lookFor(Phase.S, VelocityStructure.prem(), 6371,
+		// Math.toRadians(20), 10);
+		System.out.println(r0.computeDelta(6371, Phase.S));
 		System.exit(0);
 		PolynomialStructure ps = new PolynomialStructure(Paths.get("/home/kensuke/data/travelTime/TBL_ANI200.poly"));
 		double rayParameterP = 100;
 		double eventR = 6371;
-		Raypath diff = RaypathSearch.sDiffRaypath(ps, 6371, false);
-		// diff = new Raypath(100);
-		diff.compute();
-		diff.printInfo();
-		// System.out.println(diff.computeDelta(eventR, Phase.S));
-		System.out.println(Math.toDegrees(diff.computeDelta(6371, Phase.create("Sdiff"))) + " "
-				+ Math.toDegrees(diff.computeDelta(6371, Phase.create("Sdiff"))));
-		System.out.println(diff.computeT(6371, Phase.create("Sdiff")));
-		double[][] xy = diff.getRouteXY(eventR, Phase.create("Sdiff10"));
-		for (double[] point : xy) {
-			// System.out.println(point[0] + " " + point[1]);
-		}
 		System.exit(0);
 		// PKIKP
 		// TODO p小さい時
@@ -491,10 +482,21 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 						continue;
 					dT[i] = simpsonT(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
 				}
-				timeMap.put(pp, computeT(pp,
-						getPropagation(pp) == Propagation.PENETRATING || getPropagation(pp) == Propagation.DIFFRACTION
-								? mesh.getEntry(0) : turningRMap.get(pp),
-						mesh.getEntry(dT.length)));
+				double startR;
+				switch (getPropagation(pp)) {
+				case PENETRATING:
+					startR = mesh.getEntry(0) + ComputationalMesh.eps;
+					break;
+				case DIFFRACTION:
+					startR = mesh.getEntry(0) + permissibleGapForDiff;
+					break;
+				case BOUNCING:
+					startR = turningRMap.get(pp);
+					break;
+				default:
+					throw new RuntimeException("UNEXPECTED");
+				}
+				timeMap.put(pp, computeT(pp, startR, mesh.getEntry(dT.length)));
 			});
 		};
 
@@ -530,8 +532,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		double minR = radii.getEntry(0);
 		double maxR = radii.getEntry(radii.getDimension() - 1);
 		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR) {
-			System.out.println(startR + " " + minR + " " + endR + " " + maxR + " " + turningRMap.get(pp) + " "
-					+ propagationMap.get(pp));
 			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
 		}
 
@@ -602,11 +602,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		if (!exists(eventR, phase))
 			return Double.NaN;
 
-		double mp = phase.getCountOfP();
-		double ms = phase.getCountOfS();
-		double oc = phase.getCountOfK();
-		double icp = phase.getCountOfI();
-		double ics = phase.getCountOfJ();
+		double mp = phase.getCountOf(PhasePart.P);
+		double ms = phase.getCountOf((phase.isPSV() ? PhasePart.SV : PhasePart.SH));
+		double oc = phase.getCountOf(PhasePart.K);
+		double icp = phase.getCountOf(PhasePart.I);
+		double ics = phase.getCountOf((phase.isPSV() ? PhasePart.JV : PhasePart.JH));
 
 		// System.out.println(mp+" "+ms+" "+oc+" "+icp+" "+ics);
 		double p = 0 < mp ? deltaMap.get(PhasePart.P) * mp * 2 : 0;
@@ -643,12 +643,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	public double computeT(double eventR, Phase phase) {
 		if (!exists(eventR, phase))
 			return Double.NaN;
+		double mp = phase.getCountOf(PhasePart.P);
+		double ms = phase.getCountOf((phase.isPSV() ? PhasePart.SV : PhasePart.SH));
+		double oc = phase.getCountOf(PhasePart.K);
+		double icp = phase.getCountOf(PhasePart.I);
+		double ics = phase.getCountOf((phase.isPSV() ? PhasePart.JV : PhasePart.JH));
 
-		double mp = phase.getCountOfP();
-		double ms = phase.getCountOfS();
-		double oc = phase.getCountOfK();
-		double icp = phase.getCountOfI();
-		double ics = phase.getCountOfJ();
 
 		double p = 0 < mp ? timeMap.get(PhasePart.P) * mp * 2 : 0;
 		double s = 0 < ms ? timeMap.get((phase.isPSV() ? PhasePart.SV : PhasePart.SH)) * ms * 2 : 0;
@@ -1066,10 +1066,21 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 						continue;
 					dTheta[i] = simpsonDelta(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
 				}
-				deltaMap.put(pp, computeDelta(pp,
-						getPropagation(pp) == Propagation.PENETRATING || getPropagation(pp) == Propagation.DIFFRACTION
-								? mesh.getEntry(0) : turningRMap.get(pp),
-						mesh.getEntry(dTheta.length)));
+				double startR;
+				switch (getPropagation(pp)) {
+				case PENETRATING:
+					startR = mesh.getEntry(0) + ComputationalMesh.eps;
+					break;
+				case DIFFRACTION:
+					startR = mesh.getEntry(0) + permissibleGapForDiff;
+					break;
+				case BOUNCING:
+					startR = turningRMap.get(pp);
+					break;
+				default:
+					throw new RuntimeException("UNEXPECTED");
+				}
+				deltaMap.put(pp, computeDelta(pp, startR, mesh.getEntry(dTheta.length)));
 			});
 		};
 
