@@ -50,6 +50,8 @@ final class TravelTimeCLI {
 	 *            [commands]
 	 */
 	public static void main(String[] args) {
+		String c = "-h 571.3 -mod /home/kensuke/tmp/kibraru/TBL_ANI200.poly -ph S -deg 104 -SV";
+		args = c.split("\\s+");
 		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
