@@ -15,7 +15,7 @@ import java.util.Set;
  * The class is calculator of the formulation in Woodhouse (1981).
  * 
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.1
  * @see <a href=
  *      http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  *      1981</a>
@@ -27,7 +27,7 @@ class Woodhouse1981 implements Serializable {
 		createCache();
 	}
 
-	private final static Set<Woodhouse1981> WOODHOUSE_CACHE = new HashSet<>();
+	private final static Set<Woodhouse1981> WOODHOUSE_CACHE = Collections.synchronizedSet(new HashSet<>());
 	static {
 		WOODHOUSE_CACHE.addAll(Arrays.asList(new Woodhouse1981(VelocityStructure.prem()),
 				new Woodhouse1981(VelocityStructure.ak135()), new Woodhouse1981(VelocityStructure.isoPREM())));
@@ -35,17 +35,31 @@ class Woodhouse1981 implements Serializable {
 	private final VelocityStructure STRUCTURE;
 
 	/**
+	 * Checks if the structure is included in the cache, if it does, just copy,
+	 * otherwise create a new cache.
+	 * 
+	 * @param structure
+	 */
+	private void copyOrCreate(VelocityStructure structure) {
+		synchronized (WOODHOUSE_CACHE) {
+			Optional<Woodhouse1981> inCache = WOODHOUSE_CACHE.stream().filter(w -> w.STRUCTURE == structure)
+					.findFirst();
+			if (inCache.isPresent())
+				copyCache(inCache.get());
+			else {
+				createCache();
+				WOODHOUSE_CACHE.add(this);
+			}
+		}
+	}
+
+	/**
 	 * @param structure
 	 *            for Woodhouse computation
 	 */
 	public Woodhouse1981(VelocityStructure structure) {
-		Optional<Woodhouse1981> inCache = WOODHOUSE_CACHE.stream().filter(w -> w.STRUCTURE == structure).findFirst();
-		if (inCache.isPresent())
-			copyCache(inCache.get());
-		else
-			createCache();
+		copyOrCreate(structure);
 		STRUCTURE = structure;
-		WOODHOUSE_CACHE.add(this);
 	}
 
 	public static void main(String[] args) {
