@@ -329,7 +329,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	}
 
 	public static void main(String[] args) throws Exception { // 0
-		Raypath r0 = new Raypath(479.03198707484063);
+		String c = "-h 571.3 -ph S -deg 104 -mod /home/kensuke/tmp/kibraru/TBL_ANI200.poly -SV";
+		Raypath r0 = new Raypath(482.86966789373383);
 		// System.exit(0);
 		r0.compute();
 		r0.printInfo();
@@ -648,7 +649,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		double oc = phase.getCountOf(PhasePart.K);
 		double icp = phase.getCountOf(PhasePart.I);
 		double ics = phase.getCountOf((phase.isPSV() ? PhasePart.JV : PhasePart.JH));
-
 
 		double p = 0 < mp ? timeMap.get(PhasePart.P) * mp * 2 : 0;
 		double s = 0 < ms ? timeMap.get((phase.isPSV() ? PhasePart.SV : PhasePart.SH)) * ms * 2 : 0;
@@ -1165,6 +1165,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
 	}
 
+	/**
+	 * Information to Standard output. Note that if the method is called before
+	 * this is computed, an exception happens.
+	 */
 	public void printInfo() {
 		System.out.println("#Phase:Turning points[km] Jeffrey boundary[km] Propagation delta[deg] time[s]");
 		Arrays.stream(PhasePart.values())
