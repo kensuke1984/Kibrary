@@ -50,8 +50,6 @@ final class TravelTimeCLI {
 	 *            [commands]
 	 */
 	public static void main(String[] args) {
-		String c = "-h 571.3 -mod /home/kensuke/tmp/kibraru/TBL_ANI200.poly -ph S -deg 104 -SV";
-		args = c.split("\\s+");
 		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
@@ -114,9 +112,10 @@ final class TravelTimeCLI {
 			}
 			if (targetPhase.isDiffracted()) {
 				Raypath raypath = raypaths.get(0);
+				raypath.printInfo();
 				double delta = raypath.computeDelta(eventR, targetPhase);
 				double dDelta = Math.toDegrees(targetDelta - delta);
-				Phase diffPhase = Phase.create(targetPhase.toString() + dDelta);
+				Phase diffPhase = Phase.create(targetPhase.toString() + dDelta, targetPhase.isPSV());
 				printResults(-1, cmd, eventR, raypath, diffPhase);
 				if (cmd.hasOption("eps"))
 					raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), diffPhase);
