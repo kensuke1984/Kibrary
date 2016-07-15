@@ -16,17 +16,15 @@ import org.apache.commons.math3.util.Precision;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  * 
  */
 class TurningDepthMode extends Computation {
 
-	private double eventR;
 	private VelocityStructure structure;
 
-	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure structure, double eventR) {
+	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure structure ) {
 		super(travelTimeTool);
-		this.eventR = eventR;
 		this.structure = structure;
 	}
 
@@ -68,7 +66,7 @@ class TurningDepthMode extends Computation {
 			if (phase.equals(Phase.create("P"))) {
 				if (!psv)
 					continue;
-				Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.P, structure, turningR, eventR);
+				Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.P, structure, turningR);
 				if (raypath != null) {
 					switch (structure.whichPartition(turningR)) {
 					case MANTLE:
@@ -94,7 +92,7 @@ class TurningDepthMode extends Computation {
 				}
 			} else {
 				if (psv) {
-					Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.SV, structure, turningR, eventR);
+					Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.SV, structure, turningR);
 					if (raypath != null) {
 						switch (structure.whichPartition(turningR)) {
 						case MANTLE:
@@ -115,7 +113,7 @@ class TurningDepthMode extends Computation {
 					}
 				}
 				if (sh) {
-					Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.SH, structure, turningR, eventR);
+					Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.SH, structure, turningR);
 					if (raypath != null) {
 						switch (structure.whichPartition(turningR)) {
 						case MANTLE:

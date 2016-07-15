@@ -8,21 +8,20 @@ import javax.swing.SwingUtilities;
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 0.4b
+ * @version 0.4.1b
  * 
- * TODO
- * triplication 
+ *          TODO triplication
  * 
  */
 final class ANISOtime extends TravelTimeGUI {
-	
+
 	static final String codename = "Promyvion";
-	
-	static final String version ="0.4b";
-	
+
+	static final String version = "0.4b";
+
 	private static final long serialVersionUID = -4093263118460123169L;
 
-	/** 
+	/**
 	 * Creates new form TravelTimeGUI
 	 */
 	private ANISOtime() {
@@ -33,7 +32,7 @@ final class ANISOtime extends TravelTimeGUI {
 
 	@Override
 	void save() {
-		if(currentComputationMode==null){
+		if (currentComputationMode == null) {
 			JOptionPane.showMessageDialog(null, "Compute first.");
 			return;
 		}
@@ -45,16 +44,18 @@ final class ANISOtime extends TravelTimeGUI {
 		createNewRaypathTabs();
 		switch (selectedMode()) {
 		case RAYPARAMETER:
-			Raypath raypath = new Raypath(getMostImportant(), getStructure()); //TODO SH SV
+			Raypath raypath = new Raypath(getMostImportant(), getStructure()); // TODO
+																				// SH
+																				// SV
 			RayparameterMode normalMode = new RayparameterMode(this, raypath);
 			currentComputationMode = normalMode;
 			break;
 		case TURNING_DEPTH:
-			TurningDepthMode tdm = new TurningDepthMode(this, getStructure(), getEventR());
+			TurningDepthMode tdm = new TurningDepthMode(this, getStructure());
 			currentComputationMode = tdm;
 			break;
 		case DIFFRACTION:
-			DiffractionMode dMode = new DiffractionMode(this, getStructure(), getEventR());
+			DiffractionMode dMode = new DiffractionMode(this, getStructure());
 			currentComputationMode = dMode;
 			break;
 		case EPICENTRAL_DISTANCE:
@@ -86,7 +87,7 @@ final class ANISOtime extends TravelTimeGUI {
 			return;
 		}
 		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) 
+			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
 				if ("Nimbus".equals(info.getName())) {
 					javax.swing.UIManager.setLookAndFeel(info.getClassName());
 					break;
