@@ -147,7 +147,7 @@ public final class RaypathSearch {
 			default:
 				throw new RuntimeException("UNEXPECTED");
 			}
-			pathList.addAll(DoubleStream.iterate(rStart, r -> r + deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
+			pathList.addAll( DoubleStream.iterate(rStart, r -> r + deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
 					.filter(r -> 0 < r && r <= structure.earthRadius()).parallel().mapToObj(r -> {
 						PhasePart pp;
 						if (r < structure.innerCoreBoundary())
@@ -156,7 +156,7 @@ public final class RaypathSearch {
 							pp = targetPhase.isPSV() ? PhasePart.SV : PhasePart.SH;
 						return RaypathSearch.raypathByTurningR(pp, structure, r, eventR);
 					}).filter(Objects::nonNull).collect(Collectors.toList()));
-			System.out.println(pathList.size());
+			
 			// assume p for S with turning point is within cmb and icb.
 			if (sTurning == Partition.CORE_MANTLE_BOUNDARY) {
 				double pdelta = Math.abs(pathList.get(pathList.size() - 1).getRayParameter()
