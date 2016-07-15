@@ -1,6 +1,8 @@
 package io.github.kensuke1984.anisotime;
 
 import java.awt.GraphicsEnvironment;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,15 +22,22 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.2b
+ * @version 0.1.2.1b
  * 
  */
 public final class RaypathSearch {
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
+		String c = "-h 571.3 -ph S -deg 104 -mod /home/kensuke/tmp/kibraru/TBL_ANI200.poly -SV";
 		double eventR = 6371 - 571.3;
-		double targetDelta = Math.toRadians(60);
-		Phase targetPhase = Phase.ScS;
-		lookFor(Phase.ScS, VelocityStructure.prem(), eventR, targetDelta, 10);
+		VelocityStructure structure = new PolynomialStructure(Paths.get("/home/kensuke/tmp/kibraru/TBL_ANI200.poly"));
+		double targetDelta = Math.toRadians(104);
+		Phase targetPhase = Phase.create("S", true);
+		List<Raypath> list = lookFor(targetPhase, structure, eventR, targetDelta, 10);
+		System.out.println(list.size());
+
+		Raypath r =diffRaypath(PhasePart.SV, structure.coreMantleBoundary(), true, structure);
+		r.compute();
+	 r.printInfo() ;
 	}
 
 	private RaypathSearch() {
@@ -47,11 +56,9 @@ public final class RaypathSearch {
 	 *            {@link VelocityStructure}
 	 * @param turningR
 	 *            radius[km] you want to set.
-	 * @param eventR
-	 *            [km] source radius
 	 * @return null if the gap exceeds permissibleRGap
 	 */
-	public static Raypath raypathByTurningR(PhasePart pp, VelocityStructure structure, double turningR, double eventR) {
+	public static Raypath raypathByTurningR(PhasePart pp, VelocityStructure structure, double turningR) {
 		double p = toRayParameter(pp, turningR, structure);
 		Raypath raypath = new Raypath(p, structure);
 		double residual = turningR - raypath.getTurningR(pp);
@@ -70,15 +77,11 @@ public final class RaypathSearch {
 	 *            true: topside(v), false: underside(^) reflection.
 	 * @param structure
 	 *            {@link VelocityStructure}
-	 * @param eventR
-	 *            [km] source radius
 	 * @return raypath which has pturning R on the CMB
 	 */
-	public static Raypath diffRaypath(PhasePart pp, double boundary, boolean topside, VelocityStructure structure,
-			double eventR) {
+	public static Raypath diffRaypath(PhasePart pp, double boundary, boolean topside, VelocityStructure structure) {
 		return raypathByTurningR(pp, structure,
-				boundary + (topside ? Raypath.permissibleGapForDiff / 100 : -Raypath.permissibleGapForDiff / 100),
-				eventR);
+				boundary + (topside ? Raypath.permissibleGapForDiff / 100 : -Raypath.permissibleGapForDiff / 100));
 	}
 
 	/**
@@ -147,16 +150,16 @@ public final class RaypathSearch {
 			default:
 				throw new RuntimeException("UNEXPECTED");
 			}
-			pathList.addAll( DoubleStream.iterate(rStart, r -> r + deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
+			pathList.addAll(DoubleStream.iterate(rStart, r -> r + deltaR).limit((int) ((rEnd - rStart) / deltaR) + 2)
 					.filter(r -> 0 < r && r <= structure.earthRadius()).parallel().mapToObj(r -> {
 						PhasePart pp;
 						if (r < structure.innerCoreBoundary())
 							pp = targetPhase.isPSV() ? PhasePart.JV : PhasePart.JH;
 						else
 							pp = targetPhase.isPSV() ? PhasePart.SV : PhasePart.SH;
-						return RaypathSearch.raypathByTurningR(pp, structure, r, eventR);
+						return RaypathSearch.raypathByTurningR(pp, structure, r);
 					}).filter(Objects::nonNull).collect(Collectors.toList()));
-			
+
 			// assume p for S with turning point is within cmb and icb.
 			if (sTurning == Partition.CORE_MANTLE_BOUNDARY) {
 				double pdelta = Math.abs(pathList.get(pathList.size() - 1).getRayParameter()
@@ -203,7 +206,7 @@ public final class RaypathSearch {
 				else
 					pp = PhasePart.P;
 
-				Raypath raypath = RaypathSearch.raypathByTurningR(pp, structure, r, eventR);
+				Raypath raypath = RaypathSearch.raypathByTurningR(pp, structure, r);
 				if (raypath != null)
 					pathList.add(raypath);
 			}
@@ -219,7 +222,7 @@ public final class RaypathSearch {
 						pp = PhasePart.K;
 					else
 						pp = PhasePart.P;
-					Raypath raypath = RaypathSearch.raypathByTurningR(pp, structure, r, eventR);
+					Raypath raypath = RaypathSearch.raypathByTurningR(pp, structure, r);
 					if (raypath != null)
 						pathList.add(raypath);
 				}
@@ -232,7 +235,7 @@ public final class RaypathSearch {
 						pp = targetPhase.isPSV() ? PhasePart.JV : PhasePart.JH;
 					else
 						pp = targetPhase.isPSV() ? PhasePart.SV : PhasePart.SH;
-					Raypath raypath = RaypathSearch.raypathByTurningR(pp, structure, r, eventR);
+					Raypath raypath = RaypathSearch.raypathByTurningR(pp, structure, r);
 					if (raypath != null)
 						pathList.add(raypath);
 				}
@@ -298,7 +301,7 @@ public final class RaypathSearch {
 				pp = PhasePart.P;
 			else
 				pp = targetPhase.isPSV() ? PhasePart.SV : PhasePart.SH;
-			Raypath diffRay = diffRaypath(pp, structure.coreMantleBoundary(), true, structure, eventR);
+			Raypath diffRay = diffRaypath(pp, structure.coreMantleBoundary(), true, structure);
 			diffRay.compute();
 			if (targetDelta < diffRay.computeDelta(eventR, targetPhase)) {
 				System.err.println("Sdiff would have longer distance than "
