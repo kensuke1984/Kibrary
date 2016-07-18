@@ -5,17 +5,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.apache.commons.math3.util.FastMath;
 
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.datacorrection.SCARDEC;
+import io.github.kensuke1984.kibrary.datacorrection.SCARDEC.SCARDEC_ID;
 import io.github.kensuke1984.kibrary.util.Raypath;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -255,7 +259,7 @@ public class SACMaker implements Runnable {
 
 		@Override
 		public SAC setInt(SACHeaderEnum sacHeaderEnum, int value) {
-			if (headerMap.containsKey(sacHeaderEnum))
+			if (headerMap.containsKey(sacHeaderEnum) && headerMap.get(sacHeaderEnum) != "-12345")
 				throw new RuntimeException("UNEeXpExted");
 			headerMap.put(sacHeaderEnum, String.valueOf(value));
 			return this;
@@ -374,6 +378,9 @@ public class SACMaker implements Runnable {
 		this.sourceTimeFunction = sourceTimeFunction;
 	}
 
+	/**
+	 * true: PDE time, false: CMT time TODO scardec??
+	 */
 	private boolean pde;
 
 	public void setTemporalDifferentiation(boolean temporalDifferentiation) {
@@ -625,7 +632,21 @@ public class SACMaker implements Runnable {
 			SpcFileName pairName = new SpcFileName(args[1]);
 			pairSPC = SpectrumFile.getInstance(pairName);
 		}
+
 		SACMaker sm = new SACMaker(oneSPC, pairSPC);
+		if (2 < args.length && args[2].equals("-scardec")) {
+			if (args.length < 4)
+				throw new IllegalArgumentException("please use as spcfile1 spcfile2 -scardec yyyyMMdd_HHmmss");
+			System.err.println("OUTPUTTING with SCARDEC");
+			Predicate<SCARDEC_ID> predicate = id -> id.getDateTime()
+					.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")).equals(args[3]);
+			Set<SCARDEC_ID> idSet = SCARDEC.search(predicate);
+			if (idSet.isEmpty())
+				throw new RuntimeException("no SCARDEC for " + args[3]);
+			sm.setSourceTimeFunction(
+					SCARDEC.getOPT(idSet.iterator().next()).toSourceTimeFunction(oneSPC.np(), oneSPC.tlen()));
+
+		}
 		sm.setOutPath(Paths.get(System.getProperty("user.dir")));
 		sm.run();
 	}

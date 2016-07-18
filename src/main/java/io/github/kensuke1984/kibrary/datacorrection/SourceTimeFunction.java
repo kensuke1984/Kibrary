@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * @author Kensuke Konishi
  *
  */
-public abstract class SourceTimeFunction {
+public class SourceTimeFunction {
 	/**
 	 * Triangle source time function
 	 * 
@@ -94,12 +94,7 @@ public abstract class SourceTimeFunction {
 	 */
 	public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
-		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
-			@Override
-			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-				return sourceTimeFunction;
-			}
-		};
+		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
 		sourceTimeFunction.sourceTimeFunction = new Complex[np];
 		final double deltaF = 1.0 / tlen; // omega
 		final double constant = 2 * Math.PI * deltaF * halfDuration;
@@ -170,11 +165,11 @@ public abstract class SourceTimeFunction {
 			System.err.println("Only samplingHz 20 is acceptable now.");
 			bool = false;
 		}
-		if (np <= 0 || (np & (np - 1)) != 0) {
+		if (!ArithmeticUtils.isPowerOfTwo(np)) {
 			System.err.println("np must be a power of 2");
 			bool = false;
 		}
-		long tlen10 =  Math.round(10 * tlen);
+		long tlen10 = Math.round(10 * tlen);
 		if (!ArithmeticUtils.isPowerOfTwo(tlen10)) {
 			System.err.println("tlen must be a tenth of a power of 2");
 			bool = false;
@@ -207,9 +202,18 @@ public abstract class SourceTimeFunction {
 
 	protected final double samplingHz;
 
+	/**
+	 * The length is np
+	 */
 	protected Complex[] sourceTimeFunction;
 
-	public abstract Complex[] getSourceTimeFunctionInFrequencyDomain();
+	/**
+	 * @return source time function in frequency domain. the length is
+	 *         {@link #np}
+	 */
+	public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+		return sourceTimeFunction;
+	}
 
 	/**
 	 * @param outPath
@@ -307,7 +311,8 @@ public abstract class SourceTimeFunction {
 	 * Operates convolution for data in <b>frequency</b> domain.
 	 * 
 	 * @param data
-	 *            to be convolved in <b>frequency</b> domain.
+	 *            to be convolved in <b>frequency</b> domain. The length must be
+	 *            {@link #np} + 1
 	 * @return convolute data in <b>frequency</b> domain
 	 */
 	public final Complex[] convolve(Complex[] data) {
@@ -330,7 +335,7 @@ public abstract class SourceTimeFunction {
 
 	/**
 	 * x axis: time [s], y axis: amplitude
-	 * 
+	 * After considering that conjugate F[i] = F[N-i], 
 	 * @return trace of Source time function in time domain
 	 */
 	public Trace getSourceTimeFunctionInTimeDomain() {
@@ -340,8 +345,10 @@ public abstract class SourceTimeFunction {
 
 		Complex[] stf = new Complex[nptsInTimeDomain];
 		Arrays.fill(stf, Complex.ZERO);
-		for (int i = 0; i < sourceTimeFunction.length; i++)
+		for (int i = 0 ; i < np; i++) {
 			stf[i] = sourceTimeFunction[i];
+			stf[nptsInTimeDomain - 1 - i] = stf[i+1].conjugate();
+		}
 		double[] stfInTime = Arrays.stream(inverseFourierTransform(stf)).map(d -> d * samplingHz).toArray();
 		return new Trace(time, stfInTime);
 	}
@@ -378,12 +385,7 @@ public abstract class SourceTimeFunction {
 		Complex[] sourceTimeFunction = new Complex[np];
 		for (int i = 0; i < np; i++)
 			sourceTimeFunction[i] = obsInFrequencyDomain[i + 1].divide(synInFrequencyDomain[i + 1]);
-		SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz) {
-			@Override
-			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-				return sourceTimeFunction;
-			}
-		};
+		SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz);
 		stf.sourceTimeFunction = sourceTimeFunction;
 		return stf;
 	}
