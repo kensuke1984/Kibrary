@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
  * 
  * Data for one element in one {@link SpcBody} in a {@link SpectrumFile}
  * 
- * @version 0.1.5.2
+ * @version 0.1.5.3
  * 
  * @author Kensuke Konishi
  * 
@@ -46,7 +46,7 @@ public class SpcComponent {
 	private int nptsInTimeDomain;
 
 	/**
-	 * 周波数領域のデータ u[i] i=[0, np]
+	 * 周波数領域のデータ u[i] i=[0, np] The length is np+1
 	 */
 	private Complex[] uFreq;
 
@@ -118,21 +118,20 @@ public class SpcComponent {
 	}
 
 	/**
-	 * before toTime This method applies ramped source time function.
+	 * before toTime This method applies ramped source time function. TODO
 	 * 
 	 * @param sourceTimeFunction
 	 *            to be applied
 	 */
 	public void applySourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
-		Complex[] sourceTimeFunctionU = sourceTimeFunction.getSourceTimeFunctionInFrequencyDomain();
-		for (int i = 0; i < sourceTimeFunctionU.length; i++)
-			uFreq[i + 1] = uFreq[i + 1].multiply(sourceTimeFunctionU[i]);
+		uFreq = sourceTimeFunction.convolve(uFreq);
 	}
 
 	/**
 	 * before toTime ufreq[i] * 2&times; &pi; &times i /tlen;
 	 * 
 	 * uFreq[i] = uFreq[i].multiply(new Complex(0, constant * i));
+	 * 
 	 * @param tlen
 	 *            time length
 	 */
@@ -180,7 +179,7 @@ public class SpcComponent {
 		// set blank due to lsmooth
 		Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
 
-		// set values for imaginary frequency
+		// set values for imaginary frequency  F[i] = F[N-i]
 		for (int i = 0; i < nnp - 1; i++)
 			data[nnp + 1 + i] = data[nnp - 1 - i].conjugate();
 

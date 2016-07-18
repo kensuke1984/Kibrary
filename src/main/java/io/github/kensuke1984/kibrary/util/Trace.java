@@ -29,11 +29,29 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * TODO sorted
  * 
  * 
- * @version 0.1.1.2
+ * @version 0.1.2
  * @author Kensuke Konishi
  * 
  */
 public class Trace {
+
+	/**
+	 * @param i
+	 *            index for x [0, length -1]
+	 * @return x[i]
+	 */
+	public double getXAt(int i) {
+		return x[i];
+	}
+
+	/**
+	 * @param i
+	 *            index for y [0, length -1]
+	 * @return y[i]
+	 */
+	public double getYAt(int i) {
+		return y[i];
+	}
 
 	/**
 	 * All lines are trimmed. Lines starting with 'c' '!' '#' are ignored.
@@ -130,14 +148,17 @@ public class Trace {
 	}
 
 	/**
-	 * f(x) &rarr; f(x-shift) Shifts "shift" in the direction of x axis.
+	 * f(x) &rarr; f(x-shift) Shifts "shift" in the direction of x axis. If you
+	 * want to change like below: <br>
+	 * x:(3, 4, 5) -> (0, 1, 2) <br>
+	 * then the value 'shift' should be -3
 	 * 
 	 * @param shift
 	 *            value of shift
 	 * @return f(x-shift), the values in y is deep copied.
 	 */
 	public Trace shiftX(double shift) {
-		return new Trace(Arrays.stream(x).map(d -> d + shift).toArray(), y.clone());
+		return new Trace(Arrays.stream(x).map(d -> d + shift).toArray(), y);
 	}
 
 	/**
