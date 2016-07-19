@@ -34,6 +34,7 @@ public class PolynomialStructure implements Serializable {
 	 * Serialization identifier 2016/4/25
 	 */
 	private static final long serialVersionUID = 5111509508797962781L;
+	
 	/**
 	 * the number of layers
 	 */
