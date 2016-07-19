@@ -60,7 +60,6 @@ public interface VelocityStructure extends Serializable {
 	}
 	
 	
-	
 	/**
 	 * @param r
 	 *            radius [km]
