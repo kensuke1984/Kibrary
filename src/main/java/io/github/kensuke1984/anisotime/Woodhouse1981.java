@@ -22,6 +22,11 @@ import java.util.Set;
  */
 class Woodhouse1981 implements Serializable {
 
+	/**
+	 * As of 2016/7/19
+	 */
+	private static final long serialVersionUID = 5178266700270807118L;
+
 	private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
 		stream.defaultReadObject();
 		createCache();
@@ -32,6 +37,8 @@ class Woodhouse1981 implements Serializable {
 		WOODHOUSE_CACHE.addAll(Arrays.asList(new Woodhouse1981(VelocityStructure.prem()),
 				new Woodhouse1981(VelocityStructure.ak135()), new Woodhouse1981(VelocityStructure.isoPREM())));
 	}
+	
+	
 	private final VelocityStructure STRUCTURE;
 
 	/**

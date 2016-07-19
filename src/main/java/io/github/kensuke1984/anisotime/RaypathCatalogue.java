@@ -19,15 +19,10 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * @author Kensuke Konishi
- * @version 0.0.2b
+ * @version 0.0.3b
  */
 class RaypathCatalogue implements Serializable {
 
-
-	/**
-	 * 2016/5/23
-	 */
-	private static final long serialVersionUID = 8730045312450734842L;
 
 	/**
 	 * Woodhouse formula with certain velocity structure
@@ -38,7 +33,7 @@ class RaypathCatalogue implements Serializable {
 	 * This value is in [rad].
 	 * <p>
 	 * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
-	 * PcP') and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
+	 * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
 	 * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue. If
 	 * &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> - &Delta;<sub>i</sub>|)
 	 * &lt; this value, both p<sub>i</sub> and p<sub>i+1</sub> are stored,
@@ -47,19 +42,21 @@ class RaypathCatalogue implements Serializable {
 	private final double D_DELTA;
 
 	/**
-	 * Standard &delta;P. In case the &delta;P is too big, another value is
-	 * used.
+	 * Standard &delta;p (ray parameter). In case the &delta;p is too big to
+	 * have &Delta; satisfying {@link #D_DELTA}, another value (2.5, 1.25) is
+	 * used instantly.
 	 */
 	private final double DELTA_P = 5;
 
 	/**
-	 * Minimum value of &delta;P. Even if similar raypath is not found within
-	 * this value, a catalogue does not have denser rayparameter.
+	 * Minimum value of &delta;p (ray parameter). Even if similar raypaths
+	 * satisfying {@link #D_DELTA} are not found within this value, a catalogue
+	 * does not have a denser ray parameter than the value.
 	 */
 	private final double MINIMUM_DELTA_P = 0.1;
 
 	/**
-	 * List of stored raypaths. Ordered by rayparameter p.
+	 * List of stored raypaths. Ordered by each ray parameter p.
 	 */
 	private final SortedSet<Raypath> raypathList = new TreeSet<>();
 
@@ -92,9 +89,9 @@ class RaypathCatalogue implements Serializable {
 	}
 
 	private void test() throws IOException, ClassNotFoundException {
-		 create();
+//		create();
 //		 write(Paths.get("/tmp/ray0.tmp"));
-//		readtest();
+		 readtest();
 	}
 
 	private static void readtest() throws ClassNotFoundException, IOException {
@@ -102,11 +99,11 @@ class RaypathCatalogue implements Serializable {
 		Raypath ray = r.raypathList.first();
 		System.out.println(ray.computeT(5371, Phase.ScS));
 		r.raypathList.forEach(ra -> {
-			if(!ra.exists(6371, Phase.ScS))
+			if (!ra.exists(6371, Phase.ScS))
 				return;
 			double delta = Math.toDegrees(ra.computeDelta(6371, Phase.ScS));
 			double time = ra.computeT(6371, Phase.ScS);
-			System.out.println(delta+" "+time);
+			System.out.println(delta + " " + time);
 		});
 	}
 
@@ -126,7 +123,7 @@ class RaypathCatalogue implements Serializable {
 	private double p_SHdiff;
 
 	/**
-	 * Computes rayparameters of diffraction phases.
+	 * Computes ray parameters of diffraction phases (Pdiff and Sdiff).
 	 */
 	private void computeDiffraction() {
 		VelocityStructure structure = WOODHOUSE.getStructure();
@@ -135,7 +132,8 @@ class RaypathCatalogue implements Serializable {
 		p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
 		p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
 		p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
-		System.out.println(p_Pdiff + " " + p_SVdiff + " " + p_SHdiff);
+		System.err.println("Ray parameter for Pdiff, SVdiff and SHdiff");
+		System.err.println(p_Pdiff + " " + p_SVdiff + " " + p_SHdiff);
 	}
 
 	// TODO
@@ -149,15 +147,15 @@ class RaypathCatalogue implements Serializable {
 		computeDiffraction();
 		long time = System.nanoTime();
 		// pMax = 200;
-		Raypath firstPath = new Raypath(0, WOODHOUSE, MESH );
+		Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
 		firstPath.compute();
 		raypathList.add(firstPath);
-		System.out.println("Computing a catalogue");
+		System.err.println("Computing a catalogue");
 
 		for (double p = firstPath.getRayParameter() + DELTA_P, nextP = p + DELTA_P; p < pMax; p = nextP) {
-			Raypath rp = new Raypath(p, WOODHOUSE, MESH );
+			Raypath rp = new Raypath(p, WOODHOUSE, MESH);
 			rp.compute();
-			System.out.println(p);
+//			System.out.println(p);
 			if (closeEnough(raypathList.last(), rp)) {
 				raypathList.add(rp);
 				nextP = p + DELTA_P;
@@ -175,29 +173,28 @@ class RaypathCatalogue implements Serializable {
 			// 253.70677502466899 479.03198571892705 479.03198571892705
 			if ((p < p_Pdiff && p_Pdiff < nextP) || (p < p_SVdiff && p_SVdiff < nextP)
 					|| (p < p_SHdiff && p_SHdiff < nextP)) {
-				Raypath diffPath = new Raypath(nextP,WOODHOUSE, MESH );
+				Raypath diffPath = new Raypath(nextP, WOODHOUSE, MESH);
 				diffPath.compute();
 				raypathList.add(diffPath);
 				nextP += DELTA_P;
 			}
 		}
-		Raypath pDiffPath = new Raypath(p_Pdiff, WOODHOUSE, MESH );
+		Raypath pDiffPath = new Raypath(p_Pdiff, WOODHOUSE, MESH);
 		pDiffPath.compute();
-		Raypath svDiffPath = new Raypath(p_SVdiff, WOODHOUSE, MESH );
+		Raypath svDiffPath = new Raypath(p_SVdiff, WOODHOUSE, MESH);
 		svDiffPath.compute();
-		Raypath shDiffPath = new Raypath(p_SHdiff, WOODHOUSE, MESH );
+		Raypath shDiffPath = new Raypath(p_SHdiff, WOODHOUSE, MESH);
 		shDiffPath.compute();
 		raypathList.add(pDiffPath);
 		raypathList.add(svDiffPath);
 		raypathList.add(shDiffPath);
-		System.out.println(Utilities.toTimeString(System.nanoTime() - time));
-
+		System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
 	}
 
 	private final transient SortedSet<Raypath> raypathPool = new TreeSet<>();
 
 	/**
-	 * Look for a raypath to be a next one for the {@link #raypathList} If one
+	 * Look for a raypath to be a next one for the {@link #raypathList}. If one
 	 * is found and another is also found for the next next one, all are added
 	 * recursively.
 	 * 
@@ -257,7 +254,7 @@ class RaypathCatalogue implements Serializable {
 	}
 
 	/**
-	 * Computes ray parmameter p with which q<sub>&tau;</sub> =0 at the earth
+	 * Computes ray parameter p with which q<sub>&tau;</sub> =0 at the earth
 	 * surface for P, SV and SH. Returns the maximum value of them. (basically
 	 * the one of S)
 	 * <p>
@@ -278,6 +275,13 @@ class RaypathCatalogue implements Serializable {
 		return Math.max(Math.max(p, sv), sh);
 	}
 
+	/**
+	 * @param path the path for the catalogue file.
+	 * @param options open option
+	 * @return Catalogue read from the path 
+	 * @throws IOException if any
+	 * @throws ClassNotFoundException if any
+	 */
 	public static RaypathCatalogue read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
 		try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(path, options))) {
 			return (RaypathCatalogue) oi.readObject();
