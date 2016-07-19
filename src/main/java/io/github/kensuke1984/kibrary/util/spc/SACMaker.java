@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * in Global CMT catalogue, the information for the event is written in SAC.
  * 
  * 
- * @version 0.1.5
+ * @version 0.1.6
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -462,7 +462,6 @@ public class SACMaker implements Runnable {
 		compute(body);
 
 		for (SACComponent component : components) {
-			// System.out.println(component);
 			SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
 					: SACExtension.valueOfSynthetic(component);
 			try {
@@ -638,13 +637,12 @@ public class SACMaker implements Runnable {
 			if (args.length < 4)
 				throw new IllegalArgumentException("please use as spcfile1 spcfile2 -scardec yyyyMMdd_HHmmss");
 			System.err.println("OUTPUTTING with SCARDEC");
-			Predicate<SCARDEC_ID> predicate = id -> id.getDateTime()
+			Predicate<SCARDEC_ID> predicate = id -> id.getOriginTime()
 					.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")).equals(args[3]);
-			Set<SCARDEC_ID> idSet = SCARDEC.search(predicate);
-			if (idSet.isEmpty())
-				throw new RuntimeException("no SCARDEC for " + args[3]);
-			sm.setSourceTimeFunction(
-					SCARDEC.getOPT(idSet.iterator().next()).toSourceTimeFunction(oneSPC.np(), oneSPC.tlen()));
+			SCARDEC_ID id = SCARDEC.pick(predicate);
+			SCARDEC sc = SCARDEC.getOPT(id);
+			sm.beginDateTime = id.getOriginTime();
+			sm.setSourceTimeFunction(sc.toSourceTimeFunction(oneSPC.np(), oneSPC.tlen()));
 
 		}
 		sm.setOutPath(Paths.get(System.getProperty("user.dir")));
