@@ -21,7 +21,8 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Global CMT searchを行う時のQuery
  * 
  * @author Kensuke Konishi
- * @version 0.1.10.2 TODO thread safe
+ * @version 0.1.10.3 
+ * TODO thread safe
  */
 public class GlobalCMTSearch {
 
@@ -309,11 +310,10 @@ public class GlobalCMTSearch {
 	public GlobalCMTID select() {
 		GlobalCMTID[] ids = search().toArray(new GlobalCMTID[0]);
 		if (ids.length == 0)
-			return null;
+			throw new RuntimeException("No ID matches");
 		if (ids.length == 1)
 			return ids[0];
-		GlobalCMTID id;
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(new CloseShieldInputStream(System.in)));) {
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new CloseShieldInputStream(System.in)))) {
 			System.out.println("Which ID do you want to use?");
 			System.out.println("# ID date time latitude longitude depth");
 			for (int i = 0; i < ids.length; i++) {
@@ -331,13 +331,11 @@ public class GlobalCMTSearch {
 					k = -1;
 				}
 			}
-			id = ids[k - 1];
+			System.err.println(ids[k-1] + " is chosen.");
+			return ids[k - 1];
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		System.err.println(id + " is chosen.");
-		return id;
-
 	}
 
 	/**

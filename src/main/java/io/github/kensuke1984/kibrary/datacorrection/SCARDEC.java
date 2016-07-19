@@ -1,9 +1,11 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.TransformType;
 
@@ -35,18 +39,32 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>.
  * 
  * @author kensuke
- * @version 0.0.1
+ * @version 0.0.2
  * 
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  *      <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
  */
-public class SCARDEC {
+public class SCARDEC{
+	
+	/**
+	 * @return origin time 
+	 */
+	public LocalDateTime getOriginTime(){
+		return ID.ORIGIN_TIME;
+	}
+	
+	/**
+	 * @return String of the region
+	 */
+	public String getRegion(){
+		return ID.REGION;
+	}
 
 	/**
 	 * Prints out all the events in the catalog.
 	 */
 	public static void printList() {
-		EXISTING_ID.forEach(System.out::println);
+		EXISTING_ID.stream().sorted().forEach(System.out::println);
 	}
 
 	/**
@@ -54,7 +72,7 @@ public class SCARDEC {
 	 * 
 	 * @author KENSUKE KONISHI
 	 */
-	public static class SCARDEC_ID {
+	public static class SCARDEC_ID implements Comparable<SCARDEC_ID> {
 
 		@Override
 		public String toString() {
@@ -125,7 +143,7 @@ public class SCARDEC {
 		/**
 		 * @return origin time
 		 */
-		public LocalDateTime getDateTime() {
+		public LocalDateTime getOriginTime() {
 			return ORIGIN_TIME;
 		}
 
@@ -134,6 +152,12 @@ public class SCARDEC {
 		 */
 		public String getRegion() {
 			return REGION;
+		}
+
+		@Override
+		public int compareTo(SCARDEC_ID o) {
+			int c = ORIGIN_TIME.compareTo(o.ORIGIN_TIME);
+			return c != 0 ? c : REGION.compareTo(o.REGION);
 		}
 	}
 
@@ -190,6 +214,41 @@ public class SCARDEC {
 		return EXISTING_ID.stream().filter(predicate).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Choose one ID from candidates satisfying the predicate.
+	 * 
+	 * @param predicate
+	 *            filter for IDs
+	 * @return SCARDEC_ID chosen from IDs satisfying the predicate.
+	 */
+	public static SCARDEC_ID pick(Predicate<SCARDEC_ID> predicate) {
+		SCARDEC_ID[] ids = EXISTING_ID.stream().filter(predicate).sorted().toArray(SCARDEC_ID[]::new);
+		if (ids.length == 0)
+			throw new RuntimeException("No ID matches.");
+		if (ids.length == 1)
+			return ids[0];
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+			System.out.println("Which ID do you want to use?");
+			System.out.println("There are several candidates. Choose one.");
+			for (int i = 0; i < ids.length; i++)
+				System.out.println((i + 1) + " " + ids[i]);
+			int k = -1;
+			while (k < 0) {
+				String numStr = br.readLine();
+				if (NumberUtils.isNumber(numStr))
+					k = Integer.parseInt(numStr);
+				if (k < 1 || ids.length <= k - 1) {
+					System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
+					k = -1;
+				}
+			}
+			System.err.println(ids[k - 1] + " is chosen.");
+			return ids[k - 1];
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static SCARDEC getMOY(SCARDEC_ID id) {
 		if (!EXISTING_ID.contains(id))
 			throw new RuntimeException("No information for " + id.ORIGIN_TIME + " " + id.REGION);
@@ -231,7 +290,7 @@ public class SCARDEC {
 		double deltaT = 1 / samplingHz;
 
 		double stfSize = 0;
-		for (int i = 0;i<stfForFFT.length; i++) {
+		for (int i = 0; i < stfForFFT.length; i++) {
 			double t = i * deltaT;
 			if (t < end) {
 				stfForFFT[i] = MOMENT_RATE_FUNCTION.toValue(2, t);
@@ -329,7 +388,6 @@ public class SCARDEC {
 
 		// printList();
 	}
-
 
 	public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss");
 
