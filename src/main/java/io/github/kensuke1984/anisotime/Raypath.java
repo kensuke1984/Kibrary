@@ -64,15 +64,16 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1.3b
+ * @version 0.4.1.4b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
+
 	/**
-	 * generated on 2016/5/11
+	 * As of 2016/7/19
 	 */
-	private static final long serialVersionUID = -4590397277743992353L;
+	private static final long serialVersionUID = 6040613464400911081L;
 
 	/**
 	 * If the gap between the CMB and the turning r is under this value, then
@@ -328,35 +329,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		}
 	}
 
-	public static void main(String[] args) throws Exception { // 0
-		String c = "-h 571.3 -ph S -deg 104 -mod /home/kensuke/tmp/kibraru/TBL_ANI200.poly -SV";
-		Raypath r0 = new Raypath(482.86966789373383);
-		// System.exit(0);
-		r0.compute();
-		r0.printInfo();
-		System.out.println(r0.getTurningR(PhasePart.SH));
-		// RaypathSearch.lookFor(Phase.S, VelocityStructure.prem(), 6371,
-		// Math.toRadians(20), 10);
-		System.out.println(r0.computeDelta(6371, Phase.S));
-		System.exit(0);
-		PolynomialStructure ps = new PolynomialStructure(Paths.get("/home/kensuke/data/travelTime/TBL_ANI200.poly"));
-		double rayParameterP = 100;
-		double eventR = 6371;
-		System.exit(0);
-		// PKIKP
-		// TODO p小さい時
-		long t = System.nanoTime(); // TODO
-		Raypath r = new Raypath(3, VelocityStructure.prem(), new ComputationalMesh(VelocityStructure.prem(), 1, 1, 1));
-		// System.exit(0);
-		r.compute();
-		r.printInfo();
-		Phase phase = Phase.PKIKP;
-		System.out.println(phase + " " + Math.toDegrees(r.computeDelta(6371, phase)) + " " + r.computeT(6371, phase));
-		// writeTest();
-		// readTest();
-		System.out.println(Utilities.toTimeString(System.nanoTime() - t));
-	}
-
 	private void computeTransients() {
 		if (hasTransients)
 			return;
@@ -385,6 +357,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
 		stream.defaultReadObject();
 		int flag = stream.readByte();
+		deltaMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		timeMap =  Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
 		for (PhasePart pp : PhasePart.values())
 			if ((flag & pp.getFlag()) == 0) {
 				deltaMap.put(pp, Double.NaN);
@@ -1170,6 +1144,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * this is computed, an exception happens.
 	 */
 	public void printInfo() {
+		if(!isComputed)
+			throw new RuntimeException("Not computed yet. It must be computed before printing information.");
 		System.out.println("#Phase:Turning points[km] Jeffrey boundary[km] Propagation delta[deg] time[s]");
 		Arrays.stream(PhasePart.values())
 				.forEach(pp -> System.out.println(
