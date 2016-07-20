@@ -26,7 +26,7 @@ class ResultWindow extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = -7565301966921737987L;
 
-	public ResultWindow(TravelTimeGUI travelTimeGUI) {
+	public ResultWindow(ANISOTimeGUI travelTimeGUI) {
 		this.travelTimeGUI = travelTimeGUI;
 		initComponents();
 	}
@@ -35,7 +35,7 @@ class ResultWindow extends javax.swing.JPanel {
 		return jTable1.getRowCount();
 	}
 
-	private TravelTimeGUI travelTimeGUI;
+	private ANISOTimeGUI travelTimeGUI;
 
 	/**
 	 * This method is called from within the constructor to initialize the form.

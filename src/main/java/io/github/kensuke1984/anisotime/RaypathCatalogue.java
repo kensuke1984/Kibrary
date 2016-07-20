@@ -8,8 +8,14 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.SortedSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeSet;
+
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.Utilities;
 
@@ -17,17 +23,40 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * Raypath catalogue for one model
  * 
+ * TODO boundaries close points EPS TODO default catalogue in .Kibrary
  * 
  * @author Kensuke Konishi
  * @version 0.0.3b
  */
 class RaypathCatalogue implements Serializable {
 
+	private static final long serialVersionUID = 6254554199152935565L;
 
 	/**
 	 * Woodhouse formula with certain velocity structure
 	 */
 	private final Woodhouse1981 WOODHOUSE;
+
+	/**
+	 * @return Woodhouse1981 used in the catalog.
+	 */
+	Woodhouse1981 getWoodhouse1981() {
+		return WOODHOUSE;
+	}
+
+	/**
+	 * @return Velocity structure used in the catalog.
+	 */
+	public VelocityStructure getStructure() {
+		return WOODHOUSE.getStructure();
+	}
+
+	/**
+	 * @return Raypaths in a catalog in order by the p (ray parameter).
+	 */
+	public Raypath[] getRaypaths() {
+		return raypathList.toArray(new Raypath[0]);
+	}
 
 	/**
 	 * This value is in [rad].
@@ -58,20 +87,35 @@ class RaypathCatalogue implements Serializable {
 	/**
 	 * List of stored raypaths. Ordered by each ray parameter p.
 	 */
-	private final SortedSet<Raypath> raypathList = new TreeSet<>();
+	private final TreeSet<Raypath> raypathList = new TreeSet<>();
 
 	/**
 	 * Mesh for computation
 	 */
 	private final ComputationalMesh MESH;
 
+	/**
+	 * @return {@link ComputationalMesh} used in the catalog.
+	 */
+	ComputationalMesh getMesh() {
+		return MESH;
+	}
+
 	public static RaypathCatalogue computeCatalogue(VelocityStructure structure, ComputationalMesh mesh,
 			double dDelta) {
-		RaypathCatalogue cat = new RaypathCatalogue();
+		RaypathCatalogue cat = new RaypathCatalogue(structure, mesh, dDelta);
 		cat.create();
 		return cat;
 	}
 
+	/**
+	 * @param structure
+	 *            for computation of raypaths
+	 * @param mesh
+	 *            for computation of raypaths.
+	 * @param dDelta
+	 *            [rad] for creation of a catalog.
+	 */
 	private RaypathCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		WOODHOUSE = new Woodhouse1981(structure);
 		D_DELTA = dDelta;
@@ -89,22 +133,24 @@ class RaypathCatalogue implements Serializable {
 	}
 
 	private void test() throws IOException, ClassNotFoundException {
-//		create();
-//		 write(Paths.get("/tmp/ray0.tmp"));
-		 readtest();
+		// create();
+		// write(Paths.get("/tmp/ray0.tmp"));
+		readtest();
 	}
+
+	
 
 	private static void readtest() throws ClassNotFoundException, IOException {
 		RaypathCatalogue r = RaypathCatalogue.read(Paths.get("/tmp/ray0.tmp"));
 		Raypath ray = r.raypathList.first();
-		System.out.println(ray.computeT(5371, Phase.ScS));
-		r.raypathList.forEach(ra -> {
-			if (!ra.exists(6371, Phase.ScS))
-				return;
-			double delta = Math.toDegrees(ra.computeDelta(6371, Phase.ScS));
-			double time = ra.computeT(6371, Phase.ScS);
-			System.out.println(delta + " " + time);
-		});
+
+		// r.raypathList.forEach(ra -> {
+		// if (!ra.exists(6371, Phase.S))
+		// return;
+		// double delta = Math.toDegrees(ra.computeDelta(6371, Phase.S));
+		// double time = ra.computeT(6371, Phase.S);
+		// System.out.println(delta + " " + time);
+		// });
 	}
 
 	/**
@@ -132,8 +178,8 @@ class RaypathCatalogue implements Serializable {
 		p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
 		p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
 		p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
-		System.err.println("Ray parameter for Pdiff, SVdiff and SHdiff");
-		System.err.println(p_Pdiff + " " + p_SVdiff + " " + p_SHdiff);
+		// System.err.println("Ray parameter for Pdiff, SVdiff and SHdiff");
+		// System.err.println(p_Pdiff + " " + p_SVdiff + " " + p_SHdiff);
 	}
 
 	// TODO
@@ -142,7 +188,7 @@ class RaypathCatalogue implements Serializable {
 	 */
 	private void create() {
 		double pMax = computeRayparameterLimit();
-		System.out.println("pMax=" + pMax);
+		// System.out.println("pMax=" + pMax);
 		// Compute raparameters for diffration phases.
 		computeDiffraction();
 		long time = System.nanoTime();
@@ -151,11 +197,10 @@ class RaypathCatalogue implements Serializable {
 		firstPath.compute();
 		raypathList.add(firstPath);
 		System.err.println("Computing a catalogue");
-
 		for (double p = firstPath.getRayParameter() + DELTA_P, nextP = p + DELTA_P; p < pMax; p = nextP) {
 			Raypath rp = new Raypath(p, WOODHOUSE, MESH);
 			rp.compute();
-//			System.out.println(p);
+			// System.out.println(p);
 			if (closeEnough(raypathList.last(), rp)) {
 				raypathList.add(rp);
 				nextP = p + DELTA_P;
@@ -191,7 +236,7 @@ class RaypathCatalogue implements Serializable {
 		System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
 	}
 
-	private final transient SortedSet<Raypath> raypathPool = new TreeSet<>();
+	private final transient TreeSet<Raypath> raypathPool = new TreeSet<>();
 
 	/**
 	 * Look for a raypath to be a next one for the {@link #raypathList}. If one
@@ -225,7 +270,7 @@ class RaypathCatalogue implements Serializable {
 		if (raypath2.getRayParameter() <= raypath1.getRayParameter())
 			return false;
 		if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P) {
-			System.out.println("close");
+			// System.out.println("close");
 			return true;
 		}
 		VelocityStructure structure = WOODHOUSE.getStructure();
@@ -276,11 +321,15 @@ class RaypathCatalogue implements Serializable {
 	}
 
 	/**
-	 * @param path the path for the catalogue file.
-	 * @param options open option
-	 * @return Catalogue read from the path 
-	 * @throws IOException if any
-	 * @throws ClassNotFoundException if any
+	 * @param path
+	 *            the path for the catalogue file.
+	 * @param options
+	 *            open option
+	 * @return Catalogue read from the path
+	 * @throws IOException
+	 *             if any
+	 * @throws ClassNotFoundException
+	 *             if any
 	 */
 	public static RaypathCatalogue read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
 		try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(path, options))) {

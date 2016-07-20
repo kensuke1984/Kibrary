@@ -29,7 +29,7 @@ abstract class Computation implements Runnable {
 		this.travelTimeTool = travelTimeTool;
 	}
 
-	private static void showRayPath(final TravelTimeGUI travelTimeGUI, final Raypath raypath, final Phase phase) {
+	private static void showRayPath(final ANISOTimeGUI travelTimeGUI, final Raypath raypath, final Phase phase) {
 		if (!raypath.exists(travelTimeGUI.getEventR(), phase))
 			return;
 		double[][] points = raypath.getRouteXY(travelTimeGUI.getEventR(), phase);
