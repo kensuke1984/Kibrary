@@ -85,11 +85,11 @@ final class ANISOTimeCLI {
 		VelocityStructure structure = createVelocityStructure();
 		ComputationalMesh mesh = ComputationalMesh.simple(); // TODO
 		Files.createFile(catalogPath);
-		RaypathCatalogue rc = RaypathCatalogue.computeCatalogue(structure, mesh, dDelta);
+		RaypathCatalog rc = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
 		rc.write(catalogPath);
 	}
 
-	private RaypathCatalogue catalog;
+	private RaypathCatalog catalog;
 
 	/**
 	 * [rad]
@@ -115,7 +115,7 @@ final class ANISOTimeCLI {
 		if (cmd.hasOption("rc")) {
 			try {
 				Path catalogPath = Paths.get(cmd.getOptionValue("rc"));
-				catalog = RaypathCatalogue.read(catalogPath);
+				catalog = RaypathCatalog.read(catalogPath);
 				structure = catalog.getStructure();
 				eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
 			} catch (Exception e) {

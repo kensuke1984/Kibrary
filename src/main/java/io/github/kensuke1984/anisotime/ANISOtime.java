@@ -68,7 +68,6 @@ final class ANISOtime extends ANISOTimeGUI {
 			return;
 		}
 		new Thread(currentComputationMode).start();
-
 	}
 
 	private Raypath currentRaypath;
