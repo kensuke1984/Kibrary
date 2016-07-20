@@ -17,7 +17,7 @@ class RaypathTabs extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = 406911785152443889L;
 
-	RaypathTabs(TravelTimeGUI travelTimeGui, RaypathPanel raypathPanel) {
+	RaypathTabs(ANISOTimeGUI travelTimeGui, RaypathPanel raypathPanel) {
 		super("Raypath");
 		this.raypathPanel = raypathPanel;
 		this.travelTimeGUI = travelTimeGui;
@@ -31,7 +31,7 @@ class RaypathTabs extends javax.swing.JFrame {
 
 	private RaypathPanel raypathPanel;
 
-	private TravelTimeGUI travelTimeGUI;
+	private ANISOTimeGUI travelTimeGUI;
 
 	/**
 	 * This method is called from within the constructor to initialize the form.

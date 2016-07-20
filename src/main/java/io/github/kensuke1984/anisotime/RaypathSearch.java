@@ -13,6 +13,9 @@ import java.util.stream.DoubleStream;
 
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -22,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.2.1b
+ * @version 0.2.0b
  * 
  */
 public final class RaypathSearch {
@@ -35,9 +38,9 @@ public final class RaypathSearch {
 		List<Raypath> list = lookFor(targetPhase, structure, eventR, targetDelta, 10);
 		System.out.println(list.size());
 
-		Raypath r =diffRaypath(PhasePart.SV, structure.coreMantleBoundary(), true, structure);
+		Raypath r = diffRaypath(PhasePart.SV, structure.coreMantleBoundary(), true, structure);
 		r.compute();
-	 r.printInfo() ;
+		r.printInfo();
 	}
 
 	private RaypathSearch() {
@@ -508,6 +511,108 @@ public final class RaypathSearch {
 	}
 
 	/**
+	 * @param targetPhase
+	 *            target phase
+	 * @param eventR
+	 *            [km] event radius
+	 * @param targetDelta
+	 *            [rad] target &Delta;
+	 */
+	public static Raypath[] searchPath(RaypathCatalogue catalog, Phase targetPhase, double eventR, double targetDelta) {
+		Raypath[] raypaths = catalog.getRaypaths();
+		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
+				+ Precision.round(Math.toDegrees(targetDelta), 4));
+		List<Raypath> pathList = new ArrayList<>();
+		Woodhouse1981 woodhouse = catalog.getWoodhouse1981();
+		ComputationalMesh mesh = catalog.getMesh();
+		for (int i = 0; i < raypaths.length - 1; i++) {
+			Raypath rayI = raypaths[i];
+			Raypath rayP = raypaths[i + 1];
+			double deltaI = rayI.computeDelta(eventR, targetPhase);
+			double deltaP = rayP.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaI) || Double.isNaN(deltaP))
+				continue;
+			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta))
+				continue;
+			Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, woodhouse, mesh);
+			rayC.compute();
+			double deltaC = rayC.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaC))
+				continue;
+			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
+			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaIn))
+				continue;
+			pathList.add(rayIn);
+		}
+		return pathList.toArray(new Raypath[0]);
+	}
+
+	/**
+	 * Assume that there is a regression curve f(&Delta;) = p(ray parameter) for
+	 * the small range. The function f is assumed to be a polynomial function.
+	 * The degree of the function depends on the number of the input raypaths.
+	 * 
+	 * @param targetDelta
+	 *            [rad] epicentral distance to get T for
+	 * @param raypaths
+	 *            Polynomial interpolation is done with these. All the raypaths
+	 *            must be computed.
+	 * @return travel time [s] for the target Delta estimated by the polynomial
+	 *         interpolation with the raypaths.
+	 * 
+	 */
+	private static Raypath interpolateRaypath(Phase targetPhase, double eventR, double targetDelta,
+			Raypath... raypaths) {
+		WeightedObservedPoints deltaP = new WeightedObservedPoints();
+		for (int i = 0; i < raypaths.length; i++)
+			deltaP.add(raypaths[i].computeDelta(eventR, targetPhase), raypaths[i].getRayParameter());
+		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
+		PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaP.toList()));
+		Raypath ray = new Raypath(pf.value(targetDelta));
+		ray.compute();
+		return ray;
+	}
+
+	/**
+	 * @param targetPhase
+	 *            target phase
+	 * @param eventR
+	 *            [km] event radius
+	 * @param targetDelta
+	 *            [rad] target &Delta;
+	 */
+	public static double[] searchTime(RaypathCatalogue catalog, Phase targetPhase, double eventR, double targetDelta) {
+		Raypath[] raypaths = catalog.getRaypaths();
+		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
+				+ Precision.round(Math.toDegrees(targetDelta), 4));
+		List<Double> timeList = new ArrayList<>();
+		Woodhouse1981 woodhouse = catalog.getWoodhouse1981();
+		ComputationalMesh mesh = catalog.getMesh();
+		for (int i = 0; i < raypaths.length - 1; i++) {
+			Raypath rayI = raypaths[i];
+			Raypath rayP = raypaths[i + 1];
+			double deltaI = rayI.computeDelta(eventR, targetPhase);
+			double deltaP = rayP.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaI) || Double.isNaN(deltaP))
+				continue;
+			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta))
+				continue;
+			Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, woodhouse, mesh);
+			rayC.compute();
+			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
+			double deltaC = rayC.computeDelta(eventR, targetPhase);
+			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaC) || Double.isNaN(deltaIn))
+				continue;
+			// System.err.println(i + " " + Math.toDegrees(deltaI) + " " +
+			// Math.toDegrees(deltaP));
+			timeList.add(interpolateTraveltime(targetPhase, eventR, targetDelta, rayI, rayC, rayP, rayIn));
+		}
+		return timeList.stream().mapToDouble(Double::doubleValue).toArray();
+	}
+
+	/**
 	 * Assume that there is a regression curve f(&Delta;) = T for the small
 	 * range. The function f is assumed to be a polynomial function. The degree
 	 * of the function depends on the number of the input raypaths.
@@ -515,14 +620,20 @@ public final class RaypathSearch {
 	 * @param targetDelta
 	 *            [rad] epicentral distance to get T for
 	 * @param raypaths
-	 *            Polynomial interpolation is done with these.
+	 *            Polynomial interpolation is done with these. All the raypaths
+	 *            must be computed.
 	 * @return travel time [s] for the target Delta estimated by the polynomial
 	 *         interpolation with the raypaths.
 	 * 
 	 */
-	double travelTimeInterpolation(double targetDelta, Raypath... raypaths) {
-
-		return 0;
+	private static double interpolateTraveltime(Phase targetPhase, double eventR, double targetDelta,
+			Raypath... raypaths) {
+		WeightedObservedPoints deltaTime = new WeightedObservedPoints();
+		for (int i = 0; i < raypaths.length; i++)
+			deltaTime.add(raypaths[i].computeDelta(eventR, targetPhase), raypaths[i].computeT(eventR, targetPhase));
+		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
+		PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaTime.toList()));
+		return pf.value(targetDelta);
 	}
 
 }
