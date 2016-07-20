@@ -32,13 +32,13 @@ final class TravelTimeMenuBar extends JMenuBar {
 
 	private static final long serialVersionUID = -3885037230307922628L;
 
-	TravelTimeMenuBar(TravelTimeGUI gui) {
+	TravelTimeMenuBar(ANISOTimeGUI gui) {
 		super();
 		this.gui = gui;
 		initComponents();
 	}
 
-	private TravelTimeGUI gui;
+	private ANISOTimeGUI gui;
 
 	private ButtonGroup buttonGroupModes = new ButtonGroup();
 	private ButtonGroup buttonGroupPolarization = new ButtonGroup();

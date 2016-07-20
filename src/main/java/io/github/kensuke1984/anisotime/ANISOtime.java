@@ -3,21 +3,21 @@ package io.github.kensuke1984.anisotime;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.cli.ParseException;
+
 /**
  * 
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 0.4.1b
- * 
- *          TODO triplication
+ * @version 0.5b
  * 
  */
-final class ANISOtime extends TravelTimeGUI {
+final class ANISOtime extends ANISOTimeGUI {
 
-	static final String codename = "Promyvion";
+	static final String codename = "Tavnazia";
 
-	static final String version = "0.4b";
+	static final String version = "0.5b";
 
 	private static final long serialVersionUID = -4093263118460123169L;
 
@@ -80,10 +80,15 @@ final class ANISOtime extends TravelTimeGUI {
 	/**
 	 * @param args
 	 *            the command line arguments
+	 * @throws ParseException
 	 */
 	public static void main(String args[]) {
 		if (args.length != 0) {
-			TravelTimeCLI.main(args);
+			try {
+				ANISOTimeCLI.main(args);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			return;
 		}
 		try {

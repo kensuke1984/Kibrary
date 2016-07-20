@@ -18,14 +18,14 @@ import javax.swing.WindowConstants;
  * 
  * @author Kensuke Konishi
  */
-class TravelTimeGUI extends javax.swing.JFrame {
+class ANISOTimeGUI extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = -4093263118460123169L;
 
 	/**
 	 * Creates new form TravelTimeGUI
 	 */
-	TravelTimeGUI() {
+	ANISOTimeGUI() {
 		initComponents();
 	}
 
@@ -184,22 +184,22 @@ class TravelTimeGUI extends javax.swing.JFrame {
 				}
 			}
 		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(TravelTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(TravelTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(TravelTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(TravelTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		}
 		// </editor-fold>
 
 		/* Create and display the form */
-		java.awt.EventQueue.invokeLater(() -> new TravelTimeGUI().setVisible(true));
+		java.awt.EventQueue.invokeLater(() -> new ANISOTimeGUI().setVisible(true));
 	}
 
 	void setResult(int i) {
