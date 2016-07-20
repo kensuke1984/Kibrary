@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @author Kensuke Konishi
  * @version 0.0.3b
  */
-class RaypathCatalogue implements Serializable {
+class RaypathCatalog implements Serializable {
 
 	private static final long serialVersionUID = 6254554199152935565L;
 
@@ -101,9 +101,9 @@ class RaypathCatalogue implements Serializable {
 		return MESH;
 	}
 
-	public static RaypathCatalogue computeCatalogue(VelocityStructure structure, ComputationalMesh mesh,
+	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh,
 			double dDelta) {
-		RaypathCatalogue cat = new RaypathCatalogue(structure, mesh, dDelta);
+		RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
 		cat.create();
 		return cat;
 	}
@@ -116,19 +116,19 @@ class RaypathCatalogue implements Serializable {
 	 * @param dDelta
 	 *            [rad] for creation of a catalog.
 	 */
-	private RaypathCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
+	private RaypathCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		WOODHOUSE = new Woodhouse1981(structure);
 		D_DELTA = dDelta;
 		MESH = mesh;
 	}
 
-	private RaypathCatalogue() {
+	private RaypathCatalog() {
 		this(VelocityStructure.prem(), ComputationalMesh.simple(), Math.toRadians(1));
 	}
 
 	public static void main(String[] args) throws Exception {
 		// 605.5 605.5 26.78959947466123
-		RaypathCatalogue r = new RaypathCatalogue();
+		RaypathCatalog r = new RaypathCatalog();
 		r.test();
 	}
 
@@ -141,7 +141,7 @@ class RaypathCatalogue implements Serializable {
 	
 
 	private static void readtest() throws ClassNotFoundException, IOException {
-		RaypathCatalogue r = RaypathCatalogue.read(Paths.get("/tmp/ray0.tmp"));
+		RaypathCatalog r = RaypathCatalog.read(Paths.get("/tmp/ray0.tmp"));
 		Raypath ray = r.raypathList.first();
 
 		// r.raypathList.forEach(ra -> {
@@ -331,9 +331,9 @@ class RaypathCatalogue implements Serializable {
 	 * @throws ClassNotFoundException
 	 *             if any
 	 */
-	public static RaypathCatalogue read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
+	public static RaypathCatalog read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
 		try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(path, options))) {
-			return (RaypathCatalogue) oi.readObject();
+			return (RaypathCatalog) oi.readObject();
 		}
 	}
 
