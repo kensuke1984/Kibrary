@@ -518,7 +518,7 @@ public final class RaypathSearch {
 	 * @param targetDelta
 	 *            [rad] target &Delta;
 	 */
-	public static Raypath[] searchPath(RaypathCatalogue catalog, Phase targetPhase, double eventR, double targetDelta) {
+	public static Raypath[] searchPath(RaypathCatalog catalog, Phase targetPhase, double eventR, double targetDelta) {
 		Raypath[] raypaths = catalog.getRaypaths();
 		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
 				+ Precision.round(Math.toDegrees(targetDelta), 4));
@@ -582,7 +582,7 @@ public final class RaypathSearch {
 	 * @param targetDelta
 	 *            [rad] target &Delta;
 	 */
-	public static double[] searchTime(RaypathCatalogue catalog, Phase targetPhase, double eventR, double targetDelta) {
+	public static double[] searchTime(RaypathCatalog catalog, Phase targetPhase, double eventR, double targetDelta) {
 		Raypath[] raypaths = catalog.getRaypaths();
 		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
 				+ Precision.round(Math.toDegrees(targetDelta), 4));
