@@ -20,7 +20,7 @@ In other words,
 ```bash
  % /bin/bash <(curl http://kensuke1984.github.io/bin/install.sh)
 ```
-It installs Kibrary. In order to include ANISOtime to PATH, 
+It installs Kibrary. In order to include Kibrary to PATH, 
 ```bash
  % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
 ```
