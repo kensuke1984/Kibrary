@@ -18,9 +18,12 @@ click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">
 If the environment is fine, execute [this](http://kensuke1984.github.io/bin/install.sh).
 In other words,
 ```bash
- % . <(curl http://kensuke1984.github.io/bin/install.sh)
+ % /bin/bash <(curl http://kensuke1984.github.io/bin/install.sh)
 ```
-It installs Kibrary.
+It installs Kibrary. In order to include ANISOtime to PATH, 
+```bash
+ % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
+```
 
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
