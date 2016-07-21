@@ -16,7 +16,7 @@ import org.apache.commons.io.IOUtils;
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  * 
  * @author Kensuke Konishi
- * @version 0.4
+ * @version 0.4.1
  * 
  * 
  */
