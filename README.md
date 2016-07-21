@@ -18,8 +18,7 @@ click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">
 If the environment is fine, execute [this](http://kensuke1984.github.io/bin/install.sh).
 In other words,
 ```bash
- % wget http://kensuke1984.github.io/bin/install.sh
- % . ./install.sh
+ % . <(curl http://kensuke1984.github.io/bin/install.sh)
 ```
 It installs Kibrary.
 
