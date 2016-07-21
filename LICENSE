@@ -1,7 +1,7 @@
-Kibrary 0.3.2 (Sahagin) Copyright © 2015 Kensuke Konishi
+Kibrary 0.4.1 (Sahagin) Copyright © 2015 Kensuke Konishi
 
 Library for waveform inversion. 
-It bundles ANISOtime package.
+It bundles the ANISOtime package.
 
 Licensed under the Apache License, Version 2.0 (the "License")
 you may not use this file except in compliance with the License.

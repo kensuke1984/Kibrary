@@ -624,9 +624,9 @@ public class SACMaker implements Runnable {
 		}
 
 		SpcFileName oneName = new SpcFileName(args[0]);
-		SpectrumFile oneSPC = SpectrumFile.getInstance(oneName);
+		DSMOutput oneSPC = SpectrumFile.getInstance(oneName);
 
-		SpectrumFile pairSPC = null;
+		DSMOutput pairSPC = null;
 		if (1 < args.length) {
 			SpcFileName pairName = new SpcFileName(args[1]);
 			pairSPC = SpectrumFile.getInstance(pairName);
