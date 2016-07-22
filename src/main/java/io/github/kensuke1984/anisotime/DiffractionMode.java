@@ -16,7 +16,7 @@ class DiffractionMode extends Computation {
 
 	private VelocityStructure structure;
 
-	DiffractionMode(ANISOtime travelTimeTool, VelocityStructure structure ) {
+	DiffractionMode(ANISOtime travelTimeTool, VelocityStructure structure) {
 		super(travelTimeTool);
 		this.structure = structure;
 	}
@@ -43,12 +43,9 @@ class DiffractionMode extends Computation {
 		Phase[] targetPhases = travelTimeTool.getSelectedPhases();
 		List<Raypath> raypathList = new ArrayList<>();
 		List<Phase> phaseList = new ArrayList<>();
-		Raypath pRaypath = RaypathSearch.diffRaypath(PhasePart.P,
-				structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100, true, structure);
-		Raypath svRaypath = RaypathSearch.diffRaypath(PhasePart.SV,
-				structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100, true, structure);
-		Raypath shRaypath = RaypathSearch.diffRaypath(PhasePart.SH,
-				structure.coreMantleBoundary() + Raypath.permissibleGapForDiff / 100, true, structure);
+		Raypath pRaypath = structure.raypathByTurningR(PhasePart.P, true, structure.coreMantleBoundary());
+		Raypath svRaypath = structure.raypathByTurningR(PhasePart.SV, true, structure.coreMantleBoundary());
+		Raypath shRaypath = structure.raypathByTurningR(PhasePart.SH, true, structure.coreMantleBoundary());
 		pRaypath.compute();
 		svRaypath.compute();
 		shRaypath.compute();

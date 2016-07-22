@@ -15,6 +15,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.Utilities;
 
@@ -112,6 +113,7 @@ final class ANISOTimeCLI {
 	 * Sets parameters according to the input arguments.
 	 */
 	private void setParameters() {
+		dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "1")));
 		if (cmd.hasOption("rc")) {
 			try {
 				Path catalogPath = Paths.get(cmd.getOptionValue("rc"));
@@ -127,8 +129,6 @@ final class ANISOTimeCLI {
 		}
 
 		targetPhase = Phase.create(cmd.getOptionValue("ph", "S"), cmd.hasOption("SV"));
-
-		dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "1")));
 
 		targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
@@ -153,22 +153,7 @@ final class ANISOTimeCLI {
 				return;
 			}
 
-			// Read a catalog
-			if (cmd.hasOption("rc")) {
-				Raypath[] raypaths = RaypathSearch.searchPath(catalog, targetPhase, eventR, targetDelta);
-				for (Raypath raypath : raypaths) {
-					printResults(Math.toDegrees(targetDelta), raypath);
-					int j = 0;
-					if (cmd.hasOption("eps"))
-						if (raypaths.length == 1)
-							raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + ".eps"), targetPhase);
-						else
-							raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + "." + j++ + ".eps"),
-									targetPhase);
-				}
-				return;
-			}
-
+			// When the ray parameter is given
 			if (cmd.hasOption("p")) {
 				Raypath raypath = new Raypath(rayParameter, structure);
 				raypath.compute();
@@ -178,13 +163,33 @@ final class ANISOTimeCLI {
 				return;
 			}
 
-			List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase, structure, eventR, targetDelta, interval);
-			if (raypaths.isEmpty()) {
+			// Compute a catalog
+			if (!cmd.hasOption("rc")) {
+				ComputationalMesh mesh = ComputationalMesh.simple(); // TODO
+				catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
+			}
+
+			Raypath[] raypaths = catalog.searchPath( targetPhase, eventR, targetDelta);
+
+			// List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase,
+			// structure, eventR, targetDelta, interval);
+			if (raypaths.length == 0) {
 				System.err.println("No raypaths satisfying the input condition");
 				return;
 			}
 			if (targetPhase.isDiffracted()) {
-				Raypath raypath = raypaths.get(0);
+				Raypath diffRay = raypaths[0];
+				double deltaOnBoundary = Math.toDegrees(targetDelta - raypaths[0].computeDelta(eventR, targetPhase));
+				if (deltaOnBoundary < 0) {
+					System.err.println("Sdiff would have longer distance than "
+							+ Precision.round(Math.toDegrees(diffRay.computeDelta(eventR, targetPhase)), 3)
+							+ " (Your input:" + Precision.round(Math.toDegrees(targetDelta), 3) + ")");
+					return;
+				}
+				targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
+			}
+			if (targetPhase.isDiffracted()) {
+				Raypath raypath = raypaths[0];
 				double delta = raypath.computeDelta(eventR, targetPhase);
 				double dDelta = Math.toDegrees(targetDelta - delta);
 				targetPhase = Phase.create(targetPhase.toString() + dDelta, targetPhase.isPSV());
@@ -198,7 +203,7 @@ final class ANISOTimeCLI {
 				printResults(Math.toDegrees(targetDelta), raypath);
 				int j = 0;
 				if (cmd.hasOption("eps"))
-					if (raypaths.size() == 1)
+					if (raypaths.length == 1)
 						raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + ".eps"), targetPhase);
 					else
 						raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + "." + j++ + ".eps"), targetPhase);
@@ -241,7 +246,7 @@ final class ANISOTimeCLI {
 
 		if (0 < delta1) {
 			try {
-				while ((time1 = RaypathSearch.travelTimeByThreePointInterpolate(delta1, raypath, eventR, targetPhase,
+				while ((time1 = RaypathCatalog.travelTimeByThreePointInterpolate(delta1, raypath, eventR, targetPhase,
 						pInterval)) < 0)
 					pInterval *= 10;
 			} catch (Exception e) {
@@ -329,13 +334,13 @@ final class ANISOTimeCLI {
 
 	private static void setArgumentOptions() {
 		options.addOption("h", true, "depth of source [km] (default = 0)");
-		options.addOption("deg", "epicentral-distance", true, "epicentral distance [deg]");
+		options.addOption("deg", "epicentral-distance", true, "epicentral distance \u0394 [deg]");
 		options.addOption("ph", true, "seismic phase (default = S)");
-		options.addOption("mod", true, "structure (e.g. PREM) (default:PREM)");
+		options.addOption("mod", true, "structure (default:PREM)");
 		options.addOption("dec", true, "number of decimal places.");
 		options.addOption("p", true, "ray parameter");
-		options.addOption("dR", true, "Integral interval(default = 10.0) [km]");
-		options.addOption("dD", true, "Parameter for a catalog creation (dDelta).");
+		options.addOption("dR", true, "Integral interval [km] (default = 10.0)");
+		options.addOption("dD", true, "Parameter for a catalog creation (d\u0394).");
 		options.addOption("rc", "read-catalog", true, "Computes travel times from a catalog.");
 		options.addOption("cc", "create-catalog", true, "Creates a catalog.");
 	}
