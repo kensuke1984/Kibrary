@@ -16,7 +16,7 @@ import java.io.Serializable;
  */
 public interface VelocityStructure extends Serializable {
 
-	public default double getTurningR(PhasePart pp, double rayParameter){
+	public default double getTurningR(PhasePart pp, double rayParameter) {
 		switch (pp) {
 		case I:
 			return iTurningR(rayParameter);
@@ -36,8 +36,7 @@ public interface VelocityStructure extends Serializable {
 			throw new RuntimeException("anikusupekuted");
 		}
 	}
-	
-	
+
 	/**
 	 * @return Transversely isotropic (TI) PREM by Dziewonski & Anderson 1981
 	 */
@@ -55,11 +54,10 @@ public interface VelocityStructure extends Serializable {
 	/**
 	 * @return AK135 by Kennett, Engdahl & Buland (1995)
 	 */
-	public static VelocityStructure ak135(){
+	public static VelocityStructure ak135() {
 		return PolynomialStructure.AK135;
 	}
-	
-	
+
 	/**
 	 * @param r
 	 *            radius [km]
@@ -254,6 +252,44 @@ public interface VelocityStructure extends Serializable {
 			throw new IllegalArgumentException("x must be positive.");
 
 		throw new RuntimeException("could not find a radius.");
+	}
+
+	/**
+	 * Create a {@link Raypath} where 'pp' wave turns at eventR. PermissibleRGap
+	 * is from {@value Raypath#permissibleGapForDiff}; gap between turningR of
+	 * obtained Raypath and input R
+	 * 
+	 * @param pp
+	 *            target phase part
+	 * @param topside
+	 *            true: topside(v), false: underside(^) reflection.
+	 * @param turningR
+	 *            radius[km] you want to set.
+	 * @return null if the gap exceeds permissibleRGap
+	 */
+	public default Raypath raypathByTurningR(PhasePart pp, boolean topside, double turningR) {
+		double p;
+		double r = turningR + (topside ? Raypath.permissibleGapForDiff / 100 : -Raypath.permissibleGapForDiff / 100);
+		switch (pp) {
+		case P:
+		case K:
+		case I:
+			p = Math.sqrt(getRho(r) / getA(r)) * r;
+			break;
+		case SV:
+		case JV:
+			p = Math.sqrt(getRho(r) / getL(r)) * r;
+			break;
+		case SH:
+		case JH:
+			p = Math.sqrt(getRho(r) / getN(r)) * r;
+			break;
+		default:
+			throw new RuntimeException("UNEKSPECTED");
+		}
+		Raypath raypath = new Raypath(p, this);
+		double residual = turningR - raypath.getTurningR(pp);
+		return Math.abs(residual) < Raypath.permissibleGapForDiff ? raypath : null;
 	}
 
 }

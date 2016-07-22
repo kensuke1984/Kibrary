@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.util;
 
-import java.util.List;
 
+import io.github.kensuke1984.anisotime.ComputationalMesh;
 import io.github.kensuke1984.anisotime.Phase;
-import io.github.kensuke1984.anisotime.RaypathSearch;
+import io.github.kensuke1984.anisotime.RaypathCatalog;
 import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
  * 
  * 
  * 
- * @version 0.0.6
+ * @version 0.0.6.1
  * 
  * 
  * @author Kensuke Konishi
@@ -156,12 +156,12 @@ public class Raypath {
 	 * @return [rad] the delta of the extednded ray path
 	 */
 	public double computeCompensatedEpicentralDistance(Phase phase, VelocityStructure structure) {
-		List<io.github.kensuke1984.anisotime.Raypath> rays = toANISOtime(phase, structure);
-		if (rays.isEmpty())
+		 io.github.kensuke1984.anisotime.Raypath[] rays = toANISOtime(phase, structure);
+		if (rays.length==0)
 			throw new RuntimeException("No raypath");
-		if (1 < rays.size())
+		if (1 < rays.length)
 			throw new RuntimeException("multiples");
-		return rays.get(0).computeDelta(structure.earthRadius(), phase); //TODO check
+		return rays[0].computeDelta(structure.earthRadius(), phase); 
 	}
 
 	/**
@@ -171,8 +171,9 @@ public class Raypath {
 	 *            to compute raypath
 	 * @return Raypath which phase travels this raypath
 	 */
-	public List<io.github.kensuke1984.anisotime.Raypath> toANISOtime(Phase phase, VelocityStructure structure) {
-		return RaypathSearch.lookFor(phase, structure, sourceLocation.getR(), epicentralDistance, 10);
+	public io.github.kensuke1984.anisotime.Raypath[] toANISOtime(Phase phase, VelocityStructure structure) {
+		return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(), 10).searchPath(phase,
+				sourceLocation.getR(), epicentralDistance);
 	}
 
 }

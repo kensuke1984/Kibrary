@@ -16,14 +16,14 @@ import org.apache.commons.math3.util.Precision;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.2.1
+ * @version 0.1.2.2
  * 
  */
 class TurningDepthMode extends Computation {
 
 	private VelocityStructure structure;
 
-	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure structure ) {
+	TurningDepthMode(ANISOtime travelTimeTool, VelocityStructure structure) {
 		super(travelTimeTool);
 		this.structure = structure;
 	}
@@ -66,7 +66,7 @@ class TurningDepthMode extends Computation {
 			if (phase.equals(Phase.create("P"))) {
 				if (!psv)
 					continue;
-				Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.P, structure, turningR);
+				Raypath raypath = structure.raypathByTurningR(PhasePart.P, true, turningR);
 				if (raypath != null) {
 					switch (structure.whichPartition(turningR)) {
 					case MANTLE:
@@ -92,7 +92,7 @@ class TurningDepthMode extends Computation {
 				}
 			} else {
 				if (psv) {
-					Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.SV, structure, turningR);
+					Raypath raypath = structure.raypathByTurningR(PhasePart.SV, true, turningR);
 					if (raypath != null) {
 						switch (structure.whichPartition(turningR)) {
 						case MANTLE:
@@ -113,7 +113,7 @@ class TurningDepthMode extends Computation {
 					}
 				}
 				if (sh) {
-					Raypath raypath = RaypathSearch.raypathByTurningR(PhasePart.SH, structure, turningR);
+					Raypath raypath = structure.raypathByTurningR(PhasePart.SH, true, turningR);
 					if (raypath != null) {
 						switch (structure.whichPartition(turningR)) {
 						case MANTLE:

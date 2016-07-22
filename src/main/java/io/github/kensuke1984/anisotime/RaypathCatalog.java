@@ -17,6 +17,7 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
@@ -28,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @author Kensuke Konishi
  * @version 0.0.3b
  */
-class RaypathCatalog implements Serializable {
+public class RaypathCatalog implements Serializable {
 
 	private static final long serialVersionUID = 6254554199152935565L;
 
@@ -101,8 +102,7 @@ class RaypathCatalog implements Serializable {
 		return MESH;
 	}
 
-	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh,
-			double dDelta) {
+	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
 		cat.create();
 		return cat;
@@ -138,8 +138,6 @@ class RaypathCatalog implements Serializable {
 		readtest();
 	}
 
-	
-
 	private static void readtest() throws ClassNotFoundException, IOException {
 		RaypathCatalog r = RaypathCatalog.read(Paths.get("/tmp/ray0.tmp"));
 		Raypath ray = r.raypathList.first();
@@ -154,32 +152,58 @@ class RaypathCatalog implements Serializable {
 	}
 
 	/**
-	 * Rayparameter for Pdiff
+	 * Raypath of Pdiff
 	 */
-	private double p_Pdiff;
+	private Raypath pDiff;
 
 	/**
-	 * Rayparameter for SVdiff
+	 * Raypath of SVdiff
 	 */
-	private double p_SVdiff;
+	private Raypath svDiff;
 
 	/**
-	 * Rayparameter for SHdiff
+	 * Raypath of SHdiff
 	 */
-	private double p_SHdiff;
+	private Raypath shDiff;
 
 	/**
+	 * TODO boundaries
 	 * Computes ray parameters of diffraction phases (Pdiff and Sdiff).
 	 */
 	private void computeDiffraction() {
 		VelocityStructure structure = WOODHOUSE.getStructure();
 		double cmb = structure.coreMantleBoundary() + ComputationalMesh.eps;
 		double rho = structure.getRho(cmb);
-		p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
-		p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
-		p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
-		// System.err.println("Ray parameter for Pdiff, SVdiff and SHdiff");
-		// System.err.println(p_Pdiff + " " + p_SVdiff + " " + p_SHdiff);
+		double p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
+		double p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
+		double p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
+		pDiff = new Raypath(p_Pdiff, WOODHOUSE, MESH);
+		pDiff.compute();
+		svDiff = new Raypath(p_SVdiff, WOODHOUSE, MESH);
+		svDiff.compute();
+		shDiff = new Raypath(p_SHdiff, WOODHOUSE, MESH);
+		shDiff.compute();
+	}
+
+	/**
+	 * @return Raypath of Pdiff
+	 */
+	public Raypath getPdiff() {
+		return pDiff;
+	}
+
+	/**
+	 * @return Raypath of SVdiff
+	 */
+	public Raypath getSVdiff() {
+		return svDiff;
+	}
+
+	/**
+	 * @return Raypath of SHdiff
+	 */
+	public Raypath getSHdiff() {
+		return shDiff;
 	}
 
 	// TODO
@@ -197,6 +221,9 @@ class RaypathCatalog implements Serializable {
 		firstPath.compute();
 		raypathList.add(firstPath);
 		System.err.println("Computing a catalogue");
+		double p_Pdiff = pDiff.getRayParameter();
+		double p_SVdiff = svDiff.getRayParameter();
+		double p_SHdiff = shDiff.getRayParameter();
 		for (double p = firstPath.getRayParameter() + DELTA_P, nextP = p + DELTA_P; p < pMax; p = nextP) {
 			Raypath rp = new Raypath(p, WOODHOUSE, MESH);
 			rp.compute();
@@ -224,15 +251,9 @@ class RaypathCatalog implements Serializable {
 				nextP += DELTA_P;
 			}
 		}
-		Raypath pDiffPath = new Raypath(p_Pdiff, WOODHOUSE, MESH);
-		pDiffPath.compute();
-		Raypath svDiffPath = new Raypath(p_SVdiff, WOODHOUSE, MESH);
-		svDiffPath.compute();
-		Raypath shDiffPath = new Raypath(p_SHdiff, WOODHOUSE, MESH);
-		shDiffPath.compute();
-		raypathList.add(pDiffPath);
-		raypathList.add(svDiffPath);
-		raypathList.add(shDiffPath);
+		raypathList.add(pDiff);
+		raypathList.add(svDiff);
+		raypathList.add(shDiff);
 		System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
 	}
 
@@ -338,6 +359,31 @@ class RaypathCatalog implements Serializable {
 	}
 
 	/**
+	 * Assume that there is a regression curve f(&Delta;) = p(ray parameter) for
+	 * the small range. The function f is assumed to be a polynomial function.
+	 * The degree of the function depends on the number of the input raypaths.
+	 * 
+	 * @param targetDelta
+	 *            [rad] epicentral distance to get T for
+	 * @param raypaths
+	 *            Polynomial interpolation is done with these. All the raypaths
+	 *            must be computed.
+	 * @return travel time [s] for the target Delta estimated by the polynomial
+	 *         interpolation with the raypaths.
+	 * 
+	 */
+	private static Raypath interpolateRaypath(Phase targetPhase, double eventR, double targetDelta,
+			Raypath... raypaths) {
+		WeightedObservedPoints deltaP = new WeightedObservedPoints();
+		for (int i = 0; i < raypaths.length; i++)
+			deltaP.add(raypaths[i].computeDelta(eventR, targetPhase), raypaths[i].getRayParameter());
+		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
+		PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaP.toList()));
+		Raypath ray = new Raypath(pf.value(targetDelta));
+		ray.compute();
+		return ray;
+	}
+	/**
 	 * @param path
 	 *            the path to the output file
 	 * @throws IOException
@@ -348,5 +394,158 @@ class RaypathCatalog implements Serializable {
 			o.writeObject(this);
 		}
 	}
+	
+	/**
+	 * @param targetPhase
+	 *            target phase
+	 * @param eventR
+	 *            [km] event radius
+	 * @param targetDelta
+	 *            [rad] target &Delta;
+	 * @return Never returns null. zero length array is possible.
+	 */
+	public Raypath[] searchPath( Phase targetPhase, double eventR, double targetDelta) {
+		Raypath[] raypaths =getRaypaths();
+		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
+				+ Precision.round(Math.toDegrees(targetDelta), 4));
+
+		if (targetPhase.isDiffracted())
+			return new Raypath[] { targetPhase.toString().contains("Pdiff") ?  getPdiff()
+					: (targetPhase.isPSV() ?  getSVdiff() : getSHdiff()) };
+
+		List<Raypath> pathList = new ArrayList<>();
+		for (int i = 0; i < raypaths.length - 1; i++) {
+			Raypath rayI = raypaths[i];
+			Raypath rayP = raypaths[i + 1];
+			double deltaI = rayI.computeDelta(eventR, targetPhase);
+			double deltaP = rayP.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaI) || Double.isNaN(deltaP))
+				continue;
+			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta))
+				continue;
+			Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
+			rayC.compute();
+			double deltaC = rayC.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaC))
+				continue;
+			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
+			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaIn))
+				continue;
+			pathList.add(rayIn);
+		}
+		return pathList.toArray(new Raypath[0]);
+	}
+	
+	
+	/**
+	 * @param targetPhase
+	 *            target phase
+	 * @param eventR
+	 *            [km] event radius
+	 * @param targetDelta
+	 *            [rad] target &Delta;
+	 */
+	public double[] searchTime( Phase targetPhase, double eventR, double targetDelta) {
+//		Raypath[] raypaths = catalog.getRaypaths();
+		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
+				+ Precision.round(Math.toDegrees(targetDelta), 4));
+		List<Double> timeList = new ArrayList<>();
+		Raypath[] raypaths = getRaypaths();
+		for (int i = 0; i < raypaths.length - 1; i++) {
+			Raypath rayI = raypaths[i];
+			Raypath rayP = raypaths[i + 1];
+			double deltaI = rayI.computeDelta(eventR, targetPhase);
+			double deltaP = rayP.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaI) || Double.isNaN(deltaP))
+				continue;
+			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta))
+				continue;
+			Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
+			rayC.compute();
+			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
+			double deltaC = rayC.computeDelta(eventR, targetPhase);
+			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
+			if (Double.isNaN(deltaC) || Double.isNaN(deltaIn))
+				continue;
+			// System.err.println(i + " " + Math.toDegrees(deltaI) + " " +
+			// Math.toDegrees(deltaP));
+			timeList.add(interpolateTraveltime(targetPhase, eventR, targetDelta, rayI, rayC, rayP, rayIn));
+		}
+		return timeList.stream().mapToDouble(Double::doubleValue).toArray();
+	}
+	
+	
+	
+	
+	
+
+	/**
+	 * Assume that there is a regression curve f(&Delta;) = T for the small
+	 * range. The function f is assumed to be a polynomial function. The degree
+	 * of the function depends on the number of the input raypaths.
+	 * 
+	 * @param targetDelta
+	 *            [rad] epicentral distance to get T for
+	 * @param raypaths
+	 *            Polynomial interpolation is done with these. All the raypaths
+	 *            must be computed.
+	 * @return travel time [s] for the target Delta estimated by the polynomial
+	 *         interpolation with the raypaths.
+	 * 
+	 */
+	private static double interpolateTraveltime(Phase targetPhase, double eventR, double targetDelta,
+			Raypath... raypaths) {
+		WeightedObservedPoints deltaTime = new WeightedObservedPoints();
+		for (int i = 0; i < raypaths.length; i++)
+			deltaTime.add(raypaths[i].computeDelta(eventR, targetPhase), raypaths[i].computeT(eventR, targetPhase));
+		PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
+		PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaTime.toList()));
+		return pf.value(targetDelta);
+	}
+	
+	
+	
+	
+	
+	/**
+	 * @param delta
+	 *            [deg]
+	 * @param raypath0
+	 *            source of raypath
+	 * @param eventR
+	 *            radius of the source [km]
+	 * @param phase
+	 *            to look for
+	 * @param intervalOfP
+	 *            density of search
+	 * @return travel time for delta [s]
+	 */
+  static double travelTimeByThreePointInterpolate(double delta, Raypath raypath0, double eventR, Phase phase,
+			double intervalOfP) {
+		delta = Math.toRadians(delta);
+		double delta0 = raypath0.computeDelta(eventR, phase);
+		double p0 = raypath0.getRayParameter();
+		double p1 = p0 - intervalOfP;
+		double p2 = p0 + intervalOfP;
+		Raypath raypath1 = new Raypath(p1, raypath0.getStructure());
+		Raypath raypath2 = new Raypath(p2, raypath0.getStructure());
+		raypath1.compute();
+		raypath2.compute();
+		double delta1 = raypath1.computeDelta(eventR, phase);
+		double delta2 = raypath2.computeDelta(eventR, phase);
+		// delta1<delta0<delta2 or delta2<delta0<delta1
+		if ((delta1 - delta0) * (delta2 - delta0) > 0)
+			return -1;
+		if (Math.max(delta1, delta2) < delta || delta < Math.min(delta1, delta2))
+			return -1;
+		double[] p = new double[] { delta0, delta1, delta2 };
+		double[] time = new double[] { raypath0.computeT(eventR, phase), raypath1.computeT(eventR, phase),
+				raypath2.computeT(eventR, phase), };
+		Trace t = new Trace(p, time);
+		return t.toValue(2, delta);
+	}
+
+	
 
 }

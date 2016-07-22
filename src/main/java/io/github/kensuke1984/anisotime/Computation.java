@@ -140,7 +140,7 @@ abstract class Computation implements Runnable {
 				double targetDelta = Math.toDegrees(delta[i]);
 				if (!phase.isDiffracted())
 					try {
-						while ((time = RaypathSearch.travelTimeByThreePointInterpolate(targetDelta, raypath,
+						while ((time = RaypathCatalog.travelTimeByThreePointInterpolate(targetDelta, raypath,
 								travelTimeTool.getEventR(), phase, interval)) < 0)
 							interval *= 10;
 					} catch (Exception e) {
