@@ -11,8 +11,11 @@ import java.util.stream.IntStream;
 /**
  * Epicentral distance mode.
  * 
+ * TODO Catalog share
+ * TODO P-SV SH
+ * 
  * @author Kensuke Konishi
- * @version 0.2b
+ * @version 0.2.1b
  * 
  */
 class EpicentralDistanceMode extends Computation {
@@ -24,6 +27,8 @@ class EpicentralDistanceMode extends Computation {
 	 * [rad]
 	 */
 	private double epicentralDistance;
+
+	private final RaypathCatalog catalog;
 
 	/**
 	 * @param travelTimeTool
@@ -44,6 +49,8 @@ class EpicentralDistanceMode extends Computation {
 		this.eventR = eventR;
 		this.epicentralDistance = epicentralDistance;
 		this.targetPhases = targetPhases;
+		// TODO mmesh deltaR
+		this.catalog = RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(), 10);
 	}
 
 	@Override
@@ -70,22 +77,14 @@ class EpicentralDistanceMode extends Computation {
 
 		double deltaR = 10; // TODO
 		for (Phase phase : targetPhases) {
-			if (psv) {
-				List<Raypath> possibleRaypathArray = RaypathSearch.lookFor(phase, structure, eventR, epicentralDistance,
-						deltaR);
-				if (possibleRaypathArray.isEmpty())
-					continue;
-				raypaths.addAll(possibleRaypathArray);
-				IntStream.range(0, possibleRaypathArray.size()).forEach(i -> phases.add(phase));
+			Raypath[] raypaths = catalog.searchPath( phase, eventR, epicentralDistance);
+			if (raypaths.length == 0)
+				continue;
+			for (int i = 0; i < raypaths.length; i++) {
+				this.raypaths.add(raypaths[i]);
+				phases.add(phase);
 			}
-			if (sh && phase.pReaches() == null) {
-				List<Raypath> possibleRaypathArray = RaypathSearch.lookFor(phase, structure, eventR, epicentralDistance,
-						deltaR);
-				if (possibleRaypathArray.isEmpty())
-					continue;
-				raypaths.addAll(possibleRaypathArray);
-				IntStream.range(0, possibleRaypathArray.size()).forEach(i -> phases.add(phase));
-			}
+
 		}
 		for (int i = 0; i < phases.size(); i++) {
 			Phase phase = phases.get(i);

@@ -69,7 +69,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
-
 	/**
 	 * As of 2016/7/19
 	 */
@@ -358,7 +357,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		stream.defaultReadObject();
 		int flag = stream.readByte();
 		deltaMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
-		timeMap =  Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+		timeMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
 		for (PhasePart pp : PhasePart.values())
 			if ((flag & pp.getFlag()) == 0) {
 				deltaMap.put(pp, Double.NaN);
@@ -1004,9 +1003,16 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		}
 		double nextREnd = radii.getEntry(endIndexForMemory);
 		double delta = simpsonDelta(pp, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
-		double[] theta = dThetaMap.get(pp);
-		for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
-			delta += theta[i];
+		if (dThetaMap != null) {
+			double[] theta = dThetaMap.get(pp);
+			for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
+				delta += theta[i];
+		} else
+			for (int i = firstIndexForMemory; i < endIndexForMemory; i++) {
+				if (radii.getEntry(i) < jeffreysBoundary)
+					continue;
+				delta += simpsonDelta(pp, radii.getEntry(i), radii.getEntry(i + 1));
+			}
 
 		if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
 			return delta + simpsonDelta(pp, startR, radii.getEntry(firstIndexForMemory));
@@ -1144,7 +1150,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * this is computed, an exception happens.
 	 */
 	public void printInfo() {
-		if(!isComputed)
+		if (!isComputed)
 			throw new RuntimeException("Not computed yet. It must be computed before printing information.");
 		System.out.println("#Phase:Turning points[km] Jeffrey boundary[km] Propagation delta[deg] time[s]");
 		Arrays.stream(PhasePart.values())

@@ -22,7 +22,7 @@ import org.apache.commons.math3.linear.RealVector;
  * @version 0.0.1
  * 
  */
-class ComputationalMesh implements Serializable {
+public class ComputationalMesh implements Serializable {
 
 	/**
 	 * generated on 2016/5/11 TODO seriialization for vectors
