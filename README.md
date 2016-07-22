@@ -16,12 +16,14 @@ If you are not sure about the version you have,
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
 If the environment is fine, execute [this](http://kensuke1984.github.io/bin/install.sh).
-In other words,
+If you are a bash user, paste this at a Terminal prompt.
 ```bash
- % wget http://kensuke1984.github.io/bin/install.sh
- % . ./install.sh
+ % /bin/bash <(curl http://kensuke1984.github.io/bin/install.sh)
 ```
-It installs Kibrary.
+It installs Kibrary. In order to include Kibrary to PATH, 
+```bash
+ % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
+```
 
 Download and extract [gradlew.tar][gradlew] and execute *gradlew*
 and then type **gradlew build**,  
@@ -70,7 +72,7 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 ##Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
-Last updated Jul 6, 2016
+Last updated Jul 22, 2016
 
 
 [release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
