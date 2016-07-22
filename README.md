@@ -16,7 +16,7 @@ If you are not sure about the version you have,
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
 If the environment is fine, execute [this](http://kensuke1984.github.io/bin/install.sh).
-Paste this at a Terminal prompt.
+If you are a bash user, paste this at a Terminal prompt.
 ```bash
  % /bin/bash <(curl http://kensuke1984.github.io/bin/install.sh)
 ```
