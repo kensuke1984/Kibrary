@@ -28,23 +28,22 @@ import org.apache.commons.io.IOUtils;
  * @version 0.1.3.1
  * 
  */
-final class TravelTimeMenuBar extends JMenuBar {
+final class MenuBar extends JMenuBar {
 
 	private static final long serialVersionUID = -3885037230307922628L;
 
-	TravelTimeMenuBar(ANISOTimeGUI gui) {
+	MenuBar(ANISOtimeGUI gui) {
 		super();
 		this.gui = gui;
 		initComponents();
 	}
 
-	private ANISOTimeGUI gui;
+	private ANISOtimeGUI gui;
 
 	private ButtonGroup buttonGroupModes = new ButtonGroup();
 	private ButtonGroup buttonGroupPolarization = new ButtonGroup();
 
 	private void initComponents() {
-
 		jMenuFile = new JMenu("File");
 		jMenuHelp = new JMenu("Help");
 		jMenuSettings = new JMenu("Settings");
@@ -54,7 +53,7 @@ final class TravelTimeMenuBar extends JMenuBar {
 		jMenuItemParameterDescription = new JMenuItem("Parameter description");
 		jMenuItemTurningDepthMode = new JRadioButtonMenuItem("Turning Depth Mode");
 		jMenuItemDiffractionMode = new JRadioButtonMenuItem("Diffraction Mode");
-		jMenuItemRayparameterMode = new JRadioButtonMenuItem("Rayparameter Mode");
+		jMenuItemRayparameterMode = new JRadioButtonMenuItem("Ray parameter Mode");
 		jMenuItemEpicentralDistanceMode = new JRadioButtonMenuItem("Epicentral Distance Mode");
 		jMenuItemPreferences = new JMenuItem("Preferences");
 
@@ -148,7 +147,7 @@ final class TravelTimeMenuBar extends JMenuBar {
 	/**
 	 * @return 0(default): All, 1: P-SV, 2: SH
 	 */
-	int getPolarization() {
+	int getPolarity() {
 		return polarization;
 	}
 

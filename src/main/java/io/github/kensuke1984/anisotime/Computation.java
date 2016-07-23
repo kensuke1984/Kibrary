@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.0.2
+ * @version 0.1.1
  * 
  */
 abstract class Computation implements Runnable {
@@ -23,13 +23,13 @@ abstract class Computation implements Runnable {
 
 	abstract ComputationMode getMode();
 
-	final ANISOtime travelTimeTool;
+	final ANISOtimeGUI gui;
 
-	Computation(ANISOtime travelTimeTool) {
-		this.travelTimeTool = travelTimeTool;
+	Computation(ANISOtimeGUI travelTimeTool) {
+		this.gui = travelTimeTool;
 	}
 
-	private static void showRayPath(final ANISOTimeGUI travelTimeGUI, final Raypath raypath, final Phase phase) {
+	private static void showRayPath(final ANISOtimeGUI travelTimeGUI, final Raypath raypath, final Phase phase) {
 		if (!raypath.exists(travelTimeGUI.getEventR(), phase))
 			return;
 		double[][] points = raypath.getRouteXY(travelTimeGUI.getEventR(), phase);
@@ -50,7 +50,7 @@ abstract class Computation implements Runnable {
 	}
 
 	void outputPath() {
-		double eventR = travelTimeTool.getEventR();
+		double eventR = gui.getEventR();
 		Runnable output = new Runnable() {
 			Path outputDirectory;
 
@@ -118,7 +118,7 @@ abstract class Computation implements Runnable {
 		if (raypathList.size() != phaseList.size())
 			throw new RuntimeException("UNEXPECTED");
 		// System.out.println(SwingUtilities.isEventDispatchThread());
-		double eventR =travelTimeTool.getEventR();
+		double eventR =gui.getEventR();
 		for (int i = 0; i < phaseList.size(); i++) {
 			Raypath raypath = raypathList.get(i);
 			Phase phase = phaseList.get(i);
@@ -129,11 +129,11 @@ abstract class Computation implements Runnable {
 			double travelTime = raypath.computeT(eventR,phase);
 			// System.out.println(epicentralDistance+" "+travelTime);
 			String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
-			double depth = raypath.earthRadius() - travelTimeTool.getEventR();
+			double depth = raypath.earthRadius() - gui.getEventR();
 
 			if (delta == null) {
-				travelTimeTool.addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
-				showRayPath(travelTimeTool, raypath, phase);
+				gui.addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
+				showRayPath(gui, raypath, phase);
 			} else {
 				double time = travelTime;
 				double interval = 0.1;
@@ -141,30 +141,30 @@ abstract class Computation implements Runnable {
 				if (!phase.isDiffracted())
 					try {
 						while ((time = RaypathCatalog.travelTimeByThreePointInterpolate(targetDelta, raypath,
-								travelTimeTool.getEventR(), phase, interval)) < 0)
+								gui.getEventR(), phase, interval)) < 0)
 							interval *= 10;
 					} catch (Exception e) {
 						// e.printStackTrace();
-						travelTimeTool.addResult(epicentralDistance, depth, title, travelTime,
+						gui.addResult(epicentralDistance, depth, title, travelTime,
 								raypath.getRayParameter());
-						showRayPath(travelTimeTool, raypath, phase);
+						showRayPath(gui, raypath, phase);
 
 						continue;
 					}
 				if (!Double.isNaN(time)) {
-					travelTimeTool.addResult(targetDelta, depth, title, time, raypath.getRayParameter());
-					showRayPath(travelTimeTool, raypath, phase);
+					gui.addResult(targetDelta, depth, title, time, raypath.getRayParameter());
+					showRayPath(gui, raypath, phase);
 				}
 
 			}
 
 		}
 		try {
-			if (0 < travelTimeTool.getNumberOfRaypath())
+			if (0 < gui.getNumberOfRaypath())
 				SwingUtilities.invokeLater(() -> {
-					travelTimeTool.setRaypathVisible(true);
-					travelTimeTool.setResult(0);
-					travelTimeTool.selectRaypath(0);
+					gui.setRaypathVisible(true);
+					gui.setResult(0);
+					gui.selectRaypath(0);
 				});
 		} catch (Exception e) {
 		}
