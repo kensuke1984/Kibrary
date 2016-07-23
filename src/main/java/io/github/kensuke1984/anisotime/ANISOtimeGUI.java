@@ -5,29 +5,36 @@
  */
 package io.github.kensuke1984.anisotime;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.WindowConstants;
 
 /**
  * 
  * GUI for ANISOtime
  * 
- * @version 0.3.3.3
+ * @version 0.4.0
  * 
  * @author Kensuke Konishi
  */
-class ANISOTimeGUI extends javax.swing.JFrame {
+class ANISOtimeGUI extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = -4093263118460123169L;
 
 	/**
 	 * Creates new form TravelTimeGUI
 	 */
-	ANISOTimeGUI() {
+	ANISOtimeGUI() {
 		initComponents();
 	}
+
+	private Computation currentComputationMode;
 
 	private RaypathTabs raypathTabs;
 
@@ -64,6 +71,12 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 		return jPanelParameter.getEventR();
 	}
 
+	/**
+	 * @return Epicentral Distance mode: epicentral distance[deg]<br>
+	 *         Ray parameter mode: ray parameter<br>
+	 *         Turning depth mode: turning depth[km]<br>
+	 *         Diffraction mode: angle on CMB [deg]
+	 */
 	double getMostImportant() {
 		return jPanelParameter.getMostImportant();
 	}
@@ -71,8 +84,8 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 	/**
 	 * @return 0(default): All, 1: P-SV, 2: SH
 	 */
-	int getPolarization() {
-		return jMenuBar1.getPolarization();
+	synchronized int getPolarity() {
+		return jMenuBar1.getPolarity();
 	}
 
 	void setMode(ComputationMode mode) {
@@ -86,7 +99,7 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 		jPanelParameter.changePropertiesVisible();
 	}
 
-	void setPolarity(int i) {
+	synchronized void setPolarity(int i) {
 		phaseWindow.setPolarity(i);
 		jMenuBar1.setPolarity(i);
 		jPanelParameter.changeBorderTitle(jMenuBar1.getModeName() + " " + jMenuBar1.getPoleString());
@@ -111,13 +124,13 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
 		// jMenuItem1 = new JMenuItem();
-		jMenuBar1 = new TravelTimeMenuBar(this);
+		jMenuBar1 = new MenuBar(this);
 		setJMenuBar(jMenuBar1);
 		// textFieldRayParameter.setText("0");
 
 		buttonCompute.addActionListener(this::buttonComputeActionPerformed);
 
-		buttonShow.addActionListener(this::buttonShowPerformed);
+		buttonShow.addActionListener(this::buttonSavePerformed);
 
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
@@ -136,7 +149,7 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 								GroupLayout.PREFERRED_SIZE)
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 								.addComponent(buttonCompute).addComponent(buttonShow))
-				.addComponent(resultWindow, 100, 100, 100).addContainerGap()));
+						.addComponent(resultWindow, 100, 100, 100).addContainerGap()));
 
 		pack();
 		setPolarity(0);
@@ -148,27 +161,62 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 	}// </editor-fold>//GEN-END:initComponents
 
 	/**
-	 * when the button "Compute" is clicked.
+	 * @return phases selected at the time considering polarity. When S is
+	 *         checked and polarity is ALL, then SH and SV return.
 	 */
-	void compute() {
+	synchronized Set<Phase> getSelectedPhaseSet() {
+		Set<Phase> phaseSet = phaseWindow.getSelectedPhaseSet();
+		switch (getPolarity()) {
+		case 0:
+			Set<Phase> allSet = new HashSet<>(phaseSet);
+			allSet.addAll(phaseSet.stream().map(p -> Phase.create(p.toString(), true)).filter(Phase::isPSV)
+					.collect(Collectors.toSet()));
+			return allSet;
+		case 1:
+			return phaseSet.stream().map(p -> Phase.create(p.toString(), true)).filter(Phase::isPSV)
+					.collect(Collectors.toSet());
+		case 2:
+			return phaseSet.stream().filter(p -> !p.isPSV()).collect(Collectors.toSet());
+		default:
+			throw new RuntimeException("anekusupekutedo");
+		}
 	}
 
 	/**
 	 * when the button "Save" is clicked.
 	 */
-	void save() {
+	private void buttonSavePerformed(java.awt.event.ActionEvent evt) {
+		if (currentComputationMode == null) {
+			JOptionPane.showMessageDialog(null, "Compute first.");
+			return;
+		}
+		currentComputationMode.outputPath();
 	}
 
-	Phase[] getSelectedPhases() {
-		return phaseWindow.getSelectedPhases();
-	}
-
-	private void buttonShowPerformed(java.awt.event.ActionEvent evt) {
-		save();
-	}
-
+	/**
+	 * when the button "Compute" is clicked.
+	 */
 	private void buttonComputeActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonComputeActionPerformed
-		compute();
+		createNewRaypathTabs();
+		switch (selectedMode()) {
+		case RAYPARAMETER:
+			currentComputationMode = new RayparameterMode(this, new Raypath(getMostImportant(), getStructure()));
+			break;
+		case TURNING_DEPTH:
+			currentComputationMode = new TurningDepthMode(this, getStructure());
+			break;
+		case DIFFRACTION:
+			currentComputationMode = new DiffractionMode(this, getStructure());
+			break;
+		case EPICENTRAL_DISTANCE:
+			currentComputationMode = new EpicentralDistanceMode(this, getSelectedPhaseSet(),
+					Math.toRadians(getMostImportant()), getStructure(), getEventR());
+			break;
+		default:
+			JOptionPane.showMessageDialog(null, "sorry not yet.");
+			return;
+		}
+		new Thread(currentComputationMode).start();
 	}// GEN-LAST:event_buttonComputeActionPerformed
 
 	/**
@@ -184,22 +232,22 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 				}
 			}
 		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOtimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOtimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOtimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(ANISOTimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
+			java.util.logging.Logger.getLogger(ANISOtimeGUI.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		}
 		// </editor-fold>
 
 		/* Create and display the form */
-		java.awt.EventQueue.invokeLater(() -> new ANISOTimeGUI().setVisible(true));
+		java.awt.EventQueue.invokeLater(() -> new ANISOtimeGUI().setVisible(true));
 	}
 
 	void setResult(int i) {
@@ -214,10 +262,15 @@ class ANISOTimeGUI extends javax.swing.JFrame {
 		resultWindow.addRow(epicentralDistance, depth, phase, travelTime, rayparameter);
 	}
 
+	synchronized void computed(Raypath raypath) {
+		currentRaypath = raypath;
+	}
+
+	private Raypath currentRaypath;
 	// Variables declaration - do not modify//GEN-BEGIN:variables
 	private JButton buttonCompute;
 	private JButton buttonShow;
-	private TravelTimeMenuBar jMenuBar1;
+	private MenuBar jMenuBar1;
 	private ParameterInputPanel jPanelParameter;
 	private ResultWindow resultWindow;
 	private PhaseWindow phaseWindow;

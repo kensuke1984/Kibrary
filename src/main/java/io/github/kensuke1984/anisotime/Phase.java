@@ -26,8 +26,7 @@ import java.util.stream.IntStream;
  * 
  * @version 0.1.5
  * 
- *          TODO TauP のように 任意の深さの反射 ADDEDBOUNDARY
- * 
+ *          TODO TauP のように 任意の深さの反射 ADDEDBOUNDARY TODO m does not work now
  * @author Kensuke Konishi
  * 
  */
@@ -89,12 +88,10 @@ public class Phase {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((compiledName == null) ? 0 : compiledName.hashCode());
+		result = prime * result + (psv ? 1231 : 1237);
 		return result;
 	}
 
-	/**
-	 * Compiled name is same or not.
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -108,6 +105,8 @@ public class Phase {
 			if (other.compiledName != null)
 				return false;
 		} else if (!compiledName.equals(other.compiledName))
+			return false;
+		if (psv != other.psv)
 			return false;
 		return true;
 	}
@@ -429,13 +428,13 @@ public class Phase {
 	public static void main(String[] args) {
 		// System.out.println(Phase.create("2PSdiff900"));
 		Phase p = Phase.create("ScS");
-		System.out.println(p.innerCoreSTravel);
+		System.out.println(p.mantleSTravel);
 		p.printInformation();
 	}
 
 	void printInformation() {
-		IntStream.range(0, nPart)
-				.forEach(i -> System.out.println(phaseParts[i] + " " + isDownGoing[i] + " " + partition[i]));
+		IntStream.range(0, nPart).forEach(
+				i -> System.out.println(phaseParts[i] + " " + (isDownGoing[i] ? "down" : "up") + " " + partition[i]));
 	}
 
 	/**

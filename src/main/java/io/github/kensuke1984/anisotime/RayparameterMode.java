@@ -10,14 +10,14 @@ import java.util.List;
  * Rayparameter mode
  * 
  * @author Kensuke Konishi
- * @version 0.2b
+ * @version 0.2.2b
  * 
  */
 final class RayparameterMode extends Computation {
 
 	final Raypath raypath;
 
-	RayparameterMode(ANISOtime parentTravelTimeTool, Raypath raypath) {
+	RayparameterMode(ANISOtimeGUI parentTravelTimeTool, Raypath raypath) {
 		super(parentTravelTimeTool);
 		this.raypath = raypath;
 	}
@@ -27,53 +27,22 @@ final class RayparameterMode extends Computation {
 		return ComputationMode.RAYPARAMETER;
 	}
 
-	@Override
 	/** 
 	 * Computes for parameters when compute button is pushed
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run() {
-		int polarization = travelTimeTool.getPolarization();
-		boolean psv = false;
-		boolean sh = false;
-		double eventR = travelTimeTool.getEventR();
-		switch (polarization) {
-		case 0:
-			psv = true;
-			sh = true;
-			break;
-		case 1:
-			psv = true;
-			break;
-		case 2:
-			sh = true;
-			break;
-		default:
-			throw new RuntimeException("Unexpected happens");
-		}
-		Raypath psvPath = new Raypath(raypath.getRayParameter(), raypath.getVelocityStructure()
-				);//TODO
-		psvPath.compute();
-		Raypath shPath = new Raypath(raypath.getRayParameter(), raypath.getVelocityStructure()
-				);
-		shPath.compute();
-		Phase[] selectedPhases = travelTimeTool.getSelectedPhases();
+		raypath.compute();
 		List<Raypath> raypathList = new ArrayList<>();
-		List<Phase> phaseList = new ArrayList<>();
-		for (Phase phase : selectedPhases) {
-			if (psv && psvPath.exists(eventR,phase)) {
-				raypathList.add(psvPath);
-				phaseList.add(phase);
-			}
-			if (sh && phase.pReaches() == null && shPath.exists(eventR,phase)) {
-				raypathList.add(shPath);
-				phaseList.add(phase);
-			}
-
-		}
+		List<Phase> phaseList = new ArrayList<>(gui.getSelectedPhaseSet());
+		
+		for(int i=0;i<phaseList.size();i++)
+			raypathList.add(raypath);
+		
 		raypaths = raypathList;
 		phases = phaseList;
-		travelTimeTool.computed(raypath);
+		gui.computed(raypath);
 		showResult(raypaths, phases);
 	}
 }
