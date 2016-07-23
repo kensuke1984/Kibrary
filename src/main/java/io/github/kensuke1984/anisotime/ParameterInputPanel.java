@@ -278,7 +278,6 @@ class ParameterInputPanel extends javax.swing.JPanel {
 	 *         Ray parameter mode: ray parameter<br>
 	 *         Turning depth mode: turning depth[km]<br>
 	 *         Diffraction mode: angle on CMB [deg]
-	 * 
 	 */
 	double getMostImportant() {
 		return Double.parseDouble(jTextFieldMostImportant.getText());

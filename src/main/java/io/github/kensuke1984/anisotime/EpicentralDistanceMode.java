@@ -5,24 +5,22 @@ package io.github.kensuke1984.anisotime;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Set;
 
 /**
  * Epicentral distance mode.
  * 
  * TODO Catalog share
- * TODO P-SV SH
- * 
+ * TODO diffraction negative
  * @author Kensuke Konishi
- * @version 0.2.1b
+ * @version 0.2.2b
  * 
  */
 class EpicentralDistanceMode extends Computation {
 
 	private VelocityStructure structure;
 	private double eventR;
-	private Phase[] targetPhases;
+	private Set<Phase> targetPhases;
 	/**
 	 * [rad]
 	 */
@@ -31,7 +29,7 @@ class EpicentralDistanceMode extends Computation {
 	private final RaypathCatalog catalog;
 
 	/**
-	 * @param travelTimeTool
+	 * @param gui
 	 *            parent
 	 * @param targetPhases
 	 *            Array of PhaseNames
@@ -42,9 +40,9 @@ class EpicentralDistanceMode extends Computation {
 	 * @param eventR
 	 *            radius (not depth) [km]
 	 */
-	EpicentralDistanceMode(ANISOtime travelTimeTool, Phase[] targetPhases, double epicentralDistance,
+	EpicentralDistanceMode(ANISOtimeGUI gui, Set<Phase> targetPhases, double epicentralDistance,
 			VelocityStructure structure, double eventR) {
-		super(travelTimeTool);
+		super(gui);
 		this.structure = structure;
 		this.eventR = eventR;
 		this.epicentralDistance = epicentralDistance;
@@ -55,23 +53,6 @@ class EpicentralDistanceMode extends Computation {
 
 	@Override
 	public void run() {
-		int polarization = travelTimeTool.getPolarization();
-		boolean psv = false;
-		boolean sh = false;
-		switch (polarization) {
-		case 0:
-			psv = true;
-			sh = true;
-			break;
-		case 1:
-			psv = true;
-			break;
-		case 2:
-			sh = true;
-			break;
-		default:
-			throw new RuntimeException("Unexpected happens");
-		}
 		raypaths = new ArrayList<>();
 		phases = new ArrayList<>();
 

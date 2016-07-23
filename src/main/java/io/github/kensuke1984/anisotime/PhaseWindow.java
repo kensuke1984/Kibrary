@@ -5,6 +5,8 @@ package io.github.kensuke1984.anisotime;
 
 import java.awt.Component;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
@@ -17,7 +19,7 @@ import javax.swing.ListCellRenderer;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.0.2.1
+ * @version 0.0.2.2
  * 
  */
 class PhaseWindow extends javax.swing.JFrame {
@@ -38,6 +40,9 @@ class PhaseWindow extends javax.swing.JFrame {
 		isDiffractionMode = bool;
 	}
 
+	/**
+	 * @param i
+	 */
 	synchronized void setPolarity(int i) {
 		final ListCellRenderer<? super String> r = jList1.getCellRenderer();
 		jList1.setCellRenderer(new ListCellRenderer<String>() {
@@ -115,31 +120,36 @@ class PhaseWindow extends javax.swing.JFrame {
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
 								.addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 194,
 										javax.swing.GroupLayout.PREFERRED_SIZE)
-						.addComponent(jLabelShift, javax.swing.GroupLayout.PREFERRED_SIZE, 194,
-								javax.swing.GroupLayout.PREFERRED_SIZE)
-						.addGroup(layout.createSequentialGroup()
-								.addComponent(jTextFieldPhaseAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 139,
+								.addComponent(jLabelShift, javax.swing.GroupLayout.PREFERRED_SIZE, 194,
 										javax.swing.GroupLayout.PREFERRED_SIZE)
-								.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-								.addComponent(jButtonAdd, javax.swing.GroupLayout.DEFAULT_SIZE,
-										javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-				.addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
+								.addGroup(layout.createSequentialGroup()
+										.addComponent(jTextFieldPhaseAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 139,
+												javax.swing.GroupLayout.PREFERRED_SIZE)
+										.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+										.addComponent(jButtonAdd, javax.swing.GroupLayout.DEFAULT_SIZE,
+												javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+						.addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)));
 		layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup().addContainerGap()
 						.addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE,
 								javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
 						.addComponent(jLabelShift, javax.swing.GroupLayout.PREFERRED_SIZE,
 								javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-				.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-						.addComponent(jTextFieldPhaseAdd, javax.swing.GroupLayout.PREFERRED_SIZE,
-								javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-						.addComponent(jButtonAdd)).addContainerGap(20, Short.MAX_VALUE)));
+						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+								.addComponent(jTextFieldPhaseAdd, javax.swing.GroupLayout.PREFERRED_SIZE,
+										javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+								.addComponent(jButtonAdd))
+						.addContainerGap(20, Short.MAX_VALUE)));
 
 		pack();
 	}// </editor-fold>
 
-	Phase[] getSelectedPhases() {
-		return jList1.getSelectedValuesList().stream().map(Phase::create).toArray(Phase[]::new);
+	/**
+	 * @return Set of phases selected at the moment. The phases have no information
+	 *         about polarity.
+	 */
+	synchronized Set<Phase> getSelectedPhaseSet() {
+		return jList1.getSelectedValuesList().stream().map(Phase::create).collect(Collectors.toSet());
 	}
 
 	/**
