@@ -19,7 +19,10 @@ If the environment is fine, execute [this](http://kensuke1984.github.io/bin/inst
 If you are a bash user, paste this at a Terminal prompt.
 ```bash
  % /bin/bash <(curl http://kensuke1984.github.io/bin/install.sh)
+#If curl is not installed, try
+ % /bin/bash <(wget -O - -q http://kensuke1984.github.io/bin/install.sh)
 ```
+
 It installs Kibrary. In order to include Kibrary to PATH, 
 ```bash
  % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
