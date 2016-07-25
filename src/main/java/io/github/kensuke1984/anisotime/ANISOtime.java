@@ -32,7 +32,7 @@ final class ANISOtime {
 	public static void main(String args[]) {
 		if (args.length != 0) {
 			try {
-				ANISOTimeCLI.main(args);
+				ANISOtimeCLI.main(args);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
