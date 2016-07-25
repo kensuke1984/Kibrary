@@ -92,7 +92,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		jPanelParameter.changeBorderTitle(jMenuBar1.getModeName() + "  " + jMenuBar1.getPoleString());
 		jPanelParameter.setMode(mode);
 		phaseWindow.setDiffractionMode(mode == ComputationMode.DIFFRACTION);
-
 	}
 
 	void changePropertiesVisible() {

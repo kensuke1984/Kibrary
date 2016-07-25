@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -26,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @author Kensuke Konishi
  * @version 0.3b
  */
-final class ANISOTimeCLI {
+final class ANISOtimeCLI {
 
 	/**
 	 * @param args
@@ -34,7 +33,7 @@ final class ANISOTimeCLI {
 	 * @throws ParseException
 	 *             if any
 	 */
-	private ANISOTimeCLI(String[] args) throws ParseException {
+	private ANISOtimeCLI(String[] args) throws ParseException {
 		cmd = new DefaultParser().parse(options, args);
 	}
 
@@ -71,7 +70,7 @@ final class ANISOTimeCLI {
 			printHelp();
 			return;
 		}
-		ANISOTimeCLI cli = new ANISOTimeCLI(args);
+		ANISOtimeCLI cli = new ANISOtimeCLI(args);
 		cli.run();
 	}
 
