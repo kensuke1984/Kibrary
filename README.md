@@ -22,37 +22,12 @@ If you are a bash user, paste this at a Terminal prompt.
 #If curl is not installed, try
  % wget -q -O - http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 ```
+If you want to clean install, use ```/bin/sh -s -- -f``` instead of ```/bin/sh -s```.
 
-It installs Kibrary. In order to include Kibrary to PATH, 
+It installs Kibrary under HOME directory. In order to setup environment like PATH, execute a script like below:
 ```bash
  % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
 ```
-
-Download and extract [gradlew.tar][gradlew] and execute *gradlew*
-and then type **gradlew build**,  
-you will see a jar file of *Kibrary* in build/libs, which you might want to move into CLASSPATH.
-
-Here is the flow to download source codes and build *ANISOtime*.
-```bash
- % wget http://kensuke1984.github.io/gradlew.tar
- % tar xf gradlew.tar
- % ./gradlew
- % ./gradlew build 
-```
-
-You can add *ANISOtime* in CLASSPATH as follows:
-```bash
- % mv build/libs/kibrary-*.jar /path/to/kibrary.jar
- % export CLASSPATH=$CLASSPATH:/path/to/kibrary.jar
- (/path/to/ should be the absolute path.)
-```
-If you use csh, tcsh or so,
-```csh
-% setenv CLASSPATH ${CLASSPATH}:/path/to/kibrary.jar
-```
-
-If you want to have Kibrary-goblin, you try the above flow with *goblin.tar* instead of *gradlew.tar*
-
 
 ##Build by yourself
 If you just want to use Kibrary, just install as [above](#installation).
@@ -75,7 +50,7 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 ##Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
-Last updated Jul 22, 2016
+Last updated Jul 26, 2016
 
 
 [release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
