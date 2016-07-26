@@ -18,9 +18,9 @@ click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">
 If the environment is fine, execute [this](http://kensuke1984.github.io/bin/install.sh).
 If you are a bash user, paste this at a Terminal prompt.
 ```bash
- % /bin/bash <(curl -s http://kensuke1984.github.io/bin/install.sh)
+ % curl -s http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 #If curl is not installed, try
- % /bin/bash <(wget -O - -q http://kensuke1984.github.io/bin/install.sh)
+ % wget -O - http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 ```
 
 It installs Kibrary. In order to include Kibrary to PATH, 
