@@ -15,12 +15,12 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
-If the environment is fine, execute [this](http://kensuke1984.github.io/bin/install.sh).
+If the environment is fine, execute [this](https://kensuke1984.github.io/bin/install.sh).
 If you are a bash user, paste this at a Terminal prompt.
 ```bash
- % curl -s http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
+ % curl -s https://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 #If curl is not installed, try
- % wget -q -O - http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
+ % wget -q -O - https://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 ```
 If you want to clean install, use ```/bin/sh -s -- -f``` instead of ```/bin/sh -s```.
 
