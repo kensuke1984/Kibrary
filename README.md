@@ -20,7 +20,7 @@ If you are a bash user, paste this at a Terminal prompt.
 ```bash
  % curl -s http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 #If curl is not installed, try
- % wget -O - http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
+ % wget -q -O - http://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 ```
 
 It installs Kibrary. In order to include Kibrary to PATH, 
