@@ -28,7 +28,7 @@ final class About extends javax.swing.JFrame {
 	private void initComponents() {
 		setTitle("About ANISOtime");
 		jScrollPane1 = new javax.swing.JScrollPane();
-		jTextArea1 = new javax.swing.JTextArea(line,5,20);
+		jTextArea1 = new javax.swing.JTextArea(line, 5, 20);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 		jScrollPane1.setViewportView(jTextArea1);
@@ -63,12 +63,11 @@ final class About extends javax.swing.JFrame {
 	 */
 	public static void main(String args[]) {
 		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
 				if ("Nimbus".equals(info.getName())) {
 					javax.swing.UIManager.setLookAndFeel(info.getClassName());
 					break;
 				}
-			}
 		} catch (ClassNotFoundException ex) {
 			java.util.logging.Logger.getLogger(About.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 		} catch (InstantiationException ex) {

@@ -25,7 +25,7 @@ import org.apache.commons.io.IOUtils;
  * Menubar for GUI
  * 
  * @author Kensuke Konishi
- * @version 0.1.3.1
+ * @version 0.1.4
  * 
  */
 final class MenuBar extends JMenuBar {
@@ -51,8 +51,6 @@ final class MenuBar extends JMenuBar {
 		jMenuPolarization = new JMenu("Switch Polarization");
 		jMenuItemExit = new JMenuItem("Exit");
 		jMenuItemParameterDescription = new JMenuItem("Parameter description");
-		jMenuItemTurningDepthMode = new JRadioButtonMenuItem("Turning Depth Mode");
-		jMenuItemDiffractionMode = new JRadioButtonMenuItem("Diffraction Mode");
 		jMenuItemRayparameterMode = new JRadioButtonMenuItem("Ray parameter Mode");
 		jMenuItemEpicentralDistanceMode = new JRadioButtonMenuItem("Epicentral Distance Mode");
 		jMenuItemPreferences = new JMenuItem("Preferences");
@@ -67,8 +65,6 @@ final class MenuBar extends JMenuBar {
 		buttonGroupPolarization.add(jMenuItemPSV);
 		buttonGroupPolarization.add(jMenuItemSH);
 
-		buttonGroupModes.add(jMenuItemDiffractionMode);
-		buttonGroupModes.add(jMenuItemTurningDepthMode);
 		buttonGroupModes.add(jMenuItemEpicentralDistanceMode);
 		buttonGroupModes.add(jMenuItemRayparameterMode);
 
@@ -133,8 +129,6 @@ final class MenuBar extends JMenuBar {
 		jMenuHelp.add(jMenuItemMail);
 		jMenuModes.add(jMenuItemEpicentralDistanceMode);
 		jMenuModes.add(jMenuItemRayparameterMode);
-		jMenuModes.add(jMenuItemTurningDepthMode);
-		jMenuModes.add(jMenuItemDiffractionMode);
 		jMenuFile.add(jMenuItemExit);
 		add(jMenuFile);
 		add(jMenuSettings);
@@ -179,10 +173,6 @@ final class MenuBar extends JMenuBar {
 
 	String getModeName() {
 		switch (mode) {
-		case TURNING_DEPTH:
-			return "Mode:Turning Depth";
-		case DIFFRACTION:
-			return "Mode:Diffraction";
 		case EPICENTRAL_DISTANCE:
 			return "Mode:Epicentral Distance";
 		case RAYPARAMETER:
@@ -193,16 +183,6 @@ final class MenuBar extends JMenuBar {
 	}
 
 	private void setModeSelect() {
-		jMenuItemTurningDepthMode.addActionListener(e -> {
-			mode = ComputationMode.TURNING_DEPTH;
-			gui.setMode(mode);
-			gui.setPolarity(polarization);
-		});
-		jMenuItemDiffractionMode.addActionListener(e -> {
-			mode = ComputationMode.DIFFRACTION;
-			gui.setMode(mode);
-			gui.setPolarity(polarization);
-		});
 		jMenuItemRayparameterMode.addActionListener(e -> {
 			mode = ComputationMode.RAYPARAMETER;
 			gui.setMode(mode);
@@ -229,8 +209,6 @@ final class MenuBar extends JMenuBar {
 	private JMenu jMenuPolarization;
 	// private javax.swing.JMenu jMenu2;
 	private JMenuItem jMenuItemExit;
-	private JMenuItem jMenuItemTurningDepthMode;
-	private JMenuItem jMenuItemDiffractionMode;
 	private JMenuItem jMenuItemRayparameterMode;
 	private JMenuItem jMenuItemEpicentralDistanceMode;
 	private JMenuItem jMenuItemParameterDescription;

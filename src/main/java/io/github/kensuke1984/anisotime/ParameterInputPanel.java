@@ -24,7 +24,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  * Panel for inputting parameters
  * 
- * @version 0.2.1.3
+ * @version 0.2.2
  * @author Kensuke Konishi
  */
 class ParameterInputPanel extends javax.swing.JPanel {
@@ -55,14 +55,6 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		case RAYPARAMETER:
 			jLabelMostImportant.setText("Ray parameter :");
 			jTextFieldMostImportant.setText("680.0");
-			break;
-		case TURNING_DEPTH:
-			jLabelMostImportant.setText("Turning depth [km]:");
-			jTextFieldMostImportant.setText("1000.0");
-			break;
-		case DIFFRACTION:
-			jLabelMostImportant.setText("Angle on CMB [deg]:");
-			jTextFieldMostImportant.setText("10.0");
 			break;
 		}
 
