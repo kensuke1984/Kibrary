@@ -6,10 +6,13 @@ package io.github.kensuke1984.anisotime;
 /**
  * Modes of computation
  * 
+ * RAYPARAMETER, EPICENTRAL_DISTANCE
+ * 
+ * 
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @version 0.0.3
  * 
  */
 enum ComputationMode {
-	RAYPARAMETER, TURNING_DEPTH, DIFFRACTION, EPICENTRAL_DISTANCE;
+	 EPICENTRAL_DISTANCE,RAYPARAMETER, ;
 }

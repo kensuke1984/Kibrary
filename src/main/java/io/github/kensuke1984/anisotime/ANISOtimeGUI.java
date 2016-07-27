@@ -19,7 +19,7 @@ import javax.swing.WindowConstants;
  * 
  * GUI for ANISOtime
  * 
- * @version 0.4.0
+ * @version 0.4.1
  * 
  * @author Kensuke Konishi
  */
@@ -74,8 +74,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	/**
 	 * @return Epicentral Distance mode: epicentral distance[deg]<br>
 	 *         Ray parameter mode: ray parameter<br>
-	 *         Turning depth mode: turning depth[km]<br>
-	 *         Diffraction mode: angle on CMB [deg]
 	 */
 	double getMostImportant() {
 		return jPanelParameter.getMostImportant();
@@ -91,7 +89,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	void setMode(ComputationMode mode) {
 		jPanelParameter.changeBorderTitle(jMenuBar1.getModeName() + "  " + jMenuBar1.getPoleString());
 		jPanelParameter.setMode(mode);
-		phaseWindow.setDiffractionMode(mode == ComputationMode.DIFFRACTION);
 	}
 
 	void changePropertiesVisible() {
@@ -200,12 +197,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		switch (selectedMode()) {
 		case RAYPARAMETER:
 			currentComputationMode = new RayparameterMode(this, new Raypath(getMostImportant(), getStructure()));
-			break;
-		case TURNING_DEPTH:
-			currentComputationMode = new TurningDepthMode(this, getStructure());
-			break;
-		case DIFFRACTION:
-			currentComputationMode = new DiffractionMode(this, getStructure());
 			break;
 		case EPICENTRAL_DISTANCE:
 			currentComputationMode = new EpicentralDistanceMode(this, getSelectedPhaseSet(),
