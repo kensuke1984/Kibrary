@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is only for CLI use of ANISOtime.
  * 
  * @author Kensuke Konishi
- * @version 0.3b
+ * @version 0.3.1b
  */
 final class ANISOtimeCLI {
 
@@ -58,6 +58,7 @@ final class ANISOtimeCLI {
 	 * @throws ParseException
 	 */
 	public static void main(String[] args) throws ParseException {
+		args = " -rc /tmp/prem.cat -deg 120 -ph Sdiff".split("\\s+");
 		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
@@ -70,6 +71,7 @@ final class ANISOtimeCLI {
 			printHelp();
 			return;
 		}
+
 		ANISOtimeCLI cli = new ANISOtimeCLI(args);
 		cli.run();
 	}
@@ -100,7 +102,7 @@ final class ANISOtimeCLI {
 
 	private double eventR;
 
-	private Phase targetPhase; // TODO phases
+	private Phase[] targetPhase;  
 
 	private double dDelta;
 
@@ -127,7 +129,8 @@ final class ANISOtimeCLI {
 			eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
 		}
 
-		targetPhase = Phase.create(cmd.getOptionValue("ph", "S"), cmd.hasOption("SV"));
+		targetPhase = Arrays.stream(cmd.getOptionValue("ph").split(",")).map(n -> Phase.create(n, cmd.hasOption("SV")))
+				.toArray(Phase[]::new);
 
 		targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
@@ -137,9 +140,22 @@ final class ANISOtimeCLI {
 
 	}
 
+	private boolean checkArgumentOption() {
+		boolean hasProblem = false;
+
+		if (Arrays.stream(cmd.getOptions()).filter(o -> o.hasArg()).anyMatch(o -> o.getValue().startsWith("-"))) {
+			System.err.println("Some options are missing arguments.");
+			hasProblem = true;
+		}
+		return hasProblem;
+	}
+
 	private void run() {
 
 		try {
+
+			if (checkArgumentOption())
+				throw new RuntimeException("Input arguments have problems.");
 
 			if (hasConflict())
 				return;
@@ -156,9 +172,11 @@ final class ANISOtimeCLI {
 			if (cmd.hasOption("p")) {
 				Raypath raypath = new Raypath(rayParameter, structure);
 				raypath.compute();
-				printResults(-1, raypath);
-				if (cmd.hasOption("eps"))
-					raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
+				for (Phase targetPhase : this.targetPhase) {
+					printResults(-1, raypath, targetPhase);
+					if (cmd.hasOption("eps"))
+						raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
+				}
 				return;
 			}
 
@@ -168,46 +186,43 @@ final class ANISOtimeCLI {
 				catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
 			}
 
-			Raypath[] raypaths = catalog.searchPath( targetPhase, eventR, targetDelta);
+			for (Phase targetPhase : this.targetPhase) {
+				Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta);
 
-			// List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase,
-			// structure, eventR, targetDelta, interval);
-			if (raypaths.length == 0) {
-				System.err.println("No raypaths satisfying the input condition");
-				return;
-			}
-			if (targetPhase.isDiffracted()) {
-				Raypath diffRay = raypaths[0];
-				double deltaOnBoundary = Math.toDegrees(targetDelta - raypaths[0].computeDelta(eventR, targetPhase));
-				if (deltaOnBoundary < 0) {
-					System.err.println("Sdiff would have longer distance than "
-							+ Precision.round(Math.toDegrees(diffRay.computeDelta(eventR, targetPhase)), 3)
-							+ " (Your input:" + Precision.round(Math.toDegrees(targetDelta), 3) + ")");
+				// List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase,
+				// structure, eventR, targetDelta, interval);
+				if (raypaths.length == 0) {
+					System.err.println("No raypaths satisfying the input condition");
 					return;
 				}
-				targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
-			}
-			if (targetPhase.isDiffracted()) {
-				Raypath raypath = raypaths[0];
-				double delta = raypath.computeDelta(eventR, targetPhase);
-				double dDelta = Math.toDegrees(targetDelta - delta);
-				targetPhase = Phase.create(targetPhase.toString() + dDelta, targetPhase.isPSV());
-				printResults(-1, raypath);
-				if (cmd.hasOption("eps"))
-					raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
-				return;
-			}
+				if (targetPhase.isDiffracted()) {
+					Raypath diffRay = raypaths[0];
+					double deltaOnBoundary = Math
+							.toDegrees(targetDelta - raypaths[0].computeDelta(eventR, targetPhase));
+					if (deltaOnBoundary < 0) {
+						System.err.println("Sdiff would have longer distance than "
+								+ Precision.round(Math.toDegrees(diffRay.computeDelta(eventR, targetPhase)), 3)
+								+ " (Your input:" + Precision.round(Math.toDegrees(targetDelta), 3) + ")");
+						return;
+					}
+					targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
+					printResults(-1, diffRay, targetPhase);
+					if (cmd.hasOption("eps"))
+						diffRay.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
+					return;
+				}
 
-			for (Raypath raypath : raypaths) {
-				printResults(Math.toDegrees(targetDelta), raypath);
-				int j = 0;
-				if (cmd.hasOption("eps"))
-					if (raypaths.length == 1)
-						raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + ".eps"), targetPhase);
-					else
-						raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + "." + j++ + ".eps"), targetPhase);
+				for (Raypath raypath : raypaths) {
+					printResults(Math.toDegrees(targetDelta), raypath, targetPhase);
+					int j = 0;
+					if (cmd.hasOption("eps"))
+						if (raypaths.length == 1)
+							raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + ".eps"), targetPhase);
+						else
+							raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + "." + j++ + ".eps"),
+									targetPhase);
+				}
 			}
-
 		} catch (Exception e) {
 			System.err.println("improper usage");
 			e.printStackTrace();
@@ -216,7 +231,8 @@ final class ANISOtimeCLI {
 
 	}
 
-	private static void printLine(int decimalPlace, double... values) {
+	private static void printLine(Phase phase, int decimalPlace, double... values) {
+		System.out.print(phase + " ");
 		for (double value : values)
 			System.out.print(Utilities.fixDecimalPlaces(decimalPlace, value) + " ");
 		System.out.println();
@@ -231,7 +247,7 @@ final class ANISOtimeCLI {
 	 * @param raypath
 	 *            Raypath
 	 */
-	private void printResults(double delta1, Raypath raypath) {
+	private void printResults(double delta1, Raypath raypath, Phase targetPhase) {
 		double p0 = raypath.getRayParameter();
 		double delta0 = raypath.computeDelta(eventR, targetPhase);
 		double time0 = raypath.computeT(eventR, targetPhase);
@@ -262,13 +278,13 @@ final class ANISOtimeCLI {
 			// System.out.println("Epicentral distance [deg] Travel time [s]"
 			// );
 			if (cmd.hasOption("rayp"))
-				printLine(n, p0);
+				printLine(targetPhase,n, p0);
 			else if (cmd.hasOption("time"))
-				printLine(n, time0);
+				printLine(targetPhase,n, time0);
 			else if (cmd.hasOption("delta"))
-				printLine(n, delta0);
+				printLine(targetPhase,n, delta0);
 			else
-				printLine(n, p0, delta0, time0);
+				printLine(targetPhase,n, p0, delta0, time0);
 			return;
 		} catch (Exception e) {
 			System.err.println("Option digit only accepts a positive integer " + cmd.getOptionValue("digit"));
@@ -334,7 +350,8 @@ final class ANISOtimeCLI {
 	private static void setArgumentOptions() {
 		options.addOption("h", true, "depth of source [km] (default = 0)");
 		options.addOption("deg", "epicentral-distance", true, "epicentral distance \u0394 [deg]");
-		options.addOption("ph", true, "seismic phase (default = S)");
+
+		options.addOption("ph", "phase", true, "seismic phase (default = S)");
 		options.addOption("mod", true, "structure (default:PREM)");
 		options.addOption("dec", true, "number of decimal places.");
 		options.addOption("p", true, "ray parameter");

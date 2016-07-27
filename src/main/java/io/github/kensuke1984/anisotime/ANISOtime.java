@@ -9,14 +9,14 @@ import org.apache.commons.cli.ParseException;
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 1.0b
+ * @version 1.0.1b
  * 
  */
 final class ANISOtime {
 
 	static final String codename = "Tavnazia";
 
-	static final String version = "1.0b";
+	static final String version = "1.0.1b";
 
 	/**
 	 * Creates new form TravelTimeGUI
@@ -30,14 +30,14 @@ final class ANISOtime {
 	 * @throws ParseException
 	 */
 	public static void main(String args[]) {
-		if (args.length != 0) {
+		if (args.length != 0)
 			try {
 				ANISOtimeCLI.main(args);
+				return;
 			} catch (Exception e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
-			return;
-		}
+
 		try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
 				if ("Nimbus".equals(info.getName())) {
