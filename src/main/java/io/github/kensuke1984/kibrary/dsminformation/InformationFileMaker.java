@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2.0.2
+ * @version 0.2.0.1
  * 
  * @author Kensuke Konishi
  * 
@@ -40,6 +40,7 @@ public class InformationFileMaker implements Operation {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
+			pw.println("manhattan InformationFileMaker");
 			pw.println("##Path of an information file for locations of perturbation point, must be set");
 			pw.println("#locationsPath pointLocations.inf");
 			pw.println("##Path of a station information file, must be set");
