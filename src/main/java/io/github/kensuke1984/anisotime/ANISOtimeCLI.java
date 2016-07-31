@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is only for CLI use of ANISOtime.
  * 
  * @author Kensuke Konishi
- * @version 0.3.1b
+ * @version 0.3.1.1b
  */
 final class ANISOtimeCLI {
 
@@ -101,7 +101,7 @@ final class ANISOtimeCLI {
 
 	private double eventR;
 
-	private Phase[] targetPhase;  
+	private Phase[] targetPhase;
 
 	private double dDelta;
 
@@ -128,9 +128,12 @@ final class ANISOtimeCLI {
 			eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
 		}
 
-		targetPhase = Arrays.stream(cmd.getOptionValue("ph").split(",")).map(n -> Phase.create(n, cmd.hasOption("SV")))
-				.toArray(Phase[]::new);
-
+		if (cmd.hasOption("ph"))
+			targetPhase = Arrays.stream(cmd.getOptionValue("ph").split(","))
+					.map(n -> Phase.create(n, cmd.hasOption("SV"))).toArray(Phase[]::new);
+		else
+			targetPhase = new Phase[] { Phase.S };
+		
 		targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
 		interval = Double.parseDouble(cmd.getOptionValue("dR", "10"));
@@ -277,13 +280,13 @@ final class ANISOtimeCLI {
 			// System.out.println("Epicentral distance [deg] Travel time [s]"
 			// );
 			if (cmd.hasOption("rayp"))
-				printLine(targetPhase,n, p0);
+				printLine(targetPhase, n, p0);
 			else if (cmd.hasOption("time"))
-				printLine(targetPhase,n, time0);
+				printLine(targetPhase, n, time0);
 			else if (cmd.hasOption("delta"))
-				printLine(targetPhase,n, delta0);
+				printLine(targetPhase, n, delta0);
 			else
-				printLine(targetPhase,n, p0, delta0, time0);
+				printLine(targetPhase, n, p0, delta0, time0);
 			return;
 		} catch (Exception e) {
 			System.err.println("Option digit only accepts a positive integer " + cmd.getOptionValue("digit"));
