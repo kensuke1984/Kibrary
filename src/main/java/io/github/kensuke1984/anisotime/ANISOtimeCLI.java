@@ -58,7 +58,6 @@ final class ANISOtimeCLI {
 	 * @throws ParseException
 	 */
 	public static void main(String[] args) throws ParseException {
-		args = " -rc /tmp/prem.cat -deg 120 -ph Sdiff".split("\\s+");
 		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
