@@ -15,8 +15,10 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
+Binary release of Kibrary can be found [here](https://goo.gl/5n0QG7), however, installation following as below is recommended.
+
 If the environment is fine, execute [this](https://kensuke1984.github.io/bin/install.sh).
-If you are a bash user, paste this at a Terminal prompt.
+If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
  % curl -s https://kensuke1984.github.io/bin/install.sh | /bin/sh -s
 #If curl is not installed, try
@@ -27,7 +29,10 @@ If you want to clean install, use ```/bin/sh -s -- -f``` instead of ```/bin/sh -
 It installs Kibrary under HOME directory. In order to setup environment like PATH, execute a script like below:
 ```bash
  % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
-```
+```  
+
+If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), the download may fail. In that case, you must update it, otherwise you can download the binary release of Kibrary. 
+
 
 ##Build by yourself
 If you just want to use Kibrary, just install as [above](#installation).
