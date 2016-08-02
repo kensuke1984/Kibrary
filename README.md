@@ -15,7 +15,7 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
 
-Binary release of Kibrary can be found [here](https://goo.gl/5n0QG7), however, installation following as below is recommended.
+Binary release of Kibrary can be found [here](https://www.dropbox.com/sh/iwki3nss7fb1rl1/AACPEKq3efHRNFAlB1bS5bgya?dl=0), however, installation following as below is recommended.
 
 If the environment is fine, execute [this](https://kensuke1984.github.io/bin/install.sh).
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
