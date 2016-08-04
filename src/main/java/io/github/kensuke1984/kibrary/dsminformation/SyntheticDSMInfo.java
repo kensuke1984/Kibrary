@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -16,9 +17,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 /**
  * Information file for TIPSV and TISH
  * 
- * @version 0.1.6.1
- * 
- * 
+ * @version 0.1.7
  * @author Kensuke Konishi
  * 
  */
@@ -94,21 +93,22 @@ public class SyntheticDSMInfo extends DSMheader {
 			pw.println("c parameter for the source");
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			// double[] mt = momentTensor;
-			Arrays.stream(momentTensor).forEach(mt -> pw.print(mt + " "));
-			pw.println("Moment Tensor (1.e25 dyne cm)");
+			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
+					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// station
 			pw.println("c parameter for the station");
 			pw.println("c the number of stations");
-			pw.println(stations.size() + " nr");
+			pw.println(stations.size() + " nsta");
 			pw.println("c latitude longitude (deg)");
-			stations.forEach(station -> pw.println(station.getPosition()));
+
+			stations.stream().sorted().map(Station::getPosition)
+					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
 			// output
 			pw.println("c parameter for the output file");
-			stations.forEach(
-					station -> pw.println(outputDir + "/" + station.getStationName() + "." + eventID + "PSV.spc"));
+			stations.stream().sorted().map(Station::getStationName)
+					.forEach(n -> pw.println(outputDir + "/" + n + "." + eventID + "PSV.spc"));
 			pw.println("end");
 
 		}
@@ -138,28 +138,23 @@ public class SyntheticDSMInfo extends DSMheader {
 			pw.println("c parameter for the source");
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			// double[] mt = momentTensor.getDSMmt();
-			Arrays.stream(momentTensor).forEach(mt -> pw.print(mt + " "));
-			pw.println("Moment Tensor (1.e25 dyne cm)");
+			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
+					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// station
 			pw.println("c parameter for the station");
 			pw.println("c the number of stations");
-			pw.println(stations.size() + " nr");
+			pw.println(stations.size() + " nsta");
 			pw.println("c latitude longitude (deg)");
-			stations.forEach(station -> pw.println(station.getPosition()));
+			stations.stream().sorted().map(Station::getPosition)
+					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
 			// output
 			pw.println("c parameter for the output file");
-			stations.forEach(
-					station -> pw.println(outputDir + "/" + station.getStationName() + "." + eventID + "SH.spc"));
+			stations.stream().sorted().map(Station::getStationName)
+					.forEach(n -> pw.println(outputDir + "/" + n + "." + eventID + "SH.spc"));
 			pw.println("end");
-
 		}
-	}
-
-	public Set<Station> getStation() {
-		return stations;
 	}
 
 }

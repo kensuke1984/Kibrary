@@ -74,7 +74,6 @@ public class InformationFileMaker implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
-
 	}
 
 	/**

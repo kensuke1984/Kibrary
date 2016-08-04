@@ -1,10 +1,11 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
@@ -19,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -38,25 +40,25 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * Information of a seismic event in
  * <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>.
  * 
- * @author kensuke
- * @version 0.0.2
+ * @author Kensuke Konishi
+ * @version 0.1.0
  * 
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  *      <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
  */
-public class SCARDEC{
-	
+public class SCARDEC {
+
 	/**
-	 * @return origin time 
+	 * @return origin time
 	 */
-	public LocalDateTime getOriginTime(){
+	public LocalDateTime getOriginTime() {
 		return ID.ORIGIN_TIME;
 	}
-	
+
 	/**
 	 * @return String of the region
 	 */
-	public String getRegion(){
+	public String getRegion() {
 		return ID.REGION;
 	}
 
@@ -159,6 +161,13 @@ public class SCARDEC{
 			int c = ORIGIN_TIME.compareTo(o.ORIGIN_TIME);
 			return c != 0 ? c : REGION.compareTo(o.REGION);
 		}
+
+		/**
+		 * @return SCARDEC with source time functions.
+		 */
+		public SCARDEC toSCARDEC() {
+			return SCARDEC.getSCARDEC(this);
+		}
 	}
 
 	private static final URL SCARDEC_ROOT_PATH = SCARDEC.class.getClassLoader().getResource("scardec_20141231.zip");
@@ -166,7 +175,7 @@ public class SCARDEC{
 	private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
 	static {
-		try (ZipInputStream zis = new ZipInputStream(SCARDEC_ROOT_PATH.openStream())) {
+		try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()))) {
 			ZipEntry entry;
 
 			while ((entry = zis.getNextEntry()) != null) {
@@ -184,23 +193,57 @@ public class SCARDEC{
 		}
 	}
 
-	public static SCARDEC getOPT(SCARDEC_ID id) {
+	public static SCARDEC getSCARDEC(SCARDEC_ID id) {
 		if (!EXISTING_ID.contains(id))
 			throw new RuntimeException("No information for " + id.ORIGIN_TIME + " " + id.REGION);
-
-		try (ZipInputStream zis = new ZipInputStream(SCARDEC_ROOT_PATH.openStream())) {
+		try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()))) {
 			ZipEntry entry;
+			Location loc = null;
+			double m0 = Double.NaN;
+			double mw = Double.NaN;
+			double strike1 = Double.NaN;
+			double dip1 = Double.NaN;
+			double rake1 = Double.NaN;
+			double strike2 = Double.NaN;
+			double dip2 = Double.NaN;
+			double rake2 = Double.NaN;
+			Trace averageSTF = null;
+			Trace optimalSTF = null;
 			while ((entry = zis.getNextEntry()) != null) {
 				String path = Paths.get(entry.getName()).toString();
 				if (entry.isDirectory())
 					continue;
-				if (!path.contains(id.REGION) || !path.contains(id.getDateTimeString()))
+				if (!path.contains(id.REGION) || !path.contains(id.getDateTimeString()) || path.contains("cmt.png"))
 					continue;
-				if (path.contains("optsource"))
-					return readBinary(zis, id.REGION);
+				DataInputStream dis = new DataInputStream(zis);
+				for (int i = 0; i < 6; i++)
+					dis.readInt(); // origin time
+				loc = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+				m0 = dis.readDouble();
+				mw = dis.readDouble();
+				strike1 = dis.readDouble();
+				dip1 = dis.readDouble();
+				rake1 = dis.readDouble();
+				strike2 = dis.readDouble();
+				dip2 = dis.readDouble();
+				rake2 = dis.readDouble();
+				int n = dis.readInt();
+				double[] time = new double[n];
+				double[] stf = new double[n];
+				for (int i = 0; i < n; i++) {
+					time[i] = dis.readDouble();
+					stf[i] = dis.readDouble();
+				}
+				if (path.contains("moysource"))
+					averageSTF = new Trace(time, stf);
+				else
+					optimalSTF = new Trace(time, stf);
 			}
-			throw new RuntimeException("UNEKSPECTED");
+			if (averageSTF == null || optimalSTF == null)
+				throw new RuntimeException("Average of optimal stf is not found.");
+			return new SCARDEC(id, loc, m0, mw, strike1, dip1, rake1, strike2, dip2, rake2, averageSTF, optimalSTF);
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException("Exception in reading the SCARDEC archive.");
 		}
 	}
@@ -249,27 +292,6 @@ public class SCARDEC{
 		}
 	}
 
-	public static SCARDEC getMOY(SCARDEC_ID id) {
-		if (!EXISTING_ID.contains(id))
-			throw new RuntimeException("No information for " + id.ORIGIN_TIME + " " + id.REGION);
-
-		try (ZipInputStream zis = new ZipInputStream(SCARDEC_ROOT_PATH.openStream())) {
-			ZipEntry entry;
-			while ((entry = zis.getNextEntry()) != null) {
-				String path = Paths.get(entry.getName()).toString();
-				if (entry.isDirectory())
-					continue;
-				if (!path.contains(id.REGION) || !path.contains(id.getDateTimeString()))
-					continue;
-				if (path.contains("moysource"))
-					return readBinary(zis, id.REGION);
-			}
-			throw new RuntimeException("UNEKSPECTED");
-		} catch (Exception e) {
-			throw new RuntimeException("Exception in reading the SCARDEC archive.");
-		}
-	}
-
 	/**
 	 * Interpolate to the samplingHz 20. and creates {@link SourceTimeFunction}
 	 * 
@@ -279,10 +301,15 @@ public class SCARDEC{
 	 *            [s] length of waveform [should be same as synthetics]
 	 * @return {@link SourceTimeFunction} for this.
 	 */
-	public SourceTimeFunction toSourceTimeFunction(int np, double tlen) {
+	public SourceTimeFunction getOptimalSTF(int np, double tlen) {
+		return getSTF(false, np, tlen);
+	}
+
+	private SourceTimeFunction getSTF(boolean average, int np, double tlen) {
 		double samplingHz = 20;
-		double start = MOMENT_RATE_FUNCTION.getXAt(0);
-		double end = MOMENT_RATE_FUNCTION.getXAt(MOMENT_RATE_FUNCTION.getLength() - 1);
+		Trace momentRateFunction = average ? AVERAGE_MOMENT_RATE_FUNCTION : OPTIMAL_MOMENT_RATE_FUNCTION;
+		double start = momentRateFunction.getXAt(0);
+		double end = momentRateFunction.getXAt(momentRateFunction.getLength() - 1);
 		if (!SourceTimeFunction.checkValues(np, tlen, samplingHz))
 			throw new IllegalArgumentException();
 		int nptsInTime = (int) (tlen * samplingHz);
@@ -293,10 +320,10 @@ public class SCARDEC{
 		for (int i = 0; i < stfForFFT.length; i++) {
 			double t = i * deltaT;
 			if (t < end) {
-				stfForFFT[i] = MOMENT_RATE_FUNCTION.toValue(2, t);
+				stfForFFT[i] = momentRateFunction.toValue(2, t);
 				stfSize += stfForFFT[i];
 			} else if (start < t - tlen) {
-				stfForFFT[i] = MOMENT_RATE_FUNCTION.toValue(2, t - tlen);
+				stfForFFT[i] = momentRateFunction.toValue(2, t - tlen);
 				stfSize += stfForFFT[i];
 			}
 		}
@@ -320,8 +347,21 @@ public class SCARDEC{
 		return stf;
 	}
 
+	/**
+	 * Interpolate to the samplingHz 20. and creates {@link SourceTimeFunction}
+	 * 
+	 * @param np
+	 *            steps of frequency [should be same as synthetics].
+	 * @param tlen
+	 *            [s] length of waveform [should be same as synthetics]
+	 * @return {@link SourceTimeFunction} for this.
+	 */
+	public SourceTimeFunction getAverageSTF(int np, double tlen) {
+		return getSTF(true, np, tlen);
+	}
+
 	private SCARDEC(SCARDEC_ID id, Location epicentralLocation, double m0, double mw, double strike1, double dip1,
-			double rake1, double strike2, double dip2, double rake2, Trace momentRate) {
+			double rake1, double strike2, double dip2, double rake2, Trace averageSTF, Trace optimalSTF) {
 		EPICENTRAL_LOCATION = epicentralLocation;
 		DIP1 = dip1;
 		DIP2 = dip2;
@@ -332,7 +372,8 @@ public class SCARDEC{
 		M0 = m0;
 		MW = mw;
 		ID = id;
-		MOMENT_RATE_FUNCTION = momentRate;
+		AVERAGE_MOMENT_RATE_FUNCTION = averageSTF;
+		OPTIMAL_MOMENT_RATE_FUNCTION = optimalSTF;
 	}
 
 	private final SCARDEC_ID ID;
@@ -361,9 +402,16 @@ public class SCARDEC{
 	private final double RAKE2;
 
 	/**
-	 * Trace of moment rate(x: time[s], y: moment rate[N&middot;m/s])
+	 * Trace of average moment rate(x: time[s], y: moment rate[N&middot;m/s])
+	 * average source time function
 	 */
-	private final Trace MOMENT_RATE_FUNCTION;
+	private final Trace AVERAGE_MOMENT_RATE_FUNCTION;
+
+	/**
+	 * Trace of optimal moment rate(x: time[s], y: moment rate[N&middot;m/s])
+	 * optimal source time function
+	 */
+	private final Trace OPTIMAL_MOMENT_RATE_FUNCTION;
 
 	/**
 	 * @param args
@@ -383,7 +431,7 @@ public class SCARDEC{
 				continue;
 			}
 			SCARDEC_ID scid = sid.get();
-			getOPT(scid).printInfo();
+			scid.toSCARDEC().printInfo();
 		}
 
 		// printList();
@@ -391,98 +439,184 @@ public class SCARDEC{
 
 	public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss");
 
-	public static SCARDEC readAscii(Path path) throws IOException {
-		List<String> lines = Files.readAllLines(path);
-		SCARDEC_ID id = SCARDEC_ID.of(path.getFileName().toString());
-		String first = lines.get(0);
+	/**
+	 * @param averagePath
+	 *            a PATH for a SCARDEC file of the average STF (moy)
+	 * @param optimalPath
+	 *            a PATH for a SCARDEC file of the optimal STF (opt)
+	 * @return SCARDEC written in the input paths
+	 * @throws IOException
+	 *             if any
+	 */
+	public static SCARDEC readAscii(Path averagePath, Path optimalPath) throws IOException {
+		List<String> averageLines = Files.readAllLines(averagePath);
+		List<String> optimalLines = Files.readAllLines(optimalPath);
+		SCARDEC_ID averageID = SCARDEC_ID.of(averagePath.getFileName().toString());
+		SCARDEC_ID optimalID = SCARDEC_ID.of(optimalPath.getFileName().toString());
+		if (!averageID.equals(optimalID) || !averageLines.get(0).equals(optimalLines.get(0))
+				|| !averageLines.get(1).equals(optimalLines.get(1)))
+			throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
+
+		String first = averageLines.get(0);
 		String date = first.substring(0, first.indexOf(".0"));
 		LocalDateTime origin = LocalDateTime.parse(date, FORMAT);
-		if (!id.ORIGIN_TIME.equals(origin))
+		if (!optimalID.ORIGIN_TIME.equals(origin))
 			throw new RuntimeException("ORIGIN time in the file name and the file are different!!");
 		double[] latlon = Arrays.stream(first.substring(first.indexOf(".0") + 3).split("\\s+"))
 				.mapToDouble(Double::parseDouble).toArray();
-		double[] values = Arrays.stream(lines.get(1).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
+		double[] values = Arrays.stream(averageLines.get(1).split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 		Location src = new Location(latlon[0], latlon[1], 6371 - values[0]);
-		String[][] moments = lines.stream().skip(2).map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
-		double[] time = Arrays.stream(moments).mapToDouble(p -> Double.parseDouble(p[0])).toArray();
-		double[] momentrate = Arrays.stream(moments).mapToDouble(p -> Double.parseDouble(p[1])).toArray();
-		return new SCARDEC(id, src, values[1], values[2], values[3], values[4], values[5], values[6], values[7],
-				values[8], new Trace(time, momentrate));
+
+		Function<List<String>, Trace> linesToSTF = lines -> {
+			String[][] parts = lines.stream().skip(2).map(s -> s.trim().split("\\s+")).toArray(String[][]::new);
+			double[] time = Arrays.stream(parts).mapToDouble(p -> Double.parseDouble(p[0])).toArray();
+			double[] momentrates = Arrays.stream(parts).mapToDouble(p -> Double.parseDouble(p[1])).toArray();
+			return new Trace(time, momentrates);
+		};
+
+		Trace averageSTF = linesToSTF.apply(averageLines);
+		Trace optimalSTF = linesToSTF.apply(optimalLines);
+
+		return new SCARDEC(optimalID, src, values[1], values[2], values[3], values[4], values[5], values[6], values[7],
+				values[8], averageSTF, optimalSTF);
 	}
 
 	/**
 	 * 
 	 * Outputs the SCARDEC information in the binary format.
 	 * 
-	 * @param path
-	 *            Path of the output file
+	 * @param folder
+	 *            Path of the folder where SCARDEC files are written.
 	 * @param options
 	 *            if any
 	 * @throws IOException
 	 *             if any
 	 */
-	public void write(Path path, OpenOption... options) throws IOException {
-		try (DataOutputStream dos = new DataOutputStream(Files.newOutputStream(path, options))) {
-			dos.writeInt(ID.ORIGIN_TIME.getYear());
-			dos.writeInt(ID.ORIGIN_TIME.getMonthValue());
-			dos.writeInt(ID.ORIGIN_TIME.getDayOfMonth());
-			dos.writeInt(ID.ORIGIN_TIME.getHour());
-			dos.writeInt(ID.ORIGIN_TIME.getMinute());
-			dos.writeInt(ID.ORIGIN_TIME.getSecond());
-			dos.writeDouble(EPICENTRAL_LOCATION.getLatitude());
-			dos.writeDouble(EPICENTRAL_LOCATION.getLongitude());
-			dos.writeDouble(EPICENTRAL_LOCATION.getR());
-			dos.writeDouble(M0);
-			dos.writeDouble(MW);
-			dos.writeDouble(STRIKE1);
-			dos.writeDouble(DIP1);
-			dos.writeDouble(RAKE1);
-			dos.writeDouble(STRIKE2);
-			dos.writeDouble(DIP2);
-			dos.writeDouble(RAKE2);
-			double[] time = MOMENT_RATE_FUNCTION.getX();
-			double[] stf = MOMENT_RATE_FUNCTION.getY();
-			dos.writeInt(time.length);
-			for (int i = 0; i < time.length; i++) {
-				dos.writeDouble(time[i]);
-				dos.writeDouble(stf[i]);
+	public void write(Path folder, OpenOption... options) throws IOException {
+		String dateTimeString = ID.getDateTimeString();
+		Path averagePath = folder.resolve("fctmoysource_" + dateTimeString + "_" + ID.REGION);
+		Path optimalPath = folder.resolve("fctoptsource_" + dateTimeString + "_" + ID.REGION);
+		try (DataOutputStream aveDOS = new DataOutputStream(
+				new BufferedOutputStream(Files.newOutputStream(averagePath, options)));
+				DataOutputStream optDOS = new DataOutputStream(
+						new BufferedOutputStream(Files.newOutputStream(optimalPath, options)))) {
+			aveDOS.writeInt(ID.ORIGIN_TIME.getYear());
+			aveDOS.writeInt(ID.ORIGIN_TIME.getMonthValue());
+			aveDOS.writeInt(ID.ORIGIN_TIME.getDayOfMonth());
+			aveDOS.writeInt(ID.ORIGIN_TIME.getHour());
+			aveDOS.writeInt(ID.ORIGIN_TIME.getMinute());
+			aveDOS.writeInt(ID.ORIGIN_TIME.getSecond());
+			aveDOS.writeDouble(EPICENTRAL_LOCATION.getLatitude());
+			aveDOS.writeDouble(EPICENTRAL_LOCATION.getLongitude());
+			aveDOS.writeDouble(EPICENTRAL_LOCATION.getR());
+			aveDOS.writeDouble(M0);
+			aveDOS.writeDouble(MW);
+			aveDOS.writeDouble(STRIKE1);
+			aveDOS.writeDouble(DIP1);
+			aveDOS.writeDouble(RAKE1);
+			aveDOS.writeDouble(STRIKE2);
+			aveDOS.writeDouble(DIP2);
+			aveDOS.writeDouble(RAKE2);
+			double[] averageTime = AVERAGE_MOMENT_RATE_FUNCTION.getX();
+			double[] averageSTF = AVERAGE_MOMENT_RATE_FUNCTION.getY();
+			aveDOS.writeInt(averageTime.length);
+			for (int i = 0; i < averageTime.length; i++) {
+				aveDOS.writeDouble(averageTime[i]);
+				aveDOS.writeDouble(averageSTF[i]);
+			}
+			optDOS.writeInt(ID.ORIGIN_TIME.getYear());
+			optDOS.writeInt(ID.ORIGIN_TIME.getMonthValue());
+			optDOS.writeInt(ID.ORIGIN_TIME.getDayOfMonth());
+			optDOS.writeInt(ID.ORIGIN_TIME.getHour());
+			optDOS.writeInt(ID.ORIGIN_TIME.getMinute());
+			optDOS.writeInt(ID.ORIGIN_TIME.getSecond());
+			optDOS.writeDouble(EPICENTRAL_LOCATION.getLatitude());
+			optDOS.writeDouble(EPICENTRAL_LOCATION.getLongitude());
+			optDOS.writeDouble(EPICENTRAL_LOCATION.getR());
+			optDOS.writeDouble(M0);
+			optDOS.writeDouble(MW);
+			optDOS.writeDouble(STRIKE1);
+			optDOS.writeDouble(DIP1);
+			optDOS.writeDouble(RAKE1);
+			optDOS.writeDouble(STRIKE2);
+			optDOS.writeDouble(DIP2);
+			optDOS.writeDouble(RAKE2);
+			double[] optTime = OPTIMAL_MOMENT_RATE_FUNCTION.getX();
+			double[] optSTF = OPTIMAL_MOMENT_RATE_FUNCTION.getY();
+			optDOS.writeInt(optTime.length);
+			for (int i = 0; i < optTime.length; i++) {
+				optDOS.writeDouble(optTime[i]);
+				optDOS.writeDouble(optSTF[i]);
 			}
 		}
 	}
 
-	public static SCARDEC readBinary(Path path, OpenOption... options) throws IOException {
-		try (DataInputStream dis = new DataInputStream(Files.newInputStream(path, options))) {
-			SCARDEC_ID id = SCARDEC_ID.of(path.getFileName().toString());
-			SCARDEC sc = readBinary(dis, id.REGION);
-			if (!sc.ID.ORIGIN_TIME.equals(id.ORIGIN_TIME))
-				throw new RuntimeException("ORIGIN time in the file name and in the file are different!!");
-			return sc;
-		}
-	}
+	public static SCARDEC readBinary(Path averagePath, Path optimalPath, OpenOption... options) throws IOException {
+		try (DataInputStream aveDIS = new DataInputStream(
+				new BufferedInputStream(Files.newInputStream(averagePath, options)));
+				DataInputStream optDIS = new DataInputStream(
+						new BufferedInputStream(Files.newInputStream(optimalPath, options)))) {
+			SCARDEC_ID averageID = SCARDEC_ID.of(averagePath.getFileName().toString());
+			SCARDEC_ID optimalID = SCARDEC_ID.of(optimalPath.getFileName().toString());
+			if (!averageID.equals(optimalID))
+				throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
 
-	private static SCARDEC readBinary(InputStream is, String region) throws IOException {
-		try (DataInputStream dis = new DataInputStream(is)) {
-			LocalDateTime origin = LocalDateTime.of(dis.readInt(), dis.readInt(), dis.readInt(), dis.readInt(),
-					dis.readInt(), dis.readInt());
-			SCARDEC_ID id = new SCARDEC_ID(origin, region);
-			Location loc = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
-			double m0 = dis.readDouble();
-			double mw = dis.readDouble();
-			double strike1 = dis.readDouble();
-			double dip1 = dis.readDouble();
-			double rake1 = dis.readDouble();
-			double strike2 = dis.readDouble();
-			double dip2 = dis.readDouble();
-			double rake2 = dis.readDouble();
-			int n = dis.readInt();
-			double[] time = new double[n];
-			double[] stf = new double[n];
-			for (int i = 0; i < n; i++) {
-				time[i] = dis.readDouble();
-				stf[i] = dis.readDouble();
+			try (DataInputStream averageDIS = new DataInputStream(Files.newInputStream(averagePath, options));
+					DataInputStream optimalDIS = new DataInputStream(Files.newInputStream(optimalPath, options))) {
+				LocalDateTime aveLDT = LocalDateTime.of(averageDIS.readInt(), averageDIS.readInt(),
+						averageDIS.readInt(), averageDIS.readInt(), averageDIS.readInt(), averageDIS.readInt());
+				LocalDateTime optLDT = LocalDateTime.of(optimalDIS.readInt(), optimalDIS.readInt(),
+						optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt());
+
+				Location aveloc = new Location(averageDIS.readDouble(), averageDIS.readDouble(),
+						averageDIS.readDouble());
+				if (!aveLDT.equals(averageID.ORIGIN_TIME))
+					throw new RuntimeException("ORIGIN time in the file name and in the file are different!!");
+				double avem0 = averageDIS.readDouble();
+				double avemw = averageDIS.readDouble();
+				double avestrike1 = averageDIS.readDouble();
+				double avedip1 = averageDIS.readDouble();
+				double averake1 = averageDIS.readDouble();
+				double avestrike2 = averageDIS.readDouble();
+				double avedip2 = averageDIS.readDouble();
+				double averake2 = averageDIS.readDouble();
+				int aven = averageDIS.readInt();
+				double[] avetime = new double[aven];
+				double[] avestf = new double[aven];
+				for (int i = 0; i < aven; i++) {
+					avetime[i] = averageDIS.readDouble();
+					avestf[i] = averageDIS.readDouble();
+				}
+
+				Location optloc = new Location(optimalDIS.readDouble(), optimalDIS.readDouble(),
+						optimalDIS.readDouble());
+				double optm0 = optimalDIS.readDouble();
+				double optmw = optimalDIS.readDouble();
+				double optstrike1 = optimalDIS.readDouble();
+				double optdip1 = optimalDIS.readDouble();
+				double optrake1 = optimalDIS.readDouble();
+				double optstrike2 = optimalDIS.readDouble();
+				double optdip2 = optimalDIS.readDouble();
+				double optrake2 = optimalDIS.readDouble();
+				if (!aveLDT.equals(optLDT) || !aveloc.equals(optloc) || optm0 != avem0 || optmw != avemw
+						|| optstrike1 != avestrike1 || optdip1 != avedip1 || optrake1 != averake1
+						|| optstrike2 != avestrike2 || optdip2 != avedip2 || optrake2 != averake2)
+					throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
+
+				int optn = optimalDIS.readInt();
+				double[] opttime = new double[optn];
+				double[] optstf = new double[optn];
+				for (int i = 0; i < optn; i++) {
+					opttime[i] = optimalDIS.readDouble();
+					optstf[i] = optimalDIS.readDouble();
+				}
+
+				Trace averageSTF = new Trace(avetime, avestf);
+				Trace optimalSTF = new Trace(opttime, optstf);
+				return new SCARDEC(optimalID, aveloc, avem0, avemw, avestrike1, avedip1, averake1, avestrike2, avedip2,
+						averake2, averageSTF, optimalSTF);
 			}
-			Trace momentRate = new Trace(time, stf);
-			return new SCARDEC(id, loc, m0, mw, strike1, dip1, rake1, strike2, dip2, rake2, momentRate);
+
 		}
 	}
 
@@ -504,8 +638,8 @@ public class SCARDEC{
 	 */
 	public void printMomentRate() {
 		System.out.println("time[s] moment rate[N\u00b7m/s]");
-		double[] time = MOMENT_RATE_FUNCTION.getX();
-		double[] stf = MOMENT_RATE_FUNCTION.getY();
+		double[] time = OPTIMAL_MOMENT_RATE_FUNCTION.getX();
+		double[] stf = OPTIMAL_MOMENT_RATE_FUNCTION.getY();
 		for (int i = 0; i < time.length; i++)
 			System.out.println(time[i] + " " + stf[i]);
 	}
