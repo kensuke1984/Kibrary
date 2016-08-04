@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * in Global CMT catalogue, the information for the event is written in SAC.
  * 
  * 
- * @version 0.1.6
+ * @version 0.1.6.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -513,7 +513,6 @@ public class SACMaker implements Runnable {
 		sac.setInt(SACHeaderEnum.NPTS, npts);
 		sac.setValue(SACHeaderEnum.E, delta * npts);
 		sac.setValue(SACHeaderEnum.DELTA, delta);
-
 	}
 
 	/**
@@ -640,10 +639,9 @@ public class SACMaker implements Runnable {
 			Predicate<SCARDEC_ID> predicate = id -> id.getOriginTime()
 					.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")).equals(args[3]);
 			SCARDEC_ID id = SCARDEC.pick(predicate);
-			SCARDEC sc = SCARDEC.getOPT(id);
+			SCARDEC sc = id.toSCARDEC();
 			sm.beginDateTime = id.getOriginTime();
-			sm.setSourceTimeFunction(sc.toSourceTimeFunction(oneSPC.np(), oneSPC.tlen()));
-
+			sm.setSourceTimeFunction(sc.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
 		}
 		sm.setOutPath(Paths.get(System.getProperty("user.dir")));
 		sm.run();

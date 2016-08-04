@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.Station;
  * Information file for computation of back propagation.
  * 
  * 
- * @version 0.0.4.3
+ * @version 0.0.5
  * 
  * @author Kensuke Konishi
  * 
@@ -47,7 +47,8 @@ public class BPinfo extends DSMheader {
 	 *            stationの位置
 	 * @param outputDir
 	 *            書き込むフォルダ （相対パス）
-	 * @param structure velocity structure
+	 * @param structure
+	 *            velocity structure
 	 * @param tlen
 	 *            must be a power of 2 /10
 	 * @param np
@@ -70,9 +71,13 @@ public class BPinfo extends DSMheader {
 
 	/**
 	 * Write an information file for psvbp
-	 * @param outPath Path for the file
-	 * @param options for opening the file
-	 * @throws IOException If an I/O error happens
+	 * 
+	 * @param outPath
+	 *            Path for the file
+	 * @param options
+	 *            for opening the file
+	 * @throws IOException
+	 *             If an I/O error happens
 	 */
 	public void writePSVBP(Path outPath, OpenOption... options) throws IOException {
 
@@ -95,13 +100,12 @@ public class BPinfo extends DSMheader {
 			pw.println(station.getStationName());
 			pw.println("c events and stations");
 
-			// nr
-			int nr = perturbationPoint.length;
-			pw.println(nr + " nr");
+			// horizontal positions for perturbation points
+			pw.println(perturbationPoint.length + " nsta");
 			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
-			// nsta
-			int nsta = perturbationPointR.length;
-			pw.println(nsta + " nsta");
+
+			// radii for perturbation points
+			pw.println(perturbationPointR.length + " nr");
 			Arrays.stream(perturbationPointR).forEach(pw::println);
 			pw.println("end");
 		}
@@ -137,19 +141,16 @@ public class BPinfo extends DSMheader {
 			pw.println(station.getStationName());
 			pw.println("c events and stations");
 
-			// nr
-			int nr = perturbationPoint.length;
-			pw.println(nr + " nr");
+			// horizontal positions for perturbation points
+			pw.println(perturbationPoint.length + " nsta");
 			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
-			// nsta
-			int nsta = perturbationPointR.length;
-			pw.println(nsta + " nsta");
+			// radii for perturbation points
+			pw.println(perturbationPointR.length + " nr");
 			Arrays.stream(perturbationPointR).forEach(pw::println);
 			pw.println("end");
 		}
 	}
-
 
 	public void setStructure(PolynomialStructure structure) {
 		this.structure = structure;

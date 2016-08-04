@@ -23,7 +23,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class is only for CLI use of ANISOtime.
  * 
  * @author Kensuke Konishi
- * @version 0.3.1.1b
+ * @version 0.3.1.2b
  */
 final class ANISOtimeCLI {
 
@@ -133,7 +133,7 @@ final class ANISOtimeCLI {
 					.map(n -> Phase.create(n, cmd.hasOption("SV"))).toArray(Phase[]::new);
 		else
 			targetPhase = new Phase[] { Phase.S };
-		
+
 		targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
 		interval = Double.parseDouble(cmd.getOptionValue("dR", "10"));
@@ -293,7 +293,7 @@ final class ANISOtimeCLI {
 		}
 	}
 
-	private static void printHelp() {
+	static void printHelp() {
 		helpFormatter.printHelp("Travel time", options);
 	}
 

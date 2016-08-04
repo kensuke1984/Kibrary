@@ -67,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * <p>
  * Because of DSM condition, stations can not have the same name...
  * 
- * @version 2.3.0.2
+ * @version 2.3.0.3
  * 
  * @author Kensuke Konishi
  */
@@ -309,6 +309,7 @@ public class PartialDatasetMaker implements Operation {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
+			pw.println("manhattan PartialDatasetMaker");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
 			pw.println("##Path of a back propagate spc folder (BPinfo)");
@@ -341,7 +342,7 @@ public class PartialDatasetMaker implements Operation {
 			pw.println("##File for Qstructure (if no file, then PREM)");
 			pw.println("#qinf");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private void checkAndPutDefaults() {
@@ -367,6 +368,8 @@ public class PartialDatasetMaker implements Operation {
 			property.setProperty("partialTypes", "MU");
 		if (!property.containsKey("partialSamplingHz"))
 			property.setProperty("partialSamplingHz", "20");
+		if (!property.containsKey("finalSamplingHz"))
+			property.setProperty("finalSamplingHz", "1");
 	}
 
 	/**
@@ -406,7 +409,6 @@ public class PartialDatasetMaker implements Operation {
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
-
 	}
 
 	private void setLog() throws IOException {
@@ -459,9 +461,9 @@ public class PartialDatasetMaker implements Operation {
 	@Override
 	public void run() throws IOException {
 		setLog();
-		setTimeWindow();
 		final int N_THREADS = Runtime.getRuntime().availableProcessors();
 		writeLog("Running " + N_THREADS + " threads");
+		setTimeWindow();
 		// filter設計
 		setBandPassFilter();
 		// read a file for perturbation points.
@@ -473,7 +475,6 @@ public class PartialDatasetMaker implements Operation {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 		setOutput();
-
 		int bpnum = 0;
 		setSourceTimeFunctions();
 		// bpフォルダごとにスタート
@@ -608,6 +609,11 @@ public class PartialDatasetMaker implements Operation {
 		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
 	}
 
+	/**
+	 * Reads timewindow information
+	 * 
+	 * @throws IOException if any
+	 */
 	private void setTimeWindow() throws IOException {
 		// タイムウインドウの情報を読み取る。
 		System.err.println("Reading timewindow information");
@@ -627,8 +633,8 @@ public class PartialDatasetMaker implements Operation {
 		boolean bpExistence = stationSet.stream().allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));
 		if (!fpExistence || !bpExistence)
 			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
-		writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath);
-
+		writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()
+				+ " events and " + stationSet.size() + " stations.");
 	}
 
 }

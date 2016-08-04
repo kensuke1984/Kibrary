@@ -14,8 +14,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 /**
  * Information file for computation of forward propagation.
  * 
- * @version 0.0.4.3
- * 
+ * @version 0.0.5
  * @author Kensuke Konishi
  */
 public class FPinfo extends DSMheader {
@@ -78,21 +77,21 @@ public class FPinfo extends DSMheader {
 			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
 					+ event.getCmtLocation().getLongitude());
 			double[] mt = event.getCmt().getDSMmt();
-			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")));
+			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
+					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// output info
 			pw.println("c output directory");
 			pw.println(outputDir + "/");
 			pw.println(event.toString());
 			pw.println("c events and stations");
-			// nr
-			int nr = perturbationPoint.length;
-			pw.println(nr + " nr");
+
+			// horizontal positions for perturbation points
+			pw.println(perturbationPoint.length + " nsta");
 			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
-			// nsta
-			int nsta = perturbationPointR.length;
-			pw.println(nsta + " nsta");
+			// radii for perturbation points
+			pw.println(perturbationPointR.length + " nr");
 			Arrays.stream(perturbationPointR).forEach(pw::println);
 			pw.println("end");
 		}
@@ -123,21 +122,21 @@ public class FPinfo extends DSMheader {
 			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
 					+ event.getCmtLocation().getLongitude());
 			double[] mt = event.getCmt().getDSMmt();
-			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")));
+			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
+					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// output info
 			pw.println("c output directory");
 			pw.println(outputDir + "/");
 			pw.println(event.toString());
 			pw.println("c events and stations");
-			// nr
-			int nr = perturbationPoint.length;
-			pw.println(nr + " nr");
+			
+			// horizontal positions for perturbation points
+			pw.println(perturbationPoint.length + " nsta");
 			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
-			// nsta
-			int nsta = perturbationPointR.length;
-			pw.println(nsta + " nsta");
+			// radii for perturbation points
+			pw.println(perturbationPointR.length + " nr");
 			Arrays.stream(perturbationPointR).forEach(pw::println);
 			pw.println("end");
 		}
