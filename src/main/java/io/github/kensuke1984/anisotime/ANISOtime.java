@@ -1,5 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
+import java.awt.GraphicsEnvironment;
+
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.cli.ParseException;
@@ -9,7 +11,7 @@ import org.apache.commons.cli.ParseException;
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 1.0.1b
+ * @version 1.0.1.1b
  * 
  */
 final class ANISOtime {
@@ -37,6 +39,10 @@ final class ANISOtime {
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
+		else if (GraphicsEnvironment.isHeadless()) {
+			System.err.println("No graphical environment.. please use CLI.");
+			ANISOtimeCLI.printHelp();
+		}
 
 		try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
