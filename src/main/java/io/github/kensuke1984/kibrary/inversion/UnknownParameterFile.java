@@ -18,7 +18,8 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * Am=d における m の情報
  * 
  * 3D(MU): PartialType lat lon r (weighting) <br>
- * 1D(PAR2): PartialType r (weighting) 後ろに重み付けがあれば読み込む（体積など）
+ * 1D(PAR2): PartialType r (weighting)<br>
+ *  後ろに重み付け(weighting)があれば読み込む（体積など）
  * 
  * TODO ３次元と１次元の混在をさける
  * 

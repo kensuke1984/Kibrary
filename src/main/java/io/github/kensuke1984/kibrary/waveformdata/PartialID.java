@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -67,7 +68,7 @@ public class PartialID extends BasicID {
 		this.partialType = partialType;
 		this.pointLocation = perturbationLocation;
 	}
-
+	
 	public Location getPerturbationLocation() {
 		return pointLocation;
 	}

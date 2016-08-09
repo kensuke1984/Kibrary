@@ -47,7 +47,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  * {@link TimewindowInformationFile} necessary.
  * 
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -57,10 +57,10 @@ public class DataSelection implements Operation {
 		Path outPath = Paths.get(DataSelection.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan DataSelection");
-			pw.println("##Sac components to be used (Z R T)");
-			pw.println("#components");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
+			pw.println("##Sac components to be used (Z R T)");
+			pw.println("#components");
 			pw.println("##Path of a root folder containing observed dataset (.)");
 			pw.println("#obsPath");
 			pw.println("##Path of a root folder containing synthetic dataset (.)");

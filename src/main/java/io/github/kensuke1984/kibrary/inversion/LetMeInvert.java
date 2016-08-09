@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * Let's invert
  * 
- * @version 2.0.3.2
+ * @version 2.0.3.3
  * 
  * @author Kensuke Konishi
  * 
@@ -105,6 +105,10 @@ public class LetMeInvert implements Operation {
 		workPath = Paths.get(property.getProperty("workPath"));
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		if (property.containsKey("outPath"))
+			outPath = getPath("outPath");
+		else
+			outPath = workPath.resolve(Paths.get("lmi" + Utilities.getTemporaryString()));
 		stationInformationPath = getPath("stationInformationPath");
 		waveIDPath = getPath("waveIDPath");
 		waveformPath = getPath("waveformPath");
@@ -128,10 +132,12 @@ public class LetMeInvert implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("##These properties for LetMeInvert");
 			pw.println("manhattan LetMeInvert");
+			pw.println("##These properties for LetMeInvert");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
+			pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
+			pw.println("#outPath");
 			pw.println("##Path of a waveID file, must be set");
 			pw.println("#waveIDPath waveID.dat");
 			pw.println("##Path of a waveform file, must be set");
@@ -157,7 +163,6 @@ public class LetMeInvert implements Operation {
 	public LetMeInvert(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
-		outPath = Files.createTempDirectory(workPath, "lmi");
 		if (!canGO())
 			throw new RuntimeException();
 		setEquation();
@@ -166,7 +171,7 @@ public class LetMeInvert implements Operation {
 	public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
 		eq = equation;
 		this.stationSet = stationSet;
-		this.outPath = Files.createTempDirectory(workPath, "lmi");
+		workPath.resolve("lmi" + Utilities.getTemporaryString());
 		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 	}
 
@@ -176,11 +181,11 @@ public class LetMeInvert implements Operation {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
 
 		// set Dvector
-		System.out.println("Creating D vector");
+		System.err.println("Creating D vector");
 		Dvector dVector = new Dvector(ids);
 
 		// set unknown parameter
-		System.out.println("setting up unknown parameter set");
+		System.err.println("setting up unknown parameter set");
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
 		// set partial matrix
@@ -216,7 +221,7 @@ public class LetMeInvert implements Operation {
 	public void run() {
 		try {
 			System.err.println("The output folder: " + outPath);
-			Files.createDirectories(outPath);
+			Files.createDirectory(outPath);
 			if (property != null)
 				writeProperties(outPath.resolve("lmi.properties"));
 		} catch (Exception e) {
@@ -471,7 +476,7 @@ public class LetMeInvert implements Operation {
 	 */
 	public static void main(String[] args) throws IOException {
 		LetMeInvert lmi = new LetMeInvert(Property.parse(args));
-		System.out.println(LetMeInvert.class.getName() + " is running.");
+		System.err.println(LetMeInvert.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();
 		System.err.println(
@@ -586,9 +591,9 @@ public class LetMeInvert implements Operation {
 				double epicentralDistance = Math
 						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
-				pw.println(station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " "
-						+ event.getCmtLocation() + " " + Precision.round(epicentralDistance ,2) + " "
-						+ Precision.round(azimuth,2) );
+				pw.println(
+						station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
+								+ " " + Precision.round(epicentralDistance, 2) + " " + Precision.round(azimuth, 2));
 			});
 
 		}

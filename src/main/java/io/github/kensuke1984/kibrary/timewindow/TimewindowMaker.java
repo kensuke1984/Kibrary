@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
  * 
- * @version 0.2.2
+ * @version 0.2.2.1
  * 
  * 
  * @author Kensuke Konishi
@@ -58,11 +58,11 @@ public class TimewindowMaker implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(TimewindowMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("##SacComponents to be used (Z R T)");
-			pw.println("#components");
 			pw.println("manhattan TimewindowMaker");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
 			pw.println("##TauPPhases exPhases (sS)");
 			pw.println("#exPhases");
 			pw.println("##TauPPhases usePhases (S)");

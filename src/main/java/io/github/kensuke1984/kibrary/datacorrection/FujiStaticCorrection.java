@@ -69,10 +69,11 @@ public class FujiStaticCorrection implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("##SacComponents to be used (Z R T)");
-			pw.println("#components");
+			pw.println("manhattan FujiStaticCorrection");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
 			pw.println("##Path of a root directory containing observed dataset (.)");
 			pw.println("#obsPath");
 			pw.println("##Path of a root directory containing synthetic dataset (.)");

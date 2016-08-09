@@ -43,7 +43,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * 
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.2
  * 
  * @author Kensuke Konishi
  * 
@@ -52,6 +52,7 @@ public class FirstHandler implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(FirstHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan FirstHandler");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
 			pw.println("##String a name of catalog to use from [cmt, pde]  (cmt)");
@@ -64,7 +65,7 @@ public class FirstHandler implements Operation {
 			pw.println("##boolean if it is true, remove intermediate files (true)");
 			pw.println("#removeIntermediateFile");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	public FirstHandler(Properties property) {
