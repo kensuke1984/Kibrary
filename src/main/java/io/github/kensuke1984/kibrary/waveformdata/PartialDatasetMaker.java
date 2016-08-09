@@ -67,7 +67,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * <p>
  * Because of DSM condition, stations can not have the same name...
  * 
- * @version 2.3.0.3
+ * @version 2.3.0.5
  * 
  * @author Kensuke Konishi
  */
@@ -307,9 +307,9 @@ public class PartialDatasetMaker implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(PartialDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan PartialDatasetMaker");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
-			pw.println("manhattan PartialDatasetMaker");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
 			pw.println("##Path of a back propagate spc folder (BPinfo)");

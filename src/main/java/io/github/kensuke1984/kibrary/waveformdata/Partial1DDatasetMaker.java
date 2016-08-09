@@ -49,8 +49,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
  * <b>Assume there are no station with the same name but different networks in
  * same events</b> TODO
  * 
- * @version 0.2.0.1
- * 
+ * @version 0.2.0.3
  * 
  * @author Kensuke Konishi
  * 
@@ -62,6 +61,7 @@ public class Partial1DDatasetMaker implements Operation {
 		Path outPath = Paths
 				.get(Partial1DDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan Partial1DDatasetMaker");
 			pw.println("##Path of a working directory (.)");
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used(Z R T)");
@@ -92,7 +92,7 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("##radius for perturbation points, must be set");
 			pw.println("#bodyR 3505 3555 3605");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	private Set<SACComponent> components;

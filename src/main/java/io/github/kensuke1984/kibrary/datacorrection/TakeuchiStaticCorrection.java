@@ -45,7 +45,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1.1
+ * @version 0.1.1.2
  * @see {@link StaticCorrection}
  */
 public class TakeuchiStaticCorrection implements Operation {
@@ -100,10 +100,11 @@ public class TakeuchiStaticCorrection implements Operation {
 		Path outPath = Paths
 				.get(TakeuchiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("#SacComponents to be used (Z R T)");
-			pw.println("#components");
+			pw.println("manhattan TakeuchiStaticCorrection");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
+			pw.println("#SacComponents to be used (Z R T)");
+			pw.println("#components");
 			pw.println("##Path of a root directory containing observed data (.)");
 			pw.println("#obsPath");
 			pw.println("##Path of a root directory containing synthetic data (.)");
@@ -116,7 +117,7 @@ public class TakeuchiStaticCorrection implements Operation {
 			pw.println("#sacSamplingHz cant change now");
 
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	/**

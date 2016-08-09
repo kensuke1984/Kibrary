@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -29,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2.0.1
+ * @version 0.2.1.1
  * 
  * @author Kensuke Konishi
  * 
@@ -38,9 +39,9 @@ public class InformationFileMaker implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(InformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan InformationFileMaker");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
-			pw.println("manhattan InformationFileMaker");
 			pw.println("##Path of an information file for locations of perturbation point, must be set");
 			pw.println("#locationsPath pointLocations.inf");
 			pw.println("##Path of a station information file, must be set");
@@ -55,7 +56,7 @@ public class InformationFileMaker implements Operation {
 			pw.println("##if so or it doesn't exist model is an initial PREM");
 			pw.println("#structureFile ");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	public InformationFileMaker(Properties property) throws IOException {
@@ -138,9 +139,8 @@ public class InformationFileMaker implements Operation {
 	private HorizontalPosition[] perturbationPointPositions;
 
 	/**
-	 * 摂動を与える深さ the dadius of perturbation points default values are
-	 * double[]{3505, 3555, 3605, 3655, 3705, 3755, 3805, 3855}
-	 * 
+	 * Radii of perturbation points default values are double[]{3505, 3555,
+	 * 3605, 3655, 3705, 3755, 3805, 3855} Sorted. No duplication.
 	 */
 	private double[] perturbationR;
 
@@ -166,10 +166,11 @@ public class InformationFileMaker implements Operation {
 	}
 
 	/**
-	 * read a file describing locations
+	 * Reads a file describing locations
 	 * 
-	 * file should be as below: <br>
-	 * r1 r2 r3..... rn <br>
+	 * The file should be as below: <br>
+	 * r1 r2 r3..... rn (Radii cannot have duplicate values, they will be
+	 * sorted)<br>
 	 * lat1 lon1<br>
 	 * lat2 lon2<br>
 	 * .<br>
@@ -179,11 +180,8 @@ public class InformationFileMaker implements Operation {
 	 */
 	private void readParameterPointInformation() throws IOException {
 		InformationFileReader reader = new InformationFileReader(locationsPath);
-		String line0 = reader.next();
-		String[] parts0 = line0.split("\\s+");
-		perturbationR = new double[parts0.length];
-		for (int i = 0; i < perturbationR.length; i++)
-			perturbationR[i] = Double.parseDouble(parts0[i]);
+		perturbationR = Arrays.stream(reader.next().split("\\s+")).mapToDouble(Double::parseDouble).sorted().distinct()
+				.toArray();
 
 		List<HorizontalPosition> positionList = new ArrayList<>();
 		String line;
@@ -292,7 +290,8 @@ public class InformationFileMaker implements Operation {
 			Files.delete(outputPath.resolve("perturbationPoint.inf"));
 			Files.delete(outputPath);
 		} else {
-//			FileUtils.moveFileToDirectory(getParameterPath().toFile(), outputPath.toFile(), false);
+			// FileUtils.moveFileToDirectory(getParameterPath().toFile(),
+			// outputPath.toFile(), false);
 			FileUtils.copyFileToDirectory(locationsPath.toFile(), outputPath.toFile(), false);
 		}
 	}

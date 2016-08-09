@@ -35,7 +35,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * has only one folder, then model name will be set automatically the name of
  * the folder.
  * 
- * @version 0.2.4.1
+ * @version 0.2.4.2
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -289,10 +289,10 @@ public final class SpcSAC implements Operation {
 		Path outPath = Paths.get(SpcSAC.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan SpcSAC");
-			pw.println("##SACComponents for output (Z R T)");
-			pw.println("#components");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
+			pw.println("##SACComponents for output (Z R T)");
+			pw.println("#components");
 			pw.println("###If you do NOT want to use PSV or SH, you set the one 'null'.");
 			pw.println("##Path of a PSV folder (.)");
 			pw.println("#psvPath");

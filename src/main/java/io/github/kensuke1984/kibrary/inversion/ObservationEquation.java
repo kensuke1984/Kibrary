@@ -120,8 +120,9 @@ public class ObservationEquation {
 				a.setEntry(row + j, column, partial[j] * weighting);
 			count.incrementAndGet();
 		});
+		System.out.println(count.get()+" "+ dVector.getNTimeWindow() * parameterList.size()+" "+parameterList.size());
 		if (count.get() != dVector.getNTimeWindow() * parameterList.size())
-			throw new RuntimeException("Input partials are not enough");
+			throw new RuntimeException("Input partials are not enough.");
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 	}
 
