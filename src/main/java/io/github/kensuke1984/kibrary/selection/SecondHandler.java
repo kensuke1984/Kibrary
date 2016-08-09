@@ -40,6 +40,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(SecondHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan SecondHandler");
 			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
 			pw.println("####If the below values are set, then SecondHandler will check the values");
@@ -59,7 +60,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 			pw.println("#minEventLongitude");
 			pw.println("#maxEventLongitude");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	/**

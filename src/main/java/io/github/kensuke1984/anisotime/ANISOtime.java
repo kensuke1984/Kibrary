@@ -42,6 +42,7 @@ final class ANISOtime {
 		else if (GraphicsEnvironment.isHeadless()) {
 			System.err.println("No graphical environment.. please use CLI.");
 			ANISOtimeCLI.printHelp();
+			return;
 		}
 
 		try {

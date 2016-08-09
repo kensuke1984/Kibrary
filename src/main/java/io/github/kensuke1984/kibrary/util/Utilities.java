@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0.6
+ * @version 0.1.0.7
  * 
  */
 public final class Utilities {
@@ -231,7 +231,12 @@ public final class Utilities {
 	 * @return yyyyMMddHHmmss
 	 */
 	public synchronized static String getTemporaryString() {
-		return DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
+		try {
+			Thread.sleep(1000);
+			return DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
+		} catch (InterruptedException ie) {
+			return DateTimeFormatter.ofPattern("yyyyMMddHHmmss").format(LocalDateTime.now());
+		}
 	}
 
 	/**

@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.8
+ * @version 0.2.0.9
  * 
  * @author Kensuke Konishi
  * 
@@ -46,8 +46,8 @@ public class CheckerBoardTest implements Operation {
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(CheckerBoardTest.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("##Path of a working folder (.)");
 			pw.println("manhattan CheckerBoardTest");
+			pw.println("##Path of a working folder (.)");
 			pw.println("#workPath");
 			pw.println("##Path of a waveID file, must be defined");
 			pw.println("#waveIDPath id.dat");

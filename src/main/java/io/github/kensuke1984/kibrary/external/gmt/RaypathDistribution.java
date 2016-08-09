@@ -41,8 +41,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * networks in an event</b>
  * 
  * 
+ * @version 0.1.1.1
  * @author Kensuke Konishi
- * @version 0.1.1
  * 
  */
 public class RaypathDistribution implements Operation {
@@ -51,10 +51,10 @@ public class RaypathDistribution implements Operation {
 		Path outPath = Paths.get(RaypathDistribution.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan RaypathDistribution");
-			pw.println("##SacComponents to be used (Z R T)");
-			pw.println("#components");
 			pw.println("##Work folder (.)");
 			pw.println("#workPath");
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
 			pw.println("##boolean true if you want to draw raypath (false)");
 			pw.println("#raypath");
 			pw.println("##StationInformationFile a file containing station information must be set!!");

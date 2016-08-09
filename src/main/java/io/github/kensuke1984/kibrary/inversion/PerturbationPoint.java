@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
 
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Location;
 
 /**
@@ -52,7 +53,7 @@ public class PerturbationPoint extends HorizontalPoint {
 
 		@Override
 		public void run() {
-			volumeMap.put(loc, GridMaker.getVolume(loc, dR, dLatitude, dLongitude));
+			volumeMap.put(loc, Earth.getVolume(loc, dR, dLatitude, dLongitude));
 			System.out.println(loc);
 		}
 

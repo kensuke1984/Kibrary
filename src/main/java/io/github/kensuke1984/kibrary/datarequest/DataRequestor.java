@@ -198,6 +198,7 @@ public class DataRequestor implements Operation {
 		Path outPath = Paths.get(DataRequestor.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			String userName = System.getProperty("user.name");
+			pw.println("manhattan DataRequestor");
 			pw.println("##Institute institute, must be defined");
 			if (userName.equals("kensuke")) {
 				pw.println("institute Academia Sinica");

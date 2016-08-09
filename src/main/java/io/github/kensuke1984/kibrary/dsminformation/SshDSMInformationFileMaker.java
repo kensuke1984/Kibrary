@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Information file for SSHSH
  * 
- * @version 0.1.1.2
+ * @version 0.1.1.3
  * 
  * @author Kensuke Konishi
  *
@@ -119,12 +119,12 @@ public class SshDSMInformationFileMaker implements Operation {
 		Path outPath = Paths
 				.get(SshDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("##These properties for SshDSMInformationFileMaker");
 			pw.println("manhattan SshDSMInformationFileMaker");
-			pw.println("##SacComponents to be used (Z R T)");
-			pw.println("#components");
+			pw.println("##These properties for SshDSMInformationFileMaker");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
 			pw.println("##header for names of information files, header_[psv, sh].inf, (PREM)");
 			pw.println("#header");
 			pw.println("##Path of a structure file you want to use. ()");

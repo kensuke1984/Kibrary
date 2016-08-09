@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.0.2
+ * @version 0.1.1
  */
 public final class Earth {
 	private Earth() {
@@ -333,6 +333,30 @@ public final class Earth {
 						* (getCrossSection(rs[ir], rs[ir + 1], latitudes[iLatitude], latitudes[iLatitude + 1]));
 
 		return v;
+	}
+
+	/**
+	 * @param point
+	 *            center location
+	 * @param dr
+	 *            [km] radius
+	 * @param dLatitude
+	 *            [deg] 地理緯度での間隔
+	 * @param dLongitude
+	 *            [deg]
+	 * @return volume [km<sup>3</sup>]
+	 */
+	public static double getVolume(Location point, double dr, double dLatitude, double dLongitude) {
+		double r = point.getR();
+		if (r <= 0)
+			throw new RuntimeException("location has an invalid R:" + r);
+
+		double latitude = point.getLatitude();// 地理緯度
+		double longitude = point.getLongitude();
+		double startA = getExtendedShaft(point.toLocation(r - 0.5 * dr));
+		double endA = getExtendedShaft(point.toLocation(r + 0.5 * dr));
+		return Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
+				longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
 	}
 
 	/**

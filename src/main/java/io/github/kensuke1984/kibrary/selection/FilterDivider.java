@@ -31,7 +31,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  * 
- * @version 0.2.2
+ * @version 0.2.2.1
  * 
  * @author Kensuke Konishi
  * 

@@ -41,14 +41,11 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * - latitude, longitude, radius Each PartialID information<br>
  * - see in {@link #readPartialIDFile(Path)}<br>
  * 
- * 
- * @since 2013/12/1 or earlier
+ * TODO short->char
+ * READing has problem. TODO
  * 
  * @version 0.3.0.1
- * 
  * @author Kensuke Konishi
- * 
- * 
  */
 public final class PartialIDFile {
 
@@ -93,6 +90,7 @@ public final class PartialIDFile {
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
 			Location[] perturbationLocations = new Location[dis.readShort()];
+			// 4 * short 
 			int headerBytes = 4 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
 					+ 4 * 3 * perturbationLocations.length;
 			long idParts = fileSize - headerBytes;
@@ -117,6 +115,7 @@ public final class PartialIDFile {
 				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
 			int nid = (int) (idParts / oneIDByte);
 			System.err.println("Reading partialID file: " + idPath);
+			
 			long t = System.nanoTime();
 			byte[][] bytes = new byte[nid][oneIDByte];
 			for (int i = 0; i < nid; i++)
@@ -128,7 +127,6 @@ public final class PartialIDFile {
 			System.err
 					.println(ids.length + " partial IDs are read in " + Utilities.toTimeString(System.nanoTime() - t));
 			return ids;
-
 		}
 	}
 
@@ -155,7 +153,6 @@ public final class PartialIDFile {
 		} else {
 			System.out.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
 		}
-
 	}
 
 	private static void outputPerturbationPoints(String header, PartialID[] pids) throws IOException {

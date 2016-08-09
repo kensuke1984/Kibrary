@@ -66,8 +66,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * TODO <b> Assume that there are no stations with same name but different
  * network in one event</b>
  * 
- * 
- * @version 0.2.1
+ * @version 0.2.1.1
  * 
  * @author Kensuke Konishi
  * 
