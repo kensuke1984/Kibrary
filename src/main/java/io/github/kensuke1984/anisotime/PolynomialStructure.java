@@ -16,23 +16,49 @@ import io.github.kensuke1984.kibrary.math.LinearEquation;
  * Polynomial structure.
  * 
  * 
- * @version 0.0.9.2
+ * @version 0.0.10
  * 
  * @author Kensuke Konishi
  *
  */
 public class PolynomialStructure implements VelocityStructure {
 
+	 
 	/**
-	 * Serialization identifier 2016/4/25
+	 * Serialization identifier 2016/8/23
 	 */
-	private static final long serialVersionUID = -4514556619009273107L;
+	private static final long serialVersionUID = -5415364557337661053L;
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((STRUCTURE == null) ? 0 : STRUCTURE.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PolynomialStructure other = (PolynomialStructure) obj;
+		if (STRUCTURE == null) {
+			if (other.STRUCTURE != null)
+				return false;
+		} else if (!STRUCTURE.equals(other.STRUCTURE))
+			return false;
+		return true;
+	}
 
 	final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
 
 	public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
 		STRUCTURE = structure;
-		radiusSubtraction = new PolynomialFunction(new double[] { 0, -earthRadius() });
+		RADIUS_SUBTRACTION = new PolynomialFunction(new double[] { 0, -earthRadius() });
 	}
 
 	/**
@@ -109,13 +135,13 @@ public class PolynomialStructure implements VelocityStructure {
 	/*
 	 * -radius x this is only for computations for bouncing points.
 	 */
-	private final PolynomialFunction radiusSubtraction;
+	private final PolynomialFunction RADIUS_SUBTRACTION;
 
 	@Override
 	public double pTurningR(double p) {
 		final PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (coreMantleBoundary() <= r)
@@ -128,7 +154,7 @@ public class PolynomialStructure implements VelocityStructure {
 	public double iTurningR(double p) {
 		PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (0 <= r && r <= innerCoreBoundary())
@@ -141,7 +167,7 @@ public class PolynomialStructure implements VelocityStructure {
 	public double svTurningR(double p) {
 		PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (coreMantleBoundary() <= r)
@@ -154,7 +180,7 @@ public class PolynomialStructure implements VelocityStructure {
 	public double shTurningR(double p) {
 		PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVshOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVshOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (coreMantleBoundary() <= r)
@@ -167,7 +193,7 @@ public class PolynomialStructure implements VelocityStructure {
 	public double jvTurningR(double p) {
 		PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (0 <= r && r <= innerCoreBoundary())
@@ -180,7 +206,7 @@ public class PolynomialStructure implements VelocityStructure {
 	public double jhTurningR(double p) {
 		PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVshOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVshOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (0 <= r && r <= innerCoreBoundary())
@@ -193,7 +219,7 @@ public class PolynomialStructure implements VelocityStructure {
 	public double kTurningR(double p) {
 		PolynomialFunction pFunction = new PolynomialFunction(new double[] { p });
 		for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
-			PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(radiusSubtraction); // pv-r=0
+			PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
 			LinearEquation eq = new LinearEquation(pvr);
 			double r = findTurningR(i, eq);
 			if (innerCoreBoundary() < r && r < coreMantleBoundary())

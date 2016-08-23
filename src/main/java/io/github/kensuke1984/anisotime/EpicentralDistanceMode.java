@@ -13,7 +13,7 @@ import java.util.Set;
  * TODO Catalog share
  * TODO diffraction negative
  * @author Kensuke Konishi
- * @version 0.2.2b
+ * @version 0.2.2.1b
  * 
  */
 class EpicentralDistanceMode extends Computation {
@@ -48,7 +48,7 @@ class EpicentralDistanceMode extends Computation {
 		this.epicentralDistance = epicentralDistance;
 		this.targetPhases = targetPhases;
 		// TODO mmesh deltaR
-		this.catalog = RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(), 10);
+		this.catalog = RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), 10);
 	}
 
 	@Override

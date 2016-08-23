@@ -15,12 +15,13 @@ import java.util.Set;
  * The class is calculator of the formulation in Woodhouse (1981).
  * 
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.2
  * @see <a href=
  *      http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  *      1981</a>
  */
 class Woodhouse1981 implements Serializable {
+
 
 	/**
 	 * As of 2016/7/19
@@ -35,7 +36,7 @@ class Woodhouse1981 implements Serializable {
 	private final static Set<Woodhouse1981> WOODHOUSE_CACHE = Collections.synchronizedSet(new HashSet<>());
 	static {
 		WOODHOUSE_CACHE.addAll(Arrays.asList(new Woodhouse1981(VelocityStructure.prem()),
-				new Woodhouse1981(VelocityStructure.ak135()), new Woodhouse1981(VelocityStructure.isoPREM())));
+				new Woodhouse1981(VelocityStructure.ak135()), new Woodhouse1981(VelocityStructure.iprem())));
 	}
 	
 	

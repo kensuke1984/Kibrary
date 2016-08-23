@@ -88,7 +88,7 @@ public class CrossSectionLine {
 					xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
 					xyz = xyz.rotateaboutY(centerLocation.getTheta());
 					xyz = xyz.rotateaboutZ(centerLocation.getPhi());
-					positions[i + nTheta] = xyz.getLocation();
+					positions[i + nTheta] = xyz.toLocation();
 	//				System.out.println(xyz.getLocation());
 					thetaX[i+nTheta]= -theta;
 				}
@@ -98,7 +98,7 @@ public class CrossSectionLine {
 					xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
 					xyz = xyz.rotateaboutY(centerLocation.getTheta());
 					xyz = xyz.rotateaboutZ(centerLocation.getPhi());
-					positions[i + nTheta] = xyz.getLocation();
+					positions[i + nTheta] = xyz.toLocation();
 	//				System.out.println(xyz.getLocation());
 					thetaX[i+nTheta]= theta;
 				}

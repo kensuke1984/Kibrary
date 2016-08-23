@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -27,16 +28,61 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * TODO boundaries close points EPS TODO default catalogue in .Kibrary
  * 
  * @author Kensuke Konishi
- * @version 0.0.3b
+ * @version 0.0.5b
  */
 public class RaypathCatalog implements Serializable {
 
-	private static final long serialVersionUID = 6254554199152935565L;
+	/**
+	 * 2016/8/23
+	 */
+	private static final long serialVersionUID = 5497962364312001093L;
+
+
+	static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
+
 
 	/**
 	 * Woodhouse formula with certain velocity structure
 	 */
 	private final Woodhouse1981 WOODHOUSE;
+
+	/**
+	 * Catalog for PREM. &delta;&Delta; = 1. Mesh is simple.
+	 */
+	public final static RaypathCatalog PREM;
+
+	/**
+	 * Catalog for the isotropic PREM. &delta;&Delta; = 1. Mesh is simple.
+	 */
+	public final static RaypathCatalog ISO_PREM;
+
+	/**
+	 * Catalog for AK135. &delta;&Delta; = 1. Mesh is simple.
+	 */
+	public final static RaypathCatalog AK135;
+
+	static {
+		try {
+			Files.createDirectories(share);
+			Path prem = share.resolve("prem.cat");
+			Path iprem = share.resolve("iprem.cat");
+			Path ak135 = share.resolve("ak135.cat");
+			if (!Files.exists(prem))
+				computeCatalogue(VelocityStructure.prem(), ComputationalMesh.simple(VelocityStructure.prem()), Math.toRadians(1))
+						.write(prem);
+			if (!Files.exists(iprem))
+				computeCatalogue(VelocityStructure.iprem(), ComputationalMesh.simple(VelocityStructure.iprem()), Math.toRadians(1))
+						.write(iprem);
+			if (!Files.exists(ak135))
+				computeCatalogue(VelocityStructure.ak135(), ComputationalMesh.simple(VelocityStructure.ak135()), Math.toRadians(1))
+						.write(ak135);
+			PREM = read(prem);
+			ISO_PREM = read(iprem);
+			AK135 = read(ak135);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/**
 	 * @return Woodhouse1981 used in the catalog.
@@ -102,53 +148,60 @@ public class RaypathCatalog implements Serializable {
 		return MESH;
 	}
 
-	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
-		RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
-		cat.create();
-		return cat;
-	}
-
 	/**
+	 * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
+	 * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
+	 * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue.<br>
+	 * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
+	 * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
+	 * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
+	 * 
+	 * Note that if a catalog for the input parameter already exists in
+	 * KibraryHOME/share, the stored catalog returns.
+	 * 
 	 * @param structure
 	 *            for computation of raypaths
 	 * @param mesh
 	 *            for computation of raypaths.
 	 * @param dDelta
-	 *            [rad] for creation of a catalog.
+	 *            &delta;&Delta; [rad] for creation of a catalog.
+	 */
+	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
+		try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
+			for (Path p : catalogStream) {
+				RaypathCatalog c = read(p); 
+				if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta)
+					return c;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
+		cat.create(); // TODO auto write
+		return cat;
+	}
+
+	/**
+	 * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
+	 * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
+	 * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue.<br>
+	 * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
+	 * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
+	 * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
+	 * 
+	 * @param structure
+	 *            for computation of raypaths
+	 * @param mesh
+	 *            for computation of raypaths.
+	 * @param dDelta
+	 *            &delta;&Delta; [rad] for creation of a catalog.
 	 */
 	private RaypathCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		WOODHOUSE = new Woodhouse1981(structure);
+		if (dDelta <= 0)
+			throw new IllegalArgumentException("Input dDelta must be positive.");
 		D_DELTA = dDelta;
 		MESH = mesh;
-	}
-
-	private RaypathCatalog() {
-		this(VelocityStructure.prem(), ComputationalMesh.simple(), Math.toRadians(1));
-	}
-
-	public static void main(String[] args) throws Exception {
-		// 605.5 605.5 26.78959947466123
-		RaypathCatalog r = new RaypathCatalog();
-		r.test();
-	}
-
-	private void test() throws IOException, ClassNotFoundException {
-		// create();
-		// write(Paths.get("/tmp/ray0.tmp"));
-		readtest();
-	}
-
-	private static void readtest() throws ClassNotFoundException, IOException {
-		RaypathCatalog r = RaypathCatalog.read(Paths.get("/tmp/ray0.tmp"));
-		Raypath ray = r.raypathList.first();
-
-		// r.raypathList.forEach(ra -> {
-		// if (!ra.exists(6371, Phase.S))
-		// return;
-		// double delta = Math.toDegrees(ra.computeDelta(6371, Phase.S));
-		// double time = ra.computeT(6371, Phase.S);
-		// System.out.println(delta + " " + time);
-		// });
 	}
 
 	/**
@@ -167,8 +220,8 @@ public class RaypathCatalog implements Serializable {
 	private Raypath shDiff;
 
 	/**
-	 * TODO boundaries
-	 * Computes ray parameters of diffraction phases (Pdiff and Sdiff).
+	 * TODO boundaries Computes ray parameters of diffraction phases (Pdiff and
+	 * Sdiff).
 	 */
 	private void computeDiffraction() {
 		VelocityStructure structure = WOODHOUSE.getStructure();
@@ -383,6 +436,7 @@ public class RaypathCatalog implements Serializable {
 		ray.compute();
 		return ray;
 	}
+
 	/**
 	 * @param path
 	 *            the path to the output file
@@ -394,7 +448,7 @@ public class RaypathCatalog implements Serializable {
 			o.writeObject(this);
 		}
 	}
-	
+
 	/**
 	 * @param targetPhase
 	 *            target phase
@@ -404,14 +458,14 @@ public class RaypathCatalog implements Serializable {
 	 *            [rad] target &Delta;
 	 * @return Never returns null. zero length array is possible.
 	 */
-	public Raypath[] searchPath( Phase targetPhase, double eventR, double targetDelta) {
-		Raypath[] raypaths =getRaypaths();
+	public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta) {
+		Raypath[] raypaths = getRaypaths();
 		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
 				+ Precision.round(Math.toDegrees(targetDelta), 4));
 
 		if (targetPhase.isDiffracted())
-			return new Raypath[] { targetPhase.toString().contains("Pdiff") ?  getPdiff()
-					: (targetPhase.isPSV() ?  getSVdiff() : getSHdiff()) };
+			return new Raypath[] { targetPhase.toString().contains("Pdiff") ? getPdiff()
+					: (targetPhase.isPSV() ? getSVdiff() : getSHdiff()) };
 
 		List<Raypath> pathList = new ArrayList<>();
 		for (int i = 0; i < raypaths.length - 1; i++) {
@@ -436,8 +490,7 @@ public class RaypathCatalog implements Serializable {
 		}
 		return pathList.toArray(new Raypath[0]);
 	}
-	
-	
+
 	/**
 	 * @param targetPhase
 	 *            target phase
@@ -446,8 +499,8 @@ public class RaypathCatalog implements Serializable {
 	 * @param targetDelta
 	 *            [rad] target &Delta;
 	 */
-	public double[] searchTime( Phase targetPhase, double eventR, double targetDelta) {
-//		Raypath[] raypaths = catalog.getRaypaths();
+	public double[] searchTime(Phase targetPhase, double eventR, double targetDelta) {
+		// Raypath[] raypaths = catalog.getRaypaths();
 		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
 				+ Precision.round(Math.toDegrees(targetDelta), 4));
 		List<Double> timeList = new ArrayList<>();
@@ -474,11 +527,6 @@ public class RaypathCatalog implements Serializable {
 		}
 		return timeList.stream().mapToDouble(Double::doubleValue).toArray();
 	}
-	
-	
-	
-	
-	
 
 	/**
 	 * Assume that there is a regression curve f(&Delta;) = T for the small
@@ -503,11 +551,7 @@ public class RaypathCatalog implements Serializable {
 		PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaTime.toList()));
 		return pf.value(targetDelta);
 	}
-	
-	
-	
-	
-	
+
 	/**
 	 * @param delta
 	 *            [deg]
@@ -521,7 +565,7 @@ public class RaypathCatalog implements Serializable {
 	 *            density of search
 	 * @return travel time for delta [s]
 	 */
-  static double travelTimeByThreePointInterpolate(double delta, Raypath raypath0, double eventR, Phase phase,
+	static double travelTimeByThreePointInterpolate(double delta, Raypath raypath0, double eventR, Phase phase,
 			double intervalOfP) {
 		delta = Math.toRadians(delta);
 		double delta0 = raypath0.computeDelta(eventR, phase);
@@ -545,7 +589,5 @@ public class RaypathCatalog implements Serializable {
 		Trace t = new Trace(p, time);
 		return t.toValue(2, delta);
 	}
-
-	
 
 }

@@ -47,7 +47,7 @@ public interface VelocityStructure extends Serializable {
 	/**
 	 * @return isotropic PREM by Dziewonski & Anderson 1981
 	 */
-	public static VelocityStructure isoPREM() {
+	public static VelocityStructure iprem() {
 		return PolynomialStructure.ISO_PREM;
 	}
 
