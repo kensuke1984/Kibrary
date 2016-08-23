@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2.1.1
+ * @version 0.2.1.2
  * 
  * @author Kensuke Konishi
  * 
@@ -209,7 +209,6 @@ public class InformationFileMaker implements Operation {
 					ppw.println(perturbationPointPositions[i] + " " + perturbationR[j]);
 			}
 		}
-
 	}
 
 	@Override
@@ -229,16 +228,12 @@ public class InformationFileMaker implements Operation {
 			throw new NoSuchFileException(workPath.toString());
 		if (!Files.exists(stationInformationPath))
 			throw new NoSuchFileException(stationInformationPath.toString());
+		readParameterPointInformation();
 		outputPath = workPath.resolve("threedPartial" + Utilities.getTemporaryString());
 		Files.createDirectories(outputPath);
 
 		Path bpPath = outputPath.resolve("BPinfo");
 		Path fpPath = outputPath.resolve("FPinfo");
-		// String model = model;
-		// double[] perturbationPointR = perturbationPointR;
-		// horizontalPointFile = new File(workDir, "horizontalPoint.inf");
-		// perturbationPointFile = new File(workDir,"perturbationPoint.inf");
-		readParameterPointInformation();
 		createPointInformationFile();
 		// System.exit(0);
 
@@ -252,7 +247,6 @@ public class InformationFileMaker implements Operation {
 		// //////////////////////////////////////
 		System.out.println("making information files for the events(fp)");
 		for (EventFolder ed : eventDirs) {
-			// System.out.println(ed);
 			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
 			FPinfo fp = new FPinfo(ev, header, ps, tlen, np);
 			fp.setPerturbationPointR(perturbationR);
@@ -264,24 +258,20 @@ public class InformationFileMaker implements Operation {
 			Files.createDirectories(infPath.resolve(header));
 			fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
 			fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
-			//
 		}
 
 		System.out.println("making information files for the stations(bp)");
 		for (Station station : stationSet) {
-			String str = station.getStationName();
 			// System.out.println(str);
 			BPinfo bp = new BPinfo(station, header, ps, tlen, np);
 			bp.setPerturbationPointR(perturbationR);
 			bp.setPerturbationPoint(perturbationPointPositions);
-
-			Path infPath = bpPath.resolve("0000" + str);
+			Path infPath = bpPath.resolve("0000" + station.getStationName());
 			// infDir.mkdir();
 			// System.out.println(infDir.getPath()+" was made");
 			Files.createDirectories(infPath.resolve(header));
 			bp.writeSHBP(infPath.resolve(header + "_SH.inf"));
 			bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
-
 		}
 
 		// TODO

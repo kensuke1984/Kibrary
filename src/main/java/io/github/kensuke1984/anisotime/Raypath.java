@@ -11,7 +11,6 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +29,6 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.math.Integrand;
-import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * 
@@ -64,7 +62,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1.4b
+ * @version 0.4.1.5b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -187,7 +185,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	Raypath(double rayParameter, Woodhouse1981 woodhouse, ComputationalMesh mesh) {
 		RAYPARAMETER = rayParameter;
 		WOODHOUSE = woodhouse;
-		MESH = mesh == null ? ComputationalMesh.simple() : mesh;
+		MESH = mesh == null ? ComputationalMesh.simple(woodhouse.getStructure()) : mesh;
 		setTurningRs();
 		computeJeffreysRange();
 	}

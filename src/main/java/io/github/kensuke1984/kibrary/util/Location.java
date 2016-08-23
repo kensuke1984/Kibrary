@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * 
  * This class rounds off values at the 4th decimal point.
  * 
- * @version 0.1.1.2
+ * @version 0.1.1.3
  * 
  * @author Kensuke Konishi
  * 
@@ -39,7 +39,7 @@ public class Location extends HorizontalPosition {
 	}
 
 	/**
-	 * 小数点4桁目を四捨五入
+	 * [km] radius rounded off to the 3 decimal places.
 	 */
 	private final double r;
 
@@ -57,20 +57,19 @@ public class Location extends HorizontalPosition {
 	}
 
 	/**
-	 * @return radius (not depth)
+	 * @return [km] radius (not depth)
 	 */
 	public double getR() {
 		return r;
 	}
 
 	/**
-	 * 
 	 * @return {@link RThetaPhi} of this
 	 */
 	public RThetaPhi getRThetaPhi() {
 		return new RThetaPhi(r, getTheta(), getPhi());
 	}
-
+	
 	/**
 	 * Cartesian coordinate
 	 * 
@@ -83,12 +82,10 @@ public class Location extends HorizontalPosition {
 	/**
 	 * @param location
 	 *            {@link Location} to compute distance with
-	 * @return locationとの直線距離
+	 * @return locationとの直線距離 [km]
 	 */
 	public double getDistance(Location location) {
-		XYZ xyz0 = toXYZ();
-		XYZ xyz = location.toXYZ();
-		return xyz.getDistance(xyz0);
+		return location.toXYZ().getDistance(toXYZ());
 	}
 
 	@Override
