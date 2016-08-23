@@ -14,9 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
  * This class is <b>IMMUTABLE</b>
  * 
  * 
- * 
- * @version 0.0.6.1
- * 
+ * @version 0.0.6.2
  * 
  * @author Kensuke Konishi
  *
@@ -116,7 +114,7 @@ public class Raypath {
 	 */
 	public HorizontalPosition positionOnRaypathAt(double theta) {
 		return RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0).rotateaboutZ(Math.PI - azimuth)
-				.rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).getLocation();
+				.rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).toLocation();
 	}
 
 	/**
@@ -129,7 +127,7 @@ public class Raypath {
 	 */
 	public HorizontalPosition moveToNorthPole(HorizontalPosition position) {
 		return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(-sourceLocation.getPhi())
-				.rotateaboutY(-sourceLocation.getTheta()).rotateaboutZ(-Math.PI + azimuth).getLocation();
+				.rotateaboutY(-sourceLocation.getTheta()).rotateaboutZ(-Math.PI + azimuth).toLocation();
 	}
 
 	/**
@@ -142,7 +140,7 @@ public class Raypath {
 	 */
 	public HorizontalPosition moveFromNorthPole(HorizontalPosition position) {
 		return position.toXYZ(Earth.EARTH_RADIUS).rotateaboutZ(Math.PI - azimuth)
-				.rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).getLocation();
+				.rotateaboutY(sourceLocation.getTheta()).rotateaboutZ(sourceLocation.getPhi()).toLocation();
 	}
 
 	/**
@@ -172,7 +170,7 @@ public class Raypath {
 	 * @return Raypath which phase travels this raypath
 	 */
 	public io.github.kensuke1984.anisotime.Raypath[] toANISOtime(Phase phase, VelocityStructure structure) {
-		return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(), 10).searchPath(phase,
+		return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), 10).searchPath(phase,
 				sourceLocation.getR(), epicentralDistance);
 	}
 

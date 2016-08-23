@@ -6,8 +6,8 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 3次元直交座標 cartesian 右手系
  * 
  * 3-D Cartesian coordinates right-handed system
- * 
- * @version 0.0.2.1
+ * This class is <b>immutable</b>
+ * @version 0.0.2.2
  * @author Kensuke Konishi
  * 
  */
@@ -18,7 +18,7 @@ public class XYZ extends XY {
 		this.z = z;
 	}
 
-	private double z;
+	private final double z;
 
 	@Override
 	public String toString() {
@@ -26,7 +26,7 @@ public class XYZ extends XY {
 	}
 
 	/**
-	 * @return 原点からの距離
+	 * @return distance from the origin
 	 */
 	@Override
 	public double getR() {
@@ -85,7 +85,10 @@ public class XYZ extends XY {
 	 * @return xyzとの距離
 	 */
 	public double getDistance(XYZ xyz) {
-		return Math.sqrt((x - xyz.x) * (x - xyz.x) + (y - xyz.y) * (y - xyz.y) + (z - xyz.z) * (z - xyz.z));
+		double dx = x - xyz.x;
+		double dy = y - xyz.y;
+		double dz = z - xyz.z;
+		return Math.sqrt(dx * dx + dy * dy + dz * dz);
 	}
 
 	public static RThetaPhi toSphericalCoordinate(double x, double y, double z) {
@@ -95,10 +98,9 @@ public class XYZ extends XY {
 				RThetaPhi.toPHIfromCartesian(x, y, z));
 	}
 
-	public Location getLocation() {
+	public Location toLocation() {
 		RThetaPhi rtp = toSphericalCoordinate(x, y, z);
-		Location location = new Location(Location.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
-		return location;
+		return new Location(Location.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
 	}
 
 	public RThetaPhi toSphericalCoordinate() {

@@ -134,6 +134,43 @@ public class ComputationalMesh implements Serializable {
 
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((innerCoreMesh == null) ? 0 : Arrays.hashCode(innerCoreMesh.toArray()));
+		result = prime * result + ((mantleMesh == null) ? 0 : Arrays.hashCode(mantleMesh.toArray()));
+		result = prime * result + ((outerCoreMesh == null) ? 0 : Arrays.hashCode(innerCoreMesh.toArray()));
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ComputationalMesh other = (ComputationalMesh) obj;
+		if (innerCoreMesh == null) {
+			if (other.innerCoreMesh != null)
+				return false;
+		} else if (!Arrays.equals(innerCoreMesh.toArray(),other.innerCoreMesh.toArray()))
+			return false;
+		if (mantleMesh == null) {
+			if (other.mantleMesh != null)
+				return false;
+		} else if (!Arrays.equals(mantleMesh.toArray(),other.mantleMesh.toArray()))
+			return false;
+		if (outerCoreMesh == null) {
+			if (other.outerCoreMesh != null)
+				return false;
+		} else if (!Arrays.equals(outerCoreMesh.toArray(),other.outerCoreMesh.toArray()))
+			return false;
+		return true;
+	}
+
 	/**
 	 * Interval of integration startR to endR is divided by deltaR
 	 * 
@@ -181,10 +218,8 @@ public class ComputationalMesh implements Serializable {
 		return mesh.getDimension() - 1;
 	}
 
-	private static final ComputationalMesh simple = new ComputationalMesh(VelocityStructure.prem(), 1, 1, 1);
-
-	public static ComputationalMesh simple() {
-		return simple;
+	public static ComputationalMesh simple(VelocityStructure structure) {
+		return new ComputationalMesh(structure, 1, 1, 1);
 	}
 
 	private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -200,4 +235,5 @@ public class ComputationalMesh implements Serializable {
 		outerCoreMesh = RealVector.unmodifiableRealVector((RealVector) stream.readObject());
 		innerCoreMesh = RealVector.unmodifiableRealVector((RealVector) stream.readObject());
 	}
+
 }

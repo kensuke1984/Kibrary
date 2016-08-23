@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.1.1
+ * @version 0.1.2
  */
 public class InversionResult {
 
@@ -72,22 +72,32 @@ public class InversionResult {
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
 	}
 
+	/**
+	 * @return (unmodifiable) List of unknown parameters
+	 */
 	public List<UnknownParameter> getUnknownParameterList() {
 		return unknownParameterList;
 	}
 
 	/**
-	 * @return List of {@link BasicID} in order.
+	 * @return (unmodifiable) List of {@link BasicID} in order.
 	 */
 	public List<BasicID> getBasicIDList() {
 		return basicIDList;
 	}
 
 	/**
-	 * @return the number of timewindow
+	 * @return Number of timewindow
 	 */
 	public int getNumberOfWindows() {
 		return basicIDList.size();
+	}
+
+	/**
+	 * @return Number of unknown parameters (m)
+	 */
+	public int getNumberOfUnknowns() {
+		return unknownParameterList.size();
 	}
 
 	/**
@@ -143,19 +153,23 @@ public class InversionResult {
 			synStartTimeOrder[i] = Double.parseDouble(parts[16]);
 			weightingOrder[i] = Double.parseDouble(parts[17]);
 		});
+		basicIDList = Collections.unmodifiableList(basicIDList);
 	}
-	
+
 	/**
-	 * @return vector of residual (observed-synthetic) waveforms in an observed equation
-	 * @throws IOException if any
+	 * @return vector of residual (observed-synthetic) waveforms in an observed
+	 *         equation
+	 * @throws IOException
+	 *             if any
 	 */
 	public RealVector getDVector() throws DimensionMismatchException, IOException {
 		return getObservedVector().subtract(getSyntheticVector());
 	}
-	
+
 	/**
 	 * @return vector of observed waveforms in an observed equation
-	 * @throws IOException if any
+	 * @throws IOException
+	 *             if any
 	 */
 	public RealVector getObservedVector() throws IOException {
 		double[] obsv = new double[npts];
@@ -170,7 +184,8 @@ public class InversionResult {
 
 	/**
 	 * @return vector of synthetic waveforms in an observed equation
-	 * @throws IOException if any
+	 * @throws IOException
+	 *             if any
 	 */
 	public RealVector getSyntheticVector() throws IOException {
 		double[] synv = new double[npts];
@@ -252,7 +267,7 @@ public class InversionResult {
 	 * Example, if you want to get an answer of CG1. <br>
 	 * inverse &rarr; CG, n &rarr; 1
 	 * 
-	 * Returning Map key is an unknown parameter.
+	 * Keys of the returning map are unknown parameters.
 	 * 
 	 * @param inverse
 	 *            used solver
@@ -262,15 +277,13 @@ public class InversionResult {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public Map<UnknownParameter, Double> answerOf(InverseMethodEnum inverse, int n) throws IOException {
+	public Map<UnknownParameter, Double> answerMapOf(InverseMethodEnum inverse, int n) throws IOException {
 		if (n <= 0)
 			throw new IllegalArgumentException("n is out of range. must be 1, 2,.. ");
-		double[] values = Files.readAllLines(rootPath.resolve(inverse + "/" + inverse + n + ".txt")).stream()
-				.mapToDouble(Double::parseDouble).toArray();
-		Map<UnknownParameter, Double> ansMap = new HashMap<>(values.length);
-		for (int i = 0; i < unknownParameterList.size(); i++)
-			ansMap.put(unknownParameterList.get(i), values[i]);
-		return Collections.unmodifiableMap(ansMap);
+		double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + "/" + inverse.simple() + n + ".txt"))
+				.stream().mapToDouble(Double::parseDouble).toArray();
+		return IntStream.range(0, values.length).boxed()
+				.collect(Collectors.toMap(unknownParameterList::get, i -> values[i]));
 	}
 
 	/**
@@ -376,7 +389,10 @@ public class InversionResult {
 										parts[1]),
 								parts -> Double.parseDouble(parts[4]))));
 		for (InverseMethodEnum inverse : InverseMethodEnum.values()) {
-			Path path = rootPath.resolve(inverse.name() + "/variance.txt");
+			// TODO
+			if (inverse == InverseMethodEnum.LEAST_SQUARES_METHOD)
+				continue;
+			Path path = rootPath.resolve(inverse.simple() + "/variance.txt");
 			answerVarianceMap.put(inverse,
 					Files.lines(path).mapToDouble(Double::parseDouble).boxed().toArray(Double[]::new));
 		}
@@ -386,6 +402,9 @@ public class InversionResult {
 		return stationVarianceMap.keySet();
 	}
 
+	/**
+	 * @return (unmodifiable) Set of used GlobalCMT ids
+	 */
 	public Set<GlobalCMTID> idSet() {
 		return eventVarianceMap.keySet();
 	}
@@ -413,7 +432,7 @@ public class InversionResult {
 
 		Files.createDirectories(bornPath.getParent());
 		Trace syn = syntheticOf(id);
-		Map<UnknownParameter, Double> answer = answerOf(method, n);
+		Map<UnknownParameter, Double> answer = answerMapOf(method, n);
 		Trace born = syn;
 
 		for (UnknownParameter par : unknownParameterList)
@@ -524,8 +543,19 @@ public class InversionResult {
 	/**
 	 * @return the variance between obs and syn (initial model)
 	 */
-	public double getVariance() {
+	public double getInitialVariance() {
 		return answerVarianceMap.get(InverseMethodEnum.CONJUGATE_GRADIENT)[0];
+	}
+
+	/**
+	 * @param a
+	 *            assumed redundancy in data points. It is used as n/a, where n
+	 *            is the number of data points, note that n/a will be
+	 *            (int)(n/a).
+	 * @return the Akaike Information criterion for the initial model. (k=0)
+	 */
+	public double getInitialAIC(double a) {
+		return Utilities.computeAIC(getInitialVariance(), (int) (npts / a), 0);
 	}
 
 	/**
@@ -546,11 +576,11 @@ public class InversionResult {
 		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
 				Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
-		if (type == PartialType.TIME) 
+		if (type == PartialType.TIME)
 			throw new RuntimeException("TIME PARTIAL MADADAMEEEEEEEE");
-		if (ansMap.containsKey(location)) 
+		if (ansMap.containsKey(location))
 			return ansMap.get(location);
-		
+
 		Location[] nearLocations = location
 				.getNearestLocation(answer.keySet().stream().filter(key -> key.getPartialType() == type)
 						.map(key -> ((Physical3DParameter) key).getPointLocation()).toArray(Location[]::new));
@@ -561,9 +591,9 @@ public class InversionResult {
 			rTotal += 1 / r[iPoint];
 		}
 		double value = 0;
-		for (int iPoint = 0; iPoint < nPoints; iPoint++) 
+		for (int iPoint = 0; iPoint < nPoints; iPoint++)
 			value += ansMap.get(nearLocations[iPoint]) / r[iPoint];
-		
+
 		return value / rTotal;
 	}
 

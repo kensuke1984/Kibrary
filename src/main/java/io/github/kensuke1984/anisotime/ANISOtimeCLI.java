@@ -22,8 +22,10 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * This class is only for CLI use of ANISOtime.
  * 
+ * TODO customize for catalog ddelta
+ * 
  * @author Kensuke Konishi
- * @version 0.3.1.2b
+ * @version 0.3.2b
  */
 final class ANISOtimeCLI {
 
@@ -58,6 +60,7 @@ final class ANISOtimeCLI {
 	 * @throws ParseException
 	 */
 	public static void main(String[] args) throws ParseException {
+		args = " -deg 10 -mod prem".split("\\s+");
 		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
@@ -84,7 +87,7 @@ final class ANISOtimeCLI {
 	private void createCatalog() throws IOException {
 		Path catalogPath = Paths.get(cmd.getOptionValue("cc"));
 		VelocityStructure structure = createVelocityStructure();
-		ComputationalMesh mesh = ComputationalMesh.simple(); // TODO
+		ComputationalMesh mesh = ComputationalMesh.simple(structure); 
 		Files.createFile(catalogPath);
 		RaypathCatalog rc = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
 		rc.write(catalogPath);
@@ -164,12 +167,6 @@ final class ANISOtimeCLI {
 
 			setParameters();
 
-			// Catalog creation
-			if (cmd.hasOption("cc")) {
-				createCatalog();
-				return;
-			}
-
 			// When the ray parameter is given
 			if (cmd.hasOption("p")) {
 				Raypath raypath = new Raypath(rayParameter, structure);
@@ -181,10 +178,19 @@ final class ANISOtimeCLI {
 				}
 				return;
 			}
+			
+			// Catalog search
+			
+
+			// Catalog creation
+			if (cmd.hasOption("cc")) {
+				createCatalog();
+				return;
+			}
 
 			// Compute a catalog
 			if (!cmd.hasOption("rc")) {
-				ComputationalMesh mesh = ComputationalMesh.simple(); // TODO
+				ComputationalMesh mesh = ComputationalMesh.simple(structure); 
 				catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
 			}
 
@@ -412,7 +418,7 @@ final class ANISOtimeCLI {
 				out = true;
 			}
 			if (!cmd.hasOption("mod")) {
-				System.err.println("When you create a catalog, you must specfy a velocity model (e.g. -mod PREM).");
+				System.err.println("When you create a catalog, you must specfy a velocity model (e.g. -mod prem).");
 				out = true;
 			}
 			if (out)

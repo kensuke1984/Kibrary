@@ -39,7 +39,7 @@ class XY {
 	}
 
 	/**
-	 * @return distance from the origin (0,0)
+	 * @return distance from the origin (0,0).
 	 */
 	double getR() {
 		return Math.sqrt(x * x + y * y);

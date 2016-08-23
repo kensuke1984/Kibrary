@@ -23,12 +23,67 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.2.2
+ * @version 0.2.3
  * 
  * @author Kensuke Konishi
  * 
  */
 public class PolynomialStructure implements Serializable {
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + coreZone;
+		result = prime * result + Arrays.hashCode(eta);
+		result = prime * result + nzone;
+		result = prime * result + Arrays.hashCode(qKappa);
+		result = prime * result + Arrays.hashCode(qMu);
+		result = prime * result + Arrays.hashCode(rho);
+		result = prime * result + Arrays.hashCode(rmax);
+		result = prime * result + Arrays.hashCode(rmin);
+		result = prime * result + Arrays.hashCode(vph);
+		result = prime * result + Arrays.hashCode(vpv);
+		result = prime * result + Arrays.hashCode(vsh);
+		result = prime * result + Arrays.hashCode(vsv);
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		PolynomialStructure other = (PolynomialStructure) obj;
+		if (coreZone != other.coreZone)
+			return false;
+		if (!Arrays.equals(eta, other.eta))
+			return false;
+		if (nzone != other.nzone)
+			return false;
+		if (!Arrays.equals(qKappa, other.qKappa))
+			return false;
+		if (!Arrays.equals(qMu, other.qMu))
+			return false;
+		if (!Arrays.equals(rho, other.rho))
+			return false;
+		if (!Arrays.equals(rmax, other.rmax))
+			return false;
+		if (!Arrays.equals(rmin, other.rmin))
+			return false;
+		if (!Arrays.equals(vph, other.vph))
+			return false;
+		if (!Arrays.equals(vpv, other.vpv))
+			return false;
+		if (!Arrays.equals(vsh, other.vsh))
+			return false;
+		if (!Arrays.equals(vsv, other.vsv))
+			return false;
+		return true;
+	}
 
 	/**
 	 * Serialization identifier 2016/4/25
