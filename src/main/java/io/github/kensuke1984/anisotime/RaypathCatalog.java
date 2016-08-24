@@ -1,6 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
 import java.io.IOException;
+import java.io.InvalidClassException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
@@ -27,8 +28,11 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * TODO boundaries close points EPS TODO default catalogue in .Kibrary
  * 
+ * If a new catalog is computed which does not exist in Kibrary share,
+ * it automatically is stored.
+ * 
  * @author Kensuke Konishi
- * @version 0.0.5b
+ * @version 0.0.6b
  */
 public class RaypathCatalog implements Serializable {
 
@@ -37,9 +41,7 @@ public class RaypathCatalog implements Serializable {
 	 */
 	private static final long serialVersionUID = 5497962364312001093L;
 
-
 	static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
-
 
 	/**
 	 * Woodhouse formula with certain velocity structure
@@ -67,18 +69,19 @@ public class RaypathCatalog implements Serializable {
 			Path prem = share.resolve("prem.cat");
 			Path iprem = share.resolve("iprem.cat");
 			Path ak135 = share.resolve("ak135.cat");
+			ComputationalMesh simplePREM = ComputationalMesh.simple(VelocityStructure.prem());
 			if (!Files.exists(prem))
-				computeCatalogue(VelocityStructure.prem(), ComputationalMesh.simple(VelocityStructure.prem()), Math.toRadians(1))
-						.write(prem);
+				computeCatalogue(VelocityStructure.prem(), simplePREM, Math.toRadians(1)).write(prem);
 			if (!Files.exists(iprem))
-				computeCatalogue(VelocityStructure.iprem(), ComputationalMesh.simple(VelocityStructure.iprem()), Math.toRadians(1))
-						.write(iprem);
+				computeCatalogue(VelocityStructure.iprem(), simplePREM, Math.toRadians(1)).write(iprem);
 			if (!Files.exists(ak135))
-				computeCatalogue(VelocityStructure.ak135(), ComputationalMesh.simple(VelocityStructure.ak135()), Math.toRadians(1))
-						.write(ak135);
+				computeCatalogue(VelocityStructure.ak135(), ComputationalMesh.simple(VelocityStructure.ak135()),
+						Math.toRadians(1)).write(ak135);
 			PREM = read(prem);
 			ISO_PREM = read(iprem);
 			AK135 = read(ak135);
+		} catch (InvalidClassException ice) {
+			throw new RuntimeException("It looks the catalog files in Kibrary share are out of date.");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -169,7 +172,7 @@ public class RaypathCatalog implements Serializable {
 	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
 			for (Path p : catalogStream) {
-				RaypathCatalog c = read(p); 
+				RaypathCatalog c = read(p);
 				if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta)
 					return c;
 			}
@@ -177,7 +180,12 @@ public class RaypathCatalog implements Serializable {
 			e.printStackTrace();
 		}
 		RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
-		cat.create(); // TODO auto write
+		cat.create();
+		try {
+			Path p = Files.createTempFile(share, "raypath", "cat");
+			cat.write(p);
+		} catch (IOException e) {
+		}
 		return cat;
 	}
 
@@ -589,5 +597,5 @@ public class RaypathCatalog implements Serializable {
 		Trace t = new Trace(p, time);
 		return t.toValue(2, delta);
 	}
-
+	
 }

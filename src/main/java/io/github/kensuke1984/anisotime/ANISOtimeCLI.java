@@ -3,15 +3,18 @@
  */
 package io.github.kensuke1984.anisotime;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.util.Precision;
@@ -25,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * TODO customize for catalog ddelta
  * 
  * @author Kensuke Konishi
- * @version 0.3.2b
+ * @version 0.3.4b
  */
 final class ANISOtimeCLI {
 
@@ -60,7 +63,6 @@ final class ANISOtimeCLI {
 	 * @throws ParseException
 	 */
 	public static void main(String[] args) throws ParseException {
-		args = " -deg 10 -mod prem".split("\\s+");
 		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
 			About.main(null);
 			return;
@@ -78,21 +80,6 @@ final class ANISOtimeCLI {
 		cli.run();
 	}
 
-	/**
-	 * Creates a catalog according to the commands.
-	 * 
-	 * @throws IOException
-	 *             if any
-	 */
-	private void createCatalog() throws IOException {
-		Path catalogPath = Paths.get(cmd.getOptionValue("cc"));
-		VelocityStructure structure = createVelocityStructure();
-		ComputationalMesh mesh = ComputationalMesh.simple(structure); 
-		Files.createFile(catalogPath);
-		RaypathCatalog rc = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
-		rc.write(catalogPath);
-	}
-
 	private RaypathCatalog catalog;
 
 	/**
@@ -104,7 +91,7 @@ final class ANISOtimeCLI {
 
 	private double eventR;
 
-	private Phase[] targetPhase;
+	private Phase[] targetPhases;
 
 	private double dDelta;
 
@@ -117,6 +104,7 @@ final class ANISOtimeCLI {
 	 */
 	private void setParameters() {
 		dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "1")));
+
 		if (cmd.hasOption("rc")) {
 			try {
 				Path catalogPath = Paths.get(cmd.getOptionValue("rc"));
@@ -127,15 +115,20 @@ final class ANISOtimeCLI {
 				throw new RuntimeException(e);
 			}
 		} else {
+			if (!cmd.hasOption("mod"))
+				throw new RuntimeException("You must specfy a velocity model(e.g. -mod prem).");
 			structure = createVelocityStructure();
 			eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
+			// option TODO
+			ComputationalMesh mesh = ComputationalMesh.simple(structure);
+			catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
 		}
 
 		if (cmd.hasOption("ph"))
-			targetPhase = Arrays.stream(cmd.getOptionValue("ph").split(","))
+			targetPhases = Arrays.stream(cmd.getOptionValue("ph").split(","))
 					.map(n -> Phase.create(n, cmd.hasOption("SV"))).toArray(Phase[]::new);
 		else
-			targetPhase = new Phase[] { Phase.S };
+			targetPhases = new Phase[] { Phase.P, Phase.PcP, Phase.PKiKP, Phase.S, Phase.ScS, Phase.SKiKS };
 
 		targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
@@ -145,63 +138,83 @@ final class ANISOtimeCLI {
 
 	}
 
+	/**
+	 * @return if all the argument options have values.
+	 */
 	private boolean checkArgumentOption() {
 		boolean hasProblem = false;
-
-		if (Arrays.stream(cmd.getOptions()).filter(o -> o.hasArg()).anyMatch(o -> o.getValue().startsWith("-"))) {
+		if (Arrays.stream(cmd.getOptions()).filter(Option::hasArg).anyMatch(o -> o.getValue().startsWith("-"))) {
 			System.err.println("Some options are missing arguments.");
 			hasProblem = true;
 		}
 		return hasProblem;
 	}
 
+	private void printRecordSection() {
+		if (targetPhases.length != 1) {
+			System.err.println("-ph can only be one phase");
+			return;
+		}
+
+		double[] ranges = Arrays.stream(cmd.getOptionValue("rs").split(",")).mapToDouble(Double::parseDouble).toArray();
+		double min = ranges[0];
+		double max = ranges[1];
+		double interval = 2 < ranges.length ? ranges[2] : 1;
+		double[] targets = new double[(int) Math.ceil((max - min) / interval) + 1];
+		for (int i = 0; i < targets.length; i++)
+			targets[i] = min + interval * i;
+		targets[targets.length - 1] = max;
+		Map<Raypath, Double> deltaPathMap = new HashMap<>();
+		for (double d : targets)
+			for (Raypath p : catalog.searchPath(targetPhases[0], eventR, Math.toRadians(d)))
+				deltaPathMap.put(p, d);
+
+		deltaPathMap.keySet().stream().sorted(Comparator.comparingDouble(Raypath::getRayParameter).reversed())
+		.forEach(r->{
+			printResults(deltaPathMap.get(r), r, targetPhases[0]);
+		});
+		
+	}
+
 	private void run() {
 
 		try {
-
 			if (checkArgumentOption())
 				throw new RuntimeException("Input arguments have problems.");
 
 			if (hasConflict())
 				return;
-
 			setParameters();
+
+			if (cmd.hasOption("rs")) {
+				printRecordSection();
+				return;
+			}
+
+			// only create a catalog
+			if (!cmd.hasOption("p") && !cmd.hasOption("deg"))
+				return;
 
 			// When the ray parameter is given
 			if (cmd.hasOption("p")) {
 				Raypath raypath = new Raypath(rayParameter, structure);
 				raypath.compute();
-				for (Phase targetPhase : this.targetPhase) {
+				for (Phase targetPhase : this.targetPhases) {
 					printResults(-1, raypath, targetPhase);
 					if (cmd.hasOption("eps"))
 						raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
 				}
 				return;
 			}
-			
-			// Catalog search
-			
 
-			// Catalog creation
-			if (cmd.hasOption("cc")) {
-				createCatalog();
-				return;
-			}
-
-			// Compute a catalog
-			if (!cmd.hasOption("rc")) {
-				ComputationalMesh mesh = ComputationalMesh.simple(structure); 
-				catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
-			}
-
-			for (Phase targetPhase : this.targetPhase) {
+			for (Phase targetPhase : this.targetPhases) {
 				Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta);
 
 				// List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase,
 				// structure, eventR, targetDelta, interval);
 				if (raypaths.length == 0) {
 					System.err.println("No raypaths satisfying the input condition");
-					return;
+					continue;
 				}
 				if (targetPhase.isDiffracted()) {
 					Raypath diffRay = raypaths[0];
@@ -260,7 +273,6 @@ final class ANISOtimeCLI {
 		double delta0 = raypath.computeDelta(eventR, targetPhase);
 		double time0 = raypath.computeT(eventR, targetPhase);
 		if (Double.isNaN(delta0) || Double.isNaN(time0)) {
-			System.out.println(delta0 + " " + time0);
 			return;
 		}
 		delta0 = Math.toDegrees(delta0);
@@ -283,8 +295,6 @@ final class ANISOtimeCLI {
 			int n = Integer.parseInt(cmd.getOptionValue("dec", "2"));
 			if (n < 0)
 				throw new IllegalArgumentException("Invalid value for \"dec\"");
-			// System.out.println("Epicentral distance [deg] Travel time [s]"
-			// );
 			if (cmd.hasOption("rayp"))
 				printLine(targetPhase, n, p0);
 			else if (cmd.hasOption("time"))
@@ -300,7 +310,7 @@ final class ANISOtimeCLI {
 	}
 
 	static void printHelp() {
-		helpFormatter.printHelp("Travel time", options);
+		helpFormatter.printHelp("ANISOtime (CLI)", options);
 	}
 
 	/**
@@ -358,7 +368,6 @@ final class ANISOtimeCLI {
 	private static void setArgumentOptions() {
 		options.addOption("h", true, "depth of source [km] (default = 0)");
 		options.addOption("deg", "epicentral-distance", true, "epicentral distance \u0394 [deg]");
-
 		options.addOption("ph", "phase", true, "seismic phase (default = S)");
 		options.addOption("mod", true, "structure (default:PREM)");
 		options.addOption("dec", true, "number of decimal places.");
@@ -366,7 +375,9 @@ final class ANISOtimeCLI {
 		options.addOption("dR", true, "Integral interval [km] (default = 10.0)");
 		options.addOption("dD", true, "Parameter for a catalog creation (d\u0394).");
 		options.addOption("rc", "read-catalog", true, "Computes travel times from a catalog.");
-		options.addOption("cc", "create-catalog", true, "Creates a catalog.");
+		options.addOption("rs", "record-section", true,
+				"start,end(,interval) [deg]  \n computes a table of a record section for the range.");
+
 	}
 
 	/**
@@ -405,40 +416,22 @@ final class ANISOtimeCLI {
 			return true;
 		}
 
-		if (cmd.hasOption("cc")) {
-			boolean out = false;
-			if (cmd.hasOption("rc")) {
-				System.err.println(
-						"Cannot create and read a catalog simultaneously. Please create one first and then use it.");
-				out = true;
-			}
+		if (cmd.hasOption("p") && cmd.hasOption("deg")) {
+			System.err.println("You can not use both option -p and -deg		 simultaneously.");
+			return true;
+		}
+
+		if (cmd.hasOption("rs")) {
 			if (cmd.hasOption("p") || cmd.hasOption("deg")) {
-				System.err.println(
-						"When you create a catalog, you cannot specify a ray parameter and an epicentral distance.");
-				out = true;
-			}
-			if (!cmd.hasOption("mod")) {
-				System.err.println("When you create a catalog, you must specfy a velocity model (e.g. -mod prem).");
-				out = true;
-			}
-			if (out)
-				return true;
-		} else {
-			if (cmd.hasOption("dD")) {
-				System.err.println("Option dD is used only when you create a catalog.");
+				System.err.println("When you compute a record section, neither option -p nor -deg can be specified.");
 				return true;
 			}
-			if (cmd.hasOption("p")) {
-				if (cmd.hasOption("deg")) {
-					System.err.println("You can not use both option -p and -deg simultaneously.");
-					return true;
-				}
-			} else if (!cmd.hasOption("deg")) {
-				System.err.println("Use the option -deg to specify the epicentral distance,"
-						+ " or you can directly choose a raypath for your input ray parameter by the option -p");
+			if (!cmd.hasOption("ph")) {
+				System.err.println("When you compute a record section, -ph must be specified.");
 				return true;
 			}
 		}
+
 		if (cmd.hasOption("rc") && cmd.hasOption("mod")) {
 			System.err.println("When you read a catalog, you cannot specify a velocity model.");
 			return true;
