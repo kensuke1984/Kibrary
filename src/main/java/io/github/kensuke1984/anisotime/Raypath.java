@@ -10,6 +10,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,15 +63,15 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1.5b
+ * @version 0.4.1.6b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
 	/**
-	 * As of 2016/7/19
+	 * 2016/8/25
 	 */
-	private static final long serialVersionUID = 6040613464400911081L;
+	private static final long serialVersionUID = 1152738617318270619L;
 
 	/**
 	 * If the gap between the CMB and the turning r is under this value, then
@@ -283,11 +284,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 *            Path of an eps file name
 	 * @param phase
 	 *            Seismic {@link Phase}
+	 * @param options
+	 *            open options
 	 */
-	public void outputEPS(double eventR, Path epsFile, Phase phase) {
+	public void outputEPS(double eventR, Path epsFile, Phase phase, OpenOption... options) {
 		if (!exists(eventR, phase))
 			return;
-		try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(epsFile))) {
+		try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(epsFile, options))) {
 			RaypathPanel panel = new RaypathPanel(earthRadius(), coreMantleBoundary(), innerCoreBoundary());
 			// panel.setResults(rayParameter, computeDelta(phase),
 			// computeTraveltime(phase));
@@ -503,9 +506,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		RealVector radii = MESH.getMesh(partition);
 		double minR = radii.getEntry(0);
 		double maxR = radii.getEntry(radii.getDimension() - 1);
-		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR) {
+		if (startR < minR - ComputationalMesh.eps || endR < startR || maxR + ComputationalMesh.eps < endR)
 			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
-		}
 
 		if (startR < turningRMap.get(pp))
 			throw new IllegalArgumentException("Input rStart is deeper than the boucing point.");
@@ -716,10 +718,30 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 */
 	private void addRThetaTime(double nextR, PhasePart pp, LinkedList<Double> rList, LinkedList<Double> thetaList,
 			LinkedList<Double> travelTimeList) {
-		double beforeR = rList.get(rList.size() - 1);
+		double beforeR = rList.getLast();
+		if (Math.abs(nextR - innerCoreBoundary()) < permissibleGapForDiff)
+			nextR = innerCoreBoundary() - ComputationalMesh.eps * ((nextR - innerCoreBoundary()) < 0 ? 1 : -1);
+		else if (Math.abs(nextR - coreMantleBoundary()) < permissibleGapForDiff)
+			nextR = coreMantleBoundary() - ComputationalMesh.eps * ((nextR - coreMantleBoundary() < 0) ? 1 : -1);
+		else if (Math.abs(nextR - earthRadius()) < permissibleGapForDiff)
+			nextR = earthRadius() - ComputationalMesh.eps * ((nextR - earthRadius() < 0) ? 1 : -1);
+		else if (nextR<permissibleGapForDiff)
+			nextR = ComputationalMesh.eps;
+		
+		if (Math.abs(beforeR - innerCoreBoundary()) < permissibleGapForDiff)
+			beforeR = innerCoreBoundary();
+		else if (Math.abs(beforeR - coreMantleBoundary()) < permissibleGapForDiff)
+			beforeR = coreMantleBoundary();
+		else if (Math.abs(beforeR - earthRadius()) < permissibleGapForDiff)
+			beforeR = earthRadius();
+
+			
+		
 		double smallerR = Math.min(beforeR, nextR);
 		double biggerR = Math.max(beforeR, nextR);
 		double theta = computeDelta(pp, smallerR, biggerR);
+		if(beforeR<=ComputationalMesh.eps)
+			theta+=Math.toRadians(180);
 		double time = computeT(pp, smallerR, biggerR);
 		rList.add(nextR);
 		thetaList.add(theta + thetaList.getLast());
@@ -838,8 +860,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 				}
 				break;
 			case INNERCORE:
-				double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 				RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
+				if (RAYPARAMETER == 0) {
+					if (isDownGoing)
+						for (int iR = innerCoreMesh.getDimension() - 2; 0 <= iR; iR--)
+							addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+					else
+						for (int iR = 1, n = innerCoreMesh.getDimension(); iR < n; iR++)
+							addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
+					continue;
+				}
+				double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 				int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.INNERCORE);
 				if (isDownGoing) {
 					for (int iR = innerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
@@ -953,8 +984,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	}
 
 	/**
-	 * This method computes &Delta; by precomputed values. The rStart and rEnd
-	 * must be in the mantle.
+	 * This method computes &Delta; by precomputed values. The startR and endR
+	 * must be in the section (inner-core, outer-core or mantle). If the endR
 	 * 
 	 * @param startR
 	 *            [km]
@@ -967,7 +998,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		RealVector radii = MESH.getMesh(partition);
 		double minR = radii.getEntry(0);
 		double maxR = radii.getEntry(radii.getDimension() - 1);
-		if (startR < minR || endR < startR || maxR + ComputationalMesh.eps < endR)
+		if (startR < minR - ComputationalMesh.eps || endR < startR || maxR + ComputationalMesh.eps < endR)
 			throw new IllegalArgumentException("Input rStart and rEnd are invalid.");
 
 		if (startR < turningRMap.get(pp))

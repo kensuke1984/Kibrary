@@ -23,12 +23,17 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.3
+ * @version 0.2.3.1
  * 
  * @author Kensuke Konishi
  * 
  */
 public class PolynomialStructure implements Serializable {
+
+	/**
+	 * 2016/8/24
+	 */
+	private static final long serialVersionUID = -5147029504840598303L;
 
 	@Override
 	public int hashCode() {
@@ -85,11 +90,6 @@ public class PolynomialStructure implements Serializable {
 		return true;
 	}
 
-	/**
-	 * Serialization identifier 2016/4/25
-	 */
-	private static final long serialVersionUID = 5111509508797962781L;
-	
 	/**
 	 * the number of layers
 	 */
