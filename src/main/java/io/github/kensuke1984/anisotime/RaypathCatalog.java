@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
@@ -28,8 +29,8 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * TODO boundaries close points EPS TODO default catalogue in .Kibrary
  * 
- * If a new catalog is computed which does not exist in Kibrary share,
- * it automatically is stored.
+ * If a new catalog is computed which does not exist in Kibrary share, it
+ * automatically is stored.
  * 
  * @author Kensuke Konishi
  * @version 0.0.6b
@@ -37,7 +38,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 public class RaypathCatalog implements Serializable {
 
 	/**
-	 * 2016/8/23
+	 * 2016/8/25
 	 */
 	private static final long serialVersionUID = 5497962364312001093L;
 
@@ -69,19 +70,40 @@ public class RaypathCatalog implements Serializable {
 			Path prem = share.resolve("prem.cat");
 			Path iprem = share.resolve("iprem.cat");
 			Path ak135 = share.resolve("ak135.cat");
-			ComputationalMesh simplePREM = ComputationalMesh.simple(VelocityStructure.prem());
-			if (!Files.exists(prem))
-				computeCatalogue(VelocityStructure.prem(), simplePREM, Math.toRadians(1)).write(prem);
-			if (!Files.exists(iprem))
-				computeCatalogue(VelocityStructure.iprem(), simplePREM, Math.toRadians(1)).write(iprem);
-			if (!Files.exists(ak135))
-				computeCatalogue(VelocityStructure.ak135(), ComputationalMesh.simple(VelocityStructure.ak135()),
-						Math.toRadians(1)).write(ak135);
-			PREM = read(prem);
-			ISO_PREM = read(iprem);
-			AK135 = read(ak135);
-		} catch (InvalidClassException ice) {
-			throw new RuntimeException("It looks the catalog files in Kibrary share are out of date.");
+			BiFunction<Path, VelocityStructure, RaypathCatalog> getCatalogue = (p, v) -> {
+				RaypathCatalog cat;
+				String model = p.getFileName().toString().replace(".cat", "");
+				ComputationalMesh simple = ComputationalMesh.simple(v);
+				if (!Files.exists(p)) {
+					System.err
+							.println("Creating a catalog for " + model + ". This computation is only done this time.");
+					cat = new RaypathCatalog(v, simple, Math.toRadians(1));
+					cat.create();
+					try {
+						cat.write(p);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						cat = read(p);
+					} catch (ClassNotFoundException | IOException ice) {
+						System.err.println("Creating a catalog for " + model
+								+ " (due to out of date). This computation is only done this time.");
+						cat = new RaypathCatalog(v, simple, Math.toRadians(1));
+						cat.create();
+						try {
+							cat.write(p);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				return cat;
+			};
+			PREM = getCatalogue.apply(prem, VelocityStructure.prem());
+			ISO_PREM = getCatalogue.apply(iprem, VelocityStructure.iprem());
+			AK135 = getCatalogue.apply(ak135, VelocityStructure.ak135());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -171,11 +193,14 @@ public class RaypathCatalog implements Serializable {
 	 */
 	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
-			for (Path p : catalogStream) {
-				RaypathCatalog c = read(p);
-				if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta)
-					return c;
-			}
+			for (Path p : catalogStream)
+				try {
+					RaypathCatalog c = read(p);
+					if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta)
+						return c;
+				} catch (InvalidClassException ice) {
+					System.err.println(p + " may be out of date.");
+				}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -185,6 +210,7 @@ public class RaypathCatalog implements Serializable {
 			Path p = Files.createTempFile(share, "raypath", ".cat");
 			cat.write(p);
 		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return cat;
 	}
@@ -281,7 +307,7 @@ public class RaypathCatalog implements Serializable {
 		Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
 		firstPath.compute();
 		raypathList.add(firstPath);
-		System.err.println("Computing a catalogue");
+		System.err.println("Computing a catalogue. (If you use the same model, the catalog is not computed anymore.)");
 		double p_Pdiff = pDiff.getRayParameter();
 		double p_SVdiff = svDiff.getRayParameter();
 		double p_SHdiff = shDiff.getRayParameter();
@@ -597,5 +623,5 @@ public class RaypathCatalog implements Serializable {
 		Trace t = new Trace(p, time);
 		return t.toValue(2, delta);
 	}
-	
+
 }
