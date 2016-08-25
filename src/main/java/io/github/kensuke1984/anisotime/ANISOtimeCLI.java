@@ -4,6 +4,7 @@
 package io.github.kensuke1984.anisotime;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -282,6 +283,11 @@ final class ANISOtimeCLI {
 				.collect(Collectors.joining(" ")));
 	}
 
+	private static void printLine(Phase phase, PrintStream out, int decimalPlace, int flag, double[] values) {
+		out.println(phase + " " + Arrays.stream(values).mapToObj(d -> Utilities.fixDecimalPlaces(decimalPlace, d))
+				.collect(Collectors.joining(" ")));
+	}
+
 	/**
 	 * 
 	 * TODO print result according to options
@@ -323,6 +329,7 @@ final class ANISOtimeCLI {
 			int n = Integer.parseInt(cmd.getOptionValue("dec", "2"));
 			if (n < 0)
 				throw new IllegalArgumentException("Invalid value for \"dec\"");
+			
 			if (cmd.hasOption("rayp"))
 				printLine(targetPhase, out, n, p0);
 			else if (cmd.hasOption("time"))
@@ -459,7 +466,7 @@ final class ANISOtimeCLI {
 				System.err.println("When you compute record sections, -ph must be specified.");
 				return true;
 			}
-			if (!cmd.hasOption("eps")) {
+			if (cmd.hasOption("eps")) {
 				System.err.println("When you compute record sctions, -eps can not be set.");
 			}
 		} else if (cmd.hasOption("o") && !cmd.hasOption("eps")) {
