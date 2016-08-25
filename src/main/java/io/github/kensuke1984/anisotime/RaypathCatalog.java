@@ -182,7 +182,7 @@ public class RaypathCatalog implements Serializable {
 		RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
 		cat.create();
 		try {
-			Path p = Files.createTempFile(share, "raypath", "cat");
+			Path p = Files.createTempFile(share, "raypath", ".cat");
 			cat.write(p);
 		} catch (IOException e) {
 		}
