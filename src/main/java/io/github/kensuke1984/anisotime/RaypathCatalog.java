@@ -66,10 +66,6 @@ public class RaypathCatalog implements Serializable {
 
 	static {
 		try {
-			Files.createDirectories(share);
-			Path prem = share.resolve("prem.cat");
-			Path iprem = share.resolve("iprem.cat");
-			Path ak135 = share.resolve("ak135.cat");
 			BiFunction<Path, VelocityStructure, RaypathCatalog> getCatalogue = (p, v) -> {
 				RaypathCatalog cat;
 				String model = p.getFileName().toString().replace(".cat", "");
@@ -101,9 +97,10 @@ public class RaypathCatalog implements Serializable {
 				}
 				return cat;
 			};
-			PREM = getCatalogue.apply(prem, VelocityStructure.prem());
-			ISO_PREM = getCatalogue.apply(iprem, VelocityStructure.iprem());
-			AK135 = getCatalogue.apply(ak135, VelocityStructure.ak135());
+			Files.createDirectories(share);
+			PREM = getCatalogue.apply(share.resolve("prem.cat"), VelocityStructure.prem());
+			ISO_PREM = getCatalogue.apply(share.resolve("iprem.cat"), VelocityStructure.iprem());
+			AK135 = getCatalogue.apply(share.resolve("ak135.cat"), VelocityStructure.ak135());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
