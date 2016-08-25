@@ -3,13 +3,17 @@
  */
 package io.github.kensuke1984.anisotime;
 
+import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -28,7 +32,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * TODO customize for catalog ddelta
  * 
  * @author Kensuke Konishi
- * @version 0.3.4b
+ * @version 0.3.5.1b
  */
 final class ANISOtimeCLI {
 
@@ -57,24 +61,34 @@ final class ANISOtimeCLI {
 	 */
 	private final static HelpFormatter helpFormatter = new HelpFormatter();
 
+	static {
+		// add options
+		setBooleanOptions();
+		setArgumentOptions();
+	}
+
 	/**
 	 * @param args
 	 *            [commands]
 	 * @throws ParseException
 	 */
 	public static void main(String[] args) throws ParseException {
-		if (args.length == 0 || Arrays.stream(args).anyMatch("-version"::equals)) {
+		if (args.length == 0) {
 			About.main(null);
 			return;
 		}
 
-		// add options
-		setBooleanOptions();
-		setArgumentOptions();
-		if (Arrays.stream(args).anyMatch("-help"::equals) || Arrays.stream(args).anyMatch("--help"::equals)) {
-			printHelp();
-			return;
-		}
+		for (String o : args)
+			if (o.equals("-help") || o.equals("--help")) {
+				printHelp();
+				return;
+			}
+
+		for (String o : args)
+			if (o.equals("-v") || o.equals("--version") || o.equals("-version")) {
+				About.main(null);
+				return;
+			}
 
 		ANISOtimeCLI cli = new ANISOtimeCLI(args);
 		cli.run();
@@ -150,11 +164,10 @@ final class ANISOtimeCLI {
 		return hasProblem;
 	}
 
-	private void printRecordSection() {
-		if (targetPhases.length != 1) {
-			System.err.println("-ph can only be one phase");
-			return;
-		}
+	private void printRecordSection() throws IOException {
+		String timeStr = Utilities.getTemporaryString();
+		Path outDir = Paths.get(cmd.getOptionValue("o", ""));
+		Files.createDirectories(outDir);
 
 		double[] ranges = Arrays.stream(cmd.getOptionValue("rs").split(",")).mapToDouble(Double::parseDouble).toArray();
 		double min = ranges[0];
@@ -164,16 +177,19 @@ final class ANISOtimeCLI {
 		for (int i = 0; i < targets.length; i++)
 			targets[i] = min + interval * i;
 		targets[targets.length - 1] = max;
-		Map<Raypath, Double> deltaPathMap = new HashMap<>();
-		for (double d : targets)
-			for (Raypath p : catalog.searchPath(targetPhases[0], eventR, Math.toRadians(d)))
-				deltaPathMap.put(p, d);
-
-		deltaPathMap.keySet().stream().sorted(Comparator.comparingDouble(Raypath::getRayParameter).reversed())
-		.forEach(r->{
-			printResults(deltaPathMap.get(r), r, targetPhases[0]);
-		});
-		
+		for (Phase phase : targetPhases) {
+			Path out = outDir.resolve(phase.toString() + "." + timeStr + ".rcs");
+			Map<Raypath, Double> deltaPathMap = new HashMap<>();
+			for (double d : targets)
+				for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
+					deltaPathMap.put(p, d);
+			try (PrintStream ps = new PrintStream(Files.newOutputStream(out, StandardOpenOption.CREATE_NEW))) {
+				deltaPathMap.keySet().stream().sorted(Comparator.comparingDouble(Raypath::getRayParameter).reversed())
+						.forEach(r -> {
+							printResults(deltaPathMap.get(r), r, phase, ps);
+						});
+			}
+		}
 	}
 
 	private void run() {
@@ -194,19 +210,25 @@ final class ANISOtimeCLI {
 			// only create a catalog
 			if (!cmd.hasOption("p") && !cmd.hasOption("deg"))
 				return;
-
+			Path outDir = Paths.get(cmd.getOptionValue("o", ""));
+			Files.createDirectories(outDir);
+			String tmpStr = Utilities.getTemporaryString();
 			// When the ray parameter is given
 			if (cmd.hasOption("p")) {
 				Raypath raypath = new Raypath(rayParameter, structure);
 				raypath.compute();
 				for (Phase targetPhase : this.targetPhases) {
-					printResults(-1, raypath, targetPhase);
+					if (!raypath.exists(eventR, targetPhase)) {
+						System.err.println(targetPhase+" does not exist.");
+						continue;
+					}
+					printResults(-1, raypath, targetPhase, System.out);
 					if (cmd.hasOption("eps"))
-						raypath.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
+						raypath.outputEPS(eventR, outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,
+								StandardOpenOption.CREATE_NEW);
 				}
 				return;
 			}
-
 			for (Phase targetPhase : this.targetPhases) {
 				Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta);
 
@@ -227,21 +249,25 @@ final class ANISOtimeCLI {
 						return;
 					}
 					targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
-					printResults(-1, diffRay, targetPhase);
-					if (cmd.hasOption("eps"))
-						diffRay.outputEPS(eventR, Paths.get(targetPhase + ".eps"), targetPhase);
+					printResults(-1, diffRay, targetPhase, System.out);
+					if (cmd.hasOption("eps")) {
+						diffRay.outputEPS(eventR, outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,
+								StandardOpenOption.CREATE_NEW);
+					}
 					return;
 				}
 
 				for (Raypath raypath : raypaths) {
-					printResults(Math.toDegrees(targetDelta), raypath, targetPhase);
+					printResults(Math.toDegrees(targetDelta), raypath, targetPhase, System.out);
 					int j = 0;
 					if (cmd.hasOption("eps"))
 						if (raypaths.length == 1)
-							raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + ".eps"), targetPhase);
+							raypath.outputEPS(eventR, outDir.resolve(targetPhase.toString() + "." + tmpStr + ".eps"),
+									targetPhase, StandardOpenOption.CREATE_NEW);
 						else
-							raypath.outputEPS(eventR, Paths.get(targetPhase.toString() + "." + j++ + ".eps"),
-									targetPhase);
+							raypath.outputEPS(eventR,
+									outDir.resolve(targetPhase.toString() + "." + j++ + "." + tmpStr + ".eps"),
+									targetPhase, StandardOpenOption.CREATE_NEW);
 				}
 			}
 		} catch (Exception e) {
@@ -249,14 +275,11 @@ final class ANISOtimeCLI {
 			e.printStackTrace();
 			return;
 		}
-
 	}
 
-	private static void printLine(Phase phase, int decimalPlace, double... values) {
-		System.out.print(phase + " ");
-		for (double value : values)
-			System.out.print(Utilities.fixDecimalPlaces(decimalPlace, value) + " ");
-		System.out.println();
+	private static void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
+		out.println(phase + " " + Arrays.stream(values).mapToObj(d -> Utilities.fixDecimalPlaces(decimalPlace, d))
+				.collect(Collectors.joining(" ")));
 	}
 
 	/**
@@ -267,12 +290,17 @@ final class ANISOtimeCLI {
 	 *            [deg]
 	 * @param raypath
 	 *            Raypath
+	 * @param targetPhase
+	 *            phase to be printed
+	 * @param out
+	 *            resource to print in
 	 */
-	private void printResults(double delta1, Raypath raypath, Phase targetPhase) {
+	private void printResults(double delta1, Raypath raypath, Phase targetPhase, PrintStream out) {
 		double p0 = raypath.getRayParameter();
 		double delta0 = raypath.computeDelta(eventR, targetPhase);
 		double time0 = raypath.computeT(eventR, targetPhase);
 		if (Double.isNaN(delta0) || Double.isNaN(time0)) {
+			System.out.println(p0);
 			return;
 		}
 		delta0 = Math.toDegrees(delta0);
@@ -296,13 +324,13 @@ final class ANISOtimeCLI {
 			if (n < 0)
 				throw new IllegalArgumentException("Invalid value for \"dec\"");
 			if (cmd.hasOption("rayp"))
-				printLine(targetPhase, n, p0);
+				printLine(targetPhase, out, n, p0);
 			else if (cmd.hasOption("time"))
-				printLine(targetPhase, n, time0);
+				printLine(targetPhase, out, n, time0);
 			else if (cmd.hasOption("delta"))
-				printLine(targetPhase, n, delta0);
+				printLine(targetPhase, out, n, delta0);
 			else
-				printLine(targetPhase, n, p0, delta0, time0);
+				printLine(targetPhase, out, n, p0, delta0, time0);
 			return;
 		} catch (Exception e) {
 			System.err.println("Option digit only accepts a positive integer " + cmd.getOptionValue("digit"));
@@ -355,29 +383,30 @@ final class ANISOtimeCLI {
 	}
 
 	private static void setBooleanOptions() {
-		options.addOption("SV", false, "compute travel time for SV (default: SH)");
-		options.addOption("SH", false, "compute travel time for SH (default: SH)");
-		options.addOption("help", "print this message");
+		options.addOption("SV", false, "Computes travel time for SV (default: SH)");
+		options.addOption("SH", false, "Computes travel time for SH (default: SH)");
+		options.addOption("help", "Shows this message. This option has the highest priority.");
 		options.addOption("eps", false, "output path figure");
-		options.addOption(null, "rayp", false, "show only ray parameters");
-		options.addOption(null, "time", false, "show only travel times");
-		options.addOption(null, "delta", false, "show only epicentral distances");
-		options.addOption(null, "version", false, "show information of the tool.");
+		options.addOption(null, "rayp", false, "Shows only ray parameters");
+		options.addOption(null, "time", false, "Shows only travel times");
+		options.addOption(null, "delta", false, "Shows only epicentral distances");
+		options.addOption("v", "version", false,
+				"Shows information of the tool. This option has the 2nd highest priority.");
 	}
 
 	private static void setArgumentOptions() {
-		options.addOption("h", true, "depth of source [km] (default = 0)");
-		options.addOption("deg", "epicentral-distance", true, "epicentral distance \u0394 [deg]");
-		options.addOption("ph", "phase", true, "seismic phase (default = S)");
-		options.addOption("mod", true, "structure (default:PREM)");
-		options.addOption("dec", true, "number of decimal places.");
-		options.addOption("p", true, "ray parameter");
-		options.addOption("dR", true, "Integral interval [km] (default = 10.0)");
+		options.addOption("h", true, "Depth of source [km] (default = 0)");
+		options.addOption("deg", "epicentral-distance", true, "Epicentral distance \u0394 [deg]");
+		options.addOption("ph", "phase", true, "Seismic phase (default:P,PCP,PKiKP,S,ScS,SKiKS)");
+		options.addOption("mod", true, "Structure (default:prem)");
+		options.addOption("dec", true, "Number of decimal places.");
+		options.addOption("p", true, "Ray parameter");
+		options.addOption("dR", true, "Integral interval [km] (default:10.0)");
 		options.addOption("dD", true, "Parameter for a catalog creation (d\u0394).");
-		options.addOption("rc", "read-catalog", true, "Computes travel times from a catalog.");
+		options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
 		options.addOption("rs", "record-section", true,
-				"start,end(,interval) [deg]  \n computes a table of a record section for the range.");
-
+				"start,end(,interval) [deg]  \n Computes a table of a record section for the range.");
+		options.addOption("o", true, "Directory for ray path figures or record sections.");
 	}
 
 	/**
@@ -423,13 +452,19 @@ final class ANISOtimeCLI {
 
 		if (cmd.hasOption("rs")) {
 			if (cmd.hasOption("p") || cmd.hasOption("deg")) {
-				System.err.println("When you compute a record section, neither option -p nor -deg can be specified.");
+				System.err.println("When you compute record sections, neither option -p nor -deg can be specified.");
 				return true;
 			}
 			if (!cmd.hasOption("ph")) {
-				System.err.println("When you compute a record section, -ph must be specified.");
+				System.err.println("When you compute record sections, -ph must be specified.");
 				return true;
 			}
+			if (!cmd.hasOption("eps")) {
+				System.err.println("When you compute record sctions, -eps can not be set.");
+			}
+		} else if (cmd.hasOption("o") && !cmd.hasOption("eps")) {
+			System.err.println("-o can be set, only when you compute record sections or make ray path figures.");
+			return true;
 		}
 
 		if (cmd.hasOption("rc") && cmd.hasOption("mod")) {
