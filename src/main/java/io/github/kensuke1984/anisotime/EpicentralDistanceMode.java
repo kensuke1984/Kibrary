@@ -18,7 +18,6 @@ import java.util.Set;
  */
 class EpicentralDistanceMode extends Computation {
 
-	private VelocityStructure structure;
 	private double eventR;
 	private Set<Phase> targetPhases;
 	/**
@@ -43,12 +42,11 @@ class EpicentralDistanceMode extends Computation {
 	EpicentralDistanceMode(ANISOtimeGUI gui, Set<Phase> targetPhases, double epicentralDistance,
 			VelocityStructure structure, double eventR) {
 		super(gui);
-		this.structure = structure;
 		this.eventR = eventR;
 		this.epicentralDistance = epicentralDistance;
 		this.targetPhases = targetPhases;
 		// TODO mmesh deltaR
-		this.catalog = RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), 10);
+		this.catalog = RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
 	}
 
 	@Override
@@ -56,7 +54,6 @@ class EpicentralDistanceMode extends Computation {
 		raypaths = new ArrayList<>();
 		phases = new ArrayList<>();
 
-		double deltaR = 10; // TODO
 		for (Phase phase : targetPhases) {
 			Raypath[] raypaths = catalog.searchPath( phase, eventR, epicentralDistance);
 			if (raypaths.length == 0)

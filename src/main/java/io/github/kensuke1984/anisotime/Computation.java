@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.1.1
  * 
  */
 abstract class Computation implements Runnable {
@@ -29,7 +29,7 @@ abstract class Computation implements Runnable {
 		this.gui = travelTimeTool;
 	}
 
-	private static void showRayPath(final ANISOtimeGUI travelTimeGUI, final Raypath raypath, final Phase phase) {
+	private static void showRayPath(ANISOtimeGUI travelTimeGUI, Raypath raypath, Phase phase) {
 		if (!raypath.exists(travelTimeGUI.getEventR(), phase))
 			return;
 		double[][] points = raypath.getRouteXY(travelTimeGUI.getEventR(), phase);
@@ -75,7 +75,7 @@ abstract class Computation implements Runnable {
 						Path outEPSFile = outputDirectory.resolve(name + ".eps");
 						Path outInfoFile = outputDirectory.resolve(name + ".inf");
 						Path outDataFile = outputDirectory.resolve(name + ".dat");
-						raypaths.get(i).outputEPS(eventR, outEPSFile, phases.get(i));
+						raypaths.get(i).outputEPS(eventR, phases.get(i), outEPSFile);
 						raypaths.get(i).outputInfo(outInfoFile, eventR, phases.get(i));
 						raypaths.get(i).outputDat(outDataFile, eventR, phases.get(i));
 					}
@@ -118,15 +118,15 @@ abstract class Computation implements Runnable {
 		if (raypathList.size() != phaseList.size())
 			throw new RuntimeException("UNEXPECTED");
 		// System.out.println(SwingUtilities.isEventDispatchThread());
-		double eventR =gui.getEventR();
+		double eventR = gui.getEventR();
 		for (int i = 0; i < phaseList.size(); i++) {
 			Raypath raypath = raypathList.get(i);
 			Phase phase = phaseList.get(i);
 			if (!raypath.exists(eventR, phase))
 				continue;
 			// travelTimeTool.addPanels(panel);
-			double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR,phase));
-			double travelTime = raypath.computeT(eventR,phase);
+			double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
+			double travelTime = raypath.computeT(eventR, phase);
 			// System.out.println(epicentralDistance+" "+travelTime);
 			String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
 			double depth = raypath.earthRadius() - gui.getEventR();
@@ -145,8 +145,7 @@ abstract class Computation implements Runnable {
 							interval *= 10;
 					} catch (Exception e) {
 						// e.printStackTrace();
-						gui.addResult(epicentralDistance, depth, title, travelTime,
-								raypath.getRayParameter());
+						gui.addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
 						showRayPath(gui, raypath, phase);
 
 						continue;

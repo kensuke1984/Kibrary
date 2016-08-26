@@ -63,7 +63,7 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1.6b
+ * @version 0.4.1.7b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -280,36 +280,37 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	/**
 	 * Create an EPS file of {@link Phase}
 	 * 
-	 * @param epsFile
-	 *            Path of an eps file name
 	 * @param phase
 	 *            Seismic {@link Phase}
+	 * @param epsFile
+	 *            Path of an eps file name
 	 * @param options
 	 *            open options
 	 */
-	public void outputEPS(double eventR, Path epsFile, Phase phase, OpenOption... options) {
+	public void outputEPS(double eventR, Phase phase, Path epsFile, OpenOption... options) {
 		if (!exists(eventR, phase))
 			return;
 		try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(epsFile, options))) {
-			RaypathPanel panel = new RaypathPanel(earthRadius(), coreMantleBoundary(), innerCoreBoundary());
-			// panel.setResults(rayParameter, computeDelta(phase),
-			// computeTraveltime(phase));
-			double[][] points = getRouteXY(eventR, phase);
-			if (points != null) {
-				double[] x = new double[points.length];
-				double[] y = new double[points.length];
-				for (int i = 0; i < points.length; i++) {
-					// lines.add(points[i][0] + " " + points[i][1]);
-					// System.out.println(points[i][0]+" "+points[i][1]);
-					x[i] = points[i][0];
-					y[i] = points[i][1];
-				}
-				panel.addPath(x, y);
-			}
-			panel.toEPS(os, phase, RAYPARAMETER, computeDelta(eventR, phase), computeT(eventR, phase), eventR);
+			createPanel(eventR, phase).toEPS(os, phase, RAYPARAMETER, computeDelta(eventR, phase),
+					computeT(eventR, phase), eventR);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	RaypathPanel createPanel(double eventR, Phase phase) {
+		RaypathPanel panel = new RaypathPanel(getStructure());
+		double[][] points = getRouteXY(eventR, phase);
+		if (points != null) {
+			double[] x = new double[points.length];
+			double[] y = new double[points.length];
+			for (int i = 0; i < points.length; i++) {
+				x[i] = points[i][0];
+				y[i] = points[i][1];
+			}
+			panel.addPath(x, y);
+		}
+		return panel;
 	}
 
 	/**
@@ -725,9 +726,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			nextR = coreMantleBoundary() - ComputationalMesh.eps * ((nextR - coreMantleBoundary() < 0) ? 1 : -1);
 		else if (Math.abs(nextR - earthRadius()) < permissibleGapForDiff)
 			nextR = earthRadius() - ComputationalMesh.eps * ((nextR - earthRadius() < 0) ? 1 : -1);
-		else if (nextR<permissibleGapForDiff)
+		else if (nextR < permissibleGapForDiff)
 			nextR = ComputationalMesh.eps;
-		
+
 		if (Math.abs(beforeR - innerCoreBoundary()) < permissibleGapForDiff)
 			beforeR = innerCoreBoundary();
 		else if (Math.abs(beforeR - coreMantleBoundary()) < permissibleGapForDiff)
@@ -735,13 +736,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		else if (Math.abs(beforeR - earthRadius()) < permissibleGapForDiff)
 			beforeR = earthRadius();
 
-			
-		
 		double smallerR = Math.min(beforeR, nextR);
 		double biggerR = Math.max(beforeR, nextR);
 		double theta = computeDelta(pp, smallerR, biggerR);
-		if(beforeR<=ComputationalMesh.eps)
-			theta+=Math.toRadians(180);
+		if (beforeR <= ComputationalMesh.eps)
+			theta += Math.toRadians(180);
 		double time = computeT(pp, smallerR, biggerR);
 		rList.add(nextR);
 		thetaList.add(theta + thetaList.getLast());
@@ -920,10 +919,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		}
 
 		return points;
-	}
-
-	VelocityStructure getVelocityStructure() {
-		return WOODHOUSE.getStructure();
 	}
 
 	/**

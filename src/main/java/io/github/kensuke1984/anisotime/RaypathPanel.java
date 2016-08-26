@@ -23,16 +23,19 @@ import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @version 0.0.3.4
  */
 final class RaypathPanel extends JPanel {
 
-	private static final long serialVersionUID = 7294142926931120664L;
+	/**
+	 * 2016/8/26
+	 */
+	private static final long serialVersionUID = 989511960321893966L;
 
-	RaypathPanel(double earthRadius, double coreMantleBoundary, double innerCoreBoundary) {
-		this.earthRadius = earthRadius;
-		this.coreMantleBoundary = coreMantleBoundary;
-		this.innerCoreBoundary = innerCoreBoundary;
+	RaypathPanel(VelocityStructure structure) {
+		this.earthRadius = structure.earthRadius();
+		this.coreMantleBoundary = structure.coreMantleBoundary();
+		this.innerCoreBoundary = structure.innerCoreBoundary();
 		setSize(700, 700);
 	}
 
@@ -49,10 +52,17 @@ final class RaypathPanel extends JPanel {
 		// g2.drawString("jo", 300, 300);
 		drawAdditionalCircles(g);
 		// System.out.println(g.getClass());
-
 	}
-
-	void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double radius) {
+	
+	/**
+	 * @param outputStream output stream
+	 * @param phase to be shown
+	 * @param rayparameter p
+	 * @param delta [rad] to be shown.
+	 * @param time [s] to be printed
+	 * @param eventR radius of the event [km]
+	 */
+	void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double eventR) {
 		EpsGraphics epsGraphics = null;
 		try {
 			epsGraphics = new EpsGraphics(phase.toString(), outputStream, 0, 0, getWidth(), getHeight(),
@@ -61,13 +71,13 @@ final class RaypathPanel extends JPanel {
 			rayparameter = Precision.round(rayparameter, 3);
 			delta = Precision.round(Math.toDegrees(delta), 3);
 			time = Precision.round(time, 3);
-			double depth = Precision.round(6371 - radius, 3);
+			double depth = Precision.round(earthRadius - eventR, 3);
 			String line = phase.toString() + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
 					+ ", Epicentral distance[deg]: " + delta + ", Travel time[s]: " + time;
 			int startInt = (int) changeX(-line.length() / 2 * 6371 / 45);
 			// epsGraphics.drawLine(0, 100, 200, 300);
 			// epsGraphics.close();
-			epsGraphics.drawString(line, startInt, (int) changeY(6371) - 25);
+			epsGraphics.drawString(line, startInt, (int) changeY(earthRadius) - 25);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("orz");
@@ -92,18 +102,12 @@ final class RaypathPanel extends JPanel {
 			if (i == featured)
 				continue;
 			for (QuadCurve2D.Double curve : quadCurves.get(i)) {
-				double x1 = curve.x1;
-				double x2 = curve.x2;
-				double y1 = curve.y1;
-				double y2 = curve.y2;
-				double ctrlx = curve.ctrlx;
-				double ctrly = curve.ctrly;
-				x1 = changeX(x1);
-				x2 = changeX(x2);
-				y1 = changeY(y1);
-				y2 = changeY(y2);
-				ctrlx = changeX(ctrlx);
-				ctrly = changeY(ctrly);
+				double x1 =changeX( curve.x1);
+				double x2 = changeX(curve.x2);
+				double y1 = changeY(curve.y1);
+				double y2 = changeY(curve.y2);
+				double ctrlx = changeX(curve.ctrlx);
+				double ctrly = changeY(curve.ctrly);
 				QuadCurve2D.Double newCurve = new QuadCurve2D.Double(x1, y1, ctrlx, ctrly, x2, y2);
 				g2.draw(newCurve);
 				// System.out.println("curve"+ x1);
@@ -111,29 +115,20 @@ final class RaypathPanel extends JPanel {
 		}
 		g2.setColor(Color.RED);
 		for (QuadCurve2D.Double curve : quadCurves.get(featured)) {
-			double x1 = curve.x1;
-			double x2 = curve.x2;
-			double y1 = curve.y1;
-			double y2 = curve.y2;
-			double ctrlx = curve.ctrlx;
-			double ctrly = curve.ctrly;
-			x1 = changeX(x1);
-			x2 = changeX(x2);
-			y1 = changeY(y1);
-			y2 = changeY(y2);
-			ctrlx = changeX(ctrlx);
-			ctrly = changeY(ctrly);
+			double x1 =changeX( curve.x1);
+			double x2 = changeX(curve.x2);
+			double y1 = changeY(curve.y1);
+			double y2 = changeY(curve.y2);
+			double ctrlx = changeX(curve.ctrlx);
+			double ctrly = changeY(curve.ctrly);
 			QuadCurve2D.Double newCurve = new QuadCurve2D.Double(x1, y1, ctrlx, ctrly, x2, y2);
 			g2.draw(newCurve);
-			// System.out.println("curve"+ x1);
 		}
 		// g2.drawLine(0, 70, 500, 0);
 		g2.setColor(Color.BLACK);
 	}
 
 	private void drawEarth(Graphics g) {
-		// System.out.println(earthRadius);
-		// System.out.println(getSize().height);
 		int size = getSize().width < getSize().height ? getSize().width : getSize().height;
 		Graphics2D g2 = (Graphics2D) g;
 		Stroke defaultStroke = g2.getStroke();
@@ -178,34 +173,20 @@ final class RaypathPanel extends JPanel {
 	}
 
 	/**
-	 * earth radius it will be in the display
+	 * Earth radius [km] it will be in the display
 	 */
 	private double earthRadius;
 
 	/**
-	 * radius of the core mantle boundary
+	 * Radius of the core mantle boundary [km]
 	 */
 	private double coreMantleBoundary;
 
 	/**
-	 * radius of the inner core boundary
+	 * Radius of the inner core boundary [km]
 	 */
 	private double innerCoreBoundary;
 
-	/**
-	 * input x is one in cooridate system where the earth center is (0,0) (0,0)
-	 * -> (350, 350)
-	 * 
-	 * @param x
-	 * @return x coordinate to use
-	 */
-	private double changeX(double x) {
-		int size = getSize().width < getSize().height ? getSize().width : getSize().height;
-		// double xInDisplay = x / earthRadius * 250 + 350;
-		double xInDisplay = x / earthRadius * iEarthRadius() + size / 2;
-		// System.out.println(x + " " + xInDisplay+" "+getSize().width);
-		return Math.round(xInDisplay);
-	}
 
 	private void drawAdditionalCircles(Graphics g) {
 		for (double d : additionalCircle)
@@ -215,7 +196,7 @@ final class RaypathPanel extends JPanel {
 
 	synchronized void addPath(double[] x, double[] y) {
 		if (x.length != y.length)
-			return;
+			throw new IllegalArgumentException("Unexpected");
 		// System.out.println("adding path");
 		List<QuadCurve2D.Double> curveList = new ArrayList<>();
 		for (int i = 0; i < (x.length - 1) / 2; i++) {
@@ -244,14 +225,30 @@ final class RaypathPanel extends JPanel {
 
 	private final List<List<QuadCurve2D.Double>> quadCurves = new ArrayList<>();
 
+	
 	/**
-	 * input x is one in cooridate system where the earth center is (0,0) (0,0)
-	 * -> (350, 350)
+	 * input x is one in cooridate system where the earth center is (0,0) 
+	 * &rarr; (350, 350)
 	 * 
-	 * @param y
+	 * @param x to be shifted
+	 * @return x coordinate to use
+	 */
+	double changeX(double x) {
+		int size = getSize().width < getSize().height ? getSize().width : getSize().height;
+		// double xInDisplay = x / earthRadius * 250 + 350;
+		double xInDisplay = x / earthRadius * iEarthRadius() + size / 2;
+		// System.out.println(x + " " + xInDisplay+" "+getSize().width);
+		return Math.round(xInDisplay);
+	}
+	
+	/**
+	 * input x is one in cooridate system where the earth center is  (0,0)
+	 * &rarr; (350, 350)
+	 * 
+	 * @param y to be shifted
 	 * @return y coordinate to use
 	 */
-	private double changeY(double y) {
+	double changeY(double y) {
 		// double yInDisplay = -y / earthRadius * 250 + 350;
 		int size = getSize().width < getSize().height ? getSize().width : getSize().height;
 		double yInDisplay = -y / earthRadius * iEarthRadius() + size * 0.5;

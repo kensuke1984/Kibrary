@@ -16,6 +16,7 @@ final class About extends javax.swing.JFrame {
 	private static final long serialVersionUID = -8583520488520194322L;
 
 	About() {
+		super("About ANISOtime");
 		initComponents();
 	}
 
@@ -26,7 +27,6 @@ final class About extends javax.swing.JFrame {
 	 */
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">
 	private void initComponents() {
-		setTitle("About ANISOtime");
 		jScrollPane1 = new javax.swing.JScrollPane();
 		jTextArea1 = new javax.swing.JTextArea(line, 5, 20);
 		setLocationRelativeTo(null);

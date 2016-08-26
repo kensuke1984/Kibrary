@@ -4,13 +4,12 @@
 package io.github.kensuke1984.anisotime;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Rayparameter mode
  * 
  * @author Kensuke Konishi
- * @version 0.2.2b
+ * @version 0.2.2.1b
  * 
  */
 final class RayparameterMode extends Computation {
@@ -27,21 +26,20 @@ final class RayparameterMode extends Computation {
 		return ComputationMode.RAYPARAMETER;
 	}
 
-	/** 
+	/**
 	 * Computes for parameters when compute button is pushed
+	 * 
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
 		raypath.compute();
-		List<Raypath> raypathList = new ArrayList<>();
-		List<Phase> phaseList = new ArrayList<>(gui.getSelectedPhaseSet());
-		
-		for(int i=0;i<phaseList.size();i++)
-			raypathList.add(raypath);
-		
-		raypaths = raypathList;
-		phases = phaseList;
+		raypaths = new ArrayList<>();
+		phases = new ArrayList<>(gui.getSelectedPhaseSet());
+
+		for (int i = 0; i < phases.size(); i++)
+			raypaths.add(raypath);
+
 		gui.computed(raypath);
 		showResult(raypaths, phases);
 	}
