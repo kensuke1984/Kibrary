@@ -18,7 +18,6 @@ import java.util.function.BiFunction;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -33,7 +32,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * automatically is stored.
  * 
  * @author Kensuke Konishi
- * @version 0.0.6b
+ * @version 0.0.6.1b
  */
 public class RaypathCatalog implements Serializable {
 
@@ -71,8 +70,7 @@ public class RaypathCatalog implements Serializable {
 				String model = p.getFileName().toString().replace(".cat", "");
 				ComputationalMesh simple = ComputationalMesh.simple(v);
 				if (!Files.exists(p)) {
-					System.err
-							.println("Creating a catalog for " + model + ". This computation is only done this time.");
+					System.err.println("Creating a catalog for " + model + ". This computation is done only once.");
 					cat = new RaypathCatalog(v, simple, Math.toRadians(1));
 					cat.create();
 					try {
@@ -85,7 +83,7 @@ public class RaypathCatalog implements Serializable {
 						cat = read(p);
 					} catch (ClassNotFoundException | IOException ice) {
 						System.err.println("Creating a catalog for " + model
-								+ " (due to out of date). This computation is only done this time.");
+								+ " (due to out of date).  This computation is done only once.");
 						cat = new RaypathCatalog(v, simple, Math.toRadians(1));
 						cat.create();
 						try {
@@ -124,7 +122,7 @@ public class RaypathCatalog implements Serializable {
 	 * @return Raypaths in a catalog in order by the p (ray parameter).
 	 */
 	public Raypath[] getRaypaths() {
-		return raypathList.toArray(new Raypath[0]);
+		return raypathList.toArray(new Raypath[raypathList.size()]);
 	}
 
 	/**
@@ -261,12 +259,9 @@ public class RaypathCatalog implements Serializable {
 		double p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
 		double p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
 		double p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
-		pDiff = new Raypath(p_Pdiff, WOODHOUSE, MESH);
-		pDiff.compute();
-		svDiff = new Raypath(p_SVdiff, WOODHOUSE, MESH);
-		svDiff.compute();
-		shDiff = new Raypath(p_SHdiff, WOODHOUSE, MESH);
-		shDiff.compute();
+		(pDiff = new Raypath(p_Pdiff, WOODHOUSE, MESH)).compute();
+		(svDiff = new Raypath(p_SVdiff, WOODHOUSE, MESH)).compute();
+		(shDiff = new Raypath(p_SHdiff, WOODHOUSE, MESH)).compute();
 	}
 
 	/**
@@ -491,8 +486,9 @@ public class RaypathCatalog implements Serializable {
 	 */
 	public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta) {
 		Raypath[] raypaths = getRaypaths();
-		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
-				+ Precision.round(Math.toDegrees(targetDelta), 4));
+		// System.err.println("Looking for Phase:" + targetPhase + ",
+		// \u0394[\u02da]:"
+		// + Precision.round(Math.toDegrees(targetDelta), 4));
 
 		if (targetPhase.isDiffracted())
 			return new Raypath[] { targetPhase.toString().contains("Pdiff") ? getPdiff()
@@ -531,9 +527,9 @@ public class RaypathCatalog implements Serializable {
 	 *            [rad] target &Delta;
 	 */
 	public double[] searchTime(Phase targetPhase, double eventR, double targetDelta) {
-		// Raypath[] raypaths = catalog.getRaypaths();
-		System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:"
-				+ Precision.round(Math.toDegrees(targetDelta), 4));
+		// System.err.println("Looking for Phase:" + targetPhase + ",
+		// \u0394[\u02da]:"
+		// + Precision.round(Math.toDegrees(targetDelta), 4));
 		List<Double> timeList = new ArrayList<>();
 		Raypath[] raypaths = getRaypaths();
 		for (int i = 0; i < raypaths.length - 1; i++) {
@@ -552,8 +548,6 @@ public class RaypathCatalog implements Serializable {
 			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
 			if (Double.isNaN(deltaC) || Double.isNaN(deltaIn))
 				continue;
-			// System.err.println(i + " " + Math.toDegrees(deltaI) + " " +
-			// Math.toDegrees(deltaP));
 			timeList.add(interpolateTraveltime(targetPhase, eventR, targetDelta, rayI, rayC, rayP, rayIn));
 		}
 		return timeList.stream().mapToDouble(Double::doubleValue).toArray();

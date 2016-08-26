@@ -14,6 +14,10 @@ import java.nio.file.Path;
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
+	/**
+	 * 2016/8/26
+	 */
+	private static final long serialVersionUID = 2894713193785835485L;
 	io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
 	@Override
