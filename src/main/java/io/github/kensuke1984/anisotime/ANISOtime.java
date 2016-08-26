@@ -11,14 +11,14 @@ import org.apache.commons.cli.ParseException;
  * ANISOtime launcher.
  * 
  * @author Kensuke Konishi
- * @version 1.0.1.1b
+ * @version {@value #version} {@value #codename}
  * 
  */
 final class ANISOtime {
 
 	static final String codename = "Tavnazia";
 
-	static final String version = "1.0.1b";
+	static final String version = "1.0.2b";
 
 	/**
 	 * Creates new form TravelTimeGUI

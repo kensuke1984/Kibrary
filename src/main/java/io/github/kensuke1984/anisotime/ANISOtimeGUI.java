@@ -36,30 +36,28 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
 	private Computation currentComputationMode;
 
-	private RaypathTabs raypathTabs;
+	private RaypathWindow raypathWindow;
 
 	int getNumberOfRaypath() {
 		return resultWindow.getN();
 	}
 
 	void selectRaypath(int i) {
-		raypathTabs.selectTab(i);
+		raypathWindow.selectPath(i);
 	}
 
 	void setRaypathVisible(boolean bool) {
-		raypathTabs.setVisible(bool);
+		raypathWindow.setVisible(bool);
 	}
 
 	void addPath(double[] x, double[] y) {
-		raypathTabs.addPath(x, y);
+		raypathWindow.addPath(x, y);
 	}
 
 	void createNewRaypathTabs() {
-		if (raypathTabs != null)
-			raypathTabs.dispose();
-		VelocityStructure structure = jPanelParameter.getStructure();
-		raypathTabs = new RaypathTabs(this, new RaypathPanel(structure.earthRadius(), structure.coreMantleBoundary(),
-				structure.innerCoreBoundary()));
+		if (raypathWindow != null)
+			raypathWindow.dispose();
+		raypathWindow = new RaypathWindow(this, new RaypathPanel(jPanelParameter.getStructure()));
 		resultWindow.clearRows();
 	}
 

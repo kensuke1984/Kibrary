@@ -70,13 +70,6 @@ class Woodhouse1981 implements Serializable {
 		STRUCTURE = structure;
 	}
 
-	public static void main(String[] args) {
-		VelocityStructure v1 = VelocityStructure.prem();
-		VelocityStructure v = PolynomialStructure.ISO_PREM;
-		Woodhouse1981 w1 = new Woodhouse1981(v1);
-		Woodhouse1981 w = new Woodhouse1981(v);
-	}
-
 	/**
 	 * @return VelocityStructure
 	 */

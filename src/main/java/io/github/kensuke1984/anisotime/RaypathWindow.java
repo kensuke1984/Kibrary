@@ -13,16 +13,15 @@ import java.awt.event.ComponentEvent;
  * 
  * 
  */
-class RaypathTabs extends javax.swing.JFrame {
+class RaypathWindow extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = 406911785152443889L;
 
-	RaypathTabs(ANISOtimeGUI travelTimeGui, RaypathPanel raypathPanel) {
+	RaypathWindow(ANISOtimeGUI travelTimeGui, RaypathPanel raypathPanel) {
 		super("Raypath");
 		this.raypathPanel = raypathPanel;
 		this.travelTimeGUI = travelTimeGui;
 		initComponents();
-
 	}
 
 	void addPath(double[] x, double[] y) {
@@ -66,44 +65,8 @@ class RaypathTabs extends javax.swing.JFrame {
 
 	}// </editor-fold>
 
-	void selectTab(int i) {
+	void selectPath(int i) {
 		raypathPanel.setFeatured(i);
-		revalidate();
-		repaint();
 	}
 
-	/**
-	 * @param args
-	 *            the command line arguments
-	 */
-	public static void main(String args[]) {
-		try {
-			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					javax.swing.UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(RaypathTabs.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(RaypathTabs.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(RaypathTabs.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
-			java.util.logging.Logger.getLogger(RaypathTabs.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		}
-		// </editor-fold>
-
-		/* Create and display the form */
-		java.awt.EventQueue.invokeLater(() -> new RaypathTabs(null, null).setVisible(true));
-	}
-
-	// Variables declaration - do not modify
-	// private javax.swing.JTabbedPane jTabbedPane3;
-	// End of variables declaration
 }

@@ -18,9 +18,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.5.2
- * 
- * 
+ * @version 0.0.6
  */
 class ResultWindow extends javax.swing.JPanel {
 
@@ -80,7 +78,7 @@ class ResultWindow extends javax.swing.JPanel {
 			}
 		});
 		jTable1.setModel(new javax.swing.table.DefaultTableModel(new Object[][] {},
-				new String[] { "Dist", "Depth", "Name", "Time", "Rayparameter" }));
+				new String[] { "\u0394 [deg]", "Depth [km]", "Phase", "Time [s]", "Ray parameter" }));
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
 		setLayout(layout);
