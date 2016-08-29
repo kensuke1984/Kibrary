@@ -39,7 +39,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * TODO customize for catalog ddelta
  * 
  * @author Kensuke Konishi
- * @version 0.3.6b
+ * @version 0.3.6.1b
  */
 final class ANISOtimeCLI {
 
@@ -53,7 +53,7 @@ final class ANISOtimeCLI {
 		cmd = new DefaultParser().parse(options, args);
 		INPUT = Arrays.stream(args).collect(Collectors.joining(" "));
 	}
-	
+
 	private final String INPUT;
 
 	/**
@@ -362,8 +362,10 @@ final class ANISOtimeCLI {
 				System.err.println(e.getMessage());
 			} else
 				try {
-					Desktop.getDesktop().mail(new URI("mailto:kensuke@earth.sinica.edu.tw?subject=ANISOtime%20problem&body="+INPUT.replace(" ", "%20")+ 
-							"%0APlease%20attach%20the%20structure%20file%20you%20use."));
+					Desktop.getDesktop()
+							.mail(new URI("mailto:kensuke@earth.sinica.edu.tw?subject=ANISOtime%20problem&body="
+									+ INPUT.replace(" ", "%20")
+									+ "%0APlease%20attach%20the%20structure%20file%20you%20use."));
 				} catch (Exception e2) {
 					System.err.println("Sorry could not send an Email.");
 				}
@@ -372,9 +374,6 @@ final class ANISOtimeCLI {
 		}
 	}
 
-	
-	
-	
 	private void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
 		out.println(phase + " " + IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
 				.mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i])).collect(Collectors.joining(" ")));
@@ -468,8 +467,8 @@ final class ANISOtimeCLI {
 	}
 
 	private static void setBooleanOptions() {
-		options.addOption("SV", false, "Computes travel time for SV (default: SH)");
-		options.addOption("SH", false, "Computes travel time for SH (default: SH)");
+		options.addOption("SV", false, "Computes travel time for SV (default:SH)");
+		options.addOption("SH", false, "Computes travel time for SH (default:SH)");
 		options.addOption("help", "Shows this message. This option has the highest priority.");
 		options.addOption("eps", false, "output path figure");
 		options.addOption(null, "rayp", false, "Shows ray parameters");
@@ -482,17 +481,17 @@ final class ANISOtimeCLI {
 	}
 
 	private static void setArgumentOptions() {
-		options.addOption("h", true, "Depth of source [km] (default = 0)");
+		options.addOption("h", true, "Depth of source [km] (default:0)");
 		options.addOption("deg", "epicentral-distance", true, "Epicentral distance \u0394 [deg]");
 		options.addOption("ph", "phase", true, "Seismic phase (default:P,PCP,PKiKP,S,ScS,SKiKS)");
 		options.addOption("mod", true, "Structure (default:prem)");
 		options.addOption("dec", true, "Number of decimal places.");
 		options.addOption("p", true, "Ray parameter");
-		options.addOption("dR", true, "Integral interval [km] (default:10.0)");
-		options.addOption("dD", true, "Parameter for a catalog creation (d\u0394).");
+		options.addOption("dR", true, "Integral interval [km] (default:10)");
+		options.addOption("dD", true, "Parameter for a catalog creation (\u03b4\u0394).");
 		options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
 		options.addOption("rs", "record-section", true,
-				"start,end(,interval) [deg]  \n Computes a table of a record section for the range.");
+				"start,end(,interval) [deg]\n Computes a table of a record section for the range.");
 		options.addOption("o", true, "Directory for ray path figures or record sections.");
 	}
 

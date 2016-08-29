@@ -5,6 +5,7 @@ package io.github.kensuke1984.anisotime;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -53,23 +54,7 @@ class ResultWindow extends javax.swing.JPanel {
 		jTable1.setRowSelectionAllowed(true);
 		jTable1.setColumnSelectionAllowed(false);
 		jTable1.setShowGrid(true);
-		jTable1.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseReleased(MouseEvent e) {
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {
-			}
-
-			@Override
-			public void mouseExited(MouseEvent e) {
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {
-			}
-
+		jTable1.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				int row = jTable1.getSelectedRow();

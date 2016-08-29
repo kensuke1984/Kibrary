@@ -5,21 +5,29 @@
  */
 package io.github.kensuke1984.anisotime;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.FutureTask;
 import java.util.stream.Collectors;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 /**
  * 
  * GUI for ANISOtime
  * 
- * @version 0.4.1
+ * @version 0.5
  * 
  * @author Kensuke Konishi
  */
@@ -33,8 +41,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	ANISOtimeGUI() {
 		initComponents();
 	}
-
-	private Computation currentComputationMode;
 
 	private RaypathWindow raypathWindow;
 
@@ -150,8 +156,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		setLocation(getX() - getWidth() / 2, getY() - getHeight() / 2);
 		phaseWindow.setLocation(getX() + getWidth(), getY());
 		phaseWindow.setVisible(true);
-		// raypathTabs = new RaypathTabs(this);
-		// resultWindow.setLocation(getX()-resultWindow.getWidth(), getY());
+		setMode(jMenuBar1.selectedMode());
 	}// </editor-fold>//GEN-END:initComponents
 
 	/**
@@ -180,11 +185,87 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	 * when the button "Save" is clicked.
 	 */
 	private void buttonSavePerformed(java.awt.event.ActionEvent evt) {
-		if (currentComputationMode == null) {
-			JOptionPane.showMessageDialog(null, "Compute first.");
-			return;
-		}
-		currentComputationMode.outputPath();
+		double eventR = getEventR();
+
+		FutureTask<Path> askOutPath = new FutureTask<>(() -> {
+			JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
+			fileChooser.setDialogTitle("Output the path?");
+			fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			int action = fileChooser.showOpenDialog(null);
+			if (action == JFileChooser.CANCEL_OPTION || action == JFileChooser.ERROR_OPTION)
+				return null;
+			return fileChooser.getSelectedFile().toPath();
+		});
+
+		SwingUtilities.invokeLater(askOutPath);
+
+		Runnable output = () -> {
+
+			List<Raypath> raypathList;
+			List<Phase> phaseList;
+			Path outputDirectory;
+			switch (selectedMode()) {
+			case EPICENTRAL_DISTANCE:
+				raypathList = new ArrayList<>();
+				phaseList = new ArrayList<>();
+				RaypathCatalog catalog = RaypathCatalog.computeCatalogue(getStructure(),
+						ComputationalMesh.simple(getStructure()), Math.toRadians(1));
+				double epicentralDistance = Math.toRadians(getMostImportant());
+				for (Phase phase : getSelectedPhaseSet()) {
+					Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
+					if (raypaths.length == 0)
+						continue;
+					for (int i = 0; i < raypaths.length; i++) {
+						raypathList.add(raypaths[i]);
+						phaseList.add(phase);
+					}
+				}
+				for (int i = 0; i < phaseList.size(); i++) {
+					Phase phase = phaseList.get(i);
+					if (!phase.isDiffracted())
+						continue;
+					Raypath raypath = raypathList.get(i);
+					double delta = raypath.computeDelta(eventR, phase);
+					double dDelta = Math.toDegrees(epicentralDistance - delta);
+					phaseList.set(i, Phase.create(phase.toString() + dDelta));
+				}
+
+				break;
+			case RAYPARAMETER:
+				raypathList = new ArrayList<>();
+				phaseList = new ArrayList<>(getSelectedPhaseSet());
+				Raypath raypath = new Raypath(getMostImportant(), getStructure());
+				raypath.compute();
+				for (int i = 0; i < phaseList.size(); i++)
+					raypathList.add(raypath);
+				break;
+			default:
+				throw new RuntimeException("unekuspekudte");
+			}
+
+			try {
+				outputDirectory = askOutPath.get();
+				if (outputDirectory == null)
+					return;
+				if (raypathList.size() != phaseList.size())
+					throw new RuntimeException("UNEXPECTED");
+				for (int i = 0; i < raypathList.size(); i++) {
+					String name = phaseList.get(i).isPSV() ? phaseList.get(i) + "_PSV" : phaseList.get(i) + "_SH";
+					Path outEPSFile = outputDirectory.resolve(name + ".eps");
+					Path outInfoFile = outputDirectory.resolve(name + ".inf");
+					Path outDataFile = outputDirectory.resolve(name + ".dat");
+					raypathList.get(i).outputEPS(eventR, phaseList.get(i), outEPSFile);
+					raypathList.get(i).outputInfo(outInfoFile, eventR, phaseList.get(i));
+					raypathList.get(i).outputDat(outDataFile, eventR, phaseList.get(i));
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				SwingUtilities
+						.invokeLater(() -> JOptionPane.showMessageDialog(null, "Cannot output files about the path"));
+			}
+		};
+		new Thread(output).start();
+
 	}
 
 	/**
@@ -193,18 +274,13 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	private void buttonComputeActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonComputeActionPerformed
 		createNewRaypathTabs();
 		switch (selectedMode()) {
-		case RAYPARAMETER:
-			currentComputationMode = new RayparameterMode(this, new Raypath(getMostImportant(), getStructure()));
-			break;
 		case EPICENTRAL_DISTANCE:
-			currentComputationMode = new EpicentralDistanceMode(this, getSelectedPhaseSet(),
-					Math.toRadians(getMostImportant()), getStructure(), getEventR());
+			new Thread(this::runEpicentralDistanceMode).start();
 			break;
-		default:
-			JOptionPane.showMessageDialog(null, "sorry not yet.");
-			return;
+		case RAYPARAMETER:
+			new Thread(this::runRayParameterMode).start();
+			break;
 		}
-		new Thread(currentComputationMode).start();
 	}// GEN-LAST:event_buttonComputeActionPerformed
 
 	/**
@@ -250,11 +326,137 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		resultWindow.addRow(epicentralDistance, depth, phase, travelTime, rayparameter);
 	}
 
-	synchronized void computed(Raypath raypath) {
-		currentRaypath = raypath;
+	public void runRayParameterMode() {
+		Raypath raypath = new Raypath(getMostImportant(), getStructure());
+		raypath.compute();
+		List<Raypath> raypaths = new ArrayList<>();
+		List<Phase> phases = new ArrayList<>(getSelectedPhaseSet());
+
+		for (int i = 0; i < phases.size(); i++)
+			raypaths.add(raypath);
+
+		showResult(null, raypaths, phases);
 	}
 
-	private Raypath currentRaypath;
+	public void runEpicentralDistanceMode() {
+		RaypathCatalog catalog = RaypathCatalog.computeCatalogue(getStructure(),
+				ComputationalMesh.simple(getStructure()), Math.toRadians(1));
+		List<Raypath> raypathList = new ArrayList<>();
+		List<Phase> phaseList = new ArrayList<>();
+		double eventR = getEventR();
+		double epicentralDistance = Math.toRadians(getMostImportant());
+		for (Phase phase : getSelectedPhaseSet()) {
+			Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
+			if (raypaths.length == 0)
+				continue;
+			for (int i = 0; i < raypaths.length; i++) {
+				raypathList.add(raypaths[i]);
+				phaseList.add(phase);
+			}
+
+		}
+		for (int i = 0; i < phaseList.size(); i++) {
+			Phase phase = phaseList.get(i);
+			if (!phase.isDiffracted())
+				continue;
+			Raypath raypath = raypathList.get(i);
+			double delta = raypath.computeDelta(eventR, phase);
+			double dDelta = Math.toDegrees(epicentralDistance - delta);
+			phaseList.set(i, Phase.create(phase.toString() + dDelta));
+		}
+		int n = raypathList.size();
+		// System.out.println("Whats done is done");
+		double[] delta = new double[n];
+		Arrays.fill(delta, epicentralDistance);
+		showResult(delta, raypathList, phaseList);
+	}
+
+	/**
+	 * This method shows results containing i th phase of i th raypath
+	 * 
+	 * @param delta
+	 *            Array of epicentral distance
+	 * @param raypathList
+	 *            List of {@link Raypath}
+	 * @param phaseList
+	 *            List of {@link Phase}
+	 */
+	synchronized public void showResult(final double[] delta, final List<Raypath> raypathList,
+			final List<Phase> phaseList) {
+		Objects.requireNonNull(raypathList);
+		Objects.requireNonNull(phaseList);
+		if (raypathList.size() != phaseList.size())
+			throw new RuntimeException("UNEXPECTED");
+		// System.out.println(SwingUtilities.isEventDispatchThread());
+		double eventR = getEventR();
+		for (int i = 0; i < phaseList.size(); i++) {
+			Raypath raypath = raypathList.get(i);
+			Phase phase = phaseList.get(i);
+			if (!raypath.exists(eventR, phase))
+				continue;
+			// travelTimeTool.addPanels(panel);
+			double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
+			double travelTime = raypath.computeT(eventR, phase);
+			// System.out.println(epicentralDistance+" "+travelTime);
+			String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
+			double depth = raypath.earthRadius() - getEventR();
+
+			if (delta == null) {
+				addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
+				showRayPath(this, raypath, phase);
+			} else {
+				double time = travelTime;
+				double interval = 0.1;
+				double targetDelta = Math.toDegrees(delta[i]);
+				if (!phase.isDiffracted())
+					try {
+						while ((time = RaypathCatalog.travelTimeByThreePointInterpolate(targetDelta, raypath,
+								getEventR(), phase, interval)) < 0)
+							interval *= 10;
+					} catch (Exception e) {
+						// e.printStackTrace();
+						addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
+						showRayPath(this, raypath, phase);
+						continue;
+					}
+				if (!Double.isNaN(time)) {
+					addResult(targetDelta, depth, title, time, raypath.getRayParameter());
+					showRayPath(this, raypath, phase);
+				}
+			}
+		}
+		try {
+			if (0 < getNumberOfRaypath())
+				SwingUtilities.invokeLater(() -> {
+					setRaypathVisible(true);
+					setResult(0);
+					selectRaypath(0);
+				});
+		} catch (Exception e) {
+		}
+
+	}
+
+	private static void showRayPath(ANISOtimeGUI travelTimeGUI, Raypath raypath, Phase phase) {
+		if (!raypath.exists(travelTimeGUI.getEventR(), phase))
+			return;
+		double[][] points = raypath.getRouteXY(travelTimeGUI.getEventR(), phase);
+		if (points != null) {
+			double[] x = new double[points.length];
+			double[] y = new double[points.length];
+			for (int i = 0; i < points.length; i++) {
+				x[i] = points[i][0];
+				y[i] = points[i][1];
+			}
+			try {
+				SwingUtilities.invokeAndWait(() -> travelTimeGUI.addPath(x, y));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return;
+	}
+
 	// Variables declaration - do not modify//GEN-BEGIN:variables
 	private JButton buttonCompute;
 	private JButton buttonShow;

@@ -11,7 +11,6 @@ import java.awt.event.ComponentEvent;
  * 
  * @version 0.1.0.1
  * 
- * 
  */
 class RaypathWindow extends javax.swing.JFrame {
 
