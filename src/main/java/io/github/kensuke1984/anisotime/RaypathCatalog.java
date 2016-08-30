@@ -313,15 +313,10 @@ public class RaypathCatalog implements Serializable {
 			} else {
 				raypathPool.add(rp);
 				nextP = (p + raypathList.last().getRayParameter()) / 2;
-				// System.out.println(p+" "+nextP);
 			}
 
-			// System.out.println(p+" 1-> "+nextP);
 			if (lookIntoPool())
 				nextP = raypathList.last().getRayParameter() + DELTA_P;
-			// System.out.println(p+" 2-> "+nextP);
-			// System.out.println(nextP);
-			// 253.70677502466899 479.03198571892705 479.03198571892705
 			if ((p < p_Pdiff && p_Pdiff < nextP) || (p < p_SVdiff && p_SVdiff < nextP)
 					|| (p < p_SHdiff && p_SHdiff < nextP)) {
 				Raypath diffPath = new Raypath(nextP, WOODHOUSE, MESH);
@@ -370,7 +365,6 @@ public class RaypathCatalog implements Serializable {
 		if (raypath2.getRayParameter() <= raypath1.getRayParameter())
 			return false;
 		if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P) {
-			// System.out.println("close");
 			return true;
 		}
 		VelocityStructure structure = WOODHOUSE.getStructure();

@@ -49,7 +49,7 @@ final class About extends javax.swing.JFrame {
 	}// </editor-fold>
 
 	private static final String line = "ANISOtime " + ANISOtime.version + " (" + ANISOtime.codename
-			+ ") Copyright © 2015 Kensuke Konishi\n\n"
+			+ ") Copyright \u00a9 2015 Kensuke Konishi\n\n"
 			+ "Licensed under the Apache License, Version 2.0 (the \"License\")\n"
 			+ "You may not use this file except in compliance with the License.\n"
 			+ "You may obtain a copy of the License at\n\n" + "\thttp://www.apache.org/licenses/LICENSE-2.0\n\n"

@@ -23,10 +23,11 @@ import java.util.Set;
 class Woodhouse1981 implements Serializable {
 
 
+
 	/**
-	 * As of 2016/7/19
+	 * 2016/8/30
 	 */
-	private static final long serialVersionUID = 5178266700270807118L;
+	private static final long serialVersionUID = 7537069912723992175L;
 
 	private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
 		stream.defaultReadObject();
