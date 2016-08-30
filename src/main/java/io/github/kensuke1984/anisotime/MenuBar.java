@@ -33,7 +33,6 @@ final class MenuBar extends JMenuBar {
 	private static final long serialVersionUID = -3885037230307922628L;
 
 	MenuBar(ANISOtimeGUI gui) {
-		super();
 		this.gui = gui;
 		initComponents();
 	}
@@ -175,7 +174,7 @@ final class MenuBar extends JMenuBar {
 		switch (mode) {
 		case EPICENTRAL_DISTANCE:
 			return "Mode:Epicentral Distance";
-		case RAYPARAMETER:
+		case RAY_PARAMETER:
 			return "Mode:Rayparameter";
 		default:
 			throw new RuntimeException("Error");
@@ -184,7 +183,7 @@ final class MenuBar extends JMenuBar {
 
 	private void setModeSelect() {
 		jMenuItemRayparameterMode.addActionListener(e -> {
-			mode = ComputationMode.RAYPARAMETER;
+			mode = ComputationMode.RAY_PARAMETER;
 			gui.setMode(mode);
 			gui.setPolarity(polarization);
 		});

@@ -1,13 +1,9 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -19,14 +15,18 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.6
+ * @version 0.0.6.1
  */
 class ResultWindow extends javax.swing.JPanel {
 
-	private static final long serialVersionUID = -7565301966921737987L;
 
-	public ResultWindow(ANISOtimeGUI travelTimeGUI) {
-		this.travelTimeGUI = travelTimeGUI;
+	/**
+	 * 2016/8/30
+	 */
+	private static final long serialVersionUID = 5732699322643646778L;
+
+	public ResultWindow(ANISOtimeGUI gui) {
+		this.gui = gui;
 		initComponents();
 	}
 
@@ -34,7 +34,7 @@ class ResultWindow extends javax.swing.JPanel {
 		return jTable1.getRowCount();
 	}
 
-	private ANISOtimeGUI travelTimeGUI;
+	private ANISOtimeGUI gui;
 
 	/**
 	 * This method is called from within the constructor to initialize the form.
@@ -59,7 +59,7 @@ class ResultWindow extends javax.swing.JPanel {
 			public void mouseClicked(MouseEvent e) {
 				int row = jTable1.getSelectedRow();
 				setColor(row);
-				travelTimeGUI.selectRaypath(row);
+				gui.selectRaypath(row);
 			}
 		});
 		jTable1.setModel(new javax.swing.table.DefaultTableModel(new Object[][] {},
@@ -98,7 +98,6 @@ class ResultWindow extends javax.swing.JPanel {
 		try {
 			SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1.getModel()))
 					.addRow(new String[] { delta, depthS, phase, time, p }));
-
 		} catch (Exception e) {
 		}
 
@@ -167,15 +166,6 @@ class ResultWindow extends javax.swing.JPanel {
 	 *            the command line arguments
 	 */
 	public static void main(String args[]) {
-		/* Set the Nimbus look and feel */
-		// <editor-fold defaultstate="collapsed"
-		// desc=" Look and feel setting code (optional) ">
-		/*
-		 * If Nimbus (introduced in Java SE 6) is not available, stay with the
-		 * default look and feel. For details see
-		 * http://download.oracle.com/javase
-		 * /tutorial/uiswing/lookandfeel/plaf.html
-		 */
 		try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
 				if ("Nimbus".equals(info.getName())) {

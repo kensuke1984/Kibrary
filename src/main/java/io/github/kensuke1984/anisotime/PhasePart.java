@@ -1,13 +1,10 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 /**
  * P, SV, SH, K, I, JV and JH
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 public enum PhasePart {

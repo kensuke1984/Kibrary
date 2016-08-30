@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 /**
@@ -8,7 +5,7 @@ package io.github.kensuke1984.anisotime;
  * 
  * In the inner-core, I and J are PENETRATING if and only if a ray parameter = 0.
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.2
  */
 enum Propagation {

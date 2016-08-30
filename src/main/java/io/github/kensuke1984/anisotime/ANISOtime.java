@@ -9,6 +9,7 @@ import org.apache.commons.cli.ParseException;
 /**
  * 
  * ANISOtime launcher.
+ * TODO discontinuity
  * 
  * @author Kensuke Konishi
  * @version {@value #version} {@value #codename}
@@ -18,18 +19,15 @@ final class ANISOtime {
 
 	static final String codename = "Tavnazia";
 
-	static final String version = "1.0.2b";
+	static final String version = "1.1.0b";
 
-	/**
-	 * Creates new form TravelTimeGUI
-	 */
 	private ANISOtime() {
 	}
 
 	/**
 	 * @param args
 	 *            the command line arguments
-	 * @throws ParseException
+	 * @throws ParseException if any
 	 */
 	public static void main(String args[]) {
 		if (args.length != 0)

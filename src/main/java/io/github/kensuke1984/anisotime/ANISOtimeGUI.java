@@ -27,7 +27,7 @@ import javax.swing.WindowConstants;
  * 
  * GUI for ANISOtime
  * 
- * @version 0.5
+ * @version 0.5.1.1
  * 
  * @author Kensuke Konishi
  */
@@ -117,16 +117,12 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		resultWindow = new ResultWindow(this);
 
 		jPanelParameter = new ParameterInputPanel();
-		// jPanelTurningInformation = new TurningInformationPanel();
-		// jPanelPhase = new PhasePanel();
 		buttonCompute = new JButton("Compute");
 		buttonShow = new JButton("Save");
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
-		// jMenuItem1 = new JMenuItem();
 		jMenuBar1 = new MenuBar(this);
 		setJMenuBar(jMenuBar1);
-		// textFieldRayParameter.setText("0");
 
 		buttonCompute.addActionListener(this::buttonComputeActionPerformed);
 
@@ -150,7 +146,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 								.addComponent(buttonCompute).addComponent(buttonShow))
 						.addComponent(resultWindow, 100, 100, 100).addContainerGap()));
-
 		pack();
 		setPolarity(0);
 		setLocation(getX() - getWidth() / 2, getY() - getHeight() / 2);
@@ -213,8 +208,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 				double epicentralDistance = Math.toRadians(getMostImportant());
 				for (Phase phase : getSelectedPhaseSet()) {
 					Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
-					if (raypaths.length == 0)
-						continue;
 					for (int i = 0; i < raypaths.length; i++) {
 						raypathList.add(raypaths[i]);
 						phaseList.add(phase);
@@ -231,7 +224,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 				}
 
 				break;
-			case RAYPARAMETER:
+			case RAY_PARAMETER:
 				raypathList = new ArrayList<>();
 				phaseList = new ArrayList<>(getSelectedPhaseSet());
 				Raypath raypath = new Raypath(getMostImportant(), getStructure());
@@ -277,7 +270,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		case EPICENTRAL_DISTANCE:
 			new Thread(this::runEpicentralDistanceMode).start();
 			break;
-		case RAYPARAMETER:
+		case RAY_PARAMETER:
 			new Thread(this::runRayParameterMode).start();
 			break;
 		}
@@ -347,13 +340,10 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		double epicentralDistance = Math.toRadians(getMostImportant());
 		for (Phase phase : getSelectedPhaseSet()) {
 			Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
-			if (raypaths.length == 0)
-				continue;
 			for (int i = 0; i < raypaths.length; i++) {
 				raypathList.add(raypaths[i]);
 				phaseList.add(phase);
 			}
-
 		}
 		for (int i = 0; i < phaseList.size(); i++) {
 			Phase phase = phaseList.get(i);
@@ -394,13 +384,11 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 			Phase phase = phaseList.get(i);
 			if (!raypath.exists(eventR, phase))
 				continue;
-			// travelTimeTool.addPanels(panel);
 			double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
 			double travelTime = raypath.computeT(eventR, phase);
 			// System.out.println(epicentralDistance+" "+travelTime);
 			String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
-			double depth = raypath.earthRadius() - getEventR();
-
+			double depth = raypath.earthRadius() - eventR;
 			if (delta == null) {
 				addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
 				showRayPath(this, raypath, phase);
@@ -411,10 +399,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 				if (!phase.isDiffracted())
 					try {
 						while ((time = RaypathCatalog.travelTimeByThreePointInterpolate(targetDelta, raypath,
-								getEventR(), phase, interval)) < 0)
+								eventR, phase, interval)) < 0)
 							interval *= 10;
 					} catch (Exception e) {
-						// e.printStackTrace();
 						addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
 						showRayPath(this, raypath, phase);
 						continue;
@@ -437,10 +424,11 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
 	}
 
-	private static void showRayPath(ANISOtimeGUI travelTimeGUI, Raypath raypath, Phase phase) {
-		if (!raypath.exists(travelTimeGUI.getEventR(), phase))
+	private static void showRayPath(ANISOtimeGUI gui, Raypath raypath, Phase phase) {
+		double eventR = gui.getEventR();
+		if (!raypath.exists(eventR, phase))
 			return;
-		double[][] points = raypath.getRouteXY(travelTimeGUI.getEventR(), phase);
+		double[][] points = raypath.getRouteXY(eventR, phase);
 		if (points != null) {
 			double[] x = new double[points.length];
 			double[] y = new double[points.length];
@@ -449,7 +437,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 				y[i] = points[i][1];
 			}
 			try {
-				SwingUtilities.invokeAndWait(() -> travelTimeGUI.addPath(x, y));
+				SwingUtilities.invokeAndWait(() -> gui.addPath(x, y));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

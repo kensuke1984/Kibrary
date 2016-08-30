@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.awt.event.ComponentAdapter;
@@ -14,12 +11,16 @@ import java.awt.event.ComponentEvent;
  */
 class RaypathWindow extends javax.swing.JFrame {
 
-	private static final long serialVersionUID = 406911785152443889L;
 
-	RaypathWindow(ANISOtimeGUI travelTimeGui, RaypathPanel raypathPanel) {
+	/**
+	 * 2016/8/30
+	 */
+	private static final long serialVersionUID = -5519489181399651337L;
+
+	RaypathWindow(ANISOtimeGUI gui, RaypathPanel raypathPanel) {
 		super("Raypath");
 		this.raypathPanel = raypathPanel;
-		this.travelTimeGUI = travelTimeGui;
+		this.gui = gui;
 		initComponents();
 	}
 
@@ -29,7 +30,7 @@ class RaypathWindow extends javax.swing.JFrame {
 
 	private RaypathPanel raypathPanel;
 
-	private ANISOtimeGUI travelTimeGUI;
+	private ANISOtimeGUI gui;
 
 	/**
 	 * This method is called from within the constructor to initialize the form.
@@ -60,7 +61,7 @@ class RaypathWindow extends javax.swing.JFrame {
 
 		pack();
 		setSize(700, 700);
-		setLocation(travelTimeGUI.getX() - 700, travelTimeGUI.getY());
+		setLocation(gui.getX() - 700, gui.getY());
 
 	}// </editor-fold>
 

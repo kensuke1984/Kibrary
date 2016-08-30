@@ -42,6 +42,7 @@ class PhaseWindow extends javax.swing.JFrame {
 
 	/**
 	 * @param i
+	 *            0:All, 1:P-SV, 2:SH
 	 */
 	synchronized void setPolarity(int i) {
 		final ListCellRenderer<? super String> r = jList1.getCellRenderer();
@@ -105,7 +106,6 @@ class PhaseWindow extends javax.swing.JFrame {
 		jScrollPane1.setViewportView(jList1);
 
 		jButtonAdd.setToolTipText("");
-		// jList1.setSelectedIndex(2);
 		jList1.setSelectedIndices(new int[] { 2, 3 });
 		jButtonAdd.addActionListener(evt -> {
 			String line = jTextFieldPhaseAdd.getText();
@@ -145,8 +145,8 @@ class PhaseWindow extends javax.swing.JFrame {
 	}// </editor-fold>
 
 	/**
-	 * @return Set of phases selected at the moment. The phases have no information
-	 *         about polarity.
+	 * @return Set of phases selected at the moment. The phases have no
+	 *         information about polarity.
 	 */
 	synchronized Set<Phase> getSelectedPhaseSet() {
 		return jList1.getSelectedValuesList().stream().map(Phase::create).collect(Collectors.toSet());
@@ -157,15 +157,6 @@ class PhaseWindow extends javax.swing.JFrame {
 	 *            the command line arguments
 	 */
 	public static void main(String args[]) {
-		/* Set the Nimbus look and feel */
-		// <editor-fold defaultstate="collapsed"
-		// desc=" Look and feel setting code (optional) ">
-		/*
-		 * If Nimbus (introduced in Java SE 6) is not available, stay with the
-		 * default look and feel. For details see
-		 * http://download.oracle.com/javase
-		 * /tutorial/uiswing/lookandfeel/plaf.html
-		 */
 		try {
 			for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
 				if ("Nimbus".equals(info.getName())) {
