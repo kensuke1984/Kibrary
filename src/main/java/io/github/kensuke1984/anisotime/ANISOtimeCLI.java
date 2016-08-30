@@ -120,6 +120,9 @@ final class ANISOtimeCLI {
 
 	private Phase[] targetPhases;
 
+	/**
+	 * [rad]
+	 */
 	private double dDelta;
 
 	private double interval;
@@ -337,7 +340,6 @@ final class ANISOtimeCLI {
 						createEPS(raypath.createPanel(eventR, targetPhase),
 								outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,
 								raypath.getRayParameter(), targetDelta, results[1], eventR);
-
 					return;
 				}
 
@@ -369,7 +371,6 @@ final class ANISOtimeCLI {
 				} catch (Exception e2) {
 					System.err.println("Sorry could not send an Email.");
 				}
-
 			return;
 		}
 	}

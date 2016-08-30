@@ -9,6 +9,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.geom.QuadCurve2D;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +28,11 @@ import net.sf.epsgraphics.EpsGraphics;
  */
 final class RaypathPanel extends JPanel {
 
+
 	/**
-	 * 2016/8/26
+	 * 2016/8/30
 	 */
-	private static final long serialVersionUID = 989511960321893966L;
+	private static final long serialVersionUID = 8852619628102508529L;
 
 	RaypathPanel(VelocityStructure structure) {
 		this.earthRadius = structure.earthRadius();
@@ -53,43 +55,35 @@ final class RaypathPanel extends JPanel {
 		drawAdditionalCircles(g);
 		// System.out.println(g.getClass());
 	}
-	
-	/**
-	 * @param outputStream output stream
-	 * @param phase to be shown
-	 * @param rayparameter p
-	 * @param delta [rad] to be shown.
-	 * @param time [s] to be printed
-	 * @param eventR radius of the event [km]
-	 */
-	void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double eventR) {
-		EpsGraphics epsGraphics = null;
-		try {
-			epsGraphics = new EpsGraphics(phase.toString(), outputStream, 0, 0, getWidth(), getHeight(),
-					ColorMode.COLOR_RGB);
-			paintComponent(epsGraphics);
-			rayparameter = Precision.round(rayparameter, 3);
-			delta = Precision.round(Math.toDegrees(delta), 3);
-			time = Precision.round(time, 3);
-			double depth = Precision.round(earthRadius - eventR, 3);
-			String line = phase.toString() + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
-					+ ", Epicentral distance[deg]: " + delta + ", Travel time[s]: " + time;
-			int startInt = (int) changeX(-line.length() / 2 * 6371 / 45);
-			// epsGraphics.drawLine(0, 100, 200, 300);
-			// epsGraphics.close();
-			epsGraphics.drawString(line, startInt, (int) changeY(earthRadius) - 25);
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("orz");
-		} finally {
-			if (epsGraphics != null)
-				try {
-					epsGraphics.close();
-				} catch (Exception e2) {
-					e2.printStackTrace();
-				}
-		}
 
+	/**
+	 * @param outputStream
+	 *            output stream (will not be closed by this method.)
+	 * @param phase
+	 *            to be shown
+	 * @param rayparameter
+	 *            p
+	 * @param delta
+	 *            [rad] to be shown.
+	 * @param time
+	 *            [s] to be printed
+	 * @param eventR
+	 *            radius of the event [km]
+	 * @throws IOException if any
+	 */
+	void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double eventR)
+			throws IOException {
+		EpsGraphics epsGraphics = new EpsGraphics(phase.toString(), outputStream, 0, 0, getWidth(), getHeight(),
+				ColorMode.COLOR_RGB);
+		paintComponent(epsGraphics);
+		rayparameter = Precision.round(rayparameter, 3);
+		delta = Precision.round(Math.toDegrees(delta), 3);
+		time = Precision.round(time, 3);
+		double depth = Precision.round(earthRadius - eventR, 3);
+		String line = phase.toString() + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
+				+ ", Epicentral distance[deg]: " + delta + ", Travel time[s]: " + time;
+		int startInt = (int) changeX(-line.length() / 2 * 6371 / 45);
+		epsGraphics.drawString(line, startInt, (int) changeY(earthRadius) - 25);
 	}
 
 	private int featured;
@@ -102,7 +96,7 @@ final class RaypathPanel extends JPanel {
 			if (i == featured)
 				continue;
 			for (QuadCurve2D.Double curve : quadCurves.get(i)) {
-				double x1 =changeX( curve.x1);
+				double x1 = changeX(curve.x1);
 				double x2 = changeX(curve.x2);
 				double y1 = changeY(curve.y1);
 				double y2 = changeY(curve.y2);
@@ -110,12 +104,11 @@ final class RaypathPanel extends JPanel {
 				double ctrly = changeY(curve.ctrly);
 				QuadCurve2D.Double newCurve = new QuadCurve2D.Double(x1, y1, ctrlx, ctrly, x2, y2);
 				g2.draw(newCurve);
-				// System.out.println("curve"+ x1);
 			}
 		}
 		g2.setColor(Color.RED);
 		for (QuadCurve2D.Double curve : quadCurves.get(featured)) {
-			double x1 =changeX( curve.x1);
+			double x1 = changeX(curve.x1);
 			double x2 = changeX(curve.x2);
 			double y1 = changeY(curve.y1);
 			double y2 = changeY(curve.y2);
@@ -187,7 +180,6 @@ final class RaypathPanel extends JPanel {
 	 */
 	private double innerCoreBoundary;
 
-
 	private void drawAdditionalCircles(Graphics g) {
 		for (double d : additionalCircle)
 			g.drawOval((int) changeX(-d), (int) changeY(d), (int) (iEarthRadius() * d / earthRadius * 2),
@@ -225,12 +217,12 @@ final class RaypathPanel extends JPanel {
 
 	private final List<List<QuadCurve2D.Double>> quadCurves = new ArrayList<>();
 
-	
 	/**
-	 * input x is one in cooridate system where the earth center is (0,0) 
-	 * &rarr; (350, 350)
+	 * input x is one in cooridate system where the earth center is (0,0) &rarr;
+	 * (350, 350)
 	 * 
-	 * @param x to be shifted
+	 * @param x
+	 *            to be shifted
 	 * @return x coordinate to use
 	 */
 	double changeX(double x) {
@@ -240,12 +232,13 @@ final class RaypathPanel extends JPanel {
 		// System.out.println(x + " " + xInDisplay+" "+getSize().width);
 		return Math.round(xInDisplay);
 	}
-	
+
 	/**
-	 * input x is one in cooridate system where the earth center is  (0,0)
-	 * &rarr; (350, 350)
+	 * input x is one in cooridate system where the earth center is (0,0) &rarr;
+	 * (350, 350)
 	 * 
-	 * @param y to be shifted
+	 * @param y
+	 *            to be shifted
 	 * @return y coordinate to use
 	 */
 	double changeY(double y) {

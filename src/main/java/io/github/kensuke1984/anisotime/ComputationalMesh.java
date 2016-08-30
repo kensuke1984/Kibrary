@@ -131,7 +131,6 @@ public class ComputationalMesh implements Serializable {
 				Arrays.stream(outerCores).flatMapToDouble(Arrays::stream).distinct().sorted().toArray(), false));
 		innerCoreMesh = RealVector.unmodifiableRealVector(new ArrayRealVector(
 				Arrays.stream(innerCores).flatMapToDouble(Arrays::stream).distinct().sorted().toArray(), false));
-
 	}
 
 	@Override
@@ -156,17 +155,17 @@ public class ComputationalMesh implements Serializable {
 		if (innerCoreMesh == null) {
 			if (other.innerCoreMesh != null)
 				return false;
-		} else if (!Arrays.equals(innerCoreMesh.toArray(),other.innerCoreMesh.toArray()))
+		} else if (!Arrays.equals(innerCoreMesh.toArray(), other.innerCoreMesh.toArray()))
 			return false;
 		if (mantleMesh == null) {
 			if (other.mantleMesh != null)
 				return false;
-		} else if (!Arrays.equals(mantleMesh.toArray(),other.mantleMesh.toArray()))
+		} else if (!Arrays.equals(mantleMesh.toArray(), other.mantleMesh.toArray()))
 			return false;
 		if (outerCoreMesh == null) {
 			if (other.outerCoreMesh != null)
 				return false;
-		} else if (!Arrays.equals(outerCoreMesh.toArray(),other.outerCoreMesh.toArray()))
+		} else if (!Arrays.equals(outerCoreMesh.toArray(), other.outerCoreMesh.toArray()))
 			return false;
 		return true;
 	}
@@ -183,9 +182,7 @@ public class ComputationalMesh implements Serializable {
 	 * @return Array of radius [km]
 	 */
 	private static double[] point(double startR, double endR, double deltaR) {
-		int n = (int) Math.round((endR - startR) / deltaR);
-		if (n == 0)
-			n = 1;
+		int n = Math.max(1, (int) Math.round((endR - startR) / deltaR));
 		double[] x = new double[n + 1];
 		for (int i = 0; i < n; i++)
 			x[i] = startR + i * deltaR;

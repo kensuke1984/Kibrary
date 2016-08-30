@@ -286,15 +286,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 *            Path of an eps file name
 	 * @param options
 	 *            open options
+	 * @throws IOException if any
 	 */
-	public void outputEPS(double eventR, Phase phase, Path epsFile, OpenOption... options) {
+	public void outputEPS(double eventR, Phase phase, Path epsFile, OpenOption... options) throws IOException {
 		if (!exists(eventR, phase))
 			return;
 		try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(epsFile, options))) {
 			createPanel(eventR, phase).toEPS(os, phase, RAYPARAMETER, computeDelta(eventR, phase),
 					computeT(eventR, phase), eventR);
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
 
