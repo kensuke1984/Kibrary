@@ -162,9 +162,9 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 				int numberOfStation = (int) stations.stream().map(Station::getStationName).count();
 				if (numberOfStation != stations.size())
 					System.err.println("!Caution there are stations with the same name and different positions in "
-							+ eventDir.getGlobalCMTID());
+							+ eventDir);
 				Path eventOut = outPath.resolve(eventDir.toString());
-				SyntheticDSMInfo info = new SyntheticDSMInfo(ps, eventDir.getGlobalCMTID(), stations, header, tlen, np);
+				SyntheticDSMInfo info = new SyntheticDSMInfo(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, tlen, np);
 				Files.createDirectories(eventOut.resolve(header));
 				info.writePSV(eventOut.resolve(header + "_PSV.inf"));
 				info.writeSH(eventOut.resolve(header + "_SH.inf"));
