@@ -32,15 +32,16 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * automatically is stored.
  * 
  * @author Kensuke Konishi
- * @version 0.0.7b
+ * @version 0.0.8b
  */
 public class RaypathCatalog implements Serializable {
 
-
-	/**
+	 /**
 	 * 2016/9/1
 	 */
-	private static final long serialVersionUID = -3726127760808227199L;
+	private static final long serialVersionUID = -5169958584689352786L;
+
+ 
 
 	static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
 
@@ -150,7 +151,7 @@ public class RaypathCatalog implements Serializable {
 	 * satisfying {@link #D_DELTA} are not found within this value, a catalogue
 	 * does not have a denser ray parameter than the value.
 	 */
-	private final double MINIMUM_DELTA_P = 0.01;
+	final double MINIMUM_DELTA_P = 0.01;
 
 	/**
 	 * List of stored raypaths. Ordered by each ray parameter p.
@@ -286,18 +287,7 @@ public class RaypathCatalog implements Serializable {
 		return shDiff;
 	}
 
-	public static void main(String[] args) {
-		RaypathCatalog c = new RaypathCatalog(VelocityStructure.prem(),
-				ComputationalMesh.simple(VelocityStructure.prem()), Math.toRadians(1));
-		Raypath r = new Raypath(476.7816178594635);
-		Raypath r1 = new Raypath(479.03198571892705);
-		r.compute();
-		r1.compute();
-		// System.out.println(c.closeEnough(r, r1));
-		c.create();
-	}
-
-	// TODO
+	// TODO low high 
 	/**
 	 * Creates a catalogue.
 	 */
@@ -315,9 +305,7 @@ public class RaypathCatalog implements Serializable {
 		double p_Pdiff = pDiff.getRayParameter();
 		double p_SVdiff = svDiff.getRayParameter();
 		double p_SHdiff = shDiff.getRayParameter();
-		
-		
-		
+
 		for (double p = firstPath.getRayParameter() + DELTA_P, nextP = p + DELTA_P; p < pMax; p = nextP) {
 			Raypath rp = new Raypath(p, WOODHOUSE, MESH);
 			rp.compute();
@@ -337,13 +325,14 @@ public class RaypathCatalog implements Serializable {
 
 			if (p < p_Pdiff && p_Pdiff < nextP) {
 				closeDiff(pDiff);
-				nextP = raypathList.last().getRayParameter()+ DELTA_P;
+				nextP = raypathList.last().getRayParameter() + DELTA_P;
 			} else if (p < p_SVdiff && p_SVdiff < nextP) {
 				closeDiff(svDiff);
 				nextP = raypathList.last().getRayParameter() + DELTA_P;
 			} else if (p < p_SHdiff && p_SHdiff < nextP) {
 				closeDiff(shDiff);
-				nextP = raypathList.last().getRayParameter() + DELTA_P; // TODO SHSV
+				nextP = raypathList.last().getRayParameter() + DELTA_P; // TODO
+																		// SHSV
 			}
 		}
 		raypathList.add(pDiff);
@@ -560,8 +549,7 @@ public class RaypathCatalog implements Serializable {
 			if (Double.isNaN(deltaC))
 				continue;
 			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
-			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
-			if (Double.isNaN(deltaIn))
+			if (Double.isNaN(rayIn.computeDelta(eventR, targetPhase)))
 				continue;
 			pathList.add(rayIn);
 		}
@@ -636,31 +624,21 @@ public class RaypathCatalog implements Serializable {
 	 *            radius of the source [km]
 	 * @param phase
 	 *            to look for
-	 * @param intervalOfP
-	 *            density of search
 	 * @return travel time for delta [s]
 	 */
-	static double travelTimeByThreePointInterpolate(double delta, Raypath raypath0, double eventR, Phase phase,
-			double intervalOfP) {
+	double travelTimeByThreePointInterpolate(double delta, Raypath raypath0, double eventR, Phase phase) {
 		delta = Math.toRadians(delta);
 		double delta0 = raypath0.computeDelta(eventR, phase);
-		double p0 = raypath0.getRayParameter();
-		double p1 = p0 - intervalOfP;
-		double p2 = p0 + intervalOfP;
-		Raypath raypath1 = new Raypath(p1, raypath0.getStructure());
-		Raypath raypath2 = new Raypath(p2, raypath0.getStructure());
-		raypath1.compute();
-		raypath2.compute();
-		double delta1 = raypath1.computeDelta(eventR, phase);
-		double delta2 = raypath2.computeDelta(eventR, phase);
+		Raypath lower = raypathList.lower(raypath0);
+		Raypath higher = raypathList.higher(raypath0);
+		double lowerDelta = lower.computeDelta(eventR, phase);
+		double higherDelta = higher.computeDelta(eventR, phase);
+		if(Double.isNaN(lowerDelta)|| Double.isNaN(higherDelta))
+			return Double.NaN;
 		// delta1<delta0<delta2 or delta2<delta0<delta1
-		if ((delta1 - delta0) * (delta2 - delta0) > 0)
-			return -1;
-		if (Math.max(delta1, delta2) < delta || delta < Math.min(delta1, delta2))
-			return -1;
-		double[] p = new double[] { delta0, delta1, delta2 };
-		double[] time = new double[] { raypath0.computeT(eventR, phase), raypath1.computeT(eventR, phase),
-				raypath2.computeT(eventR, phase), };
+		double[] p = new double[] { delta0, lowerDelta, higherDelta };
+		double[] time = new double[] { raypath0.computeT(eventR, phase), lower.computeT(eventR, phase),
+				higher.computeT(eventR, phase), };
 		Trace t = new Trace(p, time);
 		return t.toValue(2, delta);
 	}

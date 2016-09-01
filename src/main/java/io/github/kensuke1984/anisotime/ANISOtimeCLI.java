@@ -39,7 +39,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * TODO customize for catalog ddelta
  * 
  * @author Kensuke Konishi
- * @version 0.3.6.1b
+ * @version 0.3.7b
  */
 final class ANISOtimeCLI {
 
@@ -315,15 +315,15 @@ final class ANISOtimeCLI {
 				}
 				return;
 			}
+
 			for (Phase targetPhase : this.targetPhases) {
 				Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta);
 
-				// List<Raypath> raypaths = RaypathSearch.lookFor(targetPhase,
-				// structure, eventR, targetDelta, interval);
 				if (raypaths.length == 0) {
 					System.err.println("No raypaths satisfying the input condition");
 					continue;
 				}
+
 				if (targetPhase.isDiffracted()) {
 					Raypath raypath = raypaths[0];
 					double deltaOnBoundary = Math
@@ -404,16 +404,9 @@ final class ANISOtimeCLI {
 		}
 		delta0 = Math.toDegrees(delta0);
 		double time1 = 0;
-		double pInterval = 0.1;
-
 		if (0 < delta1) {
-			try {
-				while ((time1 = RaypathCatalog.travelTimeByThreePointInterpolate(delta1, raypath, eventR, targetPhase,
-						pInterval)) < 0)
-					pInterval *= 10;
-			} catch (Exception e) {
-			}
-			if (0 < time1) {
+			time1 = catalog.travelTimeByThreePointInterpolate(delta1, raypath, eventR, targetPhase);
+			if (!Double.isNaN(time1)) {
 				time0 = time1;
 				delta0 = delta1;
 			}

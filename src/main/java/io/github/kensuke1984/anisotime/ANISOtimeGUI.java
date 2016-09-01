@@ -5,6 +5,7 @@
  */
 package io.github.kensuke1984.anisotime;
 
+import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,8 @@ import javax.swing.WindowConstants;
  * GUI for ANISOtime
  * 
  * @version 0.5.1.1
+ * 
+ * TODO diffraction  Raypath depict
  * 
  * @author Kensuke Konishi
  */
@@ -179,7 +182,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	/**
 	 * when the button "Save" is clicked.
 	 */
-	private void buttonSavePerformed(java.awt.event.ActionEvent evt) {
+	private void buttonSavePerformed(ActionEvent evt) {
 		double eventR = getEventR();
 
 		FutureTask<Path> askOutPath = new FutureTask<>(() -> {
@@ -264,7 +267,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 	/**
 	 * when the button "Compute" is clicked.
 	 */
-	private void buttonComputeActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonComputeActionPerformed
+	private void buttonComputeActionPerformed(ActionEvent evt) {// GEN-FIRST:event_buttonComputeActionPerformed
 		createNewRaypathTabs();
 		switch (selectedMode()) {
 		case EPICENTRAL_DISTANCE:
@@ -331,9 +334,13 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 		showResult(null, raypaths, phases);
 	}
 
+	RaypathCatalog getCatalog() {
+		return RaypathCatalog.computeCatalogue(getStructure(), ComputationalMesh.simple(getStructure()),
+				Math.toRadians(1));
+	}
+
 	public void runEpicentralDistanceMode() {
-		RaypathCatalog catalog = RaypathCatalog.computeCatalogue(getStructure(),
-				ComputationalMesh.simple(getStructure()), Math.toRadians(1));
+		RaypathCatalog catalog = getCatalog();
 		List<Raypath> raypathList = new ArrayList<>();
 		List<Phase> phaseList = new ArrayList<>();
 		double eventR = getEventR();
@@ -394,18 +401,10 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 				showRayPath(this, raypath, phase);
 			} else {
 				double time = travelTime;
-				double interval = 0.1;
 				double targetDelta = Math.toDegrees(delta[i]);
 				if (!phase.isDiffracted())
-					try {
-						while ((time = RaypathCatalog.travelTimeByThreePointInterpolate(targetDelta, raypath,
-								eventR, phase, interval)) < 0)
-							interval *= 10;
-					} catch (Exception e) {
-						addResult(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
-						showRayPath(this, raypath, phase);
-						continue;
-					}
+					time = getCatalog().travelTimeByThreePointInterpolate(targetDelta, raypath, eventR, phase);
+				//TODO Diffraction
 				if (!Double.isNaN(time)) {
 					addResult(targetDelta, depth, title, time, raypath.getRayParameter());
 					showRayPath(this, raypath, phase);
