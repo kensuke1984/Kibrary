@@ -32,14 +32,15 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * automatically is stored.
  * 
  * @author Kensuke Konishi
- * @version 0.0.6.1b
+ * @version 0.0.7b
  */
 public class RaypathCatalog implements Serializable {
 
+
 	/**
-	 * 2016/8/25
+	 * 2016/9/1
 	 */
-	private static final long serialVersionUID = 5497962364312001093L;
+	private static final long serialVersionUID = -3726127760808227199L;
 
 	static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
 
@@ -149,7 +150,7 @@ public class RaypathCatalog implements Serializable {
 	 * satisfying {@link #D_DELTA} are not found within this value, a catalogue
 	 * does not have a denser ray parameter than the value.
 	 */
-	private final double MINIMUM_DELTA_P = 0.1;
+	private final double MINIMUM_DELTA_P = 0.01;
 
 	/**
 	 * List of stored raypaths. Ordered by each ray parameter p.
@@ -285,6 +286,17 @@ public class RaypathCatalog implements Serializable {
 		return shDiff;
 	}
 
+	public static void main(String[] args) {
+		RaypathCatalog c = new RaypathCatalog(VelocityStructure.prem(),
+				ComputationalMesh.simple(VelocityStructure.prem()), Math.toRadians(1));
+		Raypath r = new Raypath(476.7816178594635);
+		Raypath r1 = new Raypath(479.03198571892705);
+		r.compute();
+		r1.compute();
+		// System.out.println(c.closeEnough(r, r1));
+		c.create();
+	}
+
 	// TODO
 	/**
 	 * Creates a catalogue.
@@ -303,10 +315,12 @@ public class RaypathCatalog implements Serializable {
 		double p_Pdiff = pDiff.getRayParameter();
 		double p_SVdiff = svDiff.getRayParameter();
 		double p_SHdiff = shDiff.getRayParameter();
+		
+		
+		
 		for (double p = firstPath.getRayParameter() + DELTA_P, nextP = p + DELTA_P; p < pMax; p = nextP) {
 			Raypath rp = new Raypath(p, WOODHOUSE, MESH);
 			rp.compute();
-			// System.out.println(p);
 			if (closeEnough(raypathList.last(), rp)) {
 				raypathList.add(rp);
 				nextP = p + DELTA_P;
@@ -315,20 +329,57 @@ public class RaypathCatalog implements Serializable {
 				nextP = (p + raypathList.last().getRayParameter()) / 2;
 			}
 
-			if (lookIntoPool())
+			// System.out.println(p + " " + nextP);
+			if (lookIntoPool()) {
+				p = raypathList.last().getRayParameter();
+				nextP = p + DELTA_P;
+			}
+
+			if (p < p_Pdiff && p_Pdiff < nextP) {
+				closeDiff(pDiff);
+				nextP = raypathList.last().getRayParameter()+ DELTA_P;
+			} else if (p < p_SVdiff && p_SVdiff < nextP) {
+				closeDiff(svDiff);
 				nextP = raypathList.last().getRayParameter() + DELTA_P;
-			if ((p < p_Pdiff && p_Pdiff < nextP) || (p < p_SVdiff && p_SVdiff < nextP)
-					|| (p < p_SHdiff && p_SHdiff < nextP)) {
-				Raypath diffPath = new Raypath(nextP, WOODHOUSE, MESH);
-				diffPath.compute();
-				raypathList.add(diffPath);
-				nextP += DELTA_P;
+			} else if (p < p_SHdiff && p_SHdiff < nextP) {
+				closeDiff(shDiff);
+				nextP = raypathList.last().getRayParameter() + DELTA_P; // TODO SHSV
 			}
 		}
 		raypathList.add(pDiff);
 		raypathList.add(svDiff);
 		raypathList.add(shDiff);
+
 		System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
+	}
+
+	private void closeDiff(Raypath diffPath) {
+		double diffP = diffPath.getRayParameter();
+		Raypath last = raypathList.last();
+		Raypath diffMinus = new Raypath(diffP - MINIMUM_DELTA_P, WOODHOUSE, MESH);
+		Raypath diffPlus = new Raypath(diffP + MINIMUM_DELTA_P, WOODHOUSE, MESH);
+		diffMinus.compute();
+		diffPlus.compute();
+		for (double p = (diffP + last.getRayParameter()) / 2, nextP = p + DELTA_P;; p = nextP) {
+			Raypath candidate = new Raypath(p, WOODHOUSE, MESH);
+			candidate.compute();
+			if (!closeEnough(raypathList.last(), candidate)) {
+				raypathPool.add(candidate);
+				nextP = (raypathList.last().getRayParameter() + candidate.getRayParameter()) / 2;
+				continue;
+			}
+			raypathList.add(candidate);
+			lookIntoPool();
+			candidate = raypathList.last();
+			if (!closeEnough(candidate, diffMinus)) {
+				nextP = (candidate.getRayParameter() + diffP - MINIMUM_DELTA_P) / 2;
+				continue;
+			}
+			raypathList.add(candidate);
+			raypathList.add(diffMinus);
+			raypathList.add(diffPlus);
+			return;
+		}
 	}
 
 	private final transient TreeSet<Raypath> raypathPool = new TreeSet<>();
@@ -351,9 +402,10 @@ public class RaypathCatalog implements Serializable {
 	}
 
 	/**
-	 * Criterion for the catalogue is {@link #D_DELTA} so far in both P and S
-	 * wave. The rayparameter of raypath1 must be smaller than that of raypath2,
-	 * otherwise, false is returned. TODO SH SV??
+	 * Criterion for the catalog is {@link #D_DELTA} so far in both P and S
+	 * wave. The ray parameter of raypath1 must be smaller than that of
+	 * raypath2, otherwise, false is returned. TODO SH SV?? Both raypaths must
+	 * be computed before this method.
 	 * 
 	 * @param raypath1
 	 *            to be checked
@@ -364,29 +416,33 @@ public class RaypathCatalog implements Serializable {
 	private boolean closeEnough(Raypath raypath1, Raypath raypath2) {
 		if (raypath2.getRayParameter() <= raypath1.getRayParameter())
 			return false;
-		if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P) {
+		if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P)
 			return true;
-		}
-		VelocityStructure structure = WOODHOUSE.getStructure();
-		double p1 = raypath1.computeDelta(structure.earthRadius(), Phase.P);
-		double p2 = raypath2.computeDelta(structure.earthRadius(), Phase.P);
+		double earthRadius = WOODHOUSE.getStructure().earthRadius();
+		double p1 = raypath1.computeDelta(earthRadius, Phase.P);
+		double p2 = raypath2.computeDelta(earthRadius, Phase.P);
+		// System.out.println(Math.toDegrees(p1) + " p" + Math.toDegrees(p2));
 		if (Double.isNaN(p1) ^ Double.isNaN(p2))
 			return false;
 		if (Double.isNaN(p1)) {
-			p1 = raypath1.computeDelta(structure.earthRadius(), Phase.PcP);
-			p2 = raypath2.computeDelta(structure.earthRadius(), Phase.PcP);
+			p1 = raypath1.computeDelta(earthRadius, Phase.PcP);
+			p2 = raypath2.computeDelta(earthRadius, Phase.PcP);
 		}
+		// System.out.println(Math.toDegrees(p1) + " " + Math.toDegrees(p2));
 		if (D_DELTA < Math.abs(p1 - p2))
 			return false;
+		double s1 = raypath1.computeDelta(earthRadius, Phase.S);
+		double s2 = raypath2.computeDelta(earthRadius, Phase.S);
+		// System.out.println(Math.toDegrees(s1) + " s " + Math.toDegrees(s2));
 
-		double s1 = raypath1.computeDelta(structure.earthRadius(), Phase.S);
-		double s2 = raypath2.computeDelta(structure.earthRadius(), Phase.S);
 		if (Double.isNaN(s1) ^ Double.isNaN(s2))
 			return false;
 		if (Double.isNaN(s1)) {
-			s1 = raypath1.computeDelta(structure.earthRadius(), Phase.ScS);
-			s2 = raypath2.computeDelta(structure.earthRadius(), Phase.ScS);
+			s1 = raypath1.computeDelta(earthRadius, Phase.ScS);
+			s2 = raypath2.computeDelta(earthRadius, Phase.ScS);
 		}
+		// System.out.println(Math.toDegrees(s1) + " scs " +
+		// Math.toDegrees(s2));
 		if (D_DELTA < Math.abs(s1 - s2))
 			return false;
 		return true;

@@ -22,7 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 /**
  * Information file for SSHSH
  * 
- * @version 0.1.1.3
+ * @version 0.1.2.1
  * 
  * @author Kensuke Konishi
  *
@@ -170,8 +170,9 @@ public class SshDSMInformationFileMaker implements Operation {
 			if (numberOfStation != stations.size())
 				System.err.println("!Caution there are stations with the same name and different positions in "
 						+ eventDir.getGlobalCMTID());
-			SshDSMinfo info = new SshDSMinfo(ps, eventDir.getGlobalCMTID(), stations, header, perturbationR, tlen, np);
-			Path outEvent = output.resolve(eventDir.getGlobalCMTID().toString());
+			SshDSMinfo info = new SshDSMinfo(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, perturbationR,
+					tlen, np);
+			Path outEvent = output.resolve(eventDir.toString());
 			Path modelPath = outEvent.resolve(header);
 			Files.createDirectories(outEvent);
 			Files.createDirectories(modelPath);

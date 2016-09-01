@@ -9,8 +9,9 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 
 /**
  * Information file for SSHPSV and SSHSH
@@ -19,19 +20,19 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * This class is <b>IMMUTABLE</b>
  * 
  * 
- * @version 0.0.5.1
+ * @version 0.0.6
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class SshDSMinfo extends SyntheticDSMInfo {
 
-	private double[] perturbationR;
+	private final double[] RADII;
 
-	public SshDSMinfo(PolynomialStructure structure, GlobalCMTID id, Set<Station> stations, String outputDir,
+	public SshDSMinfo(PolynomialStructure structure, GlobalCMTData event, Set<Station> stations, String outputDir,
 			double[] perturbationR, double tlen, int np) {
-		super(structure, id, stations, outputDir, tlen, np);
-		this.perturbationR = perturbationR;
+		super(structure, event, stations, outputDir, tlen, np);
+		RADII = perturbationR.clone();
 	}
 
 	/**
@@ -51,29 +52,32 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
+			Arrays.stream(STRUCTURE.toPSVlines()).forEach(pw::println);
+
+			Location eventLocation = EVENT.getCmtLocation();
 
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
-					+ " Moment Tensor (1.e25 dyne cm)");
+			pw.println(
+					Arrays.stream(EVENT.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+							+ " Moment Tensor (1.e25 dyne cm)");
 			pw.println("c directory of outputs");
-			pw.println(outputDir + "/");
+			pw.println(OUTPUT + "/");
 			pw.println("PSV.spc");
-			pw.println(stations.size() + " nsta");
-			stations.stream().sorted().map(Station::getStationName).forEach(n -> {
-				pw.println(n + "." + eventID + ".PARA");
-				pw.println(n + "." + eventID + ".PARC");
-				pw.println(n + "." + eventID + ".PARF");
-				pw.println(n + "." + eventID + ".PARL");
-				pw.println(n + "." + eventID + ".PARN");
+			pw.println(STATIONS.size() + " nsta");
+			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> {
+				pw.println(n + "." + EVENT + ".PARA");
+				pw.println(n + "." + EVENT + ".PARC");
+				pw.println(n + "." + EVENT + ".PARF");
+				pw.println(n + "." + EVENT + ".PARL");
+				pw.println(n + "." + EVENT + ".PARN");
 			});
 
-			stations.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
-			pw.println(perturbationR.length + " nr");
-			Arrays.stream(perturbationR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 
 		}
@@ -96,25 +100,25 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
-
+			Arrays.stream(STRUCTURE.toPSVlines()).forEach(pw::println);
+			Location eventLocation = EVENT.getCmtLocation();
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
-					+ " Moment Tensor (1.e25 dyne cm)");
+			pw.println(
+					Arrays.stream(EVENT.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+							+ " Moment Tensor (1.e25 dyne cm)");
 			pw.println("c directory of outputs");
-			pw.println(outputDir + "/");
+			pw.println(OUTPUT + "/");
 			pw.println("PSV.spc");
 
-			pw.println(stations.size() + " nsta");
-			stations.stream().sorted().map(Station::getStationName)
-					.forEach(n -> pw.println(n + "." + eventID + ".PAR2"));
-			stations.stream().sorted().map(Station::getPosition)
+			pw.println(STATIONS.size() + " nsta");
+			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
+			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
-			pw.println(perturbationR.length + " nr");
-			Arrays.stream(perturbationR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 
 		}
@@ -137,27 +141,28 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			Arrays.stream(structure.toSHlines()).forEach(pw::println);
-
+			Arrays.stream(STRUCTURE.toSHlines()).forEach(pw::println);
+			Location eventLocation = EVENT.getCmtLocation();
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
-					+ " Moment Tensor (1.e25 dyne cm)");
+			pw.println(
+					Arrays.stream(EVENT.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+							+ " Moment Tensor (1.e25 dyne cm)");
 			pw.println("c directory of outputs");
-			pw.println(outputDir + "/");
+			pw.println(OUTPUT + "/");
 			pw.println("SH.spc");
-			
-			pw.println(stations.size() + " nsta");
-			stations.stream().sorted().map(Station::getStationName).forEach(n -> {
-				pw.println(n + "." + eventID + ".PARL");
-				pw.println(n + "." + eventID + ".PARN");
+
+			pw.println(STATIONS.size() + " nsta");
+			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> {
+				pw.println(n + "." + EVENT + ".PARL");
+				pw.println(n + "." + EVENT + ".PARN");
 			});
-			
-			stations.stream().sorted().map(Station::getPosition)
+
+			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
-			pw.println(perturbationR.length + " nr");
-			Arrays.stream(perturbationR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
 
@@ -180,27 +185,33 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			Arrays.stream(structure.toSHlines()).forEach(pw::println);
-
+			Arrays.stream(STRUCTURE.toSHlines()).forEach(pw::println);
+			Location eventLocation = EVENT.getCmtLocation();
 			// source
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
-					+ " Moment Tensor (1.e25 dyne cm)");
+			pw.println(
+					Arrays.stream(EVENT.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
+							+ " Moment Tensor (1.e25 dyne cm)");
 			pw.println("c directory of outputs");
-			pw.println(outputDir + "/");
+			pw.println(OUTPUT + "/");
 			pw.println("SH.spc");
-			pw.println(stations.size() + " nsta");
-			stations.stream().sorted().map(Station::getStationName)
-					.forEach(n -> pw.println(n + "." + eventID + ".PAR2"));
-			stations.stream().sorted().map(Station::getPosition)
+			pw.println(STATIONS.size() + " nsta");
+			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
+			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
-			pw.println(perturbationR.length + " nr");
-			Arrays.stream(perturbationR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
 
 	}
 
+	/**
+	 * @return radii for the perturbation points
+	 */
+	public double[] getPerturbationPointDepth() {
+		return RADII.clone();
+	}
 }

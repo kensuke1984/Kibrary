@@ -13,8 +13,9 @@ import io.github.kensuke1984.kibrary.util.Station;
 /**
  * Information file for computation of back propagation.
  * 
+ * This class is <b>immutable</b>
  * 
- * @version 0.0.5
+ * @version 0.0.6
  * 
  * @author Kensuke Konishi
  * 
@@ -22,51 +23,59 @@ import io.github.kensuke1984.kibrary.util.Station;
  */
 public class BPinfo extends DSMheader {
 
-	private String outputDir;
+	private final String OUTPUT;
 
-	private double[] perturbationPointR;
-	private HorizontalPosition[] perturbationPoint;
+	private final double[] RADII;
+	private final HorizontalPosition[] POSITIONS;
 	// private double sourceR;
-	private Station station;
-	private PolynomialStructure structure;
+	private final Station STATION;
+	private final PolynomialStructure STRUCTURE;
 
+	/**
+	 * @return name of the output folder
+	 */
 	public String getOutputDir() {
-		return outputDir;
+		return OUTPUT;
 	}
 
+	/**
+	 * @return radii for the perturbation points
+	 */
 	public double[] getPerturbationPointDepth() {
-		return perturbationPointR;
+		return RADII.clone();
 	}
 
-	public PolynomialStructure getPs() {
-		return structure;
+	/**
+	 * @return structure to be used
+	 */
+	public PolynomialStructure getStructure() {
+		return STRUCTURE;
 	}
 
 	/**
 	 * @param station
-	 *            stationの位置
+	 *            Information of station
 	 * @param outputDir
-	 *            書き込むフォルダ （相対パス）
+	 *            the name of the output folder
 	 * @param structure
 	 *            velocity structure
 	 * @param tlen
-	 *            must be a power of 2 /10
+	 *            must be a power of 2 / 10 (2<sup>n</sup>)/10
 	 * @param np
-	 *            must be a power of 2
+	 *            must be a power of 2 (2<sup>n</sup>) 
+	 * @param perturbationPointR
+	 *            will be copied
+	 * @param perturbationPosition
+	 *            will be copied
 	 */
-	public BPinfo(Station station, String outputDir, PolynomialStructure structure, double tlen, int np) {
+	public BPinfo(Station station, String outputDir, PolynomialStructure structure, double tlen, int np,
+			double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
 		super(tlen, np);
-		this.station = station;
-		this.outputDir = outputDir;
-		this.structure = structure;
-	}
-
-	public void setPerturbationPoint(HorizontalPosition[] perturbationPoint) {
-		this.perturbationPoint = perturbationPoint;
-	}
-
-	public void setPerturbationPointR(double[] perturbationPointR) {
-		this.perturbationPointR = perturbationPointR;
+		STATION = station;
+		OUTPUT = outputDir;
+		STRUCTURE = structure;
+		RADII = perturbationPointR.clone();
+		POSITIONS = perturbationPosition.clone();
 	}
 
 	/**
@@ -87,26 +96,26 @@ public class BPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			Arrays.stream(structure.toPSVlines()).forEach(pw::println);
+			Arrays.stream(STRUCTURE.toPSVlines()).forEach(pw::println);
 
 			// source
-			HorizontalPosition stationPosition = station.getPosition();
+			HorizontalPosition stationPosition = STATION.getPosition();
 			pw.println("0 " + // BPINFOには震源深さいらない
 					stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
 			// output info
 			pw.println("c output directory");
-			pw.println(outputDir + "/");
-			pw.println(station.getStationName());
+			pw.println(OUTPUT + "/");
+			pw.println(STATION.getStationName());
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points
-			pw.println(perturbationPoint.length + " nsta");
-			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+			pw.println(POSITIONS.length + " nsta");
+			Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
 			// radii for perturbation points
-			pw.println(perturbationPointR.length + " nr");
-			Arrays.stream(perturbationPointR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
 	}
@@ -129,31 +138,27 @@ public class BPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			Arrays.stream(structure.toSHlines()).forEach(pw::println);
+			Arrays.stream(STRUCTURE.toSHlines()).forEach(pw::println);
 
-			HorizontalPosition stationPosition = station.getPosition();
+			HorizontalPosition stationPosition = STATION.getPosition();
 			pw.println("0 " + // BPINFOには震源深さいらない
 					stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
 			// output info
 			pw.println("c output directory");
-			pw.println(outputDir + "/");
-			pw.println(station.getStationName());
+			pw.println(OUTPUT + "/");
+			pw.println(STATION.getStationName());
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points
-			pw.println(perturbationPoint.length + " nsta");
-			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+			pw.println(POSITIONS.length + " nsta");
+			Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
 			// radii for perturbation points
-			pw.println(perturbationPointR.length + " nr");
-			Arrays.stream(perturbationPointR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
-	}
-
-	public void setStructure(PolynomialStructure structure) {
-		this.structure = structure;
 	}
 
 }

@@ -8,7 +8,9 @@ import org.apache.commons.math3.util.ArithmeticUtils;
 /**
  * Header part of a file for DSM.
  * 
- * @version 0.0.4.2
+ * This class is <b>IMMUTABLE</b>
+ * 
+ * @version 0.0.5
  * 
  * @author Kensuke Konishi
  * 
@@ -16,46 +18,48 @@ import org.apache.commons.math3.util.ArithmeticUtils;
 class DSMheader {
 
 	/**
-	 * The default value is 3276.8 .
+	 * Time length [s] (default:3276.8)
 	 */
-	private double tlen; // as default
+	private final double TLEN;
 
 	/**
-	 * The default value is 256 .
+	 * Number of step in frequency domain (default 256) must be a power of 2.
 	 */
-	private int np;
+	private final int NP;
 
 	/**
 	 * The default value is 0 .
 	 */
-	private int imin;
+	private final int IMIN;
 
 	/**
 	 * The default value is 256 .
 	 */
-	private int imax;
+	private final int IMAX;
 
 	/**
 	 * The default value is 1.e-2; re relative error (See GT95 eq. 6.2)
 	 */
-	private double relativeError;
+	private final double RELATIVE_ERROR;
 
 	/**
 	 * The default value is 1.e-10 ratc ampratio using in grid cut-off (1.d-10
 	 * is recommended)
 	 */
-	private double ratc;
+	private final double RATC;
+	
 	/**
 	 * The default value is 1.e-5 ratl ampratio using in l-cutoff
 	 */
-	private double ratl;
+	private final double RATL;
+	
 	/**
 	 * The default value is 1.e-2 wrap-around attenuation for omegai
 	 */
-	private double artificialDampl;
+	private final double ARTIFICIAL_DAMPING;
 
 	public double getTlen() {
-		return tlen;
+		return TLEN;
 	}
 
 	/**
@@ -63,73 +67,70 @@ class DSMheader {
 	 *            to be checked
 	 * @return if tlen is 2<sup>n</sup>/10
 	 */
-	static boolean validTlen(double tlen) {
+	private static boolean validTlen(double tlen) {
 		long tlen10 = Math.round(10 * tlen);
 		return ArithmeticUtils.isPowerOfTwo(tlen10) && tlen10 / 10.0 == tlen;
 	}
 
-	/**
-	 * @param np
-	 *            to be checked
-	 * @return if np is 2<sup>n</sup>
-	 */
-	protected static boolean validNp(int np) {
-		return 0 < np && (np & (np - 1)) == 0;
-	}
-
 	public int getNp() {
-		return np;
+		return NP;
 	}
 
 	public int getImin() {
-		return imin;
+		return IMIN;
 	}
 
 	public int getImax() {
-		return imax;
-	}
-
-	public double getRe() {
-		return relativeError;
-	}
-
-	public double getRatc() {
-		return ratc;
-	}
-
-	public double getRatl() {
-		return ratl;
-	}
-
-	public double getArtificialDampl() {
-		return artificialDampl;
-	}
-
-	protected String[] outputDSMHeader() {
-		// String output[] = new String[10];
-		List<String> outputLines = new ArrayList<>();
-		outputLines.add("c tlen npts");
-		outputLines.add(String.valueOf(tlen) + " " + String.valueOf(np));
-		outputLines.add("c relative error (see GT95 eq. 6.2)");
-		outputLines.add(String.valueOf(relativeError) + " re");
-		outputLines.add("c ampratio using in grid cut-off" + " (1.d-10 is recommended)");
-		outputLines.add(String.valueOf(ratc) + " ratc");
-		outputLines.add("c ampratio using in l-cutoff" + " (see KTG04 fig.8)");
-		outputLines.add(String.valueOf(ratl) + " ratl");
-		outputLines.add("c artificial damping " + "for wrap-around (see GO94 5.1)");
-		outputLines.add(String.valueOf(artificialDampl));
-		outputLines.add(String.valueOf(imin) + " " + String.valueOf(imax));
-
-		return outputLines.toArray(new String[0]);
-	}
-
-	DSMheader() {
-		setDefault();
+		return IMAX;
 	}
 
 	/**
-	 * DSMヘッダー re = 1.e-2; ratc = 1.e-10; ratl = 1.e-5; artificialDampl = 1.e-2
-	 * imin = 0, imax = np
+	 * @return relative error
+	 */
+	public double getRe() {
+		return RELATIVE_ERROR;
+	}
+
+	/**
+	 * @return ratc
+	 */
+	public double getRatc() {
+		return RATC;
+	}
+
+	public double getRatl() {
+		return RATL;
+	}
+
+	public double getArtificialDamp() {
+		return ARTIFICIAL_DAMPING;
+	}
+
+	protected String[] outputDSMHeader() {
+		List<String> outputLines = new ArrayList<>();
+		outputLines.add("c tlen npts");
+		outputLines.add(TLEN + " " + NP);
+		outputLines.add("c relative error (see GT95 eq. 6.2)");
+		outputLines.add(RELATIVE_ERROR + " re");
+		outputLines.add("c ampratio using in grid cut-off" + " (1.d-10 is recommended)");
+		outputLines.add(RATC + " ratc");
+		outputLines.add("c ampratio using in l-cutoff" + " (see KTG04 fig.8)");
+		outputLines.add(RATL + " ratl");
+		outputLines.add("c artificial damping " + "for wrap-around (see GO94 5.1)");
+		outputLines.add(Double.toString(ARTIFICIAL_DAMPING));
+		outputLines.add(IMIN + " " + IMAX);
+
+		return outputLines.toArray(new String[11]);
+	}
+
+	DSMheader() {
+		this(3276.8, 1024);
+	}
+
+	/**
+	 * DSMヘッダー <br>
+	 * re = 1.e-2; ratc = 1.e-10; ratl = 1.e-5; artificialDampl = 1.e-2 imin =
+	 * 0, imax = np
 	 * 
 	 * @param tlen
 	 *            2<sup>n</sup>/10でないといけない nは整数
@@ -137,61 +138,21 @@ class DSMheader {
 	 *            2<sup>n</sup>でないといけない nは整数
 	 */
 	DSMheader(double tlen, int np) {
-		if (!validNp(np) || !validTlen(tlen))
+		this(tlen, np, 0, np, 1.e-2, 1.e-10, 1.e-5, 1.e-2);
+	}
+
+	DSMheader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,
+			double artificialDampl) {
+		if (!ArithmeticUtils.isPowerOfTwo(np) || !validTlen(tlen))
 			throw new IllegalArgumentException("Input tlen:" + tlen + " or np:" + np + " is invalid");
-		setDefault();
-		this.tlen = tlen;
-		this.np = np;
-		this.imax = np;
-	}
-
-	/**
-	 * @param tlen
-	 *            must be 2**n /10
-	 */
-	void setTlen(double tlen) {
-		if (validTlen(tlen))
-			this.tlen = tlen;
-		else
-			throw new IllegalArgumentException("Tlen must be a power of 2 divided by 10");
-	}
-
-	/**
-	 * @param np
-	 *            must be a power of 2
-	 */
-	void setNp(int np) {
-		if (!validNp(np))
-			throw new IllegalArgumentException("Np must be a power of 2.");
-		this.np = np;
-		this.imax = np;
-	}
-
-	void setRe(double re) {
-		relativeError = re;
-	}
-
-	void setRatc(double ratc) {
-		this.ratc = ratc;
-	}
-
-	void setRatl(double ratl) {
-		this.ratl = ratl;
-	}
-
-	void setArtificialDampl(double artificialDampl) {
-		this.artificialDampl = artificialDampl;
-	}
-
-	private void setDefault() {
-		tlen = 3276.8; // as default
-		np = 1024; // as default
-		imin = 0; // as default
-		imax = np; // as default
-		relativeError = 1.e-2;
-		ratc = 1.e-10;
-		ratl = 1.e-5;
-		artificialDampl = 1.e-2;
+		this.TLEN = tlen;
+		this.NP = np;
+		this.IMIN = imin;
+		this.IMAX = imax;
+		this.RELATIVE_ERROR = relativeError;
+		this.RATC = ratc;
+		this.RATL = ratl;
+		this.ARTIFICIAL_DAMPING = artificialDampl;
 	}
 
 }

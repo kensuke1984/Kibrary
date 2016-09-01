@@ -50,7 +50,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  *         logFile is in run0.
  * 
  * 
- * @version 0.0.2.2
+ * @version 0.0.2.2.1
  */
 class MetroPolice {
 	private Path montePath;
@@ -73,7 +73,7 @@ class MetroPolice {
 			new NoSuchFileException(montePath.toString()).printStackTrace();
 			isOK = false;
 		}
-		
+
 		run0Path = montePath.resolve("run0");
 		if (!Files.exists(run0Path)) {
 			new NoSuchFileException(run0Path.toString()).printStackTrace();
@@ -105,22 +105,21 @@ class MetroPolice {
 			try {
 				Set<Station> stations = eventDir.sacFileSet().stream().filter(SACFileName::isOBS)
 						.map(SACFileName::getStationName).distinct().map(this::pickup).collect(Collectors.toSet());
-				SyntheticDSMInfo dsmInfo = new SyntheticDSMInfo(nextModel, eventDir.getGlobalCMTID(), stations, "spc",
-						1638.4, 256);
 				GlobalCMTID id = eventDir.getGlobalCMTID();
+				SyntheticDSMInfo dsmInfo = new SyntheticDSMInfo(nextModel, id.getEvent(), stations, "spc", 1638.4, 256);
 				Files.createDirectories(runPath.resolve(id + "/spc"));
 				// dsmInfo.outPSV(runPath.resolve(id + "/psv.inf"));
 				dsmInfo.writeSH(runPath.resolve(id + "/sh.inf"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-		} , 10, TimeUnit.MINUTES);
+		}, 10, TimeUnit.MINUTES);
 	}
 
 	private SpcFileName toPSVname(SpcFileName shName) {
 		String psvname = shName.getName().replace("SH.spc", "PSV.spc");
 		GlobalCMTID id = new GlobalCMTID(shName.getSourceID());
-		return new SpcFileName(psvPath.resolve(id.toString() + "/" + psvname));
+		return new SpcFileName(psvPath.resolve(id + "/" + psvname));
 	}
 
 	private Map<GlobalCMTID, SourceTimeFunction> sourceTimeFunctionMap;
