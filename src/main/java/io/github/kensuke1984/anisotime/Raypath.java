@@ -169,6 +169,19 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		this(rayParameterP, structure, null);
 	}
 
+	public static void main(String[] args) {
+		//479.03198571892705
+		Raypath shDiff = RaypathCatalog.PREM.getSHdiff();
+		Raypath svDiff = RaypathCatalog.PREM.getSVdiff();
+		System.out.println(shDiff.RAYPARAMETER+" "+svDiff.RAYPARAMETER);
+		Raypath ray = new Raypath(479.02198571892706);
+		ray.compute();
+		for(Raypath r : RaypathCatalog.PREM.getRaypaths())
+			System.out.println(Math.toDegrees(r.computeDelta(6371, Phase.S))+ " "+Math.toDegrees(r.computeDelta(6371, Phase.ScS)));
+		System.out.println(ray.computeDelta(6371, Phase.ScS));;
+
+	}
+
 	/**
 	 * @param rayParameterP
 	 *            the ray parameter
@@ -286,7 +299,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 *            Path of an eps file name
 	 * @param options
 	 *            open options
-	 * @throws IOException if any
+	 * @throws IOException
+	 *             if any
 	 */
 	public void outputEPS(double eventR, Phase phase, Path epsFile, OpenOption... options) throws IOException {
 		if (!exists(eventR, phase))
