@@ -14,16 +14,18 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 /**
  * Information file for computation of forward propagation.
  * 
- * @version 0.0.5
+ * This class is <b>immutable</b>
+ * 
+ * @version 0.0.6
  * @author Kensuke Konishi
  */
 public class FPinfo extends DSMheader {
 
-	private GlobalCMTData event;
-	private HorizontalPosition[] perturbationPoint;
-	private double[] perturbationPointR;
-	private PolynomialStructure structure;
-	private String outputDir;
+	private final GlobalCMTData EVENT;
+	private final HorizontalPosition[] POSITIONS;
+	private final double[] RADII;
+	private final PolynomialStructure STRUCTURE;
+	private final String OUTPUT;
 
 	/**
 	 * @param event
@@ -36,20 +38,19 @@ public class FPinfo extends DSMheader {
 	 *            must be a power of 2 (2<sup>n</sup>)/10
 	 * @param np
 	 *            must be a power of 2 (2<sup>n</sup>)
+	 * @param perturbationPointR
+	 *            will be copied
+	 * @param perturbationPosition
+	 *            will be copied
 	 */
-	public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure structure, double tlen, int np) {
+	public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure structure, double tlen, int np,
+			double[] perturbationPointR, HorizontalPosition[] perturbationPoint) {
 		super(tlen, np);
-		this.event = event;
-		this.outputDir = outputDir;
-		this.structure = structure;
-	}
-
-	public void setPerturbationPoint(HorizontalPosition[] perturbationPoint) {
-		this.perturbationPoint = perturbationPoint;
-	}
-
-	public void setPerturbationPointR(double[] perturbationPointR) {
-		this.perturbationPointR = perturbationPointR;
+		EVENT = event;
+		OUTPUT = outputDir;
+		STRUCTURE = structure;
+		POSITIONS = perturbationPoint.clone();
+		RADII = perturbationPointR.clone();
 	}
 
 	/**
@@ -70,29 +71,29 @@ public class FPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structurePart = structure.toSHlines();
+			String[] structurePart = STRUCTURE.toSHlines();
 			Arrays.stream(structurePart).forEach(pw::println);
 
 			// source
-			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
-					+ event.getCmtLocation().getLongitude());
-			double[] mt = event.getCmt().getDSMmt();
+			pw.println(EVENT.getCmtLocation().getR() + " " + EVENT.getCmtLocation().getLatitude() + " "
+					+ EVENT.getCmtLocation().getLongitude());
+			double[] mt = EVENT.getCmt().getDSMmt();
 			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
 					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// output info
 			pw.println("c output directory");
-			pw.println(outputDir + "/");
-			pw.println(event.toString());
+			pw.println(OUTPUT + "/");
+			pw.println(EVENT.toString());
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points
-			pw.println(perturbationPoint.length + " nsta");
-			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+			pw.println(POSITIONS.length + " nsta");
+			Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
 			// radii for perturbation points
-			pw.println(perturbationPointR.length + " nr");
-			Arrays.stream(perturbationPointR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
 	}
@@ -115,31 +116,51 @@ public class FPinfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structurePart = structure.toPSVlines();
+			String[] structurePart = STRUCTURE.toPSVlines();
 			Arrays.stream(structurePart).forEach(pw::println);
 
 			// source
-			pw.println(event.getCmtLocation().getR() + " " + event.getCmtLocation().getLatitude() + " "
-					+ event.getCmtLocation().getLongitude());
-			double[] mt = event.getCmt().getDSMmt();
+			pw.println(EVENT.getCmtLocation().getR() + " " + EVENT.getCmtLocation().getLatitude() + " "
+					+ EVENT.getCmtLocation().getLongitude());
+			double[] mt = EVENT.getCmt().getDSMmt();
 			pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" "))
 					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// output info
 			pw.println("c output directory");
-			pw.println(outputDir + "/");
-			pw.println(event.toString());
+			pw.println(OUTPUT + "/");
+			pw.println(EVENT.toString());
 			pw.println("c events and stations");
-			
+
 			// horizontal positions for perturbation points
-			pw.println(perturbationPoint.length + " nsta");
-			Arrays.stream(perturbationPoint).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
+			pw.println(POSITIONS.length + " nsta");
+			Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
 			// radii for perturbation points
-			pw.println(perturbationPointR.length + " nr");
-			Arrays.stream(perturbationPointR).forEach(pw::println);
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
 	}
+	
+	/**
+	 * @return name of the output folder
+	 */
+	public String getOutputDir() {
+		return OUTPUT;
+	}
 
+	/**
+	 * @return radii for the perturbation points
+	 */
+	public double[] getPerturbationPointDepth() {
+		return RADII.clone();
+	}
+
+	/**
+	 * @return structure to be used
+	 */
+	public PolynomialStructure getStructure() {
+		return STRUCTURE;
+	}
 }

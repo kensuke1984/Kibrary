@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary;
 /**
  * Runtime environment
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1
  */
 class Environment {
@@ -27,7 +27,6 @@ class Environment {
 		System.out.println("Java Runtime version: " + System.getProperty("java.runtime.version"));
 		System.out.println("Available processor: " + Runtime.getRuntime().availableProcessors());
 		System.out.println("Max memory[GB]: " + Runtime.getRuntime().maxMemory()/1000000000.0);
-
 	}
 
 }

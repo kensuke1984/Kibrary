@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2.1.2
+ * @version 0.2.1.3
  * 
  * @author Kensuke Konishi
  * 
@@ -248,13 +248,8 @@ public class InformationFileMaker implements Operation {
 		System.out.println("making information files for the events(fp)");
 		for (EventFolder ed : eventDirs) {
 			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
-			FPinfo fp = new FPinfo(ev, header, ps, tlen, np);
-			fp.setPerturbationPointR(perturbationR);
-			fp.setPerturbationPoint(perturbationPointPositions);
-			// File parentDir = new File(outputDir, "FPinfo");
+			FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 			Path infPath = fpPath.resolve(ev.toString());
-			// System.out.println(infDir);
-			// infDir.mkdir();
 			Files.createDirectories(infPath.resolve(header));
 			fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
 			fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
@@ -263,9 +258,7 @@ public class InformationFileMaker implements Operation {
 		System.out.println("making information files for the stations(bp)");
 		for (Station station : stationSet) {
 			// System.out.println(str);
-			BPinfo bp = new BPinfo(station, header, ps, tlen, np);
-			bp.setPerturbationPointR(perturbationR);
-			bp.setPerturbationPoint(perturbationPointPositions);
+			BPinfo bp = new BPinfo(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 			Path infPath = bpPath.resolve("0000" + station.getStationName());
 			// infDir.mkdir();
 			// System.out.println(infDir.getPath()+" was made");

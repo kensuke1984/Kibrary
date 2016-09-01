@@ -18,12 +18,12 @@ import org.apache.commons.io.IOUtils;
  * @author Kensuke Konishi
  * @version 0.4.1
  * 
- * 
  */
 final class About extends javax.swing.JFrame {
 	private static final long serialVersionUID = -2485772755944862822L;
 
 	private About() {
+		super("About Kibrary");
 		initComponents();
 	}
 
@@ -34,7 +34,6 @@ final class About extends javax.swing.JFrame {
 	 */
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">
 	private void initComponents() {
-		setTitle("About Kibrary");
 		jTextArea1 = new javax.swing.JTextArea(line, 5, 20);
 		jScrollPane1 = new javax.swing.JScrollPane(jTextArea1);
 		setLocationRelativeTo(null);
@@ -51,7 +50,6 @@ final class About extends javax.swing.JFrame {
 				.addGroup(layout.createSequentialGroup().addContainerGap()
 						.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE)
 						.addContainerGap()));
-
 		pack();
 		java.awt.EventQueue.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
 	}// </editor-fold>

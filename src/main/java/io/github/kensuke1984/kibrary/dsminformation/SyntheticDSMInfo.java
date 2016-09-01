@@ -7,11 +7,13 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
@@ -23,21 +25,21 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  */
 public class SyntheticDSMInfo extends DSMheader {
 
-	protected final PolynomialStructure structure;
+	protected final PolynomialStructure STRUCTURE;
 
-	protected final String outputDir;
+	protected final String OUTPUT;
 
 	/**
 	 * <b>unmodifiable</b>
 	 */
-	protected final Set<Station> stations;
+	protected final Set<Station> STATIONS;
 
-	protected final GlobalCMTID eventID;
+	protected final GlobalCMTData EVENT;
 
 	/**
 	 * @param structure
 	 *            of velocity
-	 * @param eventID
+	 * @param event
 	 *            {@link GlobalCMTID}
 	 * @param stations
 	 *            ステーション情報
@@ -48,26 +50,14 @@ public class SyntheticDSMInfo extends DSMheader {
 	 * @param np
 	 *            np
 	 */
-	public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTID eventID, Set<Station> stations, String outputDir,
+	public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTData event, Set<Station> stations, String outputDir,
 			double tlen, int np) {
 		super(tlen, np);
-		this.structure = structure;
-		this.eventID = eventID;
-		this.stations = Collections.unmodifiableSet(stations);
-		this.outputDir = outputDir;
-		momentTensor = eventID.getEvent().getCmt().getDSMmt();
-		eventLocation = eventID.getEvent().getCmtLocation();
+		STRUCTURE = structure;
+		EVENT = event;
+		STATIONS = Collections.unmodifiableSet(new HashSet<>(stations));
+		OUTPUT = outputDir;
 	}
-
-	/**
-	 * the moment tensor of the event
-	 */
-	protected final double[] momentTensor;
-
-	/**
-	 * the location of the event
-	 */
-	protected final Location eventLocation;
 
 	/**
 	 * PSV計算用のファイル出力
@@ -86,29 +76,31 @@ public class SyntheticDSMInfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structurePart = structure.toPSVlines();
+			String[] structurePart = STRUCTURE.toPSVlines();
 			Arrays.stream(structurePart).forEach(pw::println);
 
+			
+			Location eventLocation = EVENT.getCmtLocation();
 			// source
 			pw.println("c parameter for the source");
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
+			pw.println(Arrays.stream(EVENT.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
 					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// station
 			pw.println("c parameter for the station");
 			pw.println("c the number of stations");
-			pw.println(stations.size() + " nsta");
+			pw.println(STATIONS.size() + " nsta");
 			pw.println("c latitude longitude (deg)");
 
-			stations.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
 			// output
 			pw.println("c parameter for the output file");
-			stations.stream().sorted().map(Station::getStationName)
-					.forEach(n -> pw.println(outputDir + "/" + n + "." + eventID + "PSV.spc"));
+			STATIONS.stream().sorted().map(Station::getStationName)
+					.forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "PSV.spc"));
 			pw.println("end");
 
 		}
@@ -131,28 +123,28 @@ public class SyntheticDSMInfo extends DSMheader {
 			Arrays.stream(header).forEach(pw::println);
 
 			// structure
-			String[] structurePart = structure.toSHlines();
+			String[] structurePart = STRUCTURE.toSHlines();
 			Arrays.stream(structurePart).forEach(pw::println);
-
+			Location eventLocation = EVENT.getCmtLocation();
 			// source
 			pw.println("c parameter for the source");
 			pw.println(eventLocation.getR() + " " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 					+ " r0(km), lat, lon (deg)");
-			pw.println(Arrays.stream(momentTensor).mapToObj(Double::toString).collect(Collectors.joining(" "))
+			pw.println(Arrays.stream(EVENT.getCmt().getDSMmt()).mapToObj(Double::toString).collect(Collectors.joining(" "))
 					+ " Moment Tensor (1.e25 dyne cm)");
 
 			// station
 			pw.println("c parameter for the station");
 			pw.println("c the number of stations");
-			pw.println(stations.size() + " nsta");
+			pw.println(STATIONS.size() + " nsta");
 			pw.println("c latitude longitude (deg)");
-			stations.stream().sorted().map(Station::getPosition)
+			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
 			// output
 			pw.println("c parameter for the output file");
-			stations.stream().sorted().map(Station::getStationName)
-					.forEach(n -> pw.println(outputDir + "/" + n + "." + eventID + "SH.spc"));
+			STATIONS.stream().sorted().map(Station::getStationName)
+					.forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "SH.spc"));
 			pw.println("end");
 		}
 	}
