@@ -6,7 +6,7 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Kensuke Konishi
  * 
- * @version 0.1.0.1
+ * @version 0.1.0.2
  * 
  */
 class RaypathWindow extends javax.swing.JFrame {
@@ -58,8 +58,7 @@ class RaypathWindow extends javax.swing.JFrame {
 				setSize(size, size);
 			}
 		});
-
-		pack();
+//		pack();
 		setSize(700, 700);
 		setLocation(gui.getX() - 700, gui.getY());
 

@@ -1,6 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
 import java.awt.Point;
+import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
@@ -10,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.Consumer;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
@@ -17,7 +19,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -25,31 +26,16 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  * Panel for inputting parameters
  * 
- * @version 0.2.2.1
+ * @version 0.3.0
  * @author Kensuke Konishi
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 
 	/**
-	 * 2016/8/30
+	 * 2016/9/2
 	 */
-	private static final long serialVersionUID = 7829219792270646203L;
-	/**
-	 * if current parameter set is computed.
-	 */
-	private boolean isCurrentComputed;
-
-	synchronized boolean isCurrentComputed() {
-		return isCurrentComputed;
-	}
-
-	synchronized void computed(boolean b) {
-		isCurrentComputed = b;
-	}
-
-	synchronized private void parameterChanged() {
-		isCurrentComputed = false;
-	}
+	private static final long serialVersionUID = -6147244200238410005L;
+	private final ANISOtimeGUI gui;
 
 	void setMode(ComputationMode mode) {
 		switch (mode) {
@@ -62,23 +48,18 @@ class ParameterInputPanel extends javax.swing.JPanel {
 			jTextFieldMostImportant.setText("680.0");
 			break;
 		}
-
 	}
 
 	/**
 	 * Creates new form ParameterInputPanel
 	 */
-	public ParameterInputPanel() {
+	public ParameterInputPanel(ANISOtimeGUI gui) {
+		this.gui = gui;
 		initComponents();
 	}
 
 	void changePropertiesVisible() {
-		boolean b = !jLabelInterval.isVisible();
-		jLabelInterval.setVisible(b);
-		jLabelTurningRegionR.setVisible(b);
-		jTextFieldInterval.setVisible(b);
-		jTextFieldTurningRegionR.setVisible(b);
-		((JFrame) SwingUtilities.getRoot(this)).pack();
+		//TODO
 	}
 
 	void changeBorderTitle(String title) {
@@ -94,19 +75,10 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		jLabelMostImportant = new javax.swing.JLabel();
 		jLabelModel = new javax.swing.JLabel("Model:");
 		jLabelDepth = new javax.swing.JLabel("Depth [km]:");
-		jLabelInterval = new javax.swing.JLabel("Integration interval [km]:");
-		jLabelTurningRegionR = new javax.swing.JLabel("allowable error of turning depth [km]:");
 
 		jTextFieldMostImportant = GUIInputComponents.createPositiveNumberField("60.0");
 		jTextFieldDepth = GUIInputComponents.createPositiveNumberField("100.0");
-		jTextFieldInterval = GUIInputComponents.createPositiveNumberField("1.0");
-		jTextFieldTurningRegionR = GUIInputComponents.createPositiveNumberField("10.0");
-
-		jLabelInterval.setVisible(false);
-		jLabelTurningRegionR.setVisible(false);
-		jTextFieldInterval.setVisible(false);
-		jTextFieldTurningRegionR.setVisible(false);
-
+		
 		changeBorderTitle("Mode:Epicentral Distance  Polarity:P-SV");
 
 		String[] modelTitles = Arrays.stream(InputModel.values()).map(model -> model.name).toArray(String[]::new);
@@ -122,10 +94,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
 				.addGroup(layout.createSequentialGroup().addComponent(jLabelModel).addComponent(jComboBoxModel))
 				.addGroup(layout.createSequentialGroup().addComponent(jLabelDepth).addComponent(jTextFieldDepth,
 						javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-				.addGroup(layout.createSequentialGroup().addComponent(jLabelInterval).addComponent(jTextFieldInterval,
-						javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-				.addGroup(layout.createSequentialGroup().addComponent(jLabelTurningRegionR)
-						.addComponent(jTextFieldTurningRegionR)));
+				.addGroup(layout.createSequentialGroup())
+			  );
 
 		layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 				.addGroup(layout.createSequentialGroup()
@@ -136,20 +106,11 @@ class ParameterInputPanel extends javax.swing.JPanel {
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 								.addComponent(jTextFieldDepth).addComponent(jLabelDepth))
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-								.addComponent(jLabelInterval).addComponent(jTextFieldInterval))
-						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-								.addComponent(jLabelTurningRegionR).addComponent(jTextFieldTurningRegionR))));
-		createStructure();
-
-	}// </editor-fold>//GEN-END:initComponents
-
-	private VelocityStructure structure;
-
-	/**
-	 * @return radius [km] (not depth)
-	 */
-	double getEventR() {
-		return structure.earthRadius() - Double.parseDouble(jTextFieldDepth.getText());
+								 )
+					 )) ;
+//		createStructure();
+		gui.setStructure(VelocityStructure.prem());
+		gui.setEventDepth(100);
 	}
 
 	private void addMouseListners() {
@@ -157,11 +118,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		jLabelMostImportant
 				.addMouseListener(createDescriptionMouseListner(ParameterDescription.createFrameRayparameter()));
 		jLabelModel.addMouseListener(createDescriptionMouseListner(ParameterDescription.createFrameModel()));
-		jLabelTurningRegionR
-				.addMouseListener(createDescriptionMouseListner(ParameterDescription.createFrameAllowableError()));
-		jLabelInterval.addMouseListener(createDescriptionMouseListner(ParameterDescription.createFrameInterval()));
 	}
-
 	private static MouseListener createDescriptionMouseListner(final JFrame frame) {
 		return new MouseAdapter() {
 			Timer timer;
@@ -192,31 +149,31 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		};
 	}
 
+	private static FocusListener createAdapter(Consumer<Double> setter) {
+		return new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				setter.accept(Double.parseDouble(((JTextField) e.getSource()).getText()));
+			}
+		};
+	}
+
 	private void addListners() {
 		addMouseListners();
-		jTextFieldDepth.addFocusListener(textFieldFocusListner);
-		jTextFieldMostImportant.addFocusListener(textFieldFocusListner);
-		jTextFieldInterval.addFocusListener(textFieldFocusListner);
-		jTextFieldTurningRegionR.addFocusListener(textFieldFocusListner);
 
+		// Function
+		jTextFieldDepth.addFocusListener(createAdapter(d -> gui.setEventDepth(d)));
+		jTextFieldMostImportant.addFocusListener( createAdapter(d -> gui.setMostImportant(d)));
 		jComboBoxModel.addPopupMenuListener(new PopupMenuListener() {
-			InputModel currentModel;
 
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-				@SuppressWarnings("unchecked")
-				JComboBox<String> box = (JComboBox<String>) e.getSource();
-				currentModel = InputModel.titleOf((String) box.getSelectedItem());
 			}
 
 			@Override
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-				@SuppressWarnings("unchecked")
-				JComboBox<String> box = (JComboBox<String>) e.getSource();
-				InputModel changedModel = InputModel.titleOf((String) box.getSelectedItem());
-				if (!changedModel.equals(currentModel))
-					parameterChanged();
-				createStructure();
+				gui.setStructure(createStructure());
+				gui.setEventDepth(Double.parseDouble(jTextFieldDepth.getText()));
 			}
 
 			@Override
@@ -226,105 +183,51 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
 	}
 
-	/**
-	 * if textField changed then computed will be false
-	 */
-	private FocusListener textFieldFocusListner = new FocusListener() {
-		// private String currentText;
-		private double currentValue;
-
-		@Override
-		public void focusLost(FocusEvent e) {
-			JTextField textField = (JTextField) e.getSource();
-			String changedText = textField.getText();
-			double changedValue = Double.parseDouble(changedText);
-			if (changedValue != currentValue)
-				parameterChanged();
-		}
-
-		@Override
-		public void focusGained(FocusEvent e) {
-			JTextField textField = (JTextField) e.getSource();
-			String currentText = textField.getText();
-			currentValue = Double.parseDouble(currentText);
-		}
-	};
-
-	/**
-	 * @return Epicentral Distance mode: epicentral distance[deg]<br>
-	 *         Ray parameter mode: ray parameter<br>
-	 */
-	double getMostImportant() {
-		return Double.parseDouble(jTextFieldMostImportant.getText());
-	}
-
-	VelocityStructure getStructure() {
-		return structure;
-	}
-
-	private void createStructure() {
+	private VelocityStructure createStructure() {
 		InputModel model = InputModel.titleOf((String) jComboBoxModel.getSelectedItem());
 		JFileChooser fileChooser;
 		switch (model) {
 		case AK135:
-			structure = PolynomialStructure.AK135;
-			break;
+			return PolynomialStructure.AK135;
 		case ANISOTROPIC_PREM:
-			structure = PolynomialStructure.PREM;
-			break;
+			return PolynomialStructure.PREM;
 		case ISOTROPIC_PREM:
-			structure = PolynomialStructure.ISO_PREM;
-			break;
+			return PolynomialStructure.ISO_PREM;
 		case NAMED_DISCONTINUITY:
 			fileChooser = new JFileChooser();
 			fileChooser.setFileFilter(new FileNameExtensionFilter("named discontinuity file", "nd"));
 			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 				Path file = fileChooser.getSelectedFile().toPath();
 				try {
-					structure = new NamedDiscontinuityStructure(file);
+					return new NamedDiscontinuityStructure(file);
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "The file is invalid!");
-					structure = null;
+					return null;
 				}
-			} else
-				structure = null;
-			break;
+			}
+			return null;
 		case POLYNOMIAL:
 			fileChooser = new JFileChooser();
 			fileChooser.setFileFilter(new FileNameExtensionFilter("polynomial file", "inf"));
-			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+			if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
 				try {
-					structure = new PolynomialStructure(fileChooser.getSelectedFile().toPath());
+					return new PolynomialStructure(fileChooser.getSelectedFile().toPath());
 				} catch (Exception e) {
 					JOptionPane.showMessageDialog(null, "The file is invalid!");
-					structure = null;
+					return null;
 				}
-			} else
-				structure = null;
-			break;
+			return null;
 		default:
-			structure = null;
+			throw new RuntimeException("unexpected");
 		}
-	}
-
-	double getIntegralInterval() {
-		return Double.parseDouble(jTextFieldInterval.getText());
-	}
-
-	double getTurningRegionR() {
-		return Double.parseDouble(jTextFieldTurningRegionR.getText());
 	}
 
 	// Variables declaration - do not modify//GEN-BEGIN:variables
 	private javax.swing.JComboBox<String> jComboBoxModel;
 	private javax.swing.JLabel jLabelDepth;
-	private javax.swing.JLabel jLabelInterval;
 	private javax.swing.JLabel jLabelModel;
 	private javax.swing.JLabel jLabelMostImportant;
-	private javax.swing.JLabel jLabelTurningRegionR;
 	private javax.swing.JTextField jTextFieldDepth;
-	private javax.swing.JTextField jTextFieldInterval;
 	private javax.swing.JTextField jTextFieldMostImportant;
-	private javax.swing.JTextField jTextFieldTurningRegionR;
 	// End of variables declaration//GEN-END:variables
 }

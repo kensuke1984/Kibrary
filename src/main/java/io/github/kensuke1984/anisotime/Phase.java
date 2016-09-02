@@ -451,6 +451,7 @@ public class Phase {
 		// System.out.println(Phase.create("2PSdiff900"));
 		Phase p = Phase.create("Sdiff1");
 		System.out.println(p.phaseName + " " + p.expandedName);
+		System.out.println(p.isDownGoing[1]);
 		// p.printInformation();
 	}
 

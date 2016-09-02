@@ -25,7 +25,7 @@ import org.apache.commons.io.IOUtils;
  * Menubar for GUI
  * 
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @version 0.1.5
  * 
  */
 final class MenuBar extends JMenuBar {
@@ -37,7 +37,7 @@ final class MenuBar extends JMenuBar {
 		initComponents();
 	}
 
-	private ANISOtimeGUI gui;
+	private final ANISOtimeGUI gui;
 
 	private ButtonGroup buttonGroupModes = new ButtonGroup();
 	private ButtonGroup buttonGroupPolarization = new ButtonGroup();
@@ -67,6 +67,41 @@ final class MenuBar extends JMenuBar {
 		buttonGroupModes.add(jMenuItemEpicentralDistanceMode);
 		buttonGroupModes.add(jMenuItemRayparameterMode);
 
+		
+
+
+		// first is normal mode
+		((JRadioButtonMenuItem) jMenuItemEpicentralDistanceMode).setSelected(true);
+		((JRadioButtonMenuItem) jMenuItemPSVSH).setSelected(true);
+		jMenuSettings.add(jMenuModes);
+		jMenuSettings.add(jMenuPolarization);
+		jMenuSettings.add(jMenuItemPreferences);
+		jMenuPolarization.add(jMenuItemPSVSH);
+		jMenuPolarization.add(jMenuItemPSV);
+		jMenuPolarization.add(jMenuItemSH);
+		jMenuHelp.add(jMenuItemAbout);
+		jMenuHelp.add(jMenuItemParameterDescription);
+		jMenuHelp.add(jMenuItemMail);
+		jMenuModes.add(jMenuItemEpicentralDistanceMode);
+		jMenuModes.add(jMenuItemRayparameterMode);
+		jMenuFile.add(jMenuItemExit);
+		add(jMenuFile);
+		add(jMenuSettings);
+		add(jMenuHelp);
+		setListeners();;
+	}
+
+	private void setListeners() {
+		jMenuItemPSVSH.addActionListener(e -> gui.setPolarity(0));
+		jMenuItemPSV.addActionListener(e -> gui.setPolarity(1));
+		jMenuItemSH.addActionListener(e -> gui.setPolarity(2));
+		
+		jMenuItemRayparameterMode.addActionListener(e -> gui.setMode(ComputationMode.RAY_PARAMETER));
+		jMenuItemEpicentralDistanceMode.addActionListener(e -> gui.setMode(ComputationMode.EPICENTRAL_DISTANCE));
+		jMenuItemPreferences.addActionListener(e -> gui.changePropertiesVisible());
+
+	
+	
 		jMenuItemExit.addActionListener(evt -> System.exit(0));
 
 		jMenuItemParameterDescription.addActionListener(e -> {
@@ -100,7 +135,7 @@ final class MenuBar extends JMenuBar {
 			JOptionPane.showMessageDialog(null,
 					"Can't open a pdf file. Look at " + pdfFile + " and delete by yourself.");
 		});
-		jMenuItemAbout.addActionListener(e -> new About().setVisible(true));
+		jMenuItemAbout.addActionListener(e -> About.main(null));
 		jMenuItemMail.addActionListener(e -> {
 			try {
 				Desktop.getDesktop().mail(new URI("mailto:bob@eps.s.u-tokyo.ac.jp"));
@@ -109,97 +144,16 @@ final class MenuBar extends JMenuBar {
 						"<html>Can't launch a mailer. Please send Email to <a href>traveltimereport@outlook.com</a>.");
 			}
 		});
-
-		setModeSelect();
-
-		// first is normal mode
-		mode = ComputationMode.EPICENTRAL_DISTANCE;
-		((JRadioButtonMenuItem) jMenuItemEpicentralDistanceMode).setSelected(true);
-		((JRadioButtonMenuItem) jMenuItemPSVSH).setSelected(true);
-		polarization = 0;
-		jMenuSettings.add(jMenuModes);
-		jMenuSettings.add(jMenuPolarization);
-		jMenuSettings.add(jMenuItemPreferences);
-		jMenuPolarization.add(jMenuItemPSVSH);
-		jMenuPolarization.add(jMenuItemPSV);
-		jMenuPolarization.add(jMenuItemSH);
-		jMenuHelp.add(jMenuItemAbout);
-		jMenuHelp.add(jMenuItemParameterDescription);
-		jMenuHelp.add(jMenuItemMail);
-		jMenuModes.add(jMenuItemEpicentralDistanceMode);
-		jMenuModes.add(jMenuItemRayparameterMode);
-		jMenuFile.add(jMenuItemExit);
-		add(jMenuFile);
-		add(jMenuSettings);
-		add(jMenuHelp);
-		setPolarization();
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	}
-
-	private int polarization;
-
-	/**
-	 * @return 0(default): All, 1: P-SV, 2: SH
-	 */
-	int getPolarity() {
-		return polarization;
-	}
-
-	/**
-	 * @param i 0(default): All, 1: P-SV, 2: SH
-	 */
-	void setPolarity(int i) {
-		polarization = i;
-	}
-
-	private void setPolarization() {
-		jMenuItemPSVSH.addActionListener(e -> gui.setPolarity(0));
-		jMenuItemPSV.addActionListener(e -> gui.setPolarity(1));
-		jMenuItemSH.addActionListener(e -> gui.setPolarity(2));
-	}
-
-	String getPoleString() {
-		switch (polarization) {
-		case 0:
-			return "Polarity:All";
-		case 1:
-			return "Polarity:P-SV";
-		case 2:
-			return "Polarity:SH";
-		default:
-			throw new RuntimeException("Unexpected");
-		}
-	}
-
-	String getModeName() {
-		switch (mode) {
-		case EPICENTRAL_DISTANCE:
-			return "Mode:Epicentral Distance";
-		case RAY_PARAMETER:
-			return "Mode:Rayparameter";
-		default:
-			throw new RuntimeException("Error");
-		}
-	}
-
-	private void setModeSelect() {
-		jMenuItemRayparameterMode.addActionListener(e -> {
-			mode = ComputationMode.RAY_PARAMETER;
-			gui.setMode(mode);
-			gui.setPolarity(polarization);
-		});
-		jMenuItemEpicentralDistanceMode.addActionListener(e -> {
-			mode = ComputationMode.EPICENTRAL_DISTANCE;
-			gui.setMode(mode);
-			gui.setPolarity(polarization);
-		});
-		jMenuItemPreferences.addActionListener(e -> gui.changePropertiesVisible());
-	}
-
-	ComputationMode selectedMode() {
-		return mode;
-	}
-
-	private ComputationMode mode;
 
 	private JMenu jMenuFile;
 	private JMenu jMenuSettings;

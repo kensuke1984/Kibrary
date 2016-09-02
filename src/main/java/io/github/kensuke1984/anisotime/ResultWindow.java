@@ -30,10 +30,6 @@ class ResultWindow extends javax.swing.JPanel {
 		initComponents();
 	}
 
-	int getN() {
-		return jTable1.getRowCount();
-	}
-
 	private ANISOtimeGUI gui;
 
 	/**
@@ -105,6 +101,10 @@ class ResultWindow extends javax.swing.JPanel {
 
 	private SampleTableCellRenderer02 render;
 
+	/**
+	 * the row will be featured.
+	 * @param i number for the row
+	 */
 	void setColor(int i) {
 		render.featured = i;
 		repaint();
