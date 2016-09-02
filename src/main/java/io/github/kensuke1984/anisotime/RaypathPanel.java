@@ -53,7 +53,6 @@ final class RaypathPanel extends JPanel {
 		drawEarth(g);
 		// g2.drawString("jo", 300, 300);
 		drawAdditionalCircles(g);
-		// System.out.println(g.getClass());
 	}
 
 	/**
@@ -86,12 +85,12 @@ final class RaypathPanel extends JPanel {
 		epsGraphics.drawString(line, startInt, (int) changeY(earthRadius) - 25);
 	}
 
-	private int featured;
+	private volatile int featured;
 
 	/**
 	 * Draw Curves
 	 */
-	synchronized private void drawCurves(Graphics2D g2) {
+	 synchronized private void drawCurves(Graphics2D g2) {
 		for (int i = 0; i < quadCurves.size(); i++) {
 			if (i == featured)
 				continue;

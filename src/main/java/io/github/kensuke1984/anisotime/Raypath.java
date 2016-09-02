@@ -63,15 +63,15 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.4.1.7b
+ * @version 0.4.2b
  * @see Woodhouse, 1981
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
 	/**
-	 * 2016/8/25
+	 * 2016/9/2
 	 */
-	private static final long serialVersionUID = 1152738617318270619L;
+	private static final long serialVersionUID = -3861690924876799366L;
 
 	/**
 	 * If the gap between the CMB and the turning r is under this value, then
@@ -170,15 +170,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	}
 
 	public static void main(String[] args) {
-		//479.03198571892705
+		// 479.03198571892705
 		Raypath shDiff = RaypathCatalog.PREM.getSHdiff();
 		Raypath svDiff = RaypathCatalog.PREM.getSVdiff();
-		System.out.println(shDiff.RAYPARAMETER+" "+svDiff.RAYPARAMETER);
+		System.out.println(shDiff.RAYPARAMETER + " " + svDiff.RAYPARAMETER);
 		Raypath ray = new Raypath(479.02198571892706);
 		ray.compute();
-		for(Raypath r : RaypathCatalog.PREM.getRaypaths())
-			System.out.println(Math.toDegrees(r.computeDelta(6371, Phase.S))+ " "+Math.toDegrees(r.computeDelta(6371, Phase.ScS)));
-		System.out.println(ray.computeDelta(6371, Phase.ScS));;
+		for (Raypath r : RaypathCatalog.PREM.getRaypaths())
+			System.out.println(Math.toDegrees(r.computeDelta(6371, Phase.S)) + " "
+					+ Math.toDegrees(r.computeDelta(6371, Phase.ScS)));
+		System.out.println(ray.computeDelta(6371, Phase.ScS));
+		;
 
 	}
 
@@ -647,8 +649,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 		if (phase.isDiffracted()) {
 			double deltaOnCMB = phase.getDiffractionAngle();
 			time += phase.toString().contains("Pdiff")// TODO
-					? computeTimePAlongBoundary(PhasePart.P, coreMantleBoundary(), deltaOnCMB, true)
-					: computeTimeSAlongBoundary(phase.isPSV(), coreMantleBoundary(), deltaOnCMB, true);
+					? computeTAlongBoundary(PhasePart.P, coreMantleBoundary(), deltaOnCMB, true)
+					: computeTAlongBoundary(phase.isPSV() ? PhasePart.SV : PhasePart.SH, coreMantleBoundary(),
+							deltaOnCMB, true);
 		}
 
 		if (Math.abs(eventR - earthRadius()) <= ComputationalMesh.eps)
@@ -733,12 +736,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	private void addRThetaTime(double nextR, PhasePart pp, LinkedList<Double> rList, LinkedList<Double> thetaList,
 			LinkedList<Double> travelTimeList) {
 		double beforeR = rList.getLast();
-		if (Math.abs(nextR - innerCoreBoundary()) < permissibleGapForDiff)
-			nextR = innerCoreBoundary() - ComputationalMesh.eps * ((nextR - innerCoreBoundary()) < 0 ? 1 : -1);
+		if (Math.abs(nextR - turningRMap.get(pp)) < ComputationalMesh.eps)
+			nextR = turningRMap.get(pp) + ComputationalMesh.eps;
+		else if (Math.abs(nextR - innerCoreBoundary()) < permissibleGapForDiff)
+			nextR = innerCoreBoundary() - ComputationalMesh.eps * (nextR < innerCoreBoundary() ? 1 : -1);
 		else if (Math.abs(nextR - coreMantleBoundary()) < permissibleGapForDiff)
-			nextR = coreMantleBoundary() - ComputationalMesh.eps * ((nextR - coreMantleBoundary() < 0) ? 1 : -1);
+			nextR = coreMantleBoundary() - ComputationalMesh.eps * (nextR < coreMantleBoundary() ? 1 : -1);
 		else if (Math.abs(nextR - earthRadius()) < permissibleGapForDiff)
-			nextR = earthRadius() - ComputationalMesh.eps * ((nextR - earthRadius() < 0) ? 1 : -1);
+			nextR = earthRadius() - ComputationalMesh.eps;
 		else if (nextR < permissibleGapForDiff)
 			nextR = ComputationalMesh.eps;
 
@@ -819,10 +824,19 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			PhasePart pp = phase.phasePartOf(i);
 			switch (phase.partitionOf(i)) {
 			case CORE_MANTLE_BOUNDARY:
-				rList.add(coreMantleBoundary() + permissibleGapForDiff); // TODO
-				thetaList.add(thetaList.getLast() + phase.getDiffractionAngle());
-				double time = 0; // TODO
-				travelTimeList.add(time + travelTimeList.getLast());
+				double angle = phase.getDiffractionAngle();
+				double finalAngle = thetaList.getLast() + phase.getDiffractionAngle();
+				double finalTime = computeTAlongBoundary(pp, coreMantleBoundary(), phase.getDiffractionAngle(), true)
+						+ travelTimeList.getLast();
+				for (double tic = Math.toRadians(1); tic < angle; tic += Math.toRadians(1)) {
+					rList.add(coreMantleBoundary() + permissibleGapForDiff);
+					thetaList.add(thetaList.getLast() + Math.toRadians(1));
+					travelTimeList.add(computeTAlongBoundary(pp, coreMantleBoundary(), Math.toRadians(1), true)
+							+ travelTimeList.getLast());
+				}
+				rList.add(coreMantleBoundary() + permissibleGapForDiff);
+				thetaList.add(finalAngle);
+				travelTimeList.add(finalTime);
 				break;
 			case MANTLE:
 				if (getPropagation(pp) == Propagation.PENETRATING)
@@ -1245,51 +1259,21 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 	 * Computes diffraction on a boundary at r. The velocity is considered as
 	 * the one at r &pm; {@link ComputationalMesh#eps}
 	 * 
-	 * @param sv
-	 *            true:SV, false:SH
-	 * @param boundaryR
-	 *            [km]
-	 * @param deltaOnBoundary
-	 *            [rad]
-	 * @param shallower
-	 *            The diffraction happens true:shallower or false:deeper side.
-	 *            Shallower means larger radius.
-	 * @return S wave traveltime along the boundary
-	 * @throws RuntimeException
-	 *             If the structure has no boundary at r.
-	 */
-	private double computeTimeSAlongBoundary(boolean sv, double boundaryR, double deltaOnBoundary, boolean shallower) {
-		if (ComputationalMesh.eps < Math.abs(coreMantleBoundary() - boundaryR)
-				&& ComputationalMesh.eps < Math.abs(innerCoreBoundary() - boundaryR)
-				&& Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())
-						.allMatch(b -> ComputationalMesh.eps < Math.abs(b - boundaryR)))
-			throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
-		double s = boundaryR * deltaOnBoundary;
-		double r = boundaryR + (shallower ? ComputationalMesh.eps : -ComputationalMesh.eps);
-		double velocity = Math.sqrt((sv ? WOODHOUSE.getStructure().getL(r) : WOODHOUSE.getStructure().getN(r))
-				/ WOODHOUSE.getStructure().getRho(r));
-		return s / velocity;
-	}
-
-	/**
-	 * Computes diffraction on a boundary at r. The velocity is considered as
-	 * the one at r &pm; {@link ComputationalMesh#eps}
-	 * 
 	 * @param pp
-	 *            which phase diffracts
+	 *            phase part for the diffraction
 	 * @param boundaryR
 	 *            [km]
 	 * @param deltaOnBoundary
 	 *            [rad]
 	 * @param shallower
-	 *            The diffraction happens true:shallower or false:deeper side.
-	 *            Shallower means larger radius.
-	 * @return P wave traveltime along the boundary at the boundaryR
+	 *            The diffraction happens on the shallower(true) or
+	 *            deeper(false) side of the boundary. Shallower means larger
+	 *            radius.
+	 * @return T[s] along the boundary.
 	 * @throws RuntimeException
-	 *             If the structure has no boundary at r.
+	 *             If the structure has no boundary at the input boundaryR.
 	 */
-	private double computeTimePAlongBoundary(PhasePart pp, double boundaryR, double deltaOnBoundary,
-			boolean shallower) {
+	private double computeTAlongBoundary(PhasePart pp, double boundaryR, double deltaOnBoundary, boolean shallower) {
 		if (ComputationalMesh.eps < Math.abs(coreMantleBoundary() - boundaryR)
 				&& ComputationalMesh.eps < Math.abs(innerCoreBoundary() - boundaryR)
 				&& Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())
@@ -1297,7 +1281,25 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 			throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
 		double r = boundaryR + (shallower ? ComputationalMesh.eps : -ComputationalMesh.eps);
 		double s = boundaryR * deltaOnBoundary;
-		double velocity = Math.sqrt(WOODHOUSE.getStructure().getA(r) / WOODHOUSE.getStructure().getRho(r));
+		double numerator;
+		switch (pp) {
+		case I:
+		case K:
+		case P:
+			numerator = WOODHOUSE.getStructure().getA(r);
+			break;
+		case JH:
+		case SH:
+			numerator = WOODHOUSE.getStructure().getN(r);
+			break;
+		case SV:
+		case JV:
+			numerator = WOODHOUSE.getStructure().getL(r);
+			break;
+		default:
+			throw new RuntimeException("unikuspected");
+		}
+		double velocity = Math.sqrt(numerator / WOODHOUSE.getStructure().getRho(r));
 		return s / velocity;
 	}
 
