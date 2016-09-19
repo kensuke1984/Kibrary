@@ -1,4 +1,4 @@
-#Kabrary 
+#Kibrary 
 ![version][version-image]
 [![release] [release-image] ][release]
 [ ![aLicense] [alicense-image] ] [alicense]
