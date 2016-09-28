@@ -35,54 +35,53 @@ public class Location extends HorizontalPosition {
 		int horizontalCompare = super.compareTo(o);
 		if (horizontalCompare != 0 || !(o instanceof Location))
 			return horizontalCompare;
-		return Double.compare(r,  ((Location) o).r);
+		return Double.compare(R,  ((Location) o).R);
 	}
 
 	/**
 	 * [km] radius rounded off to the 3 decimal places.
 	 */
-	private final double r;
+	private final double R;
 
 	/**
 	 * @param latitude
-	 *            [deg] 地理緯度（度）
+	 *            [deg] geographical latitude
 	 * @param longitude
-	 *            [deg] 経度（度）
+	 *            [deg] longitude
 	 * @param r
 	 *            [km] radius
 	 */
 	public Location(double latitude, double longitude, double r) {
 		super(latitude, longitude);
-		this.r = Precision.round(r, 3);
+		R = Precision.round(r, 3);
 	}
 
 	/**
 	 * @return [km] radius (not depth)
 	 */
 	public double getR() {
-		return r;
+		return R;
 	}
 
 	/**
 	 * @return {@link RThetaPhi} of this
 	 */
 	public RThetaPhi getRThetaPhi() {
-		return new RThetaPhi(r, getTheta(), getPhi());
+		return new RThetaPhi(R, getTheta(), getPhi());
 	}
 	
 	/**
 	 * Cartesian coordinate
-	 * 
 	 * @return {@link XYZ} of this
 	 */
 	public XYZ toXYZ() {
-		return RThetaPhi.toCartesian(r, getTheta(), getPhi());
+		return RThetaPhi.toCartesian(R, getTheta(), getPhi());
 	}
 
 	/**
 	 * @param location
 	 *            {@link Location} to compute distance with
-	 * @return locationとの直線距離 [km]
+	 * @return [km] one-line distance from the location
 	 */
 	public double getDistance(Location location) {
 		return location.toXYZ().getDistance(toXYZ());
@@ -93,7 +92,7 @@ public class Location extends HorizontalPosition {
 		final int prime = 31;
 		int result = super.hashCode();
 		long temp;
-		temp = Double.doubleToLongBits(r);
+		temp = Double.doubleToLongBits(R);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		return result;
 	}
@@ -107,19 +106,19 @@ public class Location extends HorizontalPosition {
 		if (getClass() != obj.getClass())
 			return false;
 		Location other = (Location) obj;
-		if (Double.doubleToLongBits(r) != Double.doubleToLongBits(other.r))
+		if (Double.doubleToLongBits(R) != Double.doubleToLongBits(other.R))
 			return false;
 		return true;
 	}
 
 	/**
 	 * @param locations
-	 *            並び替える元。 直接はいじらない
-	 * @return locations をthisに近い順で並び替えて返す。
+	 *          to be sorted. 
+	 * @return locations in the order of the distance from this.
 	 */
 	public Location[] getNearestLocation(Location[] locations) {
 		Location[] newLocations = locations.clone();
-		Arrays.sort(newLocations, Comparator.comparingDouble(o -> o.getDistance(this)));
+		Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
 		return newLocations;
 	}
 
@@ -129,6 +128,6 @@ public class Location extends HorizontalPosition {
 
 	@Override
 	public String toString() {
-		return super.toString() + ' ' + r;
+		return super.toString() + ' ' + R;
 	}
 }

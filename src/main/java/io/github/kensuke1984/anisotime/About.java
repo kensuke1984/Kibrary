@@ -3,7 +3,7 @@ package io.github.kensuke1984.anisotime;
 import java.awt.GraphicsEnvironment;
 
 /**
- * Information about ANISO time package.
+ * Information about ANISOtime package.
  * 
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
  * @author Kensuke Konishi

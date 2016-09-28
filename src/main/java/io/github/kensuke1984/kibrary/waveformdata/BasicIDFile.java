@@ -51,9 +51,9 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * 
  * @see {@link BasicID}
  * 
- * @version 0.3.0.1
+ * @version 0.3.0.2
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public final class BasicIDFile {
@@ -68,7 +68,7 @@ public final class BasicIDFile {
 
 	private static void outputGlobalCMTID(String header, BasicID[] ids) throws IOException {
 		Path outPath = Paths.get(header + ".globalCMTID");
-		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.globalCMTID.toString()).distinct().sorted()
+		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.ID.toString()).distinct().sorted()
 				.collect(Collectors.toList());
 		Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
 		System.err.println(outPath + " is created as a list of global CMT IDs.");
@@ -76,7 +76,7 @@ public final class BasicIDFile {
 
 	private static void outputStations(String header, BasicID[] ids) throws IOException {
 		Path outPath = Paths.get(header + ".station");
-		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.station).distinct().sorted()
+		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct().sorted()
 				.map(s -> s.getStationName() + " " + s.getNetwork() + " " + s.getPosition())
 				.collect(Collectors.toList());
 		Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
@@ -127,17 +127,17 @@ public final class BasicIDFile {
 		long dataSize = Files.size(dataPath);
 		long t = System.nanoTime();
 		BasicID lastID = ids[ids.length - 1];
-		if (dataSize != lastID.startByte + lastID.npts * 8)
+		if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
 			throw new RuntimeException(dataPath + " is not invalid for " + idPath);
 		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(dataPath))) {
 			byte[][] bytes = new byte[ids.length][];
-			Arrays.parallelSetAll(bytes, i -> new byte[ids[i].npts * 8]);
+			Arrays.parallelSetAll(bytes, i -> new byte[ids[i].NPTS * 8]);
 			for (int i = 0; i < ids.length; i++)
 				bis.read(bytes[i]);
 			IntStream.range(0, ids.length).parallel().forEach(i -> {
 				BasicID id = ids[i];
 				ByteBuffer bb = ByteBuffer.wrap(bytes[i]);
-				double[] data = new double[id.npts];
+				double[] data = new double[id.NPTS];
 				for (int j = 0; j < data.length; j++)
 					data[j] = bb.getDouble();
 				ids[i] = id.setData(data);
