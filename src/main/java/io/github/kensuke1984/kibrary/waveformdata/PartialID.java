@@ -44,8 +44,8 @@ public class PartialID extends BasicID {
 
 	@Override
 	public String toString() {
-		return station + " " + station.getNetwork() + " " + globalCMTID + " " + sacComponent + " " + samplingHz + " "
-				+ startTime + " " + npts + " " + minPeriod + " " + maxPeriod + " " + startByte + " " + convolute + " "
+		return STATION + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " "
+				+ START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " " + START_BYTE + " " + CONVOLUTE + " "
 				+ pointLocation + " " + partialType;
 	}
 
@@ -111,8 +111,8 @@ public class PartialID extends BasicID {
 	 */
 	@Override
 	public PartialID setData(double[] data) {
-		return new PartialID(station, globalCMTID, sacComponent, samplingHz, startTime, npts, minPeriod, maxPeriod,
-				startByte, convolute, pointLocation, partialType, data);
+		return new PartialID(STATION, ID, COMPONENT, SAMPLINGHZ, START_TIME, NPTS, MIN_PERIOD, MAX_PERIOD,
+				START_BYTE, CONVOLUTE, pointLocation, partialType, data);
 	}
 
 }

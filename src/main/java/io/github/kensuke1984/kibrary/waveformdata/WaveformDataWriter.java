@@ -237,7 +237,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		if (mode != 0)
 			throw new RuntimeException("No BasicID please, would you.");
 
-		switch (basicID.waveFormType) {
+		switch (basicID.TYPE) {
 		case OBS:
 			idStream.writeBoolean(true); // if it is obs 1Byte
 			break;
@@ -249,10 +249,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		}
 		long startByte = dataLength;
 		addWaveform(basicID.getData());
-		idStream.writeShort(stationMap.get(basicID.station));
-		idStream.writeShort(globalCMTIDMap.get(basicID.globalCMTID));
-		idStream.writeByte(basicID.sacComponent.valueOf());
-		idStream.writeByte(getIndexOfRange(basicID.minPeriod, basicID.maxPeriod));
+		idStream.writeShort(stationMap.get(basicID.STATION));
+		idStream.writeShort(globalCMTIDMap.get(basicID.ID));
+		idStream.writeByte(basicID.COMPONENT.valueOf());
+		idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
 
 		// 4Byte * 3
 		idStream.writeFloat((float) basicID.getStartTime()); // start time 
@@ -261,7 +261,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		
 		
 		// convolutionされているか 観測波形なら true
-		idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.convolute); // 1Byte
+		idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.CONVOLUTE); // 1Byte
 		idStream.writeLong(startByte); // データの格納場所 8 Byte
 
 	}
@@ -281,22 +281,22 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 *             if an I/O error occurs
 	 */
 	public synchronized void addPartialID(PartialID partialID) throws IOException {
-		if (partialID.waveFormType != WaveformType.PARTIAL)
+		if (partialID.TYPE != WaveformType.PARTIAL)
 			throw new RuntimeException(
 					"This is not a partial derivative. " + Thread.currentThread().getStackTrace()[1].getMethodName());
 		if (mode != 1)
 			throw new RuntimeException("No Partial please, would you.");
 		long startByte = dataLength;
 		addWaveform(partialID.getData());
-		idStream.writeShort(stationMap.get(partialID.station));
-		idStream.writeShort(globalCMTIDMap.get(partialID.globalCMTID));
-		idStream.writeByte(partialID.sacComponent.valueOf());
-		idStream.writeByte(getIndexOfRange(partialID.minPeriod, partialID.maxPeriod));
-		idStream.writeFloat((float) partialID.startTime); // start time 4 Byte
-		idStream.writeInt(partialID.npts); // データポイント数 4 Byte
-		idStream.writeFloat((float) partialID.samplingHz); // sampling Hz 4 Byte
+		idStream.writeShort(stationMap.get(partialID.STATION));
+		idStream.writeShort(globalCMTIDMap.get(partialID.ID));
+		idStream.writeByte(partialID.COMPONENT.valueOf());
+		idStream.writeByte(getIndexOfRange(partialID.MIN_PERIOD, partialID.MAX_PERIOD));
+		idStream.writeFloat((float) partialID.START_TIME); // start time 4 Byte
+		idStream.writeInt(partialID.NPTS); // データポイント数 4 Byte
+		idStream.writeFloat((float) partialID.SAMPLINGHZ); // sampling Hz 4 Byte
 		// convolutionされているか
-		idStream.writeBoolean(partialID.convolute); // 1Byte
+		idStream.writeBoolean(partialID.CONVOLUTE); // 1Byte
 		idStream.writeLong(startByte); // データの格納場所 8 Byte
 		// partial type 1 Byte
 		idStream.writeByte(partialID.getPartialType().getValue());

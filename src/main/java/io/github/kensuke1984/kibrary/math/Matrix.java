@@ -60,10 +60,6 @@ public class Matrix extends Array2DRowRealMatrix {
 		return MatrixComputation.computeAtA(this);
 	}
 	
-	
-	
-	
-
 	@Override
 	public RealVector preMultiply(RealVector v)
 			throws DimensionMismatchException {
