@@ -44,7 +44,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * TODO short->char
  * READing has problem. TODO
  * 
- * @version 0.3.0.1
+ * @version 0.3.0.2
  * @author Kensuke Konishi
  */
 public final class PartialIDFile {
@@ -55,16 +55,16 @@ public final class PartialIDFile {
 		long t = System.nanoTime();
 		long dataSize = Files.size(dataPath);
 		PartialID lastID = ids[ids.length - 1];
-		if (dataSize != lastID.startByte + lastID.npts * 8)
+		if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
 			throw new RuntimeException(dataPath + " is not invalid for " + idPath);
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
 			for (int i = 0; i < ids.length; i++) {
 				if (!chooser.test(ids[i])) {
-					dis.skipBytes(ids[i].npts * 8);
+					dis.skipBytes(ids[i].NPTS * 8);
 					ids[i] = null;
 					continue;
 				}
-				double[] data = new double[ids[i].npts];
+				double[] data = new double[ids[i].NPTS];
 				for (int j = 0; j < data.length; j++)
 					data[j] = dis.readDouble();
 				ids[i] = ids[i].setData(data);
@@ -170,7 +170,7 @@ public final class PartialIDFile {
 		Path outPath = Paths.get(header + ".station");
 		if (Files.exists(outPath))
 			return;
-		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.station).distinct()
+		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct()
 				.map(s -> s.getStationName() + " " + s.getNetwork() + " " + s.getPosition())
 				.collect(Collectors.toList());
 		Files.write(outPath, lines);
@@ -230,7 +230,7 @@ public final class PartialIDFile {
 		Path outPath = Paths.get(header + ".globalCMTID");
 		if (Files.exists(outPath))
 			return;
-		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.globalCMTID.toString()).distinct().sorted()
+		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.ID.toString()).distinct().sorted()
 				.collect(Collectors.toList());
 		Files.write(outPath, lines);
 		System.out.println(outPath + " is created as a list of global CMT IDs.");

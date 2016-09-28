@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * 
  * @version 0.1.1
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SACUtil {
