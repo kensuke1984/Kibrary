@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
+import io.github.kensuke1984.anisotime.Phase;
+
 import org.apache.commons.math3.util.Precision;
 
 /**
@@ -63,7 +65,7 @@ public class Timewindow implements Comparable<Timewindow> {
 		this.startTime = Precision.round(startTime, 3);
 		this.endTime = Precision.round(endTime, 3);
 	}
-
+	
 	@Override
 	public String toString() {
 		return startTime + " " + endTime;
@@ -102,7 +104,7 @@ public class Timewindow implements Comparable<Timewindow> {
 	 * ending time round off to the third decimal place
 	 */
 	protected final double endTime;
-
+	
 	public double getStartTime() {
 		return startTime;
 	}

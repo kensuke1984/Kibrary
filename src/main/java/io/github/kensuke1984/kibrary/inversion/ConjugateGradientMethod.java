@@ -50,11 +50,12 @@ public class ConjugateGradientMethod extends InverseProblem {
 		a = new ArrayRealVector(column);
 	}
 
-	/**
-	 * AtdをスタートにCGを解いていく CG法による答え i列目にi番目でのCGベクトルを用いた解(0:cg1...)
-	 */
-	@Override
-	public void compute() {
+
+	public void conjugateGradient() {
+		int column = ata.getColumnDimension();
+		p = MatrixUtils.createRealMatrix(column, column);
+		ans = MatrixUtils.createRealMatrix(column, column);
+		a = new ArrayRealVector(column);
 		System.err.println("Solving by CG method.");
 		p.setColumnVector(0, atd.mapMultiply(-1));
 		RealVector r = atd; // r_k = Atd -AtAm_k (A35)
@@ -123,6 +124,11 @@ public class ConjugateGradientMethod extends InverseProblem {
 		covariance = p.multiply(new LUDecomposition(getL()).getSolver().getInverse()).multiply(p.transpose());
 
 		return covariance;
+	}
+	
+	@Override
+	public void compute() {
+		
 	}
 
 	@Override

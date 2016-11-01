@@ -99,7 +99,7 @@ public class SyntheticDSMInfo extends DSMheader {
 
 			// output
 			pw.println("c parameter for the output file");
-			STATIONS.stream().sorted().map(Station::getStationName)
+			STATIONS.stream().sorted().map(Station::toString)
 					.forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "PSV.spc"));
 			pw.println("end");
 
@@ -143,7 +143,7 @@ public class SyntheticDSMInfo extends DSMheader {
 
 			// output
 			pw.println("c parameter for the output file");
-			STATIONS.stream().sorted().map(Station::getStationName)
+			STATIONS.stream().sorted().map(Station::toString)
 					.forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "SH.spc"));
 			pw.println("end");
 		}

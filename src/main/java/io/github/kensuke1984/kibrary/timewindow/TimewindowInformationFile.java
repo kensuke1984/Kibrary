@@ -10,12 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
 
@@ -27,6 +29,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.anisotime.Phase;
 
 /**
  * 
@@ -103,10 +106,15 @@ public final class TimewindowInformationFile {
 					.toArray(GlobalCMTID[]::new);
 			Station[] stations = infoSet.stream().map(TimewindowInformation::getStation).distinct().sorted()
 					.toArray(Station[]::new);
+			Phase[] phases = infoSet.stream().map(TimewindowInformation::getPhases).distinct().flatMap(p -> Stream.of(p))
+				.distinct().sorted().toArray(Phase[]::new);
+			
 			Map<GlobalCMTID, Integer> idMap = new HashMap<>();
 			Map<Station, Integer> stationMap = new HashMap<>();
+			Map<Phase, Integer> phaseMap = new HashMap<>();
 			dos.writeShort(stations.length);
 			dos.writeShort(ids.length);
+			dos.writeShort(phases.length);
 			for (int i = 0; i < stations.length; i++) {
 				stationMap.put(stations[i], i);
 				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
@@ -119,9 +127,20 @@ public final class TimewindowInformationFile {
 				idMap.put(ids[i], i);
 				dos.writeBytes(StringUtils.rightPad(ids[i].toString(), 15));
 			}
+			for (int i = 0; i < phases.length; i++) {
+				phaseMap.put(phases[i], i);
+				dos.writeBytes(StringUtils.rightPad(phases[i].toString(), 10));
+			}
 			for (TimewindowInformation info : infoSet) {
 				dos.writeShort(stationMap.get(info.getStation()));
 				dos.writeShort(idMap.get(info.getGlobalCMTID()));
+				Phase[] Infophases = info.getPhases();
+				for (int i = 0; i < 5; i++) {
+					if (i < Infophases.length)
+						dos.writeShort(phaseMap.get(Infophases[i]));
+					else
+						dos.writeShort(-1);
+				}
 				dos.writeByte(info.getComponent().valueOf());
 				float startTime = (float) Precision.round(info.startTime, 3);
 				float endTime = (float) Precision.round(info.endTime, 3);
@@ -145,7 +164,8 @@ public final class TimewindowInformationFile {
 			// Read header
 			Station[] stations = new Station[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
-			int headerBytes = 2 * 2 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length;
+			Phase[] phases = new Phase[dis.readShort()];
+			int headerBytes = 2 * 2 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length + 10 * phases.length;
 			long windowParts = fileSize - headerBytes;
 			if (windowParts % oneWindowByte != 0)
 				throw new RuntimeException(infoPath + " has some problems.");
@@ -160,11 +180,16 @@ public final class TimewindowInformationFile {
 				dis.read(cmtIDBytes);
 				cmtIDs[i] = new GlobalCMTID(new String(cmtIDBytes).trim());
 			}
+			byte[] phaseBytes = new byte[10];
+			for (int i = 0; i < phases.length; i++) {
+				dis.read(phaseBytes);
+				phases[i] = Phase.create(new String(phaseBytes).trim());
+			}
 			int nwindow = (int) (windowParts / oneWindowByte);
 			byte[][] bytes = new byte[nwindow][oneWindowByte];
 			for (int i = 0; i < nwindow; i++)
 				dis.read(bytes[i]);
-			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs))
+			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs, phases))
 					.collect(Collectors.toSet());
 			System.err.println(
 					infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -186,14 +211,20 @@ public final class TimewindowInformationFile {
 	 * @param ids
 	 * @return
 	 */
-	private static TimewindowInformation create(byte[] bytes, Station[] stations, GlobalCMTID[] ids) {
+	private static TimewindowInformation create(byte[] bytes, Station[] stations, GlobalCMTID[] ids, Phase[] phases) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		Station station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
+		Phase[] tmpPhases = new Phase[5];
+		for (int i = 0; i < 5; i++) {
+			short iphase = bb.getShort();
+			if (iphase != -1)
+				tmpPhases[i] = phases[bb.getShort()];
+		}
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double startTime = bb.getFloat();
 		double endTime = bb.getFloat();
-		return new TimewindowInformation(startTime, endTime, station, id, component);
+		return new TimewindowInformation(startTime, endTime, station, id, component, tmpPhases);
 	}
 
 }

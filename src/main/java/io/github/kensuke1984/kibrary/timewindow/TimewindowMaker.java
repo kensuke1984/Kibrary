@@ -212,7 +212,7 @@ public class TimewindowMaker implements Operation {
 		Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
 		Set<TauPPhase> exPhases = this.exPhases == null ? Collections.emptySet()
 				: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
-
+		
 		if (usePhases.isEmpty()) {
 			writeInvalid(sacFileName);
 			return;
@@ -225,6 +225,7 @@ public class TimewindowMaker implements Operation {
 			writeInvalid(sacFileName);
 			return;
 		}
+		
 		// System.out.println(sacFile.getValue(SacHeaderEnum.E));
 		// delta (time step) in SacFile
 		double delta = sacFile.getValue(SACHeaderEnum.DELTA);
@@ -238,7 +239,7 @@ public class TimewindowMaker implements Operation {
 
 		// window fix
 		Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.endTime <= e).map(
-				window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component))
+				window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
 				.forEach(timewindowSet::add);
 	}
 
@@ -367,6 +368,16 @@ public class TimewindowMaker implements Operation {
 				Files.newBufferedWriter(invalidList, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 			pw.println(sacFileName);
 		}
+	}
+	
+	private Phase[] containPhases(Timewindow window, Set<TauPPhase> usePhases) {
+		List<Phase> phases = new ArrayList<>();
+		for (TauPPhase phase : usePhases) {
+			double time = phase.getTravelTime();
+			if (time < window.endTime && time > window.startTime)
+				phases.add(Phase.create(phase.toString()));
+		}
+		return phases.toArray(new Phase[phases.size()]);
 	}
 
 	@Override

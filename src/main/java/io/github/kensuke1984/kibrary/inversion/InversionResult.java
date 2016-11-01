@@ -379,15 +379,15 @@ public class InversionResult {
 		Path stationPath = rootPath.resolve("trace/stationVariance.inf");
 		eventVarianceMap = Collections
 				.unmodifiableMap(Files.readAllLines(eventPath).stream().skip(1).map(line -> line.split("\\s+")).collect(
-						Collectors.toMap(parts -> new GlobalCMTID(parts[0]), parts -> Double.parseDouble(parts[4]))));
+						Collectors.toMap(parts -> new GlobalCMTID(((String[]) parts)[0]), parts -> Double.parseDouble(((String[]) parts)[4]))));
 		stationVarianceMap = Collections
 				.unmodifiableMap(Files.readAllLines(stationPath).stream().skip(1).map(line -> line.split("\\s+"))
 						.collect(Collectors.toMap(
-								parts -> new Station(parts[0],
-										new HorizontalPosition(Double.parseDouble(parts[2]),
-												Double.parseDouble(parts[3])),
-										parts[1]),
-								parts -> Double.parseDouble(parts[4]))));
+								parts -> new Station(((String[]) parts)[0],
+										new HorizontalPosition(Double.parseDouble(((String[]) parts)[2]),
+												Double.parseDouble(((String[]) parts)[3])),
+												((String[]) parts)[1]),
+								parts -> Double.parseDouble(((String[]) parts)[4]))));
 		for (InverseMethodEnum inverse : InverseMethodEnum.values()) {
 			// TODO
 			if (inverse == InverseMethodEnum.LEAST_SQUARES_METHOD)
