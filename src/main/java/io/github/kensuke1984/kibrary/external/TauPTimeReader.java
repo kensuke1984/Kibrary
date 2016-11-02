@@ -40,10 +40,14 @@ public final class TauPTimeReader {
 	private static final String path = "taup_time";
 
 	static {
-		initialize();
+		try {
+			initialize();
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
 	}
 
-	private static void initialize() {
+	private static void initialize() throws RuntimeException {
 		if (!ExternalProcess.isInPath(path))
 			throw new RuntimeException(path + " is not in PATH");
 	}
@@ -55,7 +59,7 @@ public final class TauPTimeReader {
 	 *            [deg] targetDistance
 	 * @param phases
 	 *            to look for
-	 * @return travel times for the phase if theres a multiplication, all values
+	 * @return travel times for the phase if there is multiplication, all values
 	 *         will be returned
 	 */
 	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, Phase... phases) {
@@ -106,8 +110,9 @@ public final class TauPTimeReader {
 	}
 
 	private static Set<TauPPhase> toPhase(List<String> lines) {
-		if (lines == null || lines.size() <= 6)
+		if (lines == null || lines.size() <= 6) {
 			return Collections.emptySet();
+		}
 		return IntStream.range(5, lines.size() - 1).mapToObj(lines::get).map(TauPTimeReader::toPhase)
 				.collect(Collectors.toSet());
 	}

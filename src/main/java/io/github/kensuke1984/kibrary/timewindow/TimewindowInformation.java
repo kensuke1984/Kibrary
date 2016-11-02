@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -123,7 +127,8 @@ public class TimewindowInformation extends Timewindow {
 
 	@Override
 	public String toString() {
-		return station + " " + id + " " + component + " " + startTime + " " + endTime;
+		List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+		return station + " " + id + " " + component + " " + startTime + " " + endTime + " " + String.join(",", phaseStrings);
 	}
 
 }

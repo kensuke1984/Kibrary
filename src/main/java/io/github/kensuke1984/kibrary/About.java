@@ -16,15 +16,16 @@ import org.apache.commons.io.IOUtils;
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  * 
  * @author Kensuke Konishi
- * @version 0.4.1
+ * @author Anselme Borgeaud
+ * @version 1.0
  * 
  */
 final class About extends javax.swing.JFrame {
 	private static final long serialVersionUID = -2485772755944862822L;
 
-	public static final String codename = "Sahagin";
+	public static final String codename = "Hare";
 
-	public static final String version = "0.4.1";
+	public static final String version = "1.0";
 
 	private About() {
 		super("About Kibrary");

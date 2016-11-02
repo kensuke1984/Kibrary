@@ -15,6 +15,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -63,7 +64,7 @@ public class TimewindowMaker implements Operation {
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
-			pw.println("##TauPPhases exPhases (sS)");
+			pw.println("##TauPPhases exPhases ()");
 			pw.println("#exPhases");
 			pw.println("##TauPPhases usePhases (S)");
 			pw.println("#usePhases");
@@ -85,7 +86,7 @@ public class TimewindowMaker implements Operation {
 		if (!property.containsKey("rearShift"))
 			property.setProperty("rearShift", "0");
 		if (!property.containsKey("exPhases"))
-			property.setProperty("exPhases", "sS");
+			property.setProperty("exPhases", "");
 		if (!property.containsKey("usePhases"))
 			property.setProperty("usePhases", "S");
 	}
@@ -183,7 +184,7 @@ public class TimewindowMaker implements Operation {
 	public void run() throws Exception {
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
-				eventDir.sacFileSet().stream().filter(sfn -> sfn.isSYN() && components.contains(sfn.getComponent()))
+				eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 						.forEach(sfn -> {
 					try {
 						makeTimeWindow(sfn);
@@ -208,39 +209,47 @@ public class TimewindowMaker implements Operation {
 		double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
 		// 震源観測点ペアの震央距離
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
-
-		Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
-		Set<TauPPhase> exPhases = this.exPhases == null ? Collections.emptySet()
-				: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
 		
-		if (usePhases.isEmpty()) {
-			writeInvalid(sacFileName);
-			return;
+		try {
+			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
+			
+			usePhases.forEach(phase -> phase.getDistance());
+			
+			Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
+					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
+			
+			if (usePhases.isEmpty()) {
+				writeInvalid(sacFileName);
+				return;
+			}
+			double[] phaseTime = toTravelTime(usePhases);
+			double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+			
+			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime);
+			// System.exit(0);
+			if (windows == null) {
+				writeInvalid(sacFileName);
+				return;
+			}
+			
+			// System.out.println(sacFile.getValue(SacHeaderEnum.E));
+			// delta (time step) in SacFile
+			double delta = sacFile.getValue(SACHeaderEnum.DELTA);
+			double e = sacFile.getValue(SACHeaderEnum.E);
+			// station of SacFile
+			Station station = sacFile.getStation();
+			// global cmt id of SacFile
+			GlobalCMTID id = sacFileName.getGlobalCMTID();
+			// component of SacFile
+			SACComponent component = sacFileName.getComponent();
+	
+			// window fix
+			Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
+					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
+					.forEach(timewindowSet::add);
+		} catch (RuntimeException e) {
+			e.printStackTrace();
 		}
-		double[] phaseTime = toTravelTime(usePhases);
-		double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
-		Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime);
-		// System.exit(0);
-		if (windows == null) {
-			writeInvalid(sacFileName);
-			return;
-		}
-		
-		// System.out.println(sacFile.getValue(SacHeaderEnum.E));
-		// delta (time step) in SacFile
-		double delta = sacFile.getValue(SACHeaderEnum.DELTA);
-		double e = sacFile.getValue(SACHeaderEnum.E);
-		// station of SacFile
-		Station station = sacFile.getStation();
-		// global cmt id of SacFile
-		GlobalCMTID id = sacFileName.getGlobalCMTID();
-		// component of SacFile
-		SACComponent component = sacFileName.getComponent();
-
-		// window fix
-		Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.endTime <= e).map(
-				window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
-				.forEach(timewindowSet::add);
 	}
 
 	/**
@@ -375,7 +384,7 @@ public class TimewindowMaker implements Operation {
 		for (TauPPhase phase : usePhases) {
 			double time = phase.getTravelTime();
 			if (time < window.endTime && time > window.startTime)
-				phases.add(Phase.create(phase.toString()));
+				phases.add(phase.getPhaseName());
 		}
 		return phases.toArray(new Phase[phases.size()]);
 	}

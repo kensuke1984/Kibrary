@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 /**
@@ -106,7 +107,7 @@ public class ExternalProcess {
 	 * @return if the executable is found in PATH
 	 */
 	public static boolean isInPath(String executable) {
-		ProcessBuilder check = new ProcessBuilder("/usr/bin/which", executable);
+		ProcessBuilder check = new ProcessBuilder("/usr/bin/which", "taup_time");
 		try {
 			return check.start().waitFor() == 0;
 		} catch (InterruptedException | IOException e) {
