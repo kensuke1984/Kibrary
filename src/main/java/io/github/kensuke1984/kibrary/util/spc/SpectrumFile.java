@@ -22,14 +22,26 @@ import io.github.kensuke1984.kibrary.util.Location;
  */
 class SpectrumFile implements DSMOutput {
 
+	private String observerName;
+	private String observerNetwork;
 	private String observerID;
 	private String sourceID;
 
 	@Override
+	@Deprecated
 	public String getObserverID() {
 		return observerID;
 	}
-
+	
+	@Override
+	public String getObserverName() {
+		return observerName;
+	}
+	
+	@Override
+	public String getObserverNetwork() {
+		return observerNetwork;
+	}
 
 	@Override
 	public String getSourceID() {
@@ -115,6 +127,8 @@ class SpectrumFile implements DSMOutput {
 			SpectrumFile specFile = new SpectrumFile(spcFileName);
 			specFile.sourceID = spcFileName.getSourceID();
 			specFile.observerID = spcFileName.getObserverID();
+//			specFile.observerName = spcFileName.getObserverName();
+//			specFile.observerNetwork = spcFileName.getObserverNetwork();
 			// read header PF
 			// tlen
 			double tlen = dis.readDouble();

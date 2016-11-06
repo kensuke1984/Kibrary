@@ -72,8 +72,17 @@ public class SpcFileName extends File {
 		return SpcFileType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
 	}
 
+	@Deprecated
 	private static String getObserverID(String fileName) {
 		return fileName.split("\\.")[0];
+	}
+	
+	private static String getObserverName(String fileName) {
+		return fileName.split("\\.")[0].split("_")[0];
+	}
+	
+	private static String getObserverNetwork(String fileName) {
+		return fileName.split("\\.")[0].split("_")[1];
 	}
 
 	private static String getX(String fileName) {
@@ -96,7 +105,18 @@ public class SpcFileName extends File {
 		return fileName.endsWith("PSV.spc") ? SpcFileComponent.PSV : SpcFileComponent.SH;
 	}
 
+	@Deprecated
 	private String observerID;
+	
+	/**
+	 * Station name
+	 */
+	private String observerName;
+	
+	/**
+	 * Network name
+	 */
+	private String observerNetwor;
 
 	/**
 	 * PB: backward or PF: forward, PAR2: mu
@@ -156,6 +176,8 @@ public class SpcFileName extends File {
 			throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
 		sourceID = getEventID(fileName);
 		observerID = getObserverID(fileName);
+		observerName = getObserverName(fileName);
+		observerNetwor = getObserverNetwork(fileName);
 		fileType = getFileType(fileName);
 		mode = getMode(fileName);
 		x = getX(fileName);
@@ -204,9 +226,15 @@ public class SpcFileName extends File {
 			return false;
 		}
 
-		if (8 < getObserverID(name).length()) {
-			System.err.println("Name of station cannot be over 8 characters.");
-			return false;
+//		if (8 < getObserverID(name).length()) {
+//			System.err.println("Name of station cannot be over 8 characters.");
+//			return false;
+//		}
+		if (8 < getObserverName(name).length()) {
+			System.err.println(getObserverName(name) + "Name of station cannot be over 8 characters");
+		}
+		if (8 < getObserverNetwork(name).length()) {
+			System.err.println(getObserverNetwork(name) + "Name of network cannot be over 8 characters");
 		}
 
 		return true;

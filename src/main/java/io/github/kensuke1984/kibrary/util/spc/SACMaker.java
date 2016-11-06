@@ -396,7 +396,7 @@ public class SACMaker implements Runnable {
 	private int npts;
 
 	private void setInformation() {
-		station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition(), "DSM");
+		station = new Station(primeSPC.getObserverName(), primeSPC.getObserverPosition(), primeSPC.getObserverNetwork());
 		path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
 		if (globalCMTID != null)
 			try {
@@ -438,7 +438,7 @@ public class SACMaker implements Runnable {
 				// System.out.println(component);
 				SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
 						: SACExtension.valueOfSynthetic(component);
-				SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(station.getStationName() + "."
+				SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(station + "."
 						+ globalCMTID + "." + primeSPC.getSpcFileType() + "..." + bodyR + "." + ext));
 				if (sacFileName.exists()) {
 					System.err.println(sacFileName + " already exists..");
@@ -466,7 +466,7 @@ public class SACMaker implements Runnable {
 					: SACExtension.valueOfSynthetic(component);
 			try {
 				sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-						outDirectoryPath.resolve(station.getStationName() + "." + primeSPC.getSourceID() + "." + ext));
+						outDirectoryPath.resolve(station + "." + primeSPC.getSourceID() + "." + ext));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -482,7 +482,7 @@ public class SACMaker implements Runnable {
 						: SACExtension.valueOfTemporalPartial(component);
 				try {
 					sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
-							outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + extT));
+							outDirectoryPath.resolve(station + "." + globalCMTID + "." + extT));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -569,8 +569,18 @@ public class SACMaker implements Runnable {
 			isOK = false;
 		}
 
-		if (!spc1.getObserverID().equals(spc2.getObserverID())) {
-			System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
+//		if (!spc1.getObserverID().equals(spc2.getObserverID())) {
+//			System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
+//			isOK = false;
+//		}
+		
+		if (!spc1.getObserverName().equals(spc2.getObserverName())) {
+			System.err.println("Station names are different " + spc1.getObserverName() + " " + spc2.getObserverName());
+			isOK = false;
+		}
+		
+		if (!spc1.getObserverNetwork().equals(spc2.getObserverNetwork())) {
+			System.err.println("Network names are different " + spc1.getObserverNetwork() + " " + spc2.getObserverNetwork());
 			isOK = false;
 		}
 
