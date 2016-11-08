@@ -21,6 +21,7 @@ import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 
 /**
  * 
@@ -41,13 +42,14 @@ public enum Manhattan {
 	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
 	Partial1DDatasetMaker(10, Partial1DDatasetMaker.class), //
 	PartialDatasetMaker(11, PartialDatasetMaker.class), //
-	RaypathDistribution(12, RaypathDistribution.class), //
-	SecondHandler(13, SecondHandler.class), //
-	SpcSAC(14, SpcSAC.class), //
-	SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
-	SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
-	TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //
-	TimewindowMaker(18, TimewindowMaker.class),//
+	PhaseEnvelope(12, PhaseEnvelope.class), //
+	RaypathDistribution(13, RaypathDistribution.class), //
+	SecondHandler(14, SecondHandler.class), //
+	SpcSAC(15, SpcSAC.class), //
+	SshDSMInformationFileMaker(16, SshDSMInformationFileMaker.class), //
+	SyntheticDSMInformationFileMaker(17, SyntheticDSMInformationFileMaker.class), //
+	TakeuchiStaticCorrection(18, TakeuchiStaticCorrection.class), //
+	TimewindowMaker(19, TimewindowMaker.class),//
 	;
 
 	public static void printList() {
