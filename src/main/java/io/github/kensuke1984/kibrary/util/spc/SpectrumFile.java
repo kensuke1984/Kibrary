@@ -127,8 +127,8 @@ class SpectrumFile implements DSMOutput {
 			SpectrumFile specFile = new SpectrumFile(spcFileName);
 			specFile.sourceID = spcFileName.getSourceID();
 			specFile.observerID = spcFileName.getObserverID();
-//			specFile.observerName = spcFileName.getObserverName();
-//			specFile.observerNetwork = spcFileName.getObserverNetwork();
+			specFile.observerName = spcFileName.getObserverName();
+			specFile.observerNetwork = spcFileName.getObserverNetwork();
 			// read header PF
 			// tlen
 			double tlen = dis.readDouble();

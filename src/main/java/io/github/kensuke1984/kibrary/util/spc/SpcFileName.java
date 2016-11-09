@@ -116,7 +116,7 @@ public class SpcFileName extends File {
 	/**
 	 * Network name
 	 */
-	private String observerNetwor;
+	private String observerNetwork;
 
 	/**
 	 * PB: backward or PF: forward, PAR2: mu
@@ -177,7 +177,7 @@ public class SpcFileName extends File {
 		sourceID = getEventID(fileName);
 		observerID = getObserverID(fileName);
 		observerName = getObserverName(fileName);
-		observerNetwor = getObserverNetwork(fileName);
+		observerNetwork = getObserverNetwork(fileName);
 		fileType = getFileType(fileName);
 		mode = getMode(fileName);
 		x = getX(fileName);
@@ -246,6 +246,14 @@ public class SpcFileName extends File {
 
 	public String getObserverID() {
 		return observerID;
+	}
+	
+	public String getObserverName() {
+		return observerName;
+	}
+	
+	public String getObserverNetwork() {
+		return observerNetwork;
 	}
 
 	public String getX() {
