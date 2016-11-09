@@ -46,7 +46,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			pw.println("#header");
 			pw.println("##Path of a structure file you want to use. ()");
 			pw.println("#structureFile");
-			pw.println("##tlen must be a power of 2 over 10 (3276.8)");
+			pw.println("##tlen must be a power of 2 over 10 (6553.6)");
 			pw.println("#tlen");
 			pw.println("##np must be a power of 2 (1024)");
 			pw.println("#np");
@@ -62,7 +62,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("tlen"))
-			property.setProperty("tlen", "3276.8");
+			property.setProperty("tlen", "6553.6");
 		if (!property.containsKey("np"))
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
@@ -81,11 +81,11 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
-		np = Integer.parseInt(property.getProperty("np"));
-		tlen = Double.parseDouble(property.getProperty("tlen"));
-		header = property.getProperty("header");
+		np = Integer.parseInt(property.getProperty("np").split("\\s+")[0]);
+		tlen = Double.parseDouble(property.getProperty("tlen").split("\\s+")[0]);
+		header = property.getProperty("header").split("\\s+")[0];
 		if (property.containsKey("structureFile"))
-			structurePath = Paths.get(property.getProperty("structureFile"));
+			structurePath = Paths.get(property.getProperty("structureFile").split("\\s+")[0]);
 	}
 
 	/**
@@ -159,7 +159,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 						}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 				if (stations.isEmpty())
 					continue;
-				int numberOfStation = (int) stations.stream().map(Station::getStationName).count();
+				int numberOfStation = (int) stations.stream().map(Station::toString).count();
 				if (numberOfStation != stations.size())
 					System.err.println("!Caution there are stations with the same name and different positions in "
 							+ eventDir);

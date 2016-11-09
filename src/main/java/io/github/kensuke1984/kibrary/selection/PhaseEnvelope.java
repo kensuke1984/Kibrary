@@ -163,17 +163,23 @@ public class PhaseEnvelope implements Operation {
 						if (!Files.exists(synEventPath))
 							throw new RuntimeException(synEventPath + " does not exist.");
 						
-						String stationString = obsname.getStationString();
-						GlobalCMTID id = obsname.getGlobalCMTID();
-						SACComponent component = obsname.getComponent();
-						String name = convolute
-								? stationString + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
-								: stationString + "." + id + "." + SACExtension.valueOfSynthetic(component);
-						SACFileName synname = new SACFileName(synEventPath.resolve(name));
-						
-						double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
-						
-						showPhaseMisfit(phaseEnvelope[0], tlen, np);
+							try {
+								String network = obsname.readHeader().getSACString(SACHeaderEnum.KNETWK);
+								
+								String stationString = obsname.getStationName() + "_" + network;
+								GlobalCMTID id = obsname.getGlobalCMTID();
+								SACComponent component = obsname.getComponent();
+								String name = convolute
+										? stationString + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
+										: stationString + "." + id + "." + SACExtension.valueOfSynthetic(component);
+								SACFileName synname = new SACFileName(synEventPath.resolve(name));
+							
+								double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
+							
+								showPhaseMisfit(phaseEnvelope[0], tlen, np);
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 					});
 			} catch (Exception e) {
 				e.printStackTrace();

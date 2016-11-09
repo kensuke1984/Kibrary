@@ -91,13 +91,9 @@ public class SACFileName extends File {
 	}
 
 	private static String getStationName(String fileName) {
-		return fileName.split("\\.")[0].split("_")[0];
+		return fileName.split("\\.")[0];
 	}
 	
-	private static String getNetworkName(String fileName) {
-		return fileName.split("\\.")[0].split("_")[1];
-	}
-
 	private static String getX(String fileName) {
 		String[] parts = fileName.split("\\.");
 		return parts.length != 7 ? null : parts[3];
@@ -117,8 +113,6 @@ public class SACFileName extends File {
 
 	private String stationName;
 	
-	private String networkName;
-
 	private GlobalCMTID globalCMTID;
 
 	private SACExtension extension;
@@ -179,10 +173,6 @@ public class SACFileName extends File {
 		// station name must be 8 letters or shorter.
 		if (8 < part[0].split("_")[0].length())
 			return false;
-		
-		// network name must be 8 letters or shorter.
-		if (8 < part[0].split("_")[1].length())
-			return false;
 
 		// test if it is a global cmt id
 		if (!GlobalCMTID.isGlobalCMTID(part[1]))
@@ -216,7 +206,6 @@ public class SACFileName extends File {
 			throw new IllegalArgumentException(fileName + " contains an invalid Global CMT ID");
 		globalCMTID = new GlobalCMTID(eventID);
 		stationName = getStationName(fileName);
-		networkName = getNetworkName(fileName);
 		partialType = getSacFileType(fileName);
 		x = getX(fileName);
 		y = getY(fileName);
@@ -290,14 +279,6 @@ public class SACFileName extends File {
 		return stationName;
 	}
 	
-	public String getNetworkName() {
-		return networkName;
-	}
-	
-	public String getStationString() {
-		return stationName + "_" + networkName;
-	}
-
 	public SACComponent getComponent() {
 		return getComponent(getName());
 	}
