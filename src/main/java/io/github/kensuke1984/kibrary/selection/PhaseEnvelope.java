@@ -91,6 +91,8 @@ public class PhaseEnvelope implements Operation {
 			pw.println("#np 1024");
 			pw.println("##double tlen (s) (6553.6)");
 			pw.println("#tlen 6553.6");
+			pw.println("##double samplingHz (20)");
+			pw.println("#samplingHz");
 		}
 	}
 	
@@ -113,6 +115,8 @@ public class PhaseEnvelope implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("tlen"))
 			property.setProperty("tlen", "6553.6");
+		if (!property.containsKey("samplingHz"))
+			property.setProperty("samplingHz", "20");
 	}
 	
 	private Path workPath;
@@ -133,6 +137,7 @@ public class PhaseEnvelope implements Operation {
 		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
 		ratio = Double.parseDouble(property.getProperty("ratio"));
 		phaseMisfit = Double.parseDouble(property.getProperty("phaseMisfit"));
+		samplingHz = Double.parseDouble(property.getProperty("samplingHz"));
 
 	}
 	
@@ -163,23 +168,21 @@ public class PhaseEnvelope implements Operation {
 						if (!Files.exists(synEventPath))
 							throw new RuntimeException(synEventPath + " does not exist.");
 						
-							try {
-								String network = obsname.readHeader().getSACString(SACHeaderEnum.KNETWK);
-								
-								String stationString = obsname.getStationName() + "_" + network;
-								GlobalCMTID id = obsname.getGlobalCMTID();
-								SACComponent component = obsname.getComponent();
-								String name = convolute
-										? stationString + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
-										: stationString + "." + id + "." + SACExtension.valueOfSynthetic(component);
-								SACFileName synname = new SACFileName(synEventPath.resolve(name));
-							
-								double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
-							
-								showPhaseMisfit(phaseEnvelope[0], tlen, np);
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
+//							String network = obsname.readHeader().getSACString(SACHeaderEnum.KNETWK);
+//							String stationString = obsname.getStationName() + "_" + network;
+							String stationString = obsname.getStationName();
+							GlobalCMTID id = obsname.getGlobalCMTID();
+							SACComponent component = obsname.getComponent();
+							String name = convolute
+									? stationString + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component)
+									: stationString + "." + id + "." + SACExtension.valueOfSynthetic(component);
+							SACFileName synname = new SACFileName(synEventPath.resolve(name));
+						
+							double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
+						
+							String titleFig = stationString + "." + id;
+							System.out.println(titleFig);
+							showPhaseMisfit(phaseEnvelope[0], tlen, np, titleFig);
 					});
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -194,6 +197,7 @@ public class PhaseEnvelope implements Operation {
 		double starttime = 0;
 		int n = (int) (endtime - starttime); // re-sampling at 1Hz
 		int lsmooth = Integer.highestOneBit(n) < n ? n : n * 2; 
+		int npow2 = (int) Math.pow(2, lsmooth);
 		
 		phaseEnvelope[0] = new double[n][];
 		phaseEnvelope[1] = new double[n][];
@@ -212,7 +216,7 @@ public class PhaseEnvelope implements Operation {
 			double[] tmpobsdata = obsname.read().createTrace().cutWindow(starttime, endtime).getY();
 			double[] tmpsyndata = synname.read().createTrace().cutWindow(starttime, endtime).getY();
 			
-			double[] obsdata = new double[n];
+			double[] obsdata = new double[npow2];
 			
 			int sampling = (int) samplingHz;
 			if (sampling != 20)
@@ -221,7 +225,7 @@ public class PhaseEnvelope implements Operation {
 			for (int i = 0; i < n; i++) {
 				obsdata[i] = tmpobsdata[i * sampling];
 			}
-			Arrays.fill(obsdata, n, lsmooth, 0.); // pad with 0 for the fft
+			Arrays.fill(obsdata, n, npow2, 0.); // pad with 0 for the fft
 			
 			double dominantFrequency = new ArrayRealVector( Stream.of(fft.transform(obsdata, TransformType.FORWARD))
 				.map(z -> z.abs()).toArray(Double[]::new) ).getSubVector(0, np + 1).getMaxIndex()
@@ -229,12 +233,15 @@ public class PhaseEnvelope implements Operation {
 			
 			double sigma = 1. / dominantFrequency;
 			
+			System.out.println(sigma);
+			
 			int nn = 10 * (int) sigma + 10 < n ? 10 * (int) sigma + 10 : n;
 			int llsmooth = Integer.highestOneBit(nn) < n ? n : n * 2;
+			int nnpow2 = (int) Math.pow(2, llsmooth);
 			
-			double[] gaborWindow = gaborWindow(sigma, 2*llsmooth, 1.);
-			obsdata = new double[2*llsmooth];
-			double[] syndata = new double[2*llsmooth];
+			double[] gaborWindow = gaborWindow(sigma, 2*nnpow2, 1.);
+			obsdata = new double[2*nnpow2];
+			double[] syndata = new double[2*nnpow2];
 			
 			for (int i = 0; i < n; i++) {
 				int nlow = i - nn < 0 ? 0 : i - nn;
@@ -245,8 +252,8 @@ public class PhaseEnvelope implements Operation {
 					syndata[nnlow + k] = tmpsyndata[j * sampling] * gaborWindow[n - j - 1];
 					k++;
 				}
-				Arrays.fill(obsdata, 2*nn+1, llsmooth, 0.);
-				Arrays.fill(syndata, 2*nn+1, llsmooth, 0.);
+				Arrays.fill(obsdata, 2*nn+1, nnpow2, 0.);
+				Arrays.fill(syndata, 2*nn+1, nnpow2, 0.);
 				Arrays.fill(obsdata, 0, nnlow, 0.);
 				Arrays.fill(syndata, 0, nnlow, 0.);
 				
@@ -272,9 +279,9 @@ public class PhaseEnvelope implements Operation {
 	}
 	
 	
-	private static JFreeChart createChart(XYDataset dataset, int iy, int ix) {
-		NumberAxis xAxis = new NumberAxis("x Axis");
-        NumberAxis yAxis = new NumberAxis("y Axis");
+	private static JFreeChart createChart(XYDataset dataset, int iy, int ix, String title) {
+		NumberAxis xAxis = new NumberAxis("Time from origin time (s)");
+        NumberAxis yAxis = new NumberAxis("Frequency (Hz)");
         XYPlot plot = new XYPlot(dataset, xAxis, yAxis, null);
         XYBlockRenderer r = new XYBlockRenderer();
         SpectrumPaintScale ps = new SpectrumPaintScale(0, iy * ix);
@@ -282,7 +289,7 @@ public class PhaseEnvelope implements Operation {
         r.setBlockHeight(10.0f);
         r.setBlockWidth(10.0f);
         plot.setRenderer(r);
-        JFreeChart chart = new JFreeChart("Title",
+        JFreeChart chart = new JFreeChart(title,
             JFreeChart.DEFAULT_TITLE_FONT, plot, false);
         NumberAxis scaleAxis = new NumberAxis("Scale");
         scaleAxis.setAxisLinePaint(Color.white);
@@ -315,18 +322,18 @@ public class PhaseEnvelope implements Operation {
         return dataset;
     }
 	
-	private void showPhaseMisfit(double[][] xyphase, double tlen, int np) {
-		show("phase misfit", xyphase, tlen, np);
+	private void showPhaseMisfit(double[][] xyphase, double tlen, int np, String title) {
+		show("phase misfit", title, xyphase, tlen, np);
 	}
 	
-	private void showRatio(double[][] xyratio, double tlen, int np) {
-		show("amplitude ration", xyratio, tlen, np);
+	private void showRatio(double[][] xyratio, double tlen, int np, String title) {
+		show("amplitude ratio", title, xyratio, tlen, np);
 	}
 	
-	private void show(String title, double[][] xydata, double tlen, int np) {
-		JFrame f = new JFrame(title);
+	private void show(String titleFrame, String titleFig, double[][] xydata, double tlen, int np) {
+		JFrame f = new JFrame(titleFrame);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ChartPanel chartPanel = new ChartPanel(createChart(createDataset(xydata, tlen, np), xydata.length, xydata[0].length)) {
+        ChartPanel chartPanel = new ChartPanel(createChart(createDataset(xydata, tlen, np), xydata.length, xydata[0].length, titleFig)) {
             @Override
             public Dimension getPreferredSize() {
                 return new Dimension(640, 480);
