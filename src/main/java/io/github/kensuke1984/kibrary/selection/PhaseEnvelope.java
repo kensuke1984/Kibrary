@@ -138,7 +138,8 @@ public class PhaseEnvelope implements Operation {
 		ratio = Double.parseDouble(property.getProperty("ratio"));
 		phaseMisfit = Double.parseDouble(property.getProperty("phaseMisfit"));
 		samplingHz = Double.parseDouble(property.getProperty("samplingHz"));
-
+		tlen = Double.parseDouble(property.getProperty("tlen"));
+		np = Integer.parseInt(property.getProperty("np"));
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -181,7 +182,6 @@ public class PhaseEnvelope implements Operation {
 							double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
 						
 							String titleFig = stationString + "." + id;
-							System.out.println(titleFig);
 							showPhaseMisfit(phaseEnvelope[0], tlen, np, titleFig);
 					});
 			} catch (Exception e) {
@@ -194,10 +194,10 @@ public class PhaseEnvelope implements Operation {
 		double[][][] phaseEnvelope = new double[2][][];
 		
 		double endtime = 4000.;
+		double margin = 750.;
 		double starttime = 0;
 		int n = (int) (endtime - starttime); // re-sampling at 1Hz
-		int lsmooth = Integer.highestOneBit(n) < n ? n : n * 2; 
-		int npow2 = (int) Math.pow(2, lsmooth);
+		int npow2 = Integer.highestOneBit(n) < n ? Integer.highestOneBit(n) * 2 : Integer.highestOneBit(n); 
 		
 		phaseEnvelope[0] = new double[n][];
 		phaseEnvelope[1] = new double[n][];
@@ -208,13 +208,13 @@ public class PhaseEnvelope implements Operation {
 		}
 		
 		try {
-			if (endtime > synname.readHeader().getValue(SACHeaderEnum.E))
+			if (endtime + margin > synname.readHeader().getValue(SACHeaderEnum.E))
 				throw new IllegalArgumentException(synname + "end time smaller than the given end time: " + endtime);
 			if (obsname.readHeader().getValue(SACHeaderEnum.B) > 0)
 				throw new IllegalArgumentException(obsname + "start time > 0: " + obsname.readHeader().getValue(SACHeaderEnum.B));
 			
-			double[] tmpobsdata = obsname.read().createTrace().cutWindow(starttime, endtime).getY();
-			double[] tmpsyndata = synname.read().createTrace().cutWindow(starttime, endtime).getY();
+			double[] tmpobsdata = obsname.read().createTrace().cutWindow(starttime, endtime + margin).getY();
+			double[] tmpsyndata = synname.read().createTrace().cutWindow(starttime, endtime + margin).getY();
 			
 			double[] obsdata = new double[npow2];
 			
@@ -236,10 +236,10 @@ public class PhaseEnvelope implements Operation {
 			System.out.println(sigma);
 			
 			int nn = 10 * (int) sigma + 10 < n ? 10 * (int) sigma + 10 : n;
-			int llsmooth = Integer.highestOneBit(nn) < n ? n : n * 2;
-			int nnpow2 = (int) Math.pow(2, llsmooth);
+			int nnpow2 = Integer.highestOneBit(nn) < nn ? Integer.highestOneBit(nn) * 2 : Integer.highestOneBit(nn);
+			nnpow2 = nnpow2 < 512 ? 512 : nnpow2;
 			
-			double[] gaborWindow = gaborWindow(sigma, 2*nnpow2, 1.);
+			double[] gaborWindow = gaborWindow(sigma, 2*nn+1, 1.);
 			obsdata = new double[2*nnpow2];
 			double[] syndata = new double[2*nnpow2];
 			
@@ -248,12 +248,12 @@ public class PhaseEnvelope implements Operation {
 				int nnlow = i - nn < 0 ? nn - i : 0;
 				int k = 0;
 				for (int j = nlow; j <= i+nn; j++) {
-					obsdata[nnlow + k] = tmpobsdata[j * sampling] * gaborWindow[n - j - 1];
-					syndata[nnlow + k] = tmpsyndata[j * sampling] * gaborWindow[n - j - 1];
+					obsdata[nnlow + k] = tmpobsdata[j * sampling] * gaborWindow[2*nn - k];
+					syndata[nnlow + k] = tmpsyndata[j * sampling] * gaborWindow[2*nn - k];
 					k++;
 				}
-				Arrays.fill(obsdata, 2*nn+1, nnpow2, 0.);
-				Arrays.fill(syndata, 2*nn+1, nnpow2, 0.);
+				Arrays.fill(obsdata, 2*nn+1, 2*nnpow2, 0.);
+				Arrays.fill(syndata, 2*nn+1, 2*nnpow2, 0.);
 				Arrays.fill(obsdata, 0, nnlow, 0.);
 				Arrays.fill(syndata, 0, nnlow, 0.);
 				
@@ -261,7 +261,8 @@ public class PhaseEnvelope implements Operation {
 				Complex[] obsSpc = fft.transform(obsdata, TransformType.FORWARD);
 				
 				for (int j = 0; j < np+1; j++) {
-					phaseEnvelope[0][i][j] = obsSpc[j].getArgument() - synSpc[j].getArgument();
+					phaseEnvelope[0][i][j] = Math.acos((obsSpc[j].getReal()*synSpc[j].getReal() + obsSpc[j].getImaginary()*obsSpc[j].getImaginary())
+							/ (obsSpc[j].abs() * synSpc[j].abs())) * 180 / Math.PI;
 					if (synSpc[j].abs() != 0)
 						phaseEnvelope[1][i][j] = obsSpc[j].abs() / synSpc[j].abs();
 					else
@@ -310,12 +311,12 @@ public class PhaseEnvelope implements Operation {
 		int ix = xyzarray.length;
 		int iy = np + 1;
         DefaultXYZDataset dataset = new DefaultXYZDataset();
-        for (int i = 0; i < ix; i++) {
+        for (int i = 0; i < ix / 10; i++) {
             double[][] data = new double[3][iy];
             for (int j = 0; j < iy; j++) {
-                data[0][j] = i;
-                data[1][j] = j * np / tlen;
-                data[2][j] = xyzarray[i][j];
+                data[0][j] = i * 10;
+                data[1][j] = j * 1. / tlen;
+                data[2][j] = xyzarray[i * 10][j];
             }
             dataset.addSeries("Series" + i, data);
         }
