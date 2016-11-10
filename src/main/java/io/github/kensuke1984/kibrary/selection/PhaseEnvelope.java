@@ -45,6 +45,7 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.PaintScale;
 import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.title.PaintScaleLegend;
+import org.jfree.data.xy.AbstractXYZDataset;
 import org.jfree.data.xy.DefaultXYZDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYZDataset;
@@ -182,7 +183,7 @@ public class PhaseEnvelope implements Operation {
 							double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
 						
 							String titleFig = stationString + "." + id;
-							showPhaseMisfit(phaseEnvelope[0], tlen, np, titleFig);
+							showPhaseMisfit(phaseEnvelope[0], titleFig);
 					});
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -199,12 +200,12 @@ public class PhaseEnvelope implements Operation {
 		int n = (int) (endtime - starttime); // re-sampling at 1Hz
 		int npow2 = Integer.highestOneBit(n) < n ? Integer.highestOneBit(n) * 2 : Integer.highestOneBit(n); 
 		
-		phaseEnvelope[0] = new double[n][];
-		phaseEnvelope[1] = new double[n][];
+		phaseEnvelope[0] = new double[np+1][];
+		phaseEnvelope[1] = new double[np+1][];
 		
-		for (int i = 0; i < n; i++) {
-			phaseEnvelope[0][i] = new double[np+1];
-			phaseEnvelope[1][i] = new double[np+1];
+		for (int i = 0; i < np+1; i++) {
+			phaseEnvelope[0][i] = new double[n];
+			phaseEnvelope[1][i] = new double[n];
 		}
 		
 		try {
@@ -229,19 +230,19 @@ public class PhaseEnvelope implements Operation {
 			
 			double dominantFrequency = new ArrayRealVector( Stream.of(fft.transform(obsdata, TransformType.FORWARD))
 				.map(z -> z.abs()).toArray(Double[]::new) ).getSubVector(0, np + 1).getMaxIndex()
-				* np / tlen;
+				* 1. / tlen;
 			
 			double sigma = 1. / dominantFrequency;
-			
 			System.out.println(sigma);
+			sigma = 15;
 			
 			int nn = 10 * (int) sigma + 10 < n ? 10 * (int) sigma + 10 : n;
-			int nnpow2 = Integer.highestOneBit(nn) < nn ? Integer.highestOneBit(nn) * 2 : Integer.highestOneBit(nn);
-			nnpow2 = nnpow2 < 512 ? 512 : nnpow2;
+			int nnpow2 = Integer.highestOneBit(2*nn+1) < 2*nn+1 ? Integer.highestOneBit(2*nn+1) * 2 : Integer.highestOneBit(2*nn+1);
+			nnpow2 = nnpow2 < 2048 ? 2048 : nnpow2;
 			
 			double[] gaborWindow = gaborWindow(sigma, 2*nn+1, 1.);
-			obsdata = new double[2*nnpow2];
-			double[] syndata = new double[2*nnpow2];
+			obsdata = new double[nnpow2];
+			double[] syndata = new double[nnpow2];
 			
 			for (int i = 0; i < n; i++) {
 				int nlow = i - nn < 0 ? 0 : i - nn;
@@ -252,8 +253,8 @@ public class PhaseEnvelope implements Operation {
 					syndata[nnlow + k] = tmpsyndata[j * sampling] * gaborWindow[2*nn - k];
 					k++;
 				}
-				Arrays.fill(obsdata, 2*nn+1, 2*nnpow2, 0.);
-				Arrays.fill(syndata, 2*nn+1, 2*nnpow2, 0.);
+				Arrays.fill(obsdata, 2*nn+1, nnpow2, 0.);
+				Arrays.fill(syndata, 2*nn+1, nnpow2, 0.);
 				Arrays.fill(obsdata, 0, nnlow, 0.);
 				Arrays.fill(syndata, 0, nnlow, 0.);
 				
@@ -261,12 +262,15 @@ public class PhaseEnvelope implements Operation {
 				Complex[] obsSpc = fft.transform(obsdata, TransformType.FORWARD);
 				
 				for (int j = 0; j < np+1; j++) {
-					phaseEnvelope[0][i][j] = Math.acos((obsSpc[j].getReal()*synSpc[j].getReal() + obsSpc[j].getImaginary()*obsSpc[j].getImaginary())
+					if (synSpc[j].abs() == 0 || obsSpc[j].abs() == 0)
+						phaseEnvelope[0][j][i] = Math.acos((obsSpc[j].getReal()*synSpc[j].getReal() + obsSpc[j].getImaginary()*obsSpc[j].getImaginary())
 							/ (obsSpc[j].abs() * synSpc[j].abs())) * 180 / Math.PI;
-					if (synSpc[j].abs() != 0)
-						phaseEnvelope[1][i][j] = obsSpc[j].abs() / synSpc[j].abs();
 					else
-						phaseEnvelope[1][i][j] = Double.NaN;
+						phaseEnvelope[0][j][i] = Double.NaN;
+					if (synSpc[j].abs() != 0)
+						phaseEnvelope[1][j][i] = obsSpc[j].abs() / synSpc[j].abs();
+					else
+						phaseEnvelope[1][j][i] = Double.NaN;
 				}
 			}
 			
@@ -279,16 +283,15 @@ public class PhaseEnvelope implements Operation {
 		return phaseEnvelope;
 	}
 	
-	
-	private static JFreeChart createChart(XYDataset dataset, int iy, int ix, String title) {
+	private static JFreeChart createChart(XYDataset dataset, int lowerbound, int upperbound, String title, double dx, double dy) {
 		NumberAxis xAxis = new NumberAxis("Time from origin time (s)");
         NumberAxis yAxis = new NumberAxis("Frequency (Hz)");
         XYPlot plot = new XYPlot(dataset, xAxis, yAxis, null);
         XYBlockRenderer r = new XYBlockRenderer();
-        SpectrumPaintScale ps = new SpectrumPaintScale(0, iy * ix);
+        SpectrumPaintScale ps = new SpectrumPaintScale(lowerbound, upperbound);
         r.setPaintScale(ps);
-        r.setBlockHeight(10.0f);
-        r.setBlockWidth(10.0f);
+        r.setBlockHeight(dy);
+        r.setBlockWidth(dx);
         plot.setRenderer(r);
         JFreeChart chart = new JFreeChart(title,
             JFreeChart.DEFAULT_TITLE_FONT, plot, false);
@@ -307,34 +310,34 @@ public class PhaseEnvelope implements Operation {
         return chart;
 	}
 	
-	private static XYZDataset createDataset(double[][] xyzarray, double tlen, int np) {
-		int ix = xyzarray.length;
-		int iy = np + 1;
-        DefaultXYZDataset dataset = new DefaultXYZDataset();
-        for (int i = 0; i < ix / 10; i++) {
-            double[][] data = new double[3][iy];
-            for (int j = 0; j < iy; j++) {
-                data[0][j] = i * 10;
-                data[1][j] = j * 1. / tlen;
-                data[2][j] = xyzarray[i * 10][j];
-            }
-            dataset.addSeries("Series" + i, data);
-        }
+	private static XYZDataset createDataset(double[][] data, int xresample, int yresample, double dx, double dy) 
+			throws IllegalArgumentException {
+		if (Integer.highestOneBit(yresample) != yresample)
+			throw new IllegalArgumentException("Error: y resampling factor should be a power of 2");
+		double[][] dataResample = new double[data.length/yresample][];
+		for (int j = 0; j < dataResample.length; j++) {
+			dataResample[j] = new double[data[0].length/xresample];
+			for (int i = 0; i < dataResample[0].length; i++) {
+				dataResample[j][i] = data[j*yresample][i*xresample];
+			}
+		}
+        XYZArrayDataset dataset = new XYZArrayDataset(dataResample, dx*xresample, dy*yresample);
         return dataset;
     }
 	
-	private void showPhaseMisfit(double[][] xyphase, double tlen, int np, String title) {
-		show("phase misfit", title, xyphase, tlen, np);
+	private void showPhaseMisfit(double[][] xyphase, String title) {
+		show("phase misfit", title, xyphase, -90, 90);
 	}
 	
-	private void showRatio(double[][] xyratio, double tlen, int np, String title) {
-		show("amplitude ratio", title, xyratio, tlen, np);
+	private void showRatio(double[][] xyratio, String title) {
+		show("amplitude ratio", title, xyratio, -4, 4);
 	}
 	
-	private void show(String titleFrame, String titleFig, double[][] xydata, double tlen, int np) {
+	private void show(String titleFrame, String titleFig, double[][] xydata, int lowerbound, int upperbound) {
 		JFrame f = new JFrame(titleFrame);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ChartPanel chartPanel = new ChartPanel(createChart(createDataset(xydata, tlen, np), xydata.length, xydata[0].length, titleFig)) {
+        ChartPanel chartPanel = new ChartPanel(createChart(createDataset(xydata, 10, 4, 1., 1/tlen)
+        		, lowerbound, upperbound, titleFig, 10., 4.*1./tlen)) {
             @Override
             public Dimension getPreferredSize() {
                 return new Dimension(640, 480);
@@ -350,7 +353,10 @@ public class PhaseEnvelope implements Operation {
 	protected double[] gaborWindow(double s, int n, double dt) {
 		double a = 1 / Math.pow(Math.PI * s, 0.25);
 		double b = -1. / (2 * s * s);
-		return IntStream.range(0, n).mapToDouble(i -> a*Math.exp(b * i * dt)).toArray();
+		if (n % 2 == 1)
+			return IntStream.range(-(n-1)/2, (n-1)/2+1).mapToDouble(i -> a*Math.exp(b * i * dt)).toArray();
+		else
+			return IntStream.range(-n/2-1, n/2).mapToDouble(i -> a*Math.exp(b * i * dt)).toArray();
 	}
 	
 	private Set<SACComponent> components;
@@ -387,6 +393,48 @@ public class PhaseEnvelope implements Operation {
 		return workPath;
 	}
 	
+	 private static class XYZArrayDataset extends AbstractXYZDataset {
+	      double[][] data;
+	      int rowCount = 0;
+	      int columnCount = 0;
+	      double dx;
+	      double dy;
+	      
+	      XYZArrayDataset(double[][] data, double dx, double dy){
+	         this.data = data;
+	         rowCount = data.length;
+	         columnCount = data[0].length;
+	         this.dx = dx;
+	         this.dy = dy;
+	      }
+	      public int getSeriesCount(){
+	         return 1;
+	      }
+	      public Comparable getSeriesKey(int series){
+	         return "serie";
+	      }
+	      public int getItemCount(int series){
+	         return rowCount*columnCount;
+	      }
+	      public double getXValue(int series,int item){
+	         return (int)(item/columnCount) * dx;
+	      }
+	      public double getYValue(int series,int item){
+	         return (item % columnCount) * dy;
+	      }
+	      public double getZValue(int series,int item){
+	         return data[(int)(item/columnCount)][item % columnCount];
+	      }
+	      public Number getX(int series,int item){
+	         return new Double((int)(item/columnCount)) * dx;
+	      }
+	      public Number getY(int series,int item){
+	         return new Double(item % columnCount) * dy;
+	      }
+	      public Number getZ(int series,int item){
+	         return new Double(data[(int)(item/columnCount)][item % columnCount]);
+	      }
+	   }
 	
 	private static class SpectrumPaintScale implements PaintScale {
 
@@ -412,9 +460,35 @@ public class PhaseEnvelope implements Operation {
 
         @Override
         public Paint getPaint(double value) {
-            float scaledValue = (float) (value / (getUpperBound() - getLowerBound()));
-            float scaledH = H1 + scaledValue * (H2 - H1);
-            return Color.getHSBColor(scaledH, 1f, 1f);
+//            float scaledValue = (float) (value / (getUpperBound() - getLowerBound()));
+//            float scaledH = H1 + scaledValue * (H2 - H1);
+            if (value < -75 && ! Double.isNaN(value))
+            	return Color.BLUE;
+            else if (value >= -75 && value < -60)
+            	return Color.CYAN.darker();
+            else if (value >= -60 && value < -45)
+            	return Color.GREEN.darker();
+            else if (value >= -45 && value < -30)
+            	return Color.GREEN;
+            else if (value >= -30 && value < -15)
+            	return Color.lightGray;
+            else if (value >= -15 && value <= 15)
+            	return Color.WHITE;
+            else if (value > 15 && value <= 30)
+            	return Color.YELLOW;
+            else if (value > 30 && value <= 45)
+            	return Color.ORANGE.brighter();
+            else if (value > 45 && value <= 60)
+            	return Color.ORANGE;
+            else if (value > 60 && value <= 75)
+            	return Color.ORANGE.darker();
+            else if (value > 75 && ! Double.isNaN(value))
+            	return Color.RED;
+            else if (Double.isNaN(value))
+            	return Color.white;
+            else {
+            	throw new IllegalArgumentException(String.valueOf(value));
+            }
         }
     }
 
