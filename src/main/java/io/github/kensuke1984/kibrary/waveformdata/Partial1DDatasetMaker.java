@@ -77,10 +77,10 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("#partialTypes");
 			pw.println("##Filter if backward filtering is applied (true)");
 			pw.println("#backward");
-			pw.println("##double time length:DSM parameter tlen, must be set");
-			pw.println("#tlen 3276.8");
-			pw.println("##int step of frequency domain DSM parameter np, must be set");
-			pw.println("#np 512");
+			pw.println("##double time length:DSM parameter tlen (6553.6)");
+			pw.println("#tlen 6553.6");
+			pw.println("##int step of frequency domain DSM parameter np (1024)");
+			pw.println("#np 1024");
 			pw.println("##double minimum value of passband (0.005)");
 			pw.println("#minFreq");
 			pw.println("##double maximum value of passband (0.08)");
@@ -120,6 +120,10 @@ public class Partial1DDatasetMaker implements Operation {
 			property.setProperty("finalSamplingHz", "1");
 		if (!property.containsKey("timewindowPath"))
 			throw new IllegalArgumentException("There is no information about timewindowPath.");
+		if (!property.containsKey("tlen"))
+			property.setProperty("tlen", "6553.6");
+		if (!property.containsKey("np"))
+			property.setProperty("np", "1024");
 	}
 
 	/**
@@ -288,7 +292,7 @@ public class Partial1DDatasetMaker implements Operation {
 				}
 
 				SpcFileType spcFileType = spcFileName.getFileType();
-
+				
 				// 3次元用のスペクトルなら省く
 				if (spcFileType == SpcFileType.PB || spcFileType == SpcFileType.PF)
 					continue;
@@ -375,8 +379,9 @@ public class Partial1DDatasetMaker implements Operation {
 				return;
 			}
 
-			String stationName = spcname.getObserverID();
-			Station station = new Station(stationName, spectrum.getObserverPosition(), "DSM");
+			String stationName = spcname.getObserverName();
+			String network = spcname.getObserverNetwork();
+			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
 			if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
@@ -387,12 +392,14 @@ public class Partial1DDatasetMaker implements Operation {
 
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = timewindowInformationSet.stream()
-						.filter(info -> info.getStation().getStationName().equals(stationName))
+						.filter(info -> info.getStation().equals(station))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
-				if (tw.isEmpty())
+				if (tw.isEmpty()) {
+					System.err.println("Ignoring empty timewindow " + spcname);
 					continue;
+				}
 
 				for (int k = 0; k < spectrum.nbody(); k++) {
 					double bodyR = spectrum.getBodyR()[k];

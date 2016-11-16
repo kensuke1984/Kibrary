@@ -39,6 +39,7 @@ class Longitude implements Comparable<Longitude> {
 	 * 
 	 * @param longitude
 	 *            [deg] [-180, 360)
+	 *            The longitude is rounded to 2 decimal places
 	 */
 	Longitude(double longitude) {
 		if (!checkLongitude(longitude))
@@ -52,8 +53,8 @@ class Longitude implements Comparable<Longitude> {
 			phi = FastMath.toRadians(longitude);
 			this.longitude = longitude;
 		}
-		this.longitude = Precision.round(this.longitude, 4);
-		this.phi = Precision.round(phi, 4);
+		this.longitude = Precision.round(this.longitude, 2);
+		this.phi = Precision.round(phi, 2);
 	}
 
 	/**

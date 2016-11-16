@@ -66,10 +66,11 @@ class Latitude implements Comparable<Latitude> {
 	/**
 	 * @param 地理緯度
 	 *            [deg] geographicLatitude [-90, 90]
+	 *            The geographical latitude is rounded to 2 decimal places
 	 */
 	Latitude(double geographicLatitude) {
 		inGeographicLatitude = geographicLatitude;
-		this.geographicLatitude = Precision.round(geographicLatitude,4);
+		this.geographicLatitude = Precision.round(geographicLatitude, 2);
 		if (!checkLatitude(geographicLatitude))
 			throw new IllegalArgumentException(
 					"The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
