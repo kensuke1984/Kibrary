@@ -380,10 +380,10 @@ public class TimewindowMaker implements Operation {
 	}
 	
 	private Phase[] containPhases(Timewindow window, Set<TauPPhase> usePhases) {
-		List<Phase> phases = new ArrayList<>();
+		Set<Phase> phases = new HashSet<>();
 		for (TauPPhase phase : usePhases) {
 			double time = phase.getTravelTime();
-			if (time < window.endTime && time > window.startTime)
+			if (time <= window.endTime && time >= window.startTime)
 				phases.add(phase.getPhaseName());
 		}
 		return phases.toArray(new Phase[phases.size()]);

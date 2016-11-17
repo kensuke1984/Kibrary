@@ -250,7 +250,7 @@ public class PhaseEnvelope implements Operation {
 							}
 							else {
 								double[][][] phaseEnvelope = computePhaseEnvelope(obsname, synname);
-								if (phaseEnvelope.length > 0) {
+								if (phaseEnvelope != null) {
 									double frequencyIncrement = phaseEnvelope[2][0][1] - phaseEnvelope[2][0][0];
 									
 									double[][] freqIntPE = freqIntegrated(phaseEnvelope, maxFrequency);
@@ -267,32 +267,34 @@ public class PhaseEnvelope implements Operation {
 									
 									double minLength = Math.max(1.5/maxFrequency, 30.);
 									double[][] timewindows = selectTimewindows(freqIntPE, 0.25/maxFrequency, minLength);
-		//							for (int i = 0; i < timewindows.length; i++)
-		//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
-									
-									if (show) {
+									if (timewindows != null) {
+			//							for (int i = 0; i < timewindows.length; i++)
+			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
+										
+										if (show) {
+											try {
+												String title = obsname.read().getStation() + " " + obsEventDir.getGlobalCMTID();
+												showSeriesAndSpectra(obsname.read().createTrace(), synname.read().createTrace(), freqIntPE, timewindows, title);
+				//								showTimeSeries(obsname.read().createTrace(), synname.read().createTrace(), timewindows);
+												System.in.read();
+											} catch (IOException e) {
+												e.printStackTrace();
+											}
+										}
+										
+			//							String titleFig = stationString + "." + id;
+			//							showPhaseMisfit(phaseEnvelope[0], titleFig, frequencyIncrement);
+			//							showRatio(phaseEnvelope[1], titleFig, frequencyIncrement);
+										
 										try {
-											String title = obsname.read().getStation() + " " + obsEventDir.getGlobalCMTID();
-											showSeriesAndSpectra(obsname.read().createTrace(), synname.read().createTrace(), freqIntPE, timewindows, title);
-			//								showTimeSeries(obsname.read().createTrace(), synname.read().createTrace(), timewindows);
-											System.in.read();
+											for (double[] tw : timewindows) {
+												TimewindowInformation info = new TimewindowInformation(tw[0], tw[1], obsname.read().getStation()
+														, obsEventDir.getGlobalCMTID(), obsname.getComponent(), new Phase[] {Phase.S});
+												infoset.add(info);
+											}
 										} catch (IOException e) {
 											e.printStackTrace();
 										}
-									}
-									
-		//							String titleFig = stationString + "." + id;
-		//							showPhaseMisfit(phaseEnvelope[0], titleFig, frequencyIncrement);
-		//							showRatio(phaseEnvelope[1], titleFig, frequencyIncrement);
-									
-									try {
-										for (double[] tw : timewindows) {
-											TimewindowInformation info = new TimewindowInformation(tw[0], tw[1], obsname.read().getStation()
-													, obsEventDir.getGlobalCMTID(), obsname.getComponent(), new Phase[] {Phase.S});
-											infoset.add(info);
-										}
-									} catch (IOException e) {
-										e.printStackTrace();
 									}
 								}
 							}
@@ -339,12 +341,21 @@ public class PhaseEnvelope implements Operation {
 //			}
 //			Arrays.fill(obsdata, n, npow2, 0.); // pad with 0 for the fft
 			
-			double[] frequencyAmplitude = dominantFrequencySwave(obsname, 5./maxFrequency, 5./maxFrequency);
+			double[] frequencyAmplitude = null;
+			
+			try {
+				frequencyAmplitude = dominantFrequencySwave(obsname, 5./maxFrequency, 5./maxFrequency);
+			} catch (IllegalStateException e) {
+				System.out.println(e.getMessage());
+			}
+			if (frequencyAmplitude == null) {
+				return null;
+			}
 			double sigma = 1. / frequencyAmplitude[0];
 			double spcAmplitude = frequencyAmplitude[1];
 			if (frequencyAmplitude[0] / maxFrequency < .4 || frequencyAmplitude[0] / maxFrequency > 1.1) {
 				System.out.println("Ignoring: dominant frequency strongly differs from maximum frequency " + frequencyAmplitude[0] + "," + maxFrequency);
-				return new double[0][][];
+				return null;
 			}
 			else {
 	//			System.out.println(sigma + " " + spcAmplitude);
@@ -514,7 +525,7 @@ public class PhaseEnvelope implements Operation {
 				iselect.add(i);
 		}
 		if (iselect.size() <= 1)
-			return new double[][] {new double[] {0., 0.}};
+			return null;
 		else {
 			List<int[]> intervals = new ArrayList<>();
 			int i = iselect.get(0);
@@ -570,16 +581,19 @@ public class PhaseEnvelope implements Operation {
 		}
 	}
 	
-	private double[] dominantFrequencySwave(SACFileName sfn, double beforeArrival, double afterArrival) {
+	private double[] dominantFrequencySwave(SACFileName sfn, double beforeArrival, double afterArrival) throws IllegalStateException {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
 			SACData sd = sfn.read();
 			double distance = sd.getEventLocation().getEpicentralDistance(sd.getStation().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();
-			Set<TauPPhase> taupPhaseSet = TauPTimeReader.getTauPPhase(eventR, distance, Phase.S, Phase.create("Sdiff", false));
+			Set<TauPPhase> taupPhaseSet = TauPTimeReader.getTauPPhase(eventR, distance, Phase.S, Phase.create("Sdiff", false), Phase.s);
 			if (taupPhaseSet.size() > 1)
 				System.err.println("Warning: S-wave multiplications " + sfn);
+			if (taupPhaseSet.size() == 0) {
+				throw new IllegalStateException("Empty arrivals " + sfn);
+			}
 			double t = taupPhaseSet.stream().findFirst().get().getTravelTime();
 			RealVector tmp = sd.createTrace().cutWindow(t-beforeArrival, t+afterArrival).getYVector();
 			tmp = taper(tmp, 0.05);

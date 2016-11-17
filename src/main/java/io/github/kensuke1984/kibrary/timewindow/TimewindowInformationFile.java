@@ -109,7 +109,7 @@ public final class TimewindowInformationFile {
 					.toArray(GlobalCMTID[]::new);
 			Station[] stations = infoSet.stream().map(TimewindowInformation::getStation).distinct().sorted()
 					.toArray(Station[]::new);
-			Phase[] phases = infoSet.stream().map(TimewindowInformation::getPhases).distinct().flatMap(p -> Stream.of(p))
+			Phase[] phases = infoSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 			
 			Map<GlobalCMTID, Integer> idMap = new HashMap<>();
@@ -132,6 +132,10 @@ public final class TimewindowInformationFile {
 			}
 			for (int i = 0; i < phases.length; i++) {
 				phaseMap.put(phases[i], i);
+				if (phases[i] != null)
+					System.out.println(i + " " + phases[i]);
+				else
+					System.out.println(i + " " + "phase is null");
 				dos.writeBytes(StringUtils.rightPad(phases[i].toString(), 16));
 			}
 			for (TimewindowInformation info : infoSet) {

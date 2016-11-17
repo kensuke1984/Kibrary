@@ -148,6 +148,8 @@ public class DataSelection implements Operation {
 			property.setProperty("maxVariance", "2");
 		if (!property.containsKey("ratio"))
 			property.setProperty("ratio", "2");
+		if (!property.containsKey("convolute"))
+			property.setProperty("convolute", "true");
 	}
 
 	private void set() throws IOException {
@@ -254,14 +256,18 @@ public class DataSelection implements Operation {
 					if (!components.contains(obsName.getComponent()))
 						continue;
 					String stationName = obsName.getStationName();
+//					String network = obsName.read().getStation().getNetwork();
+					String stationString = stationName;
 					SACComponent component = obsName.getComponent();
 					// double timeshift = 0;
 					SACExtension synExt = convolute ? SACExtension.valueOfConvolutedSynthetic(component)
 							: SACExtension.valueOfSynthetic(component);
 
-					SACFileName synName = new SACFileName(synEventDirectory, stationName + "." + id + "." + synExt);
-					if (!synName.exists())
+					SACFileName synName = new SACFileName(synEventDirectory, stationString + "." + id + "." + synExt);
+					if (!synName.exists()) {
+						System.err.println("Ignoring non-existing synthetics " + synName);
 						continue;
+					}
 
 					// synthetic sac
 					SACData obsSac = obsName.read();
@@ -269,8 +275,10 @@ public class DataSelection implements Operation {
 
 					Station station = obsSac.getStation();
 					//
-					if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA))
+					if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) {
+						System.err.println("Ignoring differing DELTA " + obsName);
 						continue;
+					}
 
 					// Pickup a time window of obsName
 					Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
