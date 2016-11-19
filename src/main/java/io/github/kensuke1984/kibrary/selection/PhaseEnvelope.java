@@ -304,7 +304,8 @@ public class PhaseEnvelope implements Operation {
 										
 										try {
 											for (int i = 0; i < timewindows.length; i++) {
-												Phase[] phasenames = (Phase[]) Stream.of(phases[i]).map(phase -> phase.getPhaseName()).toArray();
+												Phase[] phasenames = new Phase[phases[i].length];
+												phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
 												TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getStation()
 														, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
 												infoset.add(info);
