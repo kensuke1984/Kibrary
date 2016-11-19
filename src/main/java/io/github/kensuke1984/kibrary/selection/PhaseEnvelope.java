@@ -8,14 +8,20 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,6 +61,7 @@ import javax.swing.JFrame;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.annotations.TextAnnotation;
 import org.jfree.chart.annotations.XYLineAnnotation;
 import org.jfree.chart.annotations.XYShapeAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
@@ -81,6 +88,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.data.xy.XYZDataset;
 import org.jfree.ui.RectangleEdge;
 import org.jfree.ui.RectangleInsets;
+import org.jfree.ui.TextAnchor;
 
 
 /**
@@ -233,6 +241,8 @@ public class PhaseEnvelope implements Operation {
 							SACFileName synname = new SACFileName(synEventPath.resolve(name));
 							System.out.println(obsname);
 							
+							SACData obssac = null;
+							
 							double obsDep = 0;
 							double synDep = 0;
 							try {
@@ -240,7 +250,8 @@ public class PhaseEnvelope implements Operation {
 //										obsname.readHeader().getValue(SACHeaderEnum.DEPMAX) : -obsname.readHeader().getValue(SACHeaderEnum.DEPMIN);
 //								synDep = synname.readHeader().getValue(SACHeaderEnum.DEPMAX) > -synname.readHeader().getValue(SACHeaderEnum.DEPMIN) ?
 //										synname.readHeader().getValue(SACHeaderEnum.DEPMAX) : -synname.readHeader().getValue(SACHeaderEnum.DEPMIN);
-								obsDep = new ArrayRealVector(obsname.read().getData()).getLInfNorm();
+								obssac = obsname.read();
+								obsDep = new ArrayRealVector(obssac.getData()).getLInfNorm();
 								synDep = new ArrayRealVector(synname.read().getData()).getLInfNorm();
 							} catch (IOException e) {
 								e.printStackTrace();
@@ -271,10 +282,15 @@ public class PhaseEnvelope implements Operation {
 			//							for (int i = 0; i < timewindows.length; i++)
 			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
 										
+										double distance = obssac.getEventLocation().getEpicentralDistance(obssac.getStation().getPosition())
+											* 180 / Math.PI;
+										double eventR = obssac.getEventLocation().getR();
+										TauPPhase[][] phases = findPhases(timewindows, distance, eventR);
+										
 										if (show) {
 											try {
-												String title = obsname.read().getStation() + " " + obsEventDir.getGlobalCMTID();
-												showSeriesAndSpectra(obsname.read().createTrace(), synname.read().createTrace(), freqIntPE, timewindows, title);
+												String title = obssac.getStation() + " " + obsEventDir.getGlobalCMTID();
+												showSeriesAndSpectra(obssac.createTrace(), synname.read().createTrace(), freqIntPE, timewindows, phases, title);
 				//								showTimeSeries(obsname.read().createTrace(), synname.read().createTrace(), timewindows);
 												System.in.read();
 											} catch (IOException e) {
@@ -287,9 +303,10 @@ public class PhaseEnvelope implements Operation {
 			//							showRatio(phaseEnvelope[1], titleFig, frequencyIncrement);
 										
 										try {
-											for (double[] tw : timewindows) {
-												TimewindowInformation info = new TimewindowInformation(tw[0], tw[1], obsname.read().getStation()
-														, obsEventDir.getGlobalCMTID(), obsname.getComponent(), new Phase[] {Phase.S});
+											for (int i = 0; i < timewindows.length; i++) {
+												Phase[] phasenames = (Phase[]) Stream.of(phases[i]).map(phase -> phase.getPhaseName()).toArray();
+												TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getStation()
+														, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
 												infoset.add(info);
 											}
 										} catch (IOException e) {
@@ -353,7 +370,7 @@ public class PhaseEnvelope implements Operation {
 			}
 			double sigma = 1. / frequencyAmplitude[0];
 			double spcAmplitude = frequencyAmplitude[1];
-			if (frequencyAmplitude[0] / maxFrequency < .4 || frequencyAmplitude[0] / maxFrequency > 1.1) {
+			if (frequencyAmplitude[0] / maxFrequency < .4 || frequencyAmplitude[0] / maxFrequency > 1.3) {
 				System.out.println("Ignoring: dominant frequency strongly differs from maximum frequency " + frequencyAmplitude[0] + "," + maxFrequency);
 				return null;
 			}
@@ -617,6 +634,45 @@ public class PhaseEnvelope implements Operation {
 		return frequencySpcAmplitude;
 	}
 	
+	private TauPPhase[][] findPhases(double[][] timewindows, double distance, double eventR) {
+		TauPPhase[][] foundPhases = new TauPPhase[timewindows.length][];
+		String[] includePhaseNames = new String[] {"S", "SS", "SSS", "SSS", "SSSS", "SSSSS", "ScS", "ScSScS", "ScSScSScS", "ScSScSScSScS", "sS", "sSS", "sSSS"
+				, "sScS", "sScSScS", "sScSScSScS", "Sdiff", "sSdiff"};
+		Phase[] includePhases = new Phase[includePhaseNames.length];
+		for (int i = 0; i < includePhases.length; i++)
+			includePhases[i] = Phase.create(includePhaseNames[i], false);
+		Set<TauPPhase> taupPhaseSet = TauPTimeReader.getTauPPhase(eventR, distance, includePhases);
+		AtomicInteger i = new AtomicInteger();
+		for (double[] tw : timewindows) {
+			Set<TauPPhase> tmpPhases = taupPhaseSet.stream().filter(phase -> phase.getTravelTime() <= tw[1] 
+					&& phase.getTravelTime() >= tw[0])
+					.collect(Collectors.toSet());
+			Map<Phase, TauPPhase> map = new HashMap<>();
+			for (TauPPhase ph : tmpPhases) {
+				if (map.containsKey(ph.getPhaseName())) {
+					if (map.get(ph.getPhaseName()).getTravelTime() < ph.getTravelTime())
+						map.put(ph.getPhaseName(), ph);
+				}
+				else
+					map.put(ph.getPhaseName(), ph);
+			}
+			
+			Comparator<TauPPhase> comparator = new Comparator<TauPPhase>() {
+			    @Override
+			    public int compare(TauPPhase p1, TauPPhase p2) {
+			        return (int) Math.signum(p1.getTravelTime() - p2.getTravelTime());
+			    }
+			};
+			List<TauPPhase> list = map.values().stream().collect(Collectors.toList());
+			Collections.sort(list, comparator);
+			
+			foundPhases[i.get()] = new TauPPhase[list.size()];
+			foundPhases[i.get()] = list.toArray(foundPhases[i.get()]);
+			i.incrementAndGet();
+		}
+		return foundPhases;
+	}
+	
 	private RealVector taper(RealVector v, double dt) {
 		int n = v.getDimension();
 		RealVector vtap = v.copy();
@@ -711,7 +767,7 @@ public class PhaseEnvelope implements Operation {
       return chart;
    }
    
-   private JFreeChart createChart(XYDataset timeseries, double[][] freqIntegratedPE, double[][] timewindows, String title) {
+   private JFreeChart createChart(XYDataset timeseries, double[][] freqIntegratedPE, double[][] timewindows, TauPPhase[][] phases, String title) {
 	   Font helvetica12 = new Font("Helvetica", Font.PLAIN, 12);
 	   
        final XYItemRenderer renderer1 = new StandardXYItemRenderer();
@@ -725,9 +781,17 @@ public class PhaseEnvelope implements Operation {
        subplot1.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
        
        double h = subplot1.getRangeAxis().getUpperBound() * .5;
-       for (double[] tw : timewindows) {
- 	      Rectangle2D.Double rect = new Rectangle2D.Double(tw[0], -h, tw[1]-tw[0], 2*h);
+       for (int i = 0; i < timewindows.length; i++) {
+ 	      Rectangle2D.Double rect = new Rectangle2D.Double(timewindows[i][0], -h, timewindows[i][1]-timewindows[i][0], 2*h);
  	      subplot1.addAnnotation(new XYShapeAnnotation(rect, new BasicStroke(1.0f), Color.BLUE));
+ 	      System.out.println(phases[i].length);
+ 	      for (int j = 0; j < phases[i].length; j++) {
+ 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().toString(), timewindows[i][0], h*1.05 + j*h/6.);
+ 	    	  annotation.setPaint(Color.BLUE);
+ 	    	  annotation.setFont(helvetica12);
+ 	    	  annotation.setTextAnchor(TextAnchor.BOTTOM_LEFT);
+ 	    	  subplot1.addAnnotation(annotation);
+ 	      }
        }
        
        XYSeries ampMisfit = new XYSeries("Amplitude misfit");
@@ -785,7 +849,16 @@ public class PhaseEnvelope implements Operation {
        final CombinedDomainXYPlot plot = new CombinedDomainXYPlot(domainAxis);
        plot.setGap(10.0);
        
-       subplot2.addAnnotation(new XYLineAnnotation(0, spcAmpMisfit, 4000*(1+domainAxis.getUpperMargin()), spcAmpMisfit, new BasicStroke(1.0f), Color.BLUE));
+       BasicStroke stroke = new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {2.0f, 6.0f}, 0.0f);
+       subplot2.addAnnotation(new XYLineAnnotation(0, spcAmpMisfit, 4000*(1+domainAxis.getUpperMargin()), spcAmpMisfit, stroke, Color.GREEN.darker()));
+       
+       for (TauPPhase[] phs : phases) {
+    	   for (TauPPhase ph : phs) {
+    		   XYLineAnnotation verticalLine = new XYLineAnnotation(ph.getTravelTime(), upperbound, ph.getTravelTime(), lowerbound
+    				   , new BasicStroke(1.0f), Color.BLUE);
+    		   subplot2.addAnnotation(verticalLine);
+    	   }
+       }
        
        // add the subplots...
        plot.add(subplot1, 1);
@@ -797,9 +870,9 @@ public class PhaseEnvelope implements Operation {
                              JFreeChart.DEFAULT_TITLE_FONT, plot, true);
    }
    
-   private void showSeriesAndSpectra(Trace obs, Trace syn, double[][] freqIntegratedPE, double[][] timewindows, String title) {
+   private void showSeriesAndSpectra(Trace obs, Trace syn, double[][] freqIntegratedPE, double[][] timewindows, TauPPhase[][] phases, String title) {
    	  XYDataset timeseries = createDataset(syn, obs);
-      JFreeChart chart = createChart(timeseries, freqIntegratedPE, timewindows, title); 
+      JFreeChart chart = createChart(timeseries, freqIntegratedPE, timewindows, phases, title); 
       ChartPanel chartPanel = new ChartPanel(chart);
       chartPanel.setPreferredSize( new java.awt.Dimension( 560 , 370 ) );         
       chartPanel.setMouseZoomable( true , false );         
