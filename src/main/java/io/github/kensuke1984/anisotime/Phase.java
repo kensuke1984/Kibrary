@@ -93,7 +93,7 @@ public class Phase {
 	public static final Phase SKS = Phase.create("SKS");
 	public static final Phase SKiKS = Phase.create("SKiKS");
 	public static final Phase SKIKS = Phase.create("SKIKS");
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -691,6 +691,10 @@ public class Phase {
 	 */
 	Partition partitionOf(int i) {
 		return partition[i];
+	}
+	
+	public String getExpandedName() {
+		return expandedName;
 	}
 
 	@Override

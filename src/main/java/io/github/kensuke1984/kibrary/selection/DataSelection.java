@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -288,12 +289,16 @@ public class DataSelection implements Operation {
 
 					if (windowInformations.isEmpty())
 						continue;
-
+					
 					for (TimewindowInformation window : windowInformations) {
 						RealVector synU = cutSAC(synSac, window);
 						RealVector obsU = cutSAC(obsSac, shift(window));
-						if (check(lpw, stationName, id, component, window, obsU, synU))
+						if (check(lpw, stationName, id, component, window, obsU, synU)) {
+							if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
+								System.out.println(window);
+							}
 							goodTimewindowInformationSet.add(window);
+						}
 					}
 					// lpw.close();
 				}

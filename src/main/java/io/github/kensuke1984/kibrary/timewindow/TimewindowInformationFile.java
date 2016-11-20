@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -132,10 +133,8 @@ public final class TimewindowInformationFile {
 			}
 			for (int i = 0; i < phases.length; i++) {
 				phaseMap.put(phases[i], i);
-				if (phases[i] != null)
-					System.out.println(i + " " + phases[i]);
-				else
-					System.out.println(i + " " + "phase is null");
+				if (phases[i] == null)
+					throw new NullPointerException(i + " " + "phase is null");
 				dos.writeBytes(StringUtils.rightPad(phases[i].toString(), 16));
 			}
 			for (TimewindowInformation info : infoSet) {
@@ -223,16 +222,18 @@ public final class TimewindowInformationFile {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		Station station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
-		Phase[] tmpPhases = new Phase[10];
+		Set<Phase> tmpset = new HashSet<>();
 		for (int i = 0; i < 10; i++) {
 			short iphase = bb.getShort();
 			if (iphase != -1)
-				tmpPhases[i] = phases[iphase];
+				tmpset.add(phases[iphase]);
 		}
+		Phase[] usablephases = new Phase[tmpset.size()];
+		usablephases = tmpset.toArray(usablephases);
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double startTime = bb.getFloat();
 		double endTime = bb.getFloat();
-		return new TimewindowInformation(startTime, endTime, station, id, component, tmpPhases);
+		return new TimewindowInformation(startTime, endTime, station, id, component, usablephases);
 	}
 
 }

@@ -8,10 +8,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,7 +19,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -55,13 +52,11 @@ import java.awt.Font;
 import java.awt.Paint;
 import java.awt.geom.Rectangle2D;
 
-import javax.naming.event.EventDirContext;
 import javax.swing.JFrame;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.annotations.TextAnnotation;
 import org.jfree.chart.annotations.XYLineAnnotation;
 import org.jfree.chart.annotations.XYShapeAnnotation;
 import org.jfree.chart.annotations.XYTextAnnotation;
@@ -76,11 +71,6 @@ import org.jfree.chart.renderer.xy.XYBlockRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.title.PaintScaleLegend;
-import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.time.RegularTimePeriod;
-import org.jfree.data.time.Second;
-import org.jfree.data.time.TimeSeries;
-import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.AbstractXYZDataset;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
@@ -770,6 +760,7 @@ public class PhaseEnvelope implements Operation {
    
    private JFreeChart createChart(XYDataset timeseries, double[][] freqIntegratedPE, double[][] timewindows, TauPPhase[][] phases, String title) {
 	   Font helvetica12 = new Font("Helvetica", Font.PLAIN, 12);
+       Color[] colors = new Color[] {Color.BLUE, Color.GREEN.darker(), Color.GRAY, Color.BLACK, Color.RED};
 	   
        final XYItemRenderer renderer1 = new StandardXYItemRenderer();
        renderer1.setSeriesPaint(0, Color.RED);
@@ -787,8 +778,8 @@ public class PhaseEnvelope implements Operation {
  	      subplot1.addAnnotation(new XYShapeAnnotation(rect, new BasicStroke(1.0f), Color.BLUE));
  	      System.out.println(phases[i].length);
  	      for (int j = 0; j < phases[i].length; j++) {
- 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().toString(), timewindows[i][0], h*1.05 + j*h/6.);
- 	    	  annotation.setPaint(Color.BLUE);
+ 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().getExpandedName(), timewindows[i][0], h*1.05 + j*h/6.);
+ 	    	  annotation.setPaint(colors[j % colors.length]);
  	    	  annotation.setFont(helvetica12);
  	    	  annotation.setTextAnchor(TextAnchor.BOTTOM_LEFT);
  	    	  subplot1.addAnnotation(annotation);
@@ -808,7 +799,6 @@ public class PhaseEnvelope implements Operation {
        
        // create subplot 2...
        
-       
        final XYPlot subplot2 = new XYPlot();
        subplot2.setDataset(0, datasetAmp);
        final XYItemRenderer rendererAmp = new StandardXYItemRenderer();
@@ -823,6 +813,7 @@ public class PhaseEnvelope implements Operation {
        subplot2.mapDatasetToRangeAxis(0, 0);
        double upperbound = rangeAxis2.getUpperBound();
        double lowerbound = rangeAxis2.getLowerBound();
+       
        
        // add secondary axis
        subplot2.setDataset(1, datasetPhase);
@@ -854,10 +845,12 @@ public class PhaseEnvelope implements Operation {
        subplot2.addAnnotation(new XYLineAnnotation(0, spcAmpMisfit, 4000*(1+domainAxis.getUpperMargin()), spcAmpMisfit, stroke, Color.GREEN.darker()));
        
        for (TauPPhase[] phs : phases) {
+    	   int i = 0;
     	   for (TauPPhase ph : phs) {
     		   XYLineAnnotation verticalLine = new XYLineAnnotation(ph.getTravelTime(), upperbound, ph.getTravelTime(), lowerbound
-    				   , new BasicStroke(1.0f), Color.BLUE);
+    				   , new BasicStroke(1.5f), colors[i % colors.length]);
     		   subplot2.addAnnotation(verticalLine);
+    		   i++;
     	   }
        }
        
