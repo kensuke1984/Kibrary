@@ -197,7 +197,7 @@ public class ComputationalMesh implements Serializable {
 	 * @param partition
 	 *            in which the r is found
 	 * @return index of maximum r<sub>i</sub> (r<sub>i</sub> &le; r) in the
-	 *         {@link #mesh}. If the mesh includes r, it returns the index of r
+	 *         mesh. If the mesh includes r, it returns the index of r
 	 *         <sub>i</sub> (= r).<br>
 	 *         Note that the return value is the index in certain partition
 	 *         mesh.

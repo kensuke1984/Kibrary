@@ -23,25 +23,23 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * 
  * Raypath catalogue for one model
- * 
+ * <p>
  * TODO boundaries close points EPS TODO default catalogue in .Kibrary
- * 
+ * <p>
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
- * 
+ *
  * @author Kensuke Konishi
  * @version 0.0.8b
  */
 public class RaypathCatalog implements Serializable {
 
-	 /**
+	/**
 	 * 2016/9/1
 	 */
 	private static final long serialVersionUID = -5169958584689352786L;
 
- 
 
 	static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
 
@@ -84,8 +82,8 @@ public class RaypathCatalog implements Serializable {
 					try {
 						cat = read(p);
 					} catch (ClassNotFoundException | IOException ice) {
-						System.err.println("Creating a catalog for " + model
-								+ " (due to out of date).  This computation is done only once.");
+						System.err.println(
+								"Creating a catalog for " + model + " (due to out of date).  This computation is done only once.");
 						cat = new RaypathCatalog(v, simple, Math.toRadians(1));
 						cat.create();
 						try {
@@ -177,24 +175,20 @@ public class RaypathCatalog implements Serializable {
 	 * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
 	 * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
 	 * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
-	 * 
+	 * <p>
 	 * Note that if a catalog for the input parameter already exists in
 	 * KibraryHOME/share, the stored catalog returns.
-	 * 
-	 * @param structure
-	 *            for computation of raypaths
-	 * @param mesh
-	 *            for computation of raypaths.
-	 * @param dDelta
-	 *            &delta;&Delta; [rad] for creation of a catalog.
+	 *
+	 * @param structure for computation of raypaths
+	 * @param mesh      for computation of raypaths.
+	 * @param dDelta    &delta;&Delta; [rad] for creation of a catalog.
 	 */
 	public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
 			for (Path p : catalogStream)
 				try {
 					RaypathCatalog c = read(p);
-					if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta)
-						return c;
+					if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta) return c;
 				} catch (InvalidClassException ice) {
 					System.err.println(p + " may be out of date.");
 				}
@@ -219,18 +213,14 @@ public class RaypathCatalog implements Serializable {
 	 * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
 	 * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
 	 * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
-	 * 
-	 * @param structure
-	 *            for computation of raypaths
-	 * @param mesh
-	 *            for computation of raypaths.
-	 * @param dDelta
-	 *            &delta;&Delta; [rad] for creation of a catalog.
+	 *
+	 * @param structure for computation of raypaths
+	 * @param mesh      for computation of raypaths.
+	 * @param dDelta    &delta;&Delta; [rad] for creation of a catalog.
 	 */
 	private RaypathCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
 		WOODHOUSE = new Woodhouse1981(structure);
-		if (dDelta <= 0)
-			throw new IllegalArgumentException("Input dDelta must be positive.");
+		if (dDelta <= 0) throw new IllegalArgumentException("Input dDelta must be positive.");
 		D_DELTA = dDelta;
 		MESH = mesh;
 	}
@@ -288,6 +278,7 @@ public class RaypathCatalog implements Serializable {
 	}
 
 	// TODO low high 
+
 	/**
 	 * Creates a catalogue.
 	 */
@@ -332,7 +323,7 @@ public class RaypathCatalog implements Serializable {
 			} else if (p < p_SHdiff && p_SHdiff < nextP) {
 				closeDiff(shDiff);
 				nextP = raypathList.last().getRayParameter() + DELTA_P; // TODO
-																		// SHSV
+				// SHSV
 			}
 		}
 		raypathList.add(pDiff);
@@ -349,7 +340,7 @@ public class RaypathCatalog implements Serializable {
 		Raypath diffPlus = new Raypath(diffP + MINIMUM_DELTA_P, WOODHOUSE, MESH);
 		diffMinus.compute();
 		diffPlus.compute();
-		for (double p = (diffP + last.getRayParameter()) / 2, nextP = p + DELTA_P;; p = nextP) {
+		for (double p = (diffP + last.getRayParameter()) / 2, nextP = p + DELTA_P; ; p = nextP) {
 			Raypath candidate = new Raypath(p, WOODHOUSE, MESH);
 			candidate.compute();
 			if (!closeEnough(raypathList.last(), candidate)) {
@@ -377,7 +368,7 @@ public class RaypathCatalog implements Serializable {
 	 * Look for a raypath to be a next one for the {@link #raypathList}. If one
 	 * is found and another is also found for the next next one, all are added
 	 * recursively.
-	 * 
+	 *
 	 * @return If any good raypath in the pool
 	 */
 	private boolean lookIntoPool() {
@@ -395,45 +386,37 @@ public class RaypathCatalog implements Serializable {
 	 * wave. The ray parameter of raypath1 must be smaller than that of
 	 * raypath2, otherwise, false is returned. TODO SH SV?? Both raypaths must
 	 * be computed before this method.
-	 * 
-	 * @param raypath1
-	 *            to be checked
-	 * @param raypath2
-	 *            to be checked
+	 *
+	 * @param raypath1 to be checked
+	 * @param raypath2 to be checked
 	 * @return If they are similar path.
 	 */
 	private boolean closeEnough(Raypath raypath1, Raypath raypath2) {
-		if (raypath2.getRayParameter() <= raypath1.getRayParameter())
-			return false;
-		if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P)
-			return true;
+		if (raypath2.getRayParameter() <= raypath1.getRayParameter()) return false;
+		if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P) return true;
 		double earthRadius = WOODHOUSE.getStructure().earthRadius();
 		double p1 = raypath1.computeDelta(earthRadius, Phase.P);
 		double p2 = raypath2.computeDelta(earthRadius, Phase.P);
 		// System.out.println(Math.toDegrees(p1) + " p" + Math.toDegrees(p2));
-		if (Double.isNaN(p1) ^ Double.isNaN(p2))
-			return false;
+		if (Double.isNaN(p1) ^ Double.isNaN(p2)) return false;
 		if (Double.isNaN(p1)) {
 			p1 = raypath1.computeDelta(earthRadius, Phase.PcP);
 			p2 = raypath2.computeDelta(earthRadius, Phase.PcP);
 		}
 		// System.out.println(Math.toDegrees(p1) + " " + Math.toDegrees(p2));
-		if (D_DELTA < Math.abs(p1 - p2))
-			return false;
+		if (D_DELTA < Math.abs(p1 - p2)) return false;
 		double s1 = raypath1.computeDelta(earthRadius, Phase.S);
 		double s2 = raypath2.computeDelta(earthRadius, Phase.S);
 		// System.out.println(Math.toDegrees(s1) + " s " + Math.toDegrees(s2));
 
-		if (Double.isNaN(s1) ^ Double.isNaN(s2))
-			return false;
+		if (Double.isNaN(s1) ^ Double.isNaN(s2)) return false;
 		if (Double.isNaN(s1)) {
 			s1 = raypath1.computeDelta(earthRadius, Phase.ScS);
 			s2 = raypath2.computeDelta(earthRadius, Phase.ScS);
 		}
 		// System.out.println(Math.toDegrees(s1) + " scs " +
 		// Math.toDegrees(s2));
-		if (D_DELTA < Math.abs(s1 - s2))
-			return false;
+		if (D_DELTA < Math.abs(s1 - s2)) return false;
 		return true;
 	}
 
@@ -445,7 +428,7 @@ public class RaypathCatalog implements Serializable {
 	 * P &rarr; r*(&rho;/A)<sup>1/2</sup> <br>
 	 * SV &rarr; r*(&rho;/L)<sup>1/2</sup> <br>
 	 * SH &rarr; r*(&rho;/N)<sup>1/2</sup> <br>
-	 * 
+	 *
 	 * @return maximum ray parameter
 	 * @see {@code Woodhouse (1981)}
 	 */
@@ -460,15 +443,11 @@ public class RaypathCatalog implements Serializable {
 	}
 
 	/**
-	 * @param path
-	 *            the path for the catalogue file.
-	 * @param options
-	 *            open option
+	 * @param path    the path for the catalogue file.
+	 * @param options open option
 	 * @return Catalogue read from the path
-	 * @throws IOException
-	 *             if any
-	 * @throws ClassNotFoundException
-	 *             if any
+	 * @throws IOException            if any
+	 * @throws ClassNotFoundException if any
 	 */
 	public static RaypathCatalog read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
 		try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(path, options))) {
@@ -480,18 +459,15 @@ public class RaypathCatalog implements Serializable {
 	 * Assume that there is a regression curve f(&Delta;) = p(ray parameter) for
 	 * the small range. The function f is assumed to be a polynomial function.
 	 * The degree of the function depends on the number of the input raypaths.
-	 * 
-	 * @param targetDelta
-	 *            [rad] epicentral distance to get T for
-	 * @param raypaths
-	 *            Polynomial interpolation is done with these. All the raypaths
-	 *            must be computed.
+	 *
+	 * @param targetDelta [rad] epicentral distance to get T for
+	 * @param raypaths    Polynomial interpolation is done with these. All the raypaths
+	 *                    must be computed.
 	 * @return travel time [s] for the target Delta estimated by the polynomial
-	 *         interpolation with the raypaths.
-	 * 
+	 * interpolation with the raypaths.
 	 */
 	private static Raypath interpolateRaypath(Phase targetPhase, double eventR, double targetDelta,
-			Raypath... raypaths) {
+											  Raypath... raypaths) {
 		WeightedObservedPoints deltaP = new WeightedObservedPoints();
 		for (int i = 0; i < raypaths.length; i++)
 			deltaP.add(raypaths[i].computeDelta(eventR, targetPhase), raypaths[i].getRayParameter());
@@ -503,10 +479,8 @@ public class RaypathCatalog implements Serializable {
 	}
 
 	/**
-	 * @param path
-	 *            the path to the output file
-	 * @throws IOException
-	 *             If an I/O error happens. it throws error.
+	 * @param path the path to the output file
+	 * @throws IOException If an I/O error happens. it throws error.
 	 */
 	public void write(Path path, OpenOption... options) throws IOException {
 		try (ObjectOutputStream o = new ObjectOutputStream(Files.newOutputStream(path, options))) {
@@ -515,12 +489,9 @@ public class RaypathCatalog implements Serializable {
 	}
 
 	/**
-	 * @param targetPhase
-	 *            target phase
-	 * @param eventR
-	 *            [km] event radius
-	 * @param targetDelta
-	 *            [rad] target &Delta;
+	 * @param targetPhase target phase
+	 * @param eventR      [km] event radius
+	 * @param targetDelta [rad] target &Delta;
 	 * @return Never returns null. zero length array is possible.
 	 */
 	public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta) {
@@ -530,8 +501,8 @@ public class RaypathCatalog implements Serializable {
 		// + Precision.round(Math.toDegrees(targetDelta), 4));
 
 		if (targetPhase.isDiffracted())
-			return new Raypath[] { targetPhase.toString().contains("Pdiff") ? getPdiff()
-					: (targetPhase.isPSV() ? getSVdiff() : getSHdiff()) };
+			return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() : (targetPhase
+					.isPSV() ? getSVdiff() : getSHdiff())};
 
 		List<Raypath> pathList = new ArrayList<>();
 		for (int i = 0; i < raypaths.length - 1; i++) {
@@ -539,30 +510,23 @@ public class RaypathCatalog implements Serializable {
 			Raypath rayP = raypaths[i + 1];
 			double deltaI = rayI.computeDelta(eventR, targetPhase);
 			double deltaP = rayP.computeDelta(eventR, targetPhase);
-			if (Double.isNaN(deltaI) || Double.isNaN(deltaP))
-				continue;
-			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta))
-				continue;
+			if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
+			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
 			Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
 			rayC.compute();
 			double deltaC = rayC.computeDelta(eventR, targetPhase);
-			if (Double.isNaN(deltaC))
-				continue;
+			if (Double.isNaN(deltaC)) continue;
 			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
-			if (Double.isNaN(rayIn.computeDelta(eventR, targetPhase)))
-				continue;
+			if (Double.isNaN(rayIn.computeDelta(eventR, targetPhase))) continue;
 			pathList.add(rayIn);
 		}
 		return pathList.toArray(new Raypath[0]);
 	}
 
 	/**
-	 * @param targetPhase
-	 *            target phase
-	 * @param eventR
-	 *            [km] event radius
-	 * @param targetDelta
-	 *            [rad] target &Delta;
+	 * @param targetPhase target phase
+	 * @param eventR      [km] event radius
+	 * @param targetDelta [rad] target &Delta;
 	 */
 	public double[] searchTime(Phase targetPhase, double eventR, double targetDelta) {
 		// System.err.println("Looking for Phase:" + targetPhase + ",
@@ -575,17 +539,14 @@ public class RaypathCatalog implements Serializable {
 			Raypath rayP = raypaths[i + 1];
 			double deltaI = rayI.computeDelta(eventR, targetPhase);
 			double deltaP = rayP.computeDelta(eventR, targetPhase);
-			if (Double.isNaN(deltaI) || Double.isNaN(deltaP))
-				continue;
-			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta))
-				continue;
+			if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
+			if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
 			Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
 			rayC.compute();
 			Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
 			double deltaC = rayC.computeDelta(eventR, targetPhase);
 			double deltaIn = rayIn.computeDelta(eventR, targetPhase);
-			if (Double.isNaN(deltaC) || Double.isNaN(deltaIn))
-				continue;
+			if (Double.isNaN(deltaC) || Double.isNaN(deltaIn)) continue;
 			timeList.add(interpolateTraveltime(targetPhase, eventR, targetDelta, rayI, rayC, rayP, rayIn));
 		}
 		return timeList.stream().mapToDouble(Double::doubleValue).toArray();
@@ -595,18 +556,15 @@ public class RaypathCatalog implements Serializable {
 	 * Assume that there is a regression curve f(&Delta;) = T for the small
 	 * range. The function f is assumed to be a polynomial function. The degree
 	 * of the function depends on the number of the input raypaths.
-	 * 
-	 * @param targetDelta
-	 *            [rad] epicentral distance to get T for
-	 * @param raypaths
-	 *            Polynomial interpolation is done with these. All the raypaths
-	 *            must be computed.
+	 *
+	 * @param targetDelta [rad] epicentral distance to get T for
+	 * @param raypaths    Polynomial interpolation is done with these. All the raypaths
+	 *                    must be computed.
 	 * @return travel time [s] for the target Delta estimated by the polynomial
-	 *         interpolation with the raypaths.
-	 * 
+	 * interpolation with the raypaths.
 	 */
 	private static double interpolateTraveltime(Phase targetPhase, double eventR, double targetDelta,
-			Raypath... raypaths) {
+												Raypath... raypaths) {
 		WeightedObservedPoints deltaTime = new WeightedObservedPoints();
 		for (int i = 0; i < raypaths.length; i++)
 			deltaTime.add(raypaths[i].computeDelta(eventR, targetPhase), raypaths[i].computeT(eventR, targetPhase));
@@ -616,14 +574,10 @@ public class RaypathCatalog implements Serializable {
 	}
 
 	/**
-	 * @param delta
-	 *            [deg]
-	 * @param raypath0
-	 *            source of raypath
-	 * @param eventR
-	 *            radius of the source [km]
-	 * @param phase
-	 *            to look for
+	 * @param delta    [deg]
+	 * @param raypath0 source of raypath
+	 * @param eventR   radius of the source [km]
+	 * @param phase    to look for
 	 * @return travel time for delta [s]
 	 */
 	double travelTimeByThreePointInterpolate(double delta, Raypath raypath0, double eventR, Phase phase) {
@@ -633,12 +587,11 @@ public class RaypathCatalog implements Serializable {
 		Raypath higher = raypathList.higher(raypath0);
 		double lowerDelta = lower.computeDelta(eventR, phase);
 		double higherDelta = higher.computeDelta(eventR, phase);
-		if(Double.isNaN(lowerDelta)|| Double.isNaN(higherDelta))
-			return Double.NaN;
+		if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
 		// delta1<delta0<delta2 or delta2<delta0<delta1
-		double[] p = new double[] { delta0, lowerDelta, higherDelta };
-		double[] time = new double[] { raypath0.computeT(eventR, phase), lower.computeT(eventR, phase),
-				higher.computeT(eventR, phase), };
+		double[] p = new double[]{delta0, lowerDelta, higherDelta};
+		double[] time = new double[]{raypath0.computeT(eventR, phase), lower.computeT(eventR, phase), higher.computeT(
+				eventR, phase),};
 		Trace t = new Trace(p, time);
 		return t.toValue(2, delta);
 	}
