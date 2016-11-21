@@ -37,13 +37,10 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
 /**
- * 
  * Let's invert
- * 
- * @version 2.0.3.3
- * 
+ *
  * @author Kensuke Konishi
- * 
+ * @version 2.0.3.3
  */
 public class LetMeInvert implements Operation {
 	/**
@@ -84,8 +81,7 @@ public class LetMeInvert implements Operation {
 	private ObservationEquation eq;
 
 	private void checkAndPutDefaults() {
-		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+		if (!property.containsKey("workPath")) property.setProperty("workPath", "");
 		if (!property.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
 		if (!property.containsKey("waveIDPath"))
@@ -96,28 +92,23 @@ public class LetMeInvert implements Operation {
 			throw new IllegalArgumentException("There is no information about 'partialIDPath'.");
 		if (!property.containsKey("partialPath"))
 			throw new IllegalArgumentException("There is no information about 'partialPath'.");
-		if (!property.containsKey("inverseMethods"))
-			property.setProperty("inverseMethods", "CG SVD");
+		if (!property.containsKey("inverseMethods")) property.setProperty("inverseMethods", "CG SVD");
 	}
 
 	private void set() {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
-		if (!Files.exists(workPath))
-			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-		if (property.containsKey("outPath"))
-			outPath = getPath("outPath");
-		else
-			outPath = workPath.resolve(Paths.get("lmi" + Utilities.getTemporaryString()));
+		if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		if (property.containsKey("outPath")) outPath = getPath("outPath");
+		else outPath = workPath.resolve(Paths.get("lmi" + Utilities.getTemporaryString()));
 		stationInformationPath = getPath("stationInformationPath");
 		waveIDPath = getPath("waveIDPath");
 		waveformPath = getPath("waveformPath");
 		partialPath = getPath("partialPath");
 		partialIDPath = getPath("partialIDPath");
 		unknownParameterListPath = getPath("unknownParameterListPath");
-		if (property.containsKey("alpha"))
-			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
-					.toArray();
+		if (property.containsKey("alpha")) alpha =
+				Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
 				.collect(Collectors.toSet());
 	}
@@ -163,15 +154,14 @@ public class LetMeInvert implements Operation {
 	public LetMeInvert(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
-		if (!canGO())
-			throw new RuntimeException();
+		if (!canGO()) throw new RuntimeException();
 		setEquation();
 	}
 
 	public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
 		eq = equation;
 		this.stationSet = stationSet;
-		workPath.resolve("lmi" + Utilities.getTemporaryString());
+		outPath = workPath.resolve("lmi" + Utilities.getTemporaryString());
 		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 	}
 
@@ -199,8 +189,7 @@ public class LetMeInvert implements Operation {
 	private Future<Void> output() throws IOException {
 		// // ステーションの情報の読み込み
 		System.err.print("reading station Information");
-		if (stationSet == null)
-			stationSet = StationInformationFile.read(stationInformationPath);
+		if (stationSet == null) stationSet = StationInformationFile.read(stationInformationPath);
 		System.err.println(" done");
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {
@@ -222,8 +211,7 @@ public class LetMeInvert implements Operation {
 		try {
 			System.err.println("The output folder: " + outPath);
 			Files.createDirectory(outPath);
-			if (property != null)
-				writeProperties(outPath.resolve("lmi.properties"));
+			if (property != null) writeProperties(outPath.resolve("lmi.properties"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Can not create " + outPath);
@@ -252,22 +240,19 @@ public class LetMeInvert implements Operation {
 
 	/**
 	 * outDirectory下にtraceフォルダを作りその下に理論波形と観測波形を書き込む
-	 * 
-	 * @param outPath
-	 *            {@link Path} for output folder
-	 * @throws IOException
-	 *             if an I/O error occurs
+	 *
+	 * @param outPath {@link Path} for output folder
+	 * @throws IOException if an I/O error occurs
 	 */
 	public void outEachTrace(Path outPath) throws IOException {
-		if (Files.exists(outPath))
-			throw new FileAlreadyExistsException(outPath.toString());
+		if (Files.exists(outPath)) throw new FileAlreadyExistsException(outPath.toString());
 		Files.createDirectories(outPath);
 		Dvector d = eq.getDVector();
 
 		Path eventPath = outPath.resolve("eventVariance.inf");
 		Path stationPath = outPath.resolve("stationVariance.inf");
 		try (PrintWriter pwEvent = new PrintWriter(Files.newBufferedWriter(eventPath));
-				PrintWriter pwStation = new PrintWriter(Files.newBufferedWriter(stationPath))) {
+			 PrintWriter pwStation = new PrintWriter(Files.newBufferedWriter(stationPath))) {
 			pwEvent.println("#id latitude longitude radius variance");
 			d.getEventVariance().entrySet().forEach(entry -> {
 				pwEvent.println(
@@ -275,8 +260,9 @@ public class LetMeInvert implements Operation {
 			});
 			pwStation.println("#name network latitude longitude variance");
 			d.getStationVariance().entrySet().forEach(entry -> {
-				pwStation.println(entry.getKey() + " " + entry.getKey().getNetwork() + " "
-						+ entry.getKey().getPosition() + " " + entry.getValue());
+				pwStation.println(
+						entry.getKey() + " " + entry.getKey().getNetwork() + " " + entry.getKey().getPosition() + " " +
+								entry.getValue());
 			});
 
 		}
@@ -289,12 +275,12 @@ public class LetMeInvert implements Operation {
 			Path wa = eventFolder.resolve("recordWa.plt");
 			try (PrintWriter plotO = new PrintWriter(
 					Files.newBufferedWriter(obs, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotS = new PrintWriter(
-							Files.newBufferedWriter(syn, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotW = new PrintWriter(
-							Files.newBufferedWriter(w, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotWa = new PrintWriter(
-							Files.newBufferedWriter(wa, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+				 PrintWriter plotS = new PrintWriter(
+						 Files.newBufferedWriter(syn, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+				 PrintWriter plotW = new PrintWriter(
+						 Files.newBufferedWriter(w, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+				 PrintWriter plotWa = new PrintWriter(
+						 Files.newBufferedWriter(wa, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
 				plotW.println("set title\"" + id + "\"");
 				plotW.print("p ");
@@ -320,13 +306,14 @@ public class LetMeInvert implements Operation {
 			for (int i = 0; i < d.getNTimeWindow(); i++) {
 				double variance = delVec[i].dotProduct(delVec[i]) / obsVec[i].dotProduct(obsVec[i]);
 				double correlation = obsVec[i].dotProduct(synVec[i]) / obsVec[i].getNorm() / synVec[i].getNorm();
-				pw1.println(i + " " + obsIDs[i].getStation() + " " + obsIDs[i].getStation().getNetwork() + " "
-						+ obsIDs[i].getGlobalCMTID() + " " + variance + " " + correlation);
+				pw1.println(i + " " + obsIDs[i].getStation() + " " + obsIDs[i].getStation().getNetwork() + " " +
+						obsIDs[i].getGlobalCMTID() + " " + variance + " " + correlation);
 			}
 		}
 		for (int i = 0; i < d.getNTimeWindow(); i++) {
-			String name = obsIDs[i].getStation() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent()
-					+ "." + i + ".txt";
+			String name =
+					obsIDs[i].getStation() + "." + obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() +
+							"." + i + ".txt";
 
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
@@ -340,38 +327,41 @@ public class LetMeInvert implements Operation {
 			Path plotPath4 = eventFolder.resolve("recordWa.plt");
 			Path tracePath = eventFolder.resolve(name);
 			try (PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath));
-					PrintWriter plotO = new PrintWriter(
-							Files.newBufferedWriter(plotPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotS = new PrintWriter(
-							Files.newBufferedWriter(plotPath2, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotW = new PrintWriter(
-							Files.newBufferedWriter(plotPath3, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotWa = new PrintWriter(
-							Files.newBufferedWriter(plotPath4, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+				 PrintWriter plotO = new PrintWriter(
+						 Files.newBufferedWriter(plotPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+				 PrintWriter plotS = new PrintWriter(
+						 Files.newBufferedWriter(plotPath2, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+				 PrintWriter plotW = new PrintWriter(
+						 Files.newBufferedWriter(plotPath3, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+				 PrintWriter plotWa = new PrintWriter(
+						 Files.newBufferedWriter(plotPath4, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
 				if (i < (d.getNTimeWindow() - 1)) {
 					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
 					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
-					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
-					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+					plotW.println(
+							"\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name + "\" u 2:($4+" +
+									gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name +
+							"\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
 				} else {
 
 					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
 					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
-					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
-					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+					plotW.println(
+							"\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name + "\" u 2:($4+" +
+									gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name +
+							"\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
 				}
 				double obsStart = obsIDs[i].getStartTime();
 				double synStart = synIDs[i].getStartTime();
 				double samplingHz = obsIDs[i].getSamplingHz();
 				pwTrace.println("#obstime syntime obs syn");
-				for (int j = 0; j < obsIDs[i].getNpts(); j++)
-					pwTrace.println((obsStart + j / samplingHz) + " " + (synStart + j / samplingHz) + " "
-							+ obsVec[i].getEntry(j) + " " + synVec[i].getEntry(j));
+				for (int j = 0; j < obsIDs[i].getNpts(); j++) {
+					pwTrace.println((obsStart + j / samplingHz) + " " + (synStart + j / samplingHz) + " " +
+							obsVec[i].getEntry(j) + " " + synVec[i].getEntry(j));
+				}
 			}
 		}
 
@@ -379,23 +369,19 @@ public class LetMeInvert implements Operation {
 
 	/**
 	 * vectorsをidの順の波形だとしてファイルに書き込む
-	 * 
-	 * @param outPath
-	 *            {@link File} for output
-	 * @param vectors
-	 *            {@link RealVector}s for output
-	 * @throws IOException
-	 *             if an I/O error occurs
+	 *
+	 * @param outPath {@link File} for output
+	 * @param vectors {@link RealVector}s for output
+	 * @throws IOException if an I/O error occurs
 	 */
 	public void outEachTrace(Path outPath, RealVector[] vectors) throws IOException {
 		// if (outDirectory.exists())
 		// return;
 		int nTimeWindow = eq.getDVector().getNTimeWindow();
-		if (vectors.length != nTimeWindow)
-			return;
-		for (int i = 0; i < nTimeWindow; i++)
-			if (vectors[i].getDimension() != eq.getDVector().getSynVec()[i].getDimension())
-				return;
+		if (vectors.length != nTimeWindow) return;
+		for (int i = 0; i < nTimeWindow; i++) {
+			if (vectors[i].getDimension() != eq.getDVector().getSynVec()[i].getDimension()) return;
+		}
 		Files.createDirectories(outPath);
 		for (GlobalCMTID id : eq.getDVector().getUsedGlobalCMTIDset()) {
 			Path eventPath = outPath.resolve(id.toString());
@@ -404,8 +390,8 @@ public class LetMeInvert implements Operation {
 			Path recorda = eventPath.resolve("recorda.plt");
 			try (PrintWriter pw = new PrintWriter(
 					Files.newBufferedWriter(record, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter pwa = new PrintWriter(
-							Files.newBufferedWriter(recorda, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+				 PrintWriter pwa = new PrintWriter(
+						 Files.newBufferedWriter(recorda, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 				pw.println("set title\"" + id + "\"");
 				pw.print("p ");
 				pwa.println("set title\"" + id + "\"");
@@ -415,24 +401,24 @@ public class LetMeInvert implements Operation {
 		BasicID[] obsIDs = eq.getDVector().getObsIDs();
 		BasicID[] synIDs = eq.getDVector().getSynIDs();
 		for (int i = 0; i < nTimeWindow; i++) {
-			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getStation() + "."
-					+ obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
+			Path out = outPath.resolve(
+					obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getStation() + "." + obsIDs[i].getGlobalCMTID() + "." +
+							obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
 			Path plotFile = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/record.plt");
 			Path plotFilea = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/recorda.plt");
 			HorizontalPosition eventLoc = obsIDs[i].getGlobalCMTID().getEvent().getCmtLocation();
 			HorizontalPosition stationPos = obsIDs[i].getStation().getPosition();
 			double gcarc = Precision.round(Math.toDegrees(eventLoc.getEpicentralDistance(stationPos)), 2);
 			double azimuth = Precision.round(Math.toDegrees(eventLoc.getAzimuth(stationPos)), 2);
-			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out));
-					PrintWriter plotW = new PrintWriter(
-							Files.newBufferedWriter(plotFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-					PrintWriter plotWa = new PrintWriter(
-							Files.newBufferedWriter(plotFilea, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out)); PrintWriter plotW = new PrintWriter(
+					Files.newBufferedWriter(plotFile, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+				 PrintWriter plotWa = new PrintWriter(
+						 Files.newBufferedWriter(plotFilea, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
-				plotW.println("\"" + out.getFileName() + "\" u 2:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation()
-						+ "\", \\");
-				plotWa.println("\"" + out.getFileName() + "\" u 2:($3+" + azimuth + ") ti\"" + obsIDs[i].getStation()
-						+ "\", \\");
+				plotW.println("\"" + out.getFileName() + "\" u 2:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() +
+						"\", \\");
+				plotWa.println("\"" + out.getFileName() + "\" u 2:($3+" + azimuth + ") ti\"" + obsIDs[i].getStation() +
+						"\", \\");
 				pw.println("#syntime synthetic+");
 				for (int j = 0; j < vectors[i].getDimension(); j++) {
 					double step = j * obsIDs[i].getSamplingHz();
@@ -447,8 +433,7 @@ public class LetMeInvert implements Operation {
 	private void solve() {
 		inverseMethods.forEach(method -> {
 			try {
-				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD)
-					return; // TODO
+				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD) return; // TODO
 				solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -464,15 +449,14 @@ public class LetMeInvert implements Operation {
 
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
 		RealMatrix p = inverseProblem.getBaseVectors();
-		for (int j = 0; j < eq.getMlength(); j++)
+		for (int j = 0; j < eq.getMlength(); j++) {
 			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
+		}
 	}
 
 	/**
-	 * @param args
-	 *            [parameter file name]
-	 * @throws IOException
-	 *             if an I/O error occurs
+	 * @param args [parameter file name]
+	 * @throws IOException if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
 		LetMeInvert lmi = new LetMeInvert(Property.parse(args));
@@ -485,21 +469,20 @@ public class LetMeInvert implements Operation {
 
 	/**
 	 * outDirectory下にvarianceを書き込む
-	 * 
+	 *
 	 * @param outPath
 	 */
 	private void outVariance(Path outPath, InverseProblem inverse) throws IOException {
 
 		Path out = outPath.resolve("variance.txt");
-		if (Files.exists(out))
-			throw new FileAlreadyExistsException(out.toString());
+		if (Files.exists(out)) throw new FileAlreadyExistsException(out.toString());
 		double[] variance = new double[eq.getMlength() + 1];
 		variance[0] = eq.getDVector().getVariance();
-		for (int i = 0; i < eq.getMlength(); i++)
+		for (int i = 0; i < eq.getMlength(); i++) {
 			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+		}
 		writeDat(out, variance);
-		if (alpha == null)
-			return;
+		if (alpha == null) return;
 		for (int i = 0; i < alpha.length; i++) {
 			out = outPath.resolve("aic" + i + ".txt");
 			double[] aic = computeAIC(variance, alpha[i]);
@@ -510,17 +493,17 @@ public class LetMeInvert implements Operation {
 
 	/**
 	 * 自由度iに対してAICを計算する 独立データは n / alpha 各々のAIC群
-	 * 
-	 * @param variance
-	 *            varianceの列
+	 *
+	 * @param variance varianceの列
 	 * @param alpha
 	 * @return
 	 */
 	private double[] computeAIC(double[] variance, double alpha) {
 		double[] aic = new double[variance.length];
 		int independentN = (int) (eq.getDlength() / alpha);
-		for (int i = 0; i < aic.length; i++)
+		for (int i = 0; i < aic.length; i++) {
 			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
+		}
 		return aic;
 	}
 
@@ -574,11 +557,9 @@ public class LetMeInvert implements Operation {
 
 	/**
 	 * station と 震源の位置関係の出力
-	 * 
-	 * @param outPath
-	 *            {@link File} for output
-	 * @throws IOException
-	 *             if an I/O error occurs
+	 *
+	 * @param outPath {@link File} for output
+	 * @throws IOException if an I/O error occurs
 	 */
 	public void outputDistribution(Path outPath) throws IOException {
 
@@ -588,12 +569,12 @@ public class LetMeInvert implements Operation {
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTData event = id.getGlobalCMTID().getEvent();
 				Station station = id.getStation();
-				double epicentralDistance = Math
-						.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
+				double epicentralDistance =
+						Math.toDegrees(station.getPosition().getEpicentralDistance(event.getCmtLocation()));
 				double azimuth = Math.toDegrees(station.getPosition().getAzimuth(event.getCmtLocation()));
-				pw.println(
-						station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " " + event.getCmtLocation()
-								+ " " + Precision.round(epicentralDistance, 2) + " " + Precision.round(azimuth, 2));
+				pw.println(station + " " + station.getPosition() + " " + id.getGlobalCMTID() + " " +
+						event.getCmtLocation() + " " + Precision.round(epicentralDistance, 2) + " " +
+						Precision.round(azimuth, 2));
 			});
 
 		}
