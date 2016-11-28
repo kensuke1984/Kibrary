@@ -445,9 +445,9 @@ public class GlobalCMTSearch {
 	 * Set Mw Range
 	 * 
 	 * @param lowerMw
-	 *            lower limit of Mw range
+	 *            minimum (included) of Mw range
 	 * @param upperMw
-	 *            upper limit of Mw range
+	 *            maximum (included) of Mw range
 	 */
 	public void setMwRange(double lowerMw, double upperMw) {
 		if (upperMw < lowerMw)

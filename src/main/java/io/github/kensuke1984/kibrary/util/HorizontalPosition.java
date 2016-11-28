@@ -34,10 +34,11 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((latitude == null) ? 0 : latitude.hashCode());
-		result = prime * result + ((longitude == null) ? 0 : longitude.hashCode());
+//		final int prime = 31;
+//		int result = 1;
+//		result = prime * result + ((latitude == null) ? 0 : latitude.hashCode());
+//		result = prime * result + ((longitude == null) ? 0 : longitude.hashCode());
+		int result = 31415 * (int) longitude.getLongitude() * (int) latitude.getLatitude();
 		return result;
 	}
 
@@ -53,16 +54,16 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 		if (latitude == null) {
 			if (other.latitude != null)
 				return false;
-		} else if (!latitude.equals(other.latitude))
+		} else if (latitude.equals(other.latitude))
 			return false;
 		if (longitude == null) {
 			if (other.longitude != null)
 				return false;
-		} else if (!longitude.equals(other.longitude))
+		} else if (longitude.equals(other.longitude))
 			return false;
 		return true;
 	}
-
+	
 	/**
 	 * @param r
 	 *            [km] radius

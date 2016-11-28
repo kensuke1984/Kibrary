@@ -41,7 +41,7 @@ class Latitude implements Comparable<Latitude> {
 		if (getClass() != obj.getClass())
 			return false;
 		Latitude other = (Latitude) obj;
-		if (Double.doubleToLongBits(geographicLatitude) != Double.doubleToLongBits(other.geographicLatitude))
+		if (Utilities.equalWithinEpsilon(geographicLatitude, other.geographicLatitude, eps))
 			return false;
 		return true;
 	}
@@ -49,7 +49,7 @@ class Latitude implements Comparable<Latitude> {
 	/**
 	 * Geographic latitude 地理緯度 [-90, 90]
 	 */
-	private double geographicLatitude;
+	private float geographicLatitude;
 
 	/**
 	 * 地心緯度 [-90, 90]
@@ -62,15 +62,20 @@ class Latitude implements Comparable<Latitude> {
 	private double theta;
 
 	private double inGeographicLatitude;
+	
+	/**
+	 * epsilon to test equality within a range for this.latitude 
+	 */
+	private final float eps = 0.001f;
 
 	/**
 	 * @param 地理緯度
 	 *            [deg] geographicLatitude [-90, 90]
-	 *            The geographical latitude is rounded to 2 decimal places
+	 *            The geographical latitude is rounded to 4 decimal places
 	 */
 	Latitude(double geographicLatitude) {
 		inGeographicLatitude = geographicLatitude;
-		this.geographicLatitude = Precision.round(geographicLatitude, 2);
+		this.geographicLatitude = (float) inGeographicLatitude;
 		if (!checkLatitude(geographicLatitude))
 			throw new IllegalArgumentException(
 					"The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
@@ -95,7 +100,7 @@ class Latitude implements Comparable<Latitude> {
 	/**
 	 * @return geographic latitude [deg] 地理緯度
 	 */
-	public double getLatitude() {
+	public float getLatitude() {
 		return geographicLatitude;
 	}
 

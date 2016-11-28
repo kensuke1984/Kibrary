@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -44,9 +45,14 @@ public class PartialID extends BasicID {
 
 	@Override
 	public String toString() {
-		return STATION + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " "
-				+ START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " " + START_BYTE + " " + CONVOLUTE + " "
+		String partialString = STATION.getStationName() + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " "
+				+ START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " ";
+		for (int i = 0; i < PHASES.length - 1; i++)
+			partialString += PHASES[i] + ",";
+		partialString += PHASES[PHASES.length - 1];
+		partialString += " " + START_BYTE + " " + CONVOLUTE + " "
 				+ pointLocation + " " + partialType;
+		return partialString;
 	}
 
 	/**
@@ -58,12 +64,12 @@ public class PartialID extends BasicID {
 	 * パラメタの種類
 	 */
 	protected final PartialType partialType;
-
+	
 	public PartialID(Station station, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
-			double startTime, int npts, double minPeriod, double maxPeriod, long startByte, boolean isConvolved,
+			double startTime, int npts, double minPeriod, double maxPeriod, Phase[] phases, long startByte, boolean isConvolved,
 			Location perturbationLocation, PartialType partialType, double... waveformData) {
 		super(WaveformType.PARTIAL, samplingHz, startTime, npts, station, eventID, sacComponent, minPeriod, maxPeriod,
-				startByte, isConvolved, waveformData);
+				phases, startByte, isConvolved, waveformData);
 		this.partialType = partialType;
 		this.pointLocation = perturbationLocation;
 	}
@@ -112,7 +118,7 @@ public class PartialID extends BasicID {
 	@Override
 	public PartialID setData(double[] data) {
 		return new PartialID(STATION, ID, COMPONENT, SAMPLINGHZ, START_TIME, NPTS, MIN_PERIOD, MAX_PERIOD,
-				START_BYTE, CONVOLUTE, pointLocation, partialType, data);
+				PHASES, START_BYTE, CONVOLUTE, pointLocation, partialType, data);
 	}
 
 }

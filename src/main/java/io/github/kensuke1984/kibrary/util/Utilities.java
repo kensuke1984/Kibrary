@@ -323,5 +323,14 @@ public final class Utilities {
 		int decimalInt = (int) Math.round(decimal);
 		return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
 	}
+	
+	public static boolean equalWithinEpsilon(float v1, float v2, float eps) {
+		if (v1 > v2 && v1 - v2 > eps)
+			return false;
+		else if (v1 < v2 && v2 - v1 > eps)
+			return false;
+		else
+			return true;
+	}
 
 }

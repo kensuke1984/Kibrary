@@ -19,7 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
@@ -225,6 +227,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private Set<EventFolder> eventDirs;
 	private Set<Station> stationSet;
 	private Set<GlobalCMTID> idSet;
+	private Phase[] phases;
 	private double[][] periodRanges;
 
 	private void readPeriodRanges() {
@@ -259,7 +262,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 *             if any
 	 */
 	public static void main(String[] args) throws Exception {
-
 		Properties property = new Properties();
 		if (args.length == 0)
 			property.load(Files.newBufferedReader(Operation.findPath()));
@@ -289,6 +291,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				.collect(Collectors.toSet());
 		idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)
 				.collect(Collectors.toSet());
+		phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+				.distinct().toArray(Phase[]::new);
 		readPeriodRanges();
 
 		int n = Runtime.getRuntime().availableProcessors();
@@ -297,7 +301,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		Path waveIDPath = workPath.resolve("waveformID" + dateStr + ".dat");
 		Path waveformPath = workPath.resolve("waveform" + dateStr + ".dat");
 		try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
-				periodRanges)) {
+				periodRanges, phases)) {
 			dataWriter = bdw;
 			for (EventFolder eventDir : eventDirs)
 				execs.execute(new Worker(eventDir));
@@ -367,7 +371,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				// タイムウインドウの情報が入っていなければ次へ
 				if (windows.isEmpty())
 					continue;
-
+				
 				SACData obsSac;
 				try {
 					obsSac = obsFileName.read();
@@ -428,12 +432,14 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double[] obsData = cutDataSac(obsSac, startTime - shift, npts);
 					double[] synData = cutDataSac(synSac, startTime, npts);
 					double correctionRatio = ratio;
+					
+					Phase[] includePhases = window.getPhases();
 
 					obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
 					BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
-							component, minPeriod, maxPeriod, 0, convolute, synData);
+							component, minPeriod, maxPeriod, includePhases, 0, convolute, synData);
 					BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
-							component, minPeriod, maxPeriod, 0, convolute, obsData);
+							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsData);
 					try {
 						dataWriter.addBasicID(obsID);
 						dataWriter.addBasicID(synID);

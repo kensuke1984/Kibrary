@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -56,9 +57,14 @@ public class BasicID {
 
 	@Override
 	public String toString() {
-		return STATION + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
-				+ COMPONENT + " " + TYPE + " " + +START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
-				+ " " + MAX_PERIOD + " " + START_BYTE + " " + CONVOLUTE;
+		String basicString = STATION.getStationName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
+				+ COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
+				+ " " + MAX_PERIOD + " ";
+		for (int i = 0; i < PHASES.length - 1; i++)
+			basicString += PHASES[i] + ",";
+		basicString += PHASES[PHASES.length - 1];
+		basicString += " " + START_BYTE + " " + CONVOLUTE;
+		return basicString;
 	}
 
 	@Override
@@ -138,6 +144,8 @@ public class BasicID {
 	protected final GlobalCMTID ID;
 
 	protected final SACComponent COMPONENT;
+	
+	protected final Phase[] PHASES;
 
 	/**
 	 * [s] if the data has not been applied a filter, 0
@@ -200,6 +208,10 @@ public class BasicID {
 	public double getMaxPeriod() {
 		return MAX_PERIOD;
 	}
+	
+	public Phase[] getPhases() {
+		return PHASES;
+	}
 
 	/**
 	 * If this is 100, then the data for this ID starts from 100 th byte  in the file.
@@ -231,7 +243,7 @@ public class BasicID {
 	 * @param waveformData the waveform data for this ID.
 	 */
 	public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Station station,
-			GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, long startByte,
+			GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases, long startByte,
 			boolean convolute, double... waveformData) {
 		TYPE = waveFormType;
 		SAMPLINGHZ = Precision.round(samplingHz, 3);
@@ -240,6 +252,7 @@ public class BasicID {
 		STATION = station;
 		ID = globalCMTID;
 		COMPONENT = sacComponent;
+		PHASES = phases;
 		MIN_PERIOD = Precision.round(minPeriod, 3);
 		MAX_PERIOD = Precision.round(maxPeriod, 3);
 		START_BYTE = startByte;
@@ -267,7 +280,7 @@ public class BasicID {
 	 */
 	public BasicID setData(double[] data) {
 		return new BasicID(TYPE, SAMPLINGHZ, START_TIME, NPTS, STATION, ID, COMPONENT, MIN_PERIOD,
-				MAX_PERIOD, START_BYTE, CONVOLUTE, data);
+				MAX_PERIOD, PHASES, START_BYTE, CONVOLUTE, data);
 	}
 
 }

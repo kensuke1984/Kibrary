@@ -78,5 +78,10 @@ public class Physical1DParameter implements UnknownParameter {
 	public PartialType getPartialType() {
 		return partialType;
 	}
+	
+	@Override
+	public Double getLocation() {
+		return perturbationR;
+	}
 
 }

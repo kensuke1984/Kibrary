@@ -15,6 +15,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -86,6 +87,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 * index map for global CMT IDs
 	 */
 	private Map<GlobalCMTID, Integer> globalCMTIDMap;
+	
+	private Map<Phase, Integer> phaseMap;
 
 	/**
 	 * index map for perturbation location
@@ -116,8 +119,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 *             if an error occurs
 	 */
 	public WaveformDataWriter(Path idPath, Path dataPath, Set<Station> stationSet, Set<GlobalCMTID> globalCMTIDSet,
-			double[][] periodRanges) throws IOException {
-		this(idPath, dataPath, stationSet, globalCMTIDSet, periodRanges, null);
+			double[][] periodRanges, Phase[] phases) throws IOException {
+		this(idPath, dataPath, stationSet, globalCMTIDSet, periodRanges, phases, null);
 	}
 
 	/**
@@ -142,7 +145,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 *             if an error occurs
 	 */
 	public WaveformDataWriter(Path idPath, Path dataPath, Set<Station> stationSet, Set<GlobalCMTID> globalCMTIDSet,
-			double[][] periodRanges, Set<Location> perturbationPoints) throws IOException {
+			double[][] periodRanges, Phase[] phases, Set<Location> perturbationPoints) throws IOException {
 		this.idPath = idPath;
 		this.dataPath = dataPath;
 		if (checkDuplication(periodRanges))
@@ -156,6 +159,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		idStream.writeShort(stationSet.size());
 		idStream.writeShort(globalCMTIDSet.size());
 		idStream.writeShort(periodRanges.length);
+		idStream.writeShort(phases.length);
 		if (perturbationPoints != null)
 			idStream.writeShort(perturbationPoints.size());
 		makeStationMap(stationSet);
@@ -164,6 +168,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
 			idStream.writeFloat((float) periodRanges[i][0]);
 			idStream.writeFloat((float) periodRanges[i][1]);
 		}
+		makePhaseMap(phases);
+		
 		if (perturbationPoints != null)
 			makePerturbationMap(perturbationPoints);
 		mode = perturbationPoints == null ? 0 : 1;
@@ -178,6 +184,15 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		}
 	}
 
+	private void makePhaseMap(Phase[] phases) throws IOException {
+		int i = 0;
+		phaseMap = new HashMap<>();
+		for (Phase phase : phases)	{
+			phaseMap.put(phase, i++);
+			idStream.writeBytes(StringUtils.rightPad(phase.toString(), 16));
+		}
+	}
+	
 	private void makePerturbationMap(Set<Location> perturbationMap) throws IOException {
 		int i = 0;
 		perturbationLocationMap = new HashMap<>();
@@ -235,7 +250,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	 */
 	public synchronized void addBasicID(BasicID basicID) throws IOException {
 		if (mode != 0)
-			throw new RuntimeException("No BasicID please, would you.");
+			throw new RuntimeException("BasicID please, would you.");
 
 		switch (basicID.TYPE) {
 		case OBS:
@@ -253,7 +268,15 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		idStream.writeShort(globalCMTIDMap.get(basicID.ID));
 		idStream.writeByte(basicID.COMPONENT.valueOf());
 		idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
-
+		Phase[] phases = basicID.PHASES;
+		for (int i = 0; i < 10; i++) { // 10 * 2 Byte
+			if (i < phases.length) {
+				idStream.writeShort(phaseMap.get(phases[i]));
+			}
+			else
+				idStream.writeShort(-1);
+		}
+		
 		// 4Byte * 3
 		idStream.writeFloat((float) basicID.getStartTime()); // start time 
 		idStream.writeInt(basicID.getNpts()); // number of points
@@ -292,6 +315,14 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		idStream.writeShort(globalCMTIDMap.get(partialID.ID));
 		idStream.writeByte(partialID.COMPONENT.valueOf());
 		idStream.writeByte(getIndexOfRange(partialID.MIN_PERIOD, partialID.MAX_PERIOD));
+		Phase[] phases = partialID.PHASES;
+		for (int i = 0; i < 10; i++) { // 10 * 2 Byte
+			if (i < phases.length) {
+				idStream.writeShort(phaseMap.get(phases[i]));
+			}
+			else
+				idStream.writeShort(-1);
+		}
 		idStream.writeFloat((float) partialID.START_TIME); // start time 4 Byte
 		idStream.writeInt(partialID.NPTS); // データポイント数 4 Byte
 		idStream.writeFloat((float) partialID.SAMPLINGHZ); // sampling Hz 4 Byte

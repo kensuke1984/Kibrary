@@ -28,12 +28,17 @@ class Longitude implements Comparable<Longitude> {
 	/**
 	 * (-180, 180] the geographic longitude. 計算等に使う値
 	 */
-	private double longitude;
+	private float longitude;
 
 	/**
 	 * [0, 2*pi) φ in spherical coordinates.
 	 */
 	private double phi;
+	
+	/**
+	 * epsilon to test equality within a range for this.longitude 
+	 */
+	private final float eps = 0.001f;
 
 	/**
 	 * 
@@ -48,13 +53,11 @@ class Longitude implements Comparable<Longitude> {
 		inLongitude = longitude;
 		if (180 < longitude) {
 			phi = FastMath.toRadians(longitude - 360);
-			this.longitude = -360 + longitude;
+			this.longitude = -360f + (float) longitude;
 		} else {
 			phi = FastMath.toRadians(longitude);
-			this.longitude = longitude;
+			this.longitude = (float) longitude;
 		}
-		this.longitude = Precision.round(this.longitude, 2);
-		this.phi = Precision.round(phi, 2);
 	}
 
 	/**
@@ -86,17 +89,17 @@ class Longitude implements Comparable<Longitude> {
 		if (getClass() != obj.getClass())
 			return false;
 		Longitude other = (Longitude) obj;
-		if (Double.doubleToLongBits(longitude) != Double.doubleToLongBits(other.longitude))
+		if (Utilities.equalWithinEpsilon(longitude, other.longitude, eps))
 			return false;
 		return true;
 	}
-
+	
 	/**
 	 * (-180, 180]
 	 * 
 	 * @return 緯度（度）
 	 */
-	public double getLongitude() {
+	public float getLongitude() {
 		return longitude;
 	}
 

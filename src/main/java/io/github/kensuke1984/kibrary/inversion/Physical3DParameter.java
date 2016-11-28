@@ -84,5 +84,10 @@ public class Physical3DParameter implements UnknownParameter {
 	public PartialType getPartialType() {
 		return partialType;
 	}
+	
+	@Override
+	public Location getLocation() {
+		return pointLocation;
+	}
 
 }

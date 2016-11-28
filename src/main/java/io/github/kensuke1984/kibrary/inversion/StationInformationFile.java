@@ -8,15 +8,22 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+
 import javax.swing.JOptionPane;
 
+
 import org.apache.commons.io.input.CloseShieldInputStream;
+
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -75,8 +82,27 @@ public final class StationInformationFile {
 					throw new RuntimeException("There is duplication in " + infoPath);
 			});
 		}
-		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
-			System.err.println("CAUTION!! Stations with the same name but different positions detected!");
+		if (stationSet.size() != stationSet.stream().map(Station::toString).distinct().count()){
+			System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
+			Map<String, List<Station>> nameToStation = new HashMap<>();
+			stationSet.forEach(sta -> {
+				if (nameToStation.containsKey(sta.toString())) {
+					List<Station> tmp = nameToStation.get(sta.toString());
+					tmp.add(sta);
+					nameToStation.put(sta.toString(), tmp);
+				}
+				else {
+					List<Station> tmp = new ArrayList<>();
+					tmp.add(sta);
+					nameToStation.put(sta.toString(), tmp);
+				}
+			});
+			nameToStation.forEach((name, sta) -> {
+				if (sta.size() > 1) {
+					sta.stream().forEach(s -> System.out.println(s));
+				}
+			});
+		}
 
 		return Collections.unmodifiableSet(stationSet);
 	}
@@ -109,11 +135,29 @@ public final class StationInformationFile {
 			}
 		}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 
-		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
-			System.err.println("CAUTION!! Stations with a same name but different positions detected!");
-
+		if (stationSet.size() != stationSet.stream().map(Station::toString).distinct().count()) {
+			System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
+			Map<String, List<Station>> nameToStation = new HashMap<>();
+			stationSet.forEach(sta -> {
+				if (nameToStation.containsKey(sta.toString())) {
+					List<Station> tmp = nameToStation.get(sta.toString());
+					tmp.add(sta);
+					nameToStation.put(sta.toString(), tmp);
+				}
+				else {
+					List<Station> tmp = new ArrayList<>();
+					tmp.add(sta);
+					nameToStation.put(sta.toString(), tmp);
+				}
+			});
+			nameToStation.forEach((name, sta) -> {
+				if (sta.size() > 1) {
+					sta.stream().forEach(s -> System.out.println(s));
+				}
+			});
+		}
+		
 		write(stationSet, out, options);
-
 	}
 
 	/**

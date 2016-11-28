@@ -51,7 +51,7 @@ public class ConjugateGradientMethod extends InverseProblem {
 	}
 
 
-	public void conjugateGradient() {
+	public void compute() {
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
@@ -59,12 +59,13 @@ public class ConjugateGradientMethod extends InverseProblem {
 		System.err.println("Solving by CG method.");
 		p.setColumnVector(0, atd.mapMultiply(-1));
 		RealVector r = atd; // r_k = Atd -AtAm_k (A35)
-
+		
 		RealVector atap = ata.operate(p.getColumnVector(0));
 
 		a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
 		ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
+		
 		// ///////
 		for (int i = 1; i < ata.getColumnDimension(); i++) {
 			r = r.subtract(atap.mapMultiply(a.getEntry(i - 1)));
@@ -126,11 +127,6 @@ public class ConjugateGradientMethod extends InverseProblem {
 		return covariance;
 	}
 	
-	@Override
-	public void compute() {
-		
-	}
-
 	@Override
 	public RealMatrix getBaseVectors() {
 		return p;

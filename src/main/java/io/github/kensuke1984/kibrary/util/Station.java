@@ -2,6 +2,8 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.math3.util.Precision;
+
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
@@ -36,7 +38,8 @@ public class Station implements Comparable<Station> {
 		if (name != 0)
 			return name;
 		int net = network.compareTo(o.network);
-		return net != 0 ? net : position.compareTo(o.position);
+//		int pos = comparePosition(o) == true ? 0 : 1;
+		return net != 0 ? net : position.compareTo(o.getPosition());
 	}
 
 	/**
@@ -65,8 +68,9 @@ public class Station implements Comparable<Station> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((position == null) ? 0 : position.hashCode());
-		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
+//		result = prime * result + ((position == null) ? 0 : position.hashCode());
+//		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
+		result = 314159 * prime * stationName.hashCode();
 		return result;
 	}
 
@@ -97,6 +101,31 @@ public class Station implements Comparable<Station> {
 			return false;
 		return true;
 	}
+	
+//	private boolean comparePosition(Station other) {
+//		boolean res = true;
+//		boolean warning = false;
+//		String thisLat = String.valueOf(position.getLatitude());
+//		String thisLon = String.valueOf(position.getLongitude());
+//		String otherLat = String.valueOf(other.getPosition().getLatitude());
+//		String otherLon = String.valueOf(other.getPosition().getLongitude());
+//		if (position.getLatitude() != other.getPosition().getLatitude()) {
+//			if (!thisLat.split("\\.")[1].substring(0, 1).equals(otherLat.split(".")[1].substring(0, 1)))
+//				res = false;
+//			else
+//				warning = true;
+//		}
+//		if (res && position.getLongitude() != other.getPosition().getLongitude()) {
+//			if (!thisLon.split("\\.")[1].substring(0, 1).equals(otherLon.split(".")[1].substring(0, 1)))
+//				res = false;
+//			else
+//				warning = true;
+//		}
+//		if (warning)
+//			System.err.println("Warning: stations positions equals to the first decimal but second decimal differ. May need to check it " + this.toString());
+//		
+//		return res;
+//	}
 
 	/**
 	 * the {@link HorizontalPosition} of the station

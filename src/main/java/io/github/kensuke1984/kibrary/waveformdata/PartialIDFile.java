@@ -8,14 +8,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.io.FilenameUtils;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -89,10 +92,11 @@ public final class PartialIDFile {
 			Station[] stations = new Station[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
+			Phase[] phases = new Phase[dis.readShort()];
 			Location[] perturbationLocations = new Location[dis.readShort()];
 			// 4 * short 
-			int headerBytes = 4 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
-					+ 4 * 3 * perturbationLocations.length;
+			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
+					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
 			long idParts = fileSize - headerBytes;
 			if (idParts % oneIDByte != 0)
 				throw new RuntimeException(idPath + " is not valid..");
@@ -111,6 +115,11 @@ public final class PartialIDFile {
 				periodRanges[i][0] = dis.readFloat();
 				periodRanges[i][1] = dis.readFloat();
 			}
+			byte[] phaseBytes = new byte[16];
+			for (int i = 0; i < phases.length; i++) {
+				dis.read(phaseBytes);
+				phases[i] = Phase.create(new String(phaseBytes).trim());
+			}
 			for (int i = 0; i < perturbationLocations.length; i++)
 				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
 			int nid = (int) (idParts / oneIDByte);
@@ -118,11 +127,12 @@ public final class PartialIDFile {
 			
 			long t = System.nanoTime();
 			byte[][] bytes = new byte[nid][oneIDByte];
+			System.out.println(nid);
 			for (int i = 0; i < nid; i++)
 				dis.read(bytes[i]);
 			PartialID[] ids = new PartialID[nid];
 			IntStream.range(0, nid).parallel().forEach(i -> {
-				ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, perturbationLocations);
+				ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, phases, perturbationLocations);
 			});
 			System.err
 					.println(ids.length + " partial IDs are read in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -180,7 +190,7 @@ public final class PartialIDFile {
 	/**
 	 * File size for an ID
 	 */
-	public static final int oneIDByte = 30;
+	public static final int oneIDByte = 50;
 
 	/**
 	 * An ID information contains<br>
@@ -188,6 +198,7 @@ public final class PartialIDFile {
 	 * event number(2)<br>
 	 * component(1)<br>
 	 * period range(1) <br>
+	 * phases numbers (10*2)<br>
 	 * start time(4)<br>
 	 * number of points(4)<br>
 	 * sampling hz(4) <br>
@@ -201,12 +212,20 @@ public final class PartialIDFile {
 	 * @return an ID written in the bytes
 	 */
 	private static PartialID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges,
-			Location[] perturbationLocations) {
+			 Phase[] phases, Location[] perturbationLocations) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		Station station = stations[bb.getShort()];
 		GlobalCMTID eventID = ids[bb.getShort()];
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double[] period = periodRanges[bb.get()];
+		Set<Phase> tmpset = new HashSet<>();
+		for (int i = 0; i < 10; i++) {
+			short iphase = bb.getShort();
+			if (iphase != -1)
+				tmpset.add(phases[iphase]);
+		}
+		Phase[] usablephases = new Phase[tmpset.size()];
+		usablephases = tmpset.toArray(usablephases);
 		double startTime = bb.getFloat(); // starting time
 		int npts = bb.getInt(); // データポイント数
 		double samplingHz = bb.getFloat();
@@ -215,7 +234,7 @@ public final class PartialIDFile {
 		PartialType partialType = PartialType.getType(bb.get());
 		Location perturbationLocation = perturbationLocations[bb.getShort()];
 		PartialID id = new PartialID(station, eventID, component, samplingHz, startTime, npts, period[0], period[1],
-				startByte, isConvolved, perturbationLocation, partialType);
+				usablephases, startByte, isConvolved, perturbationLocation, partialType);
 		return id;
 	}
 

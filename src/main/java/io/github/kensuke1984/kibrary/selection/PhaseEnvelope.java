@@ -127,9 +127,9 @@ public class PhaseEnvelope implements Operation {
 			pw.println("#samplingHz");
 			pw.println("##double dt (s) (0.05)");
 			pw.println("#dt");
-			pw.println("##double maxFrequency (Hz) (0.08)");
+			pw.println("##double maxFrequency (Hz) (0.08). Please set it to the maximum frequency of the bandpass filter you used.");
 			pw.println("#maxFrequency");
-			pw.println("##boolean show time series (false)");
+			pw.println("##boolean show time series (true)");
 			pw.println("#show");
 		}
 	}
@@ -162,7 +162,7 @@ public class PhaseEnvelope implements Operation {
 		if (!property.containsKey("maxFrequency"))
 			property.setProperty("maxFrequency", "0.08");
 		if (!property.containsKey("show"))
-			property.setProperty("show", "false");
+			property.setProperty("show", "true");
 	}
 	
 	private Path workPath;
@@ -266,8 +266,8 @@ public class PhaseEnvelope implements Operation {
 	//									e.printStackTrace();
 	//								}
 									
-									double minLength = Math.max(1.5/maxFrequency, 30.);
-									double[][] timewindows = selectTimewindows(freqIntPE, 0.25/maxFrequency, minLength);
+									double minLength = Math.max(1./maxFrequency, 30.);
+									double[][] timewindows = selectTimewindows(freqIntPE, 0.33/maxFrequency, minLength);
 									if (timewindows != null) {
 			//							for (int i = 0; i < timewindows.length; i++)
 			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
@@ -359,10 +359,10 @@ public class PhaseEnvelope implements Operation {
 			if (frequencyAmplitude == null) {
 				return null;
 			}
-			double sigma = 1. / frequencyAmplitude[0];
+			double sigma = 1. / frequencyAmplitude[0] / 2.3;
 			double spcAmplitude = frequencyAmplitude[1];
-			if (frequencyAmplitude[0] / maxFrequency < .4 || frequencyAmplitude[0] / maxFrequency > 1.3) {
-				System.out.println("Ignoring: dominant frequency strongly differs from maximum frequency " + frequencyAmplitude[0] + "," + maxFrequency);
+			if (frequencyAmplitude[0] / maxFrequency < .4 || frequencyAmplitude[0] / maxFrequency > 1.1) {
+				System.out.println("Ignoring: dominant frequency strongly differs from maximum frequency " + frequencyAmplitude[0] + "," + maxFrequency + " Possible fix: is the maximum frequency you set in the parameter file equal to the maximum frequency of the bandpass filter?");
 				return null;
 			}
 			else {
@@ -596,7 +596,14 @@ public class PhaseEnvelope implements Operation {
 			double distance = sd.getEventLocation().getEpicentralDistance(sd.getStation().getPosition())
 				* 180 / Math.PI;
 			double eventR = sd.getEventLocation().getR();
-			Set<TauPPhase> taupPhaseSet = TauPTimeReader.getTauPPhase(eventR, distance, Phase.S, Phase.create("Sdiff", false), Phase.s);
+			Phase[] phases = null;
+			if (sfn.getComponent() == SACComponent.T)
+				phases = new Phase[] {Phase.S, Phase.create("Sdiff", false), Phase.s};
+			else if (sfn.getComponent() == SACComponent.R || sfn.getComponent() == SACComponent.Z)
+				phases = new Phase[] {Phase.P, Phase.create("Pdiff", false), Phase.p};
+			else
+				throw new IllegalArgumentException("Error: SACComponent is neither R, T, or Z " + sfn);
+			Set<TauPPhase> taupPhaseSet = TauPTimeReader.getTauPPhase(eventR, distance, phases);
 			if (taupPhaseSet.size() > 1)
 				System.err.println("Warning: S-wave multiplications " + sfn);
 			if (taupPhaseSet.size() == 0) {
@@ -628,7 +635,8 @@ public class PhaseEnvelope implements Operation {
 	private TauPPhase[][] findPhases(double[][] timewindows, double distance, double eventR) {
 		TauPPhase[][] foundPhases = new TauPPhase[timewindows.length][];
 		String[] includePhaseNames = new String[] {"S", "SS", "SSS", "SSS", "SSSS", "SSSSS", "ScS", "ScSScS", "ScSScSScS", "ScSScSScSScS", "sS", "sSS", "sSSS"
-				, "sScS", "sScSScS", "sScSScSScS", "Sdiff", "sSdiff"};
+				, "sScS", "sScSScS", "sScSScSScS", "Sdiff", "sSdiff"
+				, "P", "PP", "PPP", "PPPP", "PcP", "PcPPcP", "PcPPcPPcP", "pP", "pPP", "pPPP", "pPPPP", "pPcP", "pPcPPcP", "pPcPPcPPcP", "Pdiff", "pPdiff"};
 		Phase[] includePhases = new Phase[includePhaseNames.length];
 		for (int i = 0; i < includePhases.length; i++)
 			includePhases[i] = Phase.create(includePhaseNames[i], false);
@@ -776,7 +784,6 @@ public class PhaseEnvelope implements Operation {
        for (int i = 0; i < timewindows.length; i++) {
  	      Rectangle2D.Double rect = new Rectangle2D.Double(timewindows[i][0], -h, timewindows[i][1]-timewindows[i][0], 2*h);
  	      subplot1.addAnnotation(new XYShapeAnnotation(rect, new BasicStroke(1.0f), Color.BLUE));
- 	      System.out.println(phases[i].length);
  	      for (int j = 0; j < phases[i].length; j++) {
  	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().getExpandedName(), timewindows[i][0], h*1.05 + j*h/6.);
  	    	  annotation.setPaint(colors[j % colors.length]);

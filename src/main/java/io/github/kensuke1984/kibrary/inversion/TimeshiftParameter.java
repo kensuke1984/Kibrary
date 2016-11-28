@@ -62,6 +62,9 @@ public class TimeshiftParameter implements UnknownParameter{
 		return PartialType.TIME;
 	}
 
-
+	@Override
+	public Object getLocation() {
+		return null;
+	}
 
 }

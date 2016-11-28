@@ -23,10 +23,12 @@ public interface UnknownParameter {
 	 * @return weighting for this parameter
 	 */
 	public double getWeighting();
-
+	
 	/**
 	 * @return {@link PartialType} of a parameter
 	 */
 	public PartialType getPartialType();
+	
+	public Object getLocation();
 
 }

@@ -18,6 +18,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.RealMatrix;
@@ -69,7 +70,7 @@ public class LetMeInvert implements Operation {
 	/**
 	 * 観測、理論波形のID情報
 	 */
-	protected Path waveIDPath;
+	protected Path waveformIDPath;
 
 	/**
 	 * ステーション位置情報のファイル
@@ -88,8 +89,8 @@ public class LetMeInvert implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
-		if (!property.containsKey("waveIDPath"))
-			throw new IllegalArgumentException("There is no information about 'waveIDPath'.");
+		if (!property.containsKey("waveformIDPath"))
+			throw new IllegalArgumentException("There is no information about 'waveformIDPath'.");
 		if (!property.containsKey("waveformPath"))
 			throw new IllegalArgumentException("There is no information about 'waveformPath'.");
 		if (!property.containsKey("partialIDPath"))
@@ -110,7 +111,7 @@ public class LetMeInvert implements Operation {
 		else
 			outPath = workPath.resolve(Paths.get("lmi" + Utilities.getTemporaryString()));
 		stationInformationPath = getPath("stationInformationPath");
-		waveIDPath = getPath("waveIDPath");
+		waveformIDPath = getPath("waveformIDPath");
 		waveformPath = getPath("waveformPath");
 		partialPath = getPath("partialPath");
 		partialIDPath = getPath("partialIDPath");
@@ -178,12 +179,15 @@ public class LetMeInvert implements Operation {
 	private Path outPath;
 
 	private void setEquation() throws IOException {
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
+		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
 
 		// set Dvector
 		System.err.println("Creating D vector");
-		Dvector dVector = new Dvector(ids);
-
+//		Dvector dVector = new Dvector(ids);
+		
+		ToDoubleBiFunction<BasicID, BasicID> weightingFunction = (obs, syn) -> {return 1.;};
+		Dvector dVector = new Dvector(ids, id -> true, weightingFunction);
+		
 		// set unknown parameter
 		System.err.println("setting up unknown parameter set");
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
@@ -560,8 +564,8 @@ public class LetMeInvert implements Operation {
 			new NoSuchFileException(waveformPath.toString()).printStackTrace();
 			cango = false;
 		}
-		if (!Files.exists(waveIDPath)) {
-			new NoSuchFileException(waveIDPath.toString()).printStackTrace();
+		if (!Files.exists(waveformIDPath)) {
+			new NoSuchFileException(waveformIDPath.toString()).printStackTrace();
 			cango = false;
 		}
 		if (!Files.exists(workPath)) {

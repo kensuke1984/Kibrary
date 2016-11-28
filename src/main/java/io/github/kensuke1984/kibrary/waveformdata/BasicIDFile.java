@@ -9,12 +9,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.io.FilenameUtils;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -61,7 +64,7 @@ public final class BasicIDFile {
 	/**
 	 * File size for an ID [byte]
 	 */
-	public static final int oneIDByte = 28;
+	public static final int oneIDByte = 48;
 
 	private BasicIDFile() {
 	}
@@ -128,7 +131,7 @@ public final class BasicIDFile {
 		long t = System.nanoTime();
 		BasicID lastID = ids[ids.length - 1];
 		if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
-			throw new RuntimeException(dataPath + " is not invalid for " + idPath);
+			throw new RuntimeException(dataPath + " is invalid for " + idPath);
 		try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(dataPath))) {
 			byte[][] bytes = new byte[ids.length][];
 			Arrays.parallelSetAll(bytes, i -> new byte[ids[i].NPTS * 8]);
@@ -162,11 +165,12 @@ public final class BasicIDFile {
 			Station[] stations = new Station[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
-			int headerBytes = 2 * 3 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
-					+ 4 * 2 * periodRanges.length;
+			Phase[] phases = new Phase[dis.readShort()];
+			int headerBytes = 2 * 4 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
+					+ 16 * phases.length + 4 * 2 * periodRanges.length;
 			long idParts = fileSize - headerBytes;
 			if (idParts % oneIDByte != 0)
-				throw new RuntimeException(idPath + " is not valid..");
+				throw new RuntimeException(idPath + " is not valid.");
 			// name(8),network(8),position(4*2)
 			byte[] stationBytes = new byte[24];
 			for (int i = 0; i < stations.length; i++) {
@@ -182,14 +186,19 @@ public final class BasicIDFile {
 				periodRanges[i][0] = dis.readFloat();
 				periodRanges[i][1] = dis.readFloat();
 			}
-
+			byte[] phaseBytes = new byte[16];
+			for (int i = 0; i < phases.length; i++) {
+				dis.read(phaseBytes);
+				phases[i] = Phase.create(new String(phaseBytes).trim());
+			}
+			
 			int nid = (int) (idParts / oneIDByte);
 			BasicID[] ids = new BasicID[nid];
 			byte[][] bytes = new byte[nid][oneIDByte];
 			for (int i = 0; i < nid; i++)
 				dis.read(bytes[i]);
 			IntStream.range(0, nid).parallel().forEach(i -> {
-				ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges);
+				ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, phases);
 			});
 			System.err.println(
 					"Reading " + ids.length + " basic IDs done in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -204,6 +213,7 @@ public final class BasicIDFile {
 	 * event number(2)<br>
 	 * component(1)<br>
 	 * period range(1) <br>
+	 * phases numbers(10*2)<br>
 	 * start time(4)<br>
 	 * number of points(4)<br>
 	 * sampling hz(4) <br>
@@ -214,20 +224,28 @@ public final class BasicIDFile {
 	 *            for one ID
 	 * @return an ID written in the bytes
 	 */
-	private static BasicID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges) {
+	private static BasicID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges, Phase[] phases) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		WaveformType type = 0 < bb.get() ? WaveformType.OBS : WaveformType.SYN;
 		Station station = stations[bb.getShort()];
 		GlobalCMTID id = ids[bb.getShort()];
 		SACComponent component = SACComponent.getComponent(bb.get());
 		double[] period = periodRanges[bb.get()];
+		Set<Phase> tmpset = new HashSet<>();
+		for (int i = 0; i < 10; i++) {
+			short iphase = bb.getShort();
+			if (iphase != -1)
+				tmpset.add(phases[iphase]);
+		}
+		Phase[] usablephases = new Phase[tmpset.size()];
+		usablephases = tmpset.toArray(usablephases);
 		double startTime = bb.getFloat(); // starting time
 		int npts = bb.getInt(); // データポイント数
 		double samplingHz = bb.getFloat();
 		boolean isConvolved = 0 < bb.get();
 		long startByte = bb.getLong();
 		BasicID bid = new BasicID(type, samplingHz, startTime, npts, station, id, component, period[0], period[1],
-				startByte, isConvolved);
+				usablephases, startByte, isConvolved);
 		return bid;
 	}
 }

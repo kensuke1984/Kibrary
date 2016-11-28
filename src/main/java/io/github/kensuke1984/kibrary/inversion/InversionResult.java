@@ -7,16 +7,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -56,7 +59,9 @@ public class InversionResult {
 	 * obs vs initial model.
 	 */
 	private Map<InverseMethodEnum, Double[]> answerVarianceMap = new EnumMap<>(InverseMethodEnum.class);
-
+	
+	private Set<InverseMethodEnum> inverseMethods;
+	
 	/**
 	 * 
 	 * @param rootPath
@@ -66,6 +71,17 @@ public class InversionResult {
 	 */
 	public InversionResult(Path rootPath) throws IOException {
 		this.rootPath = rootPath;
+		inverseMethods = Stream.of(InverseMethodEnum.values()).collect(Collectors.toSet());
+		readVarianceMap();
+		readOrder();
+		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
+		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
+		
+	}
+	
+	public InversionResult(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {
+		this.rootPath = rootPath;
+		this.inverseMethods = inverseMethods;
 		readVarianceMap();
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
@@ -110,9 +126,12 @@ public class InversionResult {
 	private static BasicID toBasicID(String[] parts) {
 		Station station = new Station(parts[1],
 				new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
+		Phase[] phases = new Phase[parts.length - 18];
+		for (int i = 0; i < phases.length; i++)
+			phases[i] = Phase.create(parts[i+13], false);
 		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
 				Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
-				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), Long.parseLong(parts[13]), true);
+				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[13 + phases.length]), true);
 	}
 
 	/**
@@ -143,7 +162,6 @@ public class InversionResult {
 		int n = orderLines.size() - 1;
 		basicIDList = new ArrayList<>(n);
 		startPointOrder = new int[n];
-		synStartTimeOrder = new double[n];
 		weightingOrder = new double[n];
 		IntStream.range(0, n).forEach(i -> {
 			String[] parts = orderLines.get(i + 1).split("\\s+");
@@ -388,7 +406,7 @@ public class InversionResult {
 												Double.parseDouble(((String[]) parts)[3])),
 												((String[]) parts)[1]),
 								parts -> Double.parseDouble(((String[]) parts)[4]))));
-		for (InverseMethodEnum inverse : InverseMethodEnum.values()) {
+		for (InverseMethodEnum inverse : inverseMethods) {
 			// TODO
 			if (inverse == InverseMethodEnum.LEAST_SQUARES_METHOD)
 				continue;

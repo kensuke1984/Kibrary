@@ -84,7 +84,7 @@ public class SpcFileName extends File {
 	private static String getObserverNetwork(String fileName) {
 		return fileName.split("\\.")[0].split("_")[1];
 	}
-
+	
 	private static String getX(String fileName) {
 		String[] parts = fileName.split("\\.");
 		return parts.length != 7 ? null : parts[3];
@@ -256,6 +256,10 @@ public class SpcFileName extends File {
 		return observerNetwork;
 	}
 
+	public String getObserverString() {
+		return observerName + "_" + observerNetwork;
+	}
+	
 	public String getX() {
 		return x;
 	}
