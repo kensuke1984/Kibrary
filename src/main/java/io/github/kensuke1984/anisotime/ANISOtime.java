@@ -5,6 +5,7 @@ import java.awt.GraphicsEnvironment;
 import javax.swing.SwingUtilities;
 
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.UnrecognizedOptionException;
 
 /**
  * 
@@ -34,6 +35,10 @@ final class ANISOtime {
 			try {
 				ANISOtimeCLI.main(args);
 				return;
+			}catch (UnrecognizedOptionException e){
+				System.err.println("The command line arguments are invalid.");
+                ANISOtimeCLI.printHelp();
+                return;
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
