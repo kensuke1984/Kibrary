@@ -37,9 +37,9 @@ import net.sf.epsgraphics.EpsGraphics;
  * This class is only for CLI use of ANISOtime.
  * 
  * TODO customize for catalog ddelta
- * 
+ *
  * @author Kensuke Konishi
- * @version 0.3.7b
+ * @version 0.3.7.1b
  */
 final class ANISOtimeCLI {
 
@@ -52,7 +52,7 @@ final class ANISOtimeCLI {
 	private ANISOtimeCLI(String[] args) throws ParseException {
 		cmd = new DefaultParser().parse(options, args);
 		INPUT = Arrays.stream(args).collect(Collectors.joining(" "));
-	}
+    }
 
 	private final String INPUT;
 
@@ -99,6 +99,7 @@ final class ANISOtimeCLI {
 				About.main(null);
 				return;
 			}
+
 		try {
 			ANISOtimeCLI cli = new ANISOtimeCLI(args);
 			cli.run();
