@@ -33,6 +33,10 @@ public class VelocityField {
 		String polynomialStructureString = null;
 		Path inversionResultPath = null;
 		Path polynomialStructurePath = null;
+		double amplifyPerturbation = 1.;
+		if (args.length == 1) {
+			amplifyPerturbation = Double.parseDouble(args[0]);
+		}
 		try {
 			inversionResultString = JOptionPane.showInputDialog("Inversion result folder?", inversionResultString);
 			polynomialStructureString = JOptionPane.showInputDialog("Polynomial structure?", polynomialStructureString);
@@ -95,12 +99,11 @@ public class VelocityField {
 			structure = new PolynomialStructure(polynomialStructurePath);
 		}
 		
-		Set<InverseMethodEnum> inverseMethods = Arrays.asList(InverseMethodEnum.CONJUGATE_GRADIENT).stream().collect(Collectors.toSet());
-		InversionResult ir = new InversionResult(inversionResultPath, inverseMethods);
+		InversionResult ir = new InversionResult(inversionResultPath);
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 		Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
 		if (partialTypes.contains(PartialType.PAR2)) {
-			for (InverseMethodEnum inverse : inverseMethods) {
+			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocityInitialModel" + ".txt");
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 					pw.println("# perturbationR Vsh");
@@ -109,11 +112,11 @@ public class VelocityField {
 						pw.println(r + " " + structure.getVshAt(r));
 					}
 				}
-				int n = 10 > unknowns.size() ? unknowns.size() : 10;
+				int n = unknowns.size();
 				for (int i = 1; i < n; i++) {
 					outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
-					double[] velocities = toVelocity(answerMap, unknowns, structure);
+					double[] velocities = toVelocity(answerMap, unknowns, structure, amplifyPerturbation);
 					try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 						pw.println("# perturbationR Vsh");
 						for (int j = 0; j < velocities.length; j++)
@@ -126,22 +129,65 @@ public class VelocityField {
 	
 	private static double[] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
 		double[] velocities = new double[answerMap.size()];
-		AtomicInteger iatom = new AtomicInteger();
-		parameterOrder.forEach(m -> {
-			velocities[iatom.getAndIncrement()] = toVelocity(answerMap.get(m), (Double) m.getLocation(), 20., structure);
-		});
+		int n = parameterOrder.size();
+		for (int i = 0; i < n; i++) {
+			UnknownParameter m = parameterOrder.get(i);
+			double rmin = 0;
+			double rmax = 0;
+			if (i > 0 && i < n - 1) {
+				rmin = ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2. + (Double) parameterOrder.get(i-1).getLocation();
+				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
+			}
+			else if (i > 0) {
+				rmin = ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2. + (Double) parameterOrder.get(i-1).getLocation();
+				rmax = (Double) m.getLocation() + m.getWeighting() - ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2.;
+			}
+			else {
+				rmin = (Double) m.getLocation() - m.getWeighting() + ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2.;
+				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
+			}
+			velocities[i] = toVelocity(answerMap.get(m), (Double) m.getLocation(), rmin, rmax, structure);
+		}
 		return velocities;
 	}
 	
-	private static double toVelocity(double deltaMu, double r, double dr, PolynomialStructure structure) {
-		double r1 = r - dr / 2.;
-		double r2 = r + dr / 2.;
-		return Math.sqrt((getSimpsonMu(r1, r2, structure) + deltaMu) / getSimpsonRho(r1, r2, structure));
+	private static double[] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
+			, double amplifyPerturbation) {
+		double[] velocities = new double[answerMap.size()];
+		int n = parameterOrder.size();
+		for (int i = 0; i < n; i++) {
+			UnknownParameter m = parameterOrder.get(i);
+			double rmin = 0;
+			double rmax = 0;
+			if (i > 0 && i < n - 1) {
+				rmin = ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2. + (Double) parameterOrder.get(i-1).getLocation();
+				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
+			}
+			else if (i > 0) {
+				rmin = ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2. + (Double) parameterOrder.get(i-1).getLocation();
+				rmax = (Double) m.getLocation() + m.getWeighting() - ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2.;
+			}
+			else if (i == 0) {
+				rmin = (Double) m.getLocation() - m.getWeighting() + ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2.;
+				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
+			}
+			velocities[i] = toVelocity(answerMap.get(m), (Double) m.getLocation(), rmin, rmax, structure, amplifyPerturbation);
+		}
+		return velocities;
+	}
+	
+	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure) {
+		return Math.sqrt((getSimpsonMu(rmin, rmax, structure) + (rmax - rmin) * deltaMu) / getSimpsonRho(rmin, rmax, structure));
+	}
+	
+	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure,
+			double amplifyPerturbation) {
+		return Math.sqrt((getSimpsonMu(rmin, rmax, structure) + (rmax - rmin) * deltaMu * amplifyPerturbation) / getSimpsonRho(rmin, rmax, structure));
 	}
 	
 	public static double getSimpsonRho (double r1, double r2, PolynomialStructure structure) {
 		double res = 0;
-		double dr = (r2 - r1) / 40;
+		double dr = (r2 - r1) / 40.;
 		for (int i=0; i < 40; i++) {
 			double a = r1 + i * dr;
 			double b = r1 + (i + 1) * dr;

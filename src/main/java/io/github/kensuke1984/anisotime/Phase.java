@@ -696,7 +696,7 @@ public class Phase {
 	public String getExpandedName() {
 		return expandedName;
 	}
-
+	
 	@Override
 	public String toString() {
 		return phaseName;

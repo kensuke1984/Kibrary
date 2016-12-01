@@ -81,6 +81,8 @@ public class LetMeInvert implements Operation {
 	 * どうやって方程式を解くか。 cg svd
 	 */
 	protected Set<InverseMethodEnum> inverseMethods;
+	
+	protected int weighting;
 
 	private ObservationEquation eq;
 
@@ -99,6 +101,8 @@ public class LetMeInvert implements Operation {
 			throw new IllegalArgumentException("There is no information about 'partialPath'.");
 		if (!property.containsKey("inverseMethods"))
 			property.setProperty("inverseMethods", "CG SVD");
+		if (!property.containsKey("weighting"))
+			property.setProperty("weighting", "1");
 	}
 
 	private void set() {
@@ -121,6 +125,7 @@ public class LetMeInvert implements Operation {
 					.toArray();
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
 				.collect(Collectors.toSet());
+		weighting = Integer.parseInt(property.getProperty("weighting"));
 	}
 
 	/**
@@ -155,6 +160,8 @@ public class LetMeInvert implements Operation {
 			pw.println("#alpha");
 			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
+			pw.println("##int weighting (1); 1: upperLowerMantle, 2: identity 3: reciprocal");
+			pw.println("#weighting 1");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -179,21 +186,35 @@ public class LetMeInvert implements Operation {
 	private Path outPath;
 
 	private void setEquation() throws IOException {
+		// set partial matrix
+		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
-
+		
 		// set Dvector
 		System.err.println("Creating D vector");
-//		Dvector dVector = new Dvector(ids);
-		
-		ToDoubleBiFunction<BasicID, BasicID> weightingFunction = (obs, syn) -> {return 1.;};
-		Dvector dVector = new Dvector(ids, id -> true, weightingFunction);
+		System.err.println("Going with weghting " + weighting);
+		Dvector dVector;
+		switch (weighting) {
+		case 1:
+			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
+			dVector = new Dvector(ids, id -> true, lowerUpperMantleWeighting);
+			break;
+		case 2:
+			ToDoubleBiFunction<BasicID, BasicID> weightingFunction = (obs, syn) -> {return 1.;};
+			dVector = new Dvector(ids, id -> true, weightingFunction);
+			break;
+		case 3:
+			dVector = new Dvector(ids);
+			break;
+		default:
+			throw new RuntimeException("Error: Weighting should be 1, 2, or 3");
+		}
 		
 		// set unknown parameter
 		System.err.println("setting up unknown parameter set");
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
-		// set partial matrix
-		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		eq = new ObservationEquation(partialIDs, parameterList, dVector);
 	}
 

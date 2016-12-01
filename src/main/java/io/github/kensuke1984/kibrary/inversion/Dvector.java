@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -155,6 +156,8 @@ public class Dvector {
 	 * Function for weighting of each timewindow with IDs.
 	 */
 	private ToDoubleBiFunction<BasicID, BasicID> weightingFunction;
+	
+	private double[] lowerUpperMantleWeighting;
 
 	/**
 	 * Use all waveforms in the IDs Weighting factor is reciprocal of maximum
@@ -164,7 +167,7 @@ public class Dvector {
 	 *            must contain waveform data
 	 */
 	public Dvector(BasicID[] basicIDs) {
-		this(basicIDs, id -> true, null);
+		this(basicIDs, id -> true, (ToDoubleBiFunction<BasicID, BasicID>) null);
 	}
 
 	/**
@@ -177,7 +180,7 @@ public class Dvector {
 	 *            {@link Predicate}
 	 */
 	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser) {
-		this(basicIDs, chooser, null);
+		this(basicIDs, chooser, (ToDoubleBiFunction<BasicID, BasicID>) null);
 	}
 
 	/**
@@ -207,6 +210,21 @@ public class Dvector {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
+		sort();
+		read();
+	}
+	
+	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+			double[] lowerUpperMantleWeighting) {
+		ids = basicIDs;
+		if (!check(ids))
+			throw new RuntimeException("Input IDs do not have waveform data.");
+		// System.exit(0);
+		this.chooser = chooser;
+		this.lowerUpperMantleWeighting = lowerUpperMantleWeighting;
+		this.weightingFunction = (obs, syn) -> {
+			return 1.;
+		};
 		sort();
 		read();
 	}
@@ -431,7 +449,11 @@ public class Dvector {
 			obsVec[i] = new ArrayRealVector(obsIDs[i].getData(), false);
 
 			// 観測波形の最大値の逆数で重み付け TODO 重み付けの方法を決める
-			weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+			if (lowerUpperMantleWeighting != null)
+				weighting[i] = new Phases(obsIDs[i].getPhases()).isLowerMantle() ? 
+						lowerUpperMantleWeighting[0] : lowerUpperMantleWeighting[1];
+			else
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
 
 			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
 
@@ -562,7 +584,11 @@ public class Dvector {
 			usedStationSet.add(obsIDs[i].getStation());
 			usedGlobalCMTIDset.add(obsIDs[i].getGlobalCMTID());
 		}
-
+		
+		if (lowerUpperMantleWeighting != null) {
+			System.err.println("Using weighting for lower mantle (" + lowerUpperMantleWeighting[0] 
+					+ ") and upper mantle (" + lowerUpperMantleWeighting[1] +")");
+		}
 	}
 
 	/**

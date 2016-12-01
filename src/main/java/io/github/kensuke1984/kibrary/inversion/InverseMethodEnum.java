@@ -14,7 +14,8 @@ import org.apache.commons.math3.linear.RealVector;
  * @version 0.0.2.1
  */
 public enum InverseMethodEnum {
-	SINGURAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD;
+	SINGURAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD,
+	NON_NEGATIVE_LEAST_SQUARES_METHOD;
 
 	public String simple() {
 		switch (this) {
@@ -24,6 +25,8 @@ public enum InverseMethodEnum {
 			return "CG";
 		case LEAST_SQUARES_METHOD:
 			return "LSM";
+		case NON_NEGATIVE_LEAST_SQUARES_METHOD:
+			return "NNLS";
 		default:
 			throw new RuntimeException("UnEXpECCted");
 		}
@@ -40,6 +43,9 @@ public enum InverseMethodEnum {
 		case "LSM":
 		case "lsm":
 			return LEAST_SQUARES_METHOD;
+		case "NNLS":
+		case "nnls":
+			return NON_NEGATIVE_LEAST_SQUARES_METHOD;
 		default:
 			throw new IllegalArgumentException("Invalid name for InverseMethod");
 		}

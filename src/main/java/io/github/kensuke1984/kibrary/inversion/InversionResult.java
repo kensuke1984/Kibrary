@@ -71,7 +71,8 @@ public class InversionResult {
 	 */
 	public InversionResult(Path rootPath) throws IOException {
 		this.rootPath = rootPath;
-		inverseMethods = Stream.of(InverseMethodEnum.values()).collect(Collectors.toSet());
+		inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simple()).toFile().exists())
+			.collect(Collectors.toSet());
 		readVarianceMap();
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
@@ -115,6 +116,10 @@ public class InversionResult {
 	public int getNumberOfUnknowns() {
 		return unknownParameterList.size();
 	}
+	
+	public Set<InverseMethodEnum> getInverseMethods() {
+		return inverseMethods;
+	}
 
 	/**
 	 * type is always obs
@@ -126,12 +131,13 @@ public class InversionResult {
 	private static BasicID toBasicID(String[] parts) {
 		Station station = new Station(parts[1],
 				new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
-		Phase[] phases = new Phase[parts.length - 18];
+		String[] phaseParts = parts[13].split(",");
+		Phase[] phases = new Phase[phaseParts.length];
 		for (int i = 0; i < phases.length; i++)
-			phases[i] = Phase.create(parts[i+13], false);
+			phases[i] = Phase.create(phaseParts[i], false);
 		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
 				Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
-				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[13 + phases.length]), true);
+				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[14]), true);
 	}
 
 	/**
@@ -162,14 +168,19 @@ public class InversionResult {
 		int n = orderLines.size() - 1;
 		basicIDList = new ArrayList<>(n);
 		startPointOrder = new int[n];
+		synStartTimeOrder = new double[n];
 		weightingOrder = new double[n];
 		IntStream.range(0, n).forEach(i -> {
 			String[] parts = orderLines.get(i + 1).split("\\s+");
 			basicIDList.add(toBasicID(parts));
+//			System.out.println(i + " " + parts.length);
+//			int j = 0;
+//			for (String s : parts)
+//				System.out.println(j++ + " " + s);
 			npts += Integer.parseInt(parts[9]);
-			startPointOrder[i] = Integer.parseInt(parts[15]);
-			synStartTimeOrder[i] = Double.parseDouble(parts[16]);
-			weightingOrder[i] = Double.parseDouble(parts[17]);
+			startPointOrder[i] = Integer.parseInt(parts[16]);
+			synStartTimeOrder[i] = Double.parseDouble(parts[17]);
+			weightingOrder[i] = Double.parseDouble(parts[18]);
 		});
 		basicIDList = Collections.unmodifiableList(basicIDList);
 	}

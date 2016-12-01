@@ -1,6 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
@@ -10,93 +12,164 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 
+
 public class Sensitivity1D {
 	private Map<PerturbationR_distance, Double> sensitivityMap;
 	private PartialID[] ids;
-	private Path outPath;
-	Set<Phase> includePhases;
+	Set<Phases> includePhases;
+	private double max = 0;
 	
-	public Sensitivity1D(Path partialPath, Path partialIDPath, Path outPath) throws IOException {
-		this.sensitivityMap = new HashMap<>();
-		this.ids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
-		this.outPath = outPath;
-		compute();
-		this.normalizePerDistance();
-	}
-	
-	public Sensitivity1D(PartialID[] ids, Path outPath, Set<Phase> includedPhases) {
+	public Sensitivity1D(PartialID[] ids, Set<Phases> includedPhases) {
 		this.ids = ids;
 		this.sensitivityMap = new HashMap<>();
-		this.outPath = outPath;
 		this.includePhases = includedPhases;
-		compute();
-		this.normalizePerDistance();
+		this.compute();
+	}
+	
+	public Sensitivity1D(PartialID[] ids) {
+		this(ids, null);
+	}
+	
+	public Sensitivity1D(Sensitivity1D s) {
+		this.ids = s.ids;
+		this.sensitivityMap = s.sensitivityMap;
+		this.includePhases = s.includePhases;
 	}
 	
 	public static void main(String[] args) throws IOException {
 		Path partialPath = Paths.get("partial.dat");
 		Path partialIDPath = Paths.get("partialID.dat");
-		Set<Phase> S_ScS = Arrays.asList(Phase.S, Phase.ScS).stream().collect(Collectors.toSet());
-		Set<Phase> ScS4 = Arrays.asList(Phase.create("ScSScSScSScS", false)).stream().collect(Collectors.toSet());
-		Set<Phase> ScS3 = Arrays.asList(Phase.create("ScSScSScS", false)).stream().collect(Collectors.toSet());
-		Set<Phase> SS_SSS = Arrays.asList(Phase.create("SS", false), Phase.create("SSS", false)).stream().collect(Collectors.toSet());
-		Set<Phase> all = new HashSet<>();
+//		Set<Phase> S_ScS_Sdiff = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff", false)).stream().collect(Collectors.toSet());
+//		Set<Phase> ScS4 = Arrays.asList(Phase.create("ScSScSScSScS", false)).stream().collect(Collectors.toSet());
+//		Set<Phase> ScS3 = Arrays.asList(Phase.create("ScSScSScS", false)).stream().collect(Collectors.toSet());
+//		Set<Phase> SS_SSS = Arrays.asList(Phase.create("SS", false), Phase.create("SSS", false)).stream().collect(Collectors.toSet());
+//		Set<Phase> all = new HashSet<>();
 		
 		PartialID[] ids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		Map<Phases, Double> phasesSensitivityMap = Sensitivity.sensitivityPerWindowType(ids);
+		Set<Phases> keySet = phasesSensitivityMap.keySet();
+		Set<Phases> lowerMantle = keySet.stream().filter(phases -> phases.isLowerMantle())
+				.collect(Collectors.toSet());
+		Set<Phases> upperMantle = keySet.stream().filter(phases -> phases.isUpperMantle())
+				.collect(Collectors.toSet());
+		Set<Phases> mixte = keySet.stream().filter(phases -> phases.isMixte())
+				.collect(Collectors.toSet());
+		double upperMantleSensitivity = 0;
+		double lowerMantleSensitivity = 0;
+		for (Map.Entry<Phases, Double> entry : phasesSensitivityMap.entrySet()) {
+			Phases p = entry.getKey();
+			double s = entry.getValue();
+			if (upperMantle.contains(p))
+				upperMantleSensitivity += s;
+			else if (lowerMantle.contains(p))
+				lowerMantleSensitivity += s;
+		}
+		System.out.println("Upper mantle " + upperMantleSensitivity);
+		System.out.println("Lower mantle " + lowerMantleSensitivity);
 		
-		Path outPath = Paths.get("sensitivityMap-S_ScS.txt");
-		Sensitivity1D s1DS_ScS = new Sensitivity1D(ids, outPath, S_ScS);
-		s1DS_ScS.write();
+//		Path outPath = Paths.get("sensitivity1D.txt");
+//		Sensitivity1D s1D = new Sensitivity1D(ids);
+//		s1D.write1D(outPath);
 		
-		outPath = Paths.get("sensitivityMap-ScS4.txt");
-		Sensitivity1D s1DScS4 = new Sensitivity1D(ids, outPath, ScS4);
-		s1DScS4.write();
+		Path outPath = Paths.get("sensitivity1D-upperMantle.txt");
+		Path outPath1 = Paths.get("sensitivityMap-upperMantle.txt");
+		Path outPath2 = Paths.get("sensitivityMap-upperMantle-normalizedDistance.txt");
+		Sensitivity1D s1D = new Sensitivity1D(ids, upperMantle);
+		Sensitivity1D copy = new Sensitivity1D(s1D);
+		s1D.write1D(outPath);
+		s1D.normalize();
+		s1D.write(outPath1);
+		copy.normalizePerDistance();
+		copy.write(outPath2);
 		
-		outPath = Paths.get("sensitivityMap-ScS3.txt");
-		Sensitivity1D s1DScS3 = new Sensitivity1D(ids, outPath, ScS3);
-		s1DScS3.write();
+		outPath = Paths.get("sensitivity1D-lowerMantle.txt");
+		outPath1 = Paths.get("sensitivityMap-lowerMantle.txt");
+		outPath2 = Paths.get("sensitivityMap-lowerMantle-normalizedDistance.txt");
+		s1D = new Sensitivity1D(ids, lowerMantle);
+		copy = new Sensitivity1D(s1D);
+		s1D.write1D(outPath);
+		s1D.normalize();
+		s1D.write(outPath1);
+		copy.normalizePerDistance();
+		copy.write(outPath2);
 		
-		outPath = Paths.get("sensitivityMap-SS_SSS.txt");
-		Sensitivity1D s1DSS_SSS = new Sensitivity1D(ids, outPath, SS_SSS);
-		s1DSS_SSS.write();
-		
-		outPath = Paths.get("sensitivityMap-all.txt");
-		Sensitivity1D s1D_all = new Sensitivity1D(ids, outPath, all);
-		s1D_all.write();
+		outPath = Paths.get("sensitivity1D-mixte.txt");
+		outPath1 = Paths.get("sensitivityMap-mixte.txt");
+		outPath2 = Paths.get("sensitivityMap-mixte-normalizedDistance.txt");
+		s1D = new Sensitivity1D(ids, mixte);
+		copy = new Sensitivity1D(s1D);
+		s1D.write1D(outPath);
+		s1D.normalize();
+		s1D.write(outPath1);
+		copy.normalizePerDistance();
+		copy.write(outPath2);
 	}
 	
-	public void write() throws IOException{
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))) {
+	public void write(Path outpath) throws IOException{
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))) {
+			pw.println("#perturbationR, epicentralDistanceBin, NormalizedSensitivity");
+			pw.println("#max " + getMax());
 			sensitivityMap.forEach((rDistance, sensitivity) -> {
 				pw.println(rDistance.r + " " + rDistance.distance + " " + sensitivity);
 			});
 		}
 	}
 	
+	public void write1D(Path outpath) throws IOException {
+		double[][] rSensitvity = shrinkTo1D();
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))) {
+			pw.println("#perturbationR, sensitivity");
+			for (double[] rs : rSensitvity)
+				pw.println(rs[0] + " " + rs[1]);
+		}
+	}
+	
 	public void compute() {
 		for (PartialID id : ids) {
-			if (!containPhases(id, includePhases))
-				continue;
-			PerturbationR_distance rDistance = new PerturbationR_distance(id);
-			if (sensitivityMap.containsKey(rDistance)) {
-				double sensitivity = idToSensitivity(id)
-						+ sensitivityMap.get(rDistance);
-				sensitivityMap.replace(rDistance, sensitivity);
-			}
-			else {
-				double sensitivity = idToSensitivity(id);
-				sensitivityMap.put(rDistance, sensitivity);
+			if (includePhases == null || includePhases.contains(new Phases(id.getPhases()))) {
+				PerturbationR_distance rDistance = new PerturbationR_distance(id);
+				if (sensitivityMap.containsKey(rDistance)) {
+					double sensitivity = idToSensitivity(id)
+							+ sensitivityMap.get(rDistance);
+					sensitivityMap.replace(rDistance, sensitivity);
+				}
+				else {
+					double sensitivity = idToSensitivity(id);
+					sensitivityMap.put(rDistance, sensitivity);
+				}
 			}
 		}
+	}
+	
+	public double[][] shrinkTo1D() {
+		Map<Double, Double> rSensitivityMap = new HashMap<>();
+		sensitivityMap.forEach((rDist, s) -> {
+			if (rSensitivityMap.containsKey(rDist.r)) {
+				double tmpS = rSensitivityMap.get(rDist.r) + s;
+				rSensitivityMap.put(rDist.r, tmpS);
+			}
+			else
+				rSensitivityMap.put(rDist.r, s);
+		});
+		SortedSet<Double> keys = new TreeSet<>(rSensitivityMap.keySet());
+		double[][] rSensitivity = new double[rSensitivityMap.size()][];
+		int i = 0;
+		for (Double key : keys) {
+			rSensitivity[i] = new double[2];
+			rSensitivity[i][0] = key;
+			rSensitivity[i][1] = rSensitivityMap.get(key);
+			i++;
+		}
+		return rSensitivity;
 	}
 	
 	public PartialID[] getIds() {
@@ -112,10 +185,16 @@ public class Sensitivity1D {
 		return contains;
 	}
 	
-	private double getMaxSensitivity() {
+	public double getMaxSensitivity() {
 		double max = Double.MIN_VALUE;
-		for(Map.Entry<PerturbationR_distance, Double> entry : sensitivityMap.entrySet())
+		for(Map.Entry<PerturbationR_distance, Double> entry : sensitivityMap.entrySet()) {
 			max = Math.max(max, entry.getValue());
+		}
+		this.max = max;
+		return max;
+	}
+	
+	public double getMax() {
 		return max;
 	}
 	
@@ -132,8 +211,9 @@ public class Sensitivity1D {
 	
 	private void normalize() {
 		double max = getMaxSensitivity();
-		for(Map.Entry<PerturbationR_distance, Double> entry : sensitivityMap.entrySet())
+		for(Map.Entry<PerturbationR_distance, Double> entry : sensitivityMap.entrySet()) {
 			sensitivityMap.replace(entry.getKey(), entry.getValue() / max);
+		}
 	}
 	
 	private void normalizePerDistance() {
@@ -147,8 +227,8 @@ public class Sensitivity1D {
 		}
 	}
 	
-	private static double idToSensitivity(PartialID id) {
-		return new ArrayRealVector(id.getData()).dotProduct(new ArrayRealVector(id.getData()));
+	public static double idToSensitivity(PartialID id) {
+		return Math.sqrt(new ArrayRealVector(id.getData()).dotProduct(new ArrayRealVector(id.getData())));
 	}
 	
 	public static class PerturbationR_distance {
@@ -164,6 +244,26 @@ public class Sensitivity1D {
 					.getEpicentralDistance(id.getStation().getPosition())
 					* 180. / Math.PI);
 			this.distance = (int) (distance / 2.) * 2;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			PerturbationR_distance other = (PerturbationR_distance) obj;
+			if (r != other.r)
+				return false;
+			if (distance != other.distance)
+				return false;
+			return true;
+		}
+		@Override
+		public int hashCode() {
+			int prime = 31;
+			return prime * (int) Double.doubleToLongBits(r) * (int) Double.doubleToLongBits(distance);
 		}
 	}
 }
