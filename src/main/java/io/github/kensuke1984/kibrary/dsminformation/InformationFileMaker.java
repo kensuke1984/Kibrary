@@ -30,7 +30,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * TODO information of eliminated stations and events
  * 
- * @version 0.2.1.3
+ * @version 0.2.1.4
  * 
  * @author Kensuke Konishi
  * 
@@ -205,8 +205,8 @@ public class InformationFileMaker implements Operation {
 			int figure = String.valueOf(perturbationPointPositions.length).length();
 			for (int i = 0; i < perturbationPointPositions.length; i++) {
 				hpw.println("XY" + String.format("%0" + figure + "d", i + 1) + " " + perturbationPointPositions[i]);
-				for (int j = 0; j < perturbationR.length; j++)
-					ppw.println(perturbationPointPositions[i] + " " + perturbationR[j]);
+                for (double aPerturbationR : perturbationR)
+                    ppw.println(perturbationPointPositions[i] + " " + aPerturbationR);
 			}
 		}
 	}

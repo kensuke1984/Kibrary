@@ -12,15 +12,13 @@ import java.util.stream.Stream;
  * Bit bucket is /dev/null and nul for unix and windows system, respectively.
  * 
  * @author Kensuke Konishi
- * 
- * @version 0.1.0.1
- * 
+ * @version 0.1.1
  */
 public class ExternalProcess {
 	/**
 	 * {@link Stream} for standard output
 	 */
-	protected InputStreamThread standardOutput;
+	protected final InputStreamThread standardOutput;
 
 	/**
 	 * {@link Process} for Sac
@@ -30,12 +28,12 @@ public class ExternalProcess {
 	/**
 	 * {@link Stream} for standard error
 	 */
-	protected InputStreamThread standardError;
+	protected final InputStreamThread standardError;
 
 	/**
 	 * connected to standard input
 	 */
-	protected OutputStream standardInput;
+	protected final OutputStream standardInput;
 
 	ExternalProcess(Process process) {
 		this.process = process;
@@ -95,7 +93,6 @@ public class ExternalProcess {
 		} catch (Exception e) {
 			throw new RuntimeException();
 		}
-
 	}
 
 	/**

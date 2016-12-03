@@ -7,11 +7,7 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * 
  * TODO 名前のチェック validity
  * 
- * @version 0.1.2.1
+ * @version 0.1.2.2
  * 
  * @author Kensuke Konishi
  * 
@@ -60,8 +56,8 @@ public class PerturbationPoint extends HorizontalPoint {
 	}
 
 	public void printVolumes() {
-		for (int i = 0; i < perturbationLocation.length; i++)
-			System.out.println(perturbationLocation[i] + " " + volumeMap.get(perturbationLocation[i]));
+		for (Location perLoc : perturbationLocation)
+			System.out.println(perLoc + " " + volumeMap.get(perLoc));
 	}
 
 	/**
@@ -70,10 +66,9 @@ public class PerturbationPoint extends HorizontalPoint {
 	public void computeVolumes() {
 		volumeMap = new HashMap<>();
 		ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		for (int i = 0; i < perturbationLocation.length; i++) {
-			VolumeCalculator vc = new VolumeCalculator(perturbationLocation[i]);
-			es.execute(vc);
-		}
+		for (Location perLoc : perturbationLocation)
+			es.execute(new VolumeCalculator(perLoc));
+
 		es.shutdown();
 		while (!es.isTerminated()) {
 			try {
@@ -98,7 +93,6 @@ public class PerturbationPoint extends HorizontalPoint {
 				System.out.println(loc);
 				double volume = volumeMap.get(loc);
 				pw.println("MU " + loc + " " + volume);
-
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -106,7 +100,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	}
 
 	public void setDr(double dr) {
-		this.dR = dr;
+		dR = dr;
 	}
 
 	public void setDlatitude(double dlatitude) {
@@ -147,8 +141,8 @@ public class PerturbationPoint extends HorizontalPoint {
 	/**
 	 * @param args
 	 *            dir dR dLatitude dLongitude
-	 * @throws FileAlreadyExistsException
-	 * @throws NoSuchFileException
+	 * @throws FileAlreadyExistsException if any
+	 * @throws NoSuchFileException if any
 	 */
 	public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
 		if (args.length != 4) {
@@ -183,7 +177,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	 *            file for {@link HorizontalPoint}
 	 * @param out
 	 *            for output
-	 * @throws NoSuchFileException
+	 * @throws NoSuchFileException if any
 	 */
 	public static void createPerturbationPoint(double[] r, File horizontalInfo, File out) throws NoSuchFileException {
 		HorizontalPoint hp = new HorizontalPoint(horizontalInfo);
@@ -191,9 +185,9 @@ public class PerturbationPoint extends HorizontalPoint {
 		// Map<String, HorizontalPosition> pointMap = hp.getPerPointMap();
 		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(out)))) {
 			for (String name : pointNameSet)
-				for (int ir = 0; ir < r.length; ir++)
-					pw.println(name + " " + r[ir]);
+				for (double aR : r) pw.println(name + " " + aR);
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}
@@ -203,7 +197,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	 *            {@link File} for {@link HorizontalPoint}
 	 * @param perturbationPointFile
 	 *            {@link File} for link PerturbationPoint}
-	 * @throws NoSuchFileException
+	 * @throws NoSuchFileException if any
 	 */
 	public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws NoSuchFileException {
 		super(horizontalPointFile);
@@ -236,7 +230,7 @@ public class PerturbationPoint extends HorizontalPoint {
 	private void readPerturbationPointFile() {
 		try {
 			List<String> lines = FileUtils.readLines(perturbationPointFile, Charset.defaultCharset());
-			lines.removeIf(line -> line.trim().length() == 0 || line.trim().startsWith("#"));
+			lines.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));
 			
 			pointN = lines.size();
 			perturbationLocation = new Location[pointN];
@@ -271,11 +265,8 @@ public class PerturbationPoint extends HorizontalPoint {
 	public Location[] getNearestLocation(Location location) {
 		final Location location0 = location;
 		Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
-		Arrays.sort(locations, (o1, o2) -> {
-			return Double.compare(o1.getDistance(location0), o2.getDistance(location0));
-		});
+		Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location0)));
 		return locations;
-
 	}
 
 }

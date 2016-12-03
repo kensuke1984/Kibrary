@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.awt.Desktop;
@@ -23,152 +20,135 @@ import org.apache.commons.io.IOUtils;
 
 /**
  * Menubar for GUI
- * 
+ *
  * @author Kensuke Konishi
- * @version 0.1.5
- * 
+ * @version 0.1.5.1
  */
 final class MenuBar extends JMenuBar {
 
-	private static final long serialVersionUID = -3885037230307922628L;
 
-	MenuBar(ANISOtimeGUI gui) {
-		this.gui = gui;
-		initComponents();
-	}
+    /**
+     * 2016/12/3
+     */
+    private static final long serialVersionUID = 5991384857422431087L;
 
-	private final ANISOtimeGUI gui;
+    MenuBar(ANISOtimeGUI gui) {
+        this.gui = gui;
+        initComponents();
+    }
 
-	private ButtonGroup buttonGroupModes = new ButtonGroup();
-	private ButtonGroup buttonGroupPolarization = new ButtonGroup();
+    private final ANISOtimeGUI gui;
 
-	private void initComponents() {
-		jMenuFile = new JMenu("File");
-		jMenuHelp = new JMenu("Help");
-		jMenuSettings = new JMenu("Settings");
-		jMenuModes = new JMenu("Switch Mode");
-		jMenuPolarization = new JMenu("Switch Polarization");
-		jMenuItemExit = new JMenuItem("Exit");
-		jMenuItemParameterDescription = new JMenuItem("Parameter description");
-		jMenuItemRayparameterMode = new JRadioButtonMenuItem("Ray parameter Mode");
-		jMenuItemEpicentralDistanceMode = new JRadioButtonMenuItem("Epicentral Distance Mode");
-		jMenuItemPreferences = new JMenuItem("Preferences");
+    private ButtonGroup buttonGroupModes = new ButtonGroup();
+    private ButtonGroup buttonGroupPolarization = new ButtonGroup();
 
-		jMenuItemAbout = new JMenuItem("About");
-		jMenuItemMail = new JMenuItem("Feedback");
+    private void initComponents() {
+        JMenu jMenuFile = new JMenu("File");
+        JMenu jMenuHelp = new JMenu("Help");
 
-		jMenuItemPSVSH = new JRadioButtonMenuItem("All");
-		jMenuItemPSV = new JRadioButtonMenuItem("P-SV");
-		jMenuItemSH = new JRadioButtonMenuItem("SH");
-		buttonGroupPolarization.add(jMenuItemPSVSH);
-		buttonGroupPolarization.add(jMenuItemPSV);
-		buttonGroupPolarization.add(jMenuItemSH);
+        JMenu jMenuSettings = new JMenu("Settings");
+        JMenu jMenuModes = new JMenu("Switch Mode");
+        JMenu jMenuPolarization = new JMenu("Switch Polarization");
+        jMenuItemExit = new JMenuItem("Exit");
+        jMenuItemParameterDescription = new JMenuItem("Parameter description");
+        jMenuItemRayparameterMode = new JRadioButtonMenuItem("Ray parameter Mode");
+        jMenuItemEpicentralDistanceMode = new JRadioButtonMenuItem("Epicentral Distance Mode");
+        jMenuItemPreferences = new JMenuItem("Preferences");
 
-		buttonGroupModes.add(jMenuItemEpicentralDistanceMode);
-		buttonGroupModes.add(jMenuItemRayparameterMode);
+        jMenuItemAbout = new JMenuItem("About");
+        jMenuItemMail = new JMenuItem("Feedback");
 
-		
+        jMenuItemPSVSH = new JRadioButtonMenuItem("All");
+        jMenuItemPSV = new JRadioButtonMenuItem("P-SV");
+        jMenuItemSH = new JRadioButtonMenuItem("SH");
+        buttonGroupPolarization.add(jMenuItemPSVSH);
+        buttonGroupPolarization.add(jMenuItemPSV);
+        buttonGroupPolarization.add(jMenuItemSH);
 
+        buttonGroupModes.add(jMenuItemEpicentralDistanceMode);
+        buttonGroupModes.add(jMenuItemRayparameterMode);
 
-		// first is normal mode
-		((JRadioButtonMenuItem) jMenuItemEpicentralDistanceMode).setSelected(true);
-		((JRadioButtonMenuItem) jMenuItemPSVSH).setSelected(true);
-		jMenuSettings.add(jMenuModes);
-		jMenuSettings.add(jMenuPolarization);
-		jMenuSettings.add(jMenuItemPreferences);
-		jMenuPolarization.add(jMenuItemPSVSH);
-		jMenuPolarization.add(jMenuItemPSV);
-		jMenuPolarization.add(jMenuItemSH);
-		jMenuHelp.add(jMenuItemAbout);
-		jMenuHelp.add(jMenuItemParameterDescription);
-		jMenuHelp.add(jMenuItemMail);
-		jMenuModes.add(jMenuItemEpicentralDistanceMode);
-		jMenuModes.add(jMenuItemRayparameterMode);
-		jMenuFile.add(jMenuItemExit);
-		add(jMenuFile);
-		add(jMenuSettings);
-		add(jMenuHelp);
-		setListeners();;
-	}
+        // first is normal mode
+        jMenuItemEpicentralDistanceMode.setSelected(true);
+        jMenuItemPSVSH.setSelected(true);
+        jMenuSettings.add(jMenuModes);
+        jMenuSettings.add(jMenuPolarization);
+        jMenuSettings.add(jMenuItemPreferences);
+        jMenuPolarization.add(jMenuItemPSVSH);
+        jMenuPolarization.add(jMenuItemPSV);
+        jMenuPolarization.add(jMenuItemSH);
+        jMenuHelp.add(jMenuItemAbout);
+        jMenuHelp.add(jMenuItemParameterDescription);
+        jMenuHelp.add(jMenuItemMail);
+        jMenuModes.add(jMenuItemEpicentralDistanceMode);
+        jMenuModes.add(jMenuItemRayparameterMode);
+        jMenuFile.add(jMenuItemExit);
+        add(jMenuFile);
+        add(jMenuSettings);
+        add(jMenuHelp);
+        setListeners();
+    }
 
-	private void setListeners() {
-		jMenuItemPSVSH.addActionListener(e -> gui.setPolarity(0));
-		jMenuItemPSV.addActionListener(e -> gui.setPolarity(1));
-		jMenuItemSH.addActionListener(e -> gui.setPolarity(2));
-		
-		jMenuItemRayparameterMode.addActionListener(e -> gui.setMode(ComputationMode.RAY_PARAMETER));
-		jMenuItemEpicentralDistanceMode.addActionListener(e -> gui.setMode(ComputationMode.EPICENTRAL_DISTANCE));
-		jMenuItemPreferences.addActionListener(e -> gui.changePropertiesVisible());
+    private void setListeners() {
+        jMenuItemPSVSH.addActionListener(e -> gui.setPolarity(0));
+        jMenuItemPSV.addActionListener(e -> gui.setPolarity(1));
+        jMenuItemSH.addActionListener(e -> gui.setPolarity(2));
 
-	
-	
-		jMenuItemExit.addActionListener(evt -> System.exit(0));
+        jMenuItemRayparameterMode.addActionListener(e -> gui.setMode(ComputationMode.RAY_PARAMETER));
+        jMenuItemEpicentralDistanceMode.addActionListener(e -> gui.setMode(ComputationMode.EPICENTRAL_DISTANCE));
+        jMenuItemPreferences.addActionListener(e -> gui.changePropertiesVisible());
 
-		jMenuItemParameterDescription.addActionListener(e -> {
-			URL descriptionPdf = getClass().getClassLoader().getResource("description.pdf");
-			String tmpPDFname = ".description"
-					+ Integer.toString((int) (Math.random() * Math.random() * Math.random() * 1000)) + ".pdf";
-			Path pdfFile = Paths.get("/var/tmp", tmpPDFname);
-			try {
-				pdfFile = Files.createFile(pdfFile);
-			} catch (Exception e2) {
-				pdfFile = Paths.get(System.getProperty("user.dir"), tmpPDFname);
-			}
-			try (BufferedOutputStream pdfOutStream = new BufferedOutputStream(Files.newOutputStream(pdfFile));
-					InputStream pdfStream = descriptionPdf.openStream()) {
-				IOUtils.copy(pdfStream, pdfOutStream);
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				return;
-			}
-			if (Desktop.isDesktopSupported()) {
-				try {
-					Desktop.getDesktop().open(pdfFile.toFile());
-					pdfFile.toFile().deleteOnExit();
-					return;
-				} catch (Exception ex) {
-					ex.printStackTrace();
-					// JOptionPane.showMessageDialog(null,
-					// "미안 해요. PDF를 열 수 없습니다");
-				}
-			}
-			JOptionPane.showMessageDialog(null,
-					"Can't open a pdf file. Look at " + pdfFile + " and delete by yourself.");
-		});
-		jMenuItemAbout.addActionListener(e -> About.main(null));
-		jMenuItemMail.addActionListener(e -> {
-			try {
-				Desktop.getDesktop().mail(new URI("mailto:bob@eps.s.u-tokyo.ac.jp"));
-			} catch (Exception e2) {
-				JOptionPane.showMessageDialog(null,
-						"<html>Can't launch a mailer. Please send Email to <a href>traveltimereport@outlook.com</a>.");
-			}
-		});
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	}
+        jMenuItemExit.addActionListener(evt -> System.exit(0));
 
-	private JMenu jMenuFile;
-	private JMenu jMenuSettings;
-	private JMenu jMenuModes;
-	private JMenu jMenuHelp;
-	private JMenu jMenuPolarization;
-	// private javax.swing.JMenu jMenu2;
-	private JMenuItem jMenuItemExit;
-	private JMenuItem jMenuItemRayparameterMode;
-	private JMenuItem jMenuItemEpicentralDistanceMode;
-	private JMenuItem jMenuItemParameterDescription;
-	private JMenuItem jMenuItemAbout;
-	private JMenuItem jMenuItemMail;
-	private JMenuItem jMenuItemPreferences;
-	private JMenuItem jMenuItemPSVSH;
-	private JMenuItem jMenuItemPSV;
-	private JMenuItem jMenuItemSH;
+        jMenuItemParameterDescription.addActionListener(e -> {
+            URL descriptionPdf = getClass().getClassLoader().getResource("description.pdf");
+            Path pdfFile;
+            try {
+                pdfFile = Files.createTempFile("ANISOtime_description", ".pdf");
+            } catch (Exception e2) {
+                pdfFile = Paths.get(System.getProperty("user.dir"), "ANISOtime_description.pdf");
+            }
+            try (BufferedOutputStream pdfOutStream = new BufferedOutputStream(Files.newOutputStream(pdfFile));
+                 InputStream pdfStream = descriptionPdf.openStream()) {
+                IOUtils.copy(pdfStream, pdfOutStream);
+            } catch (Exception e2) {
+                e2.printStackTrace();
+                return;
+            }
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().open(pdfFile.toFile());
+                    pdfFile.toFile().deleteOnExit();
+                    return;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    // JOptionPane.showMessageDialog(null,
+                    // "미안 해요. PDF를 열 수 없습니다");
+                }
+            }
+            JOptionPane
+                    .showMessageDialog(null, "Can't open a pdf file. Look at " + pdfFile + " and delete by yourself.");
+        });
+        jMenuItemAbout.addActionListener(e -> About.main(null));
+        jMenuItemMail.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().mail(new URI("mailto:bob@eps.s.u-tokyo.ac.jp"));
+            } catch (Exception e2) {
+                JOptionPane.showMessageDialog(null,
+                        "<html>Can't launch a mailer. Please send Email to <a href>traveltimereport@outlook.com</a>.");
+            }
+        });
+
+    }
+
+    private JMenuItem jMenuItemExit;
+    private JMenuItem jMenuItemRayparameterMode;
+    private JMenuItem jMenuItemEpicentralDistanceMode;
+    private JMenuItem jMenuItemParameterDescription;
+    private JMenuItem jMenuItemAbout;
+    private JMenuItem jMenuItemMail;
+    private JMenuItem jMenuItemPreferences;
+    private JMenuItem jMenuItemPSVSH;
+    private JMenuItem jMenuItemPSV;
+    private JMenuItem jMenuItemSH;
 }

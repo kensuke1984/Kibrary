@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.inversion;
 
 import org.apache.commons.math3.linear.RealMatrix;
@@ -11,14 +8,14 @@ import org.apache.commons.math3.linear.RealVector;
  * value decomposition.. etc
  * 
  * @author Kensuke Konishi
- * @version 0.0.2.1
+ * @version 0.0.3
  */
 public enum InverseMethodEnum {
-	SINGURAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD;
+	SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD;
 
 	public String simple() {
 		switch (this) {
-		case SINGURAR_VALUE_DECOMPOSITION:
+		case SINGULAR_VALUE_DECOMPOSITION:
 			return "SVD";
 		case CONJUGATE_GRADIENT:
 			return "CG";
@@ -33,7 +30,7 @@ public enum InverseMethodEnum {
 		switch (simple) {
 		case "svd":
 		case "SVD":
-			return SINGURAR_VALUE_DECOMPOSITION;
+			return SINGULAR_VALUE_DECOMPOSITION;
 		case "cg":
 		case "CG":
 			return CONJUGATE_GRADIENT;
@@ -47,7 +44,7 @@ public enum InverseMethodEnum {
 
 	InverseProblem getMethod(RealMatrix ata, RealVector atd) {
 		switch (this) {
-		case SINGURAR_VALUE_DECOMPOSITION:
+		case SINGULAR_VALUE_DECOMPOSITION:
 			return new SingularValueDecomposition(ata, atd);
 		case CONJUGATE_GRADIENT:
 			return new ConjugateGradientMethod(ata, atd);

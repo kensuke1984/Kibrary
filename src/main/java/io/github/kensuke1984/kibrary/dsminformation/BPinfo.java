@@ -19,7 +19,6 @@ import io.github.kensuke1984.kibrary.util.Station;
  * 
  * @author Kensuke Konishi
  * 
- * 
  */
 public class BPinfo extends DSMheader {
 

@@ -26,13 +26,13 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * 
  * Main procedures in Kibrary
  * 
- * @version 0.0.4.1
+ * @version 0.0.4.2
  * @author Kensuke Konishi
  *
  */
 public interface Operation {
 
-	public Path getWorkPath();
+	Path getWorkPath();
 
 	Properties getProperties();
 

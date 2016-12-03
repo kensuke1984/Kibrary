@@ -32,7 +32,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  * 
- * @version 0.2.1.2
+ * @version 0.2.1.3
  * 
  * @author Kensuke Konishi
  */
@@ -366,7 +366,7 @@ public class Dvector {
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
 				.collect(Collectors.toMap(id -> id, id -> 0d));
-		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0d));
+//		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0d));
 
 		Path eachVariancePath = outPath.resolve("eachVariance.txt");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
@@ -503,7 +503,7 @@ public class Dvector {
 		// //////
 		// 観測波形の抽出 list observed IDs
 		List<BasicID> obsList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.OBS)
-				.filter(chooser::test).collect(Collectors.toList());
+				.filter(chooser).collect(Collectors.toList());
 
 		// 重複チェック 重複が見つかればここから進まない
 		for (int i = 0; i < obsList.size(); i++)
@@ -513,7 +513,7 @@ public class Dvector {
 
 		// 理論波形の抽出
 		List<BasicID> synList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.SYN)
-				.filter(chooser::test).collect(Collectors.toList());
+				.filter(chooser).collect(Collectors.toList());
 
 		// 重複チェック
 		for (int i = 0; i < synList.size() - 1; i++)
@@ -533,11 +533,11 @@ public class Dvector {
 		List<BasicID> useObsList = new ArrayList<>(size);
 		List<BasicID> useSynList = new ArrayList<>(size);
 
-		for (int i = 0; i < synList.size(); i++)
-			for (int j = 0; j < obsList.size(); j++)
-				if (isPair(synList.get(i), obsList.get(j))) {
-					useObsList.add(obsList.get(j));
-					useSynList.add(synList.get(i));
+		for (BasicID syn : synList)
+			for (BasicID obs : obsList)
+				if (isPair(syn, obs)) {
+					useObsList.add(obs);
+					useSynList.add(syn);
 					break;
 				}
 

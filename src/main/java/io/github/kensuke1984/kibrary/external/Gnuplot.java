@@ -7,7 +7,7 @@ import java.io.PrintWriter;
  * Gnuplot dialog
  * 
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * @version 0.0.1.1
  */
 public class Gnuplot extends ExternalProcess {

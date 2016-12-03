@@ -10,8 +10,7 @@ import org.apache.commons.math3.util.ArithmeticUtils;
  * 
  * This class is <b>IMMUTABLE</b>
  * 
- * @version 0.0.5
- * 
+ * @version 0.0.5.1
  * @author Kensuke Konishi
  * 
  */
@@ -145,14 +144,14 @@ class DSMheader {
 			double artificialDampl) {
 		if (!ArithmeticUtils.isPowerOfTwo(np) || !validTlen(tlen))
 			throw new IllegalArgumentException("Input tlen:" + tlen + " or np:" + np + " is invalid");
-		this.TLEN = tlen;
-		this.NP = np;
-		this.IMIN = imin;
-		this.IMAX = imax;
-		this.RELATIVE_ERROR = relativeError;
-		this.RATC = ratc;
-		this.RATL = ratl;
-		this.ARTIFICIAL_DAMPING = artificialDampl;
+		TLEN = tlen;
+		NP = np;
+		IMIN = imin;
+		IMAX = imax;
+		RELATIVE_ERROR = relativeError;
+		RATC = ratc;
+		RATL = ratl;
+		ARTIFICIAL_DAMPING = artificialDampl;
 	}
 
 }

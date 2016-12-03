@@ -42,7 +42,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see {@link #create(byte[], Station[], GlobalCMTID[])}
  * 
  * 
- * @version 0.3.0.4
+ * @version 0.3.0.4.1
  * 
  * @author Kensuke Konishi
  * 
@@ -181,10 +181,10 @@ public final class TimewindowInformationFile {
 	 * Float starting time (4) (Round off to the third decimal place.),<br>
 	 * Float end time (4) (Round off to the third decimal place.), <br>
 	 *
-	 * @param bytes
-	 * @param stations
-	 * @param ids
-	 * @return
+	 * @param bytes byte array
+	 * @param stations station array
+	 * @param ids id array
+	 * @return TimewindowInformation
 	 */
 	private static TimewindowInformation create(byte[] bytes, Station[] stations, GlobalCMTID[] ids) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);

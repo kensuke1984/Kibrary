@@ -16,7 +16,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
  * 
  * This class is <b>immutable</b>
  * 
- * @version 0.0.6
+ * @version 0.0.6.1
  * @author Kensuke Konishi
  */
 public class FPinfo extends DSMheader {
@@ -40,7 +40,7 @@ public class FPinfo extends DSMheader {
 	 *            must be a power of 2 (2<sup>n</sup>)
 	 * @param perturbationPointR
 	 *            will be copied
-	 * @param perturbationPosition
+	 * @param perturbationPoint
 	 *            will be copied
 	 */
 	public FPinfo(GlobalCMTData event, String outputDir, PolynomialStructure structure, double tlen, int np,

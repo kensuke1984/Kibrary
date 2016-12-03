@@ -15,7 +15,7 @@ import java.util.Set;
  * The class is calculator of the formulation in Woodhouse (1981).
  * 
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @version 0.0.3.2.1
  * @see <a href=
  *      http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  *      1981</a>
@@ -47,7 +47,7 @@ class Woodhouse1981 implements Serializable {
 	 * Checks if the structure is included in the cache, if it does, just copy,
 	 * otherwise create a new cache.
 	 * 
-	 * @param structure
+	 * @param structure velocity structure
 	 */
 	private void copyOrCreate(VelocityStructure structure) {
 		synchronized (WOODHOUSE_CACHE) {

@@ -39,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * - see in {@link #read(Path)}<br>
  * 
  * 
- * @version 0.2.0.5
+ * @version 0.2.0.6
  * 
  * @author Kensuke Konishi
  * 
@@ -142,15 +142,14 @@ public final class StaticCorrectionFile {
 				new BufferedOutputStream(Files.newOutputStream(outPath, options)))) {
 			dos.writeShort(stations.length);
 			dos.writeShort(ids.length);
-			for (int i = 0; i < stations.length; i++) {
-				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
-				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
-				HorizontalPosition pos = stations[i].getPosition();
+			for (Station station : stations) {
+				dos.writeBytes(StringUtils.rightPad(station.getStationName(), 8));
+				dos.writeBytes(StringUtils.rightPad(station.getNetwork(), 8));
+				HorizontalPosition pos = station.getPosition();
 				dos.writeFloat((float) pos.getLatitude());
 				dos.writeFloat((float) pos.getLongitude());
 			}
-			for (int i = 0; i < ids.length; i++)
-				dos.writeBytes(StringUtils.rightPad(ids[i].toString(), 15));
+			for (GlobalCMTID id : ids) dos.writeBytes(StringUtils.rightPad(id.toString(), 15));
 
 			for (StaticCorrection correction : correctionSet) {
 				dos.writeShort(stationMap.get(correction.getStation()));
@@ -175,12 +174,12 @@ public final class StaticCorrectionFile {
 	public static void main(String[] args) throws IOException {
 		Set<StaticCorrection> scf;
 		if (args.length != 0)
-			scf = StaticCorrectionFile.read(Paths.get(args[0]));
+			scf = read(Paths.get(args[0]));
 		else {
 			String s = JOptionPane.showInputDialog("file?");
 			if (s == null || s.isEmpty())
 				return;
-			scf = StaticCorrectionFile.read(Paths.get(s));
+			scf = read(Paths.get(s));
 		}
 		scf.stream().sorted().forEach(System.out::println);
 	}
