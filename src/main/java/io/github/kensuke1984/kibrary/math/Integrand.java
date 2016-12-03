@@ -4,7 +4,7 @@ package io.github.kensuke1984.kibrary.math;
  * 
  * Integrand utilities
  * 
- * @version 0.0.4.1
+ * @version 0.0.4.1.1
  * 
  * @author Kensuke Konishi
  *
@@ -44,7 +44,7 @@ public final class Integrand {
 	 * @param y
 	 *           f(h), f(2h) for the approximation
 	 * @return value by 1
-	 * @see page 289 eq.1 Jeffereys &amp; Jeffreys
+	 * @see "page 289 eq.1 Jeffereys &amp; Jeffreys"
 	 */
 	public static double jeffreysMethod1(double h, double... y) {
 		return (8 * Math.sqrt(2) / 3 * y[0] - y[1] * 4 / 3) * h;
@@ -58,7 +58,7 @@ public final class Integrand {
 	 * @param y
 	 *            f(h), f(2h), f(3h) for the approximation
 	 * @return value by 2
-	 * @see page 289 eq.2 Jeffereys &amp; Jeffreys
+	 * @see "page 289 eq.2 Jeffereys &amp; Jeffreys"
 	 */
 	public static double jeffreysMethod2(double h, double... y) {
 		return 2 * Math.sqrt(3) * y[0] * h;
@@ -73,7 +73,7 @@ public final class Integrand {
 	 * @param y
 	 *           f(h), f(2h), f(3h) for the approximation
 	 * @return value by 3
-	 * @see page 289 eq.3 Jeffereys &amp; Jeffreys
+	 * @see "page 289 eq.3 Jeffereys &amp; Jeffreys"
 	 */
 	public static double jeffreysMethod3(double h, double... y) {
 		return (14 * Math.sqrt(3) / 5 * y[0] - 8 * Math.sqrt(6) / 5 * y[1] + 12 / 5.0 * y[2]) * h;
@@ -88,7 +88,7 @@ public final class Integrand {
 	 * @param y
 	 *            f(h), f(2h) for the approximation
 	 * @return value by 4
-	 * @see page 289 eq.4 Jeffereys &amp; Jeffreys
+	 * @see "page 289 eq.4 Jeffereys &amp; Jeffreys"
 	 */
 	public static double jeffreysMethod4(double h, double... y) {
 		return (16 * Math.sqrt(2) / 15 * y[0] + 4 / 15.0 * y[1]) * h;
@@ -103,7 +103,7 @@ public final class Integrand {
 	 * @param y
 	 *            f(h), f(2h), f(3h) for the approximation
 	 * @return value by 5
-	 * @see page 289 eq.5 Jeffereys &amp; Jeffreys
+	 * @see "page 289 eq.5 Jeffereys &amp; Jeffreys"
 	 */
 	public static double jeffreysMethod5(double h, double... y) {
 		return (6 * Math.sqrt(3) / 5 * y[0] + 4 / 5.0 * y[2]) * h;
@@ -118,7 +118,7 @@ public final class Integrand {
 	 * @param y
 	 *           f(h), f(2h), f(3h) for the approximation
 	 * @return value by 6
-	 * @see page 289 eq.6 Jeffereys &amp; Jeffreys
+	 * @see "page 289 eq.6 Jeffereys &amp; Jeffreys"
 	 */
 	public static double jeffreysMethod6(double h, double... y) {
 		return (6 * Math.sqrt(3) / 7 * y[0] + 12 * Math.sqrt(6) / 35 * y[1] + 16 / 35 * y[2]) * h;

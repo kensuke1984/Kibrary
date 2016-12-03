@@ -22,7 +22,6 @@ public class Property {
 		Manhattan.printList();
 		System.out.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "]");
 		Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).writeDefaultPropertiesFile();
-		return;
 	}
 
 	public static Properties parse(String[] args) throws IOException {

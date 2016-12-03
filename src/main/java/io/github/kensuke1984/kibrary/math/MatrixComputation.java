@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.math;
 
 import java.util.stream.IntStream;
@@ -17,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * Computations of matrix and vector
  * 
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * @author Kensuke Konishi
  */
 class MatrixComputation {

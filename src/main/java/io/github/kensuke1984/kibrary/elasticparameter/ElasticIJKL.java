@@ -17,7 +17,7 @@ public enum ElasticIJKL {
 
 	private final int value;
 
-	private ElasticIJKL(int n) {
+	ElasticIJKL(int n) {
 		value = n;
 	}
 
@@ -51,7 +51,6 @@ public enum ElasticIJKL {
 		for (ElasticIJKL ijkl : values())
 			if (ijkl.getValue() == n)
 				return ijkl;
-
 		throw new RuntimeException("Ananticipated.");
 	}
 

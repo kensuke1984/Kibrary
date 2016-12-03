@@ -74,7 +74,7 @@ public abstract class ButterworthFilter {
 	 *            &omega;: 2&pi;f&Delta;t
 	 * @return frequency responce for an input &omega;
 	 */
-	public abstract Complex getFrequencyResponce(double omega);
+	public abstract Complex getFrequencyResponse(double omega);
 
 	public double getAp() {
 		return ap;

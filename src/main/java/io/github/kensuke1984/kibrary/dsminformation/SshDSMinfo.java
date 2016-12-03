@@ -79,7 +79,6 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(RADII.length + " nr");
 			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
-
 		}
 	}
 
@@ -120,7 +119,6 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(RADII.length + " nr");
 			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
-
 		}
 	}
 
@@ -165,7 +163,6 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
-
 	}
 
 	/**
@@ -205,7 +202,6 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			Arrays.stream(RADII).forEach(pw::println);
 			pw.println("end");
 		}
-
 	}
 
 	/**

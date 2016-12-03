@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Each line: station name, station network, latitude, longitude.
  * 
  * 
- * @version 0.2.0.3
+ * @version 0.2.0.4
  * @author Kensuke Konishi
  *
  */
@@ -134,7 +134,7 @@ public final class StationInformationFile {
 			if (Files.exists(f) && Files.isDirectory(f))
 				createStationInformationFile(f);
 			else
-				System.out.println(f + " does not exist or is not a directory.");
+				System.err.println(f + " does not exist or is not a directory.");
 		} else {
 			Path workPath;
 			String path = "";
@@ -156,8 +156,6 @@ public final class StationInformationFile {
 				if (path == null || path.isEmpty())
 					return;
 				workPath = Paths.get(path);
-				if (!Files.isDirectory(workPath))
-					continue;
 				// System.out.println(tmp.getAbsolutePath());
 			} while (!Files.exists(workPath) || !Files.isDirectory(workPath));
 			createStationInformationFile(workPath);

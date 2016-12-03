@@ -28,9 +28,9 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * Duplication is NOT allowed.
  * 
- * @version 0.0.5.1
+ * @version 0.0.5.2
  * 
- * @author kensuke
+ * @author Kensuke Konishi
  * 
  */
 public class UnknownParameterFile {
@@ -51,7 +51,7 @@ public class UnknownParameterFile {
 			String line;
 			while (null != (line = br.readLine())) {
 				line = line.trim();
-				if (line.length() == 0 || line.startsWith("#"))
+				if (line.isEmpty() || line.startsWith("#"))
 					continue;
 				String[] parts = line.split("\\s+");
 				PartialType type = PartialType.valueOf(parts[0]);

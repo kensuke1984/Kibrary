@@ -12,9 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * The information contains a component, a station and a global CMT ID.
  * 
- * 
  * @version 0.1.3
- * 
  * @author Kensuke Konishi
  */
 public class TimewindowInformation extends Timewindow {

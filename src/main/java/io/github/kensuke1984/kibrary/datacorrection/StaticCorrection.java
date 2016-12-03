@@ -27,9 +27,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * To identify which time window for a waveform, synStartTime is also used.
  * 
- * @version 0.1.1.1
- * 
- * 
+ * @version 0.1.1.1.1
+ *
  * @author Kensuke Konishi
  *
  */
@@ -96,7 +95,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	 * To in observed, the timeshift will be Ts-To.<br>
 	 * Amplitude ratio shall be observed / synthetic.
 	 * 
-	 * @param stationName
+	 * @param station
 	 *            for shift
 	 * @param eventID
 	 *            for shift

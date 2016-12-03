@@ -14,8 +14,6 @@ import org.apache.commons.math3.linear.RealVector;
  * @author Kensuke Konishi
  *
  * @version 0.0.3.2
- * 
- * 
  */
 public abstract class InverseProblem {
 

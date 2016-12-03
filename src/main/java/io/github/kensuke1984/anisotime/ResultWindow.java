@@ -15,17 +15,16 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.6.1
+ * @version 0.0.6.2
  */
 class ResultWindow extends javax.swing.JPanel {
 
+    /**
+     * 2016/12/3
+     */
+    private static final long serialVersionUID = -1193832009624832856L;
 
-	/**
-	 * 2016/8/30
-	 */
-	private static final long serialVersionUID = 5732699322643646778L;
-
-	public ResultWindow(ANISOtimeGUI gui) {
+    public ResultWindow(ANISOtimeGUI gui) {
 		this.gui = gui;
 		initComponents();
 	}
@@ -39,7 +38,7 @@ class ResultWindow extends javax.swing.JPanel {
 	 */
 	// <editor-fold defaultstate="collapsed" desc="Generated Code">
 	private void initComponents() {
-		jScrollPane1 = new JScrollPane();
+		JScrollPane jScrollPane1 = new JScrollPane();
 		jTable1 = new javax.swing.JTable();
 		jScrollPane1.setViewportView(jTable1);
 		render = new SampleTableCellRenderer02();
@@ -58,7 +57,7 @@ class ResultWindow extends javax.swing.JPanel {
 				gui.selectRaypath(row);
 			}
 		});
-		jTable1.setModel(new javax.swing.table.DefaultTableModel(new Object[][] {},
+		jTable1.setModel(new DefaultTableModel(new Object[][] {},
 				new String[] { "\u0394 [deg]", "Depth [km]", "Phase", "Time [s]", "Ray parameter" }));
 
 		javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
@@ -69,8 +68,6 @@ class ResultWindow extends javax.swing.JPanel {
 				.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 187, Short.MAX_VALUE));
 		// setPreferredSize(getMinimumSize());
 	}// </editor-fold>
-
-	private javax.swing.JScrollPane jScrollPane1;
 
 	void clearRows() {
 		((DefaultTableModel) jTable1.getModel()).setRowCount(0);
@@ -95,6 +92,7 @@ class ResultWindow extends javax.swing.JPanel {
 			SwingUtilities.invokeAndWait(() -> ((DefaultTableModel) (jTable1.getModel()))
 					.addRow(new String[] { delta, depthS, phase, time, p }));
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 	}
@@ -173,16 +171,7 @@ class ResultWindow extends javax.swing.JPanel {
 					break;
 				}
 			}
-		} catch (ClassNotFoundException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (InstantiationException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (IllegalAccessException ex) {
-			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
-					ex);
-		} catch (javax.swing.UnsupportedLookAndFeelException ex) {
+		} catch (ClassNotFoundException | javax.swing.UnsupportedLookAndFeelException | IllegalAccessException | InstantiationException ex) {
 			java.util.logging.Logger.getLogger(ResultWindow.class.getName()).log(java.util.logging.Level.SEVERE, null,
 					ex);
 		}

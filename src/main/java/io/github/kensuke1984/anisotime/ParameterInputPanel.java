@@ -26,15 +26,16 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 /**
  * Panel for inputting parameters
  * 
- * @version 0.3.0
+ * @version 0.3.0.1
  * @author Kensuke Konishi
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 
 	/**
-	 * 2016/9/2
+	 * 2016/12/3
 	 */
-	private static final long serialVersionUID = -6147244200238410005L;
+	private static final long serialVersionUID = 6718030883815139117L;
+
 	private final ANISOtimeGUI gui;
 
 	void setMode(ComputationMode mode) {
@@ -162,8 +163,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
 		addMouseListners();
 
 		// Function
-		jTextFieldDepth.addFocusListener(createAdapter(d -> gui.setEventDepth(d)));
-		jTextFieldMostImportant.addFocusListener( createAdapter(d -> gui.setMostImportant(d)));
+		jTextFieldDepth.addFocusListener(createAdapter(gui::setEventDepth));
+		jTextFieldMostImportant.addFocusListener( createAdapter(gui::setMostImportant));
 		jComboBoxModel.addPopupMenuListener(new PopupMenuListener() {
 
 			@Override

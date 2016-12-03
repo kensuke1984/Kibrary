@@ -10,7 +10,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * 
- * @version 0.0.2
+ * @version 0.0.2.1
  * 
  * @author Kensuke Konishi
  *
@@ -22,11 +22,11 @@ public interface UnknownParameter {
 	 * 
 	 * @return weighting for this parameter
 	 */
-	public double getWeighting();
+	double getWeighting();
 
 	/**
 	 * @return {@link PartialType} of a parameter
 	 */
-	public PartialType getPartialType();
+	PartialType getPartialType();
 
 }

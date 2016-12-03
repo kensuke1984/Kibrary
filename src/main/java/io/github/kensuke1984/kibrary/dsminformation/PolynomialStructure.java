@@ -23,7 +23,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
  * When you try to get values on radius of boundaries, you will get one in the
  * shallower layer, i.e., the layer which has the radius as rmin.
  * 
- * @version 0.2.3.1
+ * @version 0.2.3.2
  * 
  * @author Kensuke Konishi
  * 
@@ -661,6 +661,12 @@ public class PolynomialStructure implements Serializable {
 		if (structureLines.length != (nzone * 6 + 1))
 			throw new IllegalArgumentException("Invalid lines");
 		initialize();
+		double[] rho = new double[4];
+		double[] vpv = new double[4];
+		double[] vph = new double[4];
+		double[] vsv = new double[4];
+		double[] vsh = new double[4];
+		double[] eta = new double[4];
 		for (int i = 0; i < nzone; i++) {
 			String[] rangeRhoParts = structureLines[i * 6 + 1].split("\\s+");
 			String[] vpvParts = structureLines[i * 6 + 2].split("\\s+");
@@ -670,12 +676,7 @@ public class PolynomialStructure implements Serializable {
 			String[] etaParts = structureLines[i * 6 + 6].split("\\s+");
 			rmin[i] = Double.parseDouble(rangeRhoParts[0]);
 			rmax[i] = Double.parseDouble(rangeRhoParts[1]);
-			double[] rho = new double[4];
-			double[] vpv = new double[4];
-			double[] vph = new double[4];
-			double[] vsv = new double[4];
-			double[] vsh = new double[4];
-			double[] eta = new double[4];
+
 			for (int j = 0; j < 4; j++) {
 				rho[j] = Double.parseDouble(rangeRhoParts[j + 2]);
 				vpv[j] = Double.parseDouble(vpvParts[j]);
@@ -684,6 +685,7 @@ public class PolynomialStructure implements Serializable {
 				vsh[j] = Double.parseDouble(vshParts[j]);
 				eta[j] = Double.parseDouble(etaParts[j]);
 			}
+
 			this.rho[i] = new PolynomialFunction(rho);
 			this.vpv[i] = new PolynomialFunction(vpv);
 			this.vph[i] = new PolynomialFunction(vph);

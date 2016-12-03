@@ -69,7 +69,7 @@ public final class DSMMPI {
 				System.err.println("looks like mpi-tipsv on " + information + " finished with problems");
 			return exit;
 		};
-	};
+	}
 
 	/**
 	 * Executes: mpirun -np `np` mpi-tish &lt; `information` Before the
@@ -101,7 +101,7 @@ public final class DSMMPI {
 				System.err.println("looks like mpi-tish on " + information + " finished with problems");
 			return exit;
 		};
-	};
+	}
 
 	public static void main(String[] args) throws NoSuchFileException {
 		if (args.length == 0 || (!args[0].equals("-sh") && !args[0].equals("-psv")))

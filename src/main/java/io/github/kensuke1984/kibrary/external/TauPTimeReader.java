@@ -23,7 +23,7 @@ import io.github.kensuke1984.anisotime.Phase;
  * 
  * PREM is used for travel times.
  * 
- * @version 0.3.2.1
+ * @version 0.3.2.2
  * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
  * 
  * 
@@ -79,9 +79,9 @@ public final class TauPTimeReader {
 	/**
 	 * TauPの結果の出力を読み込む
 	 * 
-	 * @param eventR
-	 * @param epicentralDistance
-	 * @param phase
+	 * @param eventR [km]
+	 * @param epicentralDistance [deg]
+	 * @param phase set of phase
 	 * @return result lines
 	 */
 	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<Phase> phase) {
@@ -98,8 +98,7 @@ public final class TauPTimeReader {
 			}
 			return outLines;
 		} catch (Exception e) {
-			System.out.println("Error occured");
-			System.out.println("could not find the time");
+			System.err.println("Error occured. Could not find the time.");
 			e.printStackTrace();
 			return null;
 		}
@@ -116,12 +115,11 @@ public final class TauPTimeReader {
 	 * Distance Depth Phase Travel Ray Param Takeoff Incident Purist distance
 	 * Purist name の順ではいっている文
 	 * 
-	 * @param line
-	 * @return
+	 * @param line to read
+	 * @return TauPPhase
 	 */
 	private static TauPPhase toPhase(String line) {
 		String[] parts = line.trim().split("\\s+");
-		// System.out.println(line+"hi");
 		double distance = Double.parseDouble(parts[0]);
 		double depth = Double.parseDouble(parts[1]);
 		Phase phaseName = Phase.create(parts[2]);

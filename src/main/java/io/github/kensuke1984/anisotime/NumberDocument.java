@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import javax.swing.text.AttributeSet;
@@ -10,13 +7,14 @@ import javax.swing.text.PlainDocument;
 /**
  * Document containing only numbers (double value) used in ANISOtime.
  * 
- * @version 0.0.1.2
+ * @version 0.0.1.3
  * @author Kensuke Konishi
  * 
  */
 final class NumberDocument extends PlainDocument {
 
-	private static final long serialVersionUID = -7573995261853190455L;
+
+	private static final long serialVersionUID = 5550233953139814272L;
 
 	NumberDocument() {
 	}
@@ -31,7 +29,7 @@ final class NumberDocument extends PlainDocument {
 			newValue = str;
 		else {
 			String currentContent = getText(0, length);
-			StringBuffer currentBuffer = new StringBuffer(currentContent);
+			StringBuilder currentBuffer = new StringBuilder(currentContent);
 			currentBuffer.insert(offset, str);
 			newValue = currentBuffer.toString();
 		}
@@ -51,12 +49,11 @@ final class NumberDocument extends PlainDocument {
 	}
 
 	private static void checkInput(String proposedValue, int offset) throws BadLocationException {
-		if (0 < proposedValue.length()) {
+		if (!proposedValue.isEmpty()) {
 			if (proposedValue.equals("+") || proposedValue.equals("-"))
 				return;
 			try {
 				Double.parseDouble(proposedValue);
-				return;
 			} catch (NumberFormatException e) {
 				throw new BadLocationException(proposedValue, offset);
 			}

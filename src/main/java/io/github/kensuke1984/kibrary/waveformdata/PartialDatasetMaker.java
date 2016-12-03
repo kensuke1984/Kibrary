@@ -173,8 +173,8 @@ public class PartialDatasetMaker implements Operation {
 		private GlobalCMTID id;
 
 		/**
-		 * @param fp
-		 * @param bpFile
+		 * @param bp back propagate
+		 * @param fpFile forward propagate
 		 */
 		private PartialComputation(DSMOutput bp, Station station, SpcFileName fpFile) {
 			this.bp = bp;
@@ -187,9 +187,9 @@ public class PartialDatasetMaker implements Operation {
 		 * cut partial derivative in [start-ext, start+ext] The ext is for
 		 * filtering .
 		 * 
-		 * @param u
-		 * @param property
-		 * @return
+		 * @param u waveform
+		 * @param timewindowInformation time window information
+		 * @return cut waveform
 		 */
 		private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation) {
 			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz) - ext;
@@ -258,7 +258,7 @@ public class PartialDatasetMaker implements Operation {
 				Location location = fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
 				for (PartialType type : partialTypes)
 					for (SACComponent component : components) {
-						if (!timewindowList.stream().anyMatch(info -> info.getComponent() == component))
+						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
 							continue;
 						double[] partial = threedPartialMaker.createPartial(component, ibody, type);
 						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
@@ -431,7 +431,6 @@ public class PartialDatasetMaker implements Operation {
 				perturbationLocationSet);
 		writeLog("Creating " + idPath + " " + datasetPath);
 		System.out.println("Creating " + idPath + " " + datasetPath);
-
 	}
 
 	// TODO
@@ -485,7 +484,7 @@ public class PartialDatasetMaker implements Operation {
 			// Set of global cmt IDs for the station in the timewindow.
 			Set<GlobalCMTID> idSet = timewindowInformation.stream()
 					.filter(info -> components.contains(info.getComponent()))
-					.filter(info -> info.getStation().equals(station)).map(info -> info.getGlobalCMTID())
+					.filter(info -> info.getStation().equals(station)).map(TimewindowInformation::getGlobalCMTID)
 					.collect(Collectors.toSet());
 
 			if (idSet.isEmpty())
