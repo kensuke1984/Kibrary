@@ -4,6 +4,7 @@ import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
 
 import java.util.Arrays;
+
 import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 import io.github.kensuke1984.kibrary.selection.FilterDivider;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
@@ -23,64 +24,61 @@ import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 
 /**
- * 
  * The list of names of manhattan (operation)
- * 
+ *
  * @author Kensuke Konishi
- * @version 0.0.5
+ * @version 0.0.5.1
  */
 public enum Manhattan {
-	CheckerBoardTest(1, CheckerBoardTest.class), //
-	DataRequestor(2, DataRequestor.class), //
-	DataSelection(3, DataSelection.class), //
-	FilterDivider(4, FilterDivider.class), //
-	FirstHandler(5, FirstHandler.class), //
-	FujiStaticCorrection(6, FujiStaticCorrection.class), //
-	InformationFileMaker(7, InformationFileMaker.class), //
-	LetMeInvert(8, LetMeInvert.class), //
-	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
-	Partial1DDatasetMaker(10, Partial1DDatasetMaker.class), //
-	PartialDatasetMaker(11, PartialDatasetMaker.class), //
-	RaypathDistribution(12, RaypathDistribution.class), //
-	SecondHandler(13, SecondHandler.class), //
-	SpcSAC(14, SpcSAC.class), //
-	SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
-	SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
-	TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //
-	TimewindowMaker(18, TimewindowMaker.class),//
-	;
+    CheckerBoardTest(1, CheckerBoardTest.class), //
+    DataRequestor(2, DataRequestor.class), //
+    DataSelection(3, DataSelection.class), //
+    FilterDivider(4, FilterDivider.class), //
+    FirstHandler(5, FirstHandler.class), //
+    FujiStaticCorrection(6, FujiStaticCorrection.class), //
+    InformationFileMaker(7, InformationFileMaker.class), //
+    LetMeInvert(8, LetMeInvert.class), //
+    ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
+    Partial1DDatasetMaker(10, Partial1DDatasetMaker.class), //
+    PartialDatasetMaker(11, PartialDatasetMaker.class), //
+    RaypathDistribution(12, RaypathDistribution.class), //
+    SecondHandler(13, SecondHandler.class), //
+    SpcSAC(14, SpcSAC.class), //
+    SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
+    SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
+    TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //
+    TimewindowMaker(18, TimewindowMaker.class),//
+    ;
 
-	public static void printList() {
-		Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
-	}
+    public static void printList() {
+        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
+    }
 
-	static Manhattan valueOf(int n) {
-		return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
-	}
+    static Manhattan valueOf(int n) {
+        return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
+    }
 
-	private Class<? extends Operation> c;
+    private Class<? extends Operation> c;
 
-	private int value;
+    private int value;
 
-	private Manhattan(int n, Class<? extends Operation> c) {
-		value = n;
-		this.c = c;
-	}
+    Manhattan(int n, Class<? extends Operation> c) {
+        value = n;
+        this.c = c;
+    }
 
-	/**
-	 * invoke main of this with the args
-	 * 
-	 * @param args
-	 *            to input main
-	 * @throws Exception
-	 *             if any
-	 */
-	public void invokeMain(String[] args) throws Exception {
-		c.getMethod("main", String[].class).invoke(null, (Object) args);
-	}
+    /**
+     * invoke main of this with the args
+     *
+     * @param args to input main
+     * @throws Exception if any
+     */
+    public void invokeMain(String[] args) throws Exception {
+        c.getMethod("main", String[].class).invoke(null, (Object) args);
+    }
 
-	public void writeDefaultPropertiesFile() throws Exception {
-		c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
-	}
+    public void writeDefaultPropertiesFile() throws Exception {
+        c.getMethod("writeDefaultPropertiesFile", (Class<?>[]) null).invoke(null, (Object[]) null);
+    }
 
 }

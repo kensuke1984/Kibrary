@@ -12,7 +12,6 @@ import java.util.List;
  * @version 0.0.2.2
  * 
  * @author Kensuke Konishi
- * 
  */
 class InformationFileReader {
 	private Path informationPath;
@@ -82,7 +81,7 @@ class InformationFileReader {
 	/**
 	 * blank line will be also considered to be a comment line
 	 * 
-	 * @param line
+	 * @param line to check
 	 * @return if the input line is comment line or not
 	 */
 	private static boolean isComment(String line) {

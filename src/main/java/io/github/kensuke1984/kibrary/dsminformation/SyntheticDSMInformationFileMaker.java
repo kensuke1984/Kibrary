@@ -22,9 +22,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
  * 
  * @version 0.2.2
- * 
  * @author Kensuke Konishi
- * 
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 

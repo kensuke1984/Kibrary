@@ -40,8 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
  * 
- * @version 0.2.2.1
- * 
+ * @version 0.2.2.2
  * 
  * @author Kensuke Konishi
  * 
@@ -245,9 +244,9 @@ public class TimewindowMaker implements Operation {
 	/**
 	 * fix start and end time by delta these time must be (int) * delta
 	 * 
-	 * @param window
-	 * @param delta
-	 * @return
+	 * @param window {@link Timewindow}
+	 * @param delta time step
+	 * @return fixed {@link Timewindow}
 	 */
 	private static Timewindow fix(Timewindow window, double delta) {
 		double startTime = delta * (int) (window.startTime / delta);
@@ -265,7 +264,7 @@ public class TimewindowMaker implements Operation {
 	 *            must be in order.
 	 * @param exPhaseTime
 	 *            must be in order.
-	 * @return
+	 * @return created {@link Timewindow} array
 	 */
 	private Timewindow[] createTimeWindows(double[] phaseTime, double[] exPhaseTime) {
 		Timewindow[] windows = Arrays.stream(phaseTime)
@@ -284,8 +283,8 @@ public class TimewindowMaker implements Operation {
 	}
 
 	/**
-	 * @param useTimeWindow
-	 * @param exTimeWindow
+	 * @param useTimeWindow to use
+	 * @param exTimeWindow to avoid
 	 * @return useTimeWindowからexTimeWindowの重なっている部分を取り除く 何もなくなってしまったらnullを返す
 	 */
 	private static Timewindow cutWindow(Timewindow useTimeWindow, Timewindow exTimeWindow) {
@@ -321,7 +320,7 @@ public class TimewindowMaker implements Operation {
 				usable.add(window);
 		}
 
-		return usable.size() == 0 ? null : usable.toArray(new Timewindow[0]);
+		return usable.isEmpty() ? null : usable.toArray(new Timewindow[0]);
 	}
 
 	/**

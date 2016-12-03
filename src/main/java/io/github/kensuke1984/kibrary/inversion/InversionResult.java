@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.2
+ * @version 0.1.2.1
  */
 public class InversionResult {
 
@@ -241,7 +241,7 @@ public class InversionResult {
 	/**
 	 * @param id
 	 *            ID of the partial
-	 * @param parN
+	 * @param parameter
 	 *            index of a partial in unknown parameters
 	 * @return {@link Trace} of parN in nth time window. time axis is Synthetic
 	 *         one

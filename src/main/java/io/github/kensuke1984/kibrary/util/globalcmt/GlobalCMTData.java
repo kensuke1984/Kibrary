@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.time.LocalDateTime;
@@ -10,27 +7,28 @@ import io.github.kensuke1984.kibrary.util.Location;
 
 /**
  * Data for global CMT data used frequently.
- * @author kensuke
- * @version 0.0.1
+ *
+ * @author Kensuke Konishi
+ * @version 0.0.1.0.1
  */
 public interface GlobalCMTData {
 
-	double getMb();
+    double getMb();
 
-	double getMs();
+    double getMs();
 
-	MomentTensor getCmt();
+    MomentTensor getCmt();
 
-	Location getCmtLocation();
+    Location getCmtLocation();
 
-	LocalDateTime getCMTTime();
+    LocalDateTime getCMTTime();
 
-	double getHalfDuration();
+    double getHalfDuration();
 
-	Location getPDELocation();
+    Location getPDELocation();
 
-	LocalDateTime getPDETime();
+    LocalDateTime getPDETime();
 
-	GlobalCMTID getGlobalCMTID();
+    GlobalCMTID getGlobalCMTID();
 
 }

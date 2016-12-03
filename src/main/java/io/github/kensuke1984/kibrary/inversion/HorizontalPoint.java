@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
  * TODO DSM informationとして書き出す
  * 
  * 
- * @version 0.1.2.1
+ * @version 0.1.2.2
  * 
  * @author Kensuke Konishi
  * 
@@ -67,7 +67,7 @@ public class HorizontalPoint {
 				line = line.trim();
 				// skip when a line starts with #
 				// skip when a line does not contain anything
-				if (line.startsWith("#") || line.length() == 0)
+				if (line.startsWith("#") || line.isEmpty())
 					continue;
 				HorizontalPosition loc = new HorizontalPosition(Double.parseDouble(line.trim().split("\\s+")[1]),
 						Double.parseDouble(line.trim().split("\\s+")[2]));

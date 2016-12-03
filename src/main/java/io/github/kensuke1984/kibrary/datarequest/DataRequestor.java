@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.datarequest;
 
 import java.io.IOException;
@@ -27,9 +24,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.3
- * 
- *
+ * @version 0.1.3.1
  */
 public class DataRequestor implements Operation {
 
@@ -144,6 +139,7 @@ public class DataRequestor implements Operation {
 
 	private void set() {
 		checkAndPutDefaults();
+        workPath = Paths.get(property.getProperty("workPath"));
 		institute = property.getProperty("institute");
 		mail = property.getProperty("mail");
 		email = property.getProperty("email");
@@ -182,7 +178,7 @@ public class DataRequestor implements Operation {
 		Channel[] channels = Channel.listChannels(networks, id, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
 				footAdjustment);
 		return new BreakFastMail(System.getProperty("user.name"), institute, mail, email, phone, fax,
-				id.toString() + "." + date, media, channels);
+				id + "." + date, media, channels);
 	}
 
 	private Set<GlobalCMTID> listIDs() {
@@ -252,7 +248,7 @@ public class DataRequestor implements Operation {
 			pw.println("##If you just want to create emails, then set it true (false)");
 			pw.println("#send");
 		}
-		System.out.println(outPath + " is created.");
+		System.err.println(outPath + " is created.");
 	}
 
 	@Override
@@ -285,7 +281,7 @@ public class DataRequestor implements Operation {
 				m.sendIris();
 				Thread.sleep(300 * 1000);
 			} catch (Exception e) {
-				System.out.println(m.getLabel() + " was not sent");
+				System.err.println(m.getLabel() + " was not sent");
 				e.printStackTrace();
 			}
 		});

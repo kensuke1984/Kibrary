@@ -62,6 +62,4 @@ public class TimeshiftParameter implements UnknownParameter{
 		return PartialType.TIME;
 	}
 
-
-
 }

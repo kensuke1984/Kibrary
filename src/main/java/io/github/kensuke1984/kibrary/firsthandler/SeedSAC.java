@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * This class assumes that rdseed, evalresp and sac exists in your PATH. The
  * software can be found in IRIS.
  * 
- * @version 0.1.8.2
+ * @version 0.1.8.3
  * 
  * @author Kensuke Konishi
  * 
@@ -195,9 +195,7 @@ class SeedSAC implements Runnable {
 	}
 
 	/**
-	 * global cmt id が日付的に合っているかどうか （startが発震時刻より前かつendがCMT時刻より後かどうか）
-	 * 
-	 * @return
+	 * @return global cmt id が日付的に合っているかどうか （startが発震時刻より前かつendがCMT時刻より後かどうか）
 	 */
 	private boolean idValidity() {
 		event = id.getEvent();
@@ -338,13 +336,12 @@ class SeedSAC implements Runnable {
 		UnevenSACMerger u = new UnevenSACMerger(eventDir.toPath());
 		u.merge();
 		u.move();
-		// System.exit(0);
 	}
 
 	/**
 	 * イベントフォルダ内のmerge後のSACを修正する
 	 * 
-	 * @return
+	 * @return if successful
 	 */
 	private boolean modifySACs() {
 		// System.out.println("Modifying sac files in "
@@ -394,7 +391,6 @@ class SeedSAC implements Runnable {
 		}
 
 		return true;
-
 	}
 
 	/**
@@ -615,7 +611,7 @@ class SeedSAC implements Runnable {
 	 * evalrespをはしらせる evalresp station component year julian day minfreq maxfreq
 	 * npts -s lin -r cs -u vel firstHandlerと同じ結果になる！
 	 * 
-	 * @param headerMap
+	 * @param headerMap header of sac file
 	 * @return if succeed
 	 */
 	private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap) {

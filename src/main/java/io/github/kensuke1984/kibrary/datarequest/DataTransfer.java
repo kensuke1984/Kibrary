@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.datarequest;
 
 import java.io.BufferedOutputStream;
@@ -21,7 +18,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * FTP access to IRIS server. OHP will be prepared
  * 
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 final class DataTransfer {
 
@@ -43,7 +40,7 @@ final class DataTransfer {
 			if (!FTPReply.isPositiveCompletion(reply))
 				throw new RuntimeException("connect fail");
 			// login
-			if (ftpclient.login("anonymous", "password") == false)
+			if (!ftpclient.login("anonymous", "password"))
 				throw new RuntimeException("login fail");
 			// passive mode
 			ftpclient.enterLocalPassiveMode();
@@ -100,7 +97,6 @@ final class DataTransfer {
 		try {
 			Path outPath = Paths.get("seedsTransferredAt" + Utilities.getTemporaryString());
 			get(args[0], outPath);
-			return;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

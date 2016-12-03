@@ -25,11 +25,11 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 /**
  * Am=d
  * 
- * @version 0.2.1.2
+ * @version 0.2.1.3
  * 
  * 
  * @author Kensuke Konishi
- * @see {@link Dvector} {@link UnknownParameter}
+ * @see Dvector {@link UnknownParameter}
  */
 public class ObservationEquation {
 
@@ -190,7 +190,7 @@ public class ObservationEquation {
 	 */
 	void outputA(Path outputPath) throws IOException {
 		if (a == null) {
-			System.out.println("no more A");
+			System.err.println("no more A");
 			return;
 		}
 		if (Files.exists(outputPath))

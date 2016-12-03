@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.awt.BasicStroke;
@@ -24,20 +21,19 @@ import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.3.4
+ * @version 0.0.3.4.1
  */
 final class RaypathPanel extends JPanel {
 
-
 	/**
-	 * 2016/8/30
+	 * 2016/12/3
 	 */
-	private static final long serialVersionUID = 8852619628102508529L;
+	private static final long serialVersionUID = 8957975255367012982L;
 
 	RaypathPanel(VelocityStructure structure) {
-		this.earthRadius = structure.earthRadius();
-		this.coreMantleBoundary = structure.coreMantleBoundary();
-		this.innerCoreBoundary = structure.innerCoreBoundary();
+		earthRadius = structure.earthRadius();
+		coreMantleBoundary = structure.coreMantleBoundary();
+		innerCoreBoundary = structure.innerCoreBoundary();
 		setSize(700, 700);
 	}
 
@@ -79,7 +75,7 @@ final class RaypathPanel extends JPanel {
 		delta = Precision.round(Math.toDegrees(delta), 3);
 		time = Precision.round(time, 3);
 		double depth = Precision.round(earthRadius - eventR, 3);
-		String line = phase.toString() + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
+		String line = phase + ", Ray parameter: " + rayparameter + ", Depth[km]:" + depth
 				+ ", Epicentral distance[deg]: " + delta + ", Travel time[s]: " + time;
 		int startInt = (int) changeX(-line.length() / 2 * 6371 / 45);
 		epsGraphics.drawString(line, startInt, (int) changeY(earthRadius) - 25);

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.awt.BorderLayout;
@@ -14,7 +11,7 @@ import javax.swing.border.EmptyBorder;
  * 
  * Parameter description used in ANISOtime.
  * 
- * @version 0.0.3.2
+ * @version 0.0.3.2.1
  * @author Kensuke Konishi
  * 
  * 

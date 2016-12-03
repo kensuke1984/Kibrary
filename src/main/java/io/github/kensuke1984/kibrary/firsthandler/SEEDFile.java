@@ -19,7 +19,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 /**
  * Seed file utility rdseed must be in PATH.
  * 
- * @version 0.0.8.1
+ * @version 0.0.8.2
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/rdseed/>download</a>
@@ -27,7 +27,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
  */
 public class SEEDFile {
 
-	{
+	static {
 		if (!ExternalProcess.isInPath("rdseed"))
 			throw new RuntimeException("rdseed is not in PATH.");
 	}
@@ -123,47 +123,45 @@ public class SEEDFile {
 	/**
 	 * rdseed -cf seedFile から読み込める情報を読み取る。
 	 * 
-	 * @throws IOException
+	 * @throws IOException if any
 	 */
 	private void readVolumeHeader() throws IOException {
 		if (!Files.exists(seedPath))
 			throw new NoSuchFileException(seedPath.toString());
 
 		String[] lines = readSeed("-cf");
-		for (int i = 0; i < lines.length; i++) {
-			if (lines[i].contains("Starting date of this volume")) {
-				Matcher m = datePattern.matcher(lines[i]);
+		for (String line : lines) {
+			if (line.contains("Starting date of this volume")) {
+				Matcher m = datePattern.matcher(line);
 				m.find();
 				String dateString = m.group();
 				startingDate = toLocalDateTime(dateString);
-			} else if (lines[i].contains("Ending date of this volume")) {
-				Matcher m = datePattern.matcher(lines[i]);
+			} else if (line.contains("Ending date of this volume")) {
+				Matcher m = datePattern.matcher(line);
 				m.find();
 				String dateString = m.group();
 				endingDate = toLocalDateTime(dateString);
-			} else if (lines[i].contains("Creation Date of this volume")) {
-				Matcher m = datePattern.matcher(lines[i]);
+			} else if (line.contains("Creation Date of this volume")) {
+				Matcher m = datePattern.matcher(line);
 				m.find();
 				String dateString = m.group();
 				creationDate = toLocalDateTime(dateString);
-			} else if (lines[i].contains("Originating Organization")) {
-				String[] parts = lines[i].split("\\s+");
-				if (parts.length == 2)
-					continue;
-				StringBuffer buffer = new StringBuffer();
+			} else if (line.contains("Originating Organization")) {
+				String[] parts = line.split("\\s+");
+				if (parts.length == 2) continue;
+				StringBuilder builder = new StringBuilder();
 				for (int j = 3; j < parts.length - 1; j++)
-					buffer.append(parts[j]);
-				buffer.append(parts[parts.length - 1]);
-				originatingOrganization = buffer.toString();
-			} else if (lines[i].contains("Volume Label")) {
-				String[] parts = lines[i].split("\\s+");
-				if (parts.length == 2)
-					continue;
-				StringBuffer buffer = new StringBuffer();
+					builder.append(parts[j]);
+				builder.append(parts[parts.length - 1]);
+				originatingOrganization = builder.toString();
+			} else if (line.contains("Volume Label")) {
+				String[] parts = line.split("\\s+");
+				if (parts.length == 2) continue;
+				StringBuilder builder = new StringBuilder();
 				for (int j = 3; j < parts.length - 1; j++)
-					buffer.append(parts[j]);
-				buffer.append(parts[parts.length - 1]);
-				volumeLabel = buffer.toString();
+					builder.append(parts[j]);
+				builder.append(parts[parts.length - 1]);
+				volumeLabel = builder.toString();
 			}
 		}
 	}
@@ -187,7 +185,7 @@ public class SEEDFile {
 	 * @param option
 	 *            -cf 等
 	 * @return output of rdseed$option. (this method never returns null)
-	 * @throws IOException
+	 * @throws IOException if any
 	 */
 	private String[] readSeed(String option) throws IOException {
 		List<String> commands = new ArrayList<>();
@@ -208,7 +206,7 @@ public class SEEDFile {
 	 * @param outputPath
 	 *            rdseed の出力先 if this is relative path, then the root is the
 	 *            directory of the seed file
-	 * @throws IOException
+	 * @throws IOException if any
 	 */
 	void extract(Path outputPath) throws IOException {
 		if (Files.exists(outputPath))

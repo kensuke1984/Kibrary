@@ -20,10 +20,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * rdseedからできた 1993.052.07.01.12.4000.PS.OGS.(locationID).BHN.D.SAC
  * の用なファイルのうち、同じnetwork, station, locationID, channel, qualityID のもののgroup
  * 
- * @version 0.0.6.1
+ * @version 0.0.6.2
  * 
  * @author Kensuke Konishi
- * 
  */
 class SACGroup {
 
@@ -53,8 +52,8 @@ class SACGroup {
 	/**
 	 * 基本となる {@link SACFileName}を追加
 	 * 
-	 * @param workPath
-	 * @param sacFileName
+	 * @param workPath work path
+	 * @param sacFileName sacfile name
 	 */
 	SACGroup(Path workPath, SACFileName sacFileName) {
 		this.workPath = workPath;
@@ -76,8 +75,6 @@ class SACGroup {
 
 	/**
 	 * グループ内のSAC fileを trashに捨てる 存在していないと作成する
-	 * 
-	 * @return 捨てられたかどうか
 	 */
 	void move(Path trash) {
 		nameSet.stream().map(Object::toString).map(workPath::resolve).forEach(srcPath -> {
@@ -195,13 +192,12 @@ class SACGroup {
 			}
 			currentEndTime = endTime;
 			currentStartTime = startTime;
-
 		}
 		// System.out.println(mergedSacFileName);
 
 		if (sacdata.size() != currentNpts) {
-			System.out.print("unexpected happened npts' are different ");
-			System.out.println(sacdata.size() + " " + currentNpts);
+			System.err.print("unexpected happened npts' are different ");
+			System.err.println(sacdata.size() + " " + currentNpts);
 			return false;
 		}
 
@@ -209,8 +205,8 @@ class SACGroup {
 		long timeDiff = (sacdata.size() - 1) * deltaInMillis + bInMillis - eInMillis;
 		if (5 < timeDiff || timeDiff < -5) {
 			// if ((sacdata.size()-1)*deltaInMillis+bInMillis != eInMillis) {
-			System.out.print("unexpected happened currentE' are different ");
-			System.out.println((sacdata.size() - 1) * deltaInMillis + bInMillis + " " + eInMillis);
+			System.err.print("unexpected happened currentE' are different ");
+			System.err.println((sacdata.size() - 1) * deltaInMillis + bInMillis + " " + eInMillis);
 			if (100 < timeDiff || timeDiff < -100)
 				return false;
 		}
@@ -220,10 +216,8 @@ class SACGroup {
 		headerMap.put(SACHeaderEnum.E, Double.toString(e));
 		double[] sdata = sacdata.stream().mapToDouble(Double::doubleValue).toArray();
 
-		// System.exit(0);
 		SACUtil.writeSAC(workPath.resolve(mergedSacFileName), headerMap, sdata);
 		return true;
-
 	}
 
 }

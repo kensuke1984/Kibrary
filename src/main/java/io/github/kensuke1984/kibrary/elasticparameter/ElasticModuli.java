@@ -3,8 +3,7 @@ package io.github.kensuke1984.kibrary.elasticparameter;
 /**
  * 偏微分係数波形を計算するためのCijklを作る
  * 
- * @author Kensuke
- *
+ * @author Kensuke Konishi
  * @version 0.0.2
  *
  */

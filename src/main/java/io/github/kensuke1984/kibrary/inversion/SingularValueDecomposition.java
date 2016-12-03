@@ -123,7 +123,7 @@ public class SingularValueDecomposition extends InverseProblem {
 
 	@Override
 	InverseMethodEnum getEnum() {
-		return InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
+		return InverseMethodEnum.SINGULAR_VALUE_DECOMPOSITION;
 	}
 
 }

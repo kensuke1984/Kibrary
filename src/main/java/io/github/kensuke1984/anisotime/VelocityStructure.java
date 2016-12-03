@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.anisotime;
 
 import java.io.Serializable;
@@ -9,14 +6,14 @@ import java.io.Serializable;
  * Structure information for computing traveltime.
  * 
  * @author Kensuke Konishi
- * @version 0.0.8.1
+ * @version 0.0.8.2
  * @see <a href=
  *      http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  *      1981</a>
  */
 public interface VelocityStructure extends Serializable {
 
-	public default double getTurningR(PhasePart pp, double rayParameter) {
+	default double getTurningR(PhasePart pp, double rayParameter) {
 		switch (pp) {
 		case I:
 			return iTurningR(rayParameter);
@@ -40,21 +37,21 @@ public interface VelocityStructure extends Serializable {
 	/**
 	 * @return Transversely isotropic (TI) PREM by Dziewonski & Anderson 1981
 	 */
-	public static VelocityStructure prem() {
+	static VelocityStructure prem() {
 		return PolynomialStructure.PREM;
 	}
 
 	/**
 	 * @return isotropic PREM by Dziewonski & Anderson 1981
 	 */
-	public static VelocityStructure iprem() {
+	static VelocityStructure iprem() {
 		return PolynomialStructure.ISO_PREM;
 	}
 
 	/**
 	 * @return AK135 by Kennett, Engdahl & Buland (1995)
 	 */
-	public static VelocityStructure ak135() {
+	static VelocityStructure ak135() {
 		return PolynomialStructure.AK135;
 	}
 
@@ -74,7 +71,7 @@ public interface VelocityStructure extends Serializable {
 	 *            ray parameter
 	 * @return the K turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid R. The radius must be in the outercore.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double kTurningR(double rayParameter);
 
@@ -87,7 +84,7 @@ public interface VelocityStructure extends Serializable {
 	 *            ray parameter
 	 * @return the SH turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid R The radius must be in the mantle.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double shTurningR(double rayParameter);
 
@@ -100,7 +97,7 @@ public interface VelocityStructure extends Serializable {
 	 *            ray parameter
 	 * @return the SV turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid R. The radius must be in the mantle.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double svTurningR(double rayParameter);
 
@@ -113,7 +110,7 @@ public interface VelocityStructure extends Serializable {
 	 *            ray parameter
 	 * @return the P turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid radius. The radius must be in the mantle.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double pTurningR(double rayParameter);
 
@@ -127,7 +124,7 @@ public interface VelocityStructure extends Serializable {
 	 * @return the P turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid radius. The radius must be in the
 	 *         inner-core.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double iTurningR(double rayParameter);
 
@@ -140,7 +137,7 @@ public interface VelocityStructure extends Serializable {
 	 *            ray parameter
 	 * @return the SH turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid R The radius must be in the inner-core.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double jhTurningR(double rayParameter);
 
@@ -153,7 +150,7 @@ public interface VelocityStructure extends Serializable {
 	 *            ray parameter
 	 * @return the SV turning radius [km] for the raypath or {@link Double#NaN}
 	 *         if there is no valid R. The radius must be in the inner-core.
-	 * @see {@code Woodhouse (1981)}
+	 * @see "Woodhouse (1981)"
 	 */
 	double jvTurningR(double rayParameter);
 
@@ -267,7 +264,7 @@ public interface VelocityStructure extends Serializable {
 	 *            radius[km] you want to set.
 	 * @return null if the gap exceeds permissibleRGap
 	 */
-	public default Raypath raypathByTurningR(PhasePart pp, boolean topside, double turningR) {
+	default Raypath raypathByTurningR(PhasePart pp, boolean topside, double turningR) {
 		double p;
 		double r = turningR + (topside ? Raypath.permissibleGapForDiff / 100 : -Raypath.permissibleGapForDiff / 100);
 		switch (pp) {

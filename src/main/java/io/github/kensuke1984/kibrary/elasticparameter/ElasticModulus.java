@@ -7,8 +7,6 @@ package io.github.kensuke1984.kibrary.elasticparameter;
  * ijklのセットは何に属するか ijkl &rarr; 1, 2, 3
  * 
  * @author Kensuke Konishi
- * 
- * 
  * @version 0.0.2.1
  * 
  */

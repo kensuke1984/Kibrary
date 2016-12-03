@@ -166,7 +166,7 @@ public class SCARDEC {
 		 * @return SCARDEC with source time functions.
 		 */
 		public SCARDEC toSCARDEC() {
-			return SCARDEC.getSCARDEC(this);
+			return getSCARDEC(this);
 		}
 	}
 
@@ -185,6 +185,7 @@ public class SCARDEC {
 						SCARDEC_ID id = SCARDEC_ID.of(path.getFileName().toString());
 						EXISTING_ID.add(id);
 					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
 			}

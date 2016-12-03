@@ -25,7 +25,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <p>
  * For OHP request, TTTT is now only one digit.
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
  * @author kensuke
  * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
@@ -52,9 +52,9 @@ public class Channel {
 	 */
 	private LocalDateTime endTime;
 
-	/**
-	 * LocationIdentifier
-	 */
+//	/**
+//	 * LocationIdentifier
+//	 */
 	// private String locationIdentifier;
 
 	/**
@@ -96,7 +96,7 @@ public class Channel {
 
 	@Override
 	public String toString() {
-		String channels = Arrays.stream(channel).collect(Collectors.joining(" "));;
+		String channels = Arrays.stream(channel).collect(Collectors.joining(" "));
 		return stationName + " " + networkName + " " + toLine(startTime) + " " + toLine(endTime) + " " + channelNumber
 				+ " " + channels;
 	}

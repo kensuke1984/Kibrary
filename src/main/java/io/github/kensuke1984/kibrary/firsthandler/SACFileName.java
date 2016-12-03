@@ -6,17 +6,14 @@ import java.time.LocalDateTime;
  * 
  * Name of interediate SAC files used in firsthandler
  * 
- * @version 0.0.5
+ * @version 0.0.5.1
  * 
- * @author kensuke
- * 
+ * @author Kensuke Konishi
  */
 class SACFileName implements Comparable<SACFileName> {
 
 	/**
-	 * PS.OGS.(locationID).BHN.D.SAC の部分を返す
-	 * 
-	 * @return
+	 * @return PS.OGS.(locationID).BHN.D.SAC
 	 */
 	String getRelationString() {
 		return name.substring(23);
@@ -132,8 +129,8 @@ class SACFileName implements Comparable<SACFileName> {
 	/**
 	 * ひとつなぎのファイルの一部か 分割されたものをつなげる際の判断基準
 	 * 
-	 * @param sacFileName
-	 * @return
+	 * @param sacFileName name to check
+	 * @return if the sacFileName ha something to do with this
 	 */
 	boolean isRelated(SACFileName sacFileName) {
 		return sacFileName.channel.equals(channel)

@@ -36,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.9
+ * @version 0.2.0.10
  * 
  * @author Kensuke Konishi
  * 
@@ -168,7 +168,7 @@ public class CheckerBoardTest implements Operation {
 			stationSet.add(id.getStation());
 			idSet.add(id.getGlobalCMTID());
 			double[] range = new double[] { id.getMinPeriod(), id.getMaxPeriod() };
-			if (ranges.size() == 0)
+			if (ranges.isEmpty())
 				ranges.add(range);
 			boolean exists = false;
 			for (int i = 0; !exists && i < ranges.size(); i++)

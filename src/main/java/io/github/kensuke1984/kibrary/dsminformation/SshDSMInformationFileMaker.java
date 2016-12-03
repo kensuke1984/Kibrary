@@ -25,7 +25,6 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @version 0.1.2.1
  * 
  * @author Kensuke Konishi
- *
  */
 public class SshDSMInformationFileMaker implements Operation {
 

@@ -1,111 +1,106 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.external;
 
 import io.github.kensuke1984.anisotime.Phase;
 
 /**
- * 
  * The output from taup_time.
- * 
+ * <p>
  * This class is <b>immutable</b>
- * 
- * 
+ *
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @version 0.0.2.1
  */
 public class TauPPhase {
 
-	TauPPhase(double distance, double depth, Phase phaseName, double travelTime, double rayParameter, double takeoff,
-			double incident, double puristDistance, String puristName) {
-		this.distance = distance;
-		this.depth = depth;
-		this.phaseName = phaseName;
-		this.travelTime = travelTime;
-		this.rayParameter = rayParameter;
-		this.takeoff = takeoff;
-		this.incident = incident;
-		this.puristDistance = puristDistance;
-		this.puristName = puristName;
-	}
+    TauPPhase(double distance, double depth, Phase phaseName, double travelTime, double rayParameter, double takeoff,
+              double incident, double puristDistance, String puristName) {
+        DISTANCE = distance;
+        DEPTH = depth;
+        PHASE_NAME = phaseName;
+        TRAVELTIME = travelTime;
+        RAY_PARAMETER = rayParameter;
+        TAKEOFF = takeoff;
+        INCIDENT = incident;
+        PURIST_DISTANCE = puristDistance;
+        PURIST_NAME = puristName;
+    }
 
-	/**
-	 * epicentral distance (deg)
-	 */
-	private final double distance;
+    /**
+     * epicentral DISTANCE (deg)
+     */
+    private final double DISTANCE;
 
-	/**
-	 * source depth not radius (km)
-	 */
-	private final double depth;
+    /**
+     * source DEPTH not radius (km)
+     */
+    private final double DEPTH;
 
-	private final Phase phaseName;
+    private final Phase PHASE_NAME;
 
-	/**
-	 * travel time (s)
-	 */
-	private final double travelTime;
+    /**
+     * travel time (s)
+     */
+    private final double TRAVELTIME;
 
-	/**
-	 * ray parameter (s/deg)
-	 */
-	private final double rayParameter;
+    /**
+     * ray parameter (s/deg)
+     */
+    private final double RAY_PARAMETER;
 
-	/**
-	 * takeoff (deg)
-	 */
-	private final double takeoff;
+    /**
+     * TAKEOFF (deg)
+     */
+    private final double TAKEOFF;
 
-	/**
-	 * incident (deg)
-	 */
-	private final double incident;
+    /**
+     * INCIDENT (deg)
+     */
+    private final double INCIDENT;
 
-	/**
-	 * purist distance
-	 */
-	private final double puristDistance;
+    /**
+     * purist DISTANCE
+     */
+    private final double PURIST_DISTANCE;
 
-	/**
-	 * purist name
-	 */
-	private final String puristName;
+    /**
+     * purist name
+     */
+    private final String PURIST_NAME;
 
-	public double getDistance() {
-		return distance;
-	}
+    public double getDistance() {
+        return DISTANCE;
+    }
 
-	public double getDepth() {
-		return depth;
-	}
+    public double getDepth() {
+        return DEPTH;
+    }
 
-	public Phase getPhaseName() {
-		return phaseName;
-	}
+    public Phase getPhaseName() {
+        return PHASE_NAME;
+    }
 
-	public double getTravelTime() {
-		return travelTime;
-	}
+    public double getTravelTime() {
+        return TRAVELTIME;
+    }
 
-	public double getRayParameter() {
-		return rayParameter;
-	}
+    public double getRayParameter() {
+        return RAY_PARAMETER;
+    }
 
-	public double getTakeoff() {
-		return takeoff;
-	}
+    public double getTakeoff() {
+        return TAKEOFF;
+    }
 
-	public double getIncident() {
-		return incident;
-	}
+    public double getIncident() {
+        return INCIDENT;
+    }
 
-	public double getPuristDistance() {
-		return puristDistance;
-	}
+    public double getPuristDistance() {
+        return PURIST_DISTANCE;
+    }
 
-	public String getPuristName() {
-		return puristName;
-	}
+    public String getPuristName() {
+        return PURIST_NAME;
+    }
 
 }
