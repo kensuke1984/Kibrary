@@ -32,7 +32,7 @@ import java.util.stream.IntStream;
  * </ul>
  *
  * @author Kensuke Konishi
- * @version 0.1.6.1
+ * @version 0.1.6.2
  *          <p>
  *          TODO TauP のように 任意の深さの反射 ADDEDBOUNDARY
  */
@@ -88,7 +88,9 @@ public class Phase {
     public static final Phase PKIKP = create("PKIKP");
     public static final Phase s = create("s");
     public static final Phase S = create("S");
+    static final Phase SV = create("S", true);
     public static final Phase ScS = create("ScS");
+    static final Phase SVcS = create("ScS", true);
     public static final Phase SKS = create("SKS");
     public static final Phase SKiKS = create("SKiKS");
     public static final Phase SKIKS = create("SKIKS");

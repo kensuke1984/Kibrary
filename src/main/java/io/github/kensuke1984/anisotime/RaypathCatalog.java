@@ -25,18 +25,18 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  * Raypath catalogue for one model
  * <p>
- * TODO boundaries close points EPS TODO default catalogue in .Kibrary
  * <p>
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
  *
  * @author Kensuke Konishi
- * @version 0.0.8.1b
+ * @version 0.0.10b
  */
 public class RaypathCatalog implements Serializable {
 
+
     /**
-     * 2016/12/3
+     * 2016/12/5
      */
     private static final long serialVersionUID = -5169958584689352786L;
 
@@ -68,28 +68,26 @@ public class RaypathCatalog implements Serializable {
                 RaypathCatalog cat;
                 String model = p.getFileName().toString().replace(".cat", "");
                 ComputationalMesh simple = ComputationalMesh.simple(v);
-                if (!Files.exists(p)) {
-                    System.err.println("Creating a catalog for " + model + ". This computation is done only once.");
-                    cat = new RaypathCatalog(v, simple, Math.toRadians(1));
-                    cat.create();
-                    try {
-                        cat.write(p);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
+                if (Files.exists(p)) {
                     try {
                         cat = read(p);
                     } catch (ClassNotFoundException | IOException ice) {
                         System.err.println("Creating a catalog for " + model +
                                 " (due to out of date).  This computation is done only once.");
-                        cat = new RaypathCatalog(v, simple, Math.toRadians(1));
-                        cat.create();
+                        (cat = new RaypathCatalog(v, simple, Math.toRadians(1))).create();
                         try {
                             cat.write(p);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                    }
+                } else {
+                    System.err.println("Creating a catalog for " + model + ". This computation is done only once.");
+                    (cat = new RaypathCatalog(v, simple, Math.toRadians(1))).create();
+                    try {
+                        cat.write(p);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
                 return cat;
@@ -186,7 +184,20 @@ public class RaypathCatalog implements Serializable {
         try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
             for (Path p : catalogStream)
                 try {
-                    RaypathCatalog c = read(p);
+                    RaypathCatalog c;
+                    switch (p.getFileName().toString()) {
+                        case "iprem.cat":
+                            c = ISO_PREM;
+                            break;
+                        case "prem.cat":
+                            c = PREM;
+                            break;
+                        case "ak135.cat":
+                            c = AK135;
+                            break;
+                        default:
+                            c = read(p);
+                    }
                     if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta) return c;
                 } catch (InvalidClassException ice) {
                     System.err.println(p + " may be out of date.");
@@ -276,28 +287,53 @@ public class RaypathCatalog implements Serializable {
         return shDiff;
     }
 
-    // TODO low high
+    /**
+     * Look for the raypath which ray parameter is more than or equal to the input min and less than or equal to max
+     * has non NaN path in P or S. Step of the ray parameter is {@link #MINIMUM_DELTA_P}.
+     *
+     * @param min min value of the search range
+     * @param max max value of the search range
+     * @return the first raypath which P, SV or SH exists. if the ray path does not exist,
+     * raypath with rayparameter max value returns.
+     */
+    private Raypath lookForNextExistingRaypath(double min, double max) {
+        for (double p = min; p < max; p += MINIMUM_DELTA_P) {
+            Raypath raypath = new Raypath(p, WOODHOUSE, MESH);
+            if (raypath.exists()) return raypath;
+        }
+        return new Raypath(max, WOODHOUSE, MESH);
+    }
+
 
     /**
      * Creates a catalogue.
+     * TODO eliminate ray paths which have only NaN
+     * when running into a ray path with all NaN. what should we do.
      */
     private void create() {
-        double pMax = computeRayparameterLimit();
-        // System.out.println("pMax=" + pMax);
+        double pMax = computeRayparameterLimit() + DELTA_P;
+//        System.out.println("pMax=" + pMax);
         // Compute raparameters for diffration phases.
         computeDiffraction();
         long time = System.nanoTime();
-        // pMax = 200;
+        System.err.println("Computing a catalogue. (If you use the same model, the catalog is not computed anymore.)");
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         firstPath.compute();
         raypathList.add(firstPath);
-        System.err.println("Computing a catalogue. (If you use the same model, the catalog is not computed anymore.)");
         double p_Pdiff = pDiff.getRayParameter();
         double p_SVdiff = svDiff.getRayParameter();
         double p_SHdiff = shDiff.getRayParameter();
-
-        for (double p = firstPath.getRayParameter() + DELTA_P, nextP = p + DELTA_P; p < pMax; p = nextP) {
+        for (double p = firstPath.getRayParameter() + DELTA_P, nextP; p < pMax; p = nextP) {
             Raypath rp = new Raypath(p, WOODHOUSE, MESH);
+            if (!rp.exists()) {
+                p = raypathList.last().getRayParameter() + MINIMUM_DELTA_P;
+                rp = new Raypath(p, WOODHOUSE, MESH);
+                if (!rp.exists()) rp = lookForNextExistingRaypath(p, pMax);
+                rp.compute();
+                raypathList.add(rp);
+                nextP = raypathList.last().getRayParameter() + DELTA_P;
+                continue;
+            }
             rp.compute();
             if (closeEnough(raypathList.last(), rp)) {
                 raypathList.add(rp);
@@ -321,8 +357,7 @@ public class RaypathCatalog implements Serializable {
                 nextP = raypathList.last().getRayParameter() + DELTA_P;
             } else if (p < p_SHdiff && p_SHdiff < nextP) {
                 closeDiff(shDiff);
-                nextP = raypathList.last().getRayParameter() + DELTA_P; // TODO
-                // SHSV
+                nextP = raypathList.last().getRayParameter() + DELTA_P;
             }
         }
         raypathList.add(pDiff);
@@ -339,7 +374,7 @@ public class RaypathCatalog implements Serializable {
         Raypath diffPlus = new Raypath(diffP + MINIMUM_DELTA_P, WOODHOUSE, MESH);
         diffMinus.compute();
         diffPlus.compute();
-        for (double p = (diffP + last.getRayParameter()) / 2, nextP = p + DELTA_P; ; p = nextP) {
+        for (double p = (diffP + last.getRayParameter()) / 2, nextP; ; p = nextP) {
             Raypath candidate = new Raypath(p, WOODHOUSE, MESH);
             candidate.compute();
             if (!closeEnough(raypathList.last(), candidate)) {
@@ -383,43 +418,60 @@ public class RaypathCatalog implements Serializable {
     /**
      * Criterion for the catalog is {@link #D_DELTA} so far in both P and S
      * wave. The ray parameter of raypath1 must be smaller than that of
-     * raypath2, otherwise, false is returned. TODO SH SV?? Both raypaths must
-     * be computed before this method.
+     * raypath2, otherwise, false returns.
+     * If the residual of the two ray parameters is less than {@link #MINIMUM_DELTA_P}, true returns.
+     * <p>
+     * Both raypaths must be computed before this method.
+     * At least one of P, PcP, S, ScS must exist in raypath1.
      *
      * @param raypath1 to be checked
      * @param raypath2 to be checked
-     * @return If they are similar path.
+     * @return If the paths are similar enough.
      */
     private boolean closeEnough(Raypath raypath1, Raypath raypath2) {
         if (raypath2.getRayParameter() <= raypath1.getRayParameter()) return false;
         if (raypath2.getRayParameter() - raypath1.getRayParameter() < MINIMUM_DELTA_P) return true;
         double earthRadius = WOODHOUSE.getStructure().earthRadius();
+
+        //case P exists
         double p1 = raypath1.computeDelta(earthRadius, Phase.P);
         double p2 = raypath2.computeDelta(earthRadius, Phase.P);
-        // System.out.println(Math.toDegrees(p1) + " p" + Math.toDegrees(p2));
-        if (Double.isNaN(p1) ^ Double.isNaN(p2)) return false;
+        //case PcP exists
         if (Double.isNaN(p1)) {
             p1 = raypath1.computeDelta(earthRadius, Phase.PcP);
             p2 = raypath2.computeDelta(earthRadius, Phase.PcP);
         }
-        // System.out.println(Math.toDegrees(p1) + " " + Math.toDegrees(p2));
+        if (Double.isNaN(p1) ^ Double.isNaN(p2)) return false;
         if (D_DELTA < Math.abs(p1 - p2)) return false;
-        double s1 = raypath1.computeDelta(earthRadius, Phase.S);
-        double s2 = raypath2.computeDelta(earthRadius, Phase.S);
-        // System.out.println(Math.toDegrees(s1) + " s " + Math.toDegrees(s2));
 
-        if (Double.isNaN(s1) ^ Double.isNaN(s2)) return false;
-        if (Double.isNaN(s1)) {
-            s1 = raypath1.computeDelta(earthRadius, Phase.ScS);
-            s2 = raypath2.computeDelta(earthRadius, Phase.ScS);
+        //case SV exists
+        double sv1 = raypath1.computeDelta(earthRadius, Phase.SV);
+        double sv2 = raypath2.computeDelta(earthRadius, Phase.SV);
+        //case ScS(SV) exists
+        if (Double.isNaN(sv1)) {
+            sv1 = raypath1.computeDelta(earthRadius, Phase.SVcS);
+            sv2 = raypath2.computeDelta(earthRadius, Phase.SVcS);
         }
-        return Math.abs(s1 - s2) <= D_DELTA;
+        if (Double.isNaN(sv1) ^ Double.isNaN(sv2)) return false;
+        if (D_DELTA < Math.abs(sv1 - sv2)) return false;
+
+        //case SH exists
+        double sh1 = raypath1.computeDelta(earthRadius, Phase.S);
+        double sh2 = raypath2.computeDelta(earthRadius, Phase.S);
+        //case ScS(SH) exists
+        if (Double.isNaN(sh1)) {
+            sh1 = raypath1.computeDelta(earthRadius, Phase.ScS);
+            sh2 = raypath2.computeDelta(earthRadius, Phase.ScS);
+        }
+        if (Double.isNaN(sh1) ^ Double.isNaN(sh2)) return false;
+
+        if (Double.isNaN(p1) && Double.isNaN(sv1) && Double.isNaN(sh1)) return false;
+        return Double.isNaN(sh1) || Math.abs(sh1 - sh2) <= D_DELTA;
     }
 
     /**
-     * Computes ray parameter p with which q<sub>&tau;</sub> =0 at the earth
-     * surface for P, SV and SH. Returns the maximum value of them. (basically
-     * the one of S)
+     * Computes ray parameter p with which q<sub>&tau;</sub> = 0 at the next grid to the earth
+     * surface for P, SV and SH. Returns the maximum value of them. (basically the one of S)
      * <p>
      * P &rarr; r*(&rho;/A)<sup>1/2</sup> <br>
      * SV &rarr; r*(&rho;/L)<sup>1/2</sup> <br>

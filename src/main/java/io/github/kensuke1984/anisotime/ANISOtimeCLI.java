@@ -160,7 +160,7 @@ final class ANISOtimeCLI {
                 throw new RuntimeException(e);
             }
         } else {
-            if (!cmd.hasOption("mod")) throw new RuntimeException("You must specfy a velocity model(e.g. -mod prem).");
+            if (!cmd.hasOption("mod")) throw new RuntimeException("You must specify a velocity model(e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
             // option TODO
