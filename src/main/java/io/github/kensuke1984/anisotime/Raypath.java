@@ -60,15 +60,15 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * JV,JH: SV, SH(J) wave in the inner-core<br>
  *
  * @author Kensuke Konishi
- * @version 0.4.2.1b
+ * @version 0.4.2.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
-     * 2016/12/3
+     * 2016/12/5
      */
-    private static final long serialVersionUID = -2747191665694556746L;
+    private static final long serialVersionUID = -1407767962065216374L;
 
     /**
      * If the gap between the CMB and the turning r is under this value, then
@@ -338,9 +338,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             }
 
         setTurningRs();
-
         computeJeffreysRange();
-
     }
 
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -401,7 +399,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             jeffreysDeltaMap.put(pp, jeffreysDelta(pp, boundary));
             jeffreysTMap.put(pp, jeffreysT(pp, boundary));
         };
-
         Arrays.stream(PhasePart.values()).forEach(compute);
     }
 
@@ -826,6 +823,16 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
         return points;
     }
+
+    /**
+     * @return false returns if and only if {@link PhasePart#P},{@link PhasePart#SV} and {@link PhasePart#SH}
+     * are all {@link Propagation#NOEXIST}.
+     */
+    boolean exists() {
+        return Stream.of(PhasePart.P, PhasePart.SV, PhasePart.SH)
+                .anyMatch(phasePart -> propagationMap.get(phasePart) != Propagation.NOEXIST);
+    }
+
 
     /**
      * The center of the Earth is (0, 0) Starting point is (0, eventR)
