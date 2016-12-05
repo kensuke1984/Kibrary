@@ -6,15 +6,9 @@
     </artifacts-to-build>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="">
+    <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="ANISOtime bugs">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" afterPath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/RaypathCatalog.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/RaypathCatalog.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Woodhouse1981.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Woodhouse1981.java" />
     </list>
     <ignored path="Kibrary.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -1035,12 +1029,19 @@
       <option name="project" value="LOCAL" />
       <updated>1480765603031</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="ANISOtime bugs">
+      <created>1480915947042</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1480915947042</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="28" width="1920" height="1018" extended-state="0" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
@@ -1087,7 +1088,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="IntelliJ" />
-    <option name="LAST_COMMIT_MESSAGE" value="IntelliJ" />
+    <MESSAGE value="ANISOtime bugs" />
+    <option name="LAST_COMMIT_MESSAGE" value="ANISOtime bugs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
