@@ -60,13 +60,13 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * JV,JH: SV, SH(J) wave in the inner-core<br>
  *
  * @author Kensuke Konishi
- * @version 0.4.2.2b
+ * @version 0.4.3b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
-     * 2016/12/5
+     * 2016/12/6
      */
     private static final long serialVersionUID = -1407767962065216374L;
 
@@ -624,11 +624,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (nameStr.contains("Pdiff")) return getPropagation(PhasePart.P) == Propagation.DIFFRACTION;
         if (nameStr.contains("Sdiff"))
             return getPropagation(phase.isPSV() ? PhasePart.SV : PhasePart.SH) == Propagation.DIFFRACTION;
-
         if (nameStr.startsWith("p") || nameStr.startsWith("s"))
             if (Math.abs(eventR - earthRadius()) < ComputationalMesh.eps) return false;
-        if (nameStr.contains("P")) if (eventR < turningRMap.get(PhasePart.P)) return false;
-        if (nameStr.contains("S"))
+        if (nameStr.startsWith("P") || nameStr.startsWith("p")) if (eventR < turningRMap.get(PhasePart.P)) return false;
+        if (nameStr.startsWith("S") || nameStr.startsWith("s"))
             if (eventR < (phase.isPSV() ? turningRMap.get(PhasePart.SV) : turningRMap.get(PhasePart.SH))) //
                 return false;
         return phase.exists(this);
