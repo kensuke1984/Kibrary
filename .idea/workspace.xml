@@ -8,9 +8,8 @@
   <component name="ChangeListManager">
     <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Kibrary.iml" afterPath="$PROJECT_DIR$/Kibrary.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" afterPath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" />
     </list>
     <ignored path="Kibrary.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -39,11 +38,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="ANISOtimeCLI.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="ANISOtimeCLI.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="48" column="7" lean-forward="true" selection-start-line="48" selection-start-column="7" selection-end-line="48" selection-end-column="7" />
+            <state relative-caret-position="-1738">
+              <caret line="81" column="23" lean-forward="false" selection-start-line="81" selection-start-column="23" selection-end-line="81" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -91,15 +90,15 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Raypath.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Raypath.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="616">
-              <caret line="143" column="0" lean-forward="false" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
+            <state relative-caret-position="-322">
+              <caret line="1159" column="0" lean-forward="false" selection-start-line="1159" selection-start-column="0" selection-end-line="1159" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#4727#4728#0" expanded="true" />
-                <element signature="e#4787#4788#0" expanded="true" />
+                <element signature="e#4725#4726#0" expanded="true" />
+                <element signature="e#4785#4786#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -205,11 +204,11 @@
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Woodhouse1981.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ComputationalMesh.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PolynomialStructure.java" />
-        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/RaypathCatalog.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" />
+        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" />
       </list>
     </option>
   </component>
@@ -629,7 +628,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/commons-cli-1.3.1-src.zip!/" />
     <property name="last.edited.regexp" value="Sample Text" />
   </component>
-  <component name="RunManager" selected="Application.ANISOtimeCLI">
+  <component name="RunManager" selected="Application.Raypath">
     <configuration default="false" name="Raypath" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
@@ -954,9 +953,9 @@
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Application.ANISOtimeCLI" />
-        <item index="1" class="java.lang.String" itemvalue="Application.RaypathCatalog" />
-        <item index="2" class="java.lang.String" itemvalue="Application.Raypath" />
+        <item index="0" class="java.lang.String" itemvalue="Application.Raypath" />
+        <item index="1" class="java.lang.String" itemvalue="Application.ANISOtimeCLI" />
+        <item index="2" class="java.lang.String" itemvalue="Application.RaypathCatalog" />
         <item index="3" class="java.lang.String" itemvalue="Application.ANISOtime" />
         <item index="4" class="java.lang.String" itemvalue="Application.Phase" />
       </list>
@@ -1052,7 +1051,14 @@
       <option name="project" value="LOCAL" />
       <updated>1480999761020</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Option argument">
+      <created>1481006114987</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1481006114987</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -1106,7 +1112,8 @@
     <MESSAGE value="IntelliJ" />
     <MESSAGE value="ANISOtime bugs" />
     <MESSAGE value="Global CMT catalog  Jul 2016" />
-    <option name="LAST_COMMIT_MESSAGE" value="Global CMT catalog  Jul 2016" />
+    <MESSAGE value="Option argument" />
+    <option name="LAST_COMMIT_MESSAGE" value="Option argument" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1483,26 +1490,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="440">
-          <caret line="34" column="19" lean-forward="false" selection-start-line="34" selection-start-column="19" selection-end-line="34" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="616">
-          <caret line="143" column="0" lean-forward="false" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#4727#4728#0" expanded="true" />
-            <element signature="e#4787#4788#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
@@ -1551,9 +1538,29 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="48" column="7" lean-forward="true" selection-start-line="48" selection-start-column="7" selection-end-line="48" selection-end-column="7" />
+        <state relative-caret-position="-1738">
+          <caret line="81" column="23" lean-forward="false" selection-start-line="81" selection-start-column="23" selection-end-line="81" selection-end-column="23" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="440">
+          <caret line="34" column="19" lean-forward="false" selection-start-line="34" selection-start-column="19" selection-end-line="34" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-322">
+          <caret line="1159" column="0" lean-forward="false" selection-start-line="1159" selection-start-column="0" selection-end-line="1159" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#4725#4726#0" expanded="true" />
+            <element signature="e#4785#4786#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
