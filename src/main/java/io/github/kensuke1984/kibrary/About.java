@@ -15,7 +15,7 @@ import javax.swing.*;
  * <br>
  *
  * @author Kensuke Konishi
- * @version 0.4.2
+ * @version {@value version}
  * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  */
@@ -24,7 +24,7 @@ final class About extends javax.swing.JFrame {
 
     public static final String codename = "Sahagin";
 
-    public static final String version = "0.4.2";
+    public static final String version = "0.4.2.1";
 
     private About() {
         super("About Kibrary");
