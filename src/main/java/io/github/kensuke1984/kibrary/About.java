@@ -2,6 +2,8 @@ package io.github.kensuke1984.kibrary;
 
 import java.awt.GraphicsEnvironment;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
 
@@ -73,7 +75,7 @@ final class About extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(About.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
         }
         // </editor-fold>
         /* Create and display the form */
