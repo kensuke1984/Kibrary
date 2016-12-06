@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javafx.css.CssMetaData;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -33,9 +35,11 @@ import net.sf.epsgraphics.EpsGraphics;
  * This class is only for CLI use of ANISOtime.
  * <p>
  * TODO customize for catalog ddelta dR
+ * <p>
+ * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.7.2b
+ * @version 0.3.7.3b
  */
 final class ANISOtimeCLI {
 
@@ -169,8 +173,8 @@ final class ANISOtimeCLI {
         }
 
         if (cmd.hasOption("ph")) targetPhases =
-                Arrays.stream(cmd.getOptionValue("ph").split(",")).map(n -> Phase.create(n, cmd.hasOption("SV")))
-                        .toArray(Phase[]::new);
+                Arrays.stream(cmd.getOptionValues("ph")).flatMap(arg -> Arrays.stream(arg.split(",")))
+                        .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
         else targetPhases = new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.S, Phase.ScS, Phase.SKiKS};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
@@ -259,6 +263,7 @@ final class ANISOtimeCLI {
         }
 
     }
+
 
     private void run() {
         try {
@@ -459,6 +464,12 @@ final class ANISOtimeCLI {
      * @return true if there are some conflicts
      */
     private boolean hasConflict() {
+
+        if (cmd.hasOption("h") && 1 < cmd.getOptionValues("h").length) {
+            System.err.println("Option -h (depth) can have only one value [km].");
+            return true;
+        }
+
 
         if (cmd.hasOption("SH")) {
             boolean out = false;
