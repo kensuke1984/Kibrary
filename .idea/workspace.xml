@@ -6,10 +6,11 @@
     </artifacts-to-build>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="ANISOtime bugs">
+    <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Kibrary.iml" afterPath="$PROJECT_DIR$/Kibrary.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" afterPath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/resources/globalcmt.catalog" afterPath="$PROJECT_DIR$/src/main/resources/globalcmt.catalog" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" />
     </list>
     <ignored path="Kibrary.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -38,21 +39,21 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="ANISOtimeCLI.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="ANISOtimeCLI.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="176">
-              <caret line="39" column="12" lean-forward="false" selection-start-line="39" selection-start-column="12" selection-end-line="39" selection-end-column="12" />
+            <state relative-caret-position="264">
+              <caret line="48" column="7" lean-forward="true" selection-start-line="48" selection-start-column="7" selection-end-line="48" selection-end-column="7" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="RaypathCatalog.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="RaypathCatalog.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/RaypathCatalog.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="88">
-              <caret line="60" column="61" lean-forward="true" selection-start-line="60" selection-start-column="61" selection-end-line="60" selection-end-column="61" />
+            <state relative-caret-position="-1716">
+              <caret line="137" column="10" lean-forward="false" selection-start-line="137" selection-start-column="10" selection-end-line="137" selection-end-column="10" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -64,7 +65,7 @@
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="198">
-              <caret line="16" column="48" lean-forward="true" selection-start-line="16" selection-start-column="48" selection-end-line="16" selection-end-column="48" />
+              <caret line="16" column="48" lean-forward="false" selection-start-line="16" selection-start-column="48" selection-end-line="16" selection-end-column="48" />
               <folding />
             </state>
           </provider>
@@ -94,7 +95,7 @@
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="616">
-              <caret line="143" column="0" lean-forward="true" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
+              <caret line="143" column="0" lean-forward="false" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#4727#4728#0" expanded="true" />
@@ -202,13 +203,13 @@
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PhasePart.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/ConjugateGradientMethod.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Woodhouse1981.java" />
-        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ComputationalMesh.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PolynomialStructure.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/RaypathCatalog.java" />
+        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java" />
       </list>
     </option>
   </component>
@@ -625,10 +626,10 @@
     <property name="project.structure.last.edited" value="Artifacts" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
-    <property name="last_opened_file_path" value="$USER_HOME$/workspace/ANISOtime" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/commons-cli-1.3.1-src.zip!/" />
     <property name="last.edited.regexp" value="Sample Text" />
   </component>
-  <component name="RunManager" selected="Application.RaypathCatalog">
+  <component name="RunManager" selected="Application.ANISOtimeCLI">
     <configuration default="false" name="Raypath" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
@@ -953,11 +954,11 @@
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="Application.RaypathCatalog" />
-        <item index="1" class="java.lang.String" itemvalue="Application.Raypath" />
-        <item index="2" class="java.lang.String" itemvalue="Application.ANISOtime" />
-        <item index="3" class="java.lang.String" itemvalue="Application.Phase" />
-        <item index="4" class="java.lang.String" itemvalue="Application.ANISOtimeCLI" />
+        <item index="0" class="java.lang.String" itemvalue="Application.ANISOtimeCLI" />
+        <item index="1" class="java.lang.String" itemvalue="Application.RaypathCatalog" />
+        <item index="2" class="java.lang.String" itemvalue="Application.Raypath" />
+        <item index="3" class="java.lang.String" itemvalue="Application.ANISOtime" />
+        <item index="4" class="java.lang.String" itemvalue="Application.Phase" />
       </list>
     </recent_temporary>
     <configuration default="true" type="AndroidRunConfigurationType" factoryName="Android Application">
@@ -1044,7 +1045,14 @@
       <option name="project" value="LOCAL" />
       <updated>1480915968956</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Global CMT catalog  Jul 2016">
+      <created>1480999761020</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1480999761020</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -1054,16 +1062,16 @@
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Nl-Palette" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328" sideWeight="0.48502675" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.328" sideWeight="0.48288772" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Image Layers" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Capture Analysis" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32457143" sideWeight="0.44973263" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32457143" sideWeight="0.44759357" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32990867" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Properties" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32457143" sideWeight="0.5502674" order="1" side_tool="true" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32457143" sideWeight="0.55240643" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.14385027" sideWeight="0.49445325" order="6" side_tool="false" content_ui="combo" />
@@ -1097,7 +1105,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="IntelliJ" />
     <MESSAGE value="ANISOtime bugs" />
-    <option name="LAST_COMMIT_MESSAGE" value="ANISOtime bugs" />
+    <MESSAGE value="Global CMT catalog  Jul 2016" />
+    <option name="LAST_COMMIT_MESSAGE" value="Global CMT catalog  Jul 2016" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1112,30 +1121,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/NamedDiscontinuityStructure.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="22">
-          <caret line="17" column="13" lean-forward="false" selection-start-line="17" selection-start-column="13" selection-end-line="17" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Raypath.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2549">
-          <caret line="18" column="13" lean-forward="false" selection-start-line="18" selection-start-column="13" selection-end-line="18" selection-end-column="13" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Trace.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="31" column="19" lean-forward="false" selection-start-line="31" selection-start-column="19" selection-end-line="31" selection-end-column="19" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Station.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="259">
@@ -1506,18 +1491,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="176">
-          <caret line="39" column="12" lean-forward="false" selection-start-line="39" selection-start-column="12" selection-end-line="39" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Raypath.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="616">
-          <caret line="143" column="0" lean-forward="true" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
+          <caret line="143" column="0" lean-forward="false" selection-start-line="143" selection-start-column="0" selection-end-line="143" selection-end-column="0" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#4727#4728#0" expanded="true" />
@@ -1529,18 +1506,54 @@
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtime.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="198">
-          <caret line="16" column="48" lean-forward="true" selection-start-line="16" selection-start-column="48" selection-end-line="16" selection-end-column="48" />
+          <caret line="16" column="48" lean-forward="false" selection-start-line="16" selection-start-column="48" selection-end-line="16" selection-end-column="48" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/RaypathCatalog.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="88">
-          <caret line="60" column="61" lean-forward="true" selection-start-line="60" selection-start-column="61" selection-end-line="60" selection-end-column="61" />
+        <state relative-caret-position="-1716">
+          <caret line="137" column="10" lean-forward="false" selection-start-line="137" selection-start-column="10" selection-end-line="137" selection-end-column="10" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/lib/commons-cli-1.3.1.jar!/org/apache/commons/cli/Option.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="186">
+          <caret line="73" column="16" lean-forward="false" selection-start-line="73" selection-start-column="16" selection-end-line="73" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/lib/commons-cli-1.3.1.jar!/org/apache/commons/cli/CommandLine.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="391">
+          <caret line="53" column="43" lean-forward="false" selection-start-line="53" selection-start-column="43" selection-end-line="53" selection-end-column="43" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/lib/commons-cli-1.3.1-src.zip!/commons-cli-1.3.1-src/src/main/java/org/apache/commons/cli/CommandLine.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1078">
+          <caret line="45" column="31" lean-forward="false" selection-start-line="45" selection-start-column="31" selection-end-line="45" selection-end-column="31" />
+          <folding>
+            <element signature="e#1711#1719#0" expanded="true" />
+            <element signature="e#9254#9255#0" expanded="true" />
+            <element signature="e#9281#9282#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ANISOtimeCLI.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="264">
+          <caret line="48" column="7" lean-forward="true" selection-start-line="48" selection-start-column="7" selection-end-line="48" selection-end-column="7" />
+          <folding />
         </state>
       </provider>
     </entry>
