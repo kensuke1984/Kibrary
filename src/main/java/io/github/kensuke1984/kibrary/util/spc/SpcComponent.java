@@ -138,7 +138,7 @@ public class SpcComponent {
 	void differentiate(double tlen) {
 		final double constant = 2 * Math.PI / tlen;
 		for (int i = 1; i <= np; i++)
-			uFreq[i] = new Complex(-uFreq[i].getImaginary() * constant, uFreq[i].getReal() * constant);
+			uFreq[i] = new Complex(-uFreq[i].getImaginary() * constant * i, uFreq[i].getReal() * constant * i);
 	}
 
 	/**

@@ -42,7 +42,6 @@ public class Matrix extends Array2DRowRealMatrix {
 		super(rowDimension, columnDimension);
 	}
 
-
 	@Override
 	public Matrix multiply(final RealMatrix arg0)
 			throws IllegalArgumentException {

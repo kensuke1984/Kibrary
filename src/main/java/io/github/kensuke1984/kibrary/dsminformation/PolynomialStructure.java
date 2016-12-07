@@ -239,7 +239,7 @@ public class PolynomialStructure implements Serializable {
 	 *            [km] radius
 	 * @return the parameter A under TI approx.
 	 */
-	private double computeA(double r) {
+	public double computeA(double r) {
 		double vph = getVphAt(r);
 		return getRhoAt(r) * vph * vph;
 	}
@@ -251,7 +251,7 @@ public class PolynomialStructure implements Serializable {
 	 *            [km] radius
 	 * @return the parameter C under TI approximation.
 	 */
-	private double computeC(double r) {
+	public double computeC(double r) {
 		double vpv = getVpvAt(r);
 		return getRhoAt(r) * vpv * vpv;
 	}
@@ -276,7 +276,7 @@ public class PolynomialStructure implements Serializable {
 
 	}
 
-	private double computeEta(double r) {
+	public double computeEta(double r) {
 		return eta[zoneOf(r)].value(toX(r));
 	}
 
@@ -287,7 +287,7 @@ public class PolynomialStructure implements Serializable {
 	 *            [km]
 	 * @return the parameter F under TI approx.
 	 */
-	private double computeF(double r) {
+	public double computeF(double r) {
 		return computeEta(r) * (computeA(r) - 2 * computeL(r));
 	}
 
@@ -298,7 +298,7 @@ public class PolynomialStructure implements Serializable {
 	 *            [km]
 	 * @return the parameter L under TI approx.
 	 */
-	private double computeL(double r) {
+	public double computeL(double r) {
 		double vsv = getVsvAt(r);
 		return getRhoAt(r) * vsv * vsv;
 	}
@@ -330,7 +330,7 @@ public class PolynomialStructure implements Serializable {
 	 *            [km]
 	 * @return the parameter N under TI approx.
 	 */
-	private double computeN(double r) {
+	public double computeN(double r) {
 		double v = getVshAt(r);
 		return getRhoAt(r) * v * v;
 	}

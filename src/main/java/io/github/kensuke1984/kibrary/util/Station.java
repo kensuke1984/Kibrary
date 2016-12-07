@@ -70,7 +70,7 @@ public class Station implements Comparable<Station> {
 		int result = 1;
 //		result = prime * result + ((position == null) ? 0 : position.hashCode());
 //		result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
-		result = 314159 * prime * stationName.hashCode();
+		result = 314159 * prime * stationName.hashCode() * network.hashCode();
 		return result;
 	}
 

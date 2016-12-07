@@ -51,7 +51,7 @@ public class InformationFileMaker implements Operation {
 			pw.println("##int np must be a power of 2, must be set");
 			pw.println("#np 1024");
 			pw.println("##double tlen must be a power of 2/10, must be set");
-			pw.println("#tlen 3276.8");
+			pw.println("#tlen 6553.6");
 			pw.println("##polynomial structure file (can be blank)");
 			pw.println("##if so or it doesn't exist model is an initial PREM");
 			pw.println("#structureFile ");
@@ -70,7 +70,7 @@ public class InformationFileMaker implements Operation {
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("tlen"))
-			property.setProperty("tlen", "3276.8");
+			property.setProperty("tlen", "6553.6");
 		if (!property.containsKey("np"))
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
@@ -259,7 +259,7 @@ public class InformationFileMaker implements Operation {
 		for (Station station : stationSet) {
 			// System.out.println(str);
 			BPinfo bp = new BPinfo(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-			Path infPath = bpPath.resolve("0000" + station.getStationName());
+			Path infPath = bpPath.resolve("0000" + station);
 			// infDir.mkdir();
 			// System.out.println(infDir.getPath()+" was made");
 			Files.createDirectories(infPath.resolve(header));

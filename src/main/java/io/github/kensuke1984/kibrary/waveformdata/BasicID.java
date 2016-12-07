@@ -60,10 +60,14 @@ public class BasicID {
 		String basicString = STATION.getStationName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
 				+ COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
 				+ " " + MAX_PERIOD + " ";
-		for (int i = 0; i < PHASES.length - 1; i++)
-			basicString += PHASES[i] + ",";
-		basicString += PHASES[PHASES.length - 1];
-		basicString += " " + START_BYTE + " " + CONVOLUTE;
+		if (PHASES.length == 1)
+			basicString += PHASES[PHASES.length - 1] + " ";
+		else if (PHASES.length > 1) {
+			for (int i = 0; i < PHASES.length - 1; i++)
+				basicString += PHASES[i] + ",";
+			basicString += PHASES[PHASES.length - 1] + " ";
+		}
+		basicString += START_BYTE + " " + CONVOLUTE;
 		return basicString;
 	}
 

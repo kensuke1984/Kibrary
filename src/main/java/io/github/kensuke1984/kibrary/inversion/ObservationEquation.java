@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -17,7 +18,9 @@ import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -43,10 +46,11 @@ public class ObservationEquation {
 	 * @param dVector
 	 *            for equation
 	 */
-	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector) {
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
+			boolean time_source, boolean time_receiver) {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
-		readA(partialIDs);
+		readA(partialIDs, time_receiver, time_source);
 		atd = computeAtD(dVector.getD());
 	}
 
@@ -98,15 +102,33 @@ public class ObservationEquation {
 	 * @param ids
 	 *            source for A
 	 */
-	private void readA(PartialID[] ids) {
+	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source) {
+		if (time_source)
+			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
+		if (time_receiver)
+			dVector.getUsedStationSet().forEach(station -> parameterList.add(new TimeReceiverSideParameter(station)));
 		a = new Matrix(dVector.getNpts(), parameterList.size());
+		a.scalarMultiply(0);
+		
 		// partialDataFile.readWaveform();
 		long t = System.nanoTime();
 		AtomicInteger count = new AtomicInteger();
+		AtomicInteger count_TIMEPARTIAL_SOURCE = new AtomicInteger();
+		AtomicInteger count_TIMEPARTIAL_RECEIVER = new AtomicInteger();
+		
+		int n = 0;
+		if (time_receiver)
+			n++;
+		if (time_source)
+			n++;
+		int numberOfParameterForSturcture = (int) parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial()).count();
+		final int nn = numberOfParameterForSturcture + n;
+		
 		Arrays.stream(ids).parallel().forEach(id -> {
-			if (count.get() == dVector.getNTimeWindow() * parameterList.size())
+			if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == dVector.getNTimeWindow() * nn)
 				return;
-			int column = whatNumer(id.getPartialType(), id.getPerturbationLocation());
+			int column = whatNumer(id.getPartialType(), id.getPerturbationLocation(),
+					id.getStation(), id.getGlobalCMTID());
 			if (column < 0)
 				return;
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
@@ -118,11 +140,28 @@ public class ObservationEquation {
 			double[] partial = id.getData();
 			for (int j = 0; j < partial.length; j++)
 				a.setEntry(row + j, column, partial[j] * weighting);
-			count.incrementAndGet();
+			if (!id.getPartialType().isTimePartial())
+				count.incrementAndGet();
+			else if (id.getPartialType().equals(PartialType.TIME_SOURCE))
+				count_TIMEPARTIAL_SOURCE.incrementAndGet();
+			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
+				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
 		});
-		System.out.println(count.get()+" "+ dVector.getNTimeWindow() * parameterList.size()+" "+parameterList.size());
-		if (count.get() != dVector.getNTimeWindow() * parameterList.size())
-			throw new RuntimeException("Input partials are not enough.");
+//		for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++) {
+//			int j = 0;
+//			for(double ai : a.getColumn(i)) {
+//				if (ai != 0)
+//					System.out.printf("%.2e ", ai);
+//				else if (j % 50 == 0)
+//					System.out.printf(".");
+//				j++;
+//			}
+//			System.out.println("\n");
+//		}
+		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
+			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
+					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
+					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + 2)");  
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 	}
 
@@ -131,13 +170,19 @@ public class ObservationEquation {
 	 *            to look for
 	 * @return parameterが何番目にあるか なければ-1
 	 */
-	private int whatNumer(PartialType type, Location location) {
+	private int whatNumer(PartialType type, Location location, Station station, GlobalCMTID id) {
 		for (int i = 0; i < parameterList.size(); i++) {
 			if (parameterList.get(i).getPartialType() != type)
 				continue;
 			switch (type) {
-			case TIME:
-				throw new RuntimeException("time  madamuripo");
+			case TIME_SOURCE:
+				if (id.equals( ((TimeSourceSideParameter) parameterList.get(i)).getGlobalCMTID() ))
+					return i;
+				break;
+			case TIME_RECEIVER:
+				if (station.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation() ))
+					return i;
+				break;
 			case PARA:
 			case PARC:
 			case PARF:

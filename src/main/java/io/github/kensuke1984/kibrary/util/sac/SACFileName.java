@@ -72,6 +72,11 @@ public class SACFileName extends File {
 		SACExtension extension = getSacExtension(fileName);
 		return !extension.isOBS() && !extension.isTemporalPartial();
 	}
+	
+	public static boolean isTemporalPartial(String fileName) {
+		SACExtension extension = getSacExtension(fileName);
+		return extension.isTemporalPartial();
+	}
 
 	private static SACExtension getSacExtension(String fileName) {
 		String suffix = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -266,11 +271,15 @@ public class SACFileName extends File {
 	public boolean isSYN() {
 		return isSYN(getName());
 	}
+	
+	public boolean isTemporalPartial() {
+		return isTemporalPartial(getName());
+	}
 
 	public GlobalCMTID getGlobalCMTID() {
 		return globalCMTID;
 	}
-
+	
 	public PartialType getPartialType() {
 		return partialType;
 	}

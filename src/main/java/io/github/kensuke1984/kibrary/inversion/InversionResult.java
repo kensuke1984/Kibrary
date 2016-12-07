@@ -605,7 +605,7 @@ public class InversionResult {
 		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
 				Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
-		if (type == PartialType.TIME)
+		if (type.equals(PartialType.TIME_RECEIVER) || type.equals(PartialType.TIME_SOURCE) )
 			throw new RuntimeException("TIME PARTIAL MADADAMEEEEEEEE");
 		if (ansMap.containsKey(location))
 			return ansMap.get(location);

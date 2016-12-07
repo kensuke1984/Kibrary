@@ -138,7 +138,7 @@ class DSMheader {
 	 *            2<sup>n</sup>でないといけない nは整数
 	 */
 	DSMheader(double tlen, int np) {
-		this(tlen, np, 0, np, 1.e-2, 1.e-10, 1.e-5, 1.e-2);
+		this(tlen, np, 0, np, 1.e-2, 1.e-10, 1.e-2, 1.e-2);
 	}
 
 	DSMheader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,

@@ -83,6 +83,8 @@ public class LetMeInvert implements Operation {
 	protected Set<InverseMethodEnum> inverseMethods;
 	
 	protected int weighting;
+	
+	protected boolean time_source, time_receiver;
 
 	private ObservationEquation eq;
 
@@ -103,6 +105,10 @@ public class LetMeInvert implements Operation {
 			property.setProperty("inverseMethods", "CG SVD");
 		if (!property.containsKey("weighting"))
 			property.setProperty("weighting", "1");
+		if (!property.containsKey("time_source"))
+			property.setProperty("time_source", "false");
+		if (!property.containsKey("time_receiver"))
+			property.setProperty("time_receiver", "false");
 	}
 
 	private void set() {
@@ -126,6 +132,8 @@ public class LetMeInvert implements Operation {
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
 				.collect(Collectors.toSet());
 		weighting = Integer.parseInt(property.getProperty("weighting"));
+		time_source = Boolean.parseBoolean(property.getProperty("time_source"));
+		time_receiver = Boolean.parseBoolean(property.getProperty("time_receiver"));
 	}
 
 	/**
@@ -162,6 +170,10 @@ public class LetMeInvert implements Operation {
 			pw.println("#inverseMethods");
 			pw.println("##int weighting (1); 1: upperLowerMantle, 2: identity 3: reciprocal");
 			pw.println("#weighting 1");
+			pw.println("##boolean time_source (false). Time partial for the source");
+			pw.println("time_source false");
+			pw.println("##boolean time_receiver (false). Time partial for the receiver");
+			pw.println("time_receiver false");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -198,7 +210,11 @@ public class LetMeInvert implements Operation {
 		switch (weighting) {
 		case 1:
 			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
-			dVector = new Dvector(ids, id -> true, lowerUpperMantleWeighting);
+			dVector = new Dvector(ids, id -> {
+				if (id.getGlobalCMTID().getEvent().getCmt().getMw() >= 6.5)
+					return true;
+				return false;
+			}, lowerUpperMantleWeighting);
 			break;
 		case 2:
 			ToDoubleBiFunction<BasicID, BasicID> weightingFunction = (obs, syn) -> {return 1.;};
@@ -215,7 +231,8 @@ public class LetMeInvert implements Operation {
 		System.err.println("setting up unknown parameter set");
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
-		eq = new ObservationEquation(partialIDs, parameterList, dVector);
+		eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver);
+		System.out.println(parameterList.size());
 	}
 
 	/**

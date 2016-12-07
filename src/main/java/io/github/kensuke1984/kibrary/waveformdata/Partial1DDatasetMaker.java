@@ -29,12 +29,15 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -96,6 +99,8 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("#finalSamplingHz");
 			pw.println("##radius for perturbation points, must be set");
 			pw.println("#bodyR 3505 3555 3605");
+			pw.println("##path of the time partials directory, must be set if PartialType containes TIME");
+			pw.println("#timePartialPath");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -103,6 +108,8 @@ public class Partial1DDatasetMaker implements Operation {
 	private Set<SACComponent> components;
 
 	private Path workPath;
+	
+	private Path timePartialPath;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -158,7 +165,13 @@ public class Partial1DDatasetMaker implements Operation {
 
 		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
 				.collect(Collectors.toSet());
-
+		
+		if (partialTypes.contains(PartialType.TIME_RECEIVER) && partialTypes.contains(PartialType.TIME_SOURCE)) {
+				timePartialPath = Paths.get(property.getProperty("timePartialPath"));
+				if (!Files.exists(timePartialPath))
+					throw new RuntimeException("The timePartialPath: " + timePartialPath + " does not exist");
+		}
+		
 		tlen = Double.parseDouble(property.getProperty("tlen"));
 		np = Integer.parseInt(property.getProperty("np"));
 		minFreq = Double.parseDouble(property.getProperty("minFreq"));
@@ -167,7 +180,6 @@ public class Partial1DDatasetMaker implements Operation {
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
-
 	}
 
 	/**
@@ -331,7 +343,7 @@ public class Partial1DDatasetMaker implements Operation {
 				}
 			}
 			System.out.print(".");
-
+			
 		}
 
 		private SourceTimeFunction computeSourceTimeFunction() {
@@ -482,6 +494,153 @@ public class Partial1DDatasetMaker implements Operation {
 		};
 
 	}
+	
+	private class WorkerTimePartial implements Runnable {
+		
+		private EventFolder eventDir;
+		private GlobalCMTID id;
+		
+		@Override
+		public void run() {
+			try {
+				writeLog("Running on " + id);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			Path timePartialFolder = eventDir.toPath();
+
+			if (!Files.exists(timePartialFolder)) {
+				throw new RuntimeException(timePartialFolder + " does not exist...");
+			}
+			
+			Set<SACFileName> sacnameSet;
+			try {
+				sacnameSet = eventDir.sacFileSet()
+						.stream()
+						.filter(sacname -> sacname.isTemporalPartial())
+						.collect(Collectors.toSet());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				return;
+			}
+			
+//			System.out.println(sacnameSet.size());
+//			sacnameSet.forEach(name -> System.out.println(name));
+			
+			Set<TimewindowInformation> timewindowCurrentEvent = timewindowInformationSet
+					.stream()
+					.filter(tw -> tw.getGlobalCMTID().equals(id))
+					.collect(Collectors.toSet());
+			
+			// すべてのsacファイルに対しての処理
+			for (SACFileName sacname : sacnameSet) {
+				try {
+					addTemporalPartial(sacname, timewindowCurrentEvent);
+				} catch (ClassCastException e) {
+					// 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
+					System.err.println(sacname + "is not 1D partial.");
+					continue;
+				} catch (Exception e) {
+					System.err.println(sacname + " is invalid.");
+					e.printStackTrace();
+					try {
+						writeLog(sacname + " is invalid.");
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					continue;
+				}
+			}
+			System.out.print(".");
+//			
+		}
+		
+		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+					.filter(info -> info.getStation().getStationName().equals(sacname.getStationName()))
+					.collect(Collectors.toSet());
+			if (tmpTws.size() == 0) {
+				return;
+			}
+			
+			System.out.println(sacname + " (time partials)");
+			
+			SACData sacdata = sacname.read();
+			Station station = sacdata.getStation();
+			
+			for (SACComponent component : components) {
+				Set<TimewindowInformation> tw = tmpTws.stream()
+						.filter(info -> info.getStation().equals(station))
+						.filter(info -> info.getGlobalCMTID().equals(id))
+						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
+
+				if (tw.isEmpty()) {
+					tmpTws.forEach(window -> {
+						System.out.println(window);
+						System.out.println(window.getStation().getPosition());
+					});
+					System.err.println(station.getPosition());
+					System.err.println("Ignoring empty timewindow " + sacname + " " + station);
+					continue;
+				}
+				
+				for (TimewindowInformation t : tw) {
+					double[] filteredUt = sacdata.createTrace().getY();
+					cutAndWrite(station, filteredUt, t);
+				}
+			}
+		}
+		
+		/**
+		 * @param u
+		 *            partial waveform
+		 * @param timewindowInformation
+		 *            cut information
+		 * @return u cut by considering sampling Hz
+		 */
+		private double[] sampleOutput(double[] u, TimewindowInformation timewindowInformation) {
+			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
+			// 書きだすための波形
+			int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
+					* finalSamplingHz);
+			double[] sampleU = new double[outnpts];
+			// cutting a waveform for outputting
+			Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
+
+			return sampleU;
+		}
+		
+		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t) {
+
+			double[] cutU = sampleOutput(filteredUt, t);
+			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
+			
+			if (sourceTimeFunction == -1)
+				System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
+			
+			PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
+					cutU);
+			PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
+					cutU);
+			
+			try {
+				partialDataWriter.addPartialID(PIDReceiverSide);
+				add();
+				partialDataWriter.addPartialID(PIDSourceSide);
+				add();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}
+		
+		private WorkerTimePartial(EventFolder eventDir) {
+			this.eventDir = eventDir;
+			id = eventDir.getGlobalCMTID();
+		};
+	}
 
 	public Partial1DDatasetMaker(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
@@ -548,6 +707,13 @@ public class Partial1DDatasetMaker implements Operation {
 
 	private void setPerturbationLocation() {
 		perturbationLocationSet = Arrays.stream(bodyR).mapToObj(r -> new Location(0, 0, r)).collect(Collectors.toSet());
+		if (timePartialPath != null) {
+			if (stationSet.isEmpty() || idSet.isEmpty())
+				throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
+			stationSet.forEach(station -> perturbationLocationSet.add(new Location(station.getPosition().getLatitude(),
+					station.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
+			idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
+		}
 	}
 
 	@Override
@@ -582,10 +748,10 @@ public class Partial1DDatasetMaker implements Operation {
 		System.err.println("Designing filter.");
 		setBandPassFilter();
 		writeLog(filter.toString());
-		setPerturbationLocation();
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
 				.collect(Collectors.toSet());
 		idSet = Utilities.globalCMTIDSet(workPath);
+		setPerturbationLocation();
 		phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 		// information about output partial types
@@ -595,6 +761,10 @@ public class Partial1DDatasetMaker implements Operation {
 		step = (int) (partialSamplingHz / finalSamplingHz);
 
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+		Set<EventFolder> timePartialEventDirs = new HashSet<>();
+		if (timePartialPath != null)
+			timePartialEventDirs = Utilities.eventFolderSet(timePartialPath);
+		timePartialEventDirs.forEach(event -> System.out.println(event.toString()));
 
 		// create ThreadPool
 		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
@@ -608,6 +778,8 @@ public class Partial1DDatasetMaker implements Operation {
 			for (EventFolder eventDir : eventDirs)
 				execs.execute(new Worker(eventDir));
 			// break;
+			for (EventFolder eventDir2 : timePartialEventDirs)
+				execs.execute(new WorkerTimePartial(eventDir2));
 			execs.shutdown();
 
 			while (!execs.isTerminated())

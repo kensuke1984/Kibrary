@@ -66,7 +66,7 @@ class Latitude implements Comparable<Latitude> {
 	/**
 	 * epsilon to test equality within a range for this.latitude 
 	 */
-	private final float eps = 0.001f;
+	private final float eps = 0.02f;
 
 	/**
 	 * @param 地理緯度

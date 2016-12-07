@@ -113,11 +113,9 @@ public class PhaseEnvelope implements Operation {
 			pw.println("#synPath");
 			pw.println("##boolean convolute (true)");
 			pw.println("#convolute");
-//			pw.println("##double ratio (2.5)");
-//			pw.println("#ratio");
-			pw.println("##double spectral amplitude misfit (0.75)");
+			pw.println("##double spectral amplitude misfit (3.0); may be better not to actually use it and rely only on the phase misfit");
 			pw.println("#spcAmpMisfit");
-			pw.println("##double phaseMisfit (degrees) (75)");
+			pw.println("##double phaseMisfit (degrees) (85)");
 			pw.println("#phaseMisfit");
 			pw.println("##int np (1024)");
 			pw.println("#np 1024");
@@ -131,6 +129,12 @@ public class PhaseEnvelope implements Operation {
 			pw.println("#maxFrequency");
 			pw.println("##boolean show time series (true)");
 			pw.println("#show");
+			pw.println("##double simgaFactor (0.5); multiplicative factor of the dominant period for the Gabor window's width");
+			pw.println("#sigmaFactor");
+			pw.println("##double threshold (0.025); multiplicative threshold of the maximum amplitude in the timeserie; 0.1 would be conservative");
+			pw.print("#threshold");
+			pw.println("##double variance (2.0)");
+			pw.println("#variance");
 		}
 	}
 	
@@ -145,12 +149,10 @@ public class PhaseEnvelope implements Operation {
 			property.setProperty("synPath", "");
 		if (!property.containsKey("convolute"))
 			property.setProperty("convolute", "true");
-//		if (!property.containsKey("ratio"))
-//			property.setProperty("ratio", "2");
 		if (!property.containsKey("spcAmpMisfit"))
-			property.setProperty("spcAmpMisfit", "0.75");
+			property.setProperty("spcAmpMisfit", "3.0");
 		if (!property.containsKey("phaseMisfit"))
-			property.setProperty("phaseMisfit", "75");
+			property.setProperty("phaseMisfit", "85");
 		if (!property.containsKey("np"))
 			property.setProperty("np", "1024");
 		if (!property.containsKey("tlen"))
@@ -163,6 +165,12 @@ public class PhaseEnvelope implements Operation {
 			property.setProperty("maxFrequency", "0.08");
 		if (!property.containsKey("show"))
 			property.setProperty("show", "true");
+		if (!property.containsKey("sigmaFactor"))
+			property.setProperty("sigmaFactor", "0.5");
+		if (!property.containsKey("threshold"))
+			property.setProperty("threshold", "0.025");
+		if (!property.containsKey("variance"))
+			property.setProperty("variance", "2.0");
 	}
 	
 	private Path workPath;
@@ -181,7 +189,6 @@ public class PhaseEnvelope implements Operation {
 		obsPath = getPath("obsPath");
 		synPath = getPath("synPath");
 		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
-//		ratio = Double.parseDouble(property.getProperty("ratio"));
 		spcAmpMisfit = Double.parseDouble(property.getProperty("spcAmpMisfit"));
 		phaseMisfit = Double.parseDouble(property.getProperty("phaseMisfit"));
 		samplingHz = Double.parseDouble(property.getProperty("samplingHz"));
@@ -190,6 +197,9 @@ public class PhaseEnvelope implements Operation {
 		dt = Double.parseDouble(property.getProperty("dt"));
 		maxFrequency = Double.parseDouble(property.getProperty("maxFrequency"));
 		show = Boolean.parseBoolean(property.getProperty("show"));
+		sigmaFactor = Double.parseDouble(property.getProperty("sigmaFactor"));
+		threshold = Double.parseDouble(property.getProperty("threshold"));
+		variance = Double.parseDouble(property.getProperty("variance"));
 	}
 	
 	public static void main(String[] args) throws Exception {
@@ -232,17 +242,15 @@ public class PhaseEnvelope implements Operation {
 							System.out.println(obsname);
 							
 							SACData obssac = null;
+							SACData synsac = null;
 							
 							double obsDep = 0;
 							double synDep = 0;
 							try {
-//								obsDep = obsname.readHeader().getValue(SACHeaderEnum.DEPMAX) > -obsname.readHeader().getValue(SACHeaderEnum.DEPMIN) ?
-//										obsname.readHeader().getValue(SACHeaderEnum.DEPMAX) : -obsname.readHeader().getValue(SACHeaderEnum.DEPMIN);
-//								synDep = synname.readHeader().getValue(SACHeaderEnum.DEPMAX) > -synname.readHeader().getValue(SACHeaderEnum.DEPMIN) ?
-//										synname.readHeader().getValue(SACHeaderEnum.DEPMAX) : -synname.readHeader().getValue(SACHeaderEnum.DEPMIN);
 								obssac = obsname.read();
+								synsac = synname.read();
 								obsDep = new ArrayRealVector(obssac.getData()).getLInfNorm();
-								synDep = new ArrayRealVector(synname.read().getData()).getLInfNorm();
+								synDep = new ArrayRealVector(synsac.getData()).getLInfNorm();
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
@@ -266,7 +274,7 @@ public class PhaseEnvelope implements Operation {
 	//									e.printStackTrace();
 	//								}
 									
-									double minLength = Math.max(1./maxFrequency, 30.);
+									double minLength = Math.min(1.2/maxFrequency, 20.);
 									double[][] timewindows = selectTimewindows(freqIntPE, 0.33/maxFrequency, minLength);
 									if (timewindows != null) {
 			//							for (int i = 0; i < timewindows.length; i++)
@@ -275,6 +283,8 @@ public class PhaseEnvelope implements Operation {
 										double distance = obssac.getEventLocation().getEpicentralDistance(obssac.getStation().getPosition())
 											* 180 / Math.PI;
 										double eventR = obssac.getEventLocation().getR();
+										
+										timewindows = filterOnTimeserieAmplitude(timewindows, obssac, synsac, threshold);
 										TauPPhase[][] phases = findPhases(timewindows, distance, eventR);
 										
 										if (show) {
@@ -359,7 +369,8 @@ public class PhaseEnvelope implements Operation {
 			if (frequencyAmplitude == null) {
 				return null;
 			}
-			double sigma = 1. / frequencyAmplitude[0] / 2.3;
+			
+			double sigma = 1. / frequencyAmplitude[0] * sigmaFactor;
 			double spcAmplitude = frequencyAmplitude[1];
 			if (frequencyAmplitude[0] / maxFrequency < .4 || frequencyAmplitude[0] / maxFrequency > 1.1) {
 				System.out.println("Ignoring: dominant frequency strongly differs from maximum frequency " + frequencyAmplitude[0] + "," + maxFrequency + " Possible fix: is the maximum frequency you set in the parameter file equal to the maximum frequency of the bandpass filter?");
@@ -589,6 +600,30 @@ public class PhaseEnvelope implements Operation {
 		}
 	}
 	
+	private double[][] filterOnTimeserieAmplitude(double[][] timewindows, SACData obsdata, SACData syndata, double threshold) {
+		Trace obstrace = obsdata.createTrace().cutWindow(0, 4000.);
+		Trace syntrace = syndata.createTrace().cutWindow(0, 4000);
+		double maxobs = obstrace.getMaxValue();
+		double maxsyn = obstrace.getMaxValue();
+		double minAllowedAmplitude = threshold * Math.max(maxobs, maxsyn);
+		List<double[]> filteredTimewindowList = new ArrayList<>();
+		for (double[] tw : timewindows) {
+			Trace syn = syntrace.cutWindow(tw[0], tw[1]);
+			Trace obs = obstrace.cutWindow(tw[0], tw[1]);
+			maxobs = syn.getMaxValue();
+			maxsyn = obs.getMaxValue();
+			RealVector synVector = syn.getYVector();
+			RealVector obsVector = obs.getYVector().getSubVector(0, synVector.getDimension());
+			double variance = Math.sqrt(obsVector.dotProduct(synVector)) / obsVector.getNorm();
+			if (maxsyn / maxobs > 2.5  || maxsyn / maxobs < 0.4 || variance > this.variance)
+				continue;
+			if (Math.min(maxsyn, maxobs) >= minAllowedAmplitude)
+				filteredTimewindowList.add(tw);
+		}
+		double[][] filteredTimewindow = new double[filteredTimewindowList.size()][]; 
+		return filteredTimewindowList.toArray(filteredTimewindow);
+	}
+	
 	private double[] dominantFrequencySwave(SACFileName sfn, double beforeArrival, double afterArrival) throws IllegalStateException {
 		double[] frequencySpcAmplitude = new double[2];
 		try {
@@ -634,9 +669,14 @@ public class PhaseEnvelope implements Operation {
 	
 	private TauPPhase[][] findPhases(double[][] timewindows, double distance, double eventR) {
 		TauPPhase[][] foundPhases = new TauPPhase[timewindows.length][];
-		String[] includePhaseNames = new String[] {"S", "SS", "SSS", "SSS", "SSSS", "SSSSS", "ScS", "ScSScS", "ScSScSScS", "ScSScSScSScS", "sS", "sSS", "sSSS"
+		String[] includePhaseNames = new String[] {};
+		if (components.contains(SACComponent.R) || components.contains(SACComponent.Z))
+			includePhaseNames = new String[] {"S", "SS", "SSS", "SSS", "SSSS", "SSSSS", "ScS", "ScSScS", "ScSScSScS", "ScSScSScSScS", "sS", "sSS", "sSSS"
 				, "sScS", "sScSScS", "sScSScSScS", "Sdiff", "sSdiff"
 				, "P", "PP", "PPP", "PPPP", "PcP", "PcPPcP", "PcPPcPPcP", "pP", "pPP", "pPPP", "pPPPP", "pPcP", "pPcPPcP", "pPcPPcPPcP", "Pdiff", "pPdiff"};
+		else
+			includePhaseNames = new String[] {"S", "SS", "SSS", "SSS", "SSSS", "SSSSS", "ScS", "ScSScS", "ScSScSScS", "ScSScSScSScS", "sS", "sSS", "sSSS"
+				, "sScS", "sScSScS", "sScSScSScS", "Sdiff", "sSdiff"};
 		Phase[] includePhases = new Phase[includePhaseNames.length];
 		for (int i = 0; i < includePhases.length; i++)
 			includePhases[i] = Phase.create(includePhaseNames[i], false);
@@ -974,6 +1014,12 @@ public class PhaseEnvelope implements Operation {
 	private double dt;
 	
 	private double maxFrequency;
+	
+	private double sigmaFactor;
+	
+	private double threshold;
+	
+	private double variance;
 	
 	private int np;
 	

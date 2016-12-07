@@ -517,12 +517,24 @@ public class Dvector {
 		Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVec[i].getDimension()));
 		return vectors;
 	}
+	
+	private List<BasicID> moreThanThreeRecordsPerStation(List<BasicID> ids) {
+		List<BasicID> filteredIds = new ArrayList<>();
+		Set<Station> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());
+		for (Station station : stations) {
+			List<BasicID> tmps = ids.stream().filter(id -> id.getStation().equals(station)).collect(Collectors.toList());
+			if (tmps.size() >= 3)
+				tmps.forEach(tmp -> filteredIds.add(tmp));
+		}
+		return filteredIds;
+	}
 
 	/**
 	 * データを選り分ける 観測波形 理論波形両方ともにあるものだけを採用する 重複があったときには終了
 	 */
 	private void sort() {
 		// //////
+		
 		// 観測波形の抽出 list observed IDs
 		List<BasicID> obsList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.OBS)
 				.filter(chooser::test).collect(Collectors.toList());
@@ -567,6 +579,10 @@ public class Dvector {
 			throw new RuntimeException("unanticipated");
 		// System.out.println(useObsList.size() + " observed and synthetic pairs
 		// are used.");
+		
+		// filter so that there is at least three records per stations (for time partials stability)
+		useObsList = moreThanThreeRecordsPerStation(useObsList);
+		useSynList = moreThanThreeRecordsPerStation(useSynList);
 
 		nTimeWindow = useSynList.size();
 		obsIDs = useObsList.toArray(new BasicID[0]);

@@ -17,11 +17,15 @@ import java.util.Arrays;
  */
 public enum PartialType {
 
-	A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME(8), PAR1(9), PAR2(10), PARA(11), PARC(12), PARF(
-			13), PARL(14), PARN(15), PARQ(16), G1(17), G2(18), G3(19), G4(20), G5(21), G6(22);
+	A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9), PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(
+			14), PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23);
 
 	public boolean is3D() {
 		return 8 < value;
+	}
+	
+	public boolean isTimePartial() {
+		return value == 8 || value == 9;
 	}
 
 	private int value;
@@ -107,7 +111,6 @@ public enum PartialType {
 			return SpcFileType.G6;
 		default:
 			throw new RuntimeException("unexpected");
-
 		}
 
 	}

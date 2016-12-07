@@ -38,7 +38,7 @@ class Longitude implements Comparable<Longitude> {
 	/**
 	 * epsilon to test equality within a range for this.longitude 
 	 */
-	private final float eps = 0.001f;
+	private final float eps = 0.02f;
 
 	/**
 	 * 
