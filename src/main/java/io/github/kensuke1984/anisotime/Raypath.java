@@ -66,16 +66,6 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
 
-    public static void main(String[] args) throws IOException {
-        VelocityStructure velocityStructure =
-                new PolynomialStructure(Paths.get("/home/kensuke/secondDisk/travelTime/anisotime/miasp91_aniso.poly"));
-        Raypath r1 = new Raypath(612.5415615885114, velocityStructure);
-        Raypath r2 = new Raypath(611.2915615885114, velocityStructure);
-        r1.compute();r2.compute();
-        r1.printInfo();
-        r2.printInfo();
-    }
-
     /**
      * 2016/12/6
      */

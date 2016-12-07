@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * <p>
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
- *
+ * <p>
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
@@ -36,25 +36,25 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public class RaypathCatalog implements Serializable {
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-        VelocityStructure structure =
-                new PolynomialStructure(Paths.get("/home/kensuke/secondDisk/travelTime/anisotime/miasp91_aniso.poly"));
-        RaypathCatalog catalog = read(Paths.get("/home/kensuke/.Kibrary/share/raypath2436284838671488265.cat"));
-Phase sp = Phase.create("SP");
-double eventR = 6371-571.3;
-        Raypath[] raypaths = catalog.searchPath(sp,eventR,Math.toRadians(98));
-        double delta = raypaths[0].computeDelta(eventR,sp);
-        double time = raypaths[0].computeT(eventR,sp);
-        double time1 = catalog.travelTimeByThreePointInterpolate(98,raypaths[0],eventR,sp);
-        System.out.println(Math.toDegrees(delta)+" "+time+" "+time1);
+    /**
+     * check which phases exist.
+     * if P and SV exist, then 0b101000 returns.
+     *
+     * @param raypath to check
+     * @return binary of P PcP SV SvcS SH SHcS (NaN:0 or 1)
+     */
+    private static int checkRaypath(Raypath raypath) {
+        int flag = 0;
+        double earthRadius = raypath.getStructure().earthRadius();
+        if (raypath.exists(earthRadius, Phase.P)) flag |= 32;
+        else if (raypath.exists(earthRadius, Phase.PcP)) flag |= 16;
+        if (raypath.exists(earthRadius, Phase.SV)) flag |= 8;
+        else if (raypath.exists(earthRadius, Phase.SVcS)) flag |= 4;
+        if (raypath.exists(earthRadius, Phase.S)) flag |= 2;
+        else if (raypath.exists(earthRadius, Phase.ScS)) flag |= 1;
 
-
-//        for (Raypath raypath : catalog.raypathList) {
-//            System.out.println(Math.toDegrees(raypath.computeDelta(eventR, sp))+" "+Math.toDegrees(raypath.computeDelta(6371, Phase.P))+" "+Math.toDegrees(raypath.computeDelta(6371, Phase.S)));
-//        }
-
+        return flag;
     }
-
 
     /**
      * 2016/12/5
@@ -325,7 +325,6 @@ double eventR = 6371-571.3;
         return new Raypath(max, WOODHOUSE, MESH);
     }
 
-
     /**
      * Creates a catalogue.
      * TODO eliminate ray paths which have only NaN
@@ -345,22 +344,22 @@ double eventR = 6371-571.3;
         double p_SVdiff = svDiff.getRayParameter();
         double p_SHdiff = shDiff.getRayParameter();
         for (double p = firstPath.getRayParameter() + DELTA_P, nextP; p < pMax; p = nextP) {
-            Raypath rp = new Raypath(p, WOODHOUSE, MESH);
-            if (!rp.exists()) {
+            Raypath candidatePath = new Raypath(p, WOODHOUSE, MESH);
+            if (!candidatePath.exists()) {
                 p = raypathList.last().getRayParameter() + MINIMUM_DELTA_P;
-                rp = new Raypath(p, WOODHOUSE, MESH);
-                if (!rp.exists()) rp = lookForNextExistingRaypath(p, pMax);
-                rp.compute();
-                raypathList.add(rp);
+                candidatePath = new Raypath(p, WOODHOUSE, MESH);
+                if (!candidatePath.exists()) candidatePath = lookForNextExistingRaypath(p, pMax);
+                candidatePath.compute();
+                raypathList.add(candidatePath);
                 nextP = raypathList.last().getRayParameter() + DELTA_P;
                 continue;
             }
-            rp.compute();
-            if (closeEnough(raypathList.last(), rp)) {
-                raypathList.add(rp);
+            candidatePath.compute();
+            if (closeEnough(raypathList.last(), candidatePath)) {
+                raypathList.add(candidatePath);
                 nextP = p + DELTA_P;
             } else {
-                raypathPool.add(rp);
+                raypathPool.add(candidatePath);
                 nextP = (p + raypathList.last().getRayParameter()) / 2;
             }
 
@@ -574,6 +573,7 @@ double eventR = 6371-571.3;
         for (int i = 0; i < raypaths.length - 1; i++) {
             Raypath rayI = raypaths[i];
             Raypath rayP = raypaths[i + 1];
+
             double deltaI = rayI.computeDelta(eventR, targetPhase);
             double deltaP = rayP.computeDelta(eventR, targetPhase);
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;

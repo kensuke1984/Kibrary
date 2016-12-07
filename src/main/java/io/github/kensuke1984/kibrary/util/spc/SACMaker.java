@@ -40,7 +40,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * in Global CMT catalogue, the information for the event is written in SAC.
  * 
  * 
- * @version 0.1.6.1
+ * @version 0.1.6.1.1
  * 
  * @author Kensuke Konishi
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
@@ -493,9 +493,7 @@ public class SACMaker implements Runnable {
 	/**
 	 * set headers on the input sacFile
 	 * 
-	 * @param sacFile
-	 * @param sacFile
-	 * @param component
+	 * @param sac to set header on
 	 */
 	private void setHeaderOn(SAC sac) {
 		if (beginDateTime != null)
@@ -518,7 +516,7 @@ public class SACMaker implements Runnable {
 	/**
 	 * compute {@link SpcBody} for output.
 	 * 
-	 * @param body
+	 * @param body to compute
 	 */
 	private void compute(SpcBody body) {
 		if (sourceTimeFunction != null)
