@@ -29,10 +29,31 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
  *
+ * TODO sorting by dDelta/dp
+ *
  * @author Kensuke Konishi
- * @version 0.0.10b
+ * @version 0.0.10.1b
  */
 public class RaypathCatalog implements Serializable {
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+        VelocityStructure structure =
+                new PolynomialStructure(Paths.get("/home/kensuke/secondDisk/travelTime/anisotime/miasp91_aniso.poly"));
+        RaypathCatalog catalog = read(Paths.get("/home/kensuke/.Kibrary/share/raypath2436284838671488265.cat"));
+Phase sp = Phase.create("SP");
+double eventR = 6371-571.3;
+        Raypath[] raypaths = catalog.searchPath(sp,eventR,Math.toRadians(98));
+        double delta = raypaths[0].computeDelta(eventR,sp);
+        double time = raypaths[0].computeT(eventR,sp);
+        double time1 = catalog.travelTimeByThreePointInterpolate(98,raypaths[0],eventR,sp);
+        System.out.println(Math.toDegrees(delta)+" "+time+" "+time1);
+
+
+//        for (Raypath raypath : catalog.raypathList) {
+//            System.out.println(Math.toDegrees(raypath.computeDelta(eventR, sp))+" "+Math.toDegrees(raypath.computeDelta(6371, Phase.P))+" "+Math.toDegrees(raypath.computeDelta(6371, Phase.S)));
+//        }
+
+    }
 
 
     /**
@@ -506,7 +527,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * Assume that there is a regression curve f(&Delta;) = p(ray parameter) for
      * the small range. The function f is assumed to be a polynomial function.
-     * The degree of the function depends on the number of the input raypaths.
+     * The degree of the function is 1.<S>depends on the number of the input raypaths.</S>
      *
      * @param targetDelta [rad] epicentral distance to get T for
      * @param raypaths    Polynomial interpolation is done with these. All the raypaths
@@ -518,7 +539,7 @@ public class RaypathCatalog implements Serializable {
         WeightedObservedPoints deltaP = new WeightedObservedPoints();
         for (Raypath raypath : raypaths)
             deltaP.add(raypath.computeDelta(eventR, targetPhase), raypath.getRayParameter());
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaP.toList()));
         Raypath ray = new Raypath(pf.value(targetDelta), WOODHOUSE, MESH);
         ray.compute();
@@ -546,7 +567,6 @@ public class RaypathCatalog implements Serializable {
         // System.err.println("Looking for Phase:" + targetPhase + ",
         // \u0394[\u02da]:"
         // + Precision.round(Math.toDegrees(targetDelta), 4));
-
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
 
