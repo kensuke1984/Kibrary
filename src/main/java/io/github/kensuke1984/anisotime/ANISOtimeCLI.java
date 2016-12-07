@@ -4,7 +4,6 @@ import java.awt.Desktop;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +16,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import javafx.css.CssMetaData;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -197,6 +195,13 @@ final class ANISOtimeCLI {
         return hasProblem;
     }
 
+    /**
+     * If the option '-rs' is passed, ANISOtime creates a record section.
+     *
+     * TODO filename
+     *
+     * @throws IOException if any
+     */
     private void printRecordSection() throws IOException {
         String timeStr = Utilities.getTemporaryString();
         Path outDir = Paths.get(cmd.getOptionValue("o", ""));
@@ -212,7 +217,7 @@ final class ANISOtimeCLI {
 
         targets[targets.length - 1] = max;
         for (Phase phase : targetPhases) {
-            Path out = outDir.resolve(phase.toString() + "." + timeStr + ".rcs");
+            Path out = outDir.resolve(phase + "." + timeStr + ".rcs");
             Map<Raypath, Double> deltaPathMap = new HashMap<>();
             for (double d : targets)
                 for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
