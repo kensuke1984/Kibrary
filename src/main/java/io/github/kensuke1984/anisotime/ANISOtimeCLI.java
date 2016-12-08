@@ -5,10 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -37,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.7.3b
+ * @version 0.3.8b
  */
 final class ANISOtimeCLI {
 
@@ -197,16 +194,20 @@ final class ANISOtimeCLI {
 
     /**
      * If the option '-rs' is passed, ANISOtime creates a record section.
-     *
-     * TODO filename
+     * <p>
+     * File name is given by -o option. If it is not given, the file name is 'anisotime.rcs'
+     * If the file of the name already exists, this method does nothing.
+     * The number of Phases selected by -ph must be 1.
      *
      * @throws IOException if any
      */
     private void printRecordSection() throws IOException {
-        String timeStr = Utilities.getTemporaryString();
-        Path outDir = Paths.get(cmd.getOptionValue("o", ""));
-        Files.createDirectories(outDir);
+        Path outfile = Paths.get(cmd.getOptionValue("o", "anisotime.rcs"));
 
+        if (Files.exists(outfile)) {
+            System.err.println(outfile + " already exists. Option '-o' allows changing the output file name.");
+            return;
+        }
         double[] ranges = Arrays.stream(cmd.getOptionValue("rs").split(",")).mapToDouble(Double::parseDouble).toArray();
         double min = ranges[0];
         double max = ranges[1];
@@ -217,13 +218,13 @@ final class ANISOtimeCLI {
 
         targets[targets.length - 1] = max;
         for (Phase phase : targetPhases) {
-            Path out = outDir.resolve(phase + "." + timeStr + ".rcs");
             Map<Raypath, Double> deltaPathMap = new HashMap<>();
             for (double d : targets)
                 for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
                     deltaPathMap.put(p, d);
 
-            try (PrintStream ps = new PrintStream(Files.newOutputStream(out, StandardOpenOption.CREATE_NEW))) {
+            try (PrintStream ps = new PrintStream(Files.newOutputStream(outfile, StandardOpenOption.CREATE_NEW))) {
+                ps.println("#created by " + INPUT);
                 deltaPathMap.keySet().stream().sorted(Comparator.comparingDouble(Raypath::getRayParameter).reversed())
                         .forEach(r -> printResults(deltaPathMap.get(r), r, phase, ps));
             }
@@ -460,7 +461,7 @@ final class ANISOtimeCLI {
         options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
         options.addOption("rs", "record-section", true,
                 "start,end(,interval) [deg]\n Computes a table of a record section for the range.");
-        options.addOption("o", true, "Directory for ray path figures or record sections.");
+        options.addOption("o", true, "Directory for ray path figures or file name for record sections.");
     }
 
     /**
