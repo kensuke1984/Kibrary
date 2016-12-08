@@ -77,7 +77,6 @@ public class InversionResult {
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
-		
 	}
 	
 	public InversionResult(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {

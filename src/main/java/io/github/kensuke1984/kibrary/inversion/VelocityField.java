@@ -173,11 +173,13 @@ public class VelocityField {
 	
 	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
 			, double amplifyPerturbation) {
-		int n = parameterOrder.size();
+		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
+				.filter(unknown -> !unknown.getPartialType().isTimePartial()).collect(Collectors.toList());
+		int n = parameterForStructure.size();
 		double[][] velocities = new double[n][];
 		for (int i = 0; i < n; i++) {
 			velocities[i] = new double[3];
-			UnknownParameter m = parameterOrder.get(i);
+			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
 //			if (i > 0 && i < n - 1) {

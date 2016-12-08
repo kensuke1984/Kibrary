@@ -211,9 +211,10 @@ public class LetMeInvert implements Operation {
 		case 1:
 			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
 			dVector = new Dvector(ids, id -> {
-				if (id.getGlobalCMTID().getEvent().getCmt().getMw() >= 6.5)
-					return true;
-				return false;
+//				if (id.getGlobalCMTID().getEvent().getCmt().getMw() >= 6.5)
+//					return true;
+//				return false;
+				return true;
 			}, lowerUpperMantleWeighting);
 			break;
 		case 2:

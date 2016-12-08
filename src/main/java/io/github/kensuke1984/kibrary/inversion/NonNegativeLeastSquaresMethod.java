@@ -1,6 +1,10 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.math.Matrix;
+
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -55,10 +59,11 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		x.set(0);
 		L = IntStream.range(0, n).boxed().collect(Collectors.toSet());
 		
-		
-		while ( !KuhnTuckerConvergenceTest(w, fullSet) ) {
-			w = atd.subtract(ata.operate(x));
+		// step 2
+		w = atd.subtract(ata.operate(x));
+		while ( !KuhnTuckerConvergenceTest(w, fullSet) ) {    // step 3
 			
+			//step 4
 			t = 0;
 			double valueAtt = Double.MIN_VALUE;
 			for (Integer i : L) {
@@ -68,16 +73,50 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 				}
 			}
 			
+			// step 5
 			F.add(t);
 			L.remove(t);
 			
-			RealVector xPrime = new ArrayRealVector(x);
-			for (Integer i :  fullSet) {
-				if (!L.contains(i))
-					xPrime.setEntry(i.intValue(), 0.);
+			// step 6
+			List<Integer> jPrimeToj = new ArrayList<>();
+			for (Integer j :  fullSet) {
+				if (F.contains(j)) {
+					jPrimeToj.add(j);
+				}
 			}
+			
+			// b' (bPrime)
+			RealVector xPrime = new ArrayRealVector(x);
+			for (Integer jPrime :  jPrimeToj)
+				xPrime.setEntry(jPrime.intValue(), 0.);
 			RealVector bPrime = d.subtract(a.operate(xPrime));
 			
+			// a' (aPrime)
+			Matrix aPrime = new Matrix(a.getRowDimension(), jPrimeToj.size());
+			for (int i = 0; i < jPrimeToj.size(); i++)
+				aPrime.setColumnVector(i, a.getColumnVector(jPrimeToj.get(i).intValue()));
+			
+			// solve z = arg min ||a' z - b'||_2
+			ConjugateGradientMethod cgMethod = new ConjugateGradientMethod(aPrime.computeAtA(), aPrime.transpose().operate(bPrime));
+			cgMethod.compute();
+			RealVector z = cgMethod.getAns(jPrimeToj.size() - 1);
+			
+			// step 7
+			boolean goToStep2 = true;
+			for (int i = 0; i < z.getDimension(); i++) {
+				if (z.getEntry(i) <= 0) {
+					goToStep2 = false;
+					break;
+				}
+			}
+			if (goToStep2) {
+				// step 2
+				w = atd.subtract(ata.operate(x));
+				continue;
+			}
+			else {
+				
+			}
 			
 		}
 	}

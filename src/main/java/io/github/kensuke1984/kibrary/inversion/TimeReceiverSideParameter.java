@@ -12,7 +12,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 
 	@Override
 	public String toString() {
-		return partialType + " " + station + " " + weighting;
+		return partialType + " " + station.getStationName() + " " + station.getNetwork() + " " + station.getPosition() + " " + weighting;
 	}
 
 	private final PartialType partialType = PartialType.TIME_RECEIVER;
