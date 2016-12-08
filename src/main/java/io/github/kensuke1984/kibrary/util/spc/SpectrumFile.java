@@ -110,7 +110,7 @@ class SpectrumFile implements DSMOutput {
 	 * @throws IOException
 	 *             If the spcFileName does not exist, or an I/O error occurs
 	 */
-	final static SpectrumFile getInstance(SpcFileName spcFileName) throws IOException {
+	static SpectrumFile getInstance(SpcFileName spcFileName) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
 			SpectrumFile specFile = new SpectrumFile(spcFileName);
 			specFile.sourceID = spcFileName.getSourceID();
