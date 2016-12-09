@@ -19,8 +19,35 @@ import org.apache.commons.math3.linear.RealVector;
  */
 public class NonNegativeLeastSquaresMethod extends InverseProblem {
 	
-	private final double lambda;
-	
+	public static void main(String[] args) {
+		// x^2 + 2x + 3
+		Matrix a1 = new Matrix(4, 3);
+		a1.setColumn(0, new double[] {1, 0, 4, 4});
+		a1.setColumn(1, new double[] {1, 0, 2, -2});
+		a1.setColumn(2, new double[] {1, 1, 1, 1});
+		RealVector d1 = new ArrayRealVector(new double[] {6.2, 2.9, 10.5, 2.8});
+		
+		// x^2 + 2x - 0.1
+		Matrix a2 = new Matrix(4, 3);
+		a2.setColumn(0, new double[] {1, 0, 4, 4});
+		a2.setColumn(1, new double[] {1, 0, 2, -2});
+		a2.setColumn(2, new double[] {-0.1, -0.1, -0.1, -0.1});
+		RealVector d2 = new ArrayRealVector(new double[] {2.7, 0.1, 8.1, -0.3});
+		
+		NonNegativeLeastSquaresMethod nnls1 = new NonNegativeLeastSquaresMethod(a1, d1);
+		nnls1.compute();
+		
+		NonNegativeLeastSquaresMethod nnls2 = new NonNegativeLeastSquaresMethod(a2, d2);
+		nnls2.compute();
+		
+		double[] coeff1 = new double[] {1, 2, 3};
+		double[] coeff2 = new double[] {1, 2, -0.1};
+		for (int i = 0; i < 3; i++)
+			System.out.println(nnls1.getAnsVector().getEntry(i) + " " + coeff1[i]);
+		System.out.println();
+		for (int i = 0; i < 3; i++)
+			System.out.println(nnls2.getAnsVector().getEntry(i) + " " + coeff2[i]);
+	}
 	
 	/**
 	 * F is the set of free (unbounded) indices
@@ -32,14 +59,16 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 	
 	private RealMatrix a;
 	
-	public NonNegativeLeastSquaresMethod(RealMatrix ata, RealVector atd, RealVector d, RealMatrix a, double lambda) {
+	private RealVector answer;
+	
+	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d) {
 		this.d = d;
 		this.a = a;
-		this.ata = ata;
-		this.atd = atd;
-		this.lambda = lambda;
+		this.ata = a.computeAtA();
+		this.atd = a.transpose().operate(d);
 		F = new HashSet<>();
 		L = new HashSet<>();
+		this.answer = new ArrayRealVector(a.getColumnDimension());
 	}
 	
 	@Override
@@ -78,47 +107,88 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 			L.remove(t);
 			
 			// step 6
-			List<Integer> jPrimeToj = new ArrayList<>();
-			for (Integer j :  fullSet) {
-				if (F.contains(j)) {
-					jPrimeToj.add(j);
+			boolean goToStep6 = true;
+			while (goToStep6) {
+				List<Integer> jPrimeToj = new ArrayList<>();
+				for (Integer j :  fullSet) {
+					if (F.contains(j)) {
+						jPrimeToj.add(j);
+					}
 				}
-			}
-			
-			// b' (bPrime)
-			RealVector xPrime = new ArrayRealVector(x);
-			for (Integer jPrime :  jPrimeToj)
-				xPrime.setEntry(jPrime.intValue(), 0.);
-			RealVector bPrime = d.subtract(a.operate(xPrime));
-			
-			// a' (aPrime)
-			Matrix aPrime = new Matrix(a.getRowDimension(), jPrimeToj.size());
-			for (int i = 0; i < jPrimeToj.size(); i++)
-				aPrime.setColumnVector(i, a.getColumnVector(jPrimeToj.get(i).intValue()));
-			
-			// solve z = arg min ||a' z - b'||_2
-			ConjugateGradientMethod cgMethod = new ConjugateGradientMethod(aPrime.computeAtA(), aPrime.transpose().operate(bPrime));
-			cgMethod.compute();
-			RealVector z = cgMethod.getAns(jPrimeToj.size() - 1);
-			
-			// step 7
-			boolean goToStep2 = true;
-			for (int i = 0; i < z.getDimension(); i++) {
-				if (z.getEntry(i) <= 0) {
-					goToStep2 = false;
-					break;
-				}
-			}
-			if (goToStep2) {
-				// step 2
-				w = atd.subtract(ata.operate(x));
-				continue;
-			}
-			else {
 				
-			}
-			
-		}
+				// b' (bPrime)
+				RealVector xPrime = new ArrayRealVector(x);
+				for (Integer k : fullSet) {
+					if (F.contains(k))
+						xPrime.setEntry(k.intValue(), 0.);
+				}
+				RealVector bPrime = d.subtract(a.operate(xPrime));
+				
+				// a' (aPrime)
+				Matrix aPrime = new Matrix(a.getRowDimension(), jPrimeToj.size());
+				for (int i = 0; i < jPrimeToj.size(); i++)
+					aPrime.setColumnVector(i, a.getColumnVector(jPrimeToj.get(i).intValue()));
+				
+				// solve z = arg min ||a' z - b'||_2
+				ConjugateGradientMethod cgMethod = new ConjugateGradientMethod(aPrime.computeAtA(), aPrime.transpose().operate(bPrime));
+				cgMethod.compute();
+				RealVector z = cgMethod.getAns(jPrimeToj.size());
+				
+				// step 7
+				Set<Integer> J = new HashSet<>();
+				boolean goToStep2 = true;
+				for (int i = 0; i < z.getDimension(); i++) {
+					if (z.getEntry(i) <= 0) {
+						goToStep2 = false;
+						J.add(i);
+					}
+//					if (z.getEntry(i) < 0)
+						
+				}
+				if (goToStep2) {
+					// step 2
+					for (int i = 0; i < z.getDimension(); i++)
+						x.setEntry(jPrimeToj.get(i), z.getEntry(i));
+					w = atd.subtract(ata.operate(x));
+					goToStep6 = false;
+				}
+				else {
+					// step 8
+					double valueAtqPrime = Double.MAX_VALUE;
+					for (Integer jPrime : J) {
+						double xj = x.getEntry(jPrimeToj.get(jPrime.intValue()));
+						double tmp = Math.abs(xj / (z.getEntry(jPrime.intValue()) - xj));
+						if (tmp < valueAtqPrime) {
+							valueAtqPrime = tmp;
+						}
+					}
+					
+					// step 9
+					double alpha = valueAtqPrime;
+					
+					// step 10
+					int jPrime = 0;
+					for (Integer j : F) {
+						x.setEntry( j.intValue(), x.getEntry(j.intValue()) + alpha * (z.getEntry(jPrime) - x.getEntry(j.intValue())) );
+						jPrime++;
+					}
+					
+					// step 11
+					for (int i = 0; i < x.getDimension(); i++) {
+						if (x.getEntry(i) <= 0) {
+							L.add(i);
+							F.remove(i);
+						}
+					}
+				}
+			} // end of step 6 while loop
+		} // end of step 2 while loop
+		
+		answer = x.copy();
+	}
+	
+	public RealVector getAnsVector() {
+		return answer;
 	}
 	
 	private boolean KuhnTuckerConvergenceTest(RealVector w, Set<Integer> fullSet) {
