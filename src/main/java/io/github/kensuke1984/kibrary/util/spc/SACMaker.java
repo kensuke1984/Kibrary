@@ -438,7 +438,7 @@ public class SACMaker implements Runnable {
 				// System.out.println(component);
 				SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component)
 						: SACExtension.valueOfSynthetic(component);
-				SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(station.getStationName() + "."
+				SACFileName sacFileName = new SACFileName(outDirectoryPath.resolve(station.getName() + "."
 						+ globalCMTID + "." + primeSPC.getSpcFileType() + "..." + bodyR + "." + ext));
 				if (sacFileName.exists()) {
 					System.err.println(sacFileName + " already exists..");
@@ -466,7 +466,7 @@ public class SACMaker implements Runnable {
 					: SACExtension.valueOfSynthetic(component);
 			try {
 				sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-						outDirectoryPath.resolve(station.getStationName() + "." + primeSPC.getSourceID() + "." + ext));
+						outDirectoryPath.resolve(station.getName() + "." + primeSPC.getSourceID() + "." + ext));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -482,7 +482,7 @@ public class SACMaker implements Runnable {
 						: SACExtension.valueOfTemporalPartial(component);
 				try {
 					sac.of(component).setSACData(bodyT.getTimeseries(component)).writeSAC(
-							outDirectoryPath.resolve(station.getStationName() + "." + globalCMTID + "." + extT));
+							outDirectoryPath.resolve(station.getName() + "." + globalCMTID + "." + extT));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

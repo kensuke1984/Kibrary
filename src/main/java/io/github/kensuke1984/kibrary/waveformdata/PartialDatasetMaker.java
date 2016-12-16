@@ -232,7 +232,7 @@ public class PartialDatasetMaker implements Operation {
 
 			// Pickup timewindows
 			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
-					.filter(info -> info.getStation().getStationName().equals(stationName))
+					.filter(info -> info.getStation().getName().equals(stationName))
 					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
 
 			// timewindow情報のないときスキップ
@@ -478,7 +478,7 @@ public class PartialDatasetMaker implements Operation {
 		setSourceTimeFunctions();
 		// bpフォルダごとにスタート
 		for (Station station : stationSet) {
-			Path bp0000Path = bpPath.resolve("0000" + station.getStationName());
+			Path bp0000Path = bpPath.resolve("0000" + station.getName());
 			Path bpModelPath = bp0000Path.resolve(modelName);
 
 			// Set of global cmt IDs for the station in the timewindow.
@@ -625,7 +625,7 @@ public class PartialDatasetMaker implements Operation {
 		});
 
 		// TODO
-		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
+		if (stationSet.size() != stationSet.stream().map(Station::getName).distinct().count())
 			throw new RuntimeException("Station duplication...");
 
 		boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));

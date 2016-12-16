@@ -105,7 +105,7 @@ public class BPinfo extends DSMheader {
 			// output info
 			pw.println("c output directory");
 			pw.println(OUTPUT + "/");
-			pw.println(STATION.getStationName());
+			pw.println(STATION.getName());
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points
@@ -146,7 +146,7 @@ public class BPinfo extends DSMheader {
 			// output info
 			pw.println("c output directory");
 			pw.println(OUTPUT + "/");
-			pw.println(STATION.getStationName());
+			pw.println(STATION.getName());
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points

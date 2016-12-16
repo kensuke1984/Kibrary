@@ -27,6 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
@@ -61,15 +62,14 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * JV,JH: SV, SH(J) wave in the inner-core<br>
  *
  * @author Kensuke Konishi
- * @version 0.4.3b
+ * @version 0.4.4b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
-
     /**
-     * 2016/12/6
+     * 2016/12/16
      */
-    private static final long serialVersionUID = -1407767962065216374L;
+    private static final long serialVersionUID = 8243323152285239494L;
 
     /**
      * If the gap between the CMB and the turning r is under this value, then
@@ -135,6 +135,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * Jeffreys boundary for each phase part.
+     * The boundary is on mesh.
      */
     private transient Map<PhasePart, Double> jeffreysBoundaryMap;
 
@@ -186,6 +187,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param phase the target phase
      * @return bottom Radius of the input phase[km]
      */
+
     double bottomingR(Phase phase) {
         Partition pReach = phase.pReaches();
         Partition sReach = phase.sReaches();
@@ -507,8 +509,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return time + simpsonT(pp, startR, radii.getEntry(beginIndex));
 
-        int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
-        time += simpsonT(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
+//        int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
+//        time += simpsonT(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
 
         double jeffreys = jeffreysT - jeffreysT(pp, startR);
         if (Double.isNaN(jeffreys)) throw new RuntimeException("youcheckya");
@@ -863,6 +865,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         return WOODHOUSE.getStructure().innerCoreBoundary();
     }
 
+    /**
+     * Compute &Delta; for turningR &le; r &le; rEnd by a device of Jeffreys and Jeffreys
+     *
+     * @param pp   to compute &Delta; for
+     * @param rEnd [km]
+     * @return &Delta; for radius range between turningR and rEnd.
+     */
     private double jeffreysDelta(PhasePart pp, double rEnd) {
         double turningR = turningRMap.get(pp);
         if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps) return 0;
@@ -913,6 +922,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * This method computes &Delta; by precomputed values. The startR and endR
      * must be in the section (inner-core, outer-core or mantle). If the endR
      *
+     * @param pp     to compute
      * @param startR [km]
      * @param endR   [km]
      * @return &Delta; for rStart &le; r &le; rEnd
@@ -937,21 +947,18 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
         double jeffreysDelta = jeffreysDeltaMap.get(pp);
         // might be NaN
-        if (endR <= jeffreysBoundary) {
-            return jeffreysDelta(pp, endR) - jeffreysDelta(pp, startR);
-        }
+        if (endR <= jeffreysBoundary) return jeffreysDelta(pp, endR) - jeffreysDelta(pp, startR);
 
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
         int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
         if (endIndexForMemory < firstIndexForMemory) {
-            if (getPropagation(pp) == Propagation.PENETRATING || jeffreysBoundary <= startR) {
+            if (getPropagation(pp) == Propagation.PENETRATING || jeffreysBoundary <= startR)
                 return simpsonDelta(pp, startR, endR);
-            }
+
             double delta = simpsonDelta(pp, jeffreysBoundary, endR);
             double jeff = jeffreysDelta - jeffreysDelta(pp, startR);
-            if (Double.isNaN(jeff)) {
-                throw new RuntimeException("YoCHECK");
-            }
+            if (Double.isNaN(jeff)) throw new RuntimeException("YoCHECK");
+
             return delta + jeff;
         }
         double nextREnd = radii.getEntry(endIndexForMemory);
@@ -962,19 +969,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 delta += theta[i];
         } else {
             for (int i = firstIndexForMemory; i < endIndexForMemory; i++) {
-                if (radii.getEntry(i) < jeffreysBoundary) {
-                    continue;
-                }
+                if (radii.getEntry(i) < jeffreysBoundary) continue;
                 delta += simpsonDelta(pp, radii.getEntry(i), radii.getEntry(i + 1));
             }
         }
-
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return delta + simpsonDelta(pp, startR, radii.getEntry(firstIndexForMemory));
-
-        int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
-        delta += simpsonDelta(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
-
+//        int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
+//        delta += simpsonDelta(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
         double jeffreys = jeffreysDelta - jeffreysDelta(pp, startR);
         if (Double.isNaN(jeffreys)) throw new RuntimeException("youtcheckya");
         return delta + jeffreys;
@@ -1000,6 +1002,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                     if (mesh.getEntry(i) < jeffreysBoundary) continue;
                     dTheta[i] = simpsonDelta(pp, mesh.getEntry(i), mesh.getEntry(i + 1));
                 }
+
                 double startR;
                 switch (getPropagation(pp)) {
                     case PENETRATING:

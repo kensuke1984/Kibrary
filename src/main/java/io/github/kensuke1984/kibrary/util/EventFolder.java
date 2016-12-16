@@ -18,16 +18,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * Utility for an event folder
  *
  * @author Kensuke Konishi
- * @version 0.0.8.4
+ * @version 0.0.8.4.1
  */
 
 public class EventFolder extends File {
 
     private static final long serialVersionUID = 8698976273645876402L;
 
-    /**
-     * global CMT ID
-     */
     private GlobalCMTID eventID;
 
     /**
@@ -89,7 +86,7 @@ public class EventFolder extends File {
     }
 
     /**
-     * @return (<b>unmodifiable</b>) Set of all SAC files in this including
+     * @return <b>unmodifiable</b> Set of all SAC files in this including
      * observed, synthetic and partial derivatives.
      * @throws IOException if an I/O error occurs
      */

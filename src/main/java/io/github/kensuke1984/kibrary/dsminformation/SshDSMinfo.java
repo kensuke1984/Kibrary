@@ -66,7 +66,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(OUTPUT + "/");
 			pw.println("PSV.spc");
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> {
+			STATIONS.stream().sorted().map(Station::getName).forEach(n -> {
 				pw.println(n + "." + EVENT + ".PARA");
 				pw.println(n + "." + EVENT + ".PARC");
 				pw.println(n + "." + EVENT + ".PARF");
@@ -112,7 +112,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println("PSV.spc");
 
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
+			STATIONS.stream().sorted().map(Station::getName).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
@@ -152,7 +152,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println("SH.spc");
 
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> {
+			STATIONS.stream().sorted().map(Station::getName).forEach(n -> {
 				pw.println(n + "." + EVENT + ".PARL");
 				pw.println(n + "." + EVENT + ".PARN");
 			});
@@ -194,7 +194,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(OUTPUT + "/");
 			pw.println("SH.spc");
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::getStationName).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
+			STATIONS.stream().sorted().map(Station::getName).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 

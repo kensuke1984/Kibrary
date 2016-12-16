@@ -73,7 +73,7 @@ final class NDK implements GlobalCMTData {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + (id == null ? 0 : id.hashCode());
         return result;
     }
 
@@ -265,7 +265,7 @@ final class NDK implements GlobalCMTData {
     /**
      * ５行の一つ分のNDKを読み取る
      *
-     * @param lines
+     * @param lines Lines expressing one NDK
      */
     static NDK read(String... lines) {
         if (lines.length != 5) throw new IllegalArgumentException("Invalid input for an NDK");

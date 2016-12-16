@@ -259,7 +259,7 @@ public class InformationFileMaker implements Operation {
 		for (Station station : stationSet) {
 			// System.out.println(str);
 			BPinfo bp = new BPinfo(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-			Path infPath = bpPath.resolve("0000" + station.getStationName());
+			Path infPath = bpPath.resolve("0000" + station.getName());
 			// infDir.mkdir();
 			// System.out.println(infDir.getPath()+" was made");
 			Files.createDirectories(infPath.resolve(header));
