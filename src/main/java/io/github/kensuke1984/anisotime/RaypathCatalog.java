@@ -35,6 +35,10 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @version 0.0.10.1b
  */
 public class RaypathCatalog implements Serializable {
+    /**
+     * 2016/12/16
+     */
+    private static final long serialVersionUID = -5169958584689352786L;
 
     /**
      * check which phases exist.
@@ -55,11 +59,6 @@ public class RaypathCatalog implements Serializable {
 
         return flag;
     }
-
-    /**
-     * 2016/12/5
-     */
-    private static final long serialVersionUID = -5169958584689352786L;
 
     static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
 

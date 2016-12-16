@@ -96,7 +96,7 @@ class MetroPolice {
 	private Path obsDir;
 
 	private Station pickup(String stationName) {
-		return stationSet.stream().filter(station -> station.getStationName().equals(stationName)).findAny()
+		return stationSet.stream().filter(station -> station.getName().equals(stationName)).findAny()
 				.orElseThrow(() -> new RuntimeException("No information about " + stationName));
 	}
 
@@ -483,8 +483,8 @@ class MetroPolice {
 	 *            透過帯域 最小周波数
 	 * @param fMax
 	 *            透過帯域 最大周波数
-	 * @param delta
-	 *            sampling dt
+	 * @param n
+	 *            the value n (see Saito)
 	 */
 	private void setFilter(double fMin, double fMax, int n) {
 		double omegaH = fMax * 2 * Math.PI * 0.05;

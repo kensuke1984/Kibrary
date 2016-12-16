@@ -48,9 +48,9 @@ public final class StationInformationFile {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
 			stationSet.forEach(s -> {
 				try {
-					pw.println(s.getStationName() + " " + s.getNetwork() + " " + s.getPosition());
+					pw.println(s.getName() + " " + s.getNetwork() + " " + s.getPosition());
 				} catch (Exception e) {
-					pw.println(s.getStationName() + " " + s.getPosition());
+					pw.println(s.getName() + " " + s.getPosition());
 				}
 			});
 		}
@@ -75,7 +75,7 @@ public final class StationInformationFile {
 					throw new RuntimeException("There is duplication in " + infoPath);
 			});
 		}
-		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
+		if (stationSet.size() != stationSet.stream().map(Station::getName).distinct().count())
 			System.err.println("CAUTION!! Stations with the same name but different positions detected!");
 
 		return Collections.unmodifiableSet(stationSet);
@@ -109,7 +109,7 @@ public final class StationInformationFile {
 			}
 		}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 
-		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
+		if (stationSet.size() != stationSet.stream().map(Station::getName).distinct().count())
 			System.err.println("CAUTION!! Stations with a same name but different positions detected!");
 
 		write(stationSet, out, options);

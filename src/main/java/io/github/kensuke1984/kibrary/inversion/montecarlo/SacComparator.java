@@ -195,11 +195,11 @@ class SacComparator {
 			throw new RuntimeException("Still no info files set");
 		this.obsSac = obsSac;
 		this.synSac = synSac;
-		String station = Station.of(obsSac).getStationName();
+		String station = Station.of(obsSac).getName();
 
 		GlobalCMTID id = new GlobalCMTID(obsSac.getSACString(SACHeaderEnum.KEVNM));
 		TimewindowInformation window = twInfo.stream()
-				.filter(info -> info.getStation().getStationName().equals(station))
+				.filter(info -> info.getStation().getName().equals(station))
 				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == SACComponent.T)
 				.findAny().get();
 		tstart = window.getStartTime();

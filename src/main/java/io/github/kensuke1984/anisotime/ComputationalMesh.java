@@ -19,7 +19,7 @@ import org.apache.commons.math3.linear.RealVector;
  * TODO Automesh by QDelta ?
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.1.1.1
  */
 public class ComputationalMesh implements Serializable {
 
@@ -66,6 +66,12 @@ public class ComputationalMesh implements Serializable {
      */
     private transient RealVector mantleMesh;
 
+    /**
+     * @param structure to create mesh for
+     * @param innerCoreInterval [km] interval in the inner-core
+     * @param outerCoreInterval [km] interval in the outer-core
+     * @param mantleInterval [km] interval in the mantle
+     */
     ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                       double mantleInterval) {
         if (innerCoreInterval < eps || outerCoreInterval < eps || mantleInterval < eps)

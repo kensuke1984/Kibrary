@@ -163,7 +163,7 @@ public final class PartialIDFile {
         Path outPath = Paths.get(header + ".station");
         if (Files.exists(outPath)) return;
         List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct()
-                .map(s -> s.getStationName() + " " + s.getNetwork() + " " + s.getPosition())
+                .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition())
                 .collect(Collectors.toList());
         Files.write(outPath, lines);
         System.out.println(outPath + " is created as a list of stations.");

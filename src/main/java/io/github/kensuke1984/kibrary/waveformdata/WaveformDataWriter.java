@@ -176,7 +176,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         stationMap = new HashMap<>();
         for (Station station : stationSet) {
             stationMap.put(station, i++);
-            idStream.writeBytes(StringUtils.rightPad(station.getStationName(), 8));
+            idStream.writeBytes(StringUtils.rightPad(station.getName(), 8));
             idStream.writeBytes(StringUtils.rightPad(station.getNetwork(), 8));
             HorizontalPosition pos = station.getPosition();
             idStream.writeFloat((float) pos.getLatitude());

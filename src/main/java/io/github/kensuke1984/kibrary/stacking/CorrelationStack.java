@@ -162,14 +162,14 @@ public class CorrelationStack implements Stack {
 	@Override
 	public Trace stack(String stationName, GlobalCMTID id, SACComponent component, WaveformType type, Trace trace) {
 		if (!timewindowInformationSet.stream()
-				.anyMatch(timewindow -> timewindow.getStation().getStationName().equals(stationName)
+				.anyMatch(timewindow -> timewindow.getStation().getName().equals(stationName)
 						&& timewindow.getGlobalCMTID().equals(id) && timewindow.getComponent() == component)) {
 			throw new RuntimeException("No timewindow information for " + stationName + " " + id + " " + component);
 		}
 		int shift = 0;
 		Key key = new Key(stationName, id, component);
 		Timewindow window = timewindowInformationSet.stream()
-				.filter(info -> info.getStation().getStationName().equals(stationName))
+				.filter(info -> info.getStation().getName().equals(stationName))
 				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
 				.findAny().get();
 		System.out.println(stationName + " " + window.getStartTime() + " " + window.getEndTime());
