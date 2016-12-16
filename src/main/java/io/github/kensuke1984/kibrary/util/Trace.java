@@ -19,17 +19,16 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 
 /**
- * Utility for a function y=f(x)
+ * Utility for a function y = f(x)
  * <p>
  * <p>
- * <p>
- * <b>This class is IMMUTABLE</b>
+ * This class is <b>IMMUTABLE</b>
  * </p>
  * <p>
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1
+ * @version 0.1.2.2
  */
 public class Trace {
 
@@ -38,7 +37,7 @@ public class Trace {
      * @return x[i]
      */
     public double getXAt(int i) {
-        return x[i];
+        return X[i];
     }
 
     /**
@@ -46,7 +45,7 @@ public class Trace {
      * @return y[i]
      */
     public double getYAt(int i) {
-        return y[i];
+        return Y[i];
     }
 
     /**
@@ -83,30 +82,30 @@ public class Trace {
         return createTrace(path, 0, 1);
     }
 
-    private final double[] x;
-    private final double[] y;
-    private final RealVector xVector;
-    private final RealVector yVector;
+    private final double[] X;
+    private final double[] Y;
+    private final RealVector X_VECTOR;
+    private final RealVector Y_VECTOR;
 
     /**
      * Deep copy
      *
-     * @param x array for x
-     * @param y array for y
+     * @param x array for X
+     * @param y array for Y
      */
     public Trace(double[] x, double[] y) {
         if (x.length != y.length) throw new IllegalArgumentException("Input arrays have different lengths");
-        this.x = x.clone();
-        this.y = y.clone();
-        xVector = new ArrayRealVector(x, false);
-        yVector = new ArrayRealVector(y, false);
+        X = x.clone();
+        Y = y.clone();
+        X_VECTOR = new ArrayRealVector(x, false);
+        Y_VECTOR = new ArrayRealVector(y, false);
     }
 
     /**
      * @return the number of elements
      */
     public int getLength() {
-        return x.length;
+        return X.length;
     }
 
     /**
@@ -116,17 +115,17 @@ public class Trace {
      * @return n th {@link PolynomialFunction} fitted to this
      */
     public PolynomialFunction toPolynomial(int n) {
-        if (x.length <= n) throw new IllegalArgumentException("n is too big");
+        if (X.length <= n) throw new IllegalArgumentException("n is too big");
         if (n < 0) throw new IllegalArgumentException("n must be positive..(at least)");
 
-        // (1,x,x**2,....)
-        RealMatrix a = new Array2DRowRealMatrix(x.length, n + 1);
-        for (int j = 0; j < x.length; j++)
+        // (1,X,X**2,....)
+        RealMatrix a = new Array2DRowRealMatrix(X.length, n + 1);
+        for (int j = 0; j < X.length; j++)
             for (int i = 0; i <= n; i++)
-                a.setEntry(j, i, Math.pow(x[j], i));
+                a.setEntry(j, i, Math.pow(X[j], i));
         RealMatrix at = a.transpose();
         a = at.multiply(a);
-        RealVector b = at.operate(yVector);
+        RealVector b = at.operate(Y_VECTOR);
         RealVector coef = new LUDecomposition(a).getSolver().solve(b);
         return new PolynomialFunction(coef.toArray());
     }
@@ -138,10 +137,10 @@ public class Trace {
      * then the value 'shift' should be -3
      *
      * @param shift value of shift
-     * @return f(x-shift), the values in y is deep copied.
+     * @return f(x-shift), the values in y are deep copied.
      */
     public Trace shiftX(double shift) {
-        return new Trace(Arrays.stream(x).map(d -> d + shift).toArray(), y);
+        return new Trace(Arrays.stream(X).map(d -> d + shift).toArray(), Y);
     }
 
     /**
@@ -149,17 +148,17 @@ public class Trace {
      *
      * @param n degree of function for interpolation
      * @param c point for the value
-     * @return y=f(c)
+     * @return y = f(c)
      */
     public double toValue(int n, double c) {
-        if (x.length < n + 1) throw new IllegalArgumentException("n is too big");
+        if (X.length < n + 1) throw new IllegalArgumentException("n is too big");
         if (n < 0) throw new IllegalArgumentException("n is invalid");
 
         int[] j = nearPoints(n + 1, c);
 
-        if (n == 0) return y[j[0]];
+        if (n == 0) return Y[j[0]];
 
-        double[] xi = Arrays.stream(j).parallel().mapToDouble(i -> x[i]).toArray();
+        double[] xi = Arrays.stream(j).parallel().mapToDouble(i -> X[i]).toArray();
 
         // c**n + c**n-1 + .....
         RealVector cx = new ArrayRealVector(n + 1);
@@ -172,18 +171,18 @@ public class Trace {
             for (int k = 0; k < n + 1; k++)
                 matrix.setEntry(i, k, Math.pow(xi[i], k));
 
-            bb.setEntry(i, y[j[i]]);
+            bb.setEntry(i, Y[j[i]]);
         }
 
         return cx.dotProduct(new LUDecomposition(matrix).getSolver().solve(bb));
     }
 
     /**
-     * @param target value of x to look for the nearest X value to
-     * @return the closest X to the target
+     * @param target value of x to look for the nearest x value to
+     * @return the closest x to the target
      */
     public double getNearestX(double target) {
-        return x[getNearestXIndex(target)];
+        return X[getNearestXIndex(target)];
     }
 
     /**
@@ -192,32 +191,32 @@ public class Trace {
      * @return index of a peak (ordered)
      */
     public int[] indexOfPeaks() {
-        return IntStream.range(1, x.length - 1).filter(i -> 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i])).toArray();
+        return IntStream.range(1, X.length - 1).filter(i -> 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).toArray();
     }
 
     /**
-     * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i]&lt;y[i-1]
+     * 0 &lt; (y(x[i])-y(x[i-1])) * (y(x[i]) - y(x[i+1])) and y[i] &lt; y[i-1]
      *
      * @return index of downward convex
      */
     public int[] indexOfDownwardConvex() {
-        return IntStream.range(1, x.length - 1)
-                .filter(i -> y[i] < y[i - 1] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i])).toArray();
+        return IntStream.range(1, X.length - 1)
+                .filter(i -> Y[i] < Y[i - 1] && 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).toArray();
     }
 
     /**
-     * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i-1] &lt; y[i]
+     * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i-1] &lt; t[i]
      *
      * @return index of downward convex
      */
     public int[] indexOfUpwardConvex() {
-        return IntStream.range(1, x.length - 1)
-                .filter(i -> y[i - 1] < y[i] && 0 < (y[i + 1] - y[i]) * (y[i - 1] - y[i])).toArray();
+        return IntStream.range(1, X.length - 1)
+                .filter(i -> Y[i - 1] < Y[i] && 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).toArray();
     }
 
     /**
-     * @param target value of x to look for the nearest X value to
-     * @return the index of the closest X to the target
+     * @param target value of x to look for the nearest x value to
+     * @return the index of the closest x to the target
      */
     public int getNearestXIndex(double target) {
         return nearPoints(1, target)[0];
@@ -230,21 +229,21 @@ public class Trace {
      * @return the shift value x0 in x direction for best correlation.
      */
     public double findBestShift(Trace trace) {
-        int gapLength = x.length - trace.getLength();
+        int gapLength = X.length - trace.getLength();
         if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
         double corMax = -1;
-        double compY2 = trace.yVector.getNorm();
+        double compY2 = trace.Y_VECTOR.getNorm();
         double shift = 0;
         for (int i = 0; i <= gapLength; i++) {
             double cor = 0;
             double y2 = 0;
             for (int j = 0; j < trace.getLength(); j++) {
-                cor += y[i + j] * trace.y[j];
-                y2 += y[i + j] * y[i + j];
+                cor += Y[i + j] * trace.Y[j];
+                y2 += Y[i + j] * Y[i + j];
             }
             cor /= y2 * compY2;
             if (corMax < cor) {
-                shift = x[i] - trace.x[0];
+                shift = X[i] - trace.X[0];
                 corMax = cor;
             }
         }
@@ -294,12 +293,12 @@ public class Trace {
      * @return xに最も近いn点の番号
      */
     private int[] nearPoints(int n, double x) {
-        if (n <= 0 || this.x.length < n) throw new IllegalArgumentException("n is invalid");
+        if (n <= 0 || X.length < n) throw new IllegalArgumentException("n is invalid");
         int[] xi = new int[n];
         double[] res = new double[n];
         Arrays.fill(res, -1);
-        for (int i = 0; i < this.x.length; i++) {
-            double residual = Math.abs(this.x[i] - x);
+        for (int i = 0; i < X.length; i++) {
+            double residual = Math.abs(X[i] - x);
             for (int j = 0; j < n; j++)
                 if (res[j] < 0 || residual <= res[j]) {
                     for (int k = n - 1; j < k; k--) {
@@ -318,15 +317,15 @@ public class Trace {
      * thisの start &le; x &le; endの部分を切り抜く
      *
      * @param start start x of window
-     * @param end   end px of window
+     * @param end   end x of window
      * @return 対象部分のtraceを返す (deep copy)
      */
     public Trace cutWindow(double start, double end) {
         List<Double> xList = new ArrayList<>();
         List<Double> yList = new ArrayList<>();
-        IntStream.range(0, x.length).filter(i -> start <= x[i] && x[i] <= end).forEach(i -> {
-            xList.add(x[i]);
-            yList.add(y[i]);
+        IntStream.range(0, X.length).filter(i -> start <= X[i] && X[i] <= end).forEach(i -> {
+            xList.add(X[i]);
+            yList.add(Y[i]);
         });
         if (xList.isEmpty()) throw new RuntimeException("No data in [" + start + ", " + end + "]");
         return new Trace(xList.stream().mapToDouble(Double::doubleValue).toArray(),
@@ -345,56 +344,56 @@ public class Trace {
      * @return DEEP copy of x
      */
     public double[] getX() {
-        return x.clone();
+        return X.clone();
     }
 
     /**
      * @return DEEP copy of y
      */
     public double[] getY() {
-        return y.clone();
+        return Y.clone();
     }
 
     /**
      * @return x which gives maximum y
      */
     public double getXforMaxValue() {
-        return x[yVector.getMaxIndex()];
+        return X[Y_VECTOR.getMaxIndex()];
     }
 
     /**
      * @return x which gives minimum y
      */
     public double getXforMinValue() {
-        return x[yVector.getMinIndex()];
+        return X[Y_VECTOR.getMinIndex()];
     }
 
     /**
      * @return maximum value of y
      */
     public double getMaxValue() {
-        return yVector.getMaxValue();
+        return Y_VECTOR.getMaxValue();
     }
 
     /**
      * @return minimum value of y
      */
     public double getMinValue() {
-        return yVector.getMinValue();
+        return Y_VECTOR.getMinValue();
     }
 
     /**
-     * @return (deep) copy of X
+     * @return (deep) copy of x
      */
     public RealVector getXVector() {
-        return xVector.copy();
+        return X_VECTOR.copy();
     }
 
     /**
-     * @return (deep) copy of Y
+     * @return (deep) copy of y
      */
     public RealVector getYVector() {
-        return yVector.copy();
+        return Y_VECTOR.copy();
     }
 
     /**
@@ -404,23 +403,23 @@ public class Trace {
      * @return new Trace after the addition
      */
     public Trace add(Trace trace) {
-        if (!Arrays.equals(x, trace.x)) throw new IllegalArgumentException("Trace to be added has different x axis.");
-        return new Trace(x, yVector.add(trace.yVector).toArray());
+        if (!Arrays.equals(X, trace.X)) throw new IllegalArgumentException("Trace to be added has different X axis.");
+        return new Trace(X, Y_VECTOR.add(trace.Y_VECTOR).toArray());
     }
 
     /**
      * @param d to be multiplied
-     * @return Trace which Y is multiplied d
+     * @return Trace which y is multiplied d
      */
     public Trace multiply(double d) {
-        return new Trace(x, yVector.mapMultiply(d).toArray());
+        return new Trace(X, Y_VECTOR.mapMultiply(d).toArray());
     }
 
     /**
      * @return the average value of y
      */
     public double average() {
-        return Arrays.stream(y).average().getAsDouble();
+        return Arrays.stream(Y).average().getAsDouble();
     }
 
     /**
@@ -430,7 +429,7 @@ public class Trace {
      */
     public double standardDeviation() {
         double average = average();
-        return Arrays.stream(y).map(d -> d - average).map(d -> d * d).sum() / y.length;
+        return Arrays.stream(Y).map(d -> d - average).map(d -> d * d).sum() / Y.length;
     }
 
 }

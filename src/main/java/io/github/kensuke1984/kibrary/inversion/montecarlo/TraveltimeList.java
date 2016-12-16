@@ -39,7 +39,7 @@ class TraveltimeList {
 	}
 
 	private void add(SACData sacFile, double time) {
-		String station = Station.of(sacFile).getStationName();
+		String station = Station.of(sacFile).getName();
 		GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
 		add(station, id, time);
 	}

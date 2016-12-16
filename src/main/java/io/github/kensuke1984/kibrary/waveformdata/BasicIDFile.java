@@ -74,7 +74,7 @@ public final class BasicIDFile {
     private static void outputStations(String header, BasicID[] ids) throws IOException {
         Path outPath = Paths.get(header + ".station");
         List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct().sorted()
-                .map(s -> s.getStationName() + " " + s.getNetwork() + " " + s.getPosition())
+                .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition())
                 .collect(Collectors.toList());
         Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
         System.err.println(outPath + " is created as a list of stations.");

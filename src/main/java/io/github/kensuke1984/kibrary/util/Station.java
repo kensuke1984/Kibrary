@@ -10,16 +10,16 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * Information of station
  * </p>
  * consisting of <br>
- * Station name, {@link HorizontalPosition}, Station network <br>
+ * Station name, {@link HorizontalPosition}, Station NETWORK <br>
  * <p>
  * <p>
  * This class is <b>IMMUTABLE.</b>
  * </p>
  * <p>
- * Station name and network name must be 8 or less letters.
+ * Station name and NETWORK name must be 8 or less letters.
  * <p>
- * If the network name is 'DSM', comparison of networks between instances is not
- * done, station name and horizontal position is considered.
+ * If the NETWORK name is 'DSM', comparison of networks between instances is not
+ * done, station name and horizontal POSITION is considered.
  *
  * @author Kensuke Konishi
  * @version 0.0.5.3
@@ -28,10 +28,10 @@ public class Station implements Comparable<Station> {
 
     @Override
     public int compareTo(Station o) {
-        int name = stationName.compareTo(o.stationName);
+        int name = NAME.compareTo(o.NAME);
         if (name != 0) return name;
-        int net = network.compareTo(o.network);
-        return net != 0 ? net : position.compareTo(o.position);
+        int net = NETWORK.compareTo(o.NETWORK);
+        return net != 0 ? net : POSITION.compareTo(o.POSITION);
     }
 
     /**
@@ -50,16 +50,16 @@ public class Station implements Comparable<Station> {
     }
 
     /**
-     * network name
+     * NETWORK name
      */
-    private final String network;
+    private final String NETWORK;
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((position == null) ? 0 : position.hashCode());
-        result = prime * result + ((stationName == null) ? 0 : stationName.hashCode());
+        result = prime * result + ((POSITION == null) ? 0 : POSITION.hashCode());
+        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
         return result;
     }
 
@@ -69,71 +69,71 @@ public class Station implements Comparable<Station> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Station other = (Station) obj;
-        if (position == null) {
-            if (other.position != null) return false;
-        } else if (!position.equals(other.position)) return false;
-        if (stationName == null) {
-            if (other.stationName != null) return false;
-        } else if (!stationName.equals(other.stationName)) return false;
-        if (network == null) return other.network == null || other.network.equals("DSM");
-        else if (network.equals("DSM")) return true;
-        else if (other.network != null && !other.network.equals("DSM") && !network.equals(other.network)) return false;
+        if (POSITION == null) {
+            if (other.POSITION != null) return false;
+        } else if (!POSITION.equals(other.POSITION)) return false;
+        if (NAME == null) {
+            if (other.NAME != null) return false;
+        } else if (!NAME.equals(other.NAME)) return false;
+        if (NETWORK == null) return other.NETWORK == null || other.NETWORK.equals("DSM");
+        else if (NETWORK.equals("DSM")) return true;
+        else if (other.NETWORK != null && !other.NETWORK.equals("DSM") && !NETWORK.equals(other.NETWORK)) return false;
         return true;
     }
 
     /**
      * the {@link HorizontalPosition} of the station
      */
-    private final HorizontalPosition position;
+    private final HorizontalPosition POSITION;
 
     /**
-     * the name of the station
+     * name of the station
      */
-    private final String stationName;
+    private final String NAME;
 
     /**
-     * @return the name of the station
+     * @return name of the station
      */
-    public String getStationName() {
-        return stationName;
+    public String getName() {
+        return NAME;
     }
 
     @Override
     public String toString() {
-        return stationName;
+        return NAME;
     }
 
     /**
-     * @return the position of the station
+     * @return the POSITION of the station
      */
     public HorizontalPosition getPosition() {
-        return position;
+        return POSITION;
     }
 
     /**
      * @return the name of the network
      */
     public String getNetwork() {
-        return network;
+        return NETWORK;
     }
 
     /**
      * @param stationName Name of the station (must be 8 or less letters)
      * @param network     Name of the network of the station (must be 8 or less letters)
-     * @param position    Horizontal position of the station
+     * @param position    Horizontal POSITION of the station
      */
     public Station(String stationName, HorizontalPosition position, String network) {
         if (8 < stationName.length() || 8 < network.length())
-            throw new IllegalArgumentException("Both station and network name must be 8 or less letters.");
-        this.stationName = stationName;
-        this.network = network;
-        this.position = position;
+            throw new IllegalArgumentException("Both station and NETWORK name must be 8 or less letters.");
+        NAME = stationName;
+        NETWORK = network;
+        POSITION = position;
     }
 
     /**
      * Creates station from the input bytes.
      * <p>
-     * The bytes must contain Name(8), network(8), latitude(4), longitude(4)
+     * The bytes must contain Name(8), NETWORK(8), latitude(4), longitude(4)
      * <p>
      * The bytes are written in header parts of BasicIDFile PartialIDFile
      * TimewindowInformationFile.

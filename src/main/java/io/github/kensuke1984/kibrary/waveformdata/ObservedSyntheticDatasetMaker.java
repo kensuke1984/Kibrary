@@ -44,23 +44,20 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * Observed and synthetic waveforms in SAC files are collected from the obsDir
  * and synDir, respectively. Only SAC files, which sample rates are
- * {@link parameter.ObservedSyntheticDatasetMaker#sacSamplingHz}, are used. Both
+ * {@link #sacSamplingHz}, are used. Both
  * folders must have event folders inside which have waveforms.
  * <p>
  * The static correction is applied as described in {@link StaticCorrection}
  * <p>
- * <p>
  * The sample rates of the data is
- * {@link parameter.ObservedSyntheticDatasetMaker#finalSamplingHz}.<br>
- * Timewindow information in
- * {@link parameter.ObservedSyntheticDatasetMaker#timewindowInformationPath} is
- * used for cutting windows.
+ * {@link #finalSamplingHz}.<br>
+ * Timewindow information in {@link #timewindowPath} is used for cutting windows.
  * <p>
  * Only pairs of a seismic source and a receiver with both an observed and
  * synthetic waveform are collected.
  * <p>
  * This class does not apply a digital filter, but extract information about
- * passband written in SAC files.
+ * pass band written in SAC files.
  * <p>
  * TODO <b> Assume that there are no stations with same name but different
  * network in one event</b>
@@ -331,7 +328,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                 if (!synFileName.exists()) continue;
 
                 Set<TimewindowInformation> windows = timewindowInformationSet.stream()
-                        .filter(info -> info.getStation().getStationName().equals(stationName))
+                        .filter(info -> info.getStation().getName().equals(stationName))
                         .filter(info -> info.getGlobalCMTID().equals(id))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 

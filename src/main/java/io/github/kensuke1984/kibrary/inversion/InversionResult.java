@@ -506,8 +506,8 @@ public class InversionResult {
 				bornMap.put(bid.getStation(), born.append(bornOf(bid, method, n).getYVector()));
 			}
 			for (Station s : stationSet()) {
-				RealVector obs = obsMap.get(s.getStationName());
-				RealVector del = bornMap.get(s.getStationName()).subtract(obs);
+				RealVector obs = obsMap.get(s.getName());
+				RealVector del = bornMap.get(s.getName()).subtract(obs);
 				stationLines.add(s + " " + del.dotProduct(del) / obs.dotProduct(obs));
 			}
 			Files.write(station, stationLines);

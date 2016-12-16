@@ -165,7 +165,7 @@ public class TakeuchiStaticCorrection implements Operation {
         GlobalCMTID id = obsName.getGlobalCMTID();
         SACComponent component = obsName.getComponent();
         Set<TimewindowInformation> timeWindowSet =
-                timewindow.stream().filter(info -> info.getStation().getStationName().equals(stationName))
+                timewindow.stream().filter(info -> info.getStation().getName().equals(stationName))
                         .filter(info -> info.getGlobalCMTID().equals(id))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
         if (timeWindowSet.size() != 1) throw new RuntimeException(timewindowInformationPath + " is invalid.");

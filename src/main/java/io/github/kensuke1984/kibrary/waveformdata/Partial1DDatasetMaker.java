@@ -367,7 +367,7 @@ public class Partial1DDatasetMaker implements Operation {
 
             for (SACComponent component : components) {
                 Set<TimewindowInformation> tw = timewindowInformationSet.stream()
-                        .filter(info -> info.getStation().getStationName().equals(stationName))
+                        .filter(info -> info.getStation().getName().equals(stationName))
                         .filter(info -> info.getGlobalCMTID().equals(id))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
