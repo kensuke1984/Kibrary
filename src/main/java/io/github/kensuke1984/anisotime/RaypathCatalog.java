@@ -561,12 +561,14 @@ public class RaypathCatalog implements Serializable {
      * @return Never returns null. zero length array is possible.
      */
     public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta) {
+        if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
+                (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
+
         Raypath[] raypaths = getRaypaths();
         // System.err.println("Looking for Phase:" + targetPhase + ",
         // \u0394[\u02da]:"
         // + Precision.round(Math.toDegrees(targetDelta), 4));
-        if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
-                (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
+
 
         List<Raypath> pathList = new ArrayList<>();
         for (int i = 0; i < raypaths.length - 1; i++) {
