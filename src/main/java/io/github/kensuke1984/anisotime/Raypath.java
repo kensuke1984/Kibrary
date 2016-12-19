@@ -135,7 +135,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * Jeffreys boundary for each phase part.
-     * The boundary is on mesh.
+     * The boundary is on mesh. If the phase penetrates a part, the value is {@link Double#NaN}
      */
     private transient Map<PhasePart, Double> jeffreysBoundaryMap;
 

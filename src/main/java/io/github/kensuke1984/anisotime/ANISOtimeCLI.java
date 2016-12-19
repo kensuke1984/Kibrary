@@ -34,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.8b
+ * @version 0.3.9b
  */
 final class ANISOtimeCLI {
 
@@ -217,14 +217,27 @@ final class ANISOtimeCLI {
             targets[i] = min + interval * i;
 
         targets[targets.length - 1] = max;
-        for (Phase phase : targetPhases) {
-            Map<Raypath, Double> deltaPathMap = new HashMap<>();
-            for (double d : targets)
-                for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
-                    deltaPathMap.put(p, d);
+        try (PrintStream ps = new PrintStream(Files.newOutputStream(outfile, StandardOpenOption.CREATE_NEW))) {
+            ps.println("#created by " + INPUT);
+            for (Phase phase : targetPhases) {
+                Map<Raypath, Double> deltaPathMap = new HashMap<>();
 
-            try (PrintStream ps = new PrintStream(Files.newOutputStream(outfile, StandardOpenOption.CREATE_NEW))) {
-                ps.println("#created by " + INPUT);
+                if (phase.isDiffracted()) {
+                    Raypath diff = catalog.searchPath(phase, eventR, 0)[0];
+                    double angle0 = diff.computeDelta(eventR, phase);
+                    for (double d : targets) {
+                        double deltaOnBoundary = d - Math.toDegrees(angle0);
+                        Phase diffPhase = Phase.create(phase.toString() + deltaOnBoundary, phase.isPSV());
+                        printResults(-1, diff, diffPhase, ps);
+                    }
+                    continue;
+                }
+
+
+                for (double d : targets)
+                    for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
+                        deltaPathMap.put(p, d);
+
                 deltaPathMap.keySet().stream().sorted(Comparator.comparingDouble(Raypath::getRayParameter).reversed())
                         .forEach(r -> printResults(deltaPathMap.get(r), r, phase, ps));
             }
@@ -239,6 +252,7 @@ final class ANISOtimeCLI {
      * @param time         [s] to be printed
      * @param eventR       radius of the event [km]
      */
+
     void createEPS(RaypathPanel panel, Path out, Phase phase, double rayparameter, double delta, double time,
                    double eventR) {
         EpsGraphics epsGraphics = null;
