@@ -4,15 +4,15 @@ package io.github.kensuke1984.anisotime;
  * P, SV, SH, K, I, JV and JH
  *
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 public enum PhasePart {
-    // P in the mantle
-    P, // S in the mantle
-    SV, SH, // P in tht outer-core
-    K, // P in the inner-core
-    I, // S in the inner-core
-    JV, JH;
+    P, // P in the mantle
+    SV, SH, // S in the mantle
+    K, // P in tht outer-core
+    I, // P in the inner-core
+    JV, JH // S in the inner-core
+    ;
 
     /**
      * @return P, S: Mantle, K: Outer core, I, J: Inner core
