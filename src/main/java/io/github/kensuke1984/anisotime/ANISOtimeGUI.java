@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
@@ -30,7 +32,7 @@ import javax.swing.WindowConstants;
  * GUI for ANISOtime
  *
  * @author Kensuke Konishi
- * @version 0.5.2.1
+ * @version 0.5.2.2
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
 
@@ -52,11 +54,11 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         raypathWindow.selectPath(i);
     }
 
-    void addPath(double[] x, double[] y) {
+    private void addPath(double[] x, double[] y) {
         raypathWindow.addPath(x, y);
     }
 
-    void createNewRaypathTabs() {
+    private void createNewRaypathTabs() {
         if (raypathWindow != null) raypathWindow.dispose();
         raypathWindow = new RaypathWindow(this, new RaypathPanel(structure));
         resultWindow.clearRows();
@@ -237,8 +239,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     double epicentralDistance = Math.toRadians(mostImportant);
                     for (Phase phase : phaseSet) {
                         Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
-                        for (int i = 0; i < raypaths.length; i++) {
-                            raypathList.add(raypaths[i]);
+                        for (Raypath raypath : raypaths) {
+                            raypathList.add(raypath);
                             phaseList.add(phase);
                         }
                     }
@@ -313,8 +315,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(ANISOtimeGUI.class.getName())
-                    .log(java.util.logging.Level.SEVERE, null, ex);
+            Logger.getLogger(ANISOtimeGUI.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
         // </editor-fold>
 
@@ -372,8 +374,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
      * @param raypathList List of {@link Raypath}
      * @param phaseList   List of {@link Phase}
      */
-    public synchronized void showResult(final double[] delta, final List<Raypath> raypathList,
-                                        final List<Phase> phaseList) {
+    public synchronized void showResult(double[] delta, List<Raypath> raypathList,
+                                         List<Phase> phaseList) {
         Objects.requireNonNull(raypathList);
         Objects.requireNonNull(phaseList);
         if (raypathList.size() != phaseList.size()) throw new RuntimeException("UNEXPECTED");
