@@ -22,22 +22,21 @@ import org.apache.commons.io.IOUtils;
  * Menubar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.5.1
+ * @version 0.1.5.2
  */
 final class MenuBar extends JMenuBar {
 
-
     /**
-     * 2016/12/3
+     * 2016/12/20
      */
-    private static final long serialVersionUID = 5991384857422431087L;
+    private static final long serialVersionUID = -1528882471062596159L;
 
     MenuBar(ANISOtimeGUI gui) {
-        this.gui = gui;
+        GUI = gui;
         initComponents();
     }
 
-    private final ANISOtimeGUI gui;
+    private final ANISOtimeGUI GUI;
 
     private ButtonGroup buttonGroupModes = new ButtonGroup();
     private ButtonGroup buttonGroupPolarization = new ButtonGroup();
@@ -90,13 +89,13 @@ final class MenuBar extends JMenuBar {
     }
 
     private void setListeners() {
-        jMenuItemPSVSH.addActionListener(e -> gui.setPolarity(0));
-        jMenuItemPSV.addActionListener(e -> gui.setPolarity(1));
-        jMenuItemSH.addActionListener(e -> gui.setPolarity(2));
+        jMenuItemPSVSH.addActionListener(e -> GUI.setPolarity(0));
+        jMenuItemPSV.addActionListener(e -> GUI.setPolarity(1));
+        jMenuItemSH.addActionListener(e -> GUI.setPolarity(2));
 
-        jMenuItemRayparameterMode.addActionListener(e -> gui.setMode(ComputationMode.RAY_PARAMETER));
-        jMenuItemEpicentralDistanceMode.addActionListener(e -> gui.setMode(ComputationMode.EPICENTRAL_DISTANCE));
-        jMenuItemPreferences.addActionListener(e -> gui.changePropertiesVisible());
+        jMenuItemRayparameterMode.addActionListener(e -> GUI.setMode(ComputationMode.RAY_PARAMETER));
+        jMenuItemEpicentralDistanceMode.addActionListener(e -> GUI.setMode(ComputationMode.EPICENTRAL_DISTANCE));
+        jMenuItemPreferences.addActionListener(e -> GUI.changePropertiesVisible());
 
         jMenuItemExit.addActionListener(evt -> System.exit(0));
 
@@ -132,10 +131,10 @@ final class MenuBar extends JMenuBar {
         jMenuItemAbout.addActionListener(e -> About.main(null));
         jMenuItemMail.addActionListener(e -> {
             try {
-                Desktop.getDesktop().mail(new URI("mailto:bob@eps.s.u-tokyo.ac.jp"));
+                Desktop.getDesktop().mail(new URI("mailto:kensuke@earth.sinica.edu.tw"));
             } catch (Exception e2) {
                 JOptionPane.showMessageDialog(null,
-                        "<html>Can't launch a mailer. Please send Email to <a href>traveltimereport@outlook.com</a>.");
+                        "<html>Can't launch a mailer. Please send Email to <a href>kensuke@earth.sinica.edu.tw</a>.");
             }
         });
 

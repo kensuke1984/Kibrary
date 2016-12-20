@@ -1,7 +1,10 @@
 package io.github.kensuke1984.anisotime;
 
 import javax.swing.*;
+import javax.swing.GroupLayout.Alignment;
 import java.awt.GraphicsEnvironment;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static javax.swing.UIManager.*;
 
@@ -34,14 +37,14 @@ final class About extends javax.swing.JFrame {
         jTextArea1.setEditable(false);
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+        layout.setHorizontalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(
                 layout.createSequentialGroup().addContainerGap()
                         .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE).addContainerGap()));
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+        layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(
                 layout.createSequentialGroup().addContainerGap()
                         .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE).addContainerGap()));
         pack();
-        java.awt.EventQueue.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
+        SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
     }
 
     private static final String line = "ANISOtime " + ANISOtime.version + " (" + ANISOtime.codename +
@@ -63,8 +66,8 @@ final class About extends javax.swing.JFrame {
                     setLookAndFeel(info.getClassName());
                     break;
                 }
-        } catch (ClassNotFoundException | javax.swing.UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(About.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException | UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException ex) {
+            Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
         }
         // </editor-fold>
         /* Create and display the form */

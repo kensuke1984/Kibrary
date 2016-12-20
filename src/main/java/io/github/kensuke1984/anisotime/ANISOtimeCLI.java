@@ -34,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.9b
+ * @version 0.3.10b
  */
 final class ANISOtimeCLI {
 
