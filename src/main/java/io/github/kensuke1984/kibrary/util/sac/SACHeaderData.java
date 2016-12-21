@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * <A href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>here</a>
  *
  * @author Kensuke Konishi
- * @version 0.0.1.2
+ * @version 0.0.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public interface SACHeaderData {
@@ -52,6 +52,24 @@ public interface SACHeaderData {
      */
     default Station getStation() {
         return Station.of(this);
+    }
+
+    /**
+     * KCMPNM (vertical, radial or trnsvers)
+     * vertical:Z, radial:R, trnsvers:T
+     * @return component
+     */
+    default SACComponent getComponent() {
+        switch (getSACString(SACHeaderEnum.KCMPNM)) {
+            case "vertical":
+                return SACComponent.Z;
+            case "radial":
+                return SACComponent.R;
+            case "trnsvers":
+                return SACComponent.T;
+            default:
+                throw new RuntimeException("KCMPNM is invalid. must be vertical, radial or trnsvers");
+        }
     }
 
     /**

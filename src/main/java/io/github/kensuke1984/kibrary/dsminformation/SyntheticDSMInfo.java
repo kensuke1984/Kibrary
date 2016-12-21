@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
  * Information file for TIPSV and TISH
  *
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.8
  */
 public class SyntheticDSMInfo extends DSMheader {
 
@@ -134,6 +134,14 @@ public class SyntheticDSMInfo extends DSMheader {
                     .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "SH.spc"));
             pw.println("end");
         }
+    }
+
+    public SyntheticDSMInfo replaceStructure(PolynomialStructure structure) {
+        return new SyntheticDSMInfo(structure, EVENT, STATIONS, OUTPUT, getTlen(), getNp());
+    }
+
+    public GlobalCMTData getGlobalCMTData() {
+        return EVENT;
     }
 
 }
