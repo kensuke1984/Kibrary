@@ -5,8 +5,8 @@ package io.github.kensuke1984.kibrary.util.sac;
  * Components of SAC<br>
  * Z(1), R(2), T(3)
  *
- * @author kensuke
- * @version 0.0.3.2
+ * @author Kensuke Konishi
+ * @version 0.0.3.3
  */
 public enum SACComponent {
     Z(1), R(2), T(3);
@@ -47,17 +47,7 @@ public enum SACComponent {
      * @return SACComponent of the input sacHeaderData
      */
     public static SACComponent of(SACHeaderData sacHeaderData) {
-        String kcmpnm = sacHeaderData.getSACString(SACHeaderEnum.KCMPNM);
-        switch (kcmpnm) {
-            case "vertical":
-                return Z;
-            case "radial":
-                return R;
-            case "trnsvers":
-                return T;
-            default:
-                throw new RuntimeException("KCMPNM is invalid. must be vertical, radial or trnsvers");
-        }
+        return sacHeaderData.getComponent();
     }
 
 }
