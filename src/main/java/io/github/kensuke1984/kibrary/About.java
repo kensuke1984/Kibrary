@@ -26,7 +26,7 @@ final class About extends javax.swing.JFrame {
 
     public static final String codename = "Sahagin";
 
-    public static final String version = "0.4.2.1";
+    public static final String version = "0.4.2.2";
 
     private About() {
         super("About Kibrary");
