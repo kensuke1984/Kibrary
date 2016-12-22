@@ -272,7 +272,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeLong(startByte); // データの格納場所 8 Byte
         // partial type 1 Byte
         idStream.writeByte(partialID.getPartialType().getValue());
-        idStream.writeShort(perturbationLocationMap.get(partialID.pointLocation));
+        idStream.writeShort(perturbationLocationMap.get(partialID.POINT_LOCATION));
     }
 
 }

@@ -46,7 +46,7 @@ public class XYZ extends XY {
 	 *         axis
 	 */
 	public XYZ rotateaboutX(double theta) {
-		double y = this.y * Math.cos(theta) - this.z * Math.sin(theta);
+		double y = this.y * Math.cos(theta) - z * Math.sin(theta);
 		double z = this.z * Math.cos(theta) + this.y * Math.sin(theta);
 		return new XYZ(x, y, z);
 	}
@@ -60,7 +60,7 @@ public class XYZ extends XY {
 	 *         axis
 	 */
 	public XYZ rotateaboutY(double theta) {
-		double z = this.z * Math.cos(theta) - this.x * Math.sin(theta);
+		double z = this.z * Math.cos(theta) - x * Math.sin(theta);
 		double x = this.x * Math.cos(theta) + this.z * Math.sin(theta);
 		return new XYZ(x, y, z);
 	}
@@ -74,7 +74,7 @@ public class XYZ extends XY {
 	 *         axis
 	 */
 	public XYZ rotateaboutZ(double theta) {
-		double x = this.x * Math.cos(theta) - this.y * Math.sin(theta);
+		double x = this.x * Math.cos(theta) - y * Math.sin(theta);
 		double y = this.y * Math.cos(theta) + this.x * Math.sin(theta);
 		return new XYZ(x, y, z);
 	}

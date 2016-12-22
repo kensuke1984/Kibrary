@@ -71,7 +71,7 @@ final class NDK implements GlobalCMTData {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + (id == null ? 0 : id.hashCode());
         return result;
@@ -405,9 +405,7 @@ final class NDK implements GlobalCMTData {
         // tension axis plunge
         if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0) return false;
         // null axis plunge
-        if (plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1) return false;
-
-        return true;
+        return !(plunge1 < search.getLowerNullAxisPlunge() || search.getUpperNullAxisPlunge() < plunge1);
     }
 
     @Override

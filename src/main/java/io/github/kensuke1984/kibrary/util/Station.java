@@ -56,7 +56,7 @@ public class Station implements Comparable<Station> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + ((POSITION == null) ? 0 : POSITION.hashCode());
         result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());

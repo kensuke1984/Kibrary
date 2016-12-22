@@ -120,7 +120,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 				.addMouseListener(createDescriptionMouseListner(ParameterDescription.createFrameRayparameter()));
 		jLabelModel.addMouseListener(createDescriptionMouseListner(ParameterDescription.createFrameModel()));
 	}
-	private static MouseListener createDescriptionMouseListner(final JFrame frame) {
+	private static MouseListener createDescriptionMouseListner(JFrame frame) {
 		return new MouseAdapter() {
 			Timer timer;
 

@@ -39,7 +39,7 @@ public class Physical3DParameter implements UnknownParameter {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
+		int prime = 31;
 		int result = 1;
 		result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
 		result = prime * result + ((pointLocation == null) ? 0 : pointLocation.hashCode());
@@ -65,10 +65,8 @@ public class Physical3DParameter implements UnknownParameter {
 				return false;
 		} else if (!pointLocation.equals(other.pointLocation))
 			return false;
-		if (Double.doubleToLongBits(weighting) != Double.doubleToLongBits(other.weighting))
-			return false;
-		return true;
-	}
+        return Double.doubleToLongBits(weighting) == Double.doubleToLongBits(other.weighting);
+    }
 
 	/**
 	 * location of the perturbation

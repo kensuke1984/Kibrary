@@ -20,7 +20,7 @@ public class Physical1DParameter implements UnknownParameter {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
+		int prime = 31;
 		int result = 1;
 		result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
 		long temp;
@@ -33,20 +33,13 @@ public class Physical1DParameter implements UnknownParameter {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
 		Physical1DParameter other = (Physical1DParameter) obj;
-		if (partialType != other.partialType)
-			return false;
-		if (Double.doubleToLongBits(perturbationR) != Double.doubleToLongBits(other.perturbationR))
-			return false;
-		if (Double.doubleToLongBits(weighting) != Double.doubleToLongBits(other.weighting))
-			return false;
-		return true;
+		if (partialType != other.partialType) return false;
+		return Double.doubleToLongBits(perturbationR) == Double.doubleToLongBits(other.perturbationR) &&
+				Double.doubleToLongBits(weighting) == Double.doubleToLongBits(other.weighting);
 	}
 
 	private final double perturbationR;

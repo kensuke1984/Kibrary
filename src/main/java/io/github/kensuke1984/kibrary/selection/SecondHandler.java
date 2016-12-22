@@ -152,9 +152,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
             // Event Longitude
             double eventLongitude = obsSac.getValue(SACHeaderEnum.EVLO);
-            if (eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude) return false;
-
-            return true;
+            return !(eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude);
         };
     }
 
@@ -177,14 +175,16 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
         try {
             for (SACFileName sacName : sacnames) {
                 // if the sacName is OK
-                boolean isOK = true;
+                boolean isOK;
                 if (!sacName.isOBS()) continue;
 
                 if (!sacName.getGlobalCMTID().equals(eventDir.getGlobalCMTID())) isOK = false;
-
-                // SacFileの読み込み
-                SACData obsSac = sacName.read();
-                isOK = predicate.test(obsSac);
+//TODO isok????
+                else {
+                    // SacFileの読み込み
+                    SACData obsSac = sacName.read();
+                    isOK = predicate.test(obsSac);
+                }
 
                 if (!isOK) try {
                     FileUtils.moveFileToDirectory(sacName, trashDir.toFile(), true);

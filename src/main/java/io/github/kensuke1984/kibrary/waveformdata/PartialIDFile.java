@@ -153,7 +153,7 @@ public final class PartialIDFile {
         Path outPath = Paths.get(header + ".par");
         if (Files.exists(outPath)) return;
         List<String> lines =
-                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.partialType, id.pointLocation, 1))
+                Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.PARTIAL_TYPE, id.POINT_LOCATION, 1))
                         .distinct().map(Physical3DParameter::toString).sorted().collect(Collectors.toList());
         Files.write(outPath, lines);
         System.out.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");

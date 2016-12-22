@@ -96,7 +96,7 @@ public class SCARDEC {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
+			int prime = 31;
 			int result = 1;
 			result = prime * result + ((ORIGIN_TIME == null) ? 0 : ORIGIN_TIME.hashCode());
 			result = prime * result + ((REGION == null) ? 0 : REGION.hashCode());
@@ -626,7 +626,7 @@ public class SCARDEC {
 	 * and rakes.
 	 */
 	public void printInfo() {
-		System.out.println(ID.toString());
+		System.out.println(ID);
 		System.out.println("Epicentral location(lat lon radius):" + EPICENTRAL_LOCATION);
 		System.out.println("M0:" + M0 + ", Mw:" + MW);
 		System.out.println("strike1:" + STRIKE1 + ", dip1:" + DIP1 + ", rake1:" + RAKE1 + " [deg]");

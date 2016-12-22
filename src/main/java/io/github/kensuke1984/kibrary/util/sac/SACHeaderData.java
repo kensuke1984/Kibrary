@@ -33,7 +33,7 @@ public interface SACHeaderData {
      * @return {@link Location} of the source made from EVLA, EVLO and EVDP.
      * Earth radius is considered as 6371.
      */
-    default public Location getEventLocation() {
+    default Location getEventLocation() {
         return new Location(getValue(SACHeaderEnum.EVLA), getValue(SACHeaderEnum.EVLO),
                 6371.0 - getValue(SACHeaderEnum.EVDP));
     }

@@ -28,7 +28,7 @@ interface WeightingFactor {
 	 */
 	double getFactor(int i, int j, int k, int l);
 
-	static final WeightingFactor A = new WeightingFactor() {
+	WeightingFactor A = new WeightingFactor() {
 		/**
 		 * Coefficient for A. Geller and Hara (1993) Aの係数
 		 */
@@ -44,7 +44,7 @@ interface WeightingFactor {
 		}
 	};
 
-	static final WeightingFactor C = new WeightingFactor() {
+	WeightingFactor C = new WeightingFactor() {
 		/**
 		 * Coefficient for C Geller and Hara (1993)
 		 */
@@ -59,7 +59,7 @@ interface WeightingFactor {
 		}
 	};
 
-	static final WeightingFactor F = new WeightingFactor() {
+	WeightingFactor F = new WeightingFactor() {
 		/**
 		 * Coefficient for F. Geller and Hara (1993)
 		 */
@@ -71,9 +71,9 @@ interface WeightingFactor {
 			default:
 				return 0;
 			}
-		};
-	};
-	static final WeightingFactor L = new WeightingFactor() {
+		}
+    };
+	WeightingFactor L = new WeightingFactor() {
 		/**
 		 * Coefficient for L. Geller and Hara (1993)
 		 */
@@ -88,7 +88,7 @@ interface WeightingFactor {
 		}
 
 	};
-	static final WeightingFactor N = new WeightingFactor() {
+	WeightingFactor N = new WeightingFactor() {
 		/**
 		 * Coefficient for N. Geller and Hara (1993)
 		 */
@@ -104,7 +104,7 @@ interface WeightingFactor {
 			}
 		}
 	};
-	static final WeightingFactor MU = new WeightingFactor() {
+	WeightingFactor MU = new WeightingFactor() {
 		/**
 		 * Coefficint for &mu;
 		 */
@@ -120,7 +120,7 @@ interface WeightingFactor {
 			}
 		}
 	};
-	static final WeightingFactor LAMBDA = new WeightingFactor() {
+	WeightingFactor LAMBDA = new WeightingFactor() {
 		/**
 		 * λの係数 i, j, k, l ={0, 1, 2}
 		 */

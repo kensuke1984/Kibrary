@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.external.gmt;
 
 import java.io.IOException;
@@ -193,11 +190,9 @@ public class RaypathDistribution implements Operation {
 	 * @return if the path of Sacfile should be drawn
 	 */
 	private boolean inTimeWindow(SACFileName name) {
-		return timeWindowInformationFile == null ? true
-				: timeWindowInformationFile.stream()
-						.anyMatch(tw -> tw.getComponent() == name.getComponent()
-								&& tw.getGlobalCMTID().equals(name.getGlobalCMTID())
-								&& tw.getStation().getName().equals(name.getStationName()));
+		return timeWindowInformationFile == null || timeWindowInformationFile.stream().anyMatch(
+                tw -> tw.getComponent() == name.getComponent() && tw.getGlobalCMTID().equals(name.getGlobalCMTID()) &&
+                        tw.getStation().getName().equals(name.getStationName()));
 	}
 
 	private void outputRaypath() throws IOException {

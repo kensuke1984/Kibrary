@@ -617,7 +617,7 @@ public enum SACHeaderEnum {
         return type;
     }
 
-    private SACHeaderEnum(int n) {
+    SACHeaderEnum(int n) {
         type = n;
     }
 

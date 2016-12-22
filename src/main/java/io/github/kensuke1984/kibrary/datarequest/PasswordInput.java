@@ -114,7 +114,7 @@ class PasswordInput extends JPanel implements ActionListener {
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         // Create and set up the content pane.
-        final PasswordInput newContentPane = new PasswordInput(frame);
+        PasswordInput newContentPane = new PasswordInput(frame);
         newContentPane.setOpaque(true); // content panes must be opaque
         frame.setContentPane(newContentPane);
 
