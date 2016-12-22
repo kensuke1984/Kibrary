@@ -64,6 +64,8 @@ public class TimewindowMaker implements Operation {
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
+			pw.println("##boolean majorArc (false). Use major arc phases?");
+			pw.println("#majorArc");
 			pw.println("##TauPPhases exPhases ()");
 			pw.println("#exPhases");
 			pw.println("##TauPPhases usePhases (S)");
@@ -89,6 +91,8 @@ public class TimewindowMaker implements Operation {
 			property.setProperty("exPhases", "");
 		if (!property.containsKey("usePhases"))
 			property.setProperty("usePhases", "S");
+		if (!property.containsKey("majorArc"));
+			property.setProperty("majorArc", "false");
 	}
 
 	private Path workPath;
@@ -107,10 +111,10 @@ public class TimewindowMaker implements Operation {
 				.collect(Collectors.toSet());
 		usePhases = phaseSet(property.getProperty("usePhases"));
 		exPhases = phaseSet(property.getProperty("exPhases"));
-
+		majorArc = Boolean.parseBoolean(property.getProperty("majorArc"));
+		
 		frontShift = Double.parseDouble(property.getProperty("frontShift"));
 		rearShift = Double.parseDouble(property.getProperty("rearShift"));
-
 	}
 
 	private static Set<Phase> phaseSet(String arg) {
@@ -140,7 +144,9 @@ public class TimewindowMaker implements Operation {
 	 * 省きたいフェーズ
 	 */
 	private Set<Phase> exPhases;
-
+	
+	private boolean majorArc;
+	
 	/**
 	 * 使いたいフェーズ
 	 */
@@ -214,6 +220,10 @@ public class TimewindowMaker implements Operation {
 			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
 			
 			usePhases.forEach(phase -> phase.getDistance());
+			
+			if (!majorArc) {
+				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+			}
 			
 			Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
 					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);

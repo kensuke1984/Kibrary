@@ -81,5 +81,7 @@ public interface DSMOutput {
 	 * @return SpcFileType of this
 	 */
 	SpcFileType getSpcFileType();
+	
+	SpcFileName getSpcFileName();
 
 }

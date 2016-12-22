@@ -31,7 +31,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		Matrix a2 = new Matrix(4, 3);
 		a2.setColumn(0, new double[] {1, 0, 4, 4});
 		a2.setColumn(1, new double[] {1, 0, 2, -2});
-		a2.setColumn(2, new double[] {-0.1, -0.1, -0.1, -0.1});
+		a2.setColumn(2, new double[] {1, 1, 1, 1});
 		RealVector d2 = new ArrayRealVector(new double[] {2.7, 0.1, 8.1, -0.3});
 		
 		NonNegativeLeastSquaresMethod nnls1 = new NonNegativeLeastSquaresMethod(a1, d1);
@@ -40,13 +40,14 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		NonNegativeLeastSquaresMethod nnls2 = new NonNegativeLeastSquaresMethod(a2, d2);
 		nnls2.compute();
 		
+		
 		double[] coeff1 = new double[] {1, 2, 3};
 		double[] coeff2 = new double[] {1, 2, -0.1};
 		for (int i = 0; i < 3; i++)
-			System.out.println(nnls1.getAnsVector().getEntry(i) + " " + coeff1[i]);
+			System.out.printf("%.3f %.3f\n",nnls1.getAnsVector().getEntry(i), coeff1[i]);
 		System.out.println();
 		for (int i = 0; i < 3; i++)
-			System.out.println(nnls2.getAnsVector().getEntry(i) + " " + coeff2[i]);
+			System.out.printf("%.3f %.3f\n", nnls2.getAnsVector().getEntry(i), coeff2[i]);
 	}
 	
 	/**
@@ -59,7 +60,23 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 	
 	private RealMatrix a;
 	
-	private RealVector answer;
+	private RealVector x;
+	
+	private final int MAX_ITERATION;
+	
+	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d, int MAX_ITERATION) {
+		this.d = d;
+		this.a = a;
+		this.ata = a.computeAtA();
+		this.atd = a.transpose().operate(d);
+		F = new HashSet<>();
+		L = new HashSet<>();
+		this.x = new ArrayRealVector(a.getColumnDimension());
+		this.MAX_ITERATION = MAX_ITERATION;
+		//initialization
+		x.set(0);
+		L = IntStream.range(0, atd.getDimension()).boxed().collect(Collectors.toSet());
+	}
 	
 	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d) {
 		this.d = d;
@@ -68,7 +85,32 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		this.atd = a.transpose().operate(d);
 		F = new HashSet<>();
 		L = new HashSet<>();
-		this.answer = new ArrayRealVector(a.getColumnDimension());
+		this.x = new ArrayRealVector(a.getColumnDimension());
+		x.set(0);
+		this.MAX_ITERATION = 50000;
+		//initialization
+		x.set(0);
+		L = IntStream.range(0, atd.getDimension()).boxed().collect(Collectors.toSet());
+	}
+	
+	public NonNegativeLeastSquaresMethod(Matrix a, RealVector d, RealVector x) {
+		this.d = d;
+		this.a = a;
+		this.ata = a.computeAtA();
+		this.atd = a.transpose().operate(d);
+		F = new HashSet<>();
+		L = new HashSet<>();
+		this.MAX_ITERATION = 50000;
+		// initialization
+		this.x = x;
+		for (int i = 0; i < x.getDimension(); i++) {
+			if (x.getEntry(i) <= 0) {
+				L.add(i);
+				x.setEntry(i, 0.);
+			}
+			else
+				F.add(i);
+		}
 	}
 	
 	@Override
@@ -83,15 +125,13 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 		Set<Integer> fullSet = IntStream.range(0, n).boxed().collect(Collectors.toSet());
 		Integer t = 0;
 		
-		// initialize
-		RealVector x = new ArrayRealVector(n);
-		x.set(0);
-		L = IntStream.range(0, n).boxed().collect(Collectors.toSet());
+		int nIteration = 0;
 		
 		// step 2
-		w = atd.subtract(ata.operate(x));
-		while ( !KuhnTuckerConvergenceTest(w, fullSet) ) {    // step 3
-			
+		
+		
+		do  {    // step 3
+			w = atd.subtract(ata.operate(x));
 			//step 4
 			t = 0;
 			double valueAtt = Double.MIN_VALUE;
@@ -108,9 +148,9 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 			
 			// step 6
 			boolean goToStep6 = true;
-			while (goToStep6) {
+			while (goToStep6 && nIteration < MAX_ITERATION) {
 				List<Integer> jPrimeToj = new ArrayList<>();
-				for (Integer j :  fullSet) {
+				for (Integer j : fullSet) {
 					if (F.contains(j)) {
 						jPrimeToj.add(j);
 					}
@@ -133,6 +173,9 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 				ConjugateGradientMethod cgMethod = new ConjugateGradientMethod(aPrime.computeAtA(), aPrime.transpose().operate(bPrime));
 				cgMethod.compute();
 				RealVector z = cgMethod.getAns(jPrimeToj.size());
+				System.out.println("Z length " + z.getDimension());
+				for (double zi : z.toArray())
+					System.out.println(zi);
 				
 				// step 7
 				Set<Integer> J = new HashSet<>();
@@ -149,8 +192,9 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 					// step 2
 					for (int i = 0; i < z.getDimension(); i++)
 						x.setEntry(jPrimeToj.get(i), z.getEntry(i));
-					w = atd.subtract(ata.operate(x));
+//					w = atd.subtract(ata.operate(x));
 					goToStep6 = false;
+					nIteration++;
 				}
 				else {
 					// step 8
@@ -180,15 +224,14 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 							F.remove(i);
 						}
 					}
+					nIteration++;
 				}
 			} // end of step 6 while loop
-		} // end of step 2 while loop
-		
-		answer = x.copy();
+		} while ( !KuhnTuckerConvergenceTest(w, fullSet) && nIteration < MAX_ITERATION ); // end of step 2 while loop
 	}
 	
 	public RealVector getAnsVector() {
-		return answer;
+		return x;
 	}
 	
 	private boolean KuhnTuckerConvergenceTest(RealVector w, Set<Integer> fullSet) {
@@ -198,6 +241,7 @@ public class NonNegativeLeastSquaresMethod extends InverseProblem {
 				conditionOnW = false;
 				break;
 			}
+		System.out.println(conditionOnW + "," + F.equals(fullSet));
 		return conditionOnW || F.equals(fullSet);
 	}
 	

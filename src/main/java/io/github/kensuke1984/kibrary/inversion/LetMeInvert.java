@@ -18,15 +18,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -82,9 +85,11 @@ public class LetMeInvert implements Operation {
 	 */
 	protected Set<InverseMethodEnum> inverseMethods;
 	
-	protected int weighting;
+	protected WeightingType weightingType;
 	
 	protected boolean time_source, time_receiver;
+	
+	protected double gamma;
 
 	private ObservationEquation eq;
 
@@ -104,7 +109,7 @@ public class LetMeInvert implements Operation {
 		if (!property.containsKey("inverseMethods"))
 			property.setProperty("inverseMethods", "CG SVD");
 		if (!property.containsKey("weighting"))
-			property.setProperty("weighting", "1");
+			property.setProperty("weighting", "TAKEUCHIKOBAYASHI");
 		if (!property.containsKey("time_source"))
 			property.setProperty("time_source", "false");
 		if (!property.containsKey("time_receiver"))
@@ -131,9 +136,14 @@ public class LetMeInvert implements Operation {
 					.toArray();
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
 				.collect(Collectors.toSet());
-		weighting = Integer.parseInt(property.getProperty("weighting"));
+		weightingType = WeightingType.valueOf(property.getProperty("weighting"));
 		time_source = Boolean.parseBoolean(property.getProperty("time_source"));
 		time_receiver = Boolean.parseBoolean(property.getProperty("time_receiver"));
+		if (weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI)) {
+			if (!property.containsKey("gamma"))
+				throw new RuntimeException("gamma must be set in oreder to use TAKEUCHIKOBAYASHI weighting scheme");
+			gamma = Double.parseDouble(property.getProperty("gamma"));
+		}
 	}
 
 	/**
@@ -168,8 +178,10 @@ public class LetMeInvert implements Operation {
 			pw.println("#alpha");
 			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
-			pw.println("##int weighting (1); 1: upperLowerMantle, 2: identity 3: reciprocal");
-			pw.println("#weighting 1");
+			pw.println("##int weighting (1); LOWERUPPERMANTLE, TAKEUCHIKOBAYASHI, RECIPROCAL");
+			pw.println("#weighting TAKEUCHIKOBAYASHI");
+			pw.println("##double gamma. Must be set only if TAKEUCHIKOBAYASHI weigthing is used");
+			pw.println("#gamma 0.1");
 			pw.println("##boolean time_source (false). Time partial for the source");
 			pw.println("time_source false");
 			pw.println("##boolean time_receiver (false). Time partial for the receiver");
@@ -203,37 +215,45 @@ public class LetMeInvert implements Operation {
 		
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
 		
+		// set unknown parameter
+				System.err.println("setting up unknown parameter set");
+				List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
+		
+		Predicate<BasicID> chooser = new Predicate<BasicID>() {
+			public boolean test(BasicID id) {
+//				return id.getStartTime() < 4000.;
+				return true;
+			}
+		};
+		
 		// set Dvector
 		System.err.println("Creating D vector");
-		System.err.println("Going with weghting " + weighting);
-		Dvector dVector;
-		switch (weighting) {
-		case 1:
+		System.err.println("Going with weghting " + weightingType);
+		Dvector dVector =  null;
+		boolean atLeastThreeRecordsPerStation = time_receiver || time_source;
+		switch (weightingType) {
+		case LOWERUPPERMANTLE:
 			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
-			dVector = new Dvector(ids, id -> {
-//				if (id.getGlobalCMTID().getEvent().getCmt().getMw() >= 6.5)
-//					return true;
-//				return false;
-				return true;
-			}, lowerUpperMantleWeighting);
+			dVector = new Dvector(ids, chooser, weightingType, lowerUpperMantleWeighting, atLeastThreeRecordsPerStation);
 			break;
-		case 2:
-			ToDoubleBiFunction<BasicID, BasicID> weightingFunction = (obs, syn) -> {return 1.;};
-			dVector = new Dvector(ids, id -> true, weightingFunction);
+		case RECIPROCAL:
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
 			break;
-		case 3:
-			dVector = new Dvector(ids);
+		case TAKEUCHIKOBAYASHI:
+			dVector = new Dvector(ids, id -> true, WeightingType.IDENTITY, atLeastThreeRecordsPerStation);
+//			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
+			List<UnknownParameter> parameterForStructure = parameterList.stream()
+					.filter(unknonw -> !unknonw.getPartialType().isTimePartial())
+					.collect(Collectors.toList());
+//			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
+			double[] weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
+			dVector = new Dvector(ids, id -> true, weightingType, weighting, atLeastThreeRecordsPerStation);
 			break;
 		default:
-			throw new RuntimeException("Error: Weighting should be 1, 2, or 3");
+			throw new RuntimeException("Error: Weighting should be LOWERUPPERMANTLE, RECIPROCAL, or TAKEUCHIKOBAYASHI");
 		}
 		
-		// set unknown parameter
-		System.err.println("setting up unknown parameter set");
-		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
-
 		eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver);
-		System.out.println(parameterList.size());
 	}
 
 	/**
@@ -252,6 +272,8 @@ public class LetMeInvert implements Operation {
 			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			eq.outputA(outPath.resolve("partial"));
+			eq.outputSensitivity(outPath.resolve("sensitivity.inf"));
+			dVector.outWeighting(outPath.resolve("weighting.inf"));
 			return null;
 		};
 		FutureTask<Void> future = new FutureTask<>(output);
@@ -408,16 +430,16 @@ public class LetMeInvert implements Operation {
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
 							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
 				}
+				double maxObs = obsVec[i].getLInfNorm();
 				double obsStart = obsIDs[i].getStartTime();
 				double synStart = synIDs[i].getStartTime();
 				double samplingHz = obsIDs[i].getSamplingHz();
 				pwTrace.println("#obstime syntime obs syn");
 				for (int j = 0; j < obsIDs[i].getNpts(); j++)
 					pwTrace.println((obsStart + j / samplingHz) + " " + (synStart + j / samplingHz) + " "
-							+ obsVec[i].getEntry(j) + " " + synVec[i].getEntry(j));
+							+ obsVec[i].getEntry(j) / maxObs + " " + synVec[i].getEntry(j) / maxObs);
 			}
 		}
-
 	}
 
 	/**

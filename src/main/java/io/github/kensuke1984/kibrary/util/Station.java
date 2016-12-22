@@ -178,6 +178,12 @@ public class Station implements Comparable<Station> {
 		this.network = network;
 		this.position = position;
 	}
+	
+	public Station(Station station) {
+		this.stationName = station.stationName;
+		this.network = station.network;
+		this.position = station.position;
+	}
 
 	/**
 	 * Creates station from the input bytes.

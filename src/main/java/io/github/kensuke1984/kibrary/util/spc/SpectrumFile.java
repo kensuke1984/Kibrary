@@ -79,7 +79,7 @@ class SpectrumFile implements DSMOutput {
 
 	private int nbody;
 
-	SpcFileName getSpcFileName() {
+	public SpcFileName getSpcFileName() {
 		return spcFileName;
 	}
 
@@ -127,8 +127,6 @@ class SpectrumFile implements DSMOutput {
 			SpectrumFile specFile = new SpectrumFile(spcFileName);
 			specFile.sourceID = spcFileName.getSourceID();
 			specFile.observerID = spcFileName.getObserverID();
-			specFile.observerName = spcFileName.getObserverName();
-			specFile.observerNetwork = spcFileName.getObserverNetwork();
 			// read header PF
 			// tlen
 			double tlen = dis.readDouble();
@@ -158,6 +156,13 @@ class SpectrumFile implements DSMOutput {
 			default:
 				throw new RuntimeException("component can be only 3(synthetic), 9(fp) or 27(bp) right now");
 			}
+			
+			specFile.observerName = spcFileName.getObserverName();
+			if (specFile.spcFileType.equals(SpcFileType.PB) || specFile.spcFileType.equals(SpcFileType.PF))
+				specFile.observerNetwork = null;
+			else
+				specFile.observerNetwork = spcFileName.getObserverNetwork();
+			
 //			 System.out.println(nbody);
 			specFile.nbody = nbody;
 			specFile.np = np;

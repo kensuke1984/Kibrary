@@ -5,8 +5,11 @@ import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -267,6 +270,20 @@ public class ObservationEquation {
 
 		});
 
+	}
+	
+	void outputSensitivity(Path outPath) throws IOException {
+		if (a == null) {
+			System.out.println("no more A");
+			return;
+		}
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+			Map<UnknownParameter, Double> sMap = Sensitivity.sensitivityMap(ata, parameterList);
+			for (UnknownParameter unknown : parameterList)
+				pw.println((Double) unknown.getLocation() + " " + sMap.get(unknown));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**

@@ -86,6 +86,7 @@ public class ThreeDPartialMaker {
 	 * @return {@link PartialSpectrumFile}
 	 */
 	public DSMOutput toSpectrum(PartialType type) {
+		SpcFileName spcFileName = bp.getSpcFileName();
 		double tlen = bp.tlen();
 		int np = bp.np();
 		int nbody = bp.nbody();
@@ -181,6 +182,11 @@ public class ThreeDPartialMaker {
 			@Override
 			public double[] getBodyR() {
 				return bodyR;
+			}
+			
+			@Override
+			public SpcFileName getSpcFileName() {
+				return spcFileName;
 			}
 		};
 	}
@@ -440,12 +446,7 @@ public class ThreeDPartialMaker {
 					"Perturbation points are different fp, bp: " + fp.getObserverName() + " ," + bp.getObserverName());
 			validity = false;
 		}
-		if (!(fp.getObserverNetwork().equals(bp.getObserverNetwork()))) {
-			System.err.println(
-					"Perturbation points are different fp, bp: " + fp.getObserverNetwork() + " ," + bp.getObserverNetwork());
-			validity = false;
-		}
-		
+		// FP and BP have no observation network, thus we do no check it
 
 		// 場所
 		if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {

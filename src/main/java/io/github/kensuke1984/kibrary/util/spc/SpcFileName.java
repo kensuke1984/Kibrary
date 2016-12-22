@@ -176,9 +176,12 @@ public class SpcFileName extends File {
 			throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
 		sourceID = getEventID(fileName);
 		observerID = getObserverID(fileName);
-		observerName = getObserverName(fileName);
-		observerNetwork = getObserverNetwork(fileName);
 		fileType = getFileType(fileName);
+		observerName = getObserverName(fileName);
+		if (fileType.equals(SpcFileType.PB) || fileType.equals(SpcFileType.PF))
+			observerNetwork = null;
+		else
+			observerNetwork = getObserverNetwork(fileName);
 		mode = getMode(fileName);
 		x = getX(fileName);
 		y = getY(fileName);
@@ -226,16 +229,22 @@ public class SpcFileName extends File {
 			return false;
 		}
 
-//		if (8 < getObserverID(name).length()) {
-//			System.err.println("Name of station cannot be over 8 characters.");
-//			return false;
-//		}
-		if (8 < getObserverName(name).length()) {
-			System.err.println(getObserverName(name) + "Name of station cannot be over 8 characters");
+		if (parts.length == 3) {
+			// synthetics have both station name and network name
+			if (8 < getObserverName(name).length()) {
+				System.err.println(getObserverName(name) + "Name of station cannot be over 8 characters");
+			}
+			if (8 < getObserverNetwork(name).length()) {
+				System.err.println(getObserverNetwork(name) + "Name of network cannot be over 8 characters");
+			}
 		}
-		if (8 < getObserverNetwork(name).length()) {
-			System.err.println(getObserverNetwork(name) + "Name of network cannot be over 8 characters");
+		else {
+			// bp and fp waveforms have only a station name
+			if (8 < getObserverName(name).length()) {
+				System.err.println(getObserverName(name) + "Name of station cannot be over 8 characters");
+			}
 		}
+		
 
 		return true;
 	}
@@ -253,11 +262,16 @@ public class SpcFileName extends File {
 	}
 	
 	public String getObserverNetwork() {
+		if (fileType.equals(SpcFileType.PB) || fileType.equals(SpcFileType.PF))
+			throw new RuntimeException("PB and PF waveforms have no network");
 		return observerNetwork;
 	}
 
 	public String getObserverString() {
-		return observerName + "_" + observerNetwork;
+		if (fileType.equals(SpcFileType.PB) || fileType.equals(SpcFileType.PF))
+			return observerName;
+		else
+			return observerName + "_" + observerNetwork;
 	}
 	
 	public String getX() {

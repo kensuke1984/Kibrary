@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -99,7 +100,7 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("#finalSamplingHz");
 			pw.println("##radius for perturbation points, must be set");
 			pw.println("#bodyR 3505 3555 3605");
-			pw.println("##path of the time partials directory, must be set if PartialType containes TIME");
+			pw.println("##path of the time partials directory, must be set if PartialType containes TIME_SOURCE or TIME_RECEIVER");
 			pw.println("#timePartialPath");
 		}
 		System.err.println(outPath + " is created.");
@@ -166,7 +167,7 @@ public class Partial1DDatasetMaker implements Operation {
 		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
 				.collect(Collectors.toSet());
 		
-		if (partialTypes.contains(PartialType.TIME_RECEIVER) && partialTypes.contains(PartialType.TIME_SOURCE)) {
+		if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
 				timePartialPath = Paths.get(property.getProperty("timePartialPath"));
 				if (!Files.exists(timePartialPath))
 					throw new RuntimeException("The timePartialPath: " + timePartialPath + " does not exist");
@@ -281,9 +282,9 @@ public class Partial1DDatasetMaker implements Operation {
 				return;
 			}
 
-			Set<SpcFileName> spcFileNameSet;
+			List<SpcFileName> spcFileNames;
 			try {
-				spcFileNameSet = Utilities.collectSpcFileName(spcFolder);
+				spcFileNames = Utilities.collectSpcFileName(spcFolder);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 				return;
@@ -298,7 +299,7 @@ public class Partial1DDatasetMaker implements Operation {
 					.collect(Collectors.toSet());
 			
 			// すべてのspcファイルに対しての処理
-			for (SpcFileName spcFileName : spcFileNameSet) {
+			for (SpcFileName spcFileName : spcFileNames) {
 				// 理論波形（非偏微分係数波形）ならスキップ
 				if (spcFileName.isSynthetic())
 					continue;
@@ -764,7 +765,6 @@ public class Partial1DDatasetMaker implements Operation {
 		Set<EventFolder> timePartialEventDirs = new HashSet<>();
 		if (timePartialPath != null)
 			timePartialEventDirs = Utilities.eventFolderSet(timePartialPath);
-		timePartialEventDirs.forEach(event -> System.out.println(event.toString()));
 
 		// create ThreadPool
 		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);

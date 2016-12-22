@@ -6,10 +6,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.rmi.UnexpectedException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -19,6 +24,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
+import org.jsoup.select.Collector;
+
+import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -29,11 +37,15 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
@@ -125,7 +137,11 @@ public class PartialDatasetMaker implements Operation {
 	private double maxFreq;
 
 	private Properties property;
+	
 	private Path workPath;
+	
+	private Path timePartialPath;
+	
 	/**
 	 * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
 	 */
@@ -172,6 +188,7 @@ public class PartialDatasetMaker implements Operation {
 		private DSMOutput fp;
 		private Station station;
 		private GlobalCMTID id;
+		private TimewindowInformation timewindow;
 
 		/**
 		 * @param fp
@@ -182,6 +199,17 @@ public class PartialDatasetMaker implements Operation {
 			this.station = station;
 			fpname = fpFile;
 			id = new GlobalCMTID(fpname.getSourceID());
+		}
+		
+		private PartialComputation(DSMOutput bp, Station station, DSMOutput fp, TimewindowInformation timewindow) {
+			this.bp = bp;
+			this.station = station;
+			fpname = null;
+			this.fp = fp;
+			id = new GlobalCMTID(fp.getSourceID());
+			this.timewindow = timewindow;
+			if (!timewindow.getStation().equals(station) || !timewindow.getGlobalCMTID().equals(id))
+				throw new RuntimeException("fp/bp files GCMTID or station does not match those of the timewindow");
 		}
 
 		/**
@@ -221,32 +249,34 @@ public class PartialDatasetMaker implements Operation {
 
 		@Override
 		public void run() {
-			String stationName = bp.getSourceID();
+//			String stationString = bp.getSourceID();
 			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
 				throw new RuntimeException("There may be a station with the same name but other networks.");
 
 			if (bp.tlen() != tlen || bp.np() != np)
 				throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
-			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
+//			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
 
-			touchedSet.add(id);
+//			touchedSet.add(id);
 
 			// Pickup timewindows
-			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
-					.filter(info -> info.getStation().getStationName().equals(stationName))
-					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
-
-			// timewindow情報のないときスキップ
-			if (timewindowList.isEmpty())
-				return;
+//			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
+//					.filter(info -> info.getStation().toString().equals(stationString))
+//					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
+//
+//			// timewindow情報のないときスキップ
+//			if (timewindowList.isEmpty()) {
+//				System.err.println("empty timewindows for " + stationString + " " + id);
+//				return;
+//			}
 
 			// System.out.println("I am " + Thread.currentThread().getName());
-			try {
-				fp = fpname.read();
-			} catch (Exception e) {
-				e.printStackTrace();
-				return;
-			}
+//			try {
+//				fp = fpname.read();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//				return;
+//			}
 
 			ThreeDPartialMaker threedPartialMaker = new ThreeDPartialMaker(fp, bp);
 			threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
@@ -254,34 +284,182 @@ public class PartialDatasetMaker implements Operation {
 				threedPartialMaker.setStructure(structure);
 
 			// i番目の深さの偏微分波形を作る
+			Set<PartialType> partialTypeForStructure = partialTypes.stream().filter(type -> !type.isTimePartial())
+					.collect(Collectors.toSet());
 			for (int ibody = 0, nbody = fp.nbody(); ibody < nbody; ibody++) {
 				// とりあえずtransverse（２）成分についての名前
 				Location location = fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
-				for (PartialType type : partialTypes)
+				for (PartialType type : partialTypeForStructure) {
 					for (SACComponent component : components) {
-						if (!timewindowList.stream().anyMatch(info -> info.getComponent() == component))
+//						if (!timewindowList.stream().anyMatch(info -> info.getComponent() == component))
+//							continue;
+						if (!timewindow.getComponent().equals(component))
 							continue;
 						double[] partial = threedPartialMaker.createPartial(component, ibody, type);
-						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
-							Complex[] u = cutPartial(partial, info);
+//						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
+						Complex[] u = cutPartial(partial, timewindow);
 
-							u = filter.applyFilter(u);
-							double[] cutU = sampleOutput(u, info);
+						u = filter.applyFilter(u);
+						double[] cutU = sampleOutput(u, timewindow);
 
-							PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
-									cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0
-									, location, type, cutU);
-							try {
-								partialDataWriter.addPartialID(pid);
-								System.out.print(".");
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						});
+						PartialID pid = new PartialID(station, id, component, finalSamplingHz, timewindow.getStartTime(),
+								cutU.length, 1 / maxFreq, 1 / minFreq, timewindow.getPhases(), 0, sourceTimeFunction != 0
+								, location, type, cutU);
+						try {
+							partialDataWriter.addPartialID(pid);
+							System.out.print(".");
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+//						});
 					}
-
+				}
 			}
 		}
+	}
+	
+private class WorkerTimePartial implements Runnable {
+		
+		private EventFolder eventDir;
+		private GlobalCMTID id;
+		
+		@Override
+		public void run() {
+			try {
+				writeLog("Running on " + id);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			Path timePartialFolder = eventDir.toPath();
+
+			if (!Files.exists(timePartialFolder)) {
+				throw new RuntimeException(timePartialFolder + " does not exist...");
+			}
+			
+			Set<SACFileName> sacnameSet;
+			try {
+				sacnameSet = eventDir.sacFileSet()
+						.stream()
+						.filter(sacname -> sacname.isTemporalPartial())
+						.collect(Collectors.toSet());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+				return;
+			}
+			
+//			System.out.println(sacnameSet.size());
+//			sacnameSet.forEach(name -> System.out.println(name));
+			
+			Set<TimewindowInformation> timewindowCurrentEvent = timewindowInformation
+					.stream()
+					.filter(tw -> tw.getGlobalCMTID().equals(id))
+					.collect(Collectors.toSet());
+			
+			// すべてのsacファイルに対しての処理
+			for (SACFileName sacname : sacnameSet) {
+				try {
+					addTemporalPartial(sacname, timewindowCurrentEvent);
+				} catch (ClassCastException e) {
+					// 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
+					System.err.println(sacname + "is not 1D partial.");
+					continue;
+				} catch (Exception e) {
+					System.err.println(sacname + " is invalid.");
+					e.printStackTrace();
+					try {
+						writeLog(sacname + " is invalid.");
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					continue;
+				}
+			}
+			System.out.print(".");
+//			
+		}
+		
+		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+					.filter(info -> info.getStation().getStationName().equals(sacname.getStationName()))
+					.collect(Collectors.toSet());
+			if (tmpTws.size() == 0) {
+				return;
+			}
+			
+			System.out.println(sacname + " (time partials)");
+			
+			SACData sacdata = sacname.read();
+			Station station = sacdata.getStation();
+			
+			for (SACComponent component : components) {
+				Set<TimewindowInformation> tw = tmpTws.stream()
+						.filter(info -> info.getStation().equals(station))
+						.filter(info -> info.getGlobalCMTID().equals(id))
+						.filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
+
+				if (tw.isEmpty()) {
+					tmpTws.forEach(window -> {
+						System.out.println(window);
+						System.out.println(window.getStation().getPosition());
+					});
+					System.err.println(station.getPosition());
+					System.err.println("Ignoring empty timewindow " + sacname + " " + station);
+					continue;
+				}
+				
+				for (TimewindowInformation t : tw) {
+					double[] filteredUt = sacdata.createTrace().getY();
+					cutAndWrite(station, filteredUt, t);
+				}
+			}
+		}
+		
+		/**
+		 * @param u
+		 *            partial waveform
+		 * @param timewindowInformation
+		 *            cut information
+		 * @return u cut by considering sampling Hz
+		 */
+		private double[] sampleOutput(double[] u, TimewindowInformation timewindowInformation) {
+			int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
+			// 書きだすための波形
+			int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime())
+					* finalSamplingHz);
+			double[] sampleU = new double[outnpts];
+			// cutting a waveform for outputting
+			Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
+
+			return sampleU;
+		}
+		
+		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t) {
+
+			double[] cutU = sampleOutput(filteredUt, t);
+			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
+			
+			if (sourceTimeFunction == -1)
+				System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
+			
+			PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
+					cutU);
+			PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
+					cutU);
+			
+			try {
+				partialDataWriter.addPartialID(PIDReceiverSide);
+				partialDataWriter.addPartialID(PIDSourceSide);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		private WorkerTimePartial(EventFolder eventDir) {
+			this.eventDir = eventDir;
+			id = eventDir.getGlobalCMTID();
+		};
 	}
 
 	private ButterworthFilter filter;
@@ -327,9 +505,9 @@ public class PartialDatasetMaker implements Operation {
 			pw.println("##PartialType[] compute types (MU)");
 			pw.println("#partialTypes");
 			pw.println("##double time length DSM parameter tlen, must be set");
-			pw.println("#tlen 3276.8");
+			pw.println("#tlen 6553.6");
 			pw.println("##int step of frequency domain DSM parameter np, must be set");
-			pw.println("#np 512");
+			pw.println("#np 1024");
 			pw.println("##double minimum value of passband (0.005)");
 			pw.println("#minFreq");
 			pw.println("##double maximum value of passband (0.08)");
@@ -342,6 +520,8 @@ public class PartialDatasetMaker implements Operation {
 			pw.println("#perturbationPath perturbationPoint.inf");
 			pw.println("##File for Qstructure (if no file, then PREM)");
 			pw.println("#qinf");
+			pw.println("##path of the time partials directory, must be set if PartialType containes TIME_SOURCE or TIME_RECEIVER");
+			pw.println("#timePartialPath");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -371,6 +551,7 @@ public class PartialDatasetMaker implements Operation {
 			property.setProperty("partialSamplingHz", "20");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
+		
 	}
 
 	/**
@@ -401,6 +582,13 @@ public class PartialDatasetMaker implements Operation {
 
 		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
 				.collect(Collectors.toSet());
+		
+		if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
+			timePartialPath = Paths.get(property.getProperty("timePartialPath"));
+			if (!Files.exists(timePartialPath))
+				throw new RuntimeException("The timePartialPath: " + timePartialPath + " does not exist");
+		}
+		
 		tlen = Double.parseDouble(property.getProperty("tlen"));
 		np = Integer.parseInt(property.getProperty("np"));
 		minFreq = Double.parseDouble(property.getProperty("minFreq"));
@@ -449,6 +637,13 @@ public class PartialDatasetMaker implements Operation {
 							Double.parseDouble(parts[2])))
 					.collect(Collectors.toSet());
 		}
+		if (timePartialPath != null) {
+			if (stationSet.isEmpty() || idSet.isEmpty())
+				throw new RuntimeException("stationSet and idSet must be set before perturbationLocation");
+			stationSet.forEach(station -> perturbationLocationSet.add(new Location(station.getPosition().getLatitude(),
+					station.getPosition().getLongitude(), Earth.EARTH_RADIUS)));
+			idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
+		}
 	}
 
 	private String dateString;
@@ -459,7 +654,29 @@ public class PartialDatasetMaker implements Operation {
 
 	private long startTime = System.nanoTime();
 	private long endTime;
-
+	
+	/*
+	 * sort timewindows comparing stations
+	 */
+	private List<TimewindowInformation> sortTimewindows() {
+		List<TimewindowInformation> timewindows = timewindowInformation.stream().collect(Collectors.toList());
+		
+		Comparator<TimewindowInformation> comparator = new Comparator<TimewindowInformation>() {
+			@Override
+			public int compare(TimewindowInformation o1, TimewindowInformation o2) {
+				int res = o1.getStation().compareTo(o2.getStation());
+				if (res != 0)
+					return res;
+				else {
+					return o1.getGlobalCMTID().compareTo(o2.getGlobalCMTID());
+				}
+			}
+		};
+		timewindows.sort(comparator);
+		
+		return timewindows;
+	}
+	
 	@Override
 	public void run() throws IOException {
 		setLog();
@@ -479,62 +696,153 @@ public class PartialDatasetMaker implements Operation {
 		setOutput();
 		int bpnum = 0;
 		setSourceTimeFunctions();
-		// bpフォルダごとにスタート
-		for (Station station : stationSet) {
-			Path bp0000Path = bpPath.resolve("0000" + station.getStationName());
-			Path bpModelPath = bp0000Path.resolve(modelName);
-
-			// Set of global cmt IDs for the station in the timewindow.
-			Set<GlobalCMTID> idSet = timewindowInformation.stream()
-					.filter(info -> components.contains(info.getComponent()))
-					.filter(info -> info.getStation().equals(station)).map(info -> info.getGlobalCMTID())
-					.collect(Collectors.toSet());
-
-			if (idSet.isEmpty())
-				continue;
-
-			// bpModelFolder内 spectorfile
-			Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
-			System.out.println(bpFiles.size() + " bpfiles are found");
-
-			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
-			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id.toString() + "/" + modelName))
-					.filter(Files::exists).toArray(Path[]::new);
-
-			int donebp = 0;
-			// bpフォルダ内の各bpファイルに対して
-			for (SpcFileName bpname : bpFiles) {
-				// create ThreadPool
-				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
-				// 摂動点の名前
-				DSMOutput bp = bpname.read();
-				String pointName = bp.getObserverName() + "_" + bp.getObserverNetwork();
-
-				// timewindowの存在するfpdirに対して
-				// ｂｐファイルに対する全てのfpファイルを
-				for (Path fpEventPath : fpEventPaths) {
-					String eventName = fpEventPath.getParent().getFileName().toString();
-					SpcFileName fpfile = new SpcFileName(
-							fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-					if (!fpfile.exists())
-						continue;
-					PartialComputation pc = new PartialComputation(bp, station, fpfile);
-					execs.execute(pc);
-				}
-				execs.shutdown();
-				while (!execs.isTerminated()) {
-					try {
-						Thread.sleep(100);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				partialDataWriter.flush();
-				System.out.println();
+		
+		// time partials for each event
+		if (timePartialPath != null) {
+			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+			Set<EventFolder> timePartialEventDirs = Utilities.eventFolderSet(timePartialPath);
+			for (EventFolder eventDir : timePartialEventDirs) {
+				execs.execute(new WorkerTimePartial(eventDir));
+				System.out.println("Working for time partials for " + eventDir);
 			}
-			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
+			execs.shutdown();
+			while (!execs.isTerminated()) {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			partialDataWriter.flush();
+			System.out.println();
 		}
+		
+		List<TimewindowInformation> sortedWindows = sortTimewindows();
+		
+		Station workingStation = null;
+		List<DSMOutput> bps = new ArrayList<>();
+		
+		for (GlobalCMTID id : idSet) {
+			List<DSMOutput> fps = new ArrayList<>();
+			Path fpEventPath = fpPath.resolve(id.toString() + "/" + modelName);
+			for (SpcFileName fpname : Utilities.collectSpcFileName(fpEventPath)) {
+				try {
+					fps.add(fpname.read());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			for (TimewindowInformation timewindow : sortedWindows) {
+				if (!timewindow.getGlobalCMTID().equals(id))
+					continue;
+				
+				Station station = timewindow.getStation();
+				
+				if (!station.equals(workingStation)) {
+					Path bp0000Path = bpPath.resolve("0000" + station);
+					Path bpModelPath = bp0000Path.resolve(modelName);
+					if (!bp0000Path.toFile().exists()) {
+						System.err.println(bp0000Path + "not found (skipping)");
+						continue;
+					}
+					bps = new ArrayList<>();
+					for (SpcFileName bpname : Utilities.collectSpcFileName(bpModelPath)) {
+						try {
+							bps.add(bpname.read());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					
+					workingStation = new Station(station);
+				}
+				
+				System.out.println(bps.size() + " bpfiles are found");
+				
+				int donebp = 0;
+				for (DSMOutput bp : bps) {
+					ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+					System.out.println("Working for " + "0000" + station + "." + bp.getObserverName() + " " + ++donebp + "/" + bps.size());
+					
+					String pointName = bp.getObserverName();
+					DSMOutput fp = fps.stream().filter(spc -> spc.getObserverName().equals(pointName)).findAny().get();
+						
+					PartialComputation pc = new PartialComputation(bp, station, fp, timewindow);
+					execs.execute(pc);
+					
+					execs.shutdown();
+					while (!execs.isTerminated()) {
+						try {
+							Thread.sleep(100);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+					partialDataWriter.flush();
+					System.out.println();
+				}
+				writeLog(+bpnum++ + "th " + "0000" + station + " was done ");
+			}
+		}
+		
+		// bpフォルダごとにスタート
+//		for (Station station : stationSet) {
+//			Path bp0000Path = bpPath.resolve("0000" + station);
+//			Path bpModelPath = bp0000Path.resolve(modelName);
+//
+//			// Set of global cmt IDs for the station in the timewindow.
+//			Set<GlobalCMTID> idSet = timewindowInformation.stream()
+//					.filter(info -> components.contains(info.getComponent()))
+//					.filter(info -> info.getStation().equals(station)).map(info -> info.getGlobalCMTID())
+//					.collect(Collectors.toSet());
+//
+//			if (idSet.isEmpty())
+//				continue;
+//
+//			// bpModelFolder内 spectorfile
+//			Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
+//			System.out.println(bpFiles.size() + " bpfiles are found");
+//
+//			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
+//			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id.toString() + "/" + modelName))
+//					.filter(Files::exists).toArray(Path[]::new);
+//
+//			int donebp = 0;
+//			// bpフォルダ内の各bpファイルに対して
+//			for (SpcFileName bpname : bpFiles) {
+//				// create ThreadPool
+//				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+//				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
+//				// 摂動点の名前
+//				DSMOutput bp = bpname.read();
+//				String pointName = bp.getObserverName();
+//
+//				// timewindowの存在するfpdirに対して
+//				// ｂｐファイルに対する全てのfpファイルを
+//				for (Path fpEventPath : fpEventPaths) {
+//					String eventName = fpEventPath.getParent().getFileName().toString();
+//					SpcFileName fpfile = new SpcFileName(
+//							fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
+//					if (!fpfile.exists())
+//						continue;
+//					PartialComputation pc = new PartialComputation(bp, station, fpfile);
+//					execs.execute(pc);
+//				}
+//				execs.shutdown();
+//				while (!execs.isTerminated()) {
+//					try {
+//						Thread.sleep(100);
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
+//				}
+//				partialDataWriter.flush();
+//				System.out.println();
+//			}
+//			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
+//		}
+		
 		terminate();
 	}
 
@@ -630,8 +938,28 @@ public class PartialDatasetMaker implements Operation {
 				.distinct().toArray(Phase[]::new);
 
 		// TODO
-		if (stationSet.size() != stationSet.stream().map(Station::getStationName).distinct().count())
-			throw new RuntimeException("Station duplication...");
+		if (stationSet.size() != stationSet.stream().map(Station::toString).distinct().count()) {
+			System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
+			Map<String, List<Station>> nameToStation = new HashMap<>();
+			stationSet.forEach(sta -> {
+				if (nameToStation.containsKey(sta.toString())) {
+					List<Station> tmp = nameToStation.get(sta.toString());
+					tmp.add(sta);
+					nameToStation.put(sta.toString(), tmp);
+				}
+				else {
+					List<Station> tmp = new ArrayList<>();
+					tmp.add(sta);
+					nameToStation.put(sta.toString(), tmp);
+				}
+			});
+			nameToStation.forEach((name, sta) -> {
+				if (sta.size() > 1) {
+					sta.stream().forEach(s -> System.out.println(s));
+				}
+			});
+			throw new RuntimeException("Station duplication");
+		}
 
 		boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
 		boolean bpExistence = stationSet.stream().allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));

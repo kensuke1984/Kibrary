@@ -51,6 +51,7 @@ public final class FujiConversion {
 		final int np = spectrum.np();
 		final double tlen = spectrum.tlen();
 		List<SpcBody> spcBodyList = new ArrayList<>(nbody);
+		SpcFileName spcFileName = spectrum.getSpcFileName();
 
 		// data part
 		double omegai = spectrum.omegai();
@@ -149,6 +150,11 @@ public final class FujiConversion {
 			@Override
 			public double[] getBodyR() {
 				return bodyR;
+			}
+			
+			@Override
+			public SpcFileName getSpcFileName() {
+				return spcFileName;
 			}
 		};
 

@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -12,7 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -45,6 +49,7 @@ public class Sensitivity1D {
 		this.includePhases = s.includePhases;
 	}
 	
+	
 	public static void main(String[] args) throws IOException {
 		Path partialPath = Paths.get("partial.dat");
 		Path partialIDPath = Paths.get("partialID.dat");
@@ -55,63 +60,82 @@ public class Sensitivity1D {
 //		Set<Phase> all = new HashSet<>();
 		
 		PartialID[] ids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
-		Map<Phases, Double> phasesSensitivityMap = Sensitivity.sensitivityPerWindowType(ids);
-		Set<Phases> keySet = phasesSensitivityMap.keySet();
-		Set<Phases> lowerMantle = keySet.stream().filter(phases -> phases.isLowerMantle())
-				.collect(Collectors.toSet());
-		Set<Phases> upperMantle = keySet.stream().filter(phases -> phases.isUpperMantle())
-				.collect(Collectors.toSet());
-		Set<Phases> mixte = keySet.stream().filter(phases -> phases.isMixte())
-				.collect(Collectors.toSet());
-		double upperMantleSensitivity = 0;
-		double lowerMantleSensitivity = 0;
-		for (Map.Entry<Phases, Double> entry : phasesSensitivityMap.entrySet()) {
-			Phases p = entry.getKey();
-			double s = entry.getValue();
-			if (upperMantle.contains(p))
-				upperMantleSensitivity += s;
-			else if (lowerMantle.contains(p))
-				lowerMantleSensitivity += s;
-		}
-		System.out.println("Upper mantle " + upperMantleSensitivity);
-		System.out.println("Lower mantle " + lowerMantleSensitivity);
+		
+//		Map<Phases, Double> phasesSensitivityMap = Sensitivity.sensitivityPerWindowType(ids);
+//		Set<Phases> keySet = phasesSensitivityMap.keySet();
+//		Set<Phases> lowerMantle = keySet.stream().filter(phases -> phases.isLowerMantle())
+//				.collect(Collectors.toSet());
+//		Set<Phases> upperMantle = keySet.stream().filter(phases -> phases.isUpperMantle())
+//				.collect(Collectors.toSet());
+//		Set<Phases> mixte = keySet.stream().filter(phases -> phases.isMixte())
+//				.collect(Collectors.toSet());
+//		double upperMantleSensitivity = 0;
+//		double lowerMantleSensitivity = 0;
+//		for (Map.Entry<Phases, Double> entry : phasesSensitivityMap.entrySet()) {
+//			Phases p = entry.getKey();
+//			double s = entry.getValue();
+//			if (upperMantle.contains(p))
+//				upperMantleSensitivity += s;
+//			else if (lowerMantle.contains(p))
+//				lowerMantleSensitivity += s;
+//		}
+//		System.out.println("Upper mantle " + upperMantleSensitivity);
+//		System.out.println("Lower mantle " + lowerMantleSensitivity);
 		
 //		Path outPath = Paths.get("sensitivity1D.txt");
 //		Sensitivity1D s1D = new Sensitivity1D(ids);
 //		s1D.write1D(outPath);
 		
-		Path outPath = Paths.get("sensitivity1D-upperMantle.txt");
-		Path outPath1 = Paths.get("sensitivityMap-upperMantle.txt");
-		Path outPath2 = Paths.get("sensitivityMap-upperMantle-normalizedDistance.txt");
-		Sensitivity1D s1D = new Sensitivity1D(ids, upperMantle);
-		Sensitivity1D copy = new Sensitivity1D(s1D);
-		s1D.write1D(outPath);
-		s1D.normalize();
-		s1D.write(outPath1);
-		copy.normalizePerDistance();
-		copy.write(outPath2);
+		List<Phase> phaseList = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff"), Phase.create("SS"), Phase.create("SSS"),
+				Phase.create("SSSS"), Phase.create("ScSScS"), Phase.create("ScSScSScS"), Phase.create("ScSScSScSScS"));
 		
-		outPath = Paths.get("sensitivity1D-lowerMantle.txt");
-		outPath1 = Paths.get("sensitivityMap-lowerMantle.txt");
-		outPath2 = Paths.get("sensitivityMap-lowerMantle-normalizedDistance.txt");
-		s1D = new Sensitivity1D(ids, lowerMantle);
-		copy = new Sensitivity1D(s1D);
-		s1D.write1D(outPath);
-		s1D.normalize();
-		s1D.write(outPath1);
-		copy.normalizePerDistance();
-		copy.write(outPath2);
+		for (Phase phase : phaseList) {
+			Set<Phases> phaseSet = new HashSet<>();
+			phaseSet.add(new Phases(new Phase[] {phase}));
+			Path outPath = Paths.get("sensitivity1D-" + phase.toString() + ".inf");
+			Path outPath1 = Paths.get("sensitivityMap-" + phase.toString() + ".inf");
+			Path outPath2 = Paths.get("sensitivityMapDistanceNormalized-" + phase.toString() + ".inf");
+			Sensitivity1D s1D = new Sensitivity1D(ids, phaseSet);
+			Sensitivity1D copy = new Sensitivity1D(s1D);
+			s1D.write1D(outPath);
+			s1D.normalize();
+			s1D.write(outPath1);
+			copy.normalizePerDistance();
+			copy.write(outPath2);
+		}
 		
-		outPath = Paths.get("sensitivity1D-mixte.txt");
-		outPath1 = Paths.get("sensitivityMap-mixte.txt");
-		outPath2 = Paths.get("sensitivityMap-mixte-normalizedDistance.txt");
-		s1D = new Sensitivity1D(ids, mixte);
-		copy = new Sensitivity1D(s1D);
-		s1D.write1D(outPath);
-		s1D.normalize();
-		s1D.write(outPath1);
-		copy.normalizePerDistance();
-		copy.write(outPath2);
+//		Path outPath = Paths.get("sensitivity1D-upperMantle.txt");
+//		Path outPath1 = Paths.get("sensitivityMap-upperMantle.txt");
+//		Path outPath2 = Paths.get("sensitivityMap-upperMantle-normalizedDistance.txt");
+//		Sensitivity1D s1D = new Sensitivity1D(ids, upperMantle);
+//		Sensitivity1D copy = new Sensitivity1D(s1D);
+//		s1D.write1D(outPath);
+//		s1D.normalize();
+//		s1D.write(outPath1);
+//		copy.normalizePerDistance();
+//		copy.write(outPath2);
+//		
+//		outPath = Paths.get("sensitivity1D-lowerMantle.txt");
+//		outPath1 = Paths.get("sensitivityMap-lowerMantle.txt");
+//		outPath2 = Paths.get("sensitivityMap-lowerMantle-normalizedDistance.txt");
+//		s1D = new Sensitivity1D(ids, lowerMantle);
+//		copy = new Sensitivity1D(s1D);
+//		s1D.write1D(outPath);
+//		s1D.normalize();
+//		s1D.write(outPath1);
+//		copy.normalizePerDistance();
+//		copy.write(outPath2);
+//		
+//		outPath = Paths.get("sensitivity1D-mixte.txt");
+//		outPath1 = Paths.get("sensitivityMap-mixte.txt");
+//		outPath2 = Paths.get("sensitivityMap-mixte-normalizedDistance.txt");
+//		s1D = new Sensitivity1D(ids, mixte);
+//		copy = new Sensitivity1D(s1D);
+//		s1D.write1D(outPath);
+//		s1D.normalize();
+//		s1D.write(outPath1);
+//		copy.normalizePerDistance();
+//		copy.write(outPath2);
 	}
 	
 	public void write(Path outpath) throws IOException{
@@ -135,6 +159,8 @@ public class Sensitivity1D {
 	
 	public void compute() {
 		for (PartialID id : ids) {
+			if (id.getPartialType().isTimePartial())
+				continue;
 			if (includePhases == null || includePhases.contains(new Phases(id.getPhases()))) {
 				PerturbationR_distance rDistance = new PerturbationR_distance(id);
 				if (sensitivityMap.containsKey(rDistance)) {

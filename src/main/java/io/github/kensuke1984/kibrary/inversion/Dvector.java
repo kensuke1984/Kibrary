@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,6 +20,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import ucar.nc2.dt.RadialDatasetSweep.Sweep;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -112,6 +114,8 @@ public class Dvector {
 	 * Map of variance of the dataset for a station
 	 */
 	private Map<Station, Double> stationVariance;
+	
+	private boolean atLeastThreeRecordsPerStation;
 
 	/**
 	 * @return map of variance of waveforms in each event
@@ -158,6 +162,8 @@ public class Dvector {
 	private ToDoubleBiFunction<BasicID, BasicID> weightingFunction;
 	
 	private double[] lowerUpperMantleWeighting;
+	
+	private WeightingType weightingType;
 
 	/**
 	 * Use all waveforms in the IDs Weighting factor is reciprocal of maximum
@@ -167,7 +173,7 @@ public class Dvector {
 	 *            must contain waveform data
 	 */
 	public Dvector(BasicID[] basicIDs) {
-		this(basicIDs, id -> true, (ToDoubleBiFunction<BasicID, BasicID>) null);
+		this(basicIDs, id -> true, WeightingType.IDENTITY);
 	}
 
 	/**
@@ -179,8 +185,34 @@ public class Dvector {
 	 * @param chooser
 	 *            {@link Predicate}
 	 */
-	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser) {
-		this(basicIDs, chooser, (ToDoubleBiFunction<BasicID, BasicID>) null);
+	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType, boolean atLeastThreeRecordsPerStation) {
+		this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
+		ids = basicIDs;
+		if (!check(ids))
+			throw new RuntimeException("Input IDs do not have waveform data.");
+		// System.exit(0);
+		this.chooser = chooser;
+		this.weightingType = weigthingType;
+		switch (weigthingType) {
+		case RECIPROCAL:
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
+		case IDENTITY:
+			this.weightingFunction = (obs, syn) -> 1.;
+			break;
+		default:
+			throw new RuntimeException("Weighting type for this constructor can only be IDENTITY or RECIPROCAL");
+		}
+		
+		sort();
+		read();
+	}
+	
+	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {
+		this(basicIDs, chooser, weigthingType, false);
 	}
 
 	/**
@@ -197,36 +229,66 @@ public class Dvector {
 	 *            {@link ToDoubleBiFunction} (observed, synthetic)
 	 */
 	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
-			ToDoubleBiFunction<BasicID, BasicID> weightingFunction) {
+			ToDoubleBiFunction<BasicID, BasicID> weightingFunction, boolean atLeastThreeRecordsPerStation) {
+		this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
 		ids = basicIDs;
 		if (!check(ids))
 			throw new RuntimeException("Input IDs do not have waveform data.");
 		// System.exit(0);
 		this.chooser = chooser;
-		if (weightingFunction != null)
-			this.weightingFunction = weightingFunction;
-		else
-			this.weightingFunction = (obs, syn) -> {
-				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
-			};
+		this.weightingFunction = weightingFunction;
+		this.weightingType = weightingType.USERFUNCTION;
+		
 		sort();
 		read();
 	}
 	
 	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
-			double[] lowerUpperMantleWeighting) {
+			ToDoubleBiFunction<BasicID, BasicID> weightingFunction) {
+		this(basicIDs, chooser, weightingFunction, false);
+	}
+	
+	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+			WeightingType weightingType, double[] weighting, boolean atLeastThreeRecordsPerStation) {
+		this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
+		double minW = Double.MAX_VALUE;
+		double maxW = Double.MIN_VALUE;
+		for (double w : weighting) {
+			if (w > maxW)
+				maxW = w;
+			if (w < minW)
+				minW = w;
+		}
+		if (minW < 0)
+			throw new RuntimeException("Weighting factors must be positive or null");
+		if (minW == maxW && minW == 0)
+			throw new RuntimeException("All weighting factors are null");
 		ids = basicIDs;
 		if (!check(ids))
 			throw new RuntimeException("Input IDs do not have waveform data.");
 		// System.exit(0);
 		this.chooser = chooser;
-		this.lowerUpperMantleWeighting = lowerUpperMantleWeighting;
+		this.weightingType = weightingType;
+		switch (weightingType) {
+		case LOWERUPPERMANTLE:
+			this.lowerUpperMantleWeighting = weighting.clone();
+			break;
+		case TAKEUCHIKOBAYASHI:
+			this.weighting = weighting.clone();
+			break;
+		default:
+			throw new RuntimeException("Weighting type for this constructor can be only LOWERUPPERMANTLE or TAKEUCHIKOBAYASHI");
+		}
 		this.weightingFunction = (obs, syn) -> {
 			return 1.;
 		};
 		sort();
 		read();
+	}
+	
+	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
+			WeightingType weightingType, double[] weighting) {
+		this(basicIDs, chooser, weightingType, weighting, false);
 	}
 
 	/**
@@ -449,11 +511,25 @@ public class Dvector {
 			obsVec[i] = new ArrayRealVector(obsIDs[i].getData(), false);
 
 			// 観測波形の最大値の逆数で重み付け TODO 重み付けの方法を決める
-			if (lowerUpperMantleWeighting != null)
+			switch (weightingType) {
+			case LOWERUPPERMANTLE:		
 				weighting[i] = new Phases(obsIDs[i].getPhases()).isLowerMantle() ? 
 						lowerUpperMantleWeighting[0] : lowerUpperMantleWeighting[1];
-			else
+				break;
+			case RECIPROCAL:
 				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
+			case IDENTITY:
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
+			case USERFUNCTION:
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
+			case TAKEUCHIKOBAYASHI: // double[] weighting already set in sort()
+				break;
+			default:
+				break;
+			}
 
 			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
 
@@ -582,14 +658,21 @@ public class Dvector {
 		// are used.");
 		
 		// filter so that there is at least three records per stations (for time partials stability)
-		useObsList = moreThanThreeRecordsAndTwoEventsPerStation(useObsList);
-		useSynList = moreThanThreeRecordsAndTwoEventsPerStation(useSynList);
+		if (atLeastThreeRecordsPerStation) {
+			useObsList = moreThanThreeRecordsAndTwoEventsPerStation(useObsList);
+			useSynList = moreThanThreeRecordsAndTwoEventsPerStation(useSynList);
+		}
 
 		nTimeWindow = useSynList.size();
 		obsIDs = useObsList.toArray(new BasicID[0]);
 		synIDs = useSynList.toArray(new BasicID[0]);
-
-		weighting = new double[nTimeWindow];
+		
+		if (!weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI))
+			weighting = new double[nTimeWindow];
+		else {
+			if (weighting.length != nTimeWindow)
+				throw new RuntimeException("Number of selected time windows and weighting factors differ " + weighting.length + " " + nTimeWindow);
+		}
 		startPoints = new int[nTimeWindow];
 		obsVec = new RealVector[nTimeWindow];
 		synVec = new RealVector[nTimeWindow];
@@ -602,9 +685,34 @@ public class Dvector {
 			usedGlobalCMTIDset.add(obsIDs[i].getGlobalCMTID());
 		}
 		
-		if (lowerUpperMantleWeighting != null) {
+		switch (weightingType) {
+		case LOWERUPPERMANTLE:
 			System.err.println("Using weighting for lower mantle (" + lowerUpperMantleWeighting[0] 
 					+ ") and upper mantle (" + lowerUpperMantleWeighting[1] +")");
+			break;
+		case TAKEUCHIKOBAYASHI:
+			System.err.println("Using Takeuchi-Kobayashi weighting scheme");
+			break;
+		case RECIPROCAL:
+			System.err.println("Using observed reciprocal amplitude as weighting");
+			break;
+		case IDENTITY:
+			System.err.println("Using identity weighting");
+			break;
+		case USERFUNCTION:
+			System.err.println("Using user specified weighting function");
+		default:
+			break;
+		}
+	}
+	
+	public void outWeighting(Path outPath) {
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+			for (double wi : weighting) {
+				pw.println(wi);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
