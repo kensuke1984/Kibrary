@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * <p>
  * ID for observed and synthetic waveform
  * </p>
- * <b>This class is IMMUTABLE</b> <br>
+ * This class is <b>IMMUTABLE</b> <br>
  * <p>
  * Double values will be rounded off to 3rd decimal places. <br>
  * (Those are stored as Float in the file)<br>
@@ -63,7 +63,7 @@ public class BasicID {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + ((ID == null) ? 0 : ID.hashCode());
         result = prime * result + (CONVOLUTE ? 1231 : 1237);

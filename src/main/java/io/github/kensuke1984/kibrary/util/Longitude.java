@@ -63,7 +63,7 @@ class Longitude implements Comparable<Longitude> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         long temp;
         temp = Double.doubleToLongBits(longitude);
@@ -77,8 +77,7 @@ class Longitude implements Comparable<Longitude> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
-        if (Double.doubleToLongBits(longitude) != Double.doubleToLongBits(other.longitude)) return false;
-        return true;
+        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
     }
 
     /**

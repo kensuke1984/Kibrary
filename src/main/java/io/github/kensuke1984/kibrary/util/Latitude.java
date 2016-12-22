@@ -22,7 +22,7 @@ class Latitude implements Comparable<Latitude> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         long temp;
         temp = Double.doubleToLongBits(geographicLatitude);
@@ -36,9 +36,7 @@ class Latitude implements Comparable<Latitude> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
-        if (Double.doubleToLongBits(geographicLatitude) != Double.doubleToLongBits(other.geographicLatitude))
-            return false;
-        return true;
+        return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
     }
 
     /**

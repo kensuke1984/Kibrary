@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.math.geometry;
 
 /**
@@ -26,21 +23,12 @@ public class Intersection {
 	 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
 		Intersection other = (Intersection) obj;
-		if (lineSegment1.equals(other.lineSegment1)
-				&& lineSegment2.equals(other.lineSegment2)) {
-			return true;
-		} else if (lineSegment1.equals(other.lineSegment2)
-				&& lineSegment2.equals(other.lineSegment1)) {
-			return true;
-		} else
-			return false;
+		return lineSegment1.equals(other.lineSegment1) && lineSegment2.equals(other.lineSegment2) ||
+				lineSegment1.equals(other.lineSegment2) && lineSegment2.equals(other.lineSegment1);
 	}
 
 	public Point2D getIntersectionPoint() {

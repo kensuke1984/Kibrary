@@ -84,7 +84,7 @@ public class FPinfo extends DSMheader {
 			// output info
 			pw.println("c output directory");
 			pw.println(OUTPUT + "/");
-			pw.println(EVENT.toString());
+			pw.println(EVENT);
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points
@@ -129,7 +129,7 @@ public class FPinfo extends DSMheader {
 			// output info
 			pw.println("c output directory");
 			pw.println(OUTPUT + "/");
-			pw.println(EVENT.toString());
+			pw.println(EVENT);
 			pw.println("c events and stations");
 
 			// horizontal positions for perturbation points

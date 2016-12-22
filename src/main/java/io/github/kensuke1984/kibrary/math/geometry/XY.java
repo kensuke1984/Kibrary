@@ -25,7 +25,7 @@ class XY {
 	 * @return XY rotated by theta counter-clockwisely
 	 */
 	XY rotate(double theta) {
-		double x = Math.cos(theta) * this.x - Math.sin(theta) * this.y;
+		double x = Math.cos(theta) * this.x - Math.sin(theta) * y;
 		double y = Math.sin(theta) * this.x + Math.cos(theta) * this.y;
 		return new XY(x, y);
 	}

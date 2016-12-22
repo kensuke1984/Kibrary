@@ -66,7 +66,7 @@ class SACGroup {
 	 * SacSetに{@link SACFileName}を加える 既に同じものが入っていたり
 	 * {@link SACFileName#isRelated(SACFileName)}がfalseの場合追加しない
 	 * 
-	 * @param sacFileName
+	 * @param sacFileName to add
 	 * @return 追加したかどうか
 	 */
 	boolean add(SACFileName sacFileName) {
@@ -102,8 +102,8 @@ class SACGroup {
 		Path standardSacPath = workPath.resolve(sacFileNameList[0].toString());
 		Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(standardSacPath);
 		double[] standardSacData = SACUtil.readSACData(standardSacPath);
-		final double delta = Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA));
-		final long deltaInMillis = Math.round(1000 * delta);
+		double delta = Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA));
+		long deltaInMillis = Math.round(1000 * delta);
 		// currentEndTimeとスタート時刻がmaxGap(msec) を超える波形はくっつけられない
 		long maxGap = deltaInMillis * maxGapNumber;
 		// half length of delta0 (msec)
@@ -118,7 +118,7 @@ class SACGroup {
 		// System.out.println(e0+" "+headerMap.get(SacHeaderEnum.E));
 		double currentB = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
 		// b value (msec)
-		final long bInMillis = Math.round(currentB * 1000);
+		long bInMillis = Math.round(currentB * 1000);
 		// System.out.println(currentB*1000+" "+e0);
 		// e value (msec)
 		long eInMillis = Math.round(e0 * 1000);
@@ -182,7 +182,7 @@ class SACGroup {
 				// currentsacの終了時刻のdelta後から joinsacのstartの時間差(msec)
 				long gap = deltaInMillis - timeGap;
 				// joinsacのstartから何msec目がcurrentsacの隣の値になるか
-				int gapI = (int) Math.round(gap / deltaInMillis);
+				int gapI = Math.round(gap / deltaInMillis);
 				for (int j = gapI; j < npts; j++)
 					sacdata.add(data[j]);
 				// e0の更新

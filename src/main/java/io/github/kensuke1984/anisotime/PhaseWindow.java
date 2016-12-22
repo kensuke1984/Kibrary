@@ -45,7 +45,7 @@ class PhaseWindow extends javax.swing.JFrame {
      * @param i 0:All, 1:P-SV, 2:SH
      */
     void setPolarity(int i) {
-        final ListCellRenderer<? super String> r = jList1.getCellRenderer();
+        ListCellRenderer<? super String> r = jList1.getCellRenderer();
         jList1.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
             Phase p = Phase.create(jList1.getModel().getElementAt(index));
             boolean sh = p.pReaches() == null;

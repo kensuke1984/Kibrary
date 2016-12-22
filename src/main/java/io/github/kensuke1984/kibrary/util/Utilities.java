@@ -105,7 +105,7 @@ public final class Utilities {
 
     /**
      * @param path {@link Path} for search of {@link GlobalCMTID}
-     * @return (<b>unmodifiable</B>) Set of Global CMT IDs in the path
+     * @return <b>unmodifiable</b> Set of Global CMT IDs in the path
      * @throws IOException if an I/O error occurs
      */
     public static Set<GlobalCMTID> globalCMTIDSet(Path path) throws IOException {
@@ -135,7 +135,7 @@ public final class Utilities {
      * will be ignored.
      *
      * @param path of a folder containing event folders which have SAC files.
-     * @return (<b>unmodifiable</b>)Set of sac in event folders under the path
+     * @return <b>unmodifiable</b> Set of sac in event folders under the path
      * @throws IOException if an I/O error occurs.
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {
@@ -184,7 +184,7 @@ public final class Utilities {
      */
     public static void moveSacfile(Path path, Predicate<SACFileName> predicate)
             throws IOException, InterruptedException {
-        String directoryName = "movedSacfiles" + Utilities.getTemporaryString();
+        String directoryName = "movedSacfiles" + getTemporaryString();
         // System.out.println(directoryName);
         Consumer<EventFolder> moveProcess = eventDirectory -> {
             try {

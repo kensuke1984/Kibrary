@@ -2,8 +2,8 @@ package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.2
  */
-interface DataGenerator<M, D> {
-    D[] generate(M model);
+public interface DataGenerator<M, D> {
+    D generate(M model);
 }

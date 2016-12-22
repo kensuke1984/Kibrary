@@ -3,14 +3,21 @@ package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.2
  */
-interface DataComparator<D> {
+public interface DataComparator<D> {
 
     /**
-     * @param dataset to compute likelihood for
+     * @param data to compute likelihood for
      * @return likelihood
      */
-    double likelihood(D[] dataset);
+    double likelihood(D data);
 
+    /**
+     * @param sigma &sigma;
+     * @return exp (-2*variance/&sigma;)
+     */
+    static DataComparator<Double> varianceComparator(double sigma) {
+        return variance -> Math.exp(-2 * variance / sigma);
+    }
 }

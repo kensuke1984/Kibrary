@@ -101,9 +101,9 @@ public class SpcBody {
 	 *            {@link SpcBody} for addition
 	 */
 	public void addBody(SpcBody anotherBody) {
-		if (this.np != anotherBody.getNp())
+		if (np != anotherBody.getNp())
 			throw new RuntimeException("Error: Size of body is not equal!");
-		else if (this.nComponent != anotherBody.getNumberOfComponent())
+		else if (nComponent != anotherBody.getNumberOfComponent())
 			throw new RuntimeException("Error: The numbers of each component are different.");
 
 		for (int j = 0; j < nComponent; j++)

@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
 import java.nio.file.Files;
@@ -108,7 +105,6 @@ class ModelProbability {
 			Path out = depthsPath.resolve("xyz.txt");
 			Files.write(out, outlines);
 		} catch (Exception e) {
-		} finally {
 		}
 
 	}
@@ -169,8 +165,8 @@ class ModelProbability {
 			List<String> lines = Files.readAllLines(depthPath);
 			double[] q = lines.stream().mapToDouble(line -> Double.parseDouble(line.split("\\s+")[1])).toArray();
 			double[] vs = lines.stream().mapToDouble(line -> Double.parseDouble(line.split("\\s+")[0])).toArray();
-			Path vHist = depthPath.getParent().resolve(depthPath.getFileName().toString() + ".v");
-			Path qHist = depthPath.getParent().resolve(depthPath.getFileName().toString() + ".q");
+			Path vHist = depthPath.getParent().resolve(depthPath.getFileName() + ".v");
+			Path qHist = depthPath.getParent().resolve(depthPath.getFileName() + ".q");
 			double[] vBoarder = makeBoarder(7.15 * 0.96, 7.15 * 1.04, 0.01);
 			double[] qBoarder = makeBoarder(312 * 0.9, 312 * 1.1, 5);
 			int[] qhist = makeHistgram(q, qBoarder);

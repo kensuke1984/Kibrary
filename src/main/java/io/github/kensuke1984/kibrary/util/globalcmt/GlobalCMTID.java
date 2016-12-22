@@ -38,7 +38,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + ((id == null) ? 0 : id.hashCode());
         return result;
@@ -120,7 +120,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     public static void main(String[] args) {
         if (args.length == 0) throw new IllegalArgumentException("Usage: [Global CMT IDs]");
         for (String idString : args) {
-            if (!GlobalCMTID.isGlobalCMTID(idString)) {
+            if (!isGlobalCMTID(idString)) {
                 System.err.println(idString + " is not a global CMT ID.");
                 continue;
             }

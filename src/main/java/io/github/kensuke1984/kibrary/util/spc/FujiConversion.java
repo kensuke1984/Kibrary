@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.ArrayList;
@@ -47,9 +44,9 @@ public final class FujiConversion {
 		if (spectrum.getSpcFileType() != SpcFileType.PAR2)
 			throw new RuntimeException();
 
-		final int nbody = spectrum.nbody();
-		final int np = spectrum.np();
-		final double tlen = spectrum.tlen();
+		int nbody = spectrum.nbody();
+		int np = spectrum.np();
+		double tlen = spectrum.tlen();
 		List<SpcBody> spcBodyList = new ArrayList<>(nbody);
 
 		// data part
@@ -82,7 +79,8 @@ public final class FujiConversion {
 			}
 			spcBodyList.add(newBody);
 		}
-		DSMOutput dsmoutput = new DSMOutput() {
+
+		return new DSMOutput() {
 
 			@Override
 			public double tlen() {
@@ -139,8 +137,6 @@ public final class FujiConversion {
 				return bodyR;
 			}
 		};
-
-		return dsmoutput;
 	}
 
 }

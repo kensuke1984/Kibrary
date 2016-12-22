@@ -34,7 +34,7 @@ enum SpcTensorComponent {
 		return value;
 	}
 
-	private SpcTensorComponent(int n) {
+	SpcTensorComponent(int n) {
 		value = n;
 	}
 
