@@ -6,79 +6,10 @@
     </artifacts-to-build>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="Cleanup">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/dictionaries/kensuke.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/kensuke.xml" />
+    <list default="true" id="d7b33775-8ce4-4ba2-ad7e-6992f5cf40ee" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" afterPath="$PROJECT_DIR$/src/main/java/META-INF/MANIFEST.MF" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ComputationalMesh.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ComputationalMesh.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ParameterInputPanel.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/ParameterInputPanel.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/Phase.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PhaseWindow.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PhaseWindow.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PolynomialStructure.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PolynomialStructure.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datacorrection/SCARDEC.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datacorrection/SCARDEC.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datacorrection/SourceTimeFunction.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datacorrection/SourceTimeFunction.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datarequest/PasswordInput.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datarequest/PasswordInput.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/dsminformation/FPinfo.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/dsminformation/FPinfo.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/dsminformation/PolynomialStructure.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/dsminformation/PolynomialStructure.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/ColorPallet.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/ColorPallet.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/GMTMap.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/GMTMap.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/RaypathDistribution.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/RaypathDistribution.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/Symbol.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/gmt/Symbol.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/firsthandler/SACGroup.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/firsthandler/SACGroup.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/Dvector.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/Dvector.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/LetMeInvert.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/LetMeInvert.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/ObservationEquation.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/ObservationEquation.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/PerturbationPoint.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/PerturbationPoint.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/Physical1DParameter.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/Physical1DParameter.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/Physical3DParameter.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/Physical3DParameter.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/SingularValueDecomposition.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/SingularValueDecomposition.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/TimeshiftParameter.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/TimeshiftParameter.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/UnknownParameter.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/UnknownParameter.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DSMComputation.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DSMComputation.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DataComparator.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DataComparator.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DataGenerator.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DataGenerator.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/MetroPolice.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/MetroPolice.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/ModelGenerator.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/ModelGenerator.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/ModelProbability.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/ModelProbability.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/SACVarianceComparator.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/SACVarianceComparator.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/ConvexPolygon.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/ConvexPolygon.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/Intersection.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/Intersection.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/SegmentType.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/SegmentType.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/XY.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/XY.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/XYZ.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/XYZ.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/SecondHandler.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/SecondHandler.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/stacking/BaseTimeStack.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/stacking/BaseTimeStack.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/stacking/CorrelationStack.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/stacking/CorrelationStack.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/Timewindow.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/Timewindow.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/TimewindowInformation.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/TimewindowInformation.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/TimewindowInformationFile.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/TimewindowInformationFile.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Earth.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Earth.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/HorizontalPosition.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/HorizontalPosition.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Latitude.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Latitude.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Location.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Location.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Longitude.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Longitude.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/NamedDiscontinuityStructure.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/NamedDiscontinuityStructure.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Station.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Station.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Utilities.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Utilities.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTID.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTID.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/NDK.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/globalcmt/NDK.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/sac/SACHeaderData.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/sac/SACHeaderData.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/sac/SACHeaderEnum.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/sac/SACHeaderEnum.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/sac/WaveformType.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/sac/WaveformType.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/FujiConversion.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/FujiConversion.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/PartialType.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/PartialType.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcBody.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcBody.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcFileType.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcFileType.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcTensorComponent.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcTensorComponent.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/ThreeDPartialMaker.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/ThreeDPartialMaker.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/WeightingFactor.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/WeightingFactor.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/BasicID.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/BasicID.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/Partial1DDatasetMaker.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/Partial1DDatasetMaker.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/PartialDatasetMaker.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/PartialDatasetMaker.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/PartialID.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/PartialID.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/PartialIDFile.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/PartialIDFile.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/WaveformDataWriter.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/WaveformDataWriter.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java" />
     </list>
     <ignored path="Kibrary.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -160,7 +91,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Partial1DDatasetMaker.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Partial1DDatasetMaker.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/Partial1DDatasetMaker.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="185">
@@ -170,11 +101,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ThreeDPartialMaker.java" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/ThreeDPartialMaker.java">
+      <file leaf-file-name="About.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="185">
-              <caret line="107" column="43" lean-forward="false" selection-start-line="107" selection-start-column="43" selection-end-line="107" selection-end-column="43" />
+            <state relative-caret-position="296">
+              <caret line="28" column="49" lean-forward="false" selection-start-line="28" selection-start-column="49" selection-end-line="28" selection-end-column="49" />
               <folding />
             </state>
           </provider>
@@ -246,7 +177,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/MenuBar.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/GUIInputComponents.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/anisotime/PhasePart.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/DataComparable.java" />
@@ -297,6 +227,7 @@
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/math/geometry/ConvexPolygon.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/HorizontalPosition.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/SecondHandler.java" />
+        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java" />
       </list>
     </option>
   </component>
@@ -1107,7 +1038,14 @@
       <option name="project" value="LOCAL" />
       <updated>1482400612688</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Cleanup">
+      <created>1482400659679</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1482400659679</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TodoView" selected-index="4">
@@ -1121,7 +1059,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-1" y="28" width="1922" height="1019" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32990867" sideWeight="0.49358973" order="9" side_tool="false" content_ui="tabs" />
@@ -1138,7 +1076,7 @@
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32876712" sideWeight="0.52136755" order="1" side_tool="true" content_ui="tabs" />
       <window_info id="Capture Tool" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16292734" sideWeight="0.49445325" order="6" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16292734" sideWeight="0.49445325" order="6" side_tool="false" content_ui="combo" />
       <window_info id="Problems" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32876712" sideWeight="0.4871795" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32876712" sideWeight="0.44230768" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13354701" sideWeight="0.4864865" order="9" side_tool="false" content_ui="tabs" />
@@ -1200,13 +1138,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="jar:///usr/java/default/src.zip!/java/util/Collections.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="176">
-          <caret line="1431" column="33" lean-forward="false" selection-start-line="1431" selection-start-column="33" selection-end-line="1431" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/UnknownParameter.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="88">
@@ -1633,6 +1564,14 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="185">
           <caret line="544" column="34" lean-forward="false" selection-start-line="544" selection-start-column="34" selection-end-line="544" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="296">
+          <caret line="28" column="49" lean-forward="false" selection-start-line="28" selection-start-column="49" selection-end-line="28" selection-end-column="49" />
           <folding />
         </state>
       </provider>
