@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary;
 
 import java.io.BufferedReader;
@@ -22,8 +19,7 @@ import org.apache.commons.lang3.EnumUtils;
 import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
- * 
- * 
+ *
  * Main procedures in Kibrary
  * 
  * @version 0.0.4.2
@@ -83,7 +79,7 @@ public interface Operation {
 	 *             if any
 	 * 
 	 */
-	public static void main(String[] args) throws Exception {
+	static void main(String[] args) throws Exception {
 		if (args.length == 0) {
 			Manhattan.printList();
 			System.out.print("Which one do you want to operate? [1-" + Manhattan.values().length + "]");
