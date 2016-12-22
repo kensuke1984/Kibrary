@@ -203,7 +203,7 @@ public class DataSelection implements Operation {
         private GlobalCMTID id;
 
         private Worker(EventFolder ed) throws IOException {
-            this.obsEventDirectory = ed;
+            obsEventDirectory = ed;
             (obsFiles = ed.sacFileSet()).removeIf(n -> !n.isOBS());
             id = ed.getGlobalCMTID();
             synEventDirectory = new EventFolder(synPath.resolve(ed.getName()));

@@ -32,7 +32,7 @@ import java.util.stream.Stream;
  * @author Kensuke Konishi
  * @version 0.0.1
  */
-class DSMComputation implements DataGenerator<PolynomialStructure, SACData> {
+class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
 
 
     /**

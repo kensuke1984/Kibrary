@@ -97,7 +97,7 @@ public class Phase {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + ((expandedName == null) ? 0 : expandedName.hashCode());
         result = prime * result + (psv ? 1231 : 1237);
@@ -117,8 +117,7 @@ public class Phase {
         if (expandedName == null) {
             if (other.expandedName != null) return false;
         } else if (!expandedName.equals(other.expandedName)) return false;
-        if (psv != other.psv) return false;
-        return true;
+        return psv == other.psv;
     }
 
     /**
@@ -263,8 +262,8 @@ public class Phase {
         // P
         int iCurrentPart = 0;
         for (int i = 0; i < expandedName.length(); i++) {
-            final char nextChar = i + 1 == expandedName.length() ? 0 : expandedName.charAt(i + 1);
-            final char beforeChar = i == 0 ? 0 : expandedName.charAt(i - 1);
+            char nextChar = i + 1 == expandedName.length() ? 0 : expandedName.charAt(i + 1);
+            char beforeChar = i == 0 ? 0 : expandedName.charAt(i - 1);
             switch (expandedName.charAt(i)) {
                 case 'd':
                     break;
@@ -511,9 +510,8 @@ public class Phase {
         if (kPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.K) != kPropagation) return false;
         if (innerCorePPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.I) == Propagation.NOEXIST)
             return false;
-        if (innerCoreSPropagation != Propagation.NOEXIST &&
-                ray.getPropagation(psv ? PhasePart.JV : PhasePart.JH) == Propagation.NOEXIST) return false;
-        return true;
+        return !(innerCoreSPropagation != Propagation.NOEXIST &&
+                ray.getPropagation(psv ? PhasePart.JV : PhasePart.JH) == Propagation.NOEXIST);
     }
 
     /**

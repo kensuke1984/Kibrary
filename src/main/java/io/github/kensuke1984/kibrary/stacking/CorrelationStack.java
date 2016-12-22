@@ -102,7 +102,7 @@ public class CorrelationStack implements Stack {
 	private class Key {
 		@Override
 		public int hashCode() {
-			final int prime = 31;
+			int prime = 31;
 			int result = 1;
 			result = prime * result + getOuterType().hashCode();
 			result = prime * result + ((component == null) ? 0 : component.hashCode());
@@ -161,12 +161,12 @@ public class CorrelationStack implements Stack {
 
 	@Override
 	public Trace stack(String stationName, GlobalCMTID id, SACComponent component, WaveformType type, Trace trace) {
-		if (!timewindowInformationSet.stream()
-				.anyMatch(timewindow -> timewindow.getStation().getName().equals(stationName)
+		if (timewindowInformationSet.stream()
+				.noneMatch(timewindow -> timewindow.getStation().getName().equals(stationName)
 						&& timewindow.getGlobalCMTID().equals(id) && timewindow.getComponent() == component)) {
 			throw new RuntimeException("No timewindow information for " + stationName + " " + id + " " + component);
 		}
-		int shift = 0;
+		int shift;
 		Key key = new Key(stationName, id, component);
 		Timewindow window = timewindowInformationSet.stream()
 				.filter(info -> info.getStation().getName().equals(stationName))

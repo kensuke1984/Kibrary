@@ -320,7 +320,7 @@ public final class Earth {
         double longitude = point.getLongitude();
         double startA = getExtendedShaft(point.toLocation(r - 0.5 * dr));
         double endA = getExtendedShaft(point.toLocation(r + 0.5 * dr));
-        return Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
+        return getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
                 longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
     }
 

@@ -32,7 +32,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + latitude.hashCode();
         result = prime * result + longitude.hashCode();
@@ -45,9 +45,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         HorizontalPosition other = (HorizontalPosition) obj;
-        if (!latitude.equals(other.latitude)) return false;
-        if (!longitude.equals(other.longitude)) return false;
-        return true;
+        return latitude.equals(other.latitude) && longitude.equals(other.longitude);
     }
 
     /**
@@ -206,7 +204,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      * @return 大円上での距離 精度はそこまでよくない
      */
     public double getPath(HorizontalPosition position) {
-        double distance = 0;
+        double distance;
         Ellipse e = new Ellipse(Earth.EQUATORIAL_RADIUS, Earth.POLAR_RADIUS);
 
         double r0 = e.toR(0.5 * Math.PI - getTheta());

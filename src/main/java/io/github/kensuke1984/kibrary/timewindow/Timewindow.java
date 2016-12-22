@@ -22,7 +22,7 @@ public class Timewindow implements Comparable<Timewindow> {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         long temp;
         temp = Double.doubleToLongBits(endTime);
@@ -38,9 +38,8 @@ public class Timewindow implements Comparable<Timewindow> {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Timewindow other = (Timewindow) obj;
-        if (Double.doubleToLongBits(endTime) != Double.doubleToLongBits(other.endTime)) return false;
-        if (Double.doubleToLongBits(startTime) != Double.doubleToLongBits(other.startTime)) return false;
-        return true;
+        return Double.doubleToLongBits(endTime) == Double.doubleToLongBits(other.endTime) &&
+                Double.doubleToLongBits(startTime) == Double.doubleToLongBits(other.startTime);
     }
 
     /**

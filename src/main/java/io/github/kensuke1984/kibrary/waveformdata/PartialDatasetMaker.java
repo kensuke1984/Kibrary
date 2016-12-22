@@ -460,7 +460,7 @@ public class PartialDatasetMaker implements Operation {
 	@Override
 	public void run() throws IOException {
 		setLog();
-		final int N_THREADS = Runtime.getRuntime().availableProcessors();
+		int N_THREADS = Runtime.getRuntime().availableProcessors();
 		writeLog("Running " + N_THREADS + " threads");
 		setTimeWindow();
 		// filter設計
@@ -495,7 +495,7 @@ public class PartialDatasetMaker implements Operation {
 			System.out.println(bpFiles.size() + " bpfiles are found");
 
 			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
-			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id.toString() + "/" + modelName))
+			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id + "/" + modelName))
 					.filter(Files::exists).toArray(Path[]::new);
 
 			int donebp = 0;

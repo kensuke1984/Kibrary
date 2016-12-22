@@ -87,7 +87,7 @@ public class PerturbationPoint extends HorizontalPoint {
 
 		computeVolumes();
 
-		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)));) {
+		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)))) {
 			for (int i = 0; i < perturbationLocation.length; i++) {
 				Location loc = perturbationLocation[i];
 				System.out.println(loc);
@@ -104,11 +104,11 @@ public class PerturbationPoint extends HorizontalPoint {
 	}
 
 	public void setDlatitude(double dlatitude) {
-		this.dLatitude = dlatitude;
+        dLatitude = dlatitude;
 	}
 
 	public void setDlongitude(double dlongitude) {
-		this.dLongitude = dlongitude;
+        dLongitude = dlongitude;
 	}
 
 	public Map<Location, Double> getVolumeMap() {
@@ -263,9 +263,8 @@ public class PerturbationPoint extends HorizontalPoint {
 	 * @return location に近い順でポイントのLocationを返す
 	 */
 	public Location[] getNearestLocation(Location location) {
-		final Location location0 = location;
 		Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
-		Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location0)));
+		Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location)));
 		return locations;
 	}
 

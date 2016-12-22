@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * <p>
  * ID for a partial derivative
  * </p>
- * <b>This class is IMMUTABLE</b> <br>
+ * This class is <b>IMMUTABLE</b> <br>
  *
  * =Contents of information for one ID=<br>
  * Name of station<br>
@@ -44,18 +44,18 @@ public class PartialID extends BasicID {
     public String toString() {
         return STATION + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " " + START_TIME +
                 " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " " + START_BYTE + " " + CONVOLUTE + " " +
-                pointLocation + " " + partialType;
+                POINT_LOCATION + " " + PARTIAL_TYPE;
     }
 
     /**
-     * 摂動点の位置
+     * location of perturbation
      */
-    protected final Location pointLocation;
+    protected final Location POINT_LOCATION;
 
     /**
-     * パラメタの種類
+     * type of parameter
      */
-    protected final PartialType partialType;
+    protected final PartialType PARTIAL_TYPE;
 
     public PartialID(Station station, GlobalCMTID eventID, SACComponent sacComponent, double samplingHz,
                      double startTime, int npts, double minPeriod, double maxPeriod, long startByte,
@@ -63,24 +63,24 @@ public class PartialID extends BasicID {
                      double... waveformData) {
         super(WaveformType.PARTIAL, samplingHz, startTime, npts, station, eventID, sacComponent, minPeriod, maxPeriod,
                 startByte, isConvolved, waveformData);
-        this.partialType = partialType;
-        this.pointLocation = perturbationLocation;
+        PARTIAL_TYPE = partialType;
+        POINT_LOCATION = perturbationLocation;
     }
 
     public Location getPerturbationLocation() {
-        return pointLocation;
+        return POINT_LOCATION;
     }
 
     public PartialType getPartialType() {
-        return partialType;
+        return PARTIAL_TYPE;
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
-        result = prime * result + ((pointLocation == null) ? 0 : pointLocation.hashCode());
+        result = prime * result + ((PARTIAL_TYPE == null) ? 0 : PARTIAL_TYPE.hashCode());
+        result = prime * result + ((POINT_LOCATION == null) ? 0 : POINT_LOCATION.hashCode());
         return result;
     }
 
@@ -90,10 +90,10 @@ public class PartialID extends BasicID {
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         PartialID other = (PartialID) obj;
-        if (partialType != other.partialType) return false;
-        if (pointLocation == null) {
-            if (other.pointLocation != null) return false;
-        } else if (!pointLocation.equals(other.pointLocation)) return false;
+        if (PARTIAL_TYPE != other.PARTIAL_TYPE) return false;
+        if (POINT_LOCATION == null) {
+            if (other.POINT_LOCATION != null) return false;
+        } else if (!POINT_LOCATION.equals(other.POINT_LOCATION)) return false;
         return true;
     }
 
@@ -104,7 +104,7 @@ public class PartialID extends BasicID {
     @Override
     public PartialID setData(double[] data) {
         return new PartialID(STATION, ID, COMPONENT, SAMPLINGHZ, START_TIME, NPTS, MIN_PERIOD, MAX_PERIOD, START_BYTE,
-                CONVOLUTE, pointLocation, partialType, data);
+                CONVOLUTE, POINT_LOCATION, PARTIAL_TYPE, data);
     }
 
 }

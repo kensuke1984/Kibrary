@@ -28,7 +28,7 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = 1;
         result = prime * result + ((STRUCTURE == null) ? 0 : STRUCTURE.hashCode());
         return result;
@@ -128,7 +128,7 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double pTurningR(double p) {
-        final PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
+        PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
         for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
             PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);

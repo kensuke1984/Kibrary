@@ -27,7 +27,7 @@ public interface ColorPallet {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public static void main(String[] args) throws IOException {
+	static void main(String[] args) throws IOException {
 		if (args.length < 2)
 			throw new IllegalArgumentException("Usage: [output file name] (Option min value) [max value of range]");
 		Path path = Paths.get(args[0]);
@@ -65,7 +65,7 @@ public interface ColorPallet {
 	 *            max value of range
 	 * @return Color pallete by Oobayashi
 	 */
-	public static ColorPallet oobayashi(double min, double max) {
+	static ColorPallet oobayashi(double min, double max) {
 		if (max <= min)
 			throw new IllegalArgumentException("Input values are invalid");
 		// -red blue+
@@ -114,7 +114,7 @@ public interface ColorPallet {
 	 *            max value of range
 	 * @return Color pallet by Oobayashi
 	 */
-	public static ColorPallet oobayashi(double max) {
+	static ColorPallet oobayashi(double max) {
 		return oobayashi(-max, max);
 	}
 

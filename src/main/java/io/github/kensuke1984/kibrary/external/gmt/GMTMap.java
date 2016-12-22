@@ -133,7 +133,7 @@ public final class GMTMap {
 	 */
 	public static String psxy(Symbol symbol, double symbolSize, double value, Path colorPalletPath,
 			HorizontalPosition position, String additionalOptions) {
-		String cpOption = " -C" + colorPalletPath.toString();
+		String cpOption = " -C" + colorPalletPath;
 		return "echo " + position + " " + value + " " + symbolSize + " | " + "psxy -V -: -J -R " + symbol.getOption()
 				+ cpOption + " " + additionalOptions + " -K -O -P  >> $psname";
 	}
@@ -204,8 +204,7 @@ public final class GMTMap {
 		String bOption = " -B" + interval + "+l\"" + name + "\"";
 		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
 		String cOption = " -C" + cptPath;
-		String line = "psscale -V -K -O -P " + dOption + bOption + cOption + " " + additional + " >>$psname";
-		return line;
+		return "psscale -V -K -O -P " + dOption + bOption + cOption + " " + additional + " >>$psname";
 	}
 
 	public String psHeader() {

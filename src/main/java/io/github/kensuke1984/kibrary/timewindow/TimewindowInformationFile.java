@@ -66,7 +66,7 @@ public final class TimewindowInformationFile {
 	public static void main(String[] args) throws IOException {
 		Set<TimewindowInformation> set;
 		if (args.length != 0)
-			set = TimewindowInformationFile.read(Paths.get(args[0]));
+			set = read(Paths.get(args[0]));
 		else {
 			String s = "";
 			Path f;
@@ -76,7 +76,7 @@ public final class TimewindowInformationFile {
 					return;
 				f = Paths.get(s);
 			} while (!Files.exists(f) || Files.isDirectory(f));
-			set = TimewindowInformationFile.read(f);
+			set = read(f);
 		}
 		set.stream().sorted().forEach(System.out::println);
 	}
@@ -134,12 +134,12 @@ public final class TimewindowInformationFile {
 	/**
 	 * @param infoPath
 	 *            of the information file to read
-	 * @return (<b>unmodifiable</b>) Set of timewindow information
+	 * @return <b>unmodifiable</b> Set of timewindow information
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
 	public static Set<TimewindowInformation> read(Path infoPath) throws IOException {
-		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)));) {
+		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(infoPath)))) {
 			long t = System.nanoTime();
 			long fileSize = Files.size(infoPath);
 			// Read header

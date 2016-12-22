@@ -9,7 +9,8 @@ import java.nio.file.Path;
  * @author Kensuke Konishi
  * @version 0.0.1
  */
-interface ModelGenerator<M> {
+public interface ModelGenerator<M> {
+
     /**
      * @param current model to be based for the next one.
      * @return the next model

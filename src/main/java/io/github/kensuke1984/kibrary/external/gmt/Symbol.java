@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.external.gmt;
 
 /**
@@ -25,7 +22,7 @@ public enum Symbol {
 	
 	private String option;
 
-	private Symbol(String option) {
+	Symbol(String option) {
 		this.option = option;
 	}
 

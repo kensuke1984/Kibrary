@@ -99,7 +99,7 @@ public class NamedDiscontinuityStructure {
     private Path infPath;
 
     public static void main(String[] args) {
-        NamedDiscontinuityStructure nd = NamedDiscontinuityStructure.prem();
+        NamedDiscontinuityStructure nd = prem();
         System.out.println(nd.getVs(3480 + 10e-9));
     }
 
@@ -289,8 +289,7 @@ public class NamedDiscontinuityStructure {
      */
     public double getVs(double r) {
         int izone = rToZone(r);
-        double vs = computeBullenLaw(r, vsA[izone], vsB[izone]);
-        return vs;
+        return computeBullenLaw(r, vsA[izone], vsB[izone]);
     }
 
     /**
@@ -299,8 +298,7 @@ public class NamedDiscontinuityStructure {
      */
     public double getQMu(double r) {
         int izone = rToZone(r);
-        double qMu = computeBullenLaw(r, qmuA[izone], qmuB[izone]);
-        return qMu;
+        return computeBullenLaw(r, qmuA[izone], qmuB[izone]);
     }
 
     /**
@@ -346,9 +344,9 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param r radius [km]
-     * @param a
-     * @param b
-     * @return a*(6371-r)**b
+     * @param a a
+     * @param b b
+     * @return a*(6371-r)<sup>b</sup>
      */
     private static double computeBullenLaw(double r, double a, double b) {
         return a * Math.pow(r, b);
@@ -396,8 +394,8 @@ public class NamedDiscontinuityStructure {
     /**
      * obtain the valued a, b of v(r) = a* r **b r is radius
      *
-     * @param izone
-     * @param val
+     * @param izone izone
+     * @param val val
      * @return the value a, b in Bullen expression.
      */
     private double[] computeBullenLaw(int izone, double[] val) {

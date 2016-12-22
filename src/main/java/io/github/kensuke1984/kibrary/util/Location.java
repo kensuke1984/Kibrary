@@ -83,7 +83,7 @@ public class Location extends HorizontalPosition {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
+        int prime = 31;
         int result = super.hashCode();
         long temp;
         temp = Double.doubleToLongBits(R);
@@ -97,8 +97,7 @@ public class Location extends HorizontalPosition {
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         Location other = (Location) obj;
-        if (Double.doubleToLongBits(R) != Double.doubleToLongBits(other.R)) return false;
-        return true;
+        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
     }
 
     /**

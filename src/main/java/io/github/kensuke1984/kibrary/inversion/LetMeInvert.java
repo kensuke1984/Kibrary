@@ -196,7 +196,7 @@ public class LetMeInvert implements Operation {
             outputDistribution(outPath.resolve("stationEventDistribution.inf"));
             dVector.outOrder(outPath);
             outEachTrace(outPath.resolve("trace"));
-            UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
+            UnknownParameterFile.write(eq.getparameterList(), outPath.resolve("unknownParameterOrder.inf"));
             eq.outputA(outPath.resolve("partial"));
             return null;
         };
@@ -254,16 +254,12 @@ public class LetMeInvert implements Operation {
         try (PrintWriter pwEvent = new PrintWriter(Files.newBufferedWriter(eventPath));
              PrintWriter pwStation = new PrintWriter(Files.newBufferedWriter(stationPath))) {
             pwEvent.println("#id latitude longitude radius variance");
-            d.getEventVariance().entrySet().forEach(entry -> {
-                pwEvent.println(
-                        entry.getKey() + " " + entry.getKey().getEvent().getCmtLocation() + " " + entry.getValue());
-            });
+            d.getEventVariance().entrySet().forEach(entry -> pwEvent.println(
+                    entry.getKey() + " " + entry.getKey().getEvent().getCmtLocation() + " " + entry.getValue()));
             pwStation.println("#name network latitude longitude variance");
-            d.getStationVariance().entrySet().forEach(entry -> {
-                pwStation.println(
-                        entry.getKey() + " " + entry.getKey().getNetwork() + " " + entry.getKey().getPosition() + " " +
-                                entry.getValue());
-            });
+            d.getStationVariance().entrySet().forEach(entry -> pwStation.println(
+                    entry.getKey() + " " + entry.getKey().getNetwork() + " " + entry.getKey().getPosition() + " " +
+                            entry.getValue()));
 
         }
         for (GlobalCMTID id : d.getUsedGlobalCMTIDset()) {
@@ -495,7 +491,7 @@ public class LetMeInvert implements Operation {
      * 自由度iに対してAICを計算する 独立データは n / alpha 各々のAIC群
      *
      * @param variance varianceの列
-     * @param alpha alpha redundancy
+     * @param alpha    alpha redundancy
      * @return array of aic
      */
     private double[] computeAIC(double[] variance, double alpha) {

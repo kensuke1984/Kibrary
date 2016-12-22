@@ -57,8 +57,8 @@ public class SourceTimeFunction {
             }
         };
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
-        final double deltaF = 1.0 / tlen;
-        final double constant = 2 * Math.PI * deltaF * halfDuration;
+        double deltaF = 1.0 / tlen;
+        double constant = 2 * Math.PI * deltaF * halfDuration;
         for (int i = 0; i < np; i++) {
             double omegaTau = (i + 1) * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex((2 - 2 * Math.cos(omegaTau)) / omegaTau / omegaTau);
@@ -84,8 +84,8 @@ public class SourceTimeFunction {
                                                               double halfDuration) {
         SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
-        final double deltaF = 1.0 / tlen; // omega
-        final double constant = 2 * Math.PI * deltaF * halfDuration;
+        double deltaF = 1.0 / tlen; // omega
+        double constant = 2 * Math.PI * deltaF * halfDuration;
         for (int i = 0; i < np; i++) {
             double omegaTau = (i + 1) * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex(Math.sin(omegaTau) / omegaTau);
@@ -116,8 +116,8 @@ public class SourceTimeFunction {
             }
         };
         sourceTimeFunction.sourceTimeFunction = new Complex[np];
-        final double deltaF = 1.0 / tlen; // omega
-        final double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
+        double deltaF = 1.0 / tlen; // omega
+        double constant = 2 * Math.PI * deltaF * halfDuration / 4 * Math.PI;
         for (int i = 0; i < np; i++) {
             double omegaTau = (i + 1) * constant;
             sourceTimeFunction.sourceTimeFunction[i] = new Complex(omegaTau / Math.sinh(omegaTau));

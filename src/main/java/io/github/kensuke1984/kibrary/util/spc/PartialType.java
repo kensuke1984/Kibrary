@@ -26,7 +26,7 @@ public enum PartialType {
 
 	private int value;
 
-	private PartialType(int n) {
+	PartialType(int n) {
 		value = n;
 	}
 

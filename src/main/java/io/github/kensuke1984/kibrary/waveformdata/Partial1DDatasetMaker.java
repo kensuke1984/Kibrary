@@ -424,8 +424,6 @@ public class Partial1DDatasetMaker implements Operation {
             id = eventDir.getGlobalCMTID();
         }
 
-        ;
-
     }
 
     public Partial1DDatasetMaker(Properties property) throws IOException {

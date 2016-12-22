@@ -18,7 +18,7 @@ import java.util.Comparator;
  * @author Kensuke Konishi
  * @version 0.0.1
  */
-class SACVarianceComparator implements DataComparator<SACData> {
+class SACVarianceComparator implements DataComparator<SACData[]> {
 
     SACVarianceComparator(Path obsDir) throws IOException {
         OBSERVED_DATASET = readObserved(obsDir);
@@ -71,9 +71,9 @@ class SACVarianceComparator implements DataComparator<SACData> {
     private final double SIGMA = 0.5;
 
     @Override
-    public double likelihood(SACData[] dataset) {
-        if (!hasProblems(dataset)) throw new RuntimeException("Invalid dataset");
-        return Math.exp(-2 * computeVariance(dataset) / SIGMA);
+    public double likelihood(SACData[] data) {
+        if (!hasProblems(data)) throw new RuntimeException("Invalid dataset");
+        return Math.exp(-2 * computeVariance(data) / SIGMA);
     }
 
 }

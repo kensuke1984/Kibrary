@@ -9,6 +9,7 @@ import java.util.*;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 
 /**
@@ -20,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  *         logFile is in run0.
  * @version 0.1.0
  */
-class MetroPolice<M, D> {
+public class MetroPolice<M, D> {
     private final Path WORK_DIR;
 
     /**
@@ -35,8 +36,8 @@ class MetroPolice<M, D> {
 
     private final DataGenerator<M, D> DATA_GENERATOR;
 
-    private MetroPolice(Path workDir, ModelGenerator<M> modelGenerator, DataGenerator<M, D> dataGenerator,
-                        DataComparator<D> dataComparator) throws IOException {
+    public MetroPolice(Path workDir, ModelGenerator<M> modelGenerator, DataGenerator<M, D> dataGenerator,
+                DataComparator<D> dataComparator) throws IOException {
         MODEL_GENERATOR = modelGenerator;
         DATA_COMPARATOR = dataComparator;
         DATA_GENERATOR = dataGenerator;
@@ -52,11 +53,9 @@ class MetroPolice<M, D> {
     private void run() throws IOException, InterruptedException {
 
         int nRun = limit;
-        boolean betterModel = false;
-
         System.out.println("MetroPolice is going.");
         M lastAdoptedModel = MODEL_GENERATOR.firstModel();
-        D[] lastAdoptedDataset = DATA_GENERATOR.generate(lastAdoptedModel);
+        D lastAdoptedDataset = DATA_GENERATOR.generate(lastAdoptedModel);
         Path lastAdoptedPath = MODEL_PATH.resolve("model0.inf");
         MODEL_GENERATOR.write(lastAdoptedPath, lastAdoptedModel);
         Files.createSymbolicLink(MODEL_PATH.resolve("adopted0.inf"), Paths.get("model0.inf"));
@@ -66,7 +65,7 @@ class MetroPolice<M, D> {
             M currentModel = MODEL_GENERATOR.createNextModel(lastAdoptedModel);
             Path currentPath = MODEL_PATH.resolve("model" + iRun + ".inf");
             MODEL_GENERATOR.write(currentPath, currentModel);
-            D[] currentDataset = DATA_GENERATOR.generate(currentModel);
+            D currentDataset = DATA_GENERATOR.generate(currentModel);
             double currentLikelihood = DATA_COMPARATOR.likelihood(currentDataset);
             if (judge(lastAdoptedLikelihood, currentLikelihood)) {
                 lastAdoptedModel = currentModel;
@@ -98,13 +97,18 @@ class MetroPolice<M, D> {
      * @throws InterruptedException iff any
      */
     public static void main(String[] args) throws IOException, InterruptedException {
+    }
+
+
+    private static void first() throws IOException, InterruptedException {
         Path root = Paths.get("/home/kensuke/secondDisk/montecarlo/test");
-        Path tmp = Files.createTempDirectory(root, "metro");
+        Path tmp = Files.createDirectories(root.resolve("metro" + Utilities.getTemporaryString()));
         Path obsdir = root.resolve("obs");
-        MetroPolice<PolynomialStructure, SACData> mp = new MetroPolice<>(tmp, new RandomPolynomialModelGenerator(),
+        MetroPolice<PolynomialStructure, SACData[]> mp = new MetroPolice<>(tmp, new RandomPolynomialModelGenerator(),
                 new DSMComputation(obsdir, tmp.resolve("data"), root.resolve("primePSV"),
                         StationInformationFile.read(root.resolve("station.inf"))), new SACVarianceComparator(obsdir));
         mp.run();
+
     }
 
 

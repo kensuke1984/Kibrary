@@ -7,5 +7,5 @@ package io.github.kensuke1984.kibrary.util.sac;
  * @version 0.0.1
  */
 public enum WaveformType {
-    OBS, SYN, PARTIAL;
+    OBS, SYN, PARTIAL
 }
