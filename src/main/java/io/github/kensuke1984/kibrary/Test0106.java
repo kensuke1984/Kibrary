@@ -15,7 +15,7 @@ public class Test0106 {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// TODO 自動生成されたメソッド・スタブ
+		// TODO 自動生成されたメソッド・スタブao
 		System.out.println("hihi");
 	}
 
