@@ -1,0 +1,36 @@
+              Apache Apache Commons Net
+                  Version 3.5
+                 RELEASE NOTES
+
+The Apache Commons Net team is pleased to announce the release of Apache Apache Commons Net 3.5
+
+Apache Commons Net library contains a collection of network utilities and protocol implementations.
+Supported protocols include: Echo, Finger, FTP, NNTP, NTP, POP3(S), SMTP(S), Telnet, Whois
+
+This is mainly a bug-fix release. See further details below.
+
+This release is binary compatible with previous releases.
+However it is not source compatible with releases before 3.4, as some methods were added to the interface NtpV3Packet in 3.4
+
+The code now requires a minimum of Java 1.6.
+
+Notable additions:
+ The IMAP examples can now get password from console, stdin or an environment variable.
+
+Changes in this version include:
+
+New features:
+o           Alternative password input methods for IMAP examples
+o           More tests for Feb 29 handling.
+
+Fixed Bugs:
+o NET-583:  FTPClient.getReplyString() returns wrong value after connect() Thanks to Holger Rehn.
+o NET-586:  Don't use Feb 29 for short future date tests
+o           Documentation tweaks
+
+
+
+For complete information on Apache Commons Net, including instructions on how to submit bug reports,
+patches, or suggestions for improvement, see the Apache Apache Commons Net website:
+
+http://commons.apache.org/proper/commons-net/

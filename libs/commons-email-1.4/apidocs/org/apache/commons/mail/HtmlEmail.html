@@ -1,0 +1,736 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- NewPage -->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
+<title>HtmlEmail (Apache Commons Email 1.4 API)</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<script type="text/javascript"><!--
+    if (location.href.indexOf('is-external=true') == -1) {
+        parent.document.title="HtmlEmail (Apache Commons Email 1.4 API)";
+    }
+//-->
+</script>
+<noscript>
+<div>JavaScript is disabled on your browser.</div>
+</noscript>
+<!-- ========= START OF TOP NAVBAR ======= -->
+<div class="topNav"><a name="navbar_top">
+<!--   -->
+</a><a href="#skip-navbar_top" title="Skip navigation links"></a><a name="navbar_top_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../../overview-summary.html">Overview</a></li>
+<li><a href="package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="class-use/HtmlEmail.html">Use</a></li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../../index-all.html">Index</a></li>
+<li><a href="../../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail"><span class="strong">Prev Class</span></a></li>
+<li><a href="../../../../org/apache/commons/mail/ImageHtmlEmail.html" title="class in org.apache.commons.mail"><span class="strong">Next Class</span></a></li>
+</ul>
+<ul class="navList">
+<li><a href="../../../../index.html?org/apache/commons/mail/HtmlEmail.html" target="_top">Frames</a></li>
+<li><a href="HtmlEmail.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_top">
+<li><a href="../../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_top");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#field_summary">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_summary">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li><a href="#field_detail">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_detail">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_detail">Method</a></li>
+</ul>
+</div>
+<a name="skip-navbar_top">
+<!--   -->
+</a></div>
+<!-- ========= END OF TOP NAVBAR ========= -->
+<!-- ======== START OF CLASS DATA ======== -->
+<div class="header">
+<div class="subTitle">org.apache.commons.mail</div>
+<h2 title="Class HtmlEmail" class="title">Class HtmlEmail</h2>
+</div>
+<div class="contentContainer">
+<ul class="inheritance">
+<li><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true" title="class or interface in java.lang">java.lang.Object</a></li>
+<li>
+<ul class="inheritance">
+<li><a href="../../../../org/apache/commons/mail/Email.html" title="class in org.apache.commons.mail">org.apache.commons.mail.Email</a></li>
+<li>
+<ul class="inheritance">
+<li><a href="../../../../org/apache/commons/mail/MultiPartEmail.html" title="class in org.apache.commons.mail">org.apache.commons.mail.MultiPartEmail</a></li>
+<li>
+<ul class="inheritance">
+<li>org.apache.commons.mail.HtmlEmail</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="description">
+<ul class="blockList">
+<li class="blockList">
+<dl>
+<dt>Direct Known Subclasses:</dt>
+<dd><a href="../../../../org/apache/commons/mail/ImageHtmlEmail.html" title="class in org.apache.commons.mail">ImageHtmlEmail</a></dd>
+</dl>
+<hr>
+<br>
+<pre>public class <span class="strong">HtmlEmail</span>
+extends <a href="../../../../org/apache/commons/mail/MultiPartEmail.html" title="class in org.apache.commons.mail">MultiPartEmail</a></pre>
+<div class="block">An HTML multipart email.
+
+ <p>This class is used to send HTML formatted email.  A text message
+ can also be set for HTML unaware email clients, such as text-based
+ email clients.
+
+ <p>This class also inherits from <a href="../../../../org/apache/commons/mail/MultiPartEmail.html" title="class in org.apache.commons.mail"><code>MultiPartEmail</code></a>, so it is easy to
+ add attachments to the email.
+
+ <p>To send an email in HTML, one should create a <code>HtmlEmail</code>, then
+ use the <a href="../../../../org/apache/commons/mail/Email.html#setFrom(java.lang.String)"><code>Email.setFrom(String)</code></a>, <a href="../../../../org/apache/commons/mail/Email.html#addTo(java.lang.String)"><code>Email.addTo(String)</code></a> etc. methods.
+ The HTML content can be set with the <a href="../../../../org/apache/commons/mail/HtmlEmail.html#setHtmlMsg(java.lang.String)"><code>setHtmlMsg(String)</code></a> method. The
+ alternative text content can be set with <a href="../../../../org/apache/commons/mail/HtmlEmail.html#setTextMsg(java.lang.String)"><code>setTextMsg(String)</code></a>.
+
+ <p>Either the text or HTML can be omitted, in which case the "main"
+ part of the multipart becomes whichever is supplied rather than a
+ <code>multipart/alternative</code>.
+
+ <h3>Embedding Images and Media</h3>
+
+ <p>It is also possible to embed URLs, files, or arbitrary
+ <code>DataSource</code>s directly into the body of the mail:
+ <pre>
+ HtmlEmail he = new HtmlEmail();
+ File img = new File("my/image.gif");
+ PNGDataSource png = new PNGDataSource(decodedPNGOutputStream); // a custom class
+ StringBuffer msg = new StringBuffer();
+ msg.append("&lt;html&gt;&lt;body&gt;");
+ msg.append("&lt;img src=cid:").append(he.embed(img)).append("&gt;");
+ msg.append("&lt;img src=cid:").append(he.embed(png)).append("&gt;");
+ msg.append("&lt;/body&gt;&lt;/html&gt;");
+ he.setHtmlMsg(msg.toString());
+ // code to set the other email fields (not shown)
+ </pre>
+
+ <p>Embedded entities are tracked by their name, which for <code>File</code>s is
+ the filename itself and for <code>URL</code>s is the canonical path. It is
+ an error to bind the same name to more than one entity, and this class will
+ attempt to validate that for <code>File</code>s and <code>URL</code>s. When
+ embedding a <code>DataSource</code>, the code uses the <code>equals()</code>
+ method defined on the <code>DataSource</code>s to make the determination.</div>
+<dl><dt><span class="strong">Since:</span></dt>
+  <dd>1.0</dd>
+<dt><span class="strong">Version:</span></dt>
+  <dd>$Id: HtmlEmail.java 1647983 2014-12-26 14:25:27Z tn $</dd></dl>
+</li>
+</ul>
+</div>
+<div class="summary">
+<ul class="blockList">
+<li class="blockList">
+<!-- =========== FIELD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field_summary">
+<!--   -->
+</a>
+<h3>Field Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Field and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#CID_LENGTH">CID_LENGTH</a></strong></code>
+<div class="block">Definition of the length of generated CID's.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#html">html</a></strong></code>
+<div class="block">Html part of the message.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected <a href="http://docs.oracle.com/javase/7/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a>&lt;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>,org.apache.commons.mail.HtmlEmail.InlineImage&gt;</code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#inlineEmbeds">inlineEmbeds</a></strong></code>
+<div class="block">Embedded images Map&lt;String, InlineImage&gt; where the key is the
+ user-defined image name.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected <a href="http://docs.oracle.com/javase/7/docs/api/java/util/List.html?is-external=true" title="class or interface in java.util">List</a>&lt;org.apache.commons.mail.HtmlEmail.InlineImage&gt;</code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#inlineImages">inlineImages</a></strong></code>
+<div class="block"><strong>Deprecated.</strong>&nbsp;
+<div class="block"><i>As of commons-email 1.1, no longer used. Inline embedded
+ objects are now stored in <a href="../../../../org/apache/commons/mail/HtmlEmail.html#inlineEmbeds"><code>inlineEmbeds</code></a>.</i></div>
+</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#text">text</a></strong></code>
+<div class="block">Text part of the message.</div>
+</td>
+</tr>
+</table>
+<ul class="blockList">
+<li class="blockList"><a name="fields_inherited_from_class_org.apache.commons.mail.Email">
+<!--   -->
+</a>
+<h3>Fields inherited from class&nbsp;org.apache.commons.mail.<a href="../../../../org/apache/commons/mail/Email.html" title="class in org.apache.commons.mail">Email</a></h3>
+<code><a href="../../../../org/apache/commons/mail/Email.html#ATTACHMENTS">ATTACHMENTS</a>, <a href="../../../../org/apache/commons/mail/Email.html#authenticator">authenticator</a>, <a href="../../../../org/apache/commons/mail/Email.html#bccList">bccList</a>, <a href="../../../../org/apache/commons/mail/Email.html#bounceAddress">bounceAddress</a>, <a href="../../../../org/apache/commons/mail/Email.html#ccList">ccList</a>, <a href="../../../../org/apache/commons/mail/Email.html#charset">charset</a>, <a href="../../../../org/apache/commons/mail/Email.html#content">content</a>, <a href="../../../../org/apache/commons/mail/Email.html#CONTENT_TYPE">CONTENT_TYPE</a>, <a href="../../../../org/apache/commons/mail/Email.html#contentType">contentType</a>, <a href="../../../../org/apache/commons/mail/Email.html#debug">debug</a>, <a href="../../../../org/apache/commons/mail/Email.html#EMAIL_BODY">EMAIL_BODY</a>, <a href="../../../../org/apache/commons/mail/Email.html#EMAIL_SUBJECT">EMAIL_SUBJECT</a>, <a href="../../../../org/apache/commons/mail/Email.html#emailBody">emailBody</a>, <a href="../../../../org/apache/commons/mail/Email.html#FILE_SERVER">FILE_SERVER</a>, <a href="../../../../org/apache/commons/mail/Email.html#fromAddress">fromAddress</a>, <a href="../../../../org/apache/commons/mail/Email.html#headers">headers</a>, <a href="../../../../org/apache/commons/mail/Email.html#hostName">hostName</a>, <a href="../../../../org/apache/commons/mail/Email.html#ISO_8859_1">ISO_8859_1</a>, <a href="../../../../org/apache/commons/mail/Email.html#KOI8_R">KOI8_R</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_DEBUG">MAIL_DEBUG</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_HOST">MAIL_HOST</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_PORT">MAIL_PORT</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_AUTH">MAIL_SMTP_AUTH</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_CONNECTIONTIMEOUT">MAIL_SMTP_CONNECTIONTIMEOUT</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_FROM">MAIL_SMTP_FROM</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_PASSWORD">MAIL_SMTP_PASSWORD</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_SOCKET_FACTORY_CLASS">MAIL_SMTP_SOCKET_FACTORY_CLASS</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_SOCKET_FACTORY_FALLBACK">MAIL_SMTP_SOCKET_FACTORY_FALLBACK</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_SOCKET_FACTORY_PORT">MAIL_SMTP_SOCKET_FACTORY_PORT</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_TIMEOUT">MAIL_SMTP_TIMEOUT</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_SMTP_USER">MAIL_SMTP_USER</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_TRANSPORT_PROTOCOL">MAIL_TRANSPORT_PROTOCOL</a>, <a href="../../../../org/apache/commons/mail/Email.html#MAIL_TRANSPORT_TLS">MAIL_TRANSPORT_TLS</a>, <a href="../../../../org/apache/commons/mail/Email.html#message">message</a>, <a href="../../../../org/apache/commons/mail/Email.html#popBeforeSmtp">popBeforeSmtp</a>, <a href="../../../../org/apache/commons/mail/Email.html#popHost">popHost</a>, <a href="../../../../org/apache/commons/mail/Email.html#popPassword">popPassword</a>, <a href="../../../../org/apache/commons/mail/Email.html#popUsername">popUsername</a>, <a href="../../../../org/apache/commons/mail/Email.html#RECEIVER_EMAIL">RECEIVER_EMAIL</a>, <a href="../../../../org/apache/commons/mail/Email.html#RECEIVER_NAME">RECEIVER_NAME</a>, <a href="../../../../org/apache/commons/mail/Email.html#replyList">replyList</a>, <a href="../../../../org/apache/commons/mail/Email.html#SENDER_EMAIL">SENDER_EMAIL</a>, <a href="../../../../org/apache/commons/mail/Email.html#SENDER_NAME">SENDER_NAME</a>, <a href="../../../../org/apache/commons/mail/Email.html#sentDate">sentDate</a>, <a href="../../../../org/apache/commons/mail/Email.html#SMTP">SMTP</a>, <a href="../../../../org/apache/commons/mail/Email.html#smtpPort">smtpPort</a>, <a href="../../../../org/apache/commons/mail/Email.html#socketConnectionTimeout">socketConnectionTimeout</a>, <a href="../../../../org/apache/commons/mail/Email.html#socketTimeout">socketTimeout</a>, <a href="../../../../org/apache/commons/mail/Email.html#ssl">ssl</a>, <a href="../../../../org/apache/commons/mail/Email.html#sslSmtpPort">sslSmtpPort</a>, <a href="../../../../org/apache/commons/mail/Email.html#subject">subject</a>, <a href="../../../../org/apache/commons/mail/Email.html#TEXT_HTML">TEXT_HTML</a>, <a href="../../../../org/apache/commons/mail/Email.html#TEXT_PLAIN">TEXT_PLAIN</a>, <a href="../../../../org/apache/commons/mail/Email.html#tls">tls</a>, <a href="../../../../org/apache/commons/mail/Email.html#toList">toList</a>, <a href="../../../../org/apache/commons/mail/Email.html#US_ASCII">US_ASCII</a></code></li>
+</ul>
+</li>
+</ul>
+<!-- ======== CONSTRUCTOR SUMMARY ======== -->
+<ul class="blockList">
+<li class="blockList"><a name="constructor_summary">
+<!--   -->
+</a>
+<h3>Constructor Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Constructor Summary table, listing constructors, and an explanation">
+<caption><span>Constructors</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colOne" scope="col">Constructor and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colOne"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#HtmlEmail()">HtmlEmail</a></strong>()</code>&nbsp;</td>
+</tr>
+</table>
+</li>
+</ul>
+<!-- ========== METHOD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method_summary">
+<!--   -->
+</a>
+<h3>Method Summary</h3>
+<table class="overviewSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
+<caption><span>Methods</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Method and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#buildMimeMessage()">buildMimeMessage</a></strong>()</code>
+<div class="block">Does the work of actually building the MimeMessage.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(javax.activation.DataSource,%20java.lang.String)">embed</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/javax/activation/DataSource.html?is-external=true" title="class or interface in javax.activation">DataSource</a>&nbsp;dataSource,
+     <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name)</code>
+<div class="block">Embeds the specified <code>DataSource</code> in the HTML using a
+ randomly generated Content-ID.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(javax.activation.DataSource,%20java.lang.String,%20java.lang.String)">embed</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/javax/activation/DataSource.html?is-external=true" title="class or interface in javax.activation">DataSource</a>&nbsp;dataSource,
+     <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name,
+     <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;cid)</code>
+<div class="block">Embeds the specified <code>DataSource</code> in the HTML using the
+ specified Content-ID.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.io.File)">embed</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/io/File.html?is-external=true" title="class or interface in java.io">File</a>&nbsp;file)</code>
+<div class="block">Embeds a file in the HTML.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.io.File,%20java.lang.String)">embed</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/io/File.html?is-external=true" title="class or interface in java.io">File</a>&nbsp;file,
+     <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;cid)</code>
+<div class="block">Embeds a file in the HTML.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.lang.String,%20java.lang.String)">embed</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;urlString,
+     <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name)</code>
+<div class="block">Attempts to parse the specified <code>String</code> as a URL that will
+ then be embedded in the message.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.net.URL,%20java.lang.String)">embed</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/net/URL.html?is-external=true" title="class or interface in java.net">URL</a>&nbsp;url,
+     <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name)</code>
+<div class="block">Embeds an URL in the HTML.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code><a href="../../../../org/apache/commons/mail/HtmlEmail.html" title="class in org.apache.commons.mail">HtmlEmail</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#setHtmlMsg(java.lang.String)">setHtmlMsg</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;aHtml)</code>
+<div class="block">Set the HTML content.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code><a href="../../../../org/apache/commons/mail/Email.html" title="class in org.apache.commons.mail">Email</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#setMsg(java.lang.String)">setMsg</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;msg)</code>
+<div class="block">Set the message.</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code><a href="../../../../org/apache/commons/mail/HtmlEmail.html" title="class in org.apache.commons.mail">HtmlEmail</a></code></td>
+<td class="colLast"><code><strong><a href="../../../../org/apache/commons/mail/HtmlEmail.html#setTextMsg(java.lang.String)">setTextMsg</a></strong>(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;aText)</code>
+<div class="block">Set the text content.</div>
+</td>
+</tr>
+</table>
+<ul class="blockList">
+<li class="blockList"><a name="methods_inherited_from_class_org.apache.commons.mail.MultiPartEmail">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;org.apache.commons.mail.<a href="../../../../org/apache/commons/mail/MultiPartEmail.html" title="class in org.apache.commons.mail">MultiPartEmail</a></h3>
+<code><a href="../../../../org/apache/commons/mail/MultiPartEmail.html#addPart(javax.mail.internet.MimeMultipart)">addPart</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#addPart(javax.mail.internet.MimeMultipart,%20int)">addPart</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#addPart(java.lang.String,%20java.lang.String)">addPart</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#attach(javax.activation.DataSource,%20java.lang.String,%20java.lang.String)">attach</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#attach(javax.activation.DataSource,%20java.lang.String,%20java.lang.String,%20java.lang.String)">attach</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#attach(org.apache.commons.mail.EmailAttachment)">attach</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#attach(java.io.File)">attach</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#attach(java.net.URL,%20java.lang.String,%20java.lang.String)">attach</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#attach(java.net.URL,%20java.lang.String,%20java.lang.String,%20java.lang.String)">attach</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#createBodyPart()">createBodyPart</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#createMimeMultipart()">createMimeMultipart</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#getContainer()">getContainer</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#getPrimaryBodyPart()">getPrimaryBodyPart</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#getSubType()">getSubType</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#init()">init</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#isBoolHasAttachments()">isBoolHasAttachments</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#isInitialized()">isInitialized</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#setBoolHasAttachments(boolean)">setBoolHasAttachments</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#setInitialized(boolean)">setInitialized</a>, <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#setSubType(java.lang.String)">setSubType</a></code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods_inherited_from_class_org.apache.commons.mail.Email">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;org.apache.commons.mail.<a href="../../../../org/apache/commons/mail/Email.html" title="class in org.apache.commons.mail">Email</a></h3>
+<code><a href="../../../../org/apache/commons/mail/Email.html#addBcc(java.lang.String...)">addBcc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addBcc(java.lang.String)">addBcc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addBcc(java.lang.String,%20java.lang.String)">addBcc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addBcc(java.lang.String,%20java.lang.String,%20java.lang.String)">addBcc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addCc(java.lang.String...)">addCc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addCc(java.lang.String)">addCc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addCc(java.lang.String,%20java.lang.String)">addCc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addCc(java.lang.String,%20java.lang.String,%20java.lang.String)">addCc</a>, <a href="../../../../org/apache/commons/mail/Email.html#addHeader(java.lang.String,%20java.lang.String)">addHeader</a>, <a href="../../../../org/apache/commons/mail/Email.html#addReplyTo(java.lang.String)">addReplyTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#addReplyTo(java.lang.String,%20java.lang.String)">addReplyTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#addReplyTo(java.lang.String,%20java.lang.String,%20java.lang.String)">addReplyTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#addTo(java.lang.String...)">addTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#addTo(java.lang.String)">addTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#addTo(java.lang.String,%20java.lang.String)">addTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#addTo(java.lang.String,%20java.lang.String,%20java.lang.String)">addTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#createMimeMessage(javax.mail.Session)">createMimeMessage</a>, <a href="../../../../org/apache/commons/mail/Email.html#getBccAddresses()">getBccAddresses</a>, <a href="../../../../org/apache/commons/mail/Email.html#getBounceAddress()">getBounceAddress</a>, <a href="../../../../org/apache/commons/mail/Email.html#getCcAddresses()">getCcAddresses</a>, <a href="../../../../org/apache/commons/mail/Email.html#getFromAddress()">getFromAddress</a>, <a href="../../../../org/apache/commons/mail/Email.html#getHostName()">getHostName</a>, <a href="../../../../org/apache/commons/mail/Email.html#getMailSession()">getMailSession</a>, <a href="../../../../org/apache/commons/mail/Email.html#getMimeMessage()">getMimeMessage</a>, <a href="../../../../org/apache/commons/mail/Email.html#getReplyToAddresses()">getReplyToAddresses</a>, <a href="../../../../org/apache/commons/mail/Email.html#getSentDate()">getSentDate</a>, <a href="../../../../org/apache/commons/mail/Email.html#getSmtpPort()">getSmtpPort</a>, <a href="../../../../org/apache/commons/mail/Email.html#getSocketConnectionTimeout()">getSocketConnectionTimeout</a>, <a href="../../../../org/apache/commons/mail/Email.html#getSocketTimeout()">getSocketTimeout</a>, <a href="../../../../org/apache/commons/mail/Email.html#getSslSmtpPort()">getSslSmtpPort</a>, <a href="../../../../org/apache/commons/mail/Email.html#getSubject()">getSubject</a>, <a href="../../../../org/apache/commons/mail/Email.html#getToAddresses()">getToAddresses</a>, <a href="../../../../org/apache/commons/mail/Email.html#isSendPartial()">isSendPartial</a>, <a href="../../../../org/apache/commons/mail/Email.html#isSSL()">isSSL</a>, <a href="../../../../org/apache/commons/mail/Email.html#isSSLCheckServerIdentity()">isSSLCheckServerIdentity</a>, <a href="../../../../org/apache/commons/mail/Email.html#isSSLOnConnect()">isSSLOnConnect</a>, <a href="../../../../org/apache/commons/mail/Email.html#isStartTLSEnabled()">isStartTLSEnabled</a>, <a href="../../../../org/apache/commons/mail/Email.html#isStartTLSRequired()">isStartTLSRequired</a>, <a href="../../../../org/apache/commons/mail/Email.html#isTLS()">isTLS</a>, <a href="../../../../org/apache/commons/mail/Email.html#send()">send</a>, <a href="../../../../org/apache/commons/mail/Email.html#sendMimeMessage()">sendMimeMessage</a>, <a href="../../../../org/apache/commons/mail/Email.html#setAuthentication(java.lang.String,%20java.lang.String)">setAuthentication</a>, <a href="../../../../org/apache/commons/mail/Email.html#setAuthenticator(javax.mail.Authenticator)">setAuthenticator</a>, <a href="../../../../org/apache/commons/mail/Email.html#setBcc(java.util.Collection)">setBcc</a>, <a href="../../../../org/apache/commons/mail/Email.html#setBounceAddress(java.lang.String)">setBounceAddress</a>, <a href="../../../../org/apache/commons/mail/Email.html#setCc(java.util.Collection)">setCc</a>, <a href="../../../../org/apache/commons/mail/Email.html#setCharset(java.lang.String)">setCharset</a>, <a href="../../../../org/apache/commons/mail/Email.html#setContent(javax.mail.internet.MimeMultipart)">setContent</a>, <a href="../../../../org/apache/commons/mail/Email.html#setContent(java.lang.Object,%20java.lang.String)">setContent</a>, <a href="../../../../org/apache/commons/mail/Email.html#setDebug(boolean)">setDebug</a>, <a href="../../../../org/apache/commons/mail/Email.html#setFrom(java.lang.String)">setFrom</a>, <a href="../../../../org/apache/commons/mail/Email.html#setFrom(java.lang.String,%20java.lang.String)">setFrom</a>, <a href="../../../../org/apache/commons/mail/Email.html#setFrom(java.lang.String,%20java.lang.String,%20java.lang.String)">setFrom</a>, <a href="../../../../org/apache/commons/mail/Email.html#setHeaders(java.util.Map)">setHeaders</a>, <a href="../../../../org/apache/commons/mail/Email.html#setHostName(java.lang.String)">setHostName</a>, <a href="../../../../org/apache/commons/mail/Email.html#setMailSession(javax.mail.Session)">setMailSession</a>, <a href="../../../../org/apache/commons/mail/Email.html#setMailSessionFromJNDI(java.lang.String)">setMailSessionFromJNDI</a>, <a href="../../../../org/apache/commons/mail/Email.html#setPopBeforeSmtp(boolean,%20java.lang.String,%20java.lang.String,%20java.lang.String)">setPopBeforeSmtp</a>, <a href="../../../../org/apache/commons/mail/Email.html#setReplyTo(java.util.Collection)">setReplyTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSendPartial(boolean)">setSendPartial</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSentDate(java.util.Date)">setSentDate</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSmtpPort(int)">setSmtpPort</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSocketConnectionTimeout(int)">setSocketConnectionTimeout</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSocketTimeout(int)">setSocketTimeout</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSSL(boolean)">setSSL</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSSLCheckServerIdentity(boolean)">setSSLCheckServerIdentity</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSSLOnConnect(boolean)">setSSLOnConnect</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSslSmtpPort(java.lang.String)">setSslSmtpPort</a>, <a href="../../../../org/apache/commons/mail/Email.html#setStartTLSEnabled(boolean)">setStartTLSEnabled</a>, <a href="../../../../org/apache/commons/mail/Email.html#setStartTLSRequired(boolean)">setStartTLSRequired</a>, <a href="../../../../org/apache/commons/mail/Email.html#setSubject(java.lang.String)">setSubject</a>, <a href="../../../../org/apache/commons/mail/Email.html#setTLS(boolean)">setTLS</a>, <a href="../../../../org/apache/commons/mail/Email.html#setTo(java.util.Collection)">setTo</a>, <a href="../../../../org/apache/commons/mail/Email.html#toInternetAddressArray(java.util.List)">toInternetAddressArray</a>, <a href="../../../../org/apache/commons/mail/Email.html#updateContentType(java.lang.String)">updateContentType</a></code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods_inherited_from_class_java.lang.Object">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;java.lang.<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true" title="class or interface in java.lang">Object</a></h3>
+<code><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#clone()" title="class or interface in java.lang">clone</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#equals(java.lang.Object)" title="class or interface in java.lang">equals</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#finalize()" title="class or interface in java.lang">finalize</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#getClass()" title="class or interface in java.lang">getClass</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#hashCode()" title="class or interface in java.lang">hashCode</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#notify()" title="class or interface in java.lang">notify</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#notifyAll()" title="class or interface in java.lang">notifyAll</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#toString()" title="class or interface in java.lang">toString</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#wait()" title="class or interface in java.lang">wait</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#wait(long)" title="class or interface in java.lang">wait</a>, <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Object.html?is-external=true#wait(long,%20int)" title="class or interface in java.lang">wait</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="details">
+<ul class="blockList">
+<li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field_detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a name="CID_LENGTH">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>CID_LENGTH</h4>
+<pre>public static final&nbsp;int CID_LENGTH</pre>
+<div class="block">Definition of the length of generated CID's.</div>
+<dl><dt><span class="strong">See Also:</span></dt><dd><a href="../../../../constant-values.html#org.apache.commons.mail.HtmlEmail.CID_LENGTH">Constant Field Values</a></dd></dl>
+</li>
+</ul>
+<a name="text">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>text</h4>
+<pre>protected&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> text</pre>
+<div class="block">Text part of the message. This will be used as alternative text if
+ the email client does not support HTML messages.</div>
+</li>
+</ul>
+<a name="html">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>html</h4>
+<pre>protected&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> html</pre>
+<div class="block">Html part of the message.</div>
+</li>
+</ul>
+<a name="inlineImages">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>inlineImages</h4>
+<pre><a href="http://docs.oracle.com/javase/7/docs/api/java/lang/Deprecated.html?is-external=true" title="class or interface in java.lang">@Deprecated</a>
+protected&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/util/List.html?is-external=true" title="class or interface in java.util">List</a>&lt;org.apache.commons.mail.HtmlEmail.InlineImage&gt; inlineImages</pre>
+<div class="block"><span class="strong">Deprecated.</span>&nbsp;<i>As of commons-email 1.1, no longer used. Inline embedded
+ objects are now stored in <a href="../../../../org/apache/commons/mail/HtmlEmail.html#inlineEmbeds"><code>inlineEmbeds</code></a>.</i></div>
+</li>
+</ul>
+<a name="inlineEmbeds">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>inlineEmbeds</h4>
+<pre>protected&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a>&lt;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>,org.apache.commons.mail.HtmlEmail.InlineImage&gt; inlineEmbeds</pre>
+<div class="block">Embedded images Map&lt;String, InlineImage&gt; where the key is the
+ user-defined image name.</div>
+</li>
+</ul>
+</li>
+</ul>
+<!-- ========= CONSTRUCTOR DETAIL ======== -->
+<ul class="blockList">
+<li class="blockList"><a name="constructor_detail">
+<!--   -->
+</a>
+<h3>Constructor Detail</h3>
+<a name="HtmlEmail()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>HtmlEmail</h4>
+<pre>public&nbsp;HtmlEmail()</pre>
+</li>
+</ul>
+</li>
+</ul>
+<!-- ============ METHOD DETAIL ========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method_detail">
+<!--   -->
+</a>
+<h3>Method Detail</h3>
+<a name="setTextMsg(java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setTextMsg</h4>
+<pre>public&nbsp;<a href="../../../../org/apache/commons/mail/HtmlEmail.html" title="class in org.apache.commons.mail">HtmlEmail</a>&nbsp;setTextMsg(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;aText)
+                     throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Set the text content.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>aText</code> - A String.</dd>
+<dt><span class="strong">Returns:</span></dt><dd>An HtmlEmail.</dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - see javax.mail.internet.MimeBodyPart
+  for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.0</dd></dl>
+</li>
+</ul>
+<a name="setHtmlMsg(java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setHtmlMsg</h4>
+<pre>public&nbsp;<a href="../../../../org/apache/commons/mail/HtmlEmail.html" title="class in org.apache.commons.mail">HtmlEmail</a>&nbsp;setHtmlMsg(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;aHtml)
+                     throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Set the HTML content.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>aHtml</code> - A String.</dd>
+<dt><span class="strong">Returns:</span></dt><dd>An HtmlEmail.</dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - see javax.mail.internet.MimeBodyPart
+  for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.0</dd></dl>
+</li>
+</ul>
+<a name="setMsg(java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setMsg</h4>
+<pre>public&nbsp;<a href="../../../../org/apache/commons/mail/Email.html" title="class in org.apache.commons.mail">Email</a>&nbsp;setMsg(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;msg)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Set the message.
+
+ <p>This method overrides <a href="../../../../org/apache/commons/mail/MultiPartEmail.html#setMsg(java.lang.String)"><code>MultiPartEmail.setMsg(String)</code></a> in
+ order to send an HTML message instead of a plain text message in
+ the mail body. The message is formatted in HTML for the HTML
+ part of the message; it is left as is in the alternate text
+ part.</div>
+<dl>
+<dt><strong>Overrides:</strong></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/MultiPartEmail.html#setMsg(java.lang.String)">setMsg</a></code>&nbsp;in class&nbsp;<code><a href="../../../../org/apache/commons/mail/MultiPartEmail.html" title="class in org.apache.commons.mail">MultiPartEmail</a></code></dd>
+<dt><span class="strong">Parameters:</span></dt><dd><code>msg</code> - the message text to use</dd>
+<dt><span class="strong">Returns:</span></dt><dd>this <code>HtmlEmail</code></dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - if msg is null or empty;
+ see javax.mail.internet.MimeBodyPart for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.0</dd></dl>
+</li>
+</ul>
+<a name="embed(java.lang.String, java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>embed</h4>
+<pre>public&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;embed(<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;urlString,
+           <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Attempts to parse the specified <code>String</code> as a URL that will
+ then be embedded in the message.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>urlString</code> - String representation of the URL.</dd><dd><code>name</code> - The name that will be set in the filename header field.</dd>
+<dt><span class="strong">Returns:</span></dt><dd>A String with the Content-ID of the URL.</dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - when URL supplied is invalid or if <code>name</code> is null
+ or empty; also see <a href="http://docs.oracle.com/javaee/6/api/javax/mail/internet/MimeBodyPart.html?is-external=true" title="class or interface in javax.mail.internet"><code>MimeBodyPart</code></a> for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.1</dd>
+<dt><span class="strong">See Also:</span></dt><dd><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.net.URL,%20java.lang.String)"><code>embed(URL, String)</code></a></dd></dl>
+</li>
+</ul>
+<a name="embed(java.net.URL, java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>embed</h4>
+<pre>public&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;embed(<a href="http://docs.oracle.com/javase/7/docs/api/java/net/URL.html?is-external=true" title="class or interface in java.net">URL</a>&nbsp;url,
+           <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Embeds an URL in the HTML.
+
+ <p>This method embeds a file located by an URL into
+ the mail body. It allows, for instance, to add inline images
+ to the email.  Inline files may be referenced with a
+ <code>cid:xxxxxx</code> URL, where xxxxxx is the Content-ID
+ returned by the embed function. It is an error to bind the same name
+ to more than one URL; if the same URL is embedded multiple times, the
+ same Content-ID is guaranteed to be returned.
+
+ <p>While functionally the same as passing <code>URLDataSource</code> to
+ <a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(javax.activation.DataSource,%20java.lang.String,%20java.lang.String)"><code>embed(DataSource, String, String)</code></a>, this method attempts
+ to validate the URL before embedding it in the message and will throw
+ <code>EmailException</code> if the validation fails. In this case, the
+ <code>HtmlEmail</code> object will not be changed.
+
+ <p>
+ NOTE: Clients should take care to ensure that different URLs are bound to
+ different names. This implementation tries to detect this and throw
+ <code>EmailException</code>. However, it is not guaranteed to catch
+ all cases, especially when the URL refers to a remote HTTP host that
+ may be part of a virtual host cluster.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>url</code> - The URL of the file.</dd><dd><code>name</code> - The name that will be set in the filename header
+ field.</dd>
+<dt><span class="strong">Returns:</span></dt><dd>A String with the Content-ID of the file.</dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - when URL supplied is invalid or if <code>name</code> is null
+ or empty; also see <a href="http://docs.oracle.com/javaee/6/api/javax/mail/internet/MimeBodyPart.html?is-external=true" title="class or interface in javax.mail.internet"><code>MimeBodyPart</code></a> for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.0</dd></dl>
+</li>
+</ul>
+<a name="embed(java.io.File)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>embed</h4>
+<pre>public&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;embed(<a href="http://docs.oracle.com/javase/7/docs/api/java/io/File.html?is-external=true" title="class or interface in java.io">File</a>&nbsp;file)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Embeds a file in the HTML. This implementation delegates to
+ <a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.io.File,%20java.lang.String)"><code>embed(File, String)</code></a>.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>file</code> - The <code>File</code> object to embed</dd>
+<dt><span class="strong">Returns:</span></dt><dd>A String with the Content-ID of the file.</dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - when the supplied <code>File</code> cannot be
+ used; also see <a href="http://docs.oracle.com/javaee/6/api/javax/mail/internet/MimeBodyPart.html?is-external=true" title="class or interface in javax.mail.internet"><code>MimeBodyPart</code></a> for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.1</dd>
+<dt><span class="strong">See Also:</span></dt><dd><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(java.io.File,%20java.lang.String)"><code>embed(File, String)</code></a></dd></dl>
+</li>
+</ul>
+<a name="embed(java.io.File, java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>embed</h4>
+<pre>public&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;embed(<a href="http://docs.oracle.com/javase/7/docs/api/java/io/File.html?is-external=true" title="class or interface in java.io">File</a>&nbsp;file,
+           <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;cid)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Embeds a file in the HTML.
+
+ <p>This method embeds a file located by an URL into
+ the mail body. It allows, for instance, to add inline images
+ to the email.  Inline files may be referenced with a
+ <code>cid:xxxxxx</code> URL, where xxxxxx is the Content-ID
+ returned by the embed function. Files are bound to their names, which is
+ the value returned by <a href="http://docs.oracle.com/javase/7/docs/api/java/io/File.html?is-external=true#getName()" title="class or interface in java.io"><code>File.getName()</code></a>. If the same file
+ is embedded multiple times, the same CID is guaranteed to be returned.
+
+ <p>While functionally the same as passing <code>FileDataSource</code> to
+ <a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(javax.activation.DataSource,%20java.lang.String,%20java.lang.String)"><code>embed(DataSource, String, String)</code></a>, this method attempts
+ to validate the file before embedding it in the message and will throw
+ <code>EmailException</code> if the validation fails. In this case, the
+ <code>HtmlEmail</code> object will not be changed.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>file</code> - The <code>File</code> to embed</dd><dd><code>cid</code> - the Content-ID to use for the embedded <code>File</code></dd>
+<dt><span class="strong">Returns:</span></dt><dd>A String with the Content-ID of the file.</dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - when the supplied <code>File</code> cannot be used
+  or if the file has already been embedded;
+  also see <a href="http://docs.oracle.com/javaee/6/api/javax/mail/internet/MimeBodyPart.html?is-external=true" title="class or interface in javax.mail.internet"><code>MimeBodyPart</code></a> for definitions</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.1</dd></dl>
+</li>
+</ul>
+<a name="embed(javax.activation.DataSource, java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>embed</h4>
+<pre>public&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;embed(<a href="http://docs.oracle.com/javase/7/docs/api/javax/activation/DataSource.html?is-external=true" title="class or interface in javax.activation">DataSource</a>&nbsp;dataSource,
+           <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Embeds the specified <code>DataSource</code> in the HTML using a
+ randomly generated Content-ID. Returns the generated Content-ID string.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>dataSource</code> - the <code>DataSource</code> to embed</dd><dd><code>name</code> - the name that will be set in the filename header field</dd>
+<dt><span class="strong">Returns:</span></dt><dd>the generated Content-ID for this <code>DataSource</code></dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - if the embedding fails or if <code>name</code> is
+ null or empty</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.1</dd>
+<dt><span class="strong">See Also:</span></dt><dd><a href="../../../../org/apache/commons/mail/HtmlEmail.html#embed(javax.activation.DataSource,%20java.lang.String,%20java.lang.String)"><code>embed(DataSource, String, String)</code></a></dd></dl>
+</li>
+</ul>
+<a name="embed(javax.activation.DataSource, java.lang.String, java.lang.String)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>embed</h4>
+<pre>public&nbsp;<a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;embed(<a href="http://docs.oracle.com/javase/7/docs/api/javax/activation/DataSource.html?is-external=true" title="class or interface in javax.activation">DataSource</a>&nbsp;dataSource,
+           <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;name,
+           <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;cid)
+             throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Embeds the specified <code>DataSource</code> in the HTML using the
+ specified Content-ID. Returns the specified Content-ID string.</div>
+<dl><dt><span class="strong">Parameters:</span></dt><dd><code>dataSource</code> - the <code>DataSource</code> to embed</dd><dd><code>name</code> - the name that will be set in the filename header field</dd><dd><code>cid</code> - the Content-ID to use for this <code>DataSource</code></dd>
+<dt><span class="strong">Returns:</span></dt><dd>the URL encoded Content-ID for this <code>DataSource</code></dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - if the embedding fails or if <code>name</code> is
+ null or empty</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.1</dd></dl>
+</li>
+</ul>
+<a name="buildMimeMessage()">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>buildMimeMessage</h4>
+<pre>public&nbsp;void&nbsp;buildMimeMessage()
+                      throws <a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></pre>
+<div class="block">Does the work of actually building the MimeMessage. Please note that
+ a user rarely calls this method directly and only if he/she is
+ interested in the sending the underlying MimeMessage without
+ commons-email.</div>
+<dl>
+<dt><strong>Overrides:</strong></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/MultiPartEmail.html#buildMimeMessage()">buildMimeMessage</a></code>&nbsp;in class&nbsp;<code><a href="../../../../org/apache/commons/mail/MultiPartEmail.html" title="class in org.apache.commons.mail">MultiPartEmail</a></code></dd>
+<dt><span class="strong">Throws:</span></dt>
+<dd><code><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail">EmailException</a></code> - if there was an error.</dd><dt><span class="strong">Since:</span></dt>
+  <dd>1.0</dd></dl>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<!-- ========= END OF CLASS DATA ========= -->
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<div class="bottomNav"><a name="navbar_bottom">
+<!--   -->
+</a><a href="#skip-navbar_bottom" title="Skip navigation links"></a><a name="navbar_bottom_firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../../overview-summary.html">Overview</a></li>
+<li><a href="package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="class-use/HtmlEmail.html">Use</a></li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../../index-all.html">Index</a></li>
+<li><a href="../../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li><a href="../../../../org/apache/commons/mail/EmailException.html" title="class in org.apache.commons.mail"><span class="strong">Prev Class</span></a></li>
+<li><a href="../../../../org/apache/commons/mail/ImageHtmlEmail.html" title="class in org.apache.commons.mail"><span class="strong">Next Class</span></a></li>
+</ul>
+<ul class="navList">
+<li><a href="../../../../index.html?org/apache/commons/mail/HtmlEmail.html" target="_top">Frames</a></li>
+<li><a href="HtmlEmail.html" target="_top">No Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_bottom">
+<li><a href="../../../../allclasses-noframe.html">All Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_bottom");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#field_summary">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_summary">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li><a href="#field_detail">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#constructor_detail">Constr</a>&nbsp;|&nbsp;</li>
+<li><a href="#method_detail">Method</a></li>
+</ul>
+</div>
+<a name="skip-navbar_bottom">
+<!--   -->
+</a></div>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+<p class="legalCopy"><small>Copyright &#169; 2001&#x2013;2015 <a href="http://www.apache.org/">The Apache Software Foundation</a>. All rights reserved.</small></p>
+</body>
+</html>

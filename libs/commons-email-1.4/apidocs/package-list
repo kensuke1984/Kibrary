@@ -1,0 +1,3 @@
+org.apache.commons.mail
+org.apache.commons.mail.resolver
+org.apache.commons.mail.util
