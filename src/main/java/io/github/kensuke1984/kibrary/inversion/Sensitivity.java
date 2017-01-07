@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.math3.linear.RealMatrix;
 
 public class Sensitivity {
@@ -40,7 +42,14 @@ public class Sensitivity {
 	
 	public static Map<UnknownParameter, Double> sensitivityMap(RealMatrix ata, List<UnknownParameter> parameterList) {
 		Map<UnknownParameter, Double> sensitivity = new HashMap<>();
-		for (int i = 0; i < parameterList.size(); i++)
+		if (ata == null)
+			throw new RuntimeException("ata is undefined");
+		if (parameterList == null)
+			throw new RuntimeException("unknownParameterList is undefined");
+		if(ata.getColumnDimension() != parameterList.size())
+			throw new RuntimeException("Expect ata and unknownParameterList to have the same length " 
+					+ ata.getColumnDimension() + " " + parameterList.size());
+		for (int i = 0; i < parameterList.size(); i++) 
 			sensitivity.put(parameterList.get(i), Math.sqrt(ata.getEntry(i, i)) * parameterList.get(i).getWeighting());
 		return sensitivity;
 	}

@@ -2,7 +2,9 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
@@ -14,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -99,10 +102,22 @@ public class Sensitivity1D {
 			Sensitivity1D copy = new Sensitivity1D(s1D);
 			s1D.write1D(outPath);
 			s1D.normalize();
-			s1D.write(outPath1);
+			s1D.writeComplemented(outPath1, 10., 1.);
 			copy.normalizePerDistance();
-			copy.write(outPath2);
+			copy.writeComplemented(outPath2, 10., 1.);
 		}
+		Set<Phases> phaseSet = new HashSet<>();
+		phaseSet.add(new Phases(new Phase[] {Phase.S, Phase.ScS}));
+		Path outPath = Paths.get("sensitivity1D-S_ScS.inf");
+		Path outPath1 = Paths.get("sensitivityMap-S_ScS.inf");
+		Path outPath2 = Paths.get("sensitivityMapDistanceNormalized-S_ScS.inf");
+		Sensitivity1D s1D = new Sensitivity1D(ids, phaseSet);
+		Sensitivity1D copy = new Sensitivity1D(s1D);
+		s1D.write1D(outPath);
+		s1D.normalize();
+		s1D.writeComplemented(outPath1, 10., 1.);
+		copy.normalizePerDistance();
+		copy.writeComplemented(outPath2, 10., 1.);
 		
 //		Path outPath = Paths.get("sensitivity1D-upperMantle.txt");
 //		Path outPath1 = Paths.get("sensitivityMap-upperMantle.txt");
@@ -146,6 +161,52 @@ public class Sensitivity1D {
 				pw.println(rDistance.r + " " + rDistance.distance + " " + sensitivity);
 			});
 		}
+	}
+	
+	public void writeComplemented(Path outpath, double deltaR, double deltaD) throws IOException {
+		double[][] complemented = complement(deltaR, deltaD);
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))) {
+			pw.println("#perturbationR, epicentralDistanceBin, NormalizedSensitivity");
+			pw.println("#max " + getMax());
+			for (double[] c : complemented)
+				pw.println(c[0] + " " + c[1] + " " + c[2]);
+		}
+	}
+	
+	public double[][] complement(double deltaR, double deltaD) {
+		List<Double> distanceList = sensitivityMap.keySet().stream().map(key -> key.distance).collect(Collectors.toList());
+		Collections.sort(distanceList);
+		double minD = distanceList.get(0);
+		double maxD = distanceList.get(distanceList.size() - 1);
+		
+		int nR = (int) ((Earth.EARTH_RADIUS - 3480.) / deltaR) + 1;
+		deltaR = (Earth.EARTH_RADIUS - 3480.) / (nR-1);
+		int nD = (int) ((maxD - minD) / deltaD) + 1;
+		deltaD = (maxD - minD) / (nD-1);
+		
+		System.out.println(nR + " " + nD);
+		
+		double[][] complemented = new double[nR * nD][];
+		
+		
+		Location[] locations = sensitivityMap.keySet().stream().map(key -> new Location(0., key.distance, key.r))
+				.toArray(Location[]::new);
+		
+		Complementation c = new Complementation();
+		for (int i = 0; i < nR; i++) {
+			for (int j = 0; j < nD; j++) {
+				Location loc = new Location(0., minD + j * deltaD, 3480. + i * deltaR);
+				Location[] nearPoints = c.getNearest4(locations, loc);
+				double[] nearpointsValue = new double[nearPoints.length];
+				for (int k = 0; k < nearPoints.length; k++)
+					nearpointsValue[k] = sensitivityMap.get(new PerturbationR_distance(nearPoints[k].getR(), nearPoints[k].getLongitude()));
+				double value = c.complement(nearPoints, nearpointsValue, loc);
+				
+				complemented[i*nD + j] = new double[] {loc.getLongitude(), loc.getR(), value};
+			}
+		}
+		
+		return complemented;
 	}
 	
 	public void write1D(Path outpath) throws IOException {

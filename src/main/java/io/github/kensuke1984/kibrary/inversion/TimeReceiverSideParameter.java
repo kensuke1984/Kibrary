@@ -12,16 +12,17 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 
 	@Override
 	public String toString() {
-		return partialType + " " + station.getStationName() + " " + station.getNetwork() + " " + station.getPosition() + " " + weighting;
+		return partialType + " " + station.getStationName() + " " + station.getNetwork() + " " + station.getPosition() + " " + bouncingOrder + " " + weighting;
 	}
 
 	private final PartialType partialType = PartialType.TIME_RECEIVER;
 	private final double weighting = 1.;
 
-	public TimeReceiverSideParameter(Station station) {
+	public TimeReceiverSideParameter(Station station, int bouncingOrder) {
 		this.station = station;
 		this.pointLocation = new Location(station.getPosition().getLatitude(), 
 				station.getPosition().getLongitude(), 0.);
+		this.bouncingOrder = bouncingOrder;
 	}
 
 	@Override
@@ -30,6 +31,7 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 		int result = 1;
 		result = prime * result + ((partialType == null) ? 0 : partialType.hashCode());
 		result = prime * result + ((station == null) ? 0 : station.hashCode());
+		result = prime * result + bouncingOrder;
 		long temp;
 		temp = Double.doubleToLongBits(weighting);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -57,6 +59,8 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 				return false;
 		} else if (!station.equals(other.station))
 			return false;
+		if (bouncingOrder != other.bouncingOrder)
+			return false;
 		if (Double.doubleToLongBits(weighting) != Double.doubleToLongBits(other.weighting))
 			return false;
 		return true;
@@ -69,8 +73,14 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	
 	private final Station station;
 	
+	private final int bouncingOrder;
+	
 	public Station getStation() {
 		return station;
+	}
+	
+	public int getBouncingOrder() {
+		return bouncingOrder;
 	}
 
 	@Override

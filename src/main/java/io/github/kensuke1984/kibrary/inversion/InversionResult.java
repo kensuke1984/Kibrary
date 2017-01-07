@@ -375,7 +375,7 @@ public class InversionResult {
 	 * @return txt file name of the id including "eventID/" at head. e.g., if
 	 *         its partial "partial/(txt file name)" is fine.
 	 */
-	private String getTxtName(BasicID id) {
+	protected String getTxtName(BasicID id) {
 		return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "." + basicIDList.indexOf(id) + ".txt";
 	}
@@ -469,7 +469,7 @@ public class InversionResult {
 		return born;
 
 	}
-
+	
 	private static void writeBorn(Path outBornPath, Trace born) throws IOException {
 		List<String> lines = new ArrayList<>(born.getLength() + 1);
 		lines.add("#syntime synthetic+");

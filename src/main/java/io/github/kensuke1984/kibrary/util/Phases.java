@@ -1,20 +1,65 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 
 public class Phases {
-		public static void main(String[] strings) {
-			Phases phases = new Phases(new Phase[] {Phase.ScS});
-			System.out.println(phases.isLowerMantle());
+		public static void main(String[] args) {
+			Set<TimewindowInformation> timewindows = null;
+			if (args.length == 1) {
+				try {
+					timewindows = TimewindowInformationFile.read(Paths.get(args[0]));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+				Map<Phases, Integer> phaseNumberMap = new HashMap<>();
+				for (TimewindowInformation timewindow : timewindows) {
+					Phases tmpPhase = new Phases(timewindow.getPhases());
+					if (phaseNumberMap.containsKey(tmpPhase)) {
+						Integer i = phaseNumberMap.get(tmpPhase) + 1;
+						phaseNumberMap.replace(tmpPhase, i);
+					}
+					else {
+						Integer i = 1;
+						phaseNumberMap.put(tmpPhase, i);
+					}
+				}
+				
+				Path outPath = Paths.get("phaseTable.inf");
+				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+					phaseNumberMap.forEach((phase, i) -> {
+						pw.println(phase + " " + i);
+					});
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+				
 		}
 		Phase[] phases;
 		int length;
 		public Phases(Phase[] phases) {
 			this.phases = phases;
+			this.length = phases.length;
+		}
+		public Phases(String phaseString) {
+			this.phases = Stream.of(phaseString.trim().split(",")).map(phasename -> Phase.create(phasename))
+					.toArray(Phase[]::new);
 			this.length = phases.length;
 		}
 		@Override

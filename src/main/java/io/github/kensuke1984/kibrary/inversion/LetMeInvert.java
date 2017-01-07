@@ -31,6 +31,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -90,8 +91,12 @@ public class LetMeInvert implements Operation {
 	protected boolean time_source, time_receiver;
 	
 	protected double gamma;
+	
+	private int nUnknowns;
 
 	private ObservationEquation eq;
+	
+	private String[] phases;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -144,6 +149,14 @@ public class LetMeInvert implements Operation {
 				throw new RuntimeException("gamma must be set in oreder to use TAKEUCHIKOBAYASHI weighting scheme");
 			gamma = Double.parseDouble(property.getProperty("gamma"));
 		}
+		if (!property.containsKey("phases"))
+			phases = null;
+		else
+			phases = Arrays.stream(property.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
+		if (!property.containsKey("nUnknowns"))
+			nUnknowns = -1;
+		else
+			nUnknowns = Integer.parseInt(property.getProperty("nUnknowns"));
 	}
 
 	/**
@@ -186,6 +199,9 @@ public class LetMeInvert implements Operation {
 			pw.println("time_source false");
 			pw.println("##boolean time_receiver (false). Time partial for the receiver");
 			pw.println("time_receiver false");
+			pw.println("##Use phases (blank = all phases)");
+			pw.println("#phases");
+			pw.println("#nUnknowns");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -221,10 +237,20 @@ public class LetMeInvert implements Operation {
 		
 		Predicate<BasicID> chooser = new Predicate<BasicID>() {
 			public boolean test(BasicID id) {
-//				return id.getStartTime() < 4000.;
-				return true;
+				GlobalCMTData event = id.getGlobalCMTID().getEvent();
+				if (event.getCmtLocation().getR() > 5971.)
+					return false;
+				if (event.getCmt().getMw() < 6.3)
+					return false;
+				for (String phasename : phases) {
+					if (new Phases(id.getPhases()).equals(new Phases(phasename)))
+						return true;
+				}
+				return false;
 			}
 		};
+		if (phases == null)
+			chooser = id -> true;
 		
 		// set Dvector
 		System.err.println("Creating D vector");
@@ -240,20 +266,21 @@ public class LetMeInvert implements Operation {
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
 			break;
 		case TAKEUCHIKOBAYASHI:
-			dVector = new Dvector(ids, id -> true, WeightingType.IDENTITY, atLeastThreeRecordsPerStation);
+			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation);
 //			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
 			List<UnknownParameter> parameterForStructure = parameterList.stream()
 					.filter(unknonw -> !unknonw.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 //			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
 			double[] weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
-			dVector = new Dvector(ids, id -> true, weightingType, weighting, atLeastThreeRecordsPerStation);
+			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
 			break;
 		default:
 			throw new RuntimeException("Error: Weighting should be LOWERUPPERMANTLE, RECIPROCAL, or TAKEUCHIKOBAYASHI");
 		}
 		
-		eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver);
+		System.out.println(nUnknowns);
+		eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns);
 	}
 
 	/**
@@ -272,7 +299,6 @@ public class LetMeInvert implements Operation {
 			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			eq.outputA(outPath.resolve("partial"));
-			eq.outputSensitivity(outPath.resolve("sensitivity.inf"));
 			dVector.outWeighting(outPath.resolve("weighting.inf"));
 			return null;
 		};
@@ -310,6 +336,11 @@ public class LetMeInvert implements Operation {
 		try {
 			future.get();
 		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
+		try {
+			eq.outputSensitivity(outPath.resolve("sensitivity.inf"));
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
@@ -430,14 +461,14 @@ public class LetMeInvert implements Operation {
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
 							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
 				}
-				double maxObs = obsVec[i].getLInfNorm();
+//				double maxObs = obsVec[i].getLInfNorm();
 				double obsStart = obsIDs[i].getStartTime();
 				double synStart = synIDs[i].getStartTime();
 				double samplingHz = obsIDs[i].getSamplingHz();
 				pwTrace.println("#obstime syntime obs syn");
 				for (int j = 0; j < obsIDs[i].getNpts(); j++)
 					pwTrace.println((obsStart + j / samplingHz) + " " + (synStart + j / samplingHz) + " "
-							+ obsVec[i].getEntry(j) / maxObs + " " + synVec[i].getEntry(j) / maxObs);
+							+ obsVec[i].getEntry(j) + " " + synVec[i].getEntry(j));
 			}
 		}
 	}

@@ -594,13 +594,13 @@ public class Dvector {
 		return vectors;
 	}
 	
-	private List<BasicID> moreThanThreeRecordsAndTwoEventsPerStation(List<BasicID> ids) {
+	private List<BasicID> moreThanThreeEventsPerStation(List<BasicID> ids) {
 		List<BasicID> filteredIds = new ArrayList<>();
 		Set<Station> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());
 		for (Station station : stations) {
 			List<BasicID> tmps = ids.stream().filter(id -> id.getStation().equals(station)).collect(Collectors.toList());
 			int numberOfGCMTId = (int) tmps.stream().map(id -> id.getGlobalCMTID()).distinct().count();
-			if (tmps.size() >= 3 && numberOfGCMTId >= 2)
+			if (numberOfGCMTId >= 3)
 				tmps.forEach(tmp -> filteredIds.add(tmp));
 		}
 		return filteredIds;
@@ -659,8 +659,8 @@ public class Dvector {
 		
 		// filter so that there is at least three records per stations (for time partials stability)
 		if (atLeastThreeRecordsPerStation) {
-			useObsList = moreThanThreeRecordsAndTwoEventsPerStation(useObsList);
-			useSynList = moreThanThreeRecordsAndTwoEventsPerStation(useSynList);
+			useObsList = moreThanThreeEventsPerStation(useObsList);
+			useSynList = moreThanThreeEventsPerStation(useSynList);
 		}
 
 		nTimeWindow = useSynList.size();

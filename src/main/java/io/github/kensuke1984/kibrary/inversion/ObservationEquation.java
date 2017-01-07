@@ -6,20 +6,26 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -50,10 +56,21 @@ public class ObservationEquation {
 	 *            for equation
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
-			boolean time_source, boolean time_receiver) {
+			boolean time_source, boolean time_receiver, int nUnknowns) {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
-		readA(partialIDs, time_receiver, time_source);
+		List<Integer> bouncingOrders = null;
+		if (time_receiver) {
+			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
+					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
+			Collections.sort(bouncingOrders);
+			System.out.print("Bouncing orders (at Earth's surface): ");
+			for (Integer i : bouncingOrders) {
+				System.out.print(i + " ");
+			}
+			System.out.println();
+		}
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns);
 		atd = computeAtD(dVector.getD());
 	}
 
@@ -105,11 +122,16 @@ public class ObservationEquation {
 	 * @param ids
 	 *            source for A
 	 */
-	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source) {
+	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, int nUnknowns) {
 		if (time_source)
 			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
-		if (time_receiver)
-			dVector.getUsedStationSet().forEach(station -> parameterList.add(new TimeReceiverSideParameter(station)));
+		if (time_receiver) {
+			if (bouncingOrders == null)
+				throw new RuntimeException("Exepct List<Integer> bouncingOrders to be defined");
+			for (Integer i : bouncingOrders)
+				dVector.getUsedStationSet().forEach(station -> parameterList.add(new TimeReceiverSideParameter(station, i.intValue())));
+		}
+		
 		a = new Matrix(dVector.getNpts(), parameterList.size());
 		a.scalarMultiply(0);
 		
@@ -131,7 +153,7 @@ public class ObservationEquation {
 			if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == dVector.getNTimeWindow() * nn)
 				return;
 			int column = whatNumer(id.getPartialType(), id.getPerturbationLocation(),
-					id.getStation(), id.getGlobalCMTID());
+					id.getStation(), id.getGlobalCMTID(), id.getPhases());
 			if (column < 0)
 				return;
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
@@ -150,6 +172,85 @@ public class ObservationEquation {
 			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
 				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
 		});
+		
+		if (nUnknowns != -1) {
+			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() - numberOfParameterForSturcture + nUnknowns);
+			List<UnknownParameter> parameterPrime = new ArrayList<>();
+			
+			double[] layers = new double[nUnknowns - 1];
+			int nnUnknowns = nUnknowns / 2;
+			double UpperWidth = Earth.EARTH_RADIUS - 24.4 - 5721.;
+			double LowerWidth = 5721. - 3480.;
+			double deltaUpper = UpperWidth / nnUnknowns;
+			double deltaLower = LowerWidth / nnUnknowns;
+			if (nUnknowns == 2)
+				layers[0] = 5721.;
+			else {
+				for (int i = 0; i < nnUnknowns - 1; i++) {
+					layers[i] = Earth.EARTH_RADIUS - 24.4 - (i+1) * deltaUpper;
+				}
+				layers[nnUnknowns - 1] = 5721.;
+				for (int i = 0; i < nnUnknowns - 1; i++) {
+					layers[i + nnUnknowns] = 5721. - (i + 1) * deltaLower;
+				}
+			}
+			
+			for (int i = 0; i < numberOfParameterForSturcture; i++) {
+				int j = -1;
+				for (int k = 0; k < layers.length; k++) {
+					double r = (Double) parameterList.get(i).getLocation();
+					if (r > layers[k]) {
+						System.out.println((Double) parameterList.get(i).getLocation() + " " + layers[k]);
+						j = k;
+						break;
+					}
+				}
+				if (j == -1)
+					j = nUnknowns - 1;
+				aPrime.setColumnVector(j, aPrime.getColumnVector(j).add(a.getColumnVector(i)));
+			}
+			for (int i = 0; i < a.getColumnDimension() - numberOfParameterForSturcture; i++)
+				aPrime.setColumnVector(i + nUnknowns, a.getColumnVector(i + numberOfParameterForSturcture));
+			a = aPrime;
+			
+			for (int i = 0; i < layers.length; i++) {
+				double r = 0;
+				double w = 0;
+				if (i < nnUnknowns) {
+					r = layers[i] + deltaUpper / 2.;
+					w = deltaUpper;
+				}
+				else {
+					r = layers[i] + deltaLower / 2.;
+					w = deltaLower;
+				}
+				parameterPrime.add(new Physical1DParameter(PartialType.PAR2, r, w));
+			}
+			double r = 3480. + deltaLower / 2.;
+			double w = deltaLower;
+			parameterPrime.add(new Physical1DParameter(PartialType.PAR2, r, w));
+			for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++)
+				parameterPrime.add(parameterList.get(i));
+			parameterList = parameterPrime;
+		}
+		
+		double meanAColumnNorm = 0;
+		int ntmp = 0;
+		for (int j = 0; j < a.getColumnDimension(); j++) {
+			if (parameterList.get(j).getPartialType().isTimePartial())
+				continue;
+			meanAColumnNorm += a.getColumnVector(j).getL1Norm();
+			ntmp++;
+		}
+		meanAColumnNorm /= ntmp; 
+		for (int j = 0; j < a.getColumnDimension(); j++) {
+			if (!parameterList.get(j).getPartialType().isTimePartial())
+				continue;
+			double tmpNorm = a.getColumnVector(j).getL1Norm();
+			if (tmpNorm > 0)
+				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(meanAColumnNorm / tmpNorm));
+		}
+		
 //		for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++) {
 //			int j = 0;
 //			for(double ai : a.getColumn(i)) {
@@ -173,7 +274,7 @@ public class ObservationEquation {
 	 *            to look for
 	 * @return parameterが何番目にあるか なければ-1
 	 */
-	private int whatNumer(PartialType type, Location location, Station station, GlobalCMTID id) {
+	private int whatNumer(PartialType type, Location location, Station station, GlobalCMTID id, Phase[] phases) {
 		for (int i = 0; i < parameterList.size(); i++) {
 			if (parameterList.get(i).getPartialType() != type)
 				continue;
@@ -183,7 +284,11 @@ public class ObservationEquation {
 					return i;
 				break;
 			case TIME_RECEIVER:
-				if (station.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation() ))
+				List<Integer> bouncingOrders = Arrays.stream(phases).map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
+				Collections.sort(bouncingOrders);
+				int lowestBouncingOrder = bouncingOrders.get(0);
+				if (station.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation() ) &&
+						((TimeReceiverSideParameter) parameterList.get(i)).getBouncingOrder() == lowestBouncingOrder)
 					return i;
 				break;
 			case PARA:
@@ -277,9 +382,15 @@ public class ObservationEquation {
 			System.out.println("no more A");
 			return;
 		}
+		if (ata == null) {
+			System.err.println(" No more ata. Computing again");
+			ata = a.computeAtA();
+		}
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			Map<UnknownParameter, Double> sMap = Sensitivity.sensitivityMap(ata, parameterList);
-			for (UnknownParameter unknown : parameterList)
+			List<UnknownParameter> unknownForStructure = parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
+					.collect(Collectors.toList());
+			for (UnknownParameter unknown : unknownForStructure)
 				pw.println((Double) unknown.getLocation() + " " + sMap.get(unknown));
 		} catch (IOException e) {
 			e.printStackTrace();

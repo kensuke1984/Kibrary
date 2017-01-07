@@ -3,13 +3,17 @@ package io.github.kensuke1984.kibrary.waveformdata;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -160,8 +164,25 @@ public final class PartialIDFile {
 		} else if (args.length == 2 && args[0].equals("-a")) {
 			PartialID[] ids = readPartialIDFile(Paths.get(args[1]));
 			Arrays.stream(ids).forEach(System.out::println);
+		} else if (args.length == 2 && args[0].equals("--debug")) {
+			PartialID[] ids = readPartialIDFile(Paths.get(args[1]));
+			Set<PartialType> types = new HashSet<>();
+			for (PartialID id : ids)
+				types.add(id.getPartialType());
+			for (PartialType type : types) {
+				List<StationEvent> tmpList = Arrays.stream(ids).filter(id -> id.getPartialType().equals(type))
+						.map(id -> new StationEvent(id.getStation(), id.getGlobalCMTID()))
+						.distinct().collect(Collectors.toList());
+				Collections.sort(tmpList);
+				Path outPath = Paths.get(type + ".inf");
+				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+					tmpList.forEach(tmp -> pw.println(tmp));
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		} else {
-			System.out.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
+			System.out.println("usage:[-a | --debug] [id file name]\n if \"-a\", show all IDs\n if \"--debug\", makes station-event list for all partial types");
 		}
 	}
 
@@ -254,5 +275,44 @@ public final class PartialIDFile {
 		Files.write(outPath, lines);
 		System.out.println(outPath + " is created as a list of global CMT IDs.");
 	}
-
+	
+	public static class StationEvent implements Comparable<StationEvent> {
+		public Station station;
+		public GlobalCMTID event;
+		public StationEvent(Station station, GlobalCMTID event) {
+			this.station = station;
+			this.event = event;
+		}
+		@Override
+		public int compareTo(StationEvent o) {
+			int compareStation = station.compareTo(o.station);
+			if (compareStation != 0)
+				return compareStation;
+			else
+				return event.compareTo(o.event);
+		}
+		@Override
+		public String toString() {
+			return station.toString() + " " + event.toString();
+		}
+		@Override
+		public int hashCode() {
+			return station.hashCode() * event.hashCode() * 31;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			StationEvent other = (StationEvent) obj;
+			if (!station.equals(other.station))
+				return false;
+			if (!event.equals(other.event))
+				return false;
+			return true;
+		}
+	}
 }

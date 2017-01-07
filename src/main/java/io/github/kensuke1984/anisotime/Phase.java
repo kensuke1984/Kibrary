@@ -449,10 +449,21 @@ public class Phase {
 
 	public static void main(String[] args) {
 		// System.out.println(Phase.create("2PSdiff900"));
-		Phase p = Phase.create("Sdiff1");
+		Phase p = Phase.create("sScSScSScS");
 		System.out.println(p.phaseName + " " + p.expandedName);
-		System.out.println(p.isDownGoing[1]);
+		System.out.println(p.nOfBouncingAtSurface());
+		p.printInformation();
+//		System.out.println(p.isDownGoing[1]);
 		// p.printInformation();
+	}
+	
+	public int nOfBouncingAtSurface() {
+		int nBounce = 0;
+		for (int i = 0; i < nPart; i++) {
+			if (partition[i].equals(Partition.MANTLE) && !isDownGoing[i])
+				nBounce++;
+		}
+		return --nBounce;
 	}
 
 	void printInformation() {

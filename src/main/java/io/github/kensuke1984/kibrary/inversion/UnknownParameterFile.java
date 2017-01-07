@@ -67,7 +67,7 @@ public class UnknownParameterFile {
 				case TIME_RECEIVER:
 					unknown = new TimeReceiverSideParameter(new Station(parts[1],
 							new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])),
-							parts[2]));
+							parts[2]), Integer.parseInt(parts[5]));
 					pars.add(unknown);
 					break;
 				case PARA:
