@@ -75,6 +75,7 @@ final class ANISOtimeCLI {
      * @throws ParseException if any
      */
     public static void main(String[] args) throws ParseException {
+        args = "-mod prem -deg 80".split(" ");
         if (args.length == 0) {
             About.main(null);
             return;

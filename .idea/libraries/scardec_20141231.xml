@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="scardec_20141231">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/src/main/resources/scardec_20141231.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
