@@ -12,6 +12,7 @@
 hs_err_pid*
 /bin/
 /lib/
+/out/
 
 gh-pages
 
