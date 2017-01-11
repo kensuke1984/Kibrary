@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 
+import io.github.kensuke1984.kibrary.Environment;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -35,6 +36,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @version 0.0.10.1b
  */
 public class RaypathCatalog implements Serializable {
+
     /**
      * 2016/12/16
      */
@@ -60,7 +62,7 @@ public class RaypathCatalog implements Serializable {
         return flag;
     }
 
-    static final Path share = Paths.get(System.getProperty("user.home") + "/.Kibrary/share");
+    private static final Path share = Environment.KIBRARY_HOME.resolve("share");
 
     /**
      * Woodhouse formula with certain velocity structure
@@ -568,7 +570,6 @@ public class RaypathCatalog implements Serializable {
         // System.err.println("Looking for Phase:" + targetPhase + ",
         // \u0394[\u02da]:"
         // + Precision.round(Math.toDegrees(targetDelta), 4));
-
 
         List<Raypath> pathList = new ArrayList<>();
         for (int i = 0; i < raypaths.length - 1; i++) {

@@ -1,12 +1,15 @@
 package io.github.kensuke1984.kibrary;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 /**
  * Runtime environment
  *
  * @author Kensuke Konishi
  * @version 0.0.1
  */
-class Environment {
+public class Environment {
     private Environment() {
     }
 
@@ -29,5 +32,7 @@ class Environment {
         System.out.println("Available processor: " + Runtime.getRuntime().availableProcessors());
         System.out.println("Max memory[GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
     }
+
+    public final static Path KIBRARY_HOME = Paths.get(System.getProperty("user.home") + "/.Kibrary");
 
 }

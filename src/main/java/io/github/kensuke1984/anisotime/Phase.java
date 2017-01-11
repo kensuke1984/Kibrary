@@ -416,8 +416,7 @@ public class Phase {
     }
 
     public static void main(String[] args) {
-        // System.out.println(Phase.create("2PSdiff900"));
-        Phase p = create("S(2K)S(2P)");
+        Phase p = create("P(2K)P");
         System.out.println(p.phaseName + " " + p.expandedName);
         System.out.println(p.isDownGoing[1]);
         p.printInformation();
