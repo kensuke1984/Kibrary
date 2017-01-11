@@ -34,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.10b
+ * @version 0.3.10.1b
  */
 final class ANISOtimeCLI {
 
@@ -75,7 +75,6 @@ final class ANISOtimeCLI {
      * @throws ParseException if any
      */
     public static void main(String[] args) throws ParseException {
-        args = "-mod prem -deg 80".split(" ");
         if (args.length == 0) {
             About.main(null);
             return;
@@ -174,6 +173,9 @@ final class ANISOtimeCLI {
         else targetPhases = new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.S, Phase.ScS, Phase.SKiKS};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
+        if (targetDelta < 0 || 2 * Math.PI <= targetDelta)
+            throw new RuntimeException("A value for the option -deg must be [0, 360).");
+
 
         double interval = Double.parseDouble(cmd.getOptionValue("dR", "10")); //TODO dR is not working.
 
