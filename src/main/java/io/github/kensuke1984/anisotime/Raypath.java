@@ -58,14 +58,14 @@ import io.github.kensuke1984.kibrary.math.Integrand;
  * K: P(K) wave in the outer-core<br>
  * I: P(I) wave in the inner-core<br>
  * JV,JH: SV, SH(J) wave in the inner-core<br>
+ * <p>
+ * TODO reflection
  *
  * @author Kensuke Konishi
  * @version 0.4.4b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
-
-    //TODO reflection
 
     /**
      * 2016/12/16
