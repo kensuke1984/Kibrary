@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.11b
+ * @version 0.0.11.1b
  */
 public class RaypathCatalog implements Serializable {
 
@@ -661,6 +661,8 @@ public class RaypathCatalog implements Serializable {
      * range. The function f is assumed to be a polynomial function. The degree
      * of the function depends on the number of the input raypaths.
      *
+     * @param targetPhase target phase
+     * @param eventR      [km] radius of event
      * @param targetDelta [rad] epicentral distance to get T for
      * @param raypaths    Polynomial interpolation is done with these. All the raypaths
      *                    must be computed.
@@ -677,24 +679,33 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param targetDelta [deg]
-     * @param raypath0    source of raypath
-     * @param eventR      radius of the source [km]
-     * @param phase       to look for
+     * @param targetPhase   to look for
+     * @param eventR        [km] radius of the source
+     * @param targetDelta   [deg]
+     * @param relativeAngle if the targetDelta is a relative value.
+     * @param raypath0      source of raypath
      * @return travel time for the targetDelta [s]
      */
-    double travelTimeByThreePointInterpolate(double targetDelta, Raypath raypath0, double eventR, Phase phase) {
+    double travelTimeByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
+                                             boolean relativeAngle, Raypath raypath0) {
         targetDelta = Math.toRadians(targetDelta);
-        double delta0 = raypath0.computeDelta(eventR, phase);
+        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
+                "When you search paths for a relative angle, a targetDelta must be pi or less.");
+
+        double delta0 = raypath0.computeDelta(eventR, targetPhase);
         Raypath lower = raypathList.lower(raypath0);
         Raypath higher = raypathList.higher(raypath0);
-        double lowerDelta = lower.computeDelta(eventR, phase);
-        double higherDelta = higher.computeDelta(eventR, phase);
+        double lowerDelta = lower.computeDelta(eventR, targetPhase);
+        double higherDelta = higher.computeDelta(eventR, targetPhase);
         if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
-        // delta1<delta0<delta2 or delta2<delta0<delta1
+        if (relativeAngle) {
+            lowerDelta = toRelativeAngle(lowerDelta);
+            higherDelta = toRelativeAngle(higherDelta);
+        }
         double[] p = new double[]{delta0, lowerDelta, higherDelta};
-        double[] time = new double[]{raypath0.computeT(eventR, phase), lower.computeT(eventR, phase),
-                higher.computeT(eventR, phase),};
+        double[] time = new double[]{raypath0.computeT(eventR, targetPhase), lower.computeT(eventR, targetPhase),
+                higher.computeT(eventR, targetPhase),};
         Trace t = new Trace(p, time);
         return t.toValue(2, targetDelta);
     }
