@@ -34,7 +34,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  *
  * @author Kensuke Konishi
- * @version 0.2.2
+ * @version 0.2.2.1
  */
 public class Dvector {
 
@@ -70,7 +70,12 @@ public class Dvector {
     /**
      * 残差波形のベクトル（各IDに対するタイムウインドウ）
      */
-    private RealVector[] dVec;
+    private RealVector[] dVectors;
+
+    /**
+     * 残差波形のベクトル Vector <i>&delta;d</i>
+     */
+    private RealVector dVector;
 
     /**
      * イベントごとのvariance
@@ -97,7 +102,12 @@ public class Dvector {
     /**
      * 観測波形のベクトル（各IDに対するタイムウインドウ）
      */
-    private RealVector[] obsVec;
+    private RealVector[] obsVectors;
+
+    /**
+     * 観測波形のベクトル Vector obs
+     */
+    private RealVector obsVector;
 
     /**
      * それぞれのタイムウインドウが,全体の中の何点目から始まるか
@@ -131,7 +141,12 @@ public class Dvector {
     /**
      * 理論波形のベクトル（各IDに対するタイムウインドウ）
      */
-    private RealVector[] synVec;
+    private RealVector[] synVectors;
+
+    /**
+     * 理論波形のベクトル Vector syn
+     */
+    private RealVector synVector;
 
     /**
      * Set of global CMT IDs read in vector
@@ -206,7 +221,7 @@ public class Dvector {
     public RealVector combine(RealVector[] vectors) {
         if (vectors.length != nTimeWindow) throw new RuntimeException("the number of input vector is invalid");
         for (int i = 0; i < nTimeWindow; i++)
-            if (vectors[i].getDimension() != obsVec[i].getDimension())
+            if (vectors[i].getDimension() != obsVectors[i].getDimension())
                 throw new RuntimeException("input vector is invalid");
 
         RealVector v = new ArrayRealVector(npts);
@@ -218,26 +233,27 @@ public class Dvector {
 
     /**
      * The returning vector is unmodifiable.
+     *
      * @return Vectors consisting of dvector(obs-syn). Each vector is each
      * timewindow. If you want to get the vector D, you may use
      * {@link #combine(RealVector[])}
      */
-    public RealVector[] getdVec() {
-        return dVec.clone();
+    public RealVector[] getDVectors() {
+        return dVectors.clone();
     }
 
     /**
      * @return vectors of residual between observed and synthetics (obs-syn)
      */
     public RealVector getD() {
-        return combine(dVec);
+        return dVector;
     }
 
     /**
      * @return an array of each time window length.
      */
     public int[] getLengths() {
-        return Arrays.stream(obsVec).mapToInt(RealVector::getDimension).toArray();
+        return Arrays.stream(obsVectors).mapToInt(RealVector::getDimension).toArray();
     }
 
     /**
@@ -258,15 +274,15 @@ public class Dvector {
         return obsIDs.clone();
     }
 
-    public RealVector[] getObsVec() {
-        return obsVec.clone();
+    public RealVector[] getObsVectors() {
+        return obsVectors.clone();
     }
 
     /**
      * @return vector of observed waveforms
      */
     public RealVector getObs() {
-        return combine(obsVec);
+        return obsVector;
     }
 
     /**
@@ -283,15 +299,15 @@ public class Dvector {
         return synIDs.clone();
     }
 
-    public RealVector[] getSynVec() {
-        return synVec.clone();
+    public RealVector[] getSynVectors() {
+        return synVectors.clone();
     }
 
     /**
      * @return vector of synthetic waveforms.
      */
     public RealVector getSyn() {
-        return combine(synVec);
+        return synVector;
     }
 
     public Set<GlobalCMTID> getUsedGlobalCMTIDset() {
@@ -352,8 +368,8 @@ public class Dvector {
             for (int i = 0; i < nTimeWindow; i++) {
                 Station station = obsIDs[i].getStation();
                 GlobalCMTID id = obsIDs[i].getGlobalCMTID();
-                double obs2 = obsVec[i].dotProduct(obsVec[i]);
-                RealVector del = vectors[i].subtract(obsVec[i]);
+                double obs2 = obsVectors[i].dotProduct(obsVectors[i]);
+                RealVector del = vectors[i].subtract(obsVectors[i]);
                 double del2 = del.dotProduct(del);
                 eventDenominator.put(id, eventDenominator.get(id) + obs2);
                 stationDenominator.put(station, stationDenominator.get(station) + obs2);
@@ -408,20 +424,20 @@ public class Dvector {
             start += npts;
 
             // 観測波形の読み込み
-            obsVec[i] = new ArrayRealVector(obsIDs[i].getData(), false);
+            obsVectors[i] = new ArrayRealVector(obsIDs[i].getData(), false);
 
             // 観測波形の最大値の逆数で重み付け TODO 重み付けの方法を決める
             weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]);
 
-            obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
+            obsVectors[i] = obsVectors[i].mapMultiply(weighting[i]);
 
             // 理論波形の読み込み
-            synVec[i] = new ArrayRealVector(synIDs[i].getData(), false);
-            synVec[i].mapMultiplyToSelf(weighting[i]);
+            synVectors[i] = new ArrayRealVector(synIDs[i].getData(), false);
+            synVectors[i].mapMultiplyToSelf(weighting[i]);
 
-            double denominator = obsVec[i].dotProduct(obsVec[i]);
-            dVec[i] = obsVec[i].subtract(synVec[i]);
-            double numerator = dVec[i].dotProduct(dVec[i]);
+            double denominator = obsVectors[i].dotProduct(obsVectors[i]);
+            dVectors[i] = obsVectors[i].subtract(synVectors[i]);
+            double numerator = dVectors[i].dotProduct(dVectors[i]);
             stationDenominator
                     .put(obsIDs[i].getStation(), stationDenominator.get(obsIDs[i].getStation()) + denominator);
             stationNumerator.put(obsIDs[i].getStation(), stationNumerator.get(obsIDs[i].getStation()) + numerator);
@@ -430,9 +446,9 @@ public class Dvector {
             eventNumerator.put(obsIDs[i].getGlobalCMTID(), eventNumerator.get(obsIDs[i].getGlobalCMTID()) + numerator);
 
 
-            obsVec[i] = RealVector.unmodifiableRealVector(obsVec[i]);
-            synVec[i] = RealVector.unmodifiableRealVector(synVec[i]);
-            dVec[i] = RealVector.unmodifiableRealVector(dVec[i]);
+            obsVectors[i] = RealVector.unmodifiableRealVector(obsVectors[i]);
+            synVectors[i] = RealVector.unmodifiableRealVector(synVectors[i]);
+            dVectors[i] = RealVector.unmodifiableRealVector(dVectors[i]);
 
             variance += numerator;
             obs2 += denominator;
@@ -444,6 +460,9 @@ public class Dvector {
         dNorm = Math.sqrt(variance);
         variance /= obs2;
         obsNorm = Math.sqrt(obs2);
+        dVector = RealVector.unmodifiableRealVector(combine(dVectors));
+        obsVector = RealVector.unmodifiableRealVector(combine(obsVectors));
+        synVector = RealVector.unmodifiableRealVector(combine(synVectors));
         System.err.println("Vector D was created. The variance is " + variance + ". The number of points is " + npts);
     }
 
@@ -476,7 +495,7 @@ public class Dvector {
         if (vector.getDimension() != npts)
             throw new RuntimeException("the length of input vector is invalid." + " " + vector.getDimension());
         RealVector[] vectors = new RealVector[nTimeWindow];
-        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVec[i].getDimension()));
+        Arrays.setAll(vectors, i -> vector.getSubVector(startPoints[i], obsVectors[i].getDimension()));
         return vectors;
     }
 
@@ -535,9 +554,9 @@ public class Dvector {
 
         weighting = new double[nTimeWindow];
         startPoints = new int[nTimeWindow];
-        obsVec = new RealVector[nTimeWindow];
-        synVec = new RealVector[nTimeWindow];
-        dVec = new RealVector[nTimeWindow];
+        obsVectors = new RealVector[nTimeWindow];
+        synVectors = new RealVector[nTimeWindow];
+        dVectors = new RealVector[nTimeWindow];
         System.err.println(nTimeWindow + " timewindows are used");
         usedGlobalCMTIDset = new HashSet<>();
         usedStationSet = new HashSet<>();

@@ -199,7 +199,7 @@ public class CheckerBoardTest implements Operation {
 	 *            for output
 	 */
 	public void output4ChekeBoardTest(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
-		// bornVec = dVector.getObsVec();
+		// bornVec = dVector.getObsVectors();
 		Objects.requireNonNull(bornVec);
 
 		Dvector dVector = eq.getDVector();
@@ -210,7 +210,8 @@ public class CheckerBoardTest implements Operation {
 			BasicID[] synIDs = dVector.getSynIDs();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 				bdw.addBasicID(obsIDs[i].setData(bornPart[i].mapDivide(dVector.getWeighting(i)).toArray()));
-				bdw.addBasicID(synIDs[i].setData(dVector.getSynVec()[i].mapDivide(dVector.getWeighting(i)).toArray()));
+				bdw.addBasicID(
+						synIDs[i].setData(dVector.getSynVectors()[i].mapDivide(dVector.getWeighting(i)).toArray()));
 			}
 		}
 	}
@@ -238,7 +239,7 @@ public class CheckerBoardTest implements Operation {
 			BasicID[] synIDs = dVector.getSynIDs();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 				double weighting = dVector.getWeighting(i);
-				bdw.addBasicID(obsIDs[i].setData(dVector.getObsVec()[i].mapDivide(weighting).toArray()));
+				bdw.addBasicID(obsIDs[i].setData(dVector.getObsVectors()[i].mapDivide(weighting).toArray()));
 				bdw.addBasicID(synIDs[i].setData(bornPart[i].mapDivide(weighting).toArray()));
 			}
 		}
