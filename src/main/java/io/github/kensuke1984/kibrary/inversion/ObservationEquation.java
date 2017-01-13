@@ -24,8 +24,6 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 
-import javax.xml.crypto.Data;
-
 /**
  * A&delta;m=&delta;d
  * <p>
@@ -51,7 +49,7 @@ public class ObservationEquation {
         PARAMETER_LIST = Collections.unmodifiableList(parameterList);
         readA(partialIDs);
         atd = RealVector.unmodifiableRealVector(computeAtD(dVector.getD()));
-        BORN_GENERATOR = model -> DVECTOR.separate(operate(model));
+        BORN_GENERATOR = model -> DVECTOR.separate(operate(model).add(dVector.getSyn()));
         VARIANCE_GENERATOR = this::varianceOf;
     }
 
@@ -68,7 +66,7 @@ public class ObservationEquation {
      */
     public RealVector[] bornOut(RealVector m) {
         RealVector[] am = DVECTOR.separate(operate(m));
-        RealVector[] syn = DVECTOR.getSynVec();
+        RealVector[] syn = DVECTOR.getSynVectors();
         RealVector[] born = new ArrayRealVector[DVECTOR.getNTimeWindow()];
         Arrays.setAll(born, i -> syn[i].add(am[i]));
         return born;
@@ -284,6 +282,9 @@ public class ObservationEquation {
 
     private final DataGenerator<RealVector, RealVector[]> BORN_GENERATOR;
 
+    /**
+     * @return generator of born waveforms
+     */
     public DataGenerator<RealVector, RealVector[]> getBornGenerator() {
         return BORN_GENERATOR;
     }

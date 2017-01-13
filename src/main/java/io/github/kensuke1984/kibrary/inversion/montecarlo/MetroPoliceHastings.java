@@ -5,23 +5,17 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
 
 /**
- * Waveform inversion with Metropolis–Hastings algorithm <a href=
- * https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm>wiki</a>
+ * Waveform inversion with Metropolis–Hastings algorithm.
  *
  * @author Kensuke Konishi
  *         <p>
  *         logFile is in run0.
  * @version 0.1.0
+ * @see <a href=https://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm>Wikipedia</a>
  */
-public class MetroPolice<M, D> {
+public class MetroPoliceHastings<M, D> {
     private final Path WORK_DIR;
 
     /**
@@ -36,12 +30,18 @@ public class MetroPolice<M, D> {
 
     private final DataGenerator<M, D> DATA_GENERATOR;
 
-    public MetroPolice(Path workDir, ModelGenerator<M> modelGenerator, DataGenerator<M, D> dataGenerator,
-                DataComparator<D> dataComparator) throws IOException {
+    /**
+     * @param workDir        working directory
+     * @param modelGenerator Generation a new model from a model randomly.
+     * @param dataGenerator  With a model made by the modelGenerator, data are generated.
+     * @param dataComparator Data comparison.
+     * @throws IOException if any
+     */
+    public MetroPoliceHastings(Path workDir, ModelGenerator<M> modelGenerator, DataGenerator<M, D> dataGenerator,
+                               DataComparator<D> dataComparator) throws IOException {
         MODEL_GENERATOR = modelGenerator;
         DATA_COMPARATOR = dataComparator;
         DATA_GENERATOR = dataGenerator;
-        new ArrayList<>();
         WORK_DIR = workDir;
         MODEL_PATH = workDir.resolve("models");
         if (Files.exists(MODEL_PATH)) throw new FileAlreadyExistsException(MODEL_PATH.toString());
@@ -50,24 +50,26 @@ public class MetroPolice<M, D> {
 
     private final Path MODEL_PATH;
 
-    private void run() throws IOException, InterruptedException {
+    public void run() throws IOException, InterruptedException {
 
         int nRun = limit;
-        System.out.println("MetroPolice is going.");
+        System.err.println("MetroPoliceHastings is going.");
         M lastAdoptedModel = MODEL_GENERATOR.firstModel();
         D lastAdoptedDataset = DATA_GENERATOR.generate(lastAdoptedModel);
+        System.out.println(WORK_DIR);
         Path lastAdoptedPath = MODEL_PATH.resolve("model0.inf");
         MODEL_GENERATOR.write(lastAdoptedPath, lastAdoptedModel);
         Files.createSymbolicLink(MODEL_PATH.resolve("adopted0.inf"), Paths.get("model0.inf"));
-        System.out.println("Starting from run0");
         double lastAdoptedLikelihood = DATA_COMPARATOR.likelihood(lastAdoptedDataset);
+        System.out.println(lastAdoptedLikelihood);
         for (int iRun = 1; iRun < nRun + 1; iRun++) {
             M currentModel = MODEL_GENERATOR.createNextModel(lastAdoptedModel);
             Path currentPath = MODEL_PATH.resolve("model" + iRun + ".inf");
             MODEL_GENERATOR.write(currentPath, currentModel);
             D currentDataset = DATA_GENERATOR.generate(currentModel);
             double currentLikelihood = DATA_COMPARATOR.likelihood(currentDataset);
-            if (judge(lastAdoptedLikelihood, currentLikelihood)) {
+            System.out.println(currentLikelihood);
+            if (acceptsCurrent(lastAdoptedLikelihood, currentLikelihood)) {
                 lastAdoptedModel = currentModel;
                 lastAdoptedDataset = currentDataset;
                 lastAdoptedPath = currentPath;
@@ -77,39 +79,17 @@ public class MetroPolice<M, D> {
         }
     }
 
-    private static boolean judge(double lastAdoptedLikelihood, double currentLikelihood) {
-        try {
-            double percentage = currentLikelihood / lastAdoptedLikelihood;
-            if (1 < percentage) return true;
-            double rand = Math.random();
-            return rand < percentage;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    private static int limit = 100000;
-
     /**
-     * @param args runpath, machinefile (option fo mpirun)
-     * @throws IOException          if any
-     * @throws InterruptedException iff any
+     * @param lastAdoptedLikelihood likelihood for the last model
+     * @param currentLikelihood     likelihood for the current model
+     * @return if the current model is accept.
      */
-    public static void main(String[] args) throws IOException, InterruptedException {
+    private static boolean acceptsCurrent(double lastAdoptedLikelihood, double currentLikelihood) {
+        double percentage = currentLikelihood / lastAdoptedLikelihood;
+        if (1 < percentage) return true;
+        return Math.random() < percentage;
     }
 
-
-    private static void first() throws IOException, InterruptedException {
-        Path root = Paths.get("/home/kensuke/secondDisk/montecarlo/test");
-        Path tmp = Files.createDirectories(root.resolve("metro" + Utilities.getTemporaryString()));
-        Path obsdir = root.resolve("obs");
-        MetroPolice<PolynomialStructure, SACData[]> mp = new MetroPolice<>(tmp, new RandomPolynomialModelGenerator(),
-                new DSMComputation(obsdir, tmp.resolve("data"), root.resolve("primePSV"),
-                        StationInformationFile.read(root.resolve("station.inf"))), new SACVarianceComparator(obsdir));
-        mp.run();
-
-    }
-
+    private static int limit = 100;
 
 }
