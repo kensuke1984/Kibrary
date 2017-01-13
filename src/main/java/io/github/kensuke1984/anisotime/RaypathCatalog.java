@@ -33,7 +33,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.10.1b
+ * @version 0.0.11b
  */
 public class RaypathCatalog implements Serializable {
 
@@ -529,16 +529,23 @@ public class RaypathCatalog implements Serializable {
      * the small range. The function f is assumed to be a polynomial function.
      * The degree of the function is 1.<S>depends on the number of the input raypaths.</S>
      *
-     * @param targetDelta [rad] epicentral distance to get T for
-     * @param raypaths    Polynomial interpolation is done with these. All the raypaths
-     *                    must be computed.
+     * @param targetPhase   target phase
+     * @param eventR        [km] radius of event
+     * @param targetDelta   [rad] epicentral distance to get T for
+     * @param relativeAngle if the targetDelta is a relative value.
+     * @param raypaths      Polynomial interpolation is done with these. All the raypaths
+     *                      must be computed.
      * @return travel time [s] for the target Delta estimated by the polynomial
      * interpolation with the raypaths.
      */
-    private Raypath interpolateRaypath(Phase targetPhase, double eventR, double targetDelta, Raypath... raypaths) {
+    private Raypath interpolateRaypath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle,
+                                       Raypath... raypaths) {
         WeightedObservedPoints deltaP = new WeightedObservedPoints();
-        for (Raypath raypath : raypaths)
-            deltaP.add(raypath.computeDelta(eventR, targetPhase), raypath.getRayParameter());
+        for (Raypath raypath : raypaths) {
+            double delta = raypath.computeDelta(eventR, targetPhase);
+            if (relativeAngle) delta = toRelativeAngle(delta);
+            deltaP.add(delta, raypath.getRayParameter());
+        }
         PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaP.toList()));
         Raypath ray = new Raypath(pf.value(targetDelta), WOODHOUSE, MESH);
@@ -557,12 +564,13 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param targetPhase target phase
-     * @param eventR      [km] event radius
-     * @param targetDelta [rad] target &Delta;
+     * @param targetPhase   target phase
+     * @param eventR        [km] event radius
+     * @param targetDelta   [rad] target &Delta;
+     * @param relativeAngle if the input targetDelta is a relative angle.
      * @return Never returns null. zero length array is possible.
      */
-    public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta) {
+    public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
 
@@ -570,6 +578,9 @@ public class RaypathCatalog implements Serializable {
         // System.err.println("Looking for Phase:" + targetPhase + ",
         // \u0394[\u02da]:"
         // + Precision.round(Math.toDegrees(targetDelta), 4));
+        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
+                "When you search paths for a relative angle, a targetDelta must be pi or less.");
 
         List<Raypath> pathList = new ArrayList<>();
         for (int i = 0; i < raypaths.length - 1; i++) {
@@ -579,12 +590,15 @@ public class RaypathCatalog implements Serializable {
             double deltaI = rayI.computeDelta(eventR, targetPhase);
             double deltaP = rayP.computeDelta(eventR, targetPhase);
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
+            if (relativeAngle) {
+                deltaI = toRelativeAngle(deltaI);
+                deltaP = toRelativeAngle(deltaP);
+            }
             if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
             Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
             rayC.compute();
-            double deltaC = rayC.computeDelta(eventR, targetPhase);
-            if (Double.isNaN(deltaC)) continue;
-            Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
+            if (Double.isNaN(rayC.computeDelta(eventR, targetPhase))) continue;
+            Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayI, rayC, rayP);
             if (Double.isNaN(rayIn.computeDelta(eventR, targetPhase))) continue;
             pathList.add(rayIn);
         }
@@ -592,26 +606,48 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param targetPhase target phase
-     * @param eventR      [km] event radius
-     * @param targetDelta [rad] target &Delta;
+     * If an input angle is a radian for 370 deg, then one for 10 deg returns.
+     * If an input angle is a radian for 190 deg, then one for 170 deg returns.
+     *
+     * @param angle [rad]
+     * @return a relative angle for the input angle. The angle is [0,180]
      */
-    public double[] searchTime(Phase targetPhase, double eventR, double targetDelta) {
+    private static double toRelativeAngle(double angle) {
+        while (0 < angle) angle -= 2 * Math.PI;
+        angle += 2 * Math.PI;
+        return angle <= Math.PI ? angle : 2 * Math.PI - angle;
+    }
+
+    /**
+     * @param targetPhase   target phase
+     * @param eventR        [km] event radius
+     * @param targetDelta   [rad] target &Delta;
+     * @param relativeAngle if the targetDelta is a relative value.
+     * @return [s] arrays of travel times.
+     */
+    public double[] searchTime(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
         // System.err.println("Looking for Phase:" + targetPhase + ",
         // \u0394[\u02da]:"
         // + Precision.round(Math.toDegrees(targetDelta), 4));
         List<Double> timeList = new ArrayList<>();
         Raypath[] raypaths = getRaypaths();
+        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
+                "When you search paths for a relative angle, a targetDelta must be pi or less.");
         for (int i = 0; i < raypaths.length - 1; i++) {
             Raypath rayI = raypaths[i];
             Raypath rayP = raypaths[i + 1];
             double deltaI = rayI.computeDelta(eventR, targetPhase);
             double deltaP = rayP.computeDelta(eventR, targetPhase);
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
+            if (relativeAngle) {
+                deltaI = toRelativeAngle(deltaI);
+                deltaP = toRelativeAngle(deltaP);
+            }
             if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
             Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
             rayC.compute();
-            Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, rayI, rayC, rayP);
+            Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayI, rayC, rayP);
             double deltaC = rayC.computeDelta(eventR, targetPhase);
             double deltaIn = rayIn.computeDelta(eventR, targetPhase);
             if (Double.isNaN(deltaC) || Double.isNaN(deltaIn)) continue;
