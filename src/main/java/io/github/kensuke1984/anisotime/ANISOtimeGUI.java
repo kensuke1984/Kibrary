@@ -30,7 +30,7 @@ import javax.swing.WindowConstants;
 
 /**
  * GUI for ANISOtime
- *
+ * <p>
  * TODO relative absolute
  *
  * @author Kensuke Konishi
@@ -317,8 +317,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            Logger.getLogger(ANISOtimeGUI.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            Logger.getLogger(ANISOtimeGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
         // </editor-fold>
 
@@ -376,8 +375,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
      * @param raypathList List of {@link Raypath}
      * @param phaseList   List of {@link Phase}
      */
-    public synchronized void showResult(double[] delta, List<Raypath> raypathList,
-                                         List<Phase> phaseList) {
+    public synchronized void showResult(double[] delta, List<Raypath> raypathList, List<Phase> phaseList) {
         Objects.requireNonNull(raypathList);
         Objects.requireNonNull(phaseList);
         if (raypathList.size() != phaseList.size()) throw new RuntimeException("UNEXPECTED");
@@ -398,7 +396,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 double time = travelTime;
                 double targetDelta = Math.toDegrees(delta[i]);
                 if (!phase.isDiffracted())
-                    time = getCatalog().travelTimeByThreePointInterpolate(targetDelta, raypath, eventR, phase);
+                    time = getCatalog().travelTimeByThreePointInterpolate(phase, eventR, targetDelta, false, raypath);
                 if (!Double.isNaN(time)) {
                     added = true;
                     resultWindow.addRow(epicentralDistance, depth, title, time, raypath.getRayParameter());

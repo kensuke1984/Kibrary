@@ -34,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.11b
+ * @version 0.3.11.1b
  */
 final class ANISOtimeCLI {
 
@@ -403,7 +403,9 @@ final class ANISOtimeCLI {
         }
         delta0 = Math.toDegrees(delta0);
         if (0 < targetDelta) {
-            double time1 = catalog.travelTimeByThreePointInterpolate(targetDelta, raypath, eventR, targetPhase);
+            double time1 =
+                    catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, targetDelta, relativeAngleMode,
+                            raypath);
             if (!Double.isNaN(time1)) {
                 time0 = time1;
                 delta0 = targetDelta;
