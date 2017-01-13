@@ -34,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.10.1b
+ * @version 0.3.10.2b
  */
 final class ANISOtimeCLI {
 
@@ -230,12 +230,12 @@ final class ANISOtimeCLI {
                     double angle0 = diff.computeDelta(eventR, phase);
                     for (double d : targets) {
                         double deltaOnBoundary = d - Math.toDegrees(angle0);
+                        if (deltaOnBoundary < 0) continue;
                         Phase diffPhase = Phase.create(phase.toString() + deltaOnBoundary, phase.isPSV());
                         printResults(-1, diff, diffPhase, ps);
                     }
                     continue;
                 }
-
 
                 for (double d : targets)
                     for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
