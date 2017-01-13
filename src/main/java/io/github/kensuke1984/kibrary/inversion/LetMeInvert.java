@@ -292,9 +292,9 @@ public class LetMeInvert implements Operation {
 
         BasicID[] obsIDs = d.getObsIDs();
         BasicID[] synIDs = d.getSynIDs();
-        RealVector[] obsVec = d.getObsVec();
-        RealVector[] synVec = d.getSynVec();
-        RealVector[] delVec = d.getdVec();
+        RealVector[] obsVec = d.getObsVectors();
+        RealVector[] synVec = d.getSynVectors();
+        RealVector[] delVec = d.getDVectors();
         // each trace variance
         Path eachVariancePath = outPath.resolve("eachVariance.txt");
         try (PrintWriter pw1 = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
@@ -376,7 +376,7 @@ public class LetMeInvert implements Operation {
         int nTimeWindow = eq.getDVector().getNTimeWindow();
         if (vectors.length != nTimeWindow) return;
         for (int i = 0; i < nTimeWindow; i++) {
-            if (vectors[i].getDimension() != eq.getDVector().getSynVec()[i].getDimension()) return;
+            if (vectors[i].getDimension() != eq.getDVector().getSynVectors()[i].getDimension()) return;
         }
         Files.createDirectories(outPath);
         for (GlobalCMTID id : eq.getDVector().getUsedGlobalCMTIDset()) {
