@@ -34,7 +34,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.10.2b
+ * @version 0.3.11b
  */
 final class ANISOtimeCLI {
 
@@ -112,6 +112,8 @@ final class ANISOtimeCLI {
 
     private Phase[] targetPhases;
 
+    private boolean relativeAngleMode;
+
     /**
      * [rad]
      */
@@ -149,6 +151,8 @@ final class ANISOtimeCLI {
         if (cmd.hasOption("time")) showFlag |= 4;
         if (showFlag == 0) showFlag = 7;
 
+        relativeAngleMode = cmd.hasOption("relative");
+
         if (cmd.hasOption("rc")) {
             try {
                 Path catalogPath = Paths.get(cmd.getOptionValue("rc"));
@@ -173,9 +177,10 @@ final class ANISOtimeCLI {
         else targetPhases = new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.S, Phase.ScS, Phase.SKiKS};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
-        if (targetDelta < 0 || 2 * Math.PI <= targetDelta)
-            throw new RuntimeException("A value for the option -deg must be [0, 360).");
 
+        if (targetDelta < 0) throw new RuntimeException("A value for the option -deg must be non-negative.");
+        if (relativeAngleMode && Math.PI < targetDelta)
+            throw new RuntimeException("In the relative angle mode, a value for the option -deg must be 180 or less.");
 
         double interval = Double.parseDouble(cmd.getOptionValue("dR", "10")); //TODO dR is not working.
 
@@ -224,12 +229,11 @@ final class ANISOtimeCLI {
             ps.println("#created by " + INPUT);
             for (Phase phase : targetPhases) {
                 Map<Raypath, Double> deltaPathMap = new HashMap<>();
-
                 if (phase.isDiffracted()) {
-                    Raypath diff = catalog.searchPath(phase, eventR, 0)[0];
-                    double angle0 = diff.computeDelta(eventR, phase);
+                    Raypath diff = catalog.searchPath(phase, eventR, 0, relativeAngleMode)[0];
+                    double sAngle = Math.toDegrees(diff.computeDelta(eventR, phase));
                     for (double d : targets) {
-                        double deltaOnBoundary = d - Math.toDegrees(angle0);
+                        double deltaOnBoundary = d - sAngle;
                         if (deltaOnBoundary < 0) continue;
                         Phase diffPhase = Phase.create(phase.toString() + deltaOnBoundary, phase.isPSV());
                         printResults(-1, diff, diffPhase, ps);
@@ -238,7 +242,7 @@ final class ANISOtimeCLI {
                 }
 
                 for (double d : targets)
-                    for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d)))
+                    for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d), relativeAngleMode))
                         deltaPathMap.put(p, d);
 
                 deltaPathMap.keySet().stream().sorted(Comparator.comparingDouble(Raypath::getRayParameter).reversed())
@@ -324,7 +328,7 @@ final class ANISOtimeCLI {
             }
 
             for (Phase targetPhase : targetPhases) {
-                Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta);
+                Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta, relativeAngleMode);
                 if (raypaths.length == 0) {
                     System.err.println("No raypaths satisfying the input condition");
                     continue;
@@ -453,10 +457,10 @@ final class ANISOtimeCLI {
     }
 
     private static void setBooleanOptions() {
-        options.addOption("SV", false, "Computes travel time for SV (default:SH)");
-        options.addOption("SH", false, "Computes travel time for SH (default:SH)");
+        options.addOption("SV", false, "Computes travel time for SV. (default:SH)");
+        options.addOption("SH", false, "Computes travel time for SH. (default:SH)");
         options.addOption("help", "Shows this message. This option has the highest priority.");
-        options.addOption("eps", false, "output path figure");
+        options.addOption("eps", false, "Outputs path figure.");
         options.addOption(null, "rayp", false, "Shows ray parameters");
         options.addOption(null, "time", false, "Shows travel times");
         options.addOption(null, "delta", false, "Shows epicentral distances");
@@ -464,6 +468,8 @@ final class ANISOtimeCLI {
                 "Shows information of the tool. This option has the 2nd highest priority.");
         options.addOption("s", "send", false,
                 "If you find any problem with a set of commands, add this argument to send the situation to Kensuke Konishi.");
+        options.addOption(null, "relative", false, "Relative angle mode. (default:absolute)");
+        options.addOption(null, "absolute", false, "Absolute angle mode. (default:absolute)");
     }
 
     private static void setArgumentOptions() {
@@ -488,16 +494,21 @@ final class ANISOtimeCLI {
      */
     private boolean hasConflict() {
 
+        if (cmd.hasOption("absolute") && cmd.hasOption("relative")) {
+            System.err.println("Only one of either --absolute or --relative can be chosen.");
+            return true;
+        }
+
+
         if (cmd.hasOption("h") && 1 < cmd.getOptionValues("h").length) {
             System.err.println("Option -h (depth) can have only one value [km].");
             return true;
         }
 
-
         if (cmd.hasOption("SH")) {
             boolean out = false;
             if (cmd.hasOption("SV")) {
-                System.err.println("Either SV or SH can be chosen.");
+                System.err.println("Only one of either -SV or -SH can be chosen.");
                 out = true;
             }
 

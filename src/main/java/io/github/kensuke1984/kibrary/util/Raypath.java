@@ -154,7 +154,7 @@ public class Raypath {
      */
     public io.github.kensuke1984.anisotime.Raypath[] toANISOtime(Phase phase, VelocityStructure structure) {
         return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), 10)
-                .searchPath(phase, sourceLocation.getR(), epicentralDistance);
+                .searchPath(phase, sourceLocation.getR(), epicentralDistance, false);
     }
 
 }

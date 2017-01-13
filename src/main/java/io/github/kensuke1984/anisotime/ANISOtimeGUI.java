@@ -31,6 +31,8 @@ import javax.swing.WindowConstants;
 /**
  * GUI for ANISOtime
  *
+ * TODO relative absolute
+ *
  * @author Kensuke Konishi
  * @version 0.5.2.2
  */
@@ -238,7 +240,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                             .computeCatalogue(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
                     double epicentralDistance = Math.toRadians(mostImportant);
                     for (Phase phase : phaseSet) {
-                        Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
+                        Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance, false);
                         for (Raypath raypath : raypaths) {
                             raypathList.add(raypath);
                             phaseList.add(phase);
@@ -346,7 +348,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         List<Phase> phaseList = new ArrayList<>();
         double epicentralDistance = Math.toRadians(mostImportant);
         for (Phase phase : phaseSet) {
-            Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance);
+            Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance, false);
             for (Raypath raypath : raypaths) {
                 raypathList.add(raypath);
                 phaseList.add(phase);
