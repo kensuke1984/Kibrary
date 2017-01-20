@@ -28,7 +28,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.2.2.1
  */
 public class Trace {
 
@@ -145,35 +145,36 @@ public class Trace {
 
     /**
      * x=cの点でのyの値をfをn次関数として補完する 補完の際には直近のn+1点で補完
+     * f(x) = &Sigma; a<sub>i</sub> x<sup>i</sup>
      *
      * @param n degree of function for interpolation
      * @param c point for the value
-     * @return y = f(c)
+     * @return y = f(c) = &Sigma; a<sub>i</sub> c<sup>i</sup>
      */
     public double toValue(int n, double c) {
         if (X.length < n + 1) throw new IllegalArgumentException("n is too big");
         if (n < 0) throw new IllegalArgumentException("n is invalid");
 
         int[] j = nearPoints(n + 1, c);
-
+        for (int i : j) {
+            System.out.println(i + " " + X[i]);
+        }
         if (n == 0) return Y[j[0]];
 
         double[] xi = Arrays.stream(j).parallel().mapToDouble(i -> X[i]).toArray();
 
-        // c**n + c**n-1 + .....
+        // (1, c, c**2...)
         RealVector cx = new ArrayRealVector(n + 1);
 
         RealMatrix matrix = new Array2DRowRealMatrix(n + 1, n + 1);
-        // double[] b = new double[n + 1];
+//      {a_i}
         RealVector bb = new ArrayRealVector(n + 1);
         for (int i = 0; i < n + 1; i++) {
             cx.setEntry(i, Math.pow(c, i));
             for (int k = 0; k < n + 1; k++)
                 matrix.setEntry(i, k, Math.pow(xi[i], k));
-
             bb.setEntry(i, Y[j[i]]);
         }
-
         return cx.dotProduct(new LUDecomposition(matrix).getSolver().solve(bb));
     }
 
@@ -290,7 +291,7 @@ public class Trace {
     /**
      * @param n must be a natural number
      * @param x x
-     * @return xに最も近いn点の番号
+     * @return index of n points closest to the value x
      */
     private int[] nearPoints(int n, double x) {
         if (n <= 0 || X.length < n) throw new IllegalArgumentException("n is invalid");

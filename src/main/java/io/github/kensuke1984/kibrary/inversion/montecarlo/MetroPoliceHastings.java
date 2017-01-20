@@ -1,6 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,31 +53,40 @@ public class MetroPoliceHastings<M, D> {
     private final Path MODEL_PATH;
 
     public void run() throws IOException, InterruptedException {
-
         int nRun = limit;
         System.err.println("MetroPoliceHastings is going.");
         M lastAdoptedModel = MODEL_GENERATOR.firstModel();
         D lastAdoptedDataset = DATA_GENERATOR.generate(lastAdoptedModel);
-        System.out.println(WORK_DIR);
         Path lastAdoptedPath = MODEL_PATH.resolve("model0.inf");
         MODEL_GENERATOR.write(lastAdoptedPath, lastAdoptedModel);
-        Files.createSymbolicLink(MODEL_PATH.resolve("adopted0.inf"), Paths.get("model0.inf"));
+//        Files.createSymbolicLink(MODEL_PATH.resolve("adopted0.inf"), Paths.get("model0.inf"));
+        double[] likelihoods = new double[nRun + 1];
         double lastAdoptedLikelihood = DATA_COMPARATOR.likelihood(lastAdoptedDataset);
-        System.out.println(lastAdoptedLikelihood);
-        for (int iRun = 1; iRun < nRun + 1; iRun++) {
-            M currentModel = MODEL_GENERATOR.createNextModel(lastAdoptedModel);
-            Path currentPath = MODEL_PATH.resolve("model" + iRun + ".inf");
-            MODEL_GENERATOR.write(currentPath, currentModel);
-            D currentDataset = DATA_GENERATOR.generate(currentModel);
-            double currentLikelihood = DATA_COMPARATOR.likelihood(currentDataset);
-            System.out.println(currentLikelihood);
-            if (acceptsCurrent(lastAdoptedLikelihood, currentLikelihood)) {
-                lastAdoptedModel = currentModel;
-                lastAdoptedDataset = currentDataset;
-                lastAdoptedPath = currentPath;
-                lastAdoptedLikelihood = currentLikelihood;
+        likelihoods[0] = lastAdoptedLikelihood;
+        try (BufferedWriter writer = Files.newBufferedWriter(MODEL_PATH.resolve("adopted.txt"))) {
+            writer.write("0 model0.inf");
+            writer.newLine();
+            for (int iRun = 1; iRun < nRun + 1; iRun++) {
+                M currentModel = MODEL_GENERATOR.createNextModel(lastAdoptedModel);
+                Path currentPath = MODEL_PATH.resolve("model" + iRun + ".inf");
+                MODEL_GENERATOR.write(currentPath, currentModel);
+                D currentDataset = DATA_GENERATOR.generate(currentModel);
+                double currentLikelihood = DATA_COMPARATOR.likelihood(currentDataset);
+                likelihoods[iRun] = currentLikelihood;
+                if (acceptsCurrent(lastAdoptedLikelihood, currentLikelihood)) {
+                    lastAdoptedModel = currentModel;
+                    lastAdoptedDataset = currentDataset;
+                    lastAdoptedPath = currentPath;
+                    lastAdoptedLikelihood = currentLikelihood;
+                }
+//                Files.createSymbolicLink(MODEL_PATH.resolve("adopted" + iRun + ".inf"), lastAdoptedPath.getFileName());
+                writer.write(iRun + " " + lastAdoptedPath.getFileName());
+                writer.newLine();
             }
-            Files.createSymbolicLink(MODEL_PATH.resolve("adopted" + iRun + ".inf"), lastAdoptedPath.getFileName());
+        }
+        try (PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(WORK_DIR.resolve("likelihood.txt")))) {
+            for (int i = 0; i < likelihoods.length; i++)
+                printWriter.println(i + " " + likelihoods[i]);
         }
     }
 
@@ -86,10 +97,9 @@ public class MetroPoliceHastings<M, D> {
      */
     private static boolean acceptsCurrent(double lastAdoptedLikelihood, double currentLikelihood) {
         double percentage = currentLikelihood / lastAdoptedLikelihood;
-        if (1 < percentage) return true;
-        return Math.random() < percentage;
+        return 1 < percentage || Math.random() < percentage;
     }
 
-    private static int limit = 100;
+    private static int limit = 1000000;
 
 }

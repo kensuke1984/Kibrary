@@ -1,10 +1,8 @@
 package io.github.kensuke1984.anisotime;
 
-import java.awt.Desktop;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
 import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -34,7 +32,7 @@ import net.sf.epsgraphics.EpsGraphics;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.3.11.1b
+ * @version 0.3.12b
  */
 final class ANISOtimeCLI {
 
@@ -87,7 +85,7 @@ final class ANISOtimeCLI {
             }
 
         for (String o : args)
-            if (o.equals("-v") || o.equals("--version") || o.equals("-version")) {
+            if (o.equals("-v") || o.equals("--VERSION") || o.equals("-VERSION")) {
                 About.main(null);
                 return;
             }
@@ -368,13 +366,15 @@ final class ANISOtimeCLI {
                 System.err.println(
                         "improper usage or some other problems. If you have no idea about this, you try the same order with '-s' option to send me the situation.");
                 System.err.println(e.getMessage());
-            } else try {
-                Desktop.getDesktop().mail(new URI(
-                        "mailto:kensuke@earth.sinica.edu.tw?subject=ANISOtime%20problem&body=" +
-                                INPUT.replace(" ", "%20") +
-                                "%0APlease%20attach%20the%20structure%20file%20you%20use."));
+            }
+        } finally {
+            if (cmd.hasOption("s")) try {
+                Utilities.sendMail(io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS, "ANISOtime problem",
+                        "Input: " + INPUT, "If you use your original structure, please attach it.\n",
+                        "OS: " + System.getProperty("os.name"), "Java VERSION: " + System.getProperty("java.VERSION"));
             } catch (Exception e2) {
-                System.err.println("Sorry could not send an Email.");
+                System.err.println("Sorry could not send an Email. Please inform me of your situation.");
+                System.err.println("Email address: " + io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS);
             }
         }
     }
@@ -403,8 +403,8 @@ final class ANISOtimeCLI {
         }
         delta0 = Math.toDegrees(delta0);
         if (0 < targetDelta) {
-            double time1 =
-                    catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, targetDelta, relativeAngleMode,
+            double time1 = catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
+                    relativeAngleMode,
                             raypath);
             if (!Double.isNaN(time1)) {
                 time0 = time1;

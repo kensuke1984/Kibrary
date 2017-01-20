@@ -7,7 +7,6 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,15 +26,15 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * This class create a new set of dataset files.
  *
  * @author Kensuke Konishi
- * @version 0.4.0.1
+ * @version 0.4.0.2
  */
 public class WaveformDataWriter implements Closeable, Flushable {
     public Path getIDPath() {
-        return idPath;
+        return IDPATH;
     }
 
     public Path getDataPath() {
-        return dataPath;
+        return DATAPATH;
     }
 
     /**
@@ -51,12 +50,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
     /**
      * id information file
      */
-    private Path idPath;
+    private Path IDPATH;
 
     /**
      * 波形情報ファイル
      */
-    private Path dataPath;
+    private Path DATAPATH;
 
     @Override
     public void close() throws IOException {
@@ -128,14 +127,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     public WaveformDataWriter(Path idPath, Path dataPath, Set<Station> stationSet, Set<GlobalCMTID> globalCMTIDSet,
                               double[][] periodRanges, Set<Location> perturbationPoints) throws IOException {
-        this.idPath = idPath;
-        this.dataPath = dataPath;
+        IDPATH = idPath;
+        DATAPATH = dataPath;
         if (checkDuplication(periodRanges)) throw new RuntimeException("Input periodRanges have duplication.");
         this.periodRanges = periodRanges;
-        idStream = new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(idPath, StandardOpenOption.CREATE_NEW)));
-        dataStream = new DataOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(dataPath, StandardOpenOption.CREATE_NEW)));
+        idStream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(idPath)));
+        dataStream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(dataPath)));
         dataLength = Files.size(dataPath);
         idStream.writeShort(stationSet.size());
         idStream.writeShort(globalCMTIDSet.size());

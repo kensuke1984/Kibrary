@@ -12,7 +12,7 @@ import static javax.swing.UIManager.*;
  * Information about ANISOtime package.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.1.1
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
  */
 final class About extends javax.swing.JFrame {
@@ -47,7 +47,7 @@ final class About extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
     }
 
-    private static final String line = "ANISOtime " + ANISOtime.version + " (" + ANISOtime.codename +
+    private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
             ") Copyright \u00a9 2015 Kensuke Konishi\n\n" +
             "Licensed under the Apache License, Version 2.0 (the \"License\")\n" +
             "You may not use this file except in compliance with the License.\n" +
