@@ -21,12 +21,14 @@ import javax.swing.*;
  * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  */
-final class About extends javax.swing.JFrame {
+public final class About extends javax.swing.JFrame {
+    public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
+
     private static final long serialVersionUID = -2485772755944862822L;
 
     public static final String codename = "Sahagin";
 
-    public static final String version = "0.4.2.2";
+    public static final String version = "0.4.2.3";
 
     private About() {
         super("About Kibrary");

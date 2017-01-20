@@ -22,6 +22,7 @@ import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import org.apache.commons.math3.primes.Primes;
 
 /**
  * Raypath catalogue for one model
@@ -33,14 +34,13 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.11.1b
+ * @version 0.0.12b
  */
 public class RaypathCatalog implements Serializable {
-
     /**
-     * 2016/12/16
+     * 2017/1/20
      */
-    private static final long serialVersionUID = -5169958584689352786L;
+    private static final long serialVersionUID = 6217165062016323038L;
 
     /**
      * check which phases exist.
@@ -681,7 +681,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * @param targetPhase   to look for
      * @param eventR        [km] radius of the source
-     * @param targetDelta   [deg]
+     * @param targetDelta   [rad]
      * @param relativeAngle if the targetDelta is a relative value.
      * @param raypath0      source of raypath
      * @return travel time for the targetDelta [s]
@@ -703,11 +703,13 @@ public class RaypathCatalog implements Serializable {
             lowerDelta = toRelativeAngle(lowerDelta);
             higherDelta = toRelativeAngle(higherDelta);
         }
-        double[] p = new double[]{delta0, lowerDelta, higherDelta};
-        double[] time = new double[]{raypath0.computeT(eventR, targetPhase), lower.computeT(eventR, targetPhase),
-                higher.computeT(eventR, targetPhase),};
-        Trace t = new Trace(p, time);
-        return t.toValue(2, targetDelta);
+        WeightedObservedPoints pTime = new WeightedObservedPoints();
+        pTime.add(delta0, raypath0.computeT(eventR, targetPhase));
+        pTime.add(lowerDelta, lower.computeT(eventR, targetPhase));
+        pTime.add(higherDelta, higher.computeT(eventR, targetPhase));
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
+        PolynomialFunction pf = new PolynomialFunction(fitter.fit(pTime.toList()));
+        return pf.value(targetDelta);
     }
 
 }

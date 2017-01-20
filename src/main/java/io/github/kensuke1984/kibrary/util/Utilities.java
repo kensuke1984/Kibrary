@@ -1,11 +1,13 @@
 package io.github.kensuke1984.kibrary.util;
 
-import java.awt.Toolkit;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +39,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.1
+ * @version 0.1.2
  */
 public final class Utilities {
 
@@ -286,6 +288,13 @@ public final class Utilities {
         decimal *= Math.pow(10, n);
         int decimalInt = (int) Math.round(decimal);
         return decimalInt == 0 ? String.valueOf(intValue) : intValue + "d" + decimalInt;
+    }
+
+    public static void sendMail(String address, String title, String... bodies) throws URISyntaxException, IOException {
+        String body = Arrays.stream(bodies).collect(Collectors.joining("%0A"));
+        URI uri = new URI("mailto:" + address + "?subject=" + title.replace(" ", "%20") + "&body=" +
+                body.replace(" ", "%20").replace("\n", "%0A"));
+        Desktop.getDesktop().mail(uri);
     }
 
 }

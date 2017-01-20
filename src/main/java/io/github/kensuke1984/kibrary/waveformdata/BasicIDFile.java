@@ -50,7 +50,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * TODO sampling Hz
  *
  * @author Kensuke Konishi
- * @version 0.3.0.3
+ * @version 0.3.0.4
  * @see {@link BasicID}
  */
 public final class BasicIDFile {
@@ -74,8 +74,7 @@ public final class BasicIDFile {
     private static void outputStations(String header, BasicID[] ids) throws IOException {
         Path outPath = Paths.get(header + ".station");
         List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct().sorted()
-                .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition())
-                .collect(Collectors.toList());
+                .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
         Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
         System.err.println(outPath + " is created as a list of stations.");
     }
@@ -199,7 +198,10 @@ public final class BasicIDFile {
      * convoluted(or observed) or not(1)<br>
      * position of a waveform for the ID in the datafile(8)
      *
-     * @param bytes for one ID
+     * @param bytes        for one ID
+     * @param stations     stations in header
+     * @param ids          ids in header
+     * @param periodRanges ranges in header
      * @return an ID written in the bytes
      */
     private static BasicID createID(byte[] bytes, Station[] stations, GlobalCMTID[] ids, double[][] periodRanges) {
@@ -209,8 +211,8 @@ public final class BasicIDFile {
         GlobalCMTID id = ids[bb.getShort()];
         SACComponent component = SACComponent.getComponent(bb.get());
         double[] period = periodRanges[bb.get()];
-        double startTime = bb.getFloat(); // starting time
-        int npts = bb.getInt(); // データポイント数
+        double startTime = bb.getFloat(); // start time
+        int npts = bb.getInt(); // number of data point
         double samplingHz = bb.getFloat();
         boolean isConvolved = 0 < bb.get();
         long startByte = bb.getLong();
