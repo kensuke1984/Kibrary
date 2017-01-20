@@ -11,7 +11,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * This class will create a default property for a procedure in Kibrary.
  *
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.1
  */
 public class Property {
 
@@ -26,7 +26,7 @@ public class Property {
             return;
         }
         Manhattan.printList();
-        System.out.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "]");
+        System.out.print("For which one do you want to create a property file? [1-" + Manhattan.values().length + "] ");
         Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).writeDefaultPropertiesFile();
     }
 

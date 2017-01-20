@@ -14,13 +14,13 @@ import org.apache.commons.cli.UnrecognizedOptionException;
  * TODO discontinuity
  *
  * @author Kensuke Konishi
- * @version {@value #version} {@value #codename}
+ * @version {@value #VERSION} {@value #CODENAME}
  */
 final class ANISOtime {
 
-    static final String codename = "Tavnazia";
+    static final String CODENAME = "Tavnazia";
 
-    static final String version = "1.1.3.1b";
+    static final String VERSION = "1.1.3.2b";
 
     private ANISOtime() {
     }
