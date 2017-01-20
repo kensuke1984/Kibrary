@@ -9,7 +9,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -20,9 +19,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
-import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.math3.primes.Primes;
 
 /**
  * Raypath catalogue for one model
@@ -58,7 +55,6 @@ public class RaypathCatalog implements Serializable {
         else if (raypath.exists(earthRadius, Phase.SVcS)) flag |= 4;
         if (raypath.exists(earthRadius, Phase.S)) flag |= 2;
         else if (raypath.exists(earthRadius, Phase.ScS)) flag |= 1;
-
         return flag;
     }
 
@@ -333,7 +329,6 @@ public class RaypathCatalog implements Serializable {
      */
     private void create() {
         double pMax = computeRayparameterLimit() + DELTA_P;
-//        System.out.println("pMax=" + pMax);
         // Compute raparameters for diffration phases.
         computeDiffraction();
         long time = System.nanoTime();
@@ -364,7 +359,6 @@ public class RaypathCatalog implements Serializable {
                 nextP = (p + raypathList.last().getRayParameter()) / 2;
             }
 
-            // System.out.println(p + " " + nextP);
             if (lookIntoPool()) {
                 p = raypathList.last().getRayParameter();
                 nextP = p + DELTA_P;
