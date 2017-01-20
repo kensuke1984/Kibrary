@@ -688,7 +688,6 @@ public class RaypathCatalog implements Serializable {
      */
     double travelTimeByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
                                              boolean relativeAngle, Raypath raypath0) {
-        targetDelta = Math.toRadians(targetDelta);
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
