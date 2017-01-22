@@ -256,6 +256,7 @@ public class TimewindowMaker implements Operation {
 			// window fix
 			Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
 					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
+					.filter(tw -> tw.getPhases().length > 0)
 					.forEach(timewindowSet::add);
 		} catch (RuntimeException e) {
 			e.printStackTrace();

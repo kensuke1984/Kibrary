@@ -77,6 +77,7 @@ public class InversionResult {
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
+		originalUnknownParameterList = UnknownParameterFile.read(rootPath.resolve("originalUnknownParameterOrder.inf"));
 	}
 	
 	public InversionResult(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {
@@ -86,6 +87,7 @@ public class InversionResult {
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
+		originalUnknownParameterList = UnknownParameterFile.read(rootPath.resolve("originalUnknownParameterOrder.inf"));
 	}
 
 	/**
@@ -93,6 +95,10 @@ public class InversionResult {
 	 */
 	public List<UnknownParameter> getUnknownParameterList() {
 		return unknownParameterList;
+	}
+	
+	public List<UnknownParameter> getOriginalUnknownParameterList() {
+		return originalUnknownParameterList;
 	}
 
 	/**
@@ -160,6 +166,7 @@ public class InversionResult {
 	 */
 	private double[] weightingOrder;
 	private List<UnknownParameter> unknownParameterList;
+	private List<UnknownParameter> originalUnknownParameterList;
 
 	private void readOrder() throws IOException {
 		Path orderPath = rootPath.resolve("order.inf");

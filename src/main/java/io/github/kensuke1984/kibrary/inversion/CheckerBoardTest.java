@@ -193,7 +193,7 @@ public class CheckerBoardTest implements Operation {
 		Dvector dVector = new Dvector(ids);
 		PartialID[] pids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
-		eq = new ObservationEquation(pids, parameterList, dVector, false, false, -1);
+		eq = new ObservationEquation(pids, parameterList, dVector, false, false, -1, null);
 	}
 
 	/**

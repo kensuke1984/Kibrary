@@ -6,11 +6,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 
@@ -68,7 +70,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	 */
 	protected double delta;
 
-	protected int npts;
+	protected int[] npts;
 
 	private Path workPath;
 	private Properties property;
@@ -102,7 +104,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	private Predicate<SACData> createPredicate() {
 
 		double delta = property.containsKey("delta") ? Double.parseDouble(property.getProperty("delta")) : Double.NaN;
-		int npts = property.containsKey("npts") ? Integer.parseInt(property.getProperty("npts")) : Integer.MIN_VALUE;
+		int[] npts = property.containsKey("npts") ? Arrays.stream(property.getProperty("npts").trim().split(" ")).mapToInt(Integer::parseInt).toArray() : new int[0];
 
 		double minGCARC = property.containsKey("minGCARC") ? Double.parseDouble(property.getProperty("minGCARC")) : 0;
 		double maxGCARC = property.containsKey("maxGCARC") ? Double.parseDouble(property.getProperty("maxGCARC")) : 180;
@@ -143,8 +145,14 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 					return false;
 
 				// NPTS
-				if (npts != Integer.MIN_VALUE && obsSac.getInt(SACHeaderEnum.NPTS) != npts)
-					return false;
+				if (npts.length != 0) {
+					boolean res = false;
+					for (int n : npts) {
+						if (obsSac.getInt(SACHeaderEnum.NPTS) == n)
+							res = true;
+					}
+					return res;
+				}
 
 				// GCARC
 				double gcarc = obsSac.getValue(SACHeaderEnum.GCARC);

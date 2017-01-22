@@ -10,8 +10,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -36,6 +38,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -93,6 +96,8 @@ public class LetMeInvert implements Operation {
 	protected double gamma;
 	
 	private int nUnknowns;
+	
+	private Map<PartialType, Integer[]> nNewParameter;
 
 	private ObservationEquation eq;
 	
@@ -157,6 +162,17 @@ public class LetMeInvert implements Operation {
 			nUnknowns = -1;
 		else
 			nUnknowns = Integer.parseInt(property.getProperty("nUnknowns"));
+		if (!property.containsKey("nNewParameter"))
+			throw new RuntimeException("nNewParameter must be set");
+		else {
+			nNewParameter = new HashMap<>();
+			String[] args = property.getProperty("nNewParameter").trim().split("\\s+");
+			if (args.length % 3 != 0)
+				throw new RuntimeException("nNewParameter arguments must be in format: PartialType nUM nLM");
+			for (int i = 0; i < args.length / 3; i++) {
+				nNewParameter.put(PartialType.valueOf(args[i]), new Integer[] {Integer.parseInt(args[1]), Integer.parseInt(args[2])});
+			}
+		}
 	}
 
 	/**
@@ -202,6 +218,7 @@ public class LetMeInvert implements Operation {
 			pw.println("##Use phases (blank = all phases)");
 			pw.println("#phases");
 			pw.println("#nUnknowns");
+			pw.println("#nNewParameter PAR2 9 6");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -237,11 +254,11 @@ public class LetMeInvert implements Operation {
 		
 		Predicate<BasicID> chooser = new Predicate<BasicID>() {
 			public boolean test(BasicID id) {
-				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-				if (event.getCmtLocation().getR() > 5971.)
-					return false;
-				if (event.getCmt().getMw() < 6.3)
-					return false;
+//				GlobalCMTData event = id.getGlobalCMTID().getEvent();
+//				if (event.getCmtLocation().getR() > 5971.)
+//					return false;
+//				if (event.getCmt().getMw() < 6.3)
+//					return false;
 				for (String phasename : phases) {
 					if (new Phases(id.getPhases()).equals(new Phases(phasename)))
 						return true;
@@ -280,7 +297,7 @@ public class LetMeInvert implements Operation {
 		}
 		
 		System.out.println(nUnknowns);
-		eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns);
+		eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, nNewParameter);
 	}
 
 	/**
@@ -298,6 +315,7 @@ public class LetMeInvert implements Operation {
 			dVector.outOrder(outPath);
 			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
+			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
 			eq.outputA(outPath.resolve("partial"));
 			dVector.outWeighting(outPath.resolve("weighting.inf"));
 			return null;

@@ -251,7 +251,6 @@ public class FujiStaticCorrection implements Operation {
 							System.err.println(window + " is ignored because an error occurs");
 							e.printStackTrace();
 						}
-
 			}
 		}
 	}
@@ -259,9 +258,9 @@ public class FujiStaticCorrection implements Operation {
 	private FujiStaticCorrection(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		String date = Utilities.getTemporaryString();
-		outPath = workPath.resolve("staticCorrection" + date + ".dat");
 		staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
 		set();
+		outPath = workPath.resolve("staticCorrection" + date + ".dat");
 	}
 
 	private Path outPath;

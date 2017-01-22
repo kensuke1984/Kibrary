@@ -8,7 +8,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -22,6 +24,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
@@ -30,6 +33,7 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -85,6 +89,8 @@ public class DataSelection implements Operation {
 			pw.println("#maxVariance");
 			pw.println("##double ratio (2)");
 			pw.println("#ratio");
+			pw.println("#boolean SnScSnPair (false). Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset");
+			pw.println("SnScSnPair false");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -129,6 +135,8 @@ public class DataSelection implements Operation {
 	 * amplitude のしきい値
 	 */
 	private double ratio;
+	
+	private boolean SnScSnPair;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -151,6 +159,8 @@ public class DataSelection implements Operation {
 			property.setProperty("ratio", "2");
 		if (!property.containsKey("convolute"))
 			property.setProperty("convolute", "true");
+		if (!property.containsKey("SnScSnPair"))
+			property.setProperty("SnScSnPair", "false");
 	}
 
 	private void set() throws IOException {
@@ -184,6 +194,7 @@ public class DataSelection implements Operation {
 		dateStr = Utilities.getTemporaryString();
 		outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
 		goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
+		SnScSnPair = Boolean.parseBoolean(property.getProperty("SnScSnPair"));
 	}
 
 	private Set<TimewindowInformation> sourceTimewindowInformationSet;
@@ -227,6 +238,48 @@ public class DataSelection implements Operation {
 			synEventDirectory = new EventFolder(synPath.resolve(ed.getName()));
 			if (!synEventDirectory.exists())
 				return;
+		}
+		
+		private Set<TimewindowInformation> imposeSn_ScSnPair(Set<TimewindowInformation> info) {
+			Set<TimewindowInformation> infoNew = new HashSet<>();
+			if (info.stream().map(tw -> tw.getStation()).distinct().count() > 1)
+				throw new RuntimeException("Info should contain time windows for a unique record");
+			if (info.stream().map(tw -> tw.getGlobalCMTID()).distinct().count() > 1)
+				throw new RuntimeException("Info should contain time windows for a unique record");
+			Map<Phases, TimewindowInformation> map = new HashMap<>();
+			info.stream().forEach(tw -> map.put(new Phases(tw.getPhases()), tw));
+			for (int i = 1; i <= 4; i++) {
+				Phases phase = new Phases(new Phase[] {Phase.create(new String(new char[i]).replace("\0", "S"))});
+				Phases cmbPhase = new Phases(new Phase[] {Phase.create(new String(new char[i]).replace("\0", "ScS"))});
+				Phases depthPhase = new Phases(new Phase[] {Phase.create("s" + phase)});
+				Phases cmbDepthPhase = new Phases(new Phase[] {Phase.create("s" + cmbPhase)});
+				
+				if (map.containsKey(phase) && map.containsKey(cmbPhase)) {
+					infoNew.add(map.get(phase));
+					infoNew.add(map.get(cmbPhase));
+				}
+				if (map.containsKey(depthPhase) && map.containsKey(cmbDepthPhase)) {
+					infoNew.add(map.get(depthPhase));
+					infoNew.add(map.get(cmbDepthPhase));
+				}
+			}
+			Phases cmbMerge = new Phases(new Phase[] {Phase.ScS, Phase.S});
+			Phases depthCMBMerge = new Phases(new Phase[] {Phase.create("sScS"), Phase.create("sS")});
+			if (map.containsKey(cmbMerge))
+				infoNew.add(map.get(cmbMerge));
+			if (map.containsKey(depthCMBMerge))
+				infoNew.add(map.get(depthCMBMerge));
+//			infoNew.stream().forEach(tw -> {
+//				if (tw.getPhases().length == 1)
+//					System.out.print(tw.getPhases()[0]);
+//				if (tw.getPhases().length > 1)
+//					for (int i = 0; i < tw.getPhases().length - 1; i++)
+//						System.out.print(tw.getPhases()[i] + ",");
+//					System.out.print(tw.getPhases()[tw.getPhases().length - 1]);
+//				System.out.print(" ");
+//			});
+//			System.out.println();
+			return infoNew;
 		}
 
 		@Override
@@ -290,6 +343,7 @@ public class DataSelection implements Operation {
 					if (windowInformations.isEmpty())
 						continue;
 					
+					Set<TimewindowInformation> tmpGoodWindows = new HashSet<>();
 					for (TimewindowInformation window : windowInformations) {
 						RealVector synU = cutSAC(synSac, window);
 						RealVector obsU = cutSAC(obsSac, shift(window));
@@ -297,9 +351,14 @@ public class DataSelection implements Operation {
 							if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
 								System.out.println(window);
 							}
-							goodTimewindowInformationSet.add(window);
+							tmpGoodWindows.add(window);
 						}
 					}
+					if (SnScSnPair)
+						tmpGoodWindows = imposeSn_ScSnPair(tmpGoodWindows);
+					for (TimewindowInformation window : tmpGoodWindows)
+						goodTimewindowInformationSet.add(window);
+					
 					// lpw.close();
 				}
 				// spw.close();
@@ -373,6 +432,8 @@ public class DataSelection implements Operation {
 				+ minRatio + " " + var + " " + cor);
 		return isok;
 	}
+	
+	
 
 	/**
 	 * @param sac

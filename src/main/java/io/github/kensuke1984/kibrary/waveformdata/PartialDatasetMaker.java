@@ -188,7 +188,6 @@ public class PartialDatasetMaker implements Operation {
 		private DSMOutput fp;
 		private Station station;
 		private GlobalCMTID id;
-		private TimewindowInformation timewindow;
 
 		/**
 		 * @param fp
@@ -199,17 +198,6 @@ public class PartialDatasetMaker implements Operation {
 			this.station = station;
 			fpname = fpFile;
 			id = new GlobalCMTID(fpname.getSourceID());
-		}
-		
-		private PartialComputation(DSMOutput bp, Station station, DSMOutput fp, TimewindowInformation timewindow) {
-			this.bp = bp;
-			this.station = station;
-			fpname = null;
-			this.fp = fp;
-			id = new GlobalCMTID(fp.getSourceID());
-			this.timewindow = timewindow;
-			if (!timewindow.getStation().equals(station) || !timewindow.getGlobalCMTID().equals(id))
-				throw new RuntimeException("fp/bp files GCMTID or station does not match those of the timewindow");
 		}
 
 		/**
@@ -249,34 +237,32 @@ public class PartialDatasetMaker implements Operation {
 
 		@Override
 		public void run() {
-//			String stationString = bp.getSourceID();
+			String stationName = bp.getSourceID();
 			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
 				throw new RuntimeException("There may be a station with the same name but other networks.");
 
 			if (bp.tlen() != tlen || bp.np() != np)
 				throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
-//			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
+			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
 
-//			touchedSet.add(id);
+			touchedSet.add(id);
 
 			// Pickup timewindows
-//			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
-//					.filter(info -> info.getStation().toString().equals(stationString))
-//					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
-//
-//			// timewindow情報のないときスキップ
-//			if (timewindowList.isEmpty()) {
-//				System.err.println("empty timewindows for " + stationString + " " + id);
-//				return;
-//			}
+			Set<TimewindowInformation> timewindowList = timewindowInformation.stream()
+					.filter(info -> info.getStation().toString().equals(stationName))
+					.filter(info -> info.getGlobalCMTID().equals(id)).collect(Collectors.toSet());
+
+			// timewindow情報のないときスキップ
+			if (timewindowList.isEmpty())
+				return;
 
 			// System.out.println("I am " + Thread.currentThread().getName());
-//			try {
-//				fp = fpname.read();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//				return;
-//			}
+			try {
+				fp = fpname.read();
+			} catch (Exception e) {
+				e.printStackTrace();
+				return;
+			}
 
 			ThreeDPartialMaker threedPartialMaker = new ThreeDPartialMaker(fp, bp);
 			threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
@@ -284,36 +270,32 @@ public class PartialDatasetMaker implements Operation {
 				threedPartialMaker.setStructure(structure);
 
 			// i番目の深さの偏微分波形を作る
-			Set<PartialType> partialTypeForStructure = partialTypes.stream().filter(type -> !type.isTimePartial())
-					.collect(Collectors.toSet());
 			for (int ibody = 0, nbody = fp.nbody(); ibody < nbody; ibody++) {
 				// とりあえずtransverse（２）成分についての名前
 				Location location = fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
-				for (PartialType type : partialTypeForStructure) {
+				for (PartialType type : partialTypes)
 					for (SACComponent component : components) {
-//						if (!timewindowList.stream().anyMatch(info -> info.getComponent() == component))
-//							continue;
-						if (!timewindow.getComponent().equals(component))
+						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
 							continue;
 						double[] partial = threedPartialMaker.createPartial(component, ibody, type);
-//						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
-						Complex[] u = cutPartial(partial, timewindow);
+						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
+							Complex[] u = cutPartial(partial, info);
 
-						u = filter.applyFilter(u);
-						double[] cutU = sampleOutput(u, timewindow);
+							u = filter.applyFilter(u);
+							double[] cutU = sampleOutput(u, info);
 
-						PartialID pid = new PartialID(station, id, component, finalSamplingHz, timewindow.getStartTime(),
-								cutU.length, 1 / maxFreq, 1 / minFreq, timewindow.getPhases(), 0, sourceTimeFunction != 0
-								, location, type, cutU);
-						try {
-							partialDataWriter.addPartialID(pid);
-							System.out.print(".");
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-//						});
+							PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
+									cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
+									cutU);
+							try {
+								partialDataWriter.addPartialID(pid);
+								System.out.print(".");
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						});
 					}
-				}
+
 			}
 		}
 	}
@@ -717,132 +699,61 @@ private class WorkerTimePartial implements Runnable {
 			System.out.println();
 		}
 		
-		List<TimewindowInformation> sortedWindows = sortTimewindows();
-		
-		Station workingStation = null;
-		List<DSMOutput> bps = new ArrayList<>();
-		
-		for (GlobalCMTID id : idSet) {
-			List<DSMOutput> fps = new ArrayList<>();
-			Path fpEventPath = fpPath.resolve(id.toString() + "/" + modelName);
-			for (SpcFileName fpname : Utilities.collectSpcFileName(fpEventPath)) {
-				try {
-					fps.add(fpname.read());
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			for (TimewindowInformation timewindow : sortedWindows) {
-				if (!timewindow.getGlobalCMTID().equals(id))
-					continue;
-				
-				Station station = timewindow.getStation();
-				
-				if (!station.equals(workingStation)) {
-					Path bp0000Path = bpPath.resolve("0000" + station);
-					Path bpModelPath = bp0000Path.resolve(modelName);
-					if (!bp0000Path.toFile().exists()) {
-						System.err.println(bp0000Path + "not found (skipping)");
+		for (Station station : stationSet) {
+			Path bp0000Path = bpPath.resolve("0000" + station.toString());
+			Path bpModelPath = bp0000Path.resolve(modelName);
+
+			// Set of global cmt IDs for the station in the timewindow.
+			Set<GlobalCMTID> idSet = timewindowInformation.stream()
+					.filter(info -> components.contains(info.getComponent()))
+					.filter(info -> info.getStation().equals(station)).map(TimewindowInformation::getGlobalCMTID)
+					.collect(Collectors.toSet());
+
+			if (idSet.isEmpty())
+				continue;
+
+			// bpModelFolder内 spectorfile
+			Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
+			System.out.println(bpFiles.size() + " bpfiles are found");
+
+			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
+			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id + "/" + modelName))
+					.filter(Files::exists).toArray(Path[]::new);
+
+			int donebp = 0;
+			// bpフォルダ内の各bpファイルに対して
+			for (SpcFileName bpname : bpFiles) {
+				// create ThreadPool
+				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
+				// 摂動点の名前
+				DSMOutput bp = bpname.read();
+				String pointName = bp.getObserverName();
+
+				// timewindowの存在するfpdirに対して
+				// ｂｐファイルに対する全てのfpファイルを
+				for (Path fpEventPath : fpEventPaths) {
+					String eventName = fpEventPath.getParent().getFileName().toString();
+					SpcFileName fpfile = new SpcFileName(
+							fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
+					if (!fpfile.exists())
 						continue;
-					}
-					bps = new ArrayList<>();
-					for (SpcFileName bpname : Utilities.collectSpcFileName(bpModelPath)) {
-						try {
-							bps.add(bpname.read());
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-					}
-					
-					workingStation = new Station(station);
-				}
-				
-				System.out.println(bps.size() + " bpfiles are found");
-				
-				int donebp = 0;
-				for (DSMOutput bp : bps) {
-					ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-					System.out.println("Working for " + "0000" + station + "." + bp.getObserverName() + " " + ++donebp + "/" + bps.size());
-					
-					String pointName = bp.getObserverName();
-					DSMOutput fp = fps.stream().filter(spc -> spc.getObserverName().equals(pointName)).findAny().get();
-						
-					PartialComputation pc = new PartialComputation(bp, station, fp, timewindow);
+					PartialComputation pc = new PartialComputation(bp, station, fpfile);
 					execs.execute(pc);
-					
-					execs.shutdown();
-					while (!execs.isTerminated()) {
-						try {
-							Thread.sleep(100);
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-					partialDataWriter.flush();
-					System.out.println();
 				}
-				writeLog(+bpnum++ + "th " + "0000" + station + " was done ");
+				execs.shutdown();
+				while (!execs.isTerminated()) {
+					try {
+						Thread.sleep(100);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				partialDataWriter.flush();
+				System.out.println();
 			}
+			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
 		}
-		
-		// bpフォルダごとにスタート
-//		for (Station station : stationSet) {
-//			Path bp0000Path = bpPath.resolve("0000" + station);
-//			Path bpModelPath = bp0000Path.resolve(modelName);
-//
-//			// Set of global cmt IDs for the station in the timewindow.
-//			Set<GlobalCMTID> idSet = timewindowInformation.stream()
-//					.filter(info -> components.contains(info.getComponent()))
-//					.filter(info -> info.getStation().equals(station)).map(info -> info.getGlobalCMTID())
-//					.collect(Collectors.toSet());
-//
-//			if (idSet.isEmpty())
-//				continue;
-//
-//			// bpModelFolder内 spectorfile
-//			Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
-//			System.out.println(bpFiles.size() + " bpfiles are found");
-//
-//			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
-//			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id.toString() + "/" + modelName))
-//					.filter(Files::exists).toArray(Path[]::new);
-//
-//			int donebp = 0;
-//			// bpフォルダ内の各bpファイルに対して
-//			for (SpcFileName bpname : bpFiles) {
-//				// create ThreadPool
-//				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-//				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
-//				// 摂動点の名前
-//				DSMOutput bp = bpname.read();
-//				String pointName = bp.getObserverName();
-//
-//				// timewindowの存在するfpdirに対して
-//				// ｂｐファイルに対する全てのfpファイルを
-//				for (Path fpEventPath : fpEventPaths) {
-//					String eventName = fpEventPath.getParent().getFileName().toString();
-//					SpcFileName fpfile = new SpcFileName(
-//							fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-//					if (!fpfile.exists())
-//						continue;
-//					PartialComputation pc = new PartialComputation(bp, station, fpfile);
-//					execs.execute(pc);
-//				}
-//				execs.shutdown();
-//				while (!execs.isTerminated()) {
-//					try {
-//						Thread.sleep(100);
-//					} catch (Exception e) {
-//						e.printStackTrace();
-//					}
-//				}
-//				partialDataWriter.flush();
-//				System.out.println();
-//			}
-//			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
-//		}
-		
 		terminate();
 	}
 
@@ -963,8 +874,16 @@ private class WorkerTimePartial implements Runnable {
 
 		boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
 		boolean bpExistence = stationSet.stream().allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));
-		if (!fpExistence || !bpExistence)
+		if (!fpExistence) {
+			idSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
+				.forEach(id -> System.out.println(id));
 			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
+		}
+		if (!bpExistence) {
+			stationSet.stream().filter(station -> !Files.exists(bpPath.resolve("0000" + station)))
+				.forEach(sta -> System.out.println(sta));
+			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
+		}
 		writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()
 				+ " events and " + stationSet.size() + " stations.");
 	}

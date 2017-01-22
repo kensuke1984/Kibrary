@@ -25,17 +25,16 @@ public class DividePerAzimuth {
 	public double[] azimuthRange;
 	private Path workPath;
 	private boolean rotate = false;
-	private double a1, a2;
+	private int nSlices;
 	
-	public DividePerAzimuth(Path timewindowInformationPath, Path workPath, double a1, double a2) {
+	public DividePerAzimuth(Path timewindowInformationPath, Path workPath, int nSlices) {
 		try {
 			this.info = TimewindowInformationFile.read(timewindowInformationPath);
 			setAverageEventPosition();
 			setRotation();
 			setAzimuthRange();
 			this.workPath = workPath;
-			this.a1 = a1;
-			this.a2 = a2;
+			this.nSlices = nSlices;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -48,8 +47,7 @@ public class DividePerAzimuth {
 			setRotation();
 			setAzimuthRange();
 			this.workPath = workPath;
-			this.a1 = 0.19;
-			this.a2 = 0.34;
+			this.nSlices = 6;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -64,43 +62,25 @@ public class DividePerAzimuth {
 		DividePerAzimuth dpa = null;
 		if (args.length == 1)
 			dpa = new DividePerAzimuth(infoPath, workPath);
-		else if (args.length == 3) {
-			double a1 = Double.parseDouble(args[1]);
-			double a2 = Double.parseDouble(args[2]);
-			if (a1 <= 0. || a1 >= 1. || a2 <= 0 || a2 >= 1 || a2 == a1)
-				throw new RuntimeException("a1, a2 must be (strictly) greater than 0, (strictly) smaller than 1, and not equal");
-			if (a1 > a2) {
-				double tmp = a2;
-				a1 = tmp;
-				a2 = a1;
-			}
-			dpa = new DividePerAzimuth(infoPath, workPath, a1, a2);
+		else if (args.length == 2) {
+			int nSlices = Integer.parseInt(args[1]);
+			if (nSlices < 1)
+				throw new RuntimeException("nSlices must be (strictly) greater than 1");
+			dpa = new DividePerAzimuth(infoPath, workPath, nSlices);
 		}
 		else
 			throw new RuntimeException("Please input either a Path to a timewindow information file, or a path, a1, and a2");
 		
-		System.err.println("Going with a1, a2 = " + dpa.a1 + ", " + dpa.a2);
+		System.err.println("Going with nSlices = " + dpa.nSlices);
 		
-		List<Set<TimewindowInformation>> threeParts = dpa.divideInThree();
+		List<Set<TimewindowInformation>> slices = dpa.divide();
 		
 		String originalName = infoPath.getFileName().toString();
 		originalName = originalName.substring(0, originalName.length() - 4);
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < dpa.nSlices; i++) {
 			String name = "";
-			switch (i) {
-			case 0:
-				name = originalName + "-West.dat";
-				break;
-			case 1:
-				name = originalName + "-Middle.dat";
-				break;
-			case 2:
-				name = originalName + "-East.dat";
-				break;
-			default:
-				break;
-			}
-			Set<TimewindowInformation> onePart = threeParts.get(i);
+			name = originalName + "-s" + i + ".dat";
+			Set<TimewindowInformation> onePart = slices.get(i);
 			Path outputPath = dpa.workPath.resolve(Paths.get(name));
 			System.err.println("Write " + onePart.size() + " timewindows in " + name);
 			TimewindowInformationFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
@@ -168,29 +148,25 @@ public class DividePerAzimuth {
 			return azimuth;
 	}
 	
-	private List<Set<TimewindowInformation>> divideInThree() {
-		List<Set<TimewindowInformation>> threeParts = new ArrayList<>();
-		for (int i = 0; i < 3; i++)
-			threeParts.add(new HashSet<>());
+	private List<Set<TimewindowInformation>> divide() {
+		List<Set<TimewindowInformation>> slices = new ArrayList<>();
+		for (int i = 0; i < nSlices; i++)
+			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
 			double azimuth = averageEventPosition.getAzimuth(tw.getStation().getPosition());
 			if (rotate)
 				azimuth = unfold(azimuth);
 			double ratio = (azimuth - azimuthRange[0]) / (azimuthRange[1] - azimuthRange[0]);
-			int i;
-			if (ratio < a1)
-				i = 0;
-			else if (ratio >= a1 && ratio < a2)
-				i = 1;
-			else
-				i = 2;
-			Set<TimewindowInformation> tmp = threeParts.get(i);
+			int i = (int) (ratio * nSlices);
+			if (i == nSlices)
+				i -= 1;
+			Set<TimewindowInformation> tmp = slices.get(i);
 			tmp.add(tw);
-			threeParts.set(i, tmp);
+			slices.set(i, tmp);
 		});
 		
-		return threeParts;
+		return slices;
 	}
 	
 }

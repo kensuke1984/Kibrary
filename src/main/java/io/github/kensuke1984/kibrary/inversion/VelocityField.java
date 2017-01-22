@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +117,13 @@ public class VelocityField {
 		
 		InversionResult ir = new InversionResult(inversionResultPath);
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
+		List<UnknownParameter> originalUnknowns = ir.getOriginalUnknownParameterList();
+		TriangleRadialSpline trs = null;
+		if (!unknowns.equals(originalUnknowns)) {
+			Map<PartialType, Integer[]> nNewParameter = new HashMap<>();
+			nNewParameter.put(PartialType.PAR2, new Integer[] {9, 9});
+			trs = new TriangleRadialSpline(nNewParameter, originalUnknowns);
+		}
 		Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
 		if (partialTypes.contains(PartialType.PAR2)) {
 			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
@@ -133,13 +141,26 @@ public class VelocityField {
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
 					Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 					answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
-					double[][] velocities = toVelocity(answerMap, unknowns, structure, amplifyPerturbation);
-					double[][] zeroVelocities = toVelocity(zeroMap, unknowns, structure, amplifyPerturbation);
+					double[][] velocities = null;
+					double[][] zeroVelocities = null;
+					if (trs == null) {
+						velocities = toVelocity(answerMap, unknowns, structure, amplifyPerturbation);
+						zeroVelocities = toVelocity(zeroMap, unknowns, structure, amplifyPerturbation);
+					}
+					else {
+						velocities = toVelocity(answerMap, trs, structure);
+						zeroVelocities = toVelocity(zeroMap, trs, structure);
+					}
 					try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 						pw.println("# perturbationR Vsh");
 						for (int j = 0; j < velocities.length; j++) {
-							pw.println(velocities[j][1] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
-							pw.println(velocities[j][2] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
+							if (trs == null) {
+								pw.println(velocities[j][1] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
+								pw.println(velocities[j][2] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
+							}
+							else {
+								pw.println(velocities[j][0] +  " " + velocities[j][1] + " " + zeroVelocities[j][1]);
+							}
 						}
 					}
 				}
@@ -203,6 +224,19 @@ public class VelocityField {
 		return velocities;
 	}
 	
+	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure structure) {
+		int n = 200;
+		double[][] velocities = new double[n][];
+		for (int i = 0; i < n; i++) {
+			velocities[i] = new double[2];
+			double r = 3480 + (6371 - 3480) / (n - 1) * i;
+			velocities[i][0] = r;
+			double dMu = getTriangleSplineValue(r, trs, answerMap);
+			velocities[i][1] = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
+		}
+		return velocities;
+	}
+	
 	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure) {
 		return getSimpsonVsh(rmin, rmax, structure, deltaMu);
 	}
@@ -253,5 +287,32 @@ public class VelocityField {
 		}
 		
 		return res / vol;
+	}
+	
+	private static double getTriangleSplineValue(double r, TriangleRadialSpline trs, Map<UnknownParameter, Double> answerMap) {
+		List<UnknownParameter> newParameters = trs.getNewParameters();
+		
+		double res = 0;
+		for (UnknownParameter p : newParameters) {
+			double rp = (Double) p.getLocation();
+			double w = p.getWeighting();
+			double value = answerMap.get(p);
+			if (rp - w/2. < r && rp + w/2. >= r) {
+				if (!trs.isBoundaryParameter(p)) {
+					double dr = Math.abs(rp - r);
+					res += value * (1 - 2 * dr / w);
+				}
+				else if (trs.isDownBoundary(p)) {
+					double dr = rp - r;
+					res += value * 0.5 * (1 + 2 * dr / w);
+				}
+				else {
+					double dr = rp - r;
+					res += value * 0.5 * (1 - 2 * dr / w);
+				}
+			}
+		}
+		
+		return res;
 	}
 }

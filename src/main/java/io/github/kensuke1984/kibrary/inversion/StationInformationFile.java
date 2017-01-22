@@ -79,7 +79,7 @@ public final class StationInformationFile {
 						Double.parseDouble(parts[3]));
 				Station st = new Station(parts[0], hp, parts[1]);
 				if (!stationSet.add(st))
-					throw new RuntimeException("There is duplication in " + infoPath);
+					throw new RuntimeException("There is duplication in " + infoPath + "\n" + st);
 			});
 		}
 		if (stationSet.size() != stationSet.stream().map(Station::toString).distinct().count()){

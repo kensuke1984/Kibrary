@@ -282,7 +282,7 @@ public class Partial1DDatasetMaker implements Operation {
 				return;
 			}
 
-			List<SpcFileName> spcFileNames;
+			Set<SpcFileName> spcFileNames;
 			try {
 				spcFileNames = Utilities.collectSpcFileName(spcFolder);
 			} catch (IOException e1) {

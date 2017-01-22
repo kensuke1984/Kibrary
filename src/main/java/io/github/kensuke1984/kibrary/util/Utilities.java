@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -281,12 +282,12 @@ public final class Utilities {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public static List<SpcFileName> collectSpcFileName(Path path) throws IOException {
-		List<SpcFileName> list = new ArrayList<>();
+	public static Set<SpcFileName> collectSpcFileName(Path path) throws IOException {
+		Set<SpcFileName> set = new HashSet<>();
 		try (Stream<Path> stream = Files.list(path)) {
-			stream.filter(SpcFileName::isSpcFileName).forEach(p -> list.add(new SpcFileName(p)));
+			stream.filter(SpcFileName::isSpcFileName).forEach(p -> set.add(new SpcFileName(p)));
 		}
-		return list;
+		return set;
 	}
 
 	/**

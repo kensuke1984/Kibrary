@@ -68,8 +68,20 @@ public final class TimewindowInformationFile {
 	 */
 	public static void main(String[] args) throws IOException {
 		Set<TimewindowInformation> set;
-		if (args.length != 0)
+		if (args.length == 1)
 			set = TimewindowInformationFile.read(Paths.get(args[0]));
+		else if (args.length == 2 && (args[0] == "--debug" || args[1] == "--debug")) {
+			String timewindowname;
+			if (args[0] == "--debug")
+				timewindowname = args[1];
+			else
+				timewindowname = args[0];
+			set = TimewindowInformationFile.read(Paths.get(timewindowname));
+			
+			Path outpathStation = Paths.get(timewindowname.split(".inf")[0] + "_station.inf");
+			Path outpathEvent = Paths.get(timewindowname.split(".inf")[0] + "_event.inf");
+			
+		}
 		else {
 			String s = "";
 			Path f;
@@ -81,6 +93,7 @@ public final class TimewindowInformationFile {
 			} while (!Files.exists(f) || Files.isDirectory(f));
 			set = TimewindowInformationFile.read(f);
 		}
+		
 		set.stream().sorted().forEach(System.out::println);
 	}
 

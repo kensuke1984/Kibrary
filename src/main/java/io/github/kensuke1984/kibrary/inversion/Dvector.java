@@ -173,7 +173,7 @@ public class Dvector {
 	 *            must contain waveform data
 	 */
 	public Dvector(BasicID[] basicIDs) {
-		this(basicIDs, id -> true, WeightingType.IDENTITY);
+		this(basicIDs, id -> true, WeightingType.RECIPROCAL);
 	}
 
 	/**

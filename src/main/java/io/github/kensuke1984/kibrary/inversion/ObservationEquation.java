@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,9 +57,10 @@ public class ObservationEquation {
 	 *            for equation
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
-			boolean time_source, boolean time_receiver, int nUnknowns) {
+			boolean time_source, boolean time_receiver, int nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
 		List<Integer> bouncingOrders = null;
 		if (time_receiver) {
 			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
@@ -70,10 +72,12 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
-		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns, nNewParameter);
 		atd = computeAtD(dVector.getD());
+		
 	}
-
+	
+	private List<UnknownParameter> originalParameterList;
 	private List<UnknownParameter> parameterList;
 	private Dvector dVector;
 
@@ -122,7 +126,7 @@ public class ObservationEquation {
 	 * @param ids
 	 *            source for A
 	 */
-	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, int nUnknowns) {
+	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, int nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
 		if (time_source)
 			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
 		if (time_receiver) {
@@ -172,6 +176,11 @@ public class ObservationEquation {
 			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
 				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
 		});
+		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
+			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
+					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
+					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + 2)");  
+		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
 		if (nUnknowns != -1) {
 			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() - numberOfParameterForSturcture + nUnknowns);
@@ -234,6 +243,12 @@ public class ObservationEquation {
 			parameterList = parameterPrime;
 		}
 		
+		if (nNewParameter != null) {
+			TriangleRadialSpline trs = new TriangleRadialSpline(nNewParameter, parameterList);
+			a = trs.computeNewA(a);
+			parameterList = trs.getNewParameters();
+		}
+			
 		double meanAColumnNorm = 0;
 		int ntmp = 0;
 		for (int j = 0; j < a.getColumnDimension(); j++) {
@@ -262,11 +277,6 @@ public class ObservationEquation {
 //			}
 //			System.out.println("\n");
 //		}
-		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
-			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
-					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
-					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + 2)");  
-		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 	}
 
 	/**
@@ -412,6 +422,10 @@ public class ObservationEquation {
 		return a.preMultiply(d);
 	}
 
+	public List<UnknownParameter> getOriginalParameterList() {
+		return originalParameterList;
+	}
+	
 	public List<UnknownParameter> getParameterList() {
 		return parameterList;
 	}
