@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * This class create a new set of dataset files.
  *
  * @author Kensuke Konishi
- * @version 0.4.0.2
+ * @version 0.4.0.3
  */
 public class WaveformDataWriter implements Closeable, Flushable {
     public Path getIDPath() {
@@ -50,12 +50,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
     /**
      * id information file
      */
-    private Path IDPATH;
+    private final Path IDPATH;
 
     /**
      * 波形情報ファイル
      */
-    private Path DATAPATH;
+    private final Path DATAPATH;
 
     @Override
     public void close() throws IOException {
@@ -73,7 +73,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * Because the header part is decided when this is constructed, the mode is
      * also decided(0: BasicID, 1: PartialID)
      */
-    private final int mode;
+    private final int MODE;
 
     /**
      * index map for stations
@@ -145,7 +145,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
             idStream.writeFloat((float) periodRange[1]);
         }
         if (perturbationPoints != null) makePerturbationMap(perturbationPoints);
-        mode = perturbationPoints == null ? 0 : 1;
+        MODE = perturbationPoints == null ? 0 : 1;
     }
 
     private void makeGlobalCMTIDMap(Set<GlobalCMTID> globalCMTIDSet) throws IOException {
@@ -208,7 +208,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addBasicID(BasicID basicID) throws IOException {
-        if (mode != 0) throw new RuntimeException("No BasicID please, would you.");
+        if (MODE != 0) throw new RuntimeException("No BasicID please, would you.");
 
         switch (basicID.TYPE) {
             case OBS:
@@ -254,7 +254,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     public synchronized void addPartialID(PartialID partialID) throws IOException {
         if (partialID.TYPE != WaveformType.PARTIAL) throw new RuntimeException(
                 "This is not a partial derivative. " + Thread.currentThread().getStackTrace()[1].getMethodName());
-        if (mode != 1) throw new RuntimeException("No Partial please, would you.");
+        if (MODE != 1) throw new RuntimeException("No Partial please, would you.");
         long startByte = dataLength;
         addWaveform(partialID.getData());
         idStream.writeShort(stationMap.get(partialID.STATION));
@@ -271,5 +271,4 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeByte(partialID.getPartialType().getValue());
         idStream.writeShort(perturbationLocationMap.get(partialID.POINT_LOCATION));
     }
-
 }
