@@ -38,8 +38,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * Each static correction information<br>
  * - see in {@link #read(Path)}<br>
  * 
- * 
- * @version 0.2.0.6
+ *
+ * @version 0.2.0.6.1
  * 
  * @author Kensuke Konishi
  * 
@@ -56,8 +56,8 @@ public final class StaticCorrectionFile {
 	/**
 	 * @param infoPath
 	 *            of the correction must exist
-	 * @return (<b>thread safe</b>) Set of StaticCorrection
-	 * @throws IOException
+     * @return  <b>Thread safe</b> set of StaticCorrection
+     * @throws IOException
 	 *             if an I/O error occurs
 	 */
 	public static Set<StaticCorrection> read(Path infoPath) throws IOException {

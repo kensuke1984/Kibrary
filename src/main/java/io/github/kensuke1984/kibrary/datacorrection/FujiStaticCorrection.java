@@ -60,7 +60,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * timeshift fileを一つに統一
  *
  * @author Kensuke Konishi
- * @version 0.2.1.3
+ * @version 0.2.1.4
  */
 public class FujiStaticCorrection implements Operation {
 
@@ -87,7 +87,7 @@ public class FujiStaticCorrection implements Operation {
             pw.println("##double searchRange [s] (10)");
             pw.println("#searchRange");
         }
-        System.out.println(outPath + " is created.");
+        System.err.println(outPath + " is created.");
     }
 
     /**
@@ -151,7 +151,6 @@ public class FujiStaticCorrection implements Operation {
         synPath = getPath("synPath");
         obsPath = getPath("obsPath");
         timewindowInformationPath = getPath("timewindowInformationPath");
-
         convolute = Boolean.parseBoolean(property.getProperty("convolute"));
         sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
         searchRange = Double.parseDouble(property.getProperty("searchRange"));
@@ -228,7 +227,7 @@ public class FujiStaticCorrection implements Operation {
                                 .filter(info -> info.getGlobalCMTID().equals(eventID))
                                 .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
-                if (windows != null && windows.size() != 0) for (Timewindow window : windows)
+                if (windows != null && !windows.isEmpty()) for (Timewindow window : windows)
                     try {
                         double shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
                         double ratio = computeMaxRatio(obsSac, synSac, shift, window);
@@ -416,9 +415,7 @@ public class FujiStaticCorrection implements Operation {
         // System.out.println("Threshold is " + minLimit);
         for (int ipeak : iPeaks)
             if (minLimit < Math.abs(u[ipeak])) return ipeak;
-
         return maxPoint;
-
     }
 
     /**
