@@ -37,5 +37,4 @@ public class Property {
         else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
         return property;
     }
-
 }
