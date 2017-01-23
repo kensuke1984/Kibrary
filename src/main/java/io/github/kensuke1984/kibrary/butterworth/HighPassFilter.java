@@ -5,10 +5,10 @@ import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 
 /**
- * Highpass filter
+ * High pass filter
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1
+ * @version 0.0.5.1.1
  */
 public class HighPassFilter extends ButterworthFilter {
 
@@ -135,7 +135,6 @@ public class HighPassFilter extends ButterworthFilter {
             g /= c + t;
             b1[j] = (c - t) / (c + t);
         }
-
     }
 
     /**
@@ -171,24 +170,24 @@ public class HighPassFilter extends ButterworthFilter {
 
     @Override
     public Complex getFrequencyResponse(double omega) {
-        Complex responce = Complex.valueOf(g);
+        Complex response = Complex.valueOf(g);
         for (int j = 0; j < n / 2; j++) {
             // System.out.println("yo");
             // Saito 1.7 (a1j +(a2j+1) cos ω -i(a2j-1)sinω)
             Complex numerator = Complex.valueOf(-2 + 2 * FastMath.cos(omega));
             Complex denominator =
                     Complex.valueOf(b1[j] + FastMath.cos(omega) * (b2[j] + 1), -FastMath.sin(omega) * (b2[j] - 1));
-            responce = responce.multiply(numerator).divide(denominator);
+            response = response.multiply(numerator).divide(denominator);
         }
         if (n % 2 == 1) {
             int j = n / 2;
             Complex numerator = Complex.valueOf(-1 + FastMath.cos(omega), FastMath.sin(omega));
             Complex denominator = Complex.valueOf(b1[j] + FastMath.cos(omega), FastMath.sin(omega));
-            responce = responce.multiply(numerator).divide(denominator);
+            response = response.multiply(numerator).divide(denominator);
         }
-        if (backward) responce = Complex.valueOf(responce.abs() * responce.abs());
+        if (backward) response = Complex.valueOf(response.abs() * response.abs());
 
-        return responce;
+        return response;
     }
 
     @Override
@@ -251,7 +250,7 @@ public class HighPassFilter extends ButterworthFilter {
      *
      * @param b1 b<sub>1</sub>
      * @param b2 b<sub>2</sub>
-     * @param x x
+     * @param x  x
      * @return {@link Complex}[] y
      */
     private static Complex[] computeRecursion(double b1, double b2, Complex[] x) {

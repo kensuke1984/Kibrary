@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
  * ω=2πfδt
  *
  * @author Kensuke Konishi
- * @version 0.1.3.2
+ * @version 0.1.3.2.1
  */
 public class BandPassFilter extends ButterworthFilter {
 
@@ -130,19 +130,26 @@ public class BandPassFilter extends ButterworthFilter {
     }
 
     /**
-     * 透過帯域の最大|ω|<omegaHは透過
+     * maximum value of transmission band
+     * |ω| < omegaH transmits.
      */
     private double omegaH;
+
     /**
-     * 透過帯域の最小|ω|>omegaLは透過
+     * minimum value of transmission band
+     * |ω| > omegaL transmits
      */
     private double omegaL;
+
     /**
-     * 遮断帯域のスタート|ω| >omegashは遮断
+     * maximum value of stop band
+     * |ω| > omegaSh stopped.
      */
     private double omegaSh;
+
     /**
-     * 遮断帯域のスタート|ω|< omegaslは遮断
+     * minimum value of stop band
+     * |ω| < omegaSl stopped.
      */
     private double omegaSl;
 
@@ -341,7 +348,6 @@ public class BandPassFilter extends ButterworthFilter {
         Complex lambdaJ = n / 2 < j ? sigmaJ.add(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt()) :
                 sigmaJ.subtract(((sigmaJ.pow(2)).add(4 * lambda02)).sqrt());
         lambdaJ = lambdaJ.divide(2);
-
         return lambdaJ;
     }
 

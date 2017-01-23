@@ -8,7 +8,7 @@ import org.apache.commons.math3.util.FastMath;
  * Bandstop filter
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1
+ * @version 0.0.5.1.1
  */
 public class BandStopFilter extends ButterworthFilter {
 
@@ -81,15 +81,15 @@ public class BandStopFilter extends ButterworthFilter {
         boolean valid = true;
         double halfPI = 0.5 * Math.PI;
         if (omegaH < 0 || halfPI <= omegaH) {
-            System.out.println("omegaH: " + omegaH + " is invalid");
+            System.err.println("omegaH: " + omegaH + " is invalid");
             valid = false;
         }
         if (omegaL < 0 || halfPI <= omegaL) {
-            System.out.println("omegaL: " + omegaL + " is invalid");
+            System.err.println("omegaL: " + omegaL + " is invalid");
             valid = false;
         }
         if (omegaH <= omegaL) {
-            System.out.println("omegaH, omegaL: " + omegaH + ", " + omegaL + " are invalid");
+            System.err.println("omegaH, omegaL: " + omegaH + ", " + omegaL + " are invalid");
             valid = false;
         }
         return valid;
@@ -153,7 +153,7 @@ public class BandStopFilter extends ButterworthFilter {
             g /= b0;
             b1[j] /= b0;
             b2[j] /= b0;
-            System.out.println(g + " " + b1[j] + " " + b2[j]);
+//            System.out.println(g + " " + b1[j] + " " + b2[j]);
         }
         // System.out.println(n + " " + n / 2 * 2);
         if (n % 2 == 1) {
@@ -184,7 +184,7 @@ public class BandStopFilter extends ButterworthFilter {
      * &lambda;-&lambda; <sub>0</sub><sup>2</sup>=0
      *
      * @param j j =1, 2, ..., n
-     * @return
+     * @return &lambda;<sub>j</sub>
      */
     private Complex computeLambdaJ(int j) {
         int jj = (n / 2) < j ? j - n / 2 : j;
@@ -210,7 +210,6 @@ public class BandStopFilter extends ButterworthFilter {
 
     private void setOmegaSl() {
         omegaSl = 2 * FastMath.atan(FastMath.tan(omegaH / 2) * FastMath.tan(omegaL / 2) / FastMath.tan(omegaSh / 2));
-        // System.out.println(omegaSl);
     }
 
     /**
@@ -229,7 +228,6 @@ public class BandStopFilter extends ButterworthFilter {
         double tanL = FastMath.tan(0.5 * omegaL);
         double tanSh = FastMath.tan(0.5 * omegaSh);
         sigmaSoverSigmaP = (tanH - tanL) / FastMath.abs(tanSh - tanH * tanL / tanSh);
-        // System.out.println(sigmaSoverSigmaP);
     }
 
     /**
@@ -248,14 +246,9 @@ public class BandStopFilter extends ButterworthFilter {
         omegaSl = FastMath.atan(y) * 2;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see manhattan.butterworth.ButterworthFilter#getFrequencyResponse(double)
-     */
     @Override
     public Complex getFrequencyResponse(double omega) {
-        Complex responce = Complex.valueOf(g);
+        Complex response = Complex.valueOf(g);
         Complex numerator = Complex.valueOf(a1 + 2 * FastMath.cos(omega));
         for (int j = 0; j < n / 2 * 2; j++) {
             // System.out.println("yo");
@@ -264,7 +257,7 @@ public class BandStopFilter extends ButterworthFilter {
             // /(b2j+1) cos ω -i(b2j-1)sinω)
             Complex denominator =
                     Complex.valueOf(b1[j] + FastMath.cos(omega) * (b2[j] + 1), -FastMath.sin(omega) * (b2[j] - 1));
-            responce = responce.multiply(numerator).divide(denominator);
+            response = response.multiply(numerator).divide(denominator);
         }
         if (n % 2 == 1) {
             int j = n - 1;
@@ -272,20 +265,13 @@ public class BandStopFilter extends ButterworthFilter {
             // Math.sin(omega));
             Complex denominator =
                     Complex.valueOf(b1[j] + FastMath.cos(omega) * (b2[j] + 1), -FastMath.sin(omega) * (b2[j] - 1));
-            responce = responce.multiply(numerator).divide(denominator);
+            response = response.multiply(numerator).divide(denominator);
         }
-        if (backward) responce = Complex.valueOf(responce.abs() * responce.abs());
+        if (backward) response = Complex.valueOf(response.abs() * response.abs());
 
-        return responce;
+        return response;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * manhattan.butterworth.ButterworthFilter#applyFilter(org.apache.commons
-     * .math3.complex.Complex[])
-     */
     @Override
     public Complex[] applyFilter(Complex[] data) {
         Complex[] y = new Complex[data.length];
@@ -303,7 +289,7 @@ public class BandStopFilter extends ButterworthFilter {
             Complex[] x = y;
             y = computeRecursion(b1[j], b2[j], x);
         }
-        System.out.println("G" + g + " n" + n);
+//        System.out.println("G" + g + " n" + n);
         for (int i = 0; i < y.length; i++)
             y[i] = y[i].multiply(g);
         // System.out.println(n);

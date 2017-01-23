@@ -16,7 +16,7 @@ import org.apache.commons.math3.util.FastMath;
  * f: frequency [Hz] &Delta;t: sampling interval [s]
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.1.1
  */
 public class LowPassFilter extends ButterworthFilter {
     public double getOmegaP() {
@@ -59,7 +59,7 @@ public class LowPassFilter extends ButterworthFilter {
         boolean valid = true;
         double halfPI = 0.5 * Math.PI;
         if (omegaP < 0 || halfPI <= omegaP) {
-            System.out.println("omegaP: " + omegaP + " is invalid");
+            System.err.println("omegaP: " + omegaP + " is invalid");
             valid = false;
         }
         return valid;
@@ -91,7 +91,6 @@ public class LowPassFilter extends ButterworthFilter {
     private void setC() {
         double c2 = FastMath.pow(ap * as, 1.0 / n) / FastMath.tan(omegaP / 2) / FastMath.tan(omegaS / 2);
         c = FastMath.sqrt(c2);
-        // System.out.println("c " + c);
     }
 
     /**
@@ -109,7 +108,6 @@ public class LowPassFilter extends ButterworthFilter {
     @Override
     void setSigmaSoverSigmaP() {
         sigmaSoverSigmaP = FastMath.tan(omegaS / 2) / FastMath.tan(omegaP / 2);
-        // System.out.println("sigmaSoverSigmaP " + sigmaSoverSigmaP);
     }
 
     /**
@@ -248,24 +246,24 @@ public class LowPassFilter extends ButterworthFilter {
 
     @Override
     public Complex getFrequencyResponse(double omega) {
-        Complex responce = Complex.valueOf(g);
+        Complex response = Complex.valueOf(g);
         for (int j = 0; j < n / 2; j++) {
             // System.out.println("yo");
             // Saito 1.7
             Complex numerator = Complex.valueOf(2 + 2 * FastMath.cos(omega));
             Complex denominator =
                     Complex.valueOf(b1[j] + FastMath.cos(omega) * (b2[j] + 1), -FastMath.sin(omega) * (b2[j] - 1));
-            responce = responce.multiply(numerator).divide(denominator);
+            response = response.multiply(numerator).divide(denominator);
         }
         if (n % 2 == 1) {
             int j = n / 2;
             Complex numerator = Complex.valueOf(1 + FastMath.cos(omega), FastMath.sin(omega));
             Complex denominator = Complex.valueOf(b1[j] + FastMath.cos(omega), FastMath.sin(omega));
-            responce = responce.multiply(numerator).divide(denominator);
+            response = response.multiply(numerator).divide(denominator);
         }
-        if (backward) responce = Complex.valueOf(responce.abs() * responce.abs());
+        if (backward) response = Complex.valueOf(response.abs() * response.abs());
 
-        return responce;
+        return response;
     }
 
 }

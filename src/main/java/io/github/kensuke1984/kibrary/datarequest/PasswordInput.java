@@ -24,7 +24,7 @@ import javax.swing.WindowConstants;
  * is stated in the Kibrary License statement.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.1.2
  */
 class PasswordInput extends JPanel implements ActionListener {
 
@@ -35,7 +35,7 @@ class PasswordInput extends JPanel implements ActionListener {
     private JFrame controllingFrame; // needed for dialogs
     private JPasswordField passwordField;
 
-    PasswordInput(JFrame f) {
+    private PasswordInput(JFrame f) {
         // Use the default FlowLayout.
         controllingFrame = f;
 
@@ -58,7 +58,7 @@ class PasswordInput extends JPanel implements ActionListener {
         add(buttonPane);
     }
 
-    protected JComponent createButtonPanel() {
+    private JComponent createButtonPanel() {
         JPanel p = new JPanel(new GridLayout(0, 1));
         JButton okButton = new JButton("OK");
         JButton helpButton = new JButton("Help");
@@ -74,7 +74,7 @@ class PasswordInput extends JPanel implements ActionListener {
 
     private String password;
 
-    public String getPassword() throws InterruptedException {
+    String getPassword() throws InterruptedException {
         while (password == null) Thread.sleep(10);
         return password;
     }
@@ -99,7 +99,7 @@ class PasswordInput extends JPanel implements ActionListener {
     }
 
     // Must be called from the event dispatch thread.
-    protected void resetFocus() {
+    private void resetFocus() {
         passwordField.requestFocusInWindow();
     }
 
@@ -107,7 +107,7 @@ class PasswordInput extends JPanel implements ActionListener {
      * Create the GUI and show it. For thread safety, this method should be
      * invoked from the event dispatch thread.
      */
-    public static PasswordInput createAndShowGUI() {
+    static PasswordInput createAndShowGUI() {
         // Create and set up the window.
         JFrame frame = new JFrame("Password for the Gmail");
         frame.setLocationRelativeTo(null);
