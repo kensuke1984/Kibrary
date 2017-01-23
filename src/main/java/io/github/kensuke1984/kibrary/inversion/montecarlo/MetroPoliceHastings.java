@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Waveform inversion with Metropolis–Hastings algorithm.

@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.Precision;
  * This class is <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi
- * @version 0.0.6.2
+ * @version 0.0.6.3
  */
 public class MomentTensor {
 
@@ -105,14 +105,12 @@ public class MomentTensor {
     }
 
     /**
+     * 10<sup>5</sup> dyne = N, 100 cm = 1 m
      * @param scalarMoment M<sub>0</sub> (N*m)
-     * @return Mw for the scalar Moment
+     * @return moment magnitude M<sub>w</sub> for the scalar Moment
      */
-    public static final double toMw(double scalarMoment) {
-        // double mw =0;
-        double m0 = scalarMoment;
-        // 10 ^5 dyne = N, 100 cm = 1m
-        double mw = (FastMath.log10(m0) - 9.1) / 1.5;
+    public static double toMw(double scalarMoment) {
+        double mw = (FastMath.log10(scalarMoment) - 9.1) / 1.5;
         return Precision.round(mw, 1);
     }
 

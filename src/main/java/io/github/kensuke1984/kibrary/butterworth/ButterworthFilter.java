@@ -1,6 +1,3 @@
-/**
- * 
- */
 package io.github.kensuke1984.kibrary.butterworth;
 
 import org.apache.commons.math3.complex.Complex;
@@ -17,12 +14,10 @@ import org.apache.commons.math3.util.FastMath;
  * true.
  * 
  * @author Kensuke Konishi
- * @version 0.0.5
+ * @version 0.0.5.0.1
  * 
  */
 public abstract class ButterworthFilter {
-
-	double delta;
 
 	ButterworthFilter() {
 	}
@@ -135,7 +130,6 @@ public abstract class ButterworthFilter {
 	 * @param n
 	 */
 	void nToSigmaSoverSigmaP(int n) {
-
 		sigmaSoverSigmaP = FastMath.exp(FastMath.log(as / ap) / n);
 		// double n = Math.log(as/ap)/Math.log(sigmaSvsSigmaP);
 	}

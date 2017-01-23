@@ -29,7 +29,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * {@link #convolve(Complex[])}
  *
  * @author Kensuke Konishi
- * @version 0.0.6.3
+ * @version 0.0.6.4
  */
 public class SourceTimeFunction {
 
@@ -243,7 +243,7 @@ public class SourceTimeFunction {
         return i < lsmooth ? i * 2 : lsmooth;
     }
 
-    protected static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+    static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
     private int nptsInTimeDomain;
 
