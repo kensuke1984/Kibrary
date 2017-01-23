@@ -105,7 +105,5 @@ public interface Operation {
 				throw new RuntimeException(manhattan + " is not a valid name of Manhattan.");
 			Manhattan.valueOf(manhattan).invokeMain(new String[] { args[0] });
 		}
-
 	}
-
 }

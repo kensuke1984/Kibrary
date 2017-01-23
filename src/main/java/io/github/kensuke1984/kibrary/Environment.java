@@ -7,7 +7,7 @@ import java.nio.file.Paths;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 public class Environment {
     private Environment() {

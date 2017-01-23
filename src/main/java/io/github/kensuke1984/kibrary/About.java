@@ -17,7 +17,7 @@ import javax.swing.*;
  * <br>
  *
  * @author Kensuke Konishi
- * @version {@value version}
+ * @version {@value VERSION}
  * @see <a href=https://github.com/kensuke1984/Kibrary>GitHub</a>
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  */
@@ -26,9 +26,9 @@ public final class About extends javax.swing.JFrame {
 
     private static final long serialVersionUID = -2485772755944862822L;
 
-    public static final String codename = "Sahagin";
+    public static final String CODENAME = "Sahagin";
 
-    public static final String version = "0.4.2.3";
+    public static final String VERSION = "0.4.2.3";
 
     private About() {
         super("About Kibrary");
