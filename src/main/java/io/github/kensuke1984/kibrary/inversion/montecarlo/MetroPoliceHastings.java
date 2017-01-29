@@ -51,8 +51,7 @@ public class MetroPoliceHastings<M, D> {
 
     private final Path MODEL_PATH;
 
-    public void run() throws IOException, InterruptedException {
-        int nRun = limit;
+    public void run(int nRun) throws IOException, InterruptedException {
         System.err.println("MetroPoliceHastings is going.");
         M lastAdoptedModel = MODEL_GENERATOR.firstModel();
         D lastAdoptedDataset = DATA_GENERATOR.generate(lastAdoptedModel);
@@ -98,7 +97,5 @@ public class MetroPoliceHastings<M, D> {
         double percentage = currentLikelihood / lastAdoptedLikelihood;
         return 1 < percentage || Math.random() < percentage;
     }
-
-    private static int limit = 1000000;
 
 }

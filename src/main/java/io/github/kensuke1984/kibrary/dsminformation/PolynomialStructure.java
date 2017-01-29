@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
+import io.github.kensuke1984.kibrary.util.Trace;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 /**
@@ -482,6 +483,23 @@ public class PolynomialStructure implements Serializable {
         return structure;
     }
 
+    /**
+     * The numbers of radii and values must be same.
+     *
+     * @param n      order of polynomial function. 0: constant, 1:linear function, 2:quadratic, 3: cubic
+     * @param radii  [km] radius
+     * @param values values
+     * @return PolynomialFunction for the input
+     */
+    public PolynomialFunction createFunction(int n, double[] radii, double[] values) {
+        if (radii.length != values.length)
+            throw new IllegalArgumentException("radii and values must have a same number of points.");
+        if (radii.length <= n) throw new IllegalArgumentException("The number of input points must be over n.");
+        double[] x = Arrays.stream(radii).map(this::toX).toArray();
+        Trace trace = new Trace(x, values);
+        return trace.toPolynomial(n);
+    }
+
     private static PolynomialStructure initialAnisoPREM() {
         int nzone = 12;
         double[] rmin = new double[]{0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356};
@@ -512,8 +530,7 @@ public class PolynomialStructure implements Serializable {
                 new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0}, {1, 0, 0, 0}, {3.3687, -2.4778, 0, 0}, {3.3687, -2.4778, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0},};
-        double[] qMu =
-                new double[]{84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
+        double[] qMu = new double[]{84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
@@ -589,16 +606,14 @@ public class PolynomialStructure implements Serializable {
                 {13.908244, -0.45417, 0, 0}, {24.138794, -37.097655, 46.631994, -24.272115},
                 {25.969838, -16.934118, 0, 0}, {29.38896, -21.40656, 0, 0}, {30.78765, -23.25415, 0, 0},
                 {25.413889, -17.697222, 0, 0}, {8.785412, -0.749529, 0, 0,}, {6.5, 0, 0, 0}, {5.8, 0, 0, 0}};
-        double[][] vsv =
-                new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
-                        {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
-                        {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
-                        {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
-        double[][] vsh =
-                new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
-                        {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
-                        {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
-                        {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
+        double[][] vsv = new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
+                {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
+                {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
+                {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
+        double[][] vsh = new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
+                {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
+                {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
+                {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
         double[][] eta =
                 new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},}; // ok
