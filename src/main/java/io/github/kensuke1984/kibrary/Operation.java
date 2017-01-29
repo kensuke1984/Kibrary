@@ -82,7 +82,7 @@ public interface Operation {
 	static void main(String[] args) throws Exception {
 		if (args.length == 0) {
 			Manhattan.printList();
-			System.out.print("Which one do you want to operate? [1-" + Manhattan.values().length + "]");
+			System.out.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
 			args = new String[] { Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).toString() };
 		}
 
