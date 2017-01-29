@@ -255,7 +255,7 @@ public class DataSelection implements Operation {
                     // Pickup a time window of obsName
                     Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet.stream()
                             .filter(info -> info.getStation().equals(station) && info.getGlobalCMTID().equals(id) &&
-                                    info.getComponent() == component).collect(Collectors.toSet());
+                                    info.getComponent() == component).sorted().collect(Collectors.toSet());
 
                     if (windowInformations.isEmpty()) continue;
 
