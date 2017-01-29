@@ -21,8 +21,8 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 /**
  *
  * Main procedures in Kibrary
- * 
- * @version 0.0.4.2
+ *
+ * @version 0.0.4.2.1
  * @author Kensuke Konishi
  *
  */
