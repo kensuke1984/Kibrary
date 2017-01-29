@@ -60,7 +60,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * timeshift fileを一つに統一
  *
  * @author Kensuke Konishi
- * @version 0.2.1.4
+ * @version 0.2.1.5
  */
 public class FujiStaticCorrection implements Operation {
 
@@ -148,6 +148,8 @@ public class FujiStaticCorrection implements Operation {
         if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
+        String date = Utilities.getTemporaryString();
+        outPath = workPath.resolve("staticCorrection" + date + ".dat");
         synPath = getPath("synPath");
         obsPath = getPath("obsPath");
         timewindowInformationPath = getPath("timewindowInformationPath");
@@ -245,8 +247,6 @@ public class FujiStaticCorrection implements Operation {
 
     private FujiStaticCorrection(Properties property) throws IOException {
         this.property = (Properties) property.clone();
-        String date = Utilities.getTemporaryString();
-        outPath = workPath.resolve("staticCorrection" + date + ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
         set();
     }

@@ -68,7 +68,7 @@ public class DataSelection implements Operation {
             pw.println("#timewindowInformationFilePath timewindow.dat");
             pw.println("##Path of a static correction file");
             pw.println("##If you do not want to consider static correction, then comment out the next line");
-            pw.println("#staticCorrectionformationFilePath staticCorrection.dat");
+            pw.println("#staticCorrectionInformationFilePath staticCorrection.dat");
             pw.println("##double sacSamplingHz (20)");
             pw.println("#sacSamplingHz cant change now");
             pw.println("##double minCorrelation (0)");
