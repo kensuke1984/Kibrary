@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="43c7d46e-2adf-4c57-95d8-3c688960eecc" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java" afterPath="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/bin/" />
@@ -18,7 +18,7 @@
     <option name="MAKE_PROJECT_ON_SAVE" value="true" />
   </component>
   <component name="CreatePatchCommitExecutor">
-    <option name="PATCH_PATH" value="" />
+    <option name="PATCH_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ErrorTreeViewConfiguration">
     <option name="autoscrollToSource" value="true" />
@@ -37,11 +37,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="DataSelection.java" pinned="false" current-in-tab="false">
+      <file leaf-file-name="DataSelection.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="229">
-              <caret line="92" column="54" lean-forward="true" selection-start-line="92" selection-start-column="54" selection-end-line="92" selection-end-column="54" />
+            <state relative-caret-position="214">
+              <caret line="257" column="79" lean-forward="false" selection-start-line="257" selection-start-column="79" selection-end-line="257" selection-end-column="79" />
               <folding />
             </state>
           </provider>
@@ -67,7 +67,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="About.java" pinned="false" current-in-tab="true">
+      <file leaf-file-name="About.java" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="263">
@@ -140,9 +140,10 @@
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/waveformdata/WaveformDataWriter.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/inversion/montecarlo/MetroPoliceHastings.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/dsminformation/PolynomialStructure.java" />
-        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/datacorrection/FujiStaticCorrection.java" />
         <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java" />
+        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/TimewindowInformation.java" />
+        <option value="$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java" />
       </list>
     </option>
   </component>
@@ -856,7 +857,14 @@
       <option name="project" value="LOCAL" />
       <updated>1485697704883</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="bug fixed">
+      <created>1485697832264</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1485697832264</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TodoView">
@@ -933,21 +941,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/Raypath.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="156" column="83" lean-forward="false" selection-start-line="156" selection-start-column="83" selection-end-line="156" selection-end-column="83" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/external/DSMMPI.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2464">
-          <caret line="118" column="13" lean-forward="false" selection-start-line="118" selection-start-column="13" selection-end-line="118" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/util/spc/SpcFileName.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3804">
@@ -1305,10 +1298,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="229">
-          <caret line="92" column="54" lean-forward="true" selection-start-line="92" selection-start-column="54" selection-end-line="92" selection-end-column="54" />
+        <state relative-caret-position="263">
+          <caret line="30" column="49" lean-forward="false" selection-start-line="30" selection-start-column="49" selection-end-line="30" selection-end-column="49" />
           <folding />
         </state>
       </provider>
@@ -1321,10 +1314,26 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/About.java">
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/Timewindow.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="263">
-          <caret line="30" column="49" lean-forward="false" selection-start-line="30" selection-start-column="49" selection-end-line="30" selection-end-column="49" />
+        <state relative-caret-position="144">
+          <caret line="17" column="15" lean-forward="false" selection-start-line="17" selection-start-column="15" selection-end-line="17" selection-end-column="15" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/timewindow/TimewindowInformation.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="33" column="27" lean-forward="false" selection-start-line="33" selection-start-column="27" selection-end-line="33" selection-end-column="27" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/io/github/kensuke1984/kibrary/selection/DataSelection.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="214">
+          <caret line="257" column="79" lean-forward="false" selection-start-line="257" selection-start-column="79" selection-end-line="257" selection-end-column="79" />
           <folding />
         </state>
       </provider>
