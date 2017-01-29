@@ -202,7 +202,7 @@ public class FujiStaticCorrection implements Operation {
                 // System.out.println(obsFile.getName() + " " +
                 // synFile.getName());
                 if (!synName.exists()) {
-                    System.err.println(synName + " does not exist. ");
+                    System.err.println(synName + " does not exist.");
                     continue;
                 }
                 SACData obsSac;
