@@ -47,7 +47,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * {@link TimewindowInformationFile} necessary.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
+ * @version 0.1.2
  */
 public class DataSelection implements Operation {
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -136,6 +136,7 @@ public class DataSelection implements Operation {
         if (!property.containsKey("minVariance")) property.setProperty("minVariance", "0");
         if (!property.containsKey("maxVariance")) property.setProperty("maxVariance", "2");
         if (!property.containsKey("ratio")) property.setProperty("ratio", "2");
+        if (!property.containsKey("convolute")) property.setProperty("convolute", "true");
     }
 
     private void set() throws IOException {
@@ -229,7 +230,7 @@ public class DataSelection implements Operation {
                 // all the observed files
                 if (convolute) lpw.println("#convolved");
                 else lpw.println("#not convolved");
-                lpw.println("#s e c use ratio(syn/obs){abs max min} variance correlation");
+                lpw.println("#s e c starttime use ratio(syn/obs){abs max min} variance correlation");
 
                 for (SACFileName obsName : obsFiles) {
                     // check components
@@ -329,7 +330,7 @@ public class DataSelection implements Operation {
                 ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor ||
                 var < minVariance || maxVariance < var);
 
-        writer.println(stationName + " " + id + " " + component + " " + isok + " " + absRatio + " " + maxRatio + " " +
+        writer.println(stationName + " " + id + " " + component + " " + window.getStartTime() + " " + isok + " " + absRatio + " " + maxRatio + " " +
                 minRatio + " " + var + " " + cor);
         return isok;
     }
