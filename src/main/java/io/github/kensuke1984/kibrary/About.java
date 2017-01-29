@@ -28,7 +28,7 @@ public final class About extends javax.swing.JFrame {
 
     public static final String CODENAME = "Sahagin";
 
-    public static final String VERSION = "0.4.2.3";
+    public static final String VERSION = "0.4.2.4";
 
     private About() {
         super("About Kibrary");
