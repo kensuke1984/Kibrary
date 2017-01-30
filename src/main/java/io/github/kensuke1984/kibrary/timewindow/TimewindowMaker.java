@@ -39,8 +39,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * It creates a window for each given phase and exphase with front and rear
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.
- * 
- * @version 0.2.2.2
+ *
+ * @version 0.2.2.3
  * 
  * @author Kensuke Konishi
  * 
@@ -105,7 +105,6 @@ public class TimewindowMaker implements Operation {
 				.collect(Collectors.toSet());
 		usePhases = phaseSet(property.getProperty("usePhases"));
 		exPhases = phaseSet(property.getProperty("exPhases"));
-
 		frontShift = Double.parseDouble(property.getProperty("frontShift"));
 		rearShift = Double.parseDouble(property.getProperty("rearShift"));
 
@@ -209,7 +208,7 @@ public class TimewindowMaker implements Operation {
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 
 		Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
-		Set<TauPPhase> exPhases = this.exPhases == null ? Collections.emptySet()
+		Set<TauPPhase> exPhases = this.exPhases == null || this.exPhases.isEmpty() ? Collections.emptySet()
 				: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
 
 		if (usePhases.isEmpty()) {
