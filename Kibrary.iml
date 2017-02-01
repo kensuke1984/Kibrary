@@ -37,19 +37,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="commons-lang3-3.4.jar">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-lang3-3.4.jar!/" />
-        </CLASSES>
-        <JAVADOC>
-          <root url="jar://$MODULE_DIR$/lib/commons-lang3-3.4-javadoc.jar!/" />
-        </JAVADOC>
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/commons-lang3-3.4-src.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library name="epsgraphics-1.4.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/epsgraphics-1.4.jar!/" />
@@ -115,5 +102,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="commons-lang3-3.5" level="project" />
   </component>
 </module>
