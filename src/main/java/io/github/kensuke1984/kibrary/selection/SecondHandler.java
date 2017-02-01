@@ -87,7 +87,6 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
-
         predicate = createPredicate();
     }
 
@@ -203,7 +202,6 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
      */
     public static void main(String[] args) throws Exception {
         SecondHandler s = new SecondHandler(Property.parse(args));
-
         System.err.println(SecondHandler.class.getName() + " is going");
         long time = System.nanoTime();
         s.run();

@@ -253,13 +253,13 @@ public class DataSelection implements Operation {
                     if (synSac.getValue(SACHeaderEnum.DELTA) != obsSac.getValue(SACHeaderEnum.DELTA)) continue;
 
                     // Pickup a time window of obsName
-                    Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet.stream()
+                    Set<TimewindowInformation> windowInformationSet = sourceTimewindowInformationSet.stream()
                             .filter(info -> info.getStation().equals(station) && info.getGlobalCMTID().equals(id) &&
                                     info.getComponent() == component).sorted().collect(Collectors.toSet());
 
-                    if (windowInformations.isEmpty()) continue;
+                    if (windowInformationSet.isEmpty()) continue;
 
-                    for (TimewindowInformation window : windowInformations) {
+                    for (TimewindowInformation window : windowInformationSet) {
                         RealVector synU = cutSAC(synSac, window);
                         RealVector obsU = cutSAC(obsSac, shift(window));
                         if (check(lpw, stationName, id, component, window, obsU, synU))
@@ -376,7 +376,6 @@ public class DataSelection implements Operation {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
         System.err.println();
         output();
     }
