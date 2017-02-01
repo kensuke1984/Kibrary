@@ -41,9 +41,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * window is set to integer multiple of DELTA in SAC files.
  *
  * @version 0.2.2.3
- * 
  * @author Kensuke Konishi
- * 
  */
 public class TimewindowMaker implements Operation {
 
@@ -94,7 +92,6 @@ public class TimewindowMaker implements Operation {
 	private void set() {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
-
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		String date = Utilities.getTemporaryString();
@@ -107,7 +104,6 @@ public class TimewindowMaker implements Operation {
 		exPhases = phaseSet(property.getProperty("exPhases"));
 		frontShift = Double.parseDouble(property.getProperty("frontShift"));
 		rearShift = Double.parseDouble(property.getProperty("rearShift"));
-
 	}
 
 	private static Set<Phase> phaseSet(String arg) {
@@ -174,7 +170,6 @@ public class TimewindowMaker implements Operation {
 		twm.run();
 		System.err.println(
 				TimewindowMaker.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
-
 	}
 
 	@Override
@@ -251,7 +246,6 @@ public class TimewindowMaker implements Operation {
 		double startTime = delta * (int) (window.startTime / delta);
 		double endTime = delta * (int) (window.endTime / delta);
 		return new Timewindow(startTime, endTime);
-
 	}
 
 	/**
@@ -290,7 +284,6 @@ public class TimewindowMaker implements Operation {
 		// System.out.println(useTimeWindow+" "+exTimeWindow);
 		if (!useTimeWindow.overlap(exTimeWindow))
 			return useTimeWindow;
-		// System.out.println("hi");
 		if (exTimeWindow.startTime <= useTimeWindow.startTime)
 			return useTimeWindow.endTime <= exTimeWindow.endTime ? null
 					: new Timewindow(exTimeWindow.endTime, useTimeWindow.endTime);

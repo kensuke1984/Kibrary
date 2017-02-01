@@ -122,7 +122,7 @@ public final class Utilities {
      * 引数ディレクトリ内のGlobalCMTIDに準ずるイベントフォルダ群<br>
      *
      * @param path Path of a folder containing event folders.
-     * @return (<b>unmodifiable</b>)Set of {@link EventFolder} in the workPath
+     * @return Set of {@link EventFolder} in the workPath
      * @throws IOException if an I/O error occurs
      */
     public static Set<EventFolder> eventFolderSet(Path path) throws IOException {
@@ -137,7 +137,7 @@ public final class Utilities {
      * will be ignored.
      *
      * @param path of a folder containing event folders which have SAC files.
-     * @return <b>unmodifiable</b> Set of sac in event folders under the path
+     * @return <b>Unmodifiable</b> Set of sac in event folders under the path
      * @throws IOException if an I/O error occurs.
      */
     public static Set<SACFileName> sacFileNameSet(Path path) throws IOException {
