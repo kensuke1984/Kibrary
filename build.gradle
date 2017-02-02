@@ -8,10 +8,10 @@
  */
 
 // Apply the java plugin to add support for Java
-plugins { id "de.undercouch.download" version "3.1.2" }
+plugins { id "de.undercouch.download" version "3.2.0" }
 apply plugin: 'java'
 apply plugin: 'eclipse'
-import de.undercouch.gradle.tasks.download.Download
+//import de.undercouch.gradle.tasks.download.Download
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -75,7 +75,7 @@ task downloadAndUnzip {
     }
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '3.2.1' }
+task wrapper(type: Wrapper) { gradleVersion = '3.3' }
 
 task setupSourceCodes {
 	doLast {	
@@ -91,14 +91,6 @@ task setupSourceCodes {
 
 compileJava {
 	dependsOn setupSourceCodes
-}
-
-// Gralde標準外のソースパスを追加
-sourceSets {
-	main {
-		java { srcDir 'src/java' }
-		resources { srcDir 'src/resources' }
-	}
 }
 
 clean { delete file(kibraryhome+'/src') }
