@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Global CMT searchを行う時のQuery
  *
  * @author Kensuke Konishi
- * @version 0.1.10.4
+ * @version 0.1.10.5
  *          TODO thread safe
  */
 public class GlobalCMTSearch {
@@ -314,7 +314,7 @@ public class GlobalCMTSearch {
             int k = -1;
             while (k < 0) {
                 String numStr = br.readLine();
-                if (NumberUtils.isNumber(numStr)) k = Integer.parseInt(numStr);
+                if (NumberUtils.isCreatable(numStr)) k = Integer.parseInt(numStr);
                 if (k < 1 || ids.length <= k - 1) {
                     System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
                     k = -1;

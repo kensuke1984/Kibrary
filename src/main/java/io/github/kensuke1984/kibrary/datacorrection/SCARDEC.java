@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
  * <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>.
  * 
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.0.1
  * 
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  *      <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
@@ -279,8 +279,7 @@ public class SCARDEC {
 			int k = -1;
 			while (k < 0) {
 				String numStr = br.readLine();
-				if (NumberUtils.isNumber(numStr))
-					k = Integer.parseInt(numStr);
+                if (NumberUtils.isCreatable(numStr)) k = Integer.parseInt(numStr);
 				if (k < 1 || ids.length <= k - 1) {
 					System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
 					k = -1;
