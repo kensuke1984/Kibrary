@@ -16,12 +16,12 @@
 hs_err_pid*
 
 # Build
-out
-build
-bin
-lib
+out/
+build/
+bin/
+lib/
 
-gh-pages
+gh-pages/
 
 # Idea
 .idea
@@ -34,7 +34,7 @@ Thumbs.db
 .DS_Store
 
 # Gradle
-.gradle
+.gradle/
 !gradle-wrapper.jar
 
 # Maven
@@ -44,3 +44,4 @@ target
 *.log
 *.swp
 *.bak
+
