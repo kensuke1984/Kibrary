@@ -5,28 +5,15 @@
  */
 package io.github.kensuke1984.anisotime;
 
+import javax.swing.*;
+import javax.swing.GroupLayout.Alignment;
+import javax.swing.UIManager.LookAndFeelInfo;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.WindowConstants;
 
 /**
  * GUI for ANISOtime
@@ -42,6 +29,23 @@ class ANISOtimeGUI extends javax.swing.JFrame {
      * 2016/12/3
      */
     private static final long serialVersionUID = -4546171746998586620L;
+    private RaypathWindow raypathWindow;
+    private volatile VelocityStructure structure;
+    private volatile double eventR;
+    /**
+     * Epicentral Distance mode: epicentral distance[deg]<br>
+     * Ray parameter mode: ray parameter<br>
+     */
+    private volatile double mostImportant;
+    private volatile ComputationMode mode;
+    /**
+     * 0(default): All, 1: P-SV, 2: SH
+     */
+    private volatile int polarity;
+    private volatile Set<Phase> phaseSet;
+    private ParameterInputPanel jPanelParameter;
+    private ResultWindow resultWindow;
+    private PhaseWindow phaseWindow;
 
     /**
      * Creates new form TravelTimeGUI
@@ -50,7 +54,25 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         initComponents();
     }
 
-    private RaypathWindow raypathWindow;
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        try {
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+            Logger.getLogger(ANISOtimeGUI.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        // </editor-fold>
+
+		/* Create and display the form */
+        SwingUtilities.invokeLater(() -> new ANISOtimeGUI().setVisible(true));
+    }
 
     void selectRaypath(int i) {
         raypathWindow.selectPath(i);
@@ -66,13 +88,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         resultWindow.clearRows();
     }
 
-    private volatile VelocityStructure structure;
-
     void setStructure(VelocityStructure structure) {
         this.structure = structure;
     }
-
-    private volatile double eventR;
 
     /**
      * @param eventDepth [km] depth of the source (NOT radius)
@@ -80,12 +98,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     void setEventDepth(double eventDepth) {
         eventR = structure.earthRadius() - eventDepth;
     }
-
-    /**
-     * Epicentral Distance mode: epicentral distance[deg]<br>
-     * Ray parameter mode: ray parameter<br>
-     */
-    private volatile double mostImportant;
 
     /**
      * @param d Epicentral Distance mode: epicentral distance[deg]<br>
@@ -104,8 +116,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     void changePropertiesVisible() {
         jPanelParameter.changePropertiesVisible();
     }
-
-    private volatile ComputationMode mode;
 
     /**
      * @param i 0(default): All, 1: P-SV, 2: SH
@@ -128,11 +138,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 throw new RuntimeException("Unexpected");
         }
     }
-
-    /**
-     * 0(default): All, 1: P-SV, 2: SH
-     */
-    private volatile int polarity;
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -181,8 +186,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         setPolarity(0);
         setMode(ComputationMode.EPICENTRAL_DISTANCE);
     }// </editor-fold>//GEN-END:initComponents
-
-    private volatile Set<Phase> phaseSet;
 
     /**
      * phases selected at the time considering polarity. When S is
@@ -305,26 +308,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         }
     }// GEN-LAST:event_buttonComputeActionPerformed
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        try {
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            Logger.getLogger(ANISOtimeGUI.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        // </editor-fold>
-
-		/* Create and display the form */
-        SwingUtilities.invokeLater(() -> new ANISOtimeGUI().setVisible(true));
-    }
-
     public void runRayParameterMode() {
         Raypath raypath = new Raypath(mostImportant, structure);
         raypath.compute();
@@ -432,8 +415,4 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             }
         }
     }
-
-    private ParameterInputPanel jPanelParameter;
-    private ResultWindow resultWindow;
-    private PhaseWindow phaseWindow;
 }

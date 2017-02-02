@@ -14,6 +14,8 @@ class RaypathWindow extends javax.swing.JFrame {
      * 2016/8/30
      */
     private static final long serialVersionUID = -5519489181399651337L;
+    private RaypathPanel raypathPanel;
+    private ANISOtimeGUI gui;
 
     RaypathWindow(ANISOtimeGUI gui, RaypathPanel raypathPanel) {
         super("Raypath");
@@ -25,10 +27,6 @@ class RaypathWindow extends javax.swing.JFrame {
     void addPath(double[] x, double[] y) {
         raypathPanel.addPath(x, y);
     }
-
-    private RaypathPanel raypathPanel;
-
-    private ANISOtimeGUI gui;
 
     /**
      * This method is called from within the constructor to initialize the form.

@@ -1,20 +1,19 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
-
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.DftNormalization;
+import org.apache.commons.math3.transform.FastFourierTransformer;
+import org.apache.commons.math3.transform.TransformType;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Create a partial derivative from one forward propagation and one
@@ -56,6 +55,8 @@ public class ThreeDPartialMaker {
     private double angleForVector;
 
     private int lsmooth;
+    private FujiConversion fujiConversion;
+    private SourceTimeFunction sourceTimeFunction;
 
     /**
      * 用いたいspcファイルたちと ヘッダーに加えたい情報
@@ -70,6 +71,62 @@ public class ThreeDPartialMaker {
         this.bp = bp;
         findLsmooth();
         setAngles();
+    }
+
+    /**
+     * SpcFileから３次元偏微分係数を作れるか
+     *
+     * @param fp forward propagation
+     * @param bp backward propagation
+     * @return if the pair of fp and bp is valid for making partials.
+     */
+    private static boolean isGoodPair(DSMOutput fp, DSMOutput bp) {
+        boolean validity = true;
+        if (fp.nbody() != bp.nbody()) {
+            System.err.println("nbodies are different. fp, bp: " + fp.nbody() + " ," + bp.nbody());
+            validity = false;
+        }
+        if (validity) {
+            double[] fpR = fp.getBodyR();
+            double[] bpR = bp.getBodyR();
+            validity = Arrays.equals(fpR, bpR);
+            if (!validity) {
+                System.err.println("the depths are invalid(different) as below  fp : bp");
+                for (int i = 0; i < fpR.length; i++)
+                    System.err.println(fpR[i] + " : " + bpR[i]);
+            }
+        }
+        if (fp.omegai() != bp.omegai()) {
+            System.err.println("Omegais are different. fp, bp: " + fp.omegai() + ", " + bp.omegai());
+            validity = false;
+        }
+
+        if (fp.np() != bp.np()) {
+            System.err.println("nps are different. fp, bp: " + fp.np() + ", " + bp.np());
+            validity = false;
+        }
+        // tlen
+        if (fp.tlen() != bp.tlen()) {
+            System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
+            validity = false;
+        }
+        // 摂動点名は同じかどうか
+        if (!(fp.getObserverID().equals(bp.getObserverID()))) {
+            System.err.println(
+                    "Perturbation points are different fp, bp: " + fp.getObserverID() + " ," + bp.getObserverID());
+            validity = false;
+        }
+
+        // 場所
+        if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
+            System.err.println("perturbation point Positions are different.");
+            System.err.println(
+                    "perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", " +
+                            fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() +
+                            ", " + bp.getObserverPosition().getLongitude() + ")");
+            validity = false;
+        }
+        return validity;
     }
 
     /**
@@ -187,8 +244,6 @@ public class ThreeDPartialMaker {
         return partialdouble;
     }
 
-    private FujiConversion fujiConversion;
-
     /**
      * The structure is used for computation Q
      *
@@ -221,8 +276,6 @@ public class ThreeDPartialMaker {
                 rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
 
     }
-
-    private SourceTimeFunction sourceTimeFunction;
 
     public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         this.sourceTimeFunction = sourceTimeFunction;
@@ -350,62 +403,6 @@ public class ThreeDPartialMaker {
         if (i < lsmooth) i *= 2;
         lsmooth = i;
         npts = np * lsmooth * 2;
-    }
-
-    /**
-     * SpcFileから３次元偏微分係数を作れるか
-     *
-     * @param fp forward propagation
-     * @param bp backward propagation
-     * @return if the pair of fp and bp is valid for making partials.
-     */
-    private static boolean isGoodPair(DSMOutput fp, DSMOutput bp) {
-        boolean validity = true;
-        if (fp.nbody() != bp.nbody()) {
-            System.err.println("nbodies are different. fp, bp: " + fp.nbody() + " ," + bp.nbody());
-            validity = false;
-        }
-        if (validity) {
-            double[] fpR = fp.getBodyR();
-            double[] bpR = bp.getBodyR();
-            validity = Arrays.equals(fpR, bpR);
-            if (!validity) {
-                System.err.println("the depths are invalid(different) as below  fp : bp");
-                for (int i = 0; i < fpR.length; i++)
-                    System.err.println(fpR[i] + " : " + bpR[i]);
-            }
-        }
-        if (fp.omegai() != bp.omegai()) {
-            System.err.println("Omegais are different. fp, bp: " + fp.omegai() + ", " + bp.omegai());
-            validity = false;
-        }
-
-        if (fp.np() != bp.np()) {
-            System.err.println("nps are different. fp, bp: " + fp.np() + ", " + bp.np());
-            validity = false;
-        }
-        // tlen
-        if (fp.tlen() != bp.tlen()) {
-            System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
-            validity = false;
-        }
-        // 摂動点名は同じかどうか
-        if (!(fp.getObserverID().equals(bp.getObserverID()))) {
-            System.err.println(
-                    "Perturbation points are different fp, bp: " + fp.getObserverID() + " ," + bp.getObserverID());
-            validity = false;
-        }
-
-        // 場所
-        if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
-            System.err.println("perturbation point Positions are different.");
-            System.err.println(
-                    "perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", " +
-                            fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() +
-                            ", " + bp.getObserverPosition().getLongitude() + ")");
-            validity = false;
-        }
-        return validity;
     }
 
 }

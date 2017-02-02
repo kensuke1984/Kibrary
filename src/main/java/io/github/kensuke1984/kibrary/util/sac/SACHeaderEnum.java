@@ -608,6 +608,10 @@ public enum SACHeaderEnum {
      */
     private int type;
 
+    SACHeaderEnum(int n) {
+        type = n;
+    }
+
     /**
      * @return 0:float, 1:int, 2:enumerated(String), 3:logical(true or false),
      * 8:Alphanumeric(String 8letters), 16:Alphanumeric(String
@@ -615,10 +619,6 @@ public enum SACHeaderEnum {
      */
     public int typeOf() {
         return type;
-    }
-
-    SACHeaderEnum(int n) {
-        type = n;
     }
 
 }

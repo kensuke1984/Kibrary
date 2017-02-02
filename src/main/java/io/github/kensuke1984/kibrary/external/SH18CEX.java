@@ -11,114 +11,10 @@ import io.github.kensuke1984.kibrary.util.Location;
  */
 public final class SH18CEX {
 
-    private SH18CEX() {
-    }
-
-    public static void main(String args[]) {
-        if (args.length != 3) throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
-        Location loc;
-        try {
-            loc = new Location(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[0]));
-        } catch (Exception e) {
-            throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
-        }
-        double premVs = ps.getVshAt(loc.getR());
-        double perc = getV(loc);
-        double take = premVs * (1 + perc / 100);
-        System.out.println(loc + " " + take + " " + perc);
-    }
-
     private static final PolynomialStructure ps = PolynomialStructure.PREM;
-
-    private static double xlm(int l, int m, double theta) {
-        if (m < 0 || l < m) throw new IllegalArgumentException("l, m are invalid");
-
-        double x = Math.cos(theta);
-        double fact = 1;
-        if (m != 0) for (int i = l - m + 1; i <= l + m; i++)
-            fact *= i;
-
-        double coef = Math.sqrt((2 * l + 1) / 4.0 / Math.PI / fact);
-        return coef * plgndr(l, m, x);
-    }
-
-    private static double plgndr(int l, int m, double x) {
-        if (m < 0 || l < m || x < -1 || 1 < x) throw new IllegalArgumentException("l, m, x are invalid.");
-        double pmm = 1;
-        if (0 < m) {
-            double somx2 = Math.sqrt((1 - x) * (1 + x));
-            double fact = 1;
-            for (int i = 1; i <= m; i++) {
-                pmm *= -fact * somx2;
-                fact += 2;
-            }
-        }
-        if (l == m) return pmm;
-
-        double pmmp1 = x * (2 * m + 1) * pmm;
-        if (l == (m + 1)) return pmmp1;
-
-        for (int ll = m + 2; ll <= l; ll++) {
-            double pll = (x * (2 * ll - 1) * pmmp1 - (ll + m - 1) * pmm) / (ll - m);
-            pmm = pmmp1;
-            pmmp1 = pll;
-        }
-        return pmmp1;
-
-    }
-
-    public static double getV(Location location) {
-        int fmin = 0;
-        int fmax = 18;
-        int nzpar = 13;
-        double[] hh = new double[fmax * (fmax + 2) + 1];
-        // int ipar = (fmin - 1) * (fmin + 1);
-        int ipar = 0;
-        for (int f = fmin; f <= fmax; f++)
-            for (int g = -f; g <= f; g++) {
-                // ipar++;
-                // hh[ipar] = 0;
-                double h1 = 0;
-                double h2 = 0;
-                if (g < 0) {
-                    // h1 = 0;
-                    h2 = Math.pow(-1, -g) * Math.sqrt(8 * Math.PI);
-                } else if (g == 0) {
-                    h1 = f == 0 ? 0 : Math.sqrt(4 * Math.PI);
-                    // h2 = 0;
-                } else {
-                    h1 = Math.pow(-1, g) * Math.sqrt(8 * Math.PI);
-                    // h2 = 0;
-                }
-                double theta = Math.toRadians(90 - location.getLatitude());
-                double phi = Math.toRadians(location.getLongitude());
-                double xlm = xlm(f, Math.abs(g), theta);
-                hh[ipar++] = h1 * Math.cos(Math.abs(g) * phi) * xlm + h2 * Math.sin(Math.abs(g) * phi) * xlm;
-                // System.out.println(xlm);
-            }
-
-        double r = location.getR();
-        double rho = ps.getRhoAt(r);
-        double vs = ps.getVshAt(r);
-        double mu = ps.computeMu(r);
-        double pert = 0;
-        for (int izpar = 0; izpar < 12; izpar++)
-            if ((modelNode[izpar] <= r && r < modelNode[izpar + 1]) ||
-                    izpar == nzpar - 1 && r == modelNode[izpar + 1]) {
-                double zz1 = (modelNode[izpar + 1] - r) / (modelNode[izpar + 1] - modelNode[izpar]) * mu;
-                double zz2 = (r - modelNode[izpar]) / (modelNode[izpar + 1] - modelNode[izpar]) * mu;
-                for (int par = 0; par <= fmax * (fmax + 2); par++)
-                    pert += (getDM(par, izpar) * zz1 + getDM(par, izpar + 1) * zz2) * hh[par];
-            }
-        double vs1 = Math.sqrt((pert + mu) / rho);
-
-        return (vs1 - vs) / vs * 100;
-    }
-
     private final static double[] modelNode =
             {3480.0, 3981.0, 4431.0, 4821.0, 5161.0, 5451.0, 5701.0, 5841.0, 5971.0, 6091.0, 6211.0, 6301.0, 6346.6,
                     6368.0};
-
     private static final double[] sh18cex =
             {7.012836217206323E-004, -5.610791406740902E-004, 4.582577057896778E-004, 5.328429034690334E-004,
                     -4.364115262565124E-003, 1.182355013380707E-004, 4.711369037324728E-003, 7.786904048734154E-004,
@@ -1294,6 +1190,108 @@ public final class SH18CEX {
                     -2.695960778067216E-004, 1.684605258373936E-004, -1.751395573620971E-004, -1.139531781795340E-004,
                     3.218936491026604E-004, -6.229511197310562E-004, -1.173675289227883E-004, -1.152288834421058E-003,
                     -7.028030644410962E-004};
+
+    private SH18CEX() {
+    }
+
+    public static void main(String args[]) {
+        if (args.length != 3) throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
+        Location loc;
+        try {
+            loc = new Location(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[0]));
+        } catch (Exception e) {
+            throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
+        }
+        double premVs = ps.getVshAt(loc.getR());
+        double perc = getV(loc);
+        double take = premVs * (1 + perc / 100);
+        System.out.println(loc + " " + take + " " + perc);
+    }
+
+    private static double xlm(int l, int m, double theta) {
+        if (m < 0 || l < m) throw new IllegalArgumentException("l, m are invalid");
+
+        double x = Math.cos(theta);
+        double fact = 1;
+        if (m != 0) for (int i = l - m + 1; i <= l + m; i++)
+            fact *= i;
+
+        double coef = Math.sqrt((2 * l + 1) / 4.0 / Math.PI / fact);
+        return coef * plgndr(l, m, x);
+    }
+
+    private static double plgndr(int l, int m, double x) {
+        if (m < 0 || l < m || x < -1 || 1 < x) throw new IllegalArgumentException("l, m, x are invalid.");
+        double pmm = 1;
+        if (0 < m) {
+            double somx2 = Math.sqrt((1 - x) * (1 + x));
+            double fact = 1;
+            for (int i = 1; i <= m; i++) {
+                pmm *= -fact * somx2;
+                fact += 2;
+            }
+        }
+        if (l == m) return pmm;
+
+        double pmmp1 = x * (2 * m + 1) * pmm;
+        if (l == (m + 1)) return pmmp1;
+
+        for (int ll = m + 2; ll <= l; ll++) {
+            double pll = (x * (2 * ll - 1) * pmmp1 - (ll + m - 1) * pmm) / (ll - m);
+            pmm = pmmp1;
+            pmmp1 = pll;
+        }
+        return pmmp1;
+
+    }
+
+    public static double getV(Location location) {
+        int fmin = 0;
+        int fmax = 18;
+        int nzpar = 13;
+        double[] hh = new double[fmax * (fmax + 2) + 1];
+        // int ipar = (fmin - 1) * (fmin + 1);
+        int ipar = 0;
+        for (int f = fmin; f <= fmax; f++)
+            for (int g = -f; g <= f; g++) {
+                // ipar++;
+                // hh[ipar] = 0;
+                double h1 = 0;
+                double h2 = 0;
+                if (g < 0) {
+                    // h1 = 0;
+                    h2 = Math.pow(-1, -g) * Math.sqrt(8 * Math.PI);
+                } else if (g == 0) {
+                    h1 = f == 0 ? 0 : Math.sqrt(4 * Math.PI);
+                    // h2 = 0;
+                } else {
+                    h1 = Math.pow(-1, g) * Math.sqrt(8 * Math.PI);
+                    // h2 = 0;
+                }
+                double theta = Math.toRadians(90 - location.getLatitude());
+                double phi = Math.toRadians(location.getLongitude());
+                double xlm = xlm(f, Math.abs(g), theta);
+                hh[ipar++] = h1 * Math.cos(Math.abs(g) * phi) * xlm + h2 * Math.sin(Math.abs(g) * phi) * xlm;
+                // System.out.println(xlm);
+            }
+
+        double r = location.getR();
+        double rho = ps.getRhoAt(r);
+        double vs = ps.getVshAt(r);
+        double mu = ps.computeMu(r);
+        double pert = 0;
+        for (int izpar = 0; izpar < 12; izpar++)
+            if ((modelNode[izpar] <= r && r < modelNode[izpar + 1]) ||
+                    izpar == nzpar - 1 && r == modelNode[izpar + 1]) {
+                double zz1 = (modelNode[izpar + 1] - r) / (modelNode[izpar + 1] - modelNode[izpar]) * mu;
+                double zz2 = (r - modelNode[izpar]) / (modelNode[izpar + 1] - modelNode[izpar]) * mu;
+                for (int par = 0; par <= fmax * (fmax + 2); par++)
+                    pert += (getDM(par, izpar) * zz1 + getDM(par, izpar + 1) * zz2) * hh[par];
+            }
+        double vs1 = Math.sqrt((pert + mu) / rho);
+
+        return (vs1 - vs) / vs * 100;
+    }
 
     private static final double getDM(int ipar, int izpar) {
         int fmax = 18;

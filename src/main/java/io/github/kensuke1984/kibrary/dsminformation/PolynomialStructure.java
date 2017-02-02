@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
+import io.github.kensuke1984.kibrary.util.Trace;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
@@ -9,9 +12,6 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-
-import io.github.kensuke1984.kibrary.util.Trace;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 /**
  * (input) Structure of the Earth for softwares of <i>Direct Solution Method</i>
@@ -30,9 +30,180 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 public class PolynomialStructure implements Serializable {
 
     /**
+     * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
+     */
+    public static final PolynomialStructure PREM = initialAnisoPREM();
+    /**
+     * isotropic PREM by Dziewonski &amp; Anderson 1981
+     */
+    public static final PolynomialStructure ISO_PREM = initialIsoPREM();
+    /**
+     * AK135 by Kennett <i>et al</i>. (1995)
+     */
+    public static final PolynomialStructure AK135 = initialAK135();
+    /**
      * 2016/8/24
      */
     private static final long serialVersionUID = -5147029504840598303L;
+    /**
+     * the number of layers
+     */
+    private int nzone;
+    /**
+     * Number of zones of cores.
+     */
+    private int coreZone = 2; // TODO
+    private double[] rmin;
+    private double[] rmax;
+    private PolynomialFunction[] rho;
+    private PolynomialFunction[] vpv;
+    private PolynomialFunction[] vph;
+    private PolynomialFunction[] vsv;
+    private PolynomialFunction[] vsh;
+    private PolynomialFunction[] eta;
+    private double[] qMu;
+    private double[] qKappa;
+
+    private PolynomialStructure() {
+    }
+
+    /**
+     * @param structurePath {@link Path} of a
+     * @throws IOException if an I/O error occurs. A structure file (structurePath) must
+     *                     exist.
+     */
+    public PolynomialStructure(Path structurePath) throws IOException {
+        readStructureFile(structurePath);
+    }
+
+    private static PolynomialStructure set(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
+                                           double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu,
+                                           double[] qKappa) {
+        PolynomialStructure structure = new PolynomialStructure();
+        structure.nzone = nzone;
+        structure.rmin = rmin;
+        structure.rmax = rmax;
+
+        structure.rho = new PolynomialFunction[nzone];
+        structure.vpv = new PolynomialFunction[nzone];
+        structure.vph = new PolynomialFunction[nzone];
+        structure.vsv = new PolynomialFunction[nzone];
+        structure.vsh = new PolynomialFunction[nzone];
+        structure.eta = new PolynomialFunction[nzone];
+        structure.qMu = qMu;
+        structure.qKappa = qKappa;
+
+        for (int i = 0; i < nzone; i++) {
+            structure.rho[i] = new PolynomialFunction(rho[i]);
+            structure.vpv[i] = new PolynomialFunction(vpv[i]);
+            structure.vph[i] = new PolynomialFunction(vph[i]);
+            structure.vsv[i] = new PolynomialFunction(vsv[i]);
+            structure.vsh[i] = new PolynomialFunction(vsh[i]);
+            structure.eta[i] = new PolynomialFunction(eta[i]);
+        }
+
+        return structure;
+    }
+
+    private static PolynomialStructure initialAnisoPREM() {
+        int nzone = 12;
+        double[] rmin = new double[]{0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356};
+        double[] rmax = new double[]{1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356, 6371};
+        double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
+                {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
+                {7.9565, -6.4761, 5.5283, -3.0807}, {5.3197, -1.4836, 0, 0}, {11.2494, -8.0298, 0, 0},
+                {7.1089, -3.8045, 0, 0}, {2.691, 0.6924, 0, 0}, {2.691, 0.6924, 0, 0}, {2.9, 0, 0, 0}, {2.6, 0, 0, 0},};
+        double[][] vpv = new double[][]{{11.2622, 0, -6.364, 0}, {11.0487, -4.0362, 4.8023, -13.5732},
+                {15.3891, -5.3181, 5.5242, -2.5514}, {24.952, -40.4673, 51.4832, -26.6419},
+                {29.2766, -23.6027, 5.5242, -2.5514}, {19.0957, -9.8672, 0, 0}, {39.7027, -32.6166, 0, 0},
+                {20.3926, -12.2569, 0, 0}, {0.8317, 7.218, 0, 0}, {0.8317, 7.218, 0, 0}, {6.8, 0, 0, 0},
+                {5.8, 0, 0, 0},};
+        double[][] vph = new double[][]{{11.2622, 0, -6.364, 0}, {11.0487, -4.0362, 4.8023, -13.5732},
+                {15.3891, -5.3181, 5.5242, -2.5514}, {24.952, -40.4673, 51.4832, -26.6419},
+                {29.2766, -23.6027, 5.5242, -2.5514}, {19.0957, -9.8672, 0, 0}, {39.7027, -32.6166, 0, 0},
+                {20.3926, -12.2569, 0, 0}, {3.5908, 4.6172, 0, 0}, {3.5908, 4.6172, 0, 0}, {6.8, 0, 0, 0},
+                {5.8, 0, 0, 0},};
+        double[][] vsv = new double[][]{{3.6678, 0, -4.4475, 0}, {0, 0, 0, 0}, {6.9254, 1.4672, -2.0834, 0.9783},
+                {11.1671, -13.7818, 17.4575, -9.2777}, {22.3459, -17.2473, -2.0834, 0.9783}, {9.9839, -4.9324, 0, 0},
+                {22.3512, -18.5856, 0, 0}, {8.9496, -4.4597, 0, 0}, {5.8582, -1.4678, 0, 0}, {5.8582, -1.4678, 0, 0},
+                {3.9, 0, 0, 0}, {3.2, 0, 0, 0},};
+        double[][] vsh = new double[][]{{3.6678, 0, -4.4475, 0}, {0, 0, 0, 0}, {6.9254, 1.4672, -2.0834, 0.9783},
+                {11.1671, -13.7818, 17.4575, -9.2777}, {22.3459, -17.2473, -2.0834, 0.9783}, {9.9839, -4.9324, 0, 0},
+                {22.3512, -18.5856, 0, 0}, {8.9496, -4.4597, 0, 0}, {-1.0839, 5.7176, 0, 0}, {-1.0839, 5.7176, 0, 0},
+                {3.9, 0, 0, 0}, {3.2, 0, 0, 0},};
+        double[][] eta =
+                new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
+                        {1, 0, 0, 0}, {1, 0, 0, 0}, {3.3687, -2.4778, 0, 0}, {3.3687, -2.4778, 0, 0}, {1, 0, 0, 0},
+                        {1, 0, 0, 0},};
+        double[] qMu = new double[]{84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
+        double[] qKappa =
+                new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
+        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+    }
+
+    private static PolynomialStructure initialIsoPREM() {
+        PolynomialStructure prem = initialAnisoPREM();
+        double[] vp = new double[]{4.1875, 3.9382, 0, 0};
+        double[] vs = new double[]{2.1519, 2.3481, 0, 0};
+        double[] eta = new double[]{1, 0, 0, 0};
+        for (int i = 8; i <= 9; i++) {
+            prem.vpv[i] = new PolynomialFunction(vp);
+            prem.vph[i] = new PolynomialFunction(vp);
+            prem.vsv[i] = new PolynomialFunction(vs);
+            prem.vsh[i] = new PolynomialFunction(vs);
+            prem.eta[i] = new PolynomialFunction(eta);
+        }
+        return prem;
+    }
+
+    /**
+     * standard AK135 Kennett <i>et al<i>. (1995)
+     */
+    private static PolynomialStructure initialAK135() {
+        int nzone = 11;
+        double[] rmin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351};
+        double[] rmax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351, 6371};
+        double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
+                {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
+                {7.9565, -6.4761, 5.5283, -3.0807}, {5.3197, -1.4836, 0, 0}, {11.2494, -8.0298, 0, 0},
+                {7.1089, -3.8045, 0, 0}, {2.691, 0.6924, 0, 0}, {2.691, 0.6924, 0, 0}, {2.9, 0, 0, 0}, {2.6, 0, 0, 0},};
+        double[][] vpv = new double[][]{{11.261692, 0.028794, -6.627846, 0}, {10.118851, 3.457774, -13.434875, 0},
+                {13.908244, -0.45417, 0, 0}, {24.138794, -37.097655, 46.631994, -24.272115},
+                {25.969838, -16.934118, 0, 0}, {29.38896, -21.40656, 0, 0}, {30.78765, -23.25415, 0, 0},
+                {25.413889, -17.697222, 0, 0}, {8.785412, -0.749529, 0, 0,}, {6.5, 0.0, 0.0, 0.0},
+                {5.8, 0.0, 0.0, 0.0},};
+        double[][] vph = new double[][]{{11.261692, 0.028794, -6.627846, 0}, {10.118851, 3.457774, -13.434875, 0},
+                {13.908244, -0.45417, 0, 0}, {24.138794, -37.097655, 46.631994, -24.272115},
+                {25.969838, -16.934118, 0, 0}, {29.38896, -21.40656, 0, 0}, {30.78765, -23.25415, 0, 0},
+                {25.413889, -17.697222, 0, 0}, {8.785412, -0.749529, 0, 0,}, {6.5, 0, 0, 0}, {5.8, 0, 0, 0}};
+        double[][] vsv = new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
+                {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
+                {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
+                {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
+        double[][] vsh = new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
+                {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
+                {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
+                {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
+        double[][] eta =
+                new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
+                        {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},}; // ok
+        double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600,}; // ok
+        double[] qKappa =
+                new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,}; // OK
+        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+
+    }
+
+    /**
+     * change String line from coefficients a + bx + cx**2 >>>>> a b c 0
+     *
+     * @param pf polynomial function for a layer
+     * @return string in a form of this
+     */
+    private static String toLine(PolynomialFunction pf) {
+        return Arrays.stream(Arrays.copyOf(pf.getCoefficients(), 4)).mapToObj(Double::toString)
+                .collect(Collectors.joining(" "));
+    }
 
     @Override
     public int hashCode() {
@@ -74,58 +245,10 @@ public class PolynomialStructure implements Serializable {
     }
 
     /**
-     * the number of layers
-     */
-    private int nzone;
-
-    /**
-     * Number of zones of cores.
-     */
-    private int coreZone = 2; // TODO
-
-    /**
      * @return Number of core zones.
      */
     public int getCoreZone() {
         return coreZone;
-    }
-
-    private double[] rmin;
-    private double[] rmax;
-    private PolynomialFunction[] rho;
-    private PolynomialFunction[] vpv;
-    private PolynomialFunction[] vph;
-    private PolynomialFunction[] vsv;
-    private PolynomialFunction[] vsh;
-    private PolynomialFunction[] eta;
-    private double[] qMu;
-    private double[] qKappa;
-
-    private PolynomialStructure() {
-    }
-
-    /**
-     * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
-     */
-    public static final PolynomialStructure PREM = initialAnisoPREM();
-
-    /**
-     * isotropic PREM by Dziewonski &amp; Anderson 1981
-     */
-    public static final PolynomialStructure ISO_PREM = initialIsoPREM();
-
-    /**
-     * AK135 by Kennett <i>et al</i>. (1995)
-     */
-    public static final PolynomialStructure AK135 = initialAK135();
-
-    /**
-     * @param structurePath {@link Path} of a
-     * @throws IOException if an I/O error occurs. A structure file (structurePath) must
-     *                     exist.
-     */
-    public PolynomialStructure(Path structurePath) throws IOException {
-        readStructureFile(structurePath);
     }
 
     /**
@@ -454,35 +577,6 @@ public class PolynomialStructure implements Serializable {
                 .orElseThrow(() -> new IllegalArgumentException("Input r:" + r + "is invalid."));
     }
 
-    private static PolynomialStructure set(int nzone, double[] rmin, double[] rmax, double[][] rho, double[][] vpv,
-                                           double[][] vph, double[][] vsv, double[][] vsh, double[][] eta, double[] qMu,
-                                           double[] qKappa) {
-        PolynomialStructure structure = new PolynomialStructure();
-        structure.nzone = nzone;
-        structure.rmin = rmin;
-        structure.rmax = rmax;
-
-        structure.rho = new PolynomialFunction[nzone];
-        structure.vpv = new PolynomialFunction[nzone];
-        structure.vph = new PolynomialFunction[nzone];
-        structure.vsv = new PolynomialFunction[nzone];
-        structure.vsh = new PolynomialFunction[nzone];
-        structure.eta = new PolynomialFunction[nzone];
-        structure.qMu = qMu;
-        structure.qKappa = qKappa;
-
-        for (int i = 0; i < nzone; i++) {
-            structure.rho[i] = new PolynomialFunction(rho[i]);
-            structure.vpv[i] = new PolynomialFunction(vpv[i]);
-            structure.vph[i] = new PolynomialFunction(vph[i]);
-            structure.vsv[i] = new PolynomialFunction(vsv[i]);
-            structure.vsh[i] = new PolynomialFunction(vsh[i]);
-            structure.eta[i] = new PolynomialFunction(eta[i]);
-        }
-
-        return structure;
-    }
-
     /**
      * The numbers of radii and values must be same.
      *
@@ -498,57 +592,6 @@ public class PolynomialStructure implements Serializable {
         double[] x = Arrays.stream(radii).map(this::toX).toArray();
         Trace trace = new Trace(x, values);
         return trace.toPolynomial(n);
-    }
-
-    private static PolynomialStructure initialAnisoPREM() {
-        int nzone = 12;
-        double[] rmin = new double[]{0, 1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356};
-        double[] rmax = new double[]{1221.5, 3480, 3630, 5600, 5701, 5771, 5971, 6151, 6291, 6346.6, 6356, 6371};
-        double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
-                {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
-                {7.9565, -6.4761, 5.5283, -3.0807}, {5.3197, -1.4836, 0, 0}, {11.2494, -8.0298, 0, 0},
-                {7.1089, -3.8045, 0, 0}, {2.691, 0.6924, 0, 0}, {2.691, 0.6924, 0, 0}, {2.9, 0, 0, 0}, {2.6, 0, 0, 0},};
-        double[][] vpv = new double[][]{{11.2622, 0, -6.364, 0}, {11.0487, -4.0362, 4.8023, -13.5732},
-                {15.3891, -5.3181, 5.5242, -2.5514}, {24.952, -40.4673, 51.4832, -26.6419},
-                {29.2766, -23.6027, 5.5242, -2.5514}, {19.0957, -9.8672, 0, 0}, {39.7027, -32.6166, 0, 0},
-                {20.3926, -12.2569, 0, 0}, {0.8317, 7.218, 0, 0}, {0.8317, 7.218, 0, 0}, {6.8, 0, 0, 0},
-                {5.8, 0, 0, 0},};
-        double[][] vph = new double[][]{{11.2622, 0, -6.364, 0}, {11.0487, -4.0362, 4.8023, -13.5732},
-                {15.3891, -5.3181, 5.5242, -2.5514}, {24.952, -40.4673, 51.4832, -26.6419},
-                {29.2766, -23.6027, 5.5242, -2.5514}, {19.0957, -9.8672, 0, 0}, {39.7027, -32.6166, 0, 0},
-                {20.3926, -12.2569, 0, 0}, {3.5908, 4.6172, 0, 0}, {3.5908, 4.6172, 0, 0}, {6.8, 0, 0, 0},
-                {5.8, 0, 0, 0},};
-        double[][] vsv = new double[][]{{3.6678, 0, -4.4475, 0}, {0, 0, 0, 0}, {6.9254, 1.4672, -2.0834, 0.9783},
-                {11.1671, -13.7818, 17.4575, -9.2777}, {22.3459, -17.2473, -2.0834, 0.9783}, {9.9839, -4.9324, 0, 0},
-                {22.3512, -18.5856, 0, 0}, {8.9496, -4.4597, 0, 0}, {5.8582, -1.4678, 0, 0}, {5.8582, -1.4678, 0, 0},
-                {3.9, 0, 0, 0}, {3.2, 0, 0, 0},};
-        double[][] vsh = new double[][]{{3.6678, 0, -4.4475, 0}, {0, 0, 0, 0}, {6.9254, 1.4672, -2.0834, 0.9783},
-                {11.1671, -13.7818, 17.4575, -9.2777}, {22.3459, -17.2473, -2.0834, 0.9783}, {9.9839, -4.9324, 0, 0},
-                {22.3512, -18.5856, 0, 0}, {8.9496, -4.4597, 0, 0}, {-1.0839, 5.7176, 0, 0}, {-1.0839, 5.7176, 0, 0},
-                {3.9, 0, 0, 0}, {3.2, 0, 0, 0},};
-        double[][] eta =
-                new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
-                        {1, 0, 0, 0}, {1, 0, 0, 0}, {3.3687, -2.4778, 0, 0}, {3.3687, -2.4778, 0, 0}, {1, 0, 0, 0},
-                        {1, 0, 0, 0},};
-        double[] qMu = new double[]{84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
-        double[] qKappa =
-                new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
-        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-    }
-
-    private static PolynomialStructure initialIsoPREM() {
-        PolynomialStructure prem = initialAnisoPREM();
-        double[] vp = new double[]{4.1875, 3.9382, 0, 0};
-        double[] vs = new double[]{2.1519, 2.3481, 0, 0};
-        double[] eta = new double[]{1, 0, 0, 0};
-        for (int i = 8; i <= 9; i++) {
-            prem.vpv[i] = new PolynomialFunction(vp);
-            prem.vph[i] = new PolynomialFunction(vp);
-            prem.vsv[i] = new PolynomialFunction(vs);
-            prem.vsh[i] = new PolynomialFunction(vs);
-            prem.eta[i] = new PolynomialFunction(eta);
-        }
-        return prem;
     }
 
     /**
@@ -584,44 +627,6 @@ public class PolynomialStructure implements Serializable {
         double[][] eta =
                 new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},};
-    }
-
-    /**
-     * standard AK135 Kennett <i>et al<i>. (1995)
-     */
-    private static PolynomialStructure initialAK135() {
-        int nzone = 11;
-        double[] rmin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351};
-        double[] rmax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351, 6371};
-        double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
-                {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
-                {7.9565, -6.4761, 5.5283, -3.0807}, {5.3197, -1.4836, 0, 0}, {11.2494, -8.0298, 0, 0},
-                {7.1089, -3.8045, 0, 0}, {2.691, 0.6924, 0, 0}, {2.691, 0.6924, 0, 0}, {2.9, 0, 0, 0}, {2.6, 0, 0, 0},};
-        double[][] vpv = new double[][]{{11.261692, 0.028794, -6.627846, 0}, {10.118851, 3.457774, -13.434875, 0},
-                {13.908244, -0.45417, 0, 0}, {24.138794, -37.097655, 46.631994, -24.272115},
-                {25.969838, -16.934118, 0, 0}, {29.38896, -21.40656, 0, 0}, {30.78765, -23.25415, 0, 0},
-                {25.413889, -17.697222, 0, 0}, {8.785412, -0.749529, 0, 0,}, {6.5, 0.0, 0.0, 0.0},
-                {5.8, 0.0, 0.0, 0.0},};
-        double[][] vph = new double[][]{{11.261692, 0.028794, -6.627846, 0}, {10.118851, 3.457774, -13.434875, 0},
-                {13.908244, -0.45417, 0, 0}, {24.138794, -37.097655, 46.631994, -24.272115},
-                {25.969838, -16.934118, 0, 0}, {29.38896, -21.40656, 0, 0}, {30.78765, -23.25415, 0, 0},
-                {25.413889, -17.697222, 0, 0}, {8.785412, -0.749529, 0, 0,}, {6.5, 0, 0, 0}, {5.8, 0, 0, 0}};
-        double[][] vsv = new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
-                {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
-                {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
-                {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
-        double[][] vsh = new double[][]{{3.667865, -0.001345, -4.440915, 0}, {0, 0, 0, 0}, {8.018341, -1.349895, 0, 0},
-                {12.213901, -18.573085, 24.557329, -12.728015}, {20.208945, -15.895645, 0, 0},
-                {17.71732, -13.50652, 0, 0}, {15.212335, -11.053685, 0, 0}, {5.7502, -1.2742, 0, 0},
-                {5.970824, -1.499059, 0, 0}, {3.85, 0, 0, 0}, {3.46, 0, 0, 0}};
-        double[][] eta =
-                new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
-                        {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},}; // ok
-        double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600,}; // ok
-        double[] qKappa =
-                new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,}; // OK
-        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-
     }
 
     /**
@@ -694,17 +699,6 @@ public class PolynomialStructure implements Serializable {
             outString[3 * (i - coreZone) + 6] = toLine(vsh[i]) + " " + String.valueOf(qMu[i]);
         }
         return outString;
-    }
-
-    /**
-     * change String line from coefficients a + bx + cx**2 >>>>> a b c 0
-     *
-     * @param pf polynomial function for a layer
-     * @return string in a form of this
-     */
-    private static String toLine(PolynomialFunction pf) {
-        return Arrays.stream(Arrays.copyOf(pf.getCoefficients(), 4)).mapToObj(Double::toString)
-                .collect(Collectors.joining(" "));
     }
 
     public String[] toPSVlines() {

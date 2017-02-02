@@ -1,29 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.stream.Collectors;
-
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -35,6 +11,20 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.stream.Collectors;
 
 /**
  * Let's invert
@@ -77,8 +67,77 @@ public class LetMeInvert implements Operation {
      * どうやって方程式を解くか。 cg svd
      */
     protected Set<InverseMethodEnum> inverseMethods;
-
+    /**
+     * AIC計算に用いるα 独立データ数はn/αと考える
+     */
+    protected double[] alpha;
     private ObservationEquation eq;
+    private Properties property;
+    private Path workPath;
+    private Path outPath;
+    private Set<Station> stationSet;
+
+    public LetMeInvert(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+        if (!canGO()) throw new RuntimeException();
+        setEquation();
+    }
+
+    public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
+        eq = equation;
+        this.stationSet = stationSet;
+        outPath = workPath.resolve("lmi" + Utilities.getTemporaryString());
+        inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
+    }
+
+    public static void writeDefaultPropertiesFile() throws IOException {
+        Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+            pw.println("manhattan LetMeInvert");
+            pw.println("##These properties for LetMeInvert");
+            pw.println("##Path of a work folder (.)");
+            pw.println("#workPath");
+            pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
+            pw.println("#outPath");
+            pw.println("##Path of a waveID file, must be set");
+            pw.println("#waveIDPath waveID.dat");
+            pw.println("##Path of a waveform file, must be set");
+            pw.println("#waveformPath waveform.dat");
+            pw.println("##Path of a partial id file, must be set");
+            pw.println("#partialIDPath partialID.dat");
+            pw.println("##Path of a partial waveform file must be set");
+            pw.println("#partialPath partial.dat");
+            pw.println("##Path of a unknown parameter list file, must be set");
+            pw.println("#unknownParameterListPath unknowns.inf");
+            pw.println("##Path of a station information file, must be set");
+            pw.println("#stationInformationPath station.inf");
+            pw.println("##double[] alpha it self, if it is set, compute aic for each alpha.");
+            pw.println("#alpha");
+            pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
+            pw.println("#inverseMethods");
+        }
+        System.err.println(outPath + " is created.");
+    }
+
+    /**
+     * @param args [parameter file name]
+     * @throws IOException if an I/O error occurs
+     */
+    public static void main(String[] args) throws IOException {
+        LetMeInvert lmi = new LetMeInvert(Property.parse(args));
+        System.err.println(LetMeInvert.class.getName() + " is running.");
+        long startT = System.nanoTime();
+        lmi.run();
+        System.err.println(
+                LetMeInvert.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+    }
+
+    private static void writeDat(Path out, double[] dat) throws IOException {
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out, StandardOpenOption.CREATE_NEW))) {
+            Arrays.stream(dat).forEach(pw::println);
+        }
+    }
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
@@ -112,60 +171,6 @@ public class LetMeInvert implements Operation {
         inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
                 .collect(Collectors.toSet());
     }
-
-    /**
-     * AIC計算に用いるα 独立データ数はn/αと考える
-     */
-    protected double[] alpha;
-
-    private Properties property;
-
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan LetMeInvert");
-            pw.println("##These properties for LetMeInvert");
-            pw.println("##Path of a work folder (.)");
-            pw.println("#workPath");
-            pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
-            pw.println("#outPath");
-            pw.println("##Path of a waveID file, must be set");
-            pw.println("#waveIDPath waveID.dat");
-            pw.println("##Path of a waveform file, must be set");
-            pw.println("#waveformPath waveform.dat");
-            pw.println("##Path of a partial id file, must be set");
-            pw.println("#partialIDPath partialID.dat");
-            pw.println("##Path of a partial waveform file must be set");
-            pw.println("#partialPath partial.dat");
-            pw.println("##Path of a unknown parameter list file, must be set");
-            pw.println("#unknownParameterListPath unknowns.inf");
-            pw.println("##Path of a station information file, must be set");
-            pw.println("#stationInformationPath station.inf");
-            pw.println("##double[] alpha it self, if it is set, compute aic for each alpha.");
-            pw.println("#alpha");
-            pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
-            pw.println("#inverseMethods");
-        }
-        System.err.println(outPath + " is created.");
-    }
-
-    private Path workPath;
-
-    public LetMeInvert(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
-        if (!canGO()) throw new RuntimeException();
-        setEquation();
-    }
-
-    public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
-        eq = equation;
-        this.stationSet = stationSet;
-        outPath = workPath.resolve("lmi" + Utilities.getTemporaryString());
-        inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
-    }
-
-    private Path outPath;
 
     private void setEquation() throws IOException {
         BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
@@ -451,19 +456,6 @@ public class LetMeInvert implements Operation {
     }
 
     /**
-     * @param args [parameter file name]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        LetMeInvert lmi = new LetMeInvert(Property.parse(args));
-        System.err.println(LetMeInvert.class.getName() + " is running.");
-        long startT = System.nanoTime();
-        lmi.run();
-        System.err.println(
-                LetMeInvert.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
-    }
-
-    /**
      * outPath下にvarianceを書き込む
      *
      * @param outPath root path
@@ -501,12 +493,6 @@ public class LetMeInvert implements Operation {
             aic[i] = Utilities.computeAIC(variance[i], independentN, i);
 
         return aic;
-    }
-
-    private static void writeDat(Path out, double[] dat) throws IOException {
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out, StandardOpenOption.CREATE_NEW))) {
-            Arrays.stream(dat).forEach(pw::println);
-        }
     }
 
     private boolean canGO() {
@@ -571,8 +557,6 @@ public class LetMeInvert implements Operation {
 
         }
     }
-
-    private Set<Station> stationSet;
 
     @Override
     public Path getWorkPath() {

@@ -1,6 +1,9 @@
 package io.github.kensuke1984.anisotime;
 
-import java.awt.Desktop;
+import org.apache.commons.io.IOUtils;
+
+import javax.swing.*;
+import java.awt.*;
 import java.io.BufferedOutputStream;
 import java.io.InputStream;
 import java.net.URI;
@@ -8,15 +11,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import javax.swing.ButtonGroup;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JRadioButtonMenuItem;
-
-import org.apache.commons.io.IOUtils;
 
 /**
  * Menubar for GUI
@@ -30,16 +24,24 @@ final class MenuBar extends JMenuBar {
      * 2016/12/20
      */
     private static final long serialVersionUID = -1528882471062596159L;
+    private final ANISOtimeGUI GUI;
+    private ButtonGroup buttonGroupModes = new ButtonGroup();
+    private ButtonGroup buttonGroupPolarization = new ButtonGroup();
+    private JMenuItem jMenuItemExit;
+    private JMenuItem jMenuItemRayparameterMode;
+    private JMenuItem jMenuItemEpicentralDistanceMode;
+    private JMenuItem jMenuItemParameterDescription;
+    private JMenuItem jMenuItemAbout;
+    private JMenuItem jMenuItemMail;
+    private JMenuItem jMenuItemPreferences;
+    private JMenuItem jMenuItemPSVSH;
+    private JMenuItem jMenuItemPSV;
+    private JMenuItem jMenuItemSH;
 
     MenuBar(ANISOtimeGUI gui) {
         GUI = gui;
         initComponents();
     }
-
-    private final ANISOtimeGUI GUI;
-
-    private ButtonGroup buttonGroupModes = new ButtonGroup();
-    private ButtonGroup buttonGroupPolarization = new ButtonGroup();
 
     private void initComponents() {
         JMenu jMenuFile = new JMenu("File");
@@ -139,15 +141,4 @@ final class MenuBar extends JMenuBar {
         });
 
     }
-
-    private JMenuItem jMenuItemExit;
-    private JMenuItem jMenuItemRayparameterMode;
-    private JMenuItem jMenuItemEpicentralDistanceMode;
-    private JMenuItem jMenuItemParameterDescription;
-    private JMenuItem jMenuItemAbout;
-    private JMenuItem jMenuItemMail;
-    private JMenuItem jMenuItemPreferences;
-    private JMenuItem jMenuItemPSVSH;
-    private JMenuItem jMenuItemPSV;
-    private JMenuItem jMenuItemSH;
 }

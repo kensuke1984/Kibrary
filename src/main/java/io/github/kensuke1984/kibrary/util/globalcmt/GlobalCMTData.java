@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import java.time.LocalDateTime;
-
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Location;
+
+import java.time.LocalDateTime;
 
 /**
  * Data for global CMT data used frequently.

@@ -31,72 +31,13 @@ public class SpcFileName extends File {
      * spheroidal mode PSV, toroidal mode SH
      */
     private SpcFileComponent mode;
-
-    /**
-     * @param fileName name of spc file
-     * @return event id
-     */
-    private static String getEventID(String fileName) {
-        switch (fileName.split("\\.").length) {
-            case 3:
-                String str = fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
-                return str;
-            case 7:
-                return fileName.split("\\.")[1];
-            default:
-                throw new RuntimeException("Unexpected");
-        }
-    }
-
-    /**
-     * @return ID of source
-     */
-    public String getSourceID() {
-        return sourceID;
-    }
-
-    /**
-     * 入力ファイルのSpcFileTypeを返す
-     *
-     * @param fileName name of SPC file
-     * @return which par or syn...なんのスペクトルファイルか
-     */
-    private static SpcFileType getFileType(String fileName) {
-        if (fileName.split("\\.").length != 7) return SpcFileType.SYNTHETIC;
-        return SpcFileType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
-    }
-
-    private static String getObserverID(String fileName) {
-        return fileName.split("\\.")[0];
-    }
-
-    private static String getX(String fileName) {
-        String[] parts = fileName.split("\\.");
-        return parts.length != 7 ? null : parts[3];
-    }
-
-    private static String getY(String fileName) {
-        String[] parts = fileName.split("\\.");
-        return parts.length != 7 ? null : parts[4];
-    }
-
-    /**
-     * @param fileName name of SPC file
-     * @return PSV or SH
-     * @throws RuntimeException if spc file has no indication of its mode.
-     */
-    private static SpcFileComponent getMode(String fileName) {
-        return fileName.endsWith("PSV.spc") ? SpcFileComponent.PSV : SpcFileComponent.SH;
-    }
-
     private String observerID;
-
     /**
      * PB: backward or PF: forward, PAR2: mu
      */
     private SpcFileType fileType;
-
     private String x, y;
+    private String sourceID;
 
     /**
      * @param parent {@link File} of a parent folder of the spectrum file
@@ -136,27 +77,54 @@ public class SpcFileName extends File {
         readName(getName());
     }
 
-    private String sourceID;
-
-    private void readName(String fileName) {
-        if (!isSpcFileName(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
-        sourceID = getEventID(fileName);
-        observerID = getObserverID(fileName);
-        fileType = getFileType(fileName);
-        mode = getMode(fileName);
-        x = getX(fileName);
-        y = getY(fileName);
-    }
-
-    public DSMOutput read() throws IOException {
-        return SpectrumFile.getInstance(this);
+    /**
+     * @param fileName name of spc file
+     * @return event id
+     */
+    private static String getEventID(String fileName) {
+        switch (fileName.split("\\.").length) {
+            case 3:
+                String str = fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
+                return str;
+            case 7:
+                return fileName.split("\\.")[1];
+            default:
+                throw new RuntimeException("Unexpected");
+        }
     }
 
     /**
-     * @return psv or sh
+     * 入力ファイルのSpcFileTypeを返す
+     *
+     * @param fileName name of SPC file
+     * @return which par or syn...なんのスペクトルファイルか
      */
-    public SpcFileComponent getMode() {
-        return mode;
+    private static SpcFileType getFileType(String fileName) {
+        if (fileName.split("\\.").length != 7) return SpcFileType.SYNTHETIC;
+        return SpcFileType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
+    }
+
+    private static String getObserverID(String fileName) {
+        return fileName.split("\\.")[0];
+    }
+
+    private static String getX(String fileName) {
+        String[] parts = fileName.split("\\.");
+        return parts.length != 7 ? null : parts[3];
+    }
+
+    private static String getY(String fileName) {
+        String[] parts = fileName.split("\\.");
+        return parts.length != 7 ? null : parts[4];
+    }
+
+    /**
+     * @param fileName name of SPC file
+     * @return PSV or SH
+     * @throws RuntimeException if spc file has no indication of its mode.
+     */
+    private static SpcFileComponent getMode(String fileName) {
+        return fileName.endsWith("PSV.spc") ? SpcFileComponent.PSV : SpcFileComponent.SH;
     }
 
     /**
@@ -196,6 +164,42 @@ public class SpcFileName extends File {
         return true;
     }
 
+    /**
+     * @param fileName file name for chack
+     * @return 理論波形（非偏微分波形）かどうか
+     */
+    public static boolean isSynthetic(String fileName) {
+        return fileName.split("\\.").length == 3;
+    }
+
+    /**
+     * @return ID of source
+     */
+    public String getSourceID() {
+        return sourceID;
+    }
+
+    private void readName(String fileName) {
+        if (!isSpcFileName(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
+        sourceID = getEventID(fileName);
+        observerID = getObserverID(fileName);
+        fileType = getFileType(fileName);
+        mode = getMode(fileName);
+        x = getX(fileName);
+        y = getY(fileName);
+    }
+
+    public DSMOutput read() throws IOException {
+        return SpectrumFile.getInstance(this);
+    }
+
+    /**
+     * @return psv or sh
+     */
+    public SpcFileComponent getMode() {
+        return mode;
+    }
+
     public SpcFileType getFileType() {
         return fileType;
     }
@@ -217,14 +221,6 @@ public class SpcFileName extends File {
      */
     public boolean isSynthetic() {
         return isSynthetic(getName());
-    }
-
-    /**
-     * @param fileName file name for chack
-     * @return 理論波形（非偏微分波形）かどうか
-     */
-    public static boolean isSynthetic(String fileName) {
-        return fileName.split("\\.").length == 3;
     }
 
 }

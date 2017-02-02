@@ -1,23 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
@@ -25,11 +7,18 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
+import io.github.kensuke1984.kibrary.waveformdata.*;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
 
 /**
  * Checkerboard test
@@ -40,6 +29,52 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * @version 0.2.0.10
  */
 public class CheckerBoardTest implements Operation {
+
+    /**
+     * 観測波形、理論波形の入ったファイル (BINARY)
+     */
+    protected Path waveformPath;
+    /**
+     * 求めたい未知数を羅列したファイル (ASCII)
+     */
+    protected Path unknownParameterListPath;
+    /**
+     * partialIDの入ったファイル
+     */
+    protected Path partialIDPath;
+    /**
+     * partial波形の入ったファイル
+     */
+    protected Path partialWaveformPath;
+    protected boolean iterate;
+    protected boolean noise;
+    /**
+     * 観測、理論波形のID情報
+     */
+    protected Path waveIDPath;
+    protected double noisePower;
+    /**
+     * psudoMの元になるファイル
+     */
+    protected Path inputDataPath;
+    private ObservationEquation eq;
+    private Properties property;
+    private Path workPath;
+    private Set<Station> stationSet = new HashSet<>();
+    private double[][] ranges;
+    private Set<GlobalCMTID> idSet = new HashSet<>();
+
+    public CheckerBoardTest(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+        read();
+        readIDs();
+    }
+
+    public CheckerBoardTest(ObservationEquation eq) {
+        this.eq = eq;
+        readIDs();
+    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(CheckerBoardTest.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -69,19 +104,18 @@ public class CheckerBoardTest implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    private ObservationEquation eq;
-    private Properties property;
-
-    public CheckerBoardTest(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
-        read();
-        readIDs();
-    }
-
-    public CheckerBoardTest(ObservationEquation eq) {
-        this.eq = eq;
-        readIDs();
+    /**
+     * @param args [a property file name]
+     * @throws Exception if any
+     */
+    public static void main(String[] args) throws Exception {
+        Properties property = Property.parse(args);
+        CheckerBoardTest cbt = new CheckerBoardTest(property);
+        long time = System.nanoTime();
+        System.err.println(CheckerBoardTest.class.getName() + " is going.");
+        cbt.run();
+        System.err.println(
+                CheckerBoardTest.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
     }
 
     private void checkAndPutDefaults() {
@@ -110,46 +144,6 @@ public class CheckerBoardTest implements Operation {
         if (noise) noisePower = Double.parseDouble(property.getProperty("noisePower"));
         iterate = Boolean.parseBoolean(property.getProperty("iterate"));
     }
-
-    private Path workPath;
-
-    /**
-     * 観測波形、理論波形の入ったファイル (BINARY)
-     */
-    protected Path waveformPath;
-
-    /**
-     * 求めたい未知数を羅列したファイル (ASCII)
-     */
-    protected Path unknownParameterListPath;
-
-    /**
-     * partialIDの入ったファイル
-     */
-    protected Path partialIDPath;
-    /**
-     * partial波形の入ったファイル
-     */
-    protected Path partialWaveformPath;
-
-    protected boolean iterate;
-
-    protected boolean noise;
-
-    /**
-     * 観測、理論波形のID情報
-     */
-    protected Path waveIDPath;
-
-    protected double noisePower;
-
-    /**
-     * psudoMの元になるファイル
-     */
-    protected Path inputDataPath;
-    private Set<Station> stationSet = new HashSet<>();
-    private double[][] ranges;
-    private Set<GlobalCMTID> idSet = new HashSet<>();
 
     private void readIDs() {
         List<double[]> ranges = new ArrayList<>();
@@ -243,20 +237,6 @@ public class CheckerBoardTest implements Operation {
      */
     public RealVector computePseudoD(RealVector pseudoM) {
         return eq.operate(pseudoM);
-    }
-
-    /**
-     * @param args [a property file name]
-     * @throws Exception if any
-     */
-    public static void main(String[] args) throws Exception {
-        Properties property = Property.parse(args);
-        CheckerBoardTest cbt = new CheckerBoardTest(property);
-        long time = System.nanoTime();
-        System.err.println(CheckerBoardTest.class.getName() + " is going.");
-        cbt.run();
-        System.err.println(
-                CheckerBoardTest.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
     }
 
     public RealVector getSynVector() {

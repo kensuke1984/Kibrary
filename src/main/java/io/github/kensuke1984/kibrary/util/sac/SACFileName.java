@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Style of names of SAC files. (SAC: seismic analysis code)
@@ -30,6 +30,53 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 public class SACFileName extends File {
 
     private static final long serialVersionUID = 7479212925997274364L;
+    private String stationName;
+    private GlobalCMTID globalCMTID;
+    private SACExtension extension;
+    private PartialType partialType;
+    private String x, y, z;
+    private WaveformType sacType;
+
+    /**
+     * @param parent {@link File} of a parent folder
+     * @param child  name of a file
+     */
+    public SACFileName(File parent, String child) {
+        super(parent, child);
+        readName(child);
+    }
+
+    /**
+     * @param parent path of a parent folder
+     * @param child  file name
+     */
+    public SACFileName(String parent, String child) {
+        super(parent, child);
+        readName(child);
+    }
+
+    /**
+     * @param pathname path of a file
+     */
+    public SACFileName(String pathname) {
+        super(pathname);
+        readName(getName());
+    }
+
+    /**
+     * @param uri of a file
+     */
+    public SACFileName(URI uri) {
+        super(uri);
+        readName(getName());
+    }
+
+    /**
+     * @param path {@link Path} of a file
+     */
+    public SACFileName(Path path) {
+        this(path.toString());
+    }
 
     private static String getEventID(String fileName) {
         return fileName.split("\\.")[1];
@@ -47,15 +94,6 @@ public class SACFileName extends File {
 
     public static boolean isOBS(String fileName) {
         return getSacExtension(fileName).isOBS();
-    }
-
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-    public boolean isConvolved() {
-        return extension.isConvoluted();
     }
 
     /**
@@ -101,29 +139,6 @@ public class SACFileName extends File {
     private static String getZ(String fileName) {
         if (fileName.split("\\.").length != 7) return null;
         return fileName.split("\\.")[5];
-    }
-
-    private String stationName;
-
-    private GlobalCMTID globalCMTID;
-
-    private SACExtension extension;
-
-    private PartialType partialType;
-
-    private String x, y, z;
-
-    private WaveformType sacType;
-
-    /**
-     * @return {@link SACExtension} of this sacfile name
-     */
-    public SACExtension getExtension() {
-        return extension;
-    }
-
-    public WaveformType getSacType() {
-        return sacType;
     }
 
     /**
@@ -172,13 +187,24 @@ public class SACFileName extends File {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return getName();
+    }
+
+    public boolean isConvolved() {
+        return extension.isConvoluted();
+    }
+
     /**
-     * @param parent {@link File} of a parent folder
-     * @param child  name of a file
+     * @return {@link SACExtension} of this sacfile name
      */
-    public SACFileName(File parent, String child) {
-        super(parent, child);
-        readName(child);
+    public SACExtension getExtension() {
+        return extension;
+    }
+
+    public WaveformType getSacType() {
+        return sacType;
     }
 
     private void readName(String fileName) {
@@ -195,38 +221,6 @@ public class SACFileName extends File {
         z = getZ(fileName);
         if (isOBSorSYN(fileName)) sacType = isOBS(fileName) ? WaveformType.OBS : WaveformType.SYN;
         else sacType = WaveformType.PARTIAL;
-    }
-
-    /**
-     * @param parent path of a parent folder
-     * @param child  file name
-     */
-    public SACFileName(String parent, String child) {
-        super(parent, child);
-        readName(child);
-    }
-
-    /**
-     * @param pathname path of a file
-     */
-    public SACFileName(String pathname) {
-        super(pathname);
-        readName(getName());
-    }
-
-    /**
-     * @param uri of a file
-     */
-    public SACFileName(URI uri) {
-        super(uri);
-        readName(getName());
-    }
-
-    /**
-     * @param path {@link Path} of a file
-     */
-    public SACFileName(Path path) {
-        this(path.toString());
     }
 
     /**

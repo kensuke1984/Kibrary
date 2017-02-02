@@ -12,6 +12,40 @@ import io.github.kensuke1984.anisotime.Phase;
  */
 public class TauPPhase {
 
+    /**
+     * epicentral DISTANCE (deg)
+     */
+    private final double DISTANCE;
+    /**
+     * source DEPTH not radius (km)
+     */
+    private final double DEPTH;
+    private final Phase PHASE_NAME;
+    /**
+     * travel time (s)
+     */
+    private final double TRAVELTIME;
+    /**
+     * ray parameter (s/deg)
+     */
+    private final double RAY_PARAMETER;
+    /**
+     * TAKEOFF (deg)
+     */
+    private final double TAKEOFF;
+    /**
+     * INCIDENT (deg)
+     */
+    private final double INCIDENT;
+    /**
+     * purist DISTANCE
+     */
+    private final double PURIST_DISTANCE;
+    /**
+     * purist name
+     */
+    private final String PURIST_NAME;
+
     TauPPhase(double distance, double depth, Phase phaseName, double travelTime, double rayParameter, double takeoff,
               double incident, double puristDistance, String puristName) {
         DISTANCE = distance;
@@ -24,48 +58,6 @@ public class TauPPhase {
         PURIST_DISTANCE = puristDistance;
         PURIST_NAME = puristName;
     }
-
-    /**
-     * epicentral DISTANCE (deg)
-     */
-    private final double DISTANCE;
-
-    /**
-     * source DEPTH not radius (km)
-     */
-    private final double DEPTH;
-
-    private final Phase PHASE_NAME;
-
-    /**
-     * travel time (s)
-     */
-    private final double TRAVELTIME;
-
-    /**
-     * ray parameter (s/deg)
-     */
-    private final double RAY_PARAMETER;
-
-    /**
-     * TAKEOFF (deg)
-     */
-    private final double TAKEOFF;
-
-    /**
-     * INCIDENT (deg)
-     */
-    private final double INCIDENT;
-
-    /**
-     * purist DISTANCE
-     */
-    private final double PURIST_DISTANCE;
-
-    /**
-     * purist name
-     */
-    private final String PURIST_NAME;
 
     public double getDistance() {
         return DISTANCE;

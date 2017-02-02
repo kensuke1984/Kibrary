@@ -3,13 +3,7 @@ package io.github.kensuke1984.anisotime;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The class is calculator of the formulation in Woodhouse (1981).
@@ -27,12 +21,6 @@ class Woodhouse1981 implements Serializable {
      * 2016/8/30
      */
     private static final long serialVersionUID = 7537069912723992175L;
-
-    private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
-        stream.defaultReadObject();
-        createCache();
-    }
-
     private final static Set<Woodhouse1981> WOODHOUSE_CACHE = Collections.synchronizedSet(new HashSet<>());
 
     static {
@@ -41,8 +29,25 @@ class Woodhouse1981 implements Serializable {
                         new Woodhouse1981(VelocityStructure.iprem())));
     }
 
-
     private final VelocityStructure STRUCTURE;
+    private transient Map<Double, Double> s1;
+    private transient Map<Double, Double> s2;
+    private transient Map<Double, Double> s3;
+    private transient Map<Double, Double> s4;
+    private transient Map<Double, Double> s5;
+
+    /**
+     * @param structure for Woodhouse computation
+     */
+    public Woodhouse1981(VelocityStructure structure) {
+        STRUCTURE = structure;
+        copyOrCreate();
+    }
+
+    private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
+        stream.defaultReadObject();
+        createCache();
+    }
 
     /**
      * Checks if the structure of this exists in the cache, if it does, just copy,
@@ -58,14 +63,6 @@ class Woodhouse1981 implements Serializable {
                 WOODHOUSE_CACHE.add(this);
             }
         }
-    }
-
-    /**
-     * @param structure for Woodhouse computation
-     */
-    public Woodhouse1981(VelocityStructure structure) {
-        STRUCTURE = structure;
-        copyOrCreate();
     }
 
     /**
@@ -185,12 +182,6 @@ class Woodhouse1981 implements Serializable {
         double por2 = por * por;
         return Math.sqrt(computeS4(r) * por2 * por2 + 2 * computeS5(r) * por2 + s2 * s2);
     }
-
-    private transient Map<Double, Double> s1;
-    private transient Map<Double, Double> s2;
-    private transient Map<Double, Double> s3;
-    private transient Map<Double, Double> s4;
-    private transient Map<Double, Double> s5;
 
     /**
      * Copies cash for s1-s5

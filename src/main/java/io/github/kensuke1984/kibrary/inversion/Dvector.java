@@ -1,28 +1,21 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.function.ToDoubleBiFunction;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
-
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.function.ToDoubleBiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Am=d のdに対する情報 TODO 震源観測点ペア
@@ -39,34 +32,14 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 public class Dvector {
 
     /**
-     * @param ids for check
-     * @return if all the BASICIDS have waveform data.
-     */
-    private static boolean check(BasicID[] ids) {
-        return Arrays.stream(ids).parallel().allMatch(BasicID::containsData);
-    }
-
-    /**
-     * compare id0 and id1 if component npts sampling Hz start time max min
-     * period station global cmt id are same This method does NOT consider if
-     * the input BASICIDS are observed or synthetic. TODO start time
-     *
-     * @param id0 {@link BasicID}
-     * @param id1 {@link BasicID}
-     * @return if the BASICIDS are same （理論波形と観測波形は違うけど＾＾＠）
-     */
-    private static boolean isPair(BasicID id0, BasicID id1) {
-        return id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) &&
-                id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts() &&
-                id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20 &&
-                id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
-    }
-
-    /**
      * Predicate for choosing dataset. Observed IDs are used for the choice.
      */
     private final Predicate<BasicID> CHOOSER;
-
+    private final BasicID[] BASICIDS;
+    /**
+     * Function for weighting of each timewindow with IDs.
+     */
+    private final ToDoubleBiFunction<BasicID, BasicID> WEIGHTING_FUNCTION;
     /**
      * 残差波形のベクトル（各IDに対するタイムウインドウ）
      */
@@ -81,92 +54,70 @@ public class Dvector {
      * イベントごとのvariance
      */
     private Map<GlobalCMTID, Double> eventVariance;
-
-    private final BasicID[] BASICIDS;
-
     /**
      * dの長さ (トータルのポイント数)
      */
     private int npts;
-
     /**
      * 含まれるタイムウインドウ数
      */
     private int nTimeWindow;
-
     /**
      * 観測波形の波形情報
      */
     private BasicID[] obsIDs;
-
     /**
      * 観測波形のベクトル（各IDに対するタイムウインドウ）
      */
     private RealVector[] obsVectors;
-
     /**
      * 観測波形のベクトル Vector obs
      */
     private RealVector obsVector;
-
     /**
      * それぞれのタイムウインドウが,全体の中の何点目から始まるか
      */
     private int[] startPoints;
-
     /**
      * Map of variance of the dataset for a station
      */
     private Map<Station, Double> stationVariance;
-
-    /**
-     * @return map of variance of waveforms in each event
-     */
-    public Map<GlobalCMTID, Double> getEventVariance() {
-        return eventVariance;
-    }
-
-    /**
-     * @return map of variance of waveforms for each station
-     */
-    public Map<Station, Double> getStationVariance() {
-        return stationVariance;
-    }
-
     /**
      * 観測波形の波形情報
      */
     private BasicID[] synIDs;
-
     /**
      * 理論波形のベクトル（各IDに対するタイムウインドウ）
      */
     private RealVector[] synVectors;
-
     /**
      * 理論波形のベクトル Vector syn
      */
     private RealVector synVector;
-
     /**
      * Set of global CMT IDs read in vector
      */
     private Set<GlobalCMTID> usedGlobalCMTIDset;
-
     /**
      * Set of stations read in vector.
      */
     private Set<Station> usedStationSet;
-
     /**
      * weighting for i th timewindow.
      */
     private double[] weighting;
-
     /**
-     * Function for weighting of each timewindow with IDs.
+     * Variance of dataset |obs-syn|<sup>2</sup>/|obs|<sup>2</sup>
      */
-    private final ToDoubleBiFunction<BasicID, BasicID> WEIGHTING_FUNCTION;
+    private double variance;
+    /**
+     * |obs|
+     */
+    private double obsNorm;
+    /**
+     * |obs-syn|
+     */
+    private double dNorm;
 
     /**
      * Use all waveforms in the IDs Weighting factor is reciprocal of maximum
@@ -210,6 +161,44 @@ public class Dvector {
         };
         sort();
         read();
+    }
+
+    /**
+     * @param ids for check
+     * @return if all the BASICIDS have waveform data.
+     */
+    private static boolean check(BasicID[] ids) {
+        return Arrays.stream(ids).parallel().allMatch(BasicID::containsData);
+    }
+
+    /**
+     * compare id0 and id1 if component npts sampling Hz start time max min
+     * period station global cmt id are same This method does NOT consider if
+     * the input BASICIDS are observed or synthetic. TODO start time
+     *
+     * @param id0 {@link BasicID}
+     * @param id1 {@link BasicID}
+     * @return if the BASICIDS are same （理論波形と観測波形は違うけど＾＾＠）
+     */
+    private static boolean isPair(BasicID id0, BasicID id1) {
+        return id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) &&
+                id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts() &&
+                id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20 &&
+                id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+    }
+
+    /**
+     * @return map of variance of waveforms in each event
+     */
+    public Map<GlobalCMTID, Double> getEventVariance() {
+        return eventVariance;
+    }
+
+    /**
+     * @return map of variance of waveforms for each station
+     */
+    public Map<Station, Double> getStationVariance() {
+        return stationVariance;
     }
 
     /**
@@ -391,21 +380,6 @@ public class Dvector {
 
         }
     }
-
-    /**
-     * Variance of dataset |obs-syn|<sup>2</sup>/|obs|<sup>2</sup>
-     */
-    private double variance;
-
-    /**
-     * |obs|
-     */
-    private double obsNorm;
-
-    /**
-     * |obs-syn|
-     */
-    private double dNorm;
 
     private void read() {
         // double t = System.nanoTime();

@@ -1,25 +1,5 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
@@ -30,13 +10,18 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
-import io.github.kensuke1984.kibrary.util.sac.SACExtension;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.util.sac.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Creates dataset containing observed and synthetic waveforms. <br>
@@ -74,10 +59,116 @@ public class ObservedSyntheticDatasetMaker implements Operation {
      * components to be included in the dataset
      */
     private Set<SACComponent> components;
-
+    /**
+     * {@link Path} of a root folder containing observed dataset
+     */
+    private Path obsPath;
+    /**
+     * {@link Path} of a root folder containing synthetic dataset
+     */
+    private Path synPath;
+    /**
+     * {@link Path} of a timewindow information file
+     */
+    private Path timewindowPath;
+    /**
+     * {@link Path} of a static correction file
+     */
+    private Path staticCorrectionPath;
+    /**
+     * Sacのサンプリングヘルツ （これと異なるSACはスキップ）
+     */
+    private double sacSamplingHz;
+    /**
+     * 切り出すサンプリングヘルツ
+     */
+    private double finalSamplingHz;
+    /**
+     * if it is true, the dataset will contain synthetic waveforms after
+     * convolution
+     */
+    private boolean convolute;
+    /**
+     * If it corrects time
+     */
+    private boolean timeCorrection;
+    /**
+     * if it corrects amplitude ratio
+     */
+    private boolean amplitudeCorrection;
+    private Set<StaticCorrection> staticCorrectionSet;
+    private Set<TimewindowInformation> timewindowInformationSet;
+    private WaveformDataWriter dataWriter;
+    private Set<EventFolder> eventDirs;
+    private Set<Station> stationSet;
+    private Set<GlobalCMTID> idSet;
+    private double[][] periodRanges;
+    /**
+     * number of OUTPUT pairs. (excluding ignored traces)
+     */
+    private AtomicInteger numberOfPairs = new AtomicInteger();
+    /**
+     * ID for static correction and time window information Default is station
+     * name, global CMT id, component.
+     */
+    private BiPredicate<StaticCorrection, TimewindowInformation> isPair =
+            (s, t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID()) &&
+                    s.getComponent() == t.getComponent();
     public ObservedSyntheticDatasetMaker(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
+    }
+
+    public static void writeDefaultPropertiesFile() throws IOException {
+        Path outPath = Paths.get(
+                ObservedSyntheticDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+            pw.println("manhattan ObservedSyntheticDatasetMaker");
+            pw.println("##Path of a working directory (.)");
+            pw.println("#workPath");
+            pw.println("##SacComponents to be used (Z R T)");
+            pw.println("#components");
+            pw.println("##Path of a root folder containing observed dataset (.)");
+            pw.println("#obsPath");
+            pw.println("##Path of a root folder containing synthetic dataset (.)");
+            pw.println("#synPath");
+            pw.println("##boolean convolulte (true)");
+            pw.println("#convolute");
+            pw.println("##boolean timeCorrection (false)");
+            pw.println("#timeCorrection");
+            pw.println("##boolean amplitudeCorrection (false)");
+            pw.println("#amplitudeCorrection");
+            pw.println("##Path of a timewindow information file, must be defined");
+            pw.println("#timewindowPath timewindow.dat");
+            pw.println("##Path of a static correction file, ");
+            pw.println("##if any of the corrections are true, the path must be defined");
+            pw.println("#staticCorrectionPath staticCorrection.dat");
+            pw.println("##double value of sac sampling Hz (20) can't be changed now");
+            pw.println("#sacSamplingHz the value will be ignored");
+            pw.println("##double value of sampling Hz in output files (1)");
+            pw.println("#finalSamplingHz");
+        }
+        System.err.println(outPath + " is created.");
+    }
+
+    /**
+     * @param args [a property file name]
+     * @throws Exception if any
+     */
+    public static void main(String[] args) throws Exception {
+
+        Properties property = new Properties();
+        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
+        else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
+        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
+        ObservedSyntheticDatasetMaker osdm = new ObservedSyntheticDatasetMaker(property);
+
+        long startT = System.nanoTime();
+        System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " is running.");
+        osdm.run();
+        System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startT));
+
     }
 
     private void checkAndPutDefaults() {
@@ -121,95 +212,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
         finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
     }
 
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(
-                ObservedSyntheticDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan ObservedSyntheticDatasetMaker");
-            pw.println("##Path of a working directory (.)");
-            pw.println("#workPath");
-            pw.println("##SacComponents to be used (Z R T)");
-            pw.println("#components");
-            pw.println("##Path of a root folder containing observed dataset (.)");
-            pw.println("#obsPath");
-            pw.println("##Path of a root folder containing synthetic dataset (.)");
-            pw.println("#synPath");
-            pw.println("##boolean convolulte (true)");
-            pw.println("#convolute");
-            pw.println("##boolean timeCorrection (false)");
-            pw.println("#timeCorrection");
-            pw.println("##boolean amplitudeCorrection (false)");
-            pw.println("#amplitudeCorrection");
-            pw.println("##Path of a timewindow information file, must be defined");
-            pw.println("#timewindowPath timewindow.dat");
-            pw.println("##Path of a static correction file, ");
-            pw.println("##if any of the corrections are true, the path must be defined");
-            pw.println("#staticCorrectionPath staticCorrection.dat");
-            pw.println("##double value of sac sampling Hz (20) can't be changed now");
-            pw.println("#sacSamplingHz the value will be ignored");
-            pw.println("##double value of sampling Hz in output files (1)");
-            pw.println("#finalSamplingHz");
-        }
-        System.err.println(outPath + " is created.");
-    }
-
-    /**
-     * {@link Path} of a root folder containing observed dataset
-     */
-    private Path obsPath;
-
-    /**
-     * {@link Path} of a root folder containing synthetic dataset
-     */
-    private Path synPath;
-
-    /**
-     * {@link Path} of a timewindow information file
-     */
-    private Path timewindowPath;
-
-    /**
-     * {@link Path} of a static correction file
-     */
-    private Path staticCorrectionPath;
-
-    /**
-     * Sacのサンプリングヘルツ （これと異なるSACはスキップ）
-     */
-    private double sacSamplingHz;
-
-    /**
-     * 切り出すサンプリングヘルツ
-     */
-    private double finalSamplingHz;
-
-    /**
-     * if it is true, the dataset will contain synthetic waveforms after
-     * convolution
-     */
-    private boolean convolute;
-
-    /**
-     * If it corrects time
-     */
-    private boolean timeCorrection;
-
-    /**
-     * if it corrects amplitude ratio
-     */
-    private boolean amplitudeCorrection;
-
-    private Set<StaticCorrection> staticCorrectionSet;
-
-    private Set<TimewindowInformation> timewindowInformationSet;
-
-    private WaveformDataWriter dataWriter;
-
-    private Set<EventFolder> eventDirs;
-    private Set<Station> stationSet;
-    private Set<GlobalCMTID> idSet;
-    private double[][] periodRanges;
-
     private void readPeriodRanges() {
         try {
             List<double[]> ranges = new ArrayList<>();
@@ -228,26 +230,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
         } catch (Exception e) {
             throw new RuntimeException("Error in reading period ranges from SAC files.");
         }
-    }
-
-    /**
-     * @param args [a property file name]
-     * @throws Exception if any
-     */
-    public static void main(String[] args) throws Exception {
-
-        Properties property = new Properties();
-        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
-        else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
-        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-        ObservedSyntheticDatasetMaker osdm = new ObservedSyntheticDatasetMaker(property);
-
-        long startT = System.nanoTime();
-        System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " is running.");
-        osdm.run();
-        System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startT));
-
     }
 
     @Override
@@ -283,10 +265,27 @@ public class ObservedSyntheticDatasetMaker implements Operation {
         }
     }
 
-    /**
-     * number of OUTPUT pairs. (excluding ignored traces)
-     */
-    private AtomicInteger numberOfPairs = new AtomicInteger();
+    private StaticCorrection getStaticCorrection(TimewindowInformation window) {
+        return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
+    }
+
+    private double[] cutDataSac(SACData sac, double startTime, int npts) {
+        Trace trace = sac.createTrace();
+        int step = (int) (sacSamplingHz / finalSamplingHz);
+        int startPoint = trace.getNearestXIndex(startTime);
+        double[] waveData = trace.getY();
+        return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
+    }
+
+    @Override
+    public Properties getProperties() {
+        return (Properties) property.clone();
+    }
+
+    @Override
+    public Path getWorkPath() {
+        return workPath;
+    }
 
     /**
      * 与えられたイベントフォルダの観測波形と理論波形を書き込む 両方ともが存在しないと書き込まない
@@ -412,36 +411,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
             }
             System.err.print(".");
         }
-    }
-
-    /**
-     * ID for static correction and time window information Default is station
-     * name, global CMT id, component.
-     */
-    private BiPredicate<StaticCorrection, TimewindowInformation> isPair =
-            (s, t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID()) &&
-                    s.getComponent() == t.getComponent();
-
-    private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-        return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
-    }
-
-    private double[] cutDataSac(SACData sac, double startTime, int npts) {
-        Trace trace = sac.createTrace();
-        int step = (int) (sacSamplingHz / finalSamplingHz);
-        int startPoint = trace.getNearestXIndex(startTime);
-        double[] waveData = trace.getY();
-        return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
     }
 
 }

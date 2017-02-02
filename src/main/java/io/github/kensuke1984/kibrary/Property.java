@@ -1,11 +1,11 @@
 package io.github.kensuke1984.kibrary;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * This class will create a default property for a procedure in Kibrary.

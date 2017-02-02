@@ -1,5 +1,11 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
+import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Trace;
+import org.apache.commons.math3.util.Precision;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,13 +13,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.stream.IntStream;
-
-import org.apache.commons.math3.util.Precision;
-
-import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
 
 /**
  * Data in a SAC file.

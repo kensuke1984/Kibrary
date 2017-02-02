@@ -1,5 +1,12 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -12,14 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.apache.commons.io.FilenameUtils;
-
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * Utilities for a pair of an ID file and a waveform file. The files are for

@@ -14,6 +14,28 @@ import org.apache.commons.math3.util.Precision;
  */
 public class Timewindow implements Comparable<Timewindow> {
 
+    /**
+     * starting time round off to the third decimal place
+     */
+    protected final double startTime;
+    /**
+     * ending time round off to the third decimal place
+     */
+    protected final double endTime;
+
+    /**
+     * startTime must be less than endTime
+     *
+     * @param startTime start time of the window
+     * @param endTime   end time of the window
+     */
+    public Timewindow(double startTime, double endTime) {
+        if (endTime < startTime)
+            throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
+        this.startTime = Precision.round(startTime, 3);
+        this.endTime = Precision.round(endTime, 3);
+    }
+
     @Override
     public int compareTo(Timewindow o) {
         int c = Double.compare(startTime, o.startTime);
@@ -42,19 +64,6 @@ public class Timewindow implements Comparable<Timewindow> {
                 Double.doubleToLongBits(startTime) == Double.doubleToLongBits(other.startTime);
     }
 
-    /**
-     * startTime must be less than endTime
-     *
-     * @param startTime start time of the window
-     * @param endTime   end time of the window
-     */
-    public Timewindow(double startTime, double endTime) {
-        if (endTime < startTime)
-            throw new IllegalArgumentException("startTime: " + startTime + " endTime: " + endTime + " are invalid");
-        this.startTime = Precision.round(startTime, 3);
-        this.endTime = Precision.round(endTime, 3);
-    }
-
     @Override
     public String toString() {
         return startTime + " " + endTime;
@@ -80,16 +89,6 @@ public class Timewindow implements Comparable<Timewindow> {
         double newEnd = timeWindow.endTime < endTime ? endTime : timeWindow.endTime;
         return new Timewindow(newStart, newEnd);
     }
-
-    /**
-     * starting time round off to the third decimal place
-     */
-    protected final double startTime;
-
-    /**
-     * ending time round off to the third decimal place
-     */
-    protected final double endTime;
 
     public double getStartTime() {
         return startTime;

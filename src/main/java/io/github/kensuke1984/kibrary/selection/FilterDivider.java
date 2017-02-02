@@ -1,31 +1,23 @@
 package io.github.kensuke1984.kibrary.selection;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.butterworth.*;
+import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
-import io.github.kensuke1984.kibrary.butterworth.BandStopFilter;
-import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.butterworth.HighPassFilter;
-import io.github.kensuke1984.kibrary.butterworth.LowPassFilter;
-import io.github.kensuke1984.kibrary.util.EventFolder;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
  * 観測波形ディレクトリobsDir、理論波形ディレクトリsynDir双方の下に存在するイベントフォルダの理論波形と観測波形に フィルターを掛ける <br>
@@ -35,6 +27,49 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
  * @version 0.2.2.1.1
  */
 public class FilterDivider implements Operation {
+
+    /**
+     * Path for the work folder
+     */
+    private Path workPath;
+    private Properties property;
+    private ButterworthFilter filter;
+    private Path outPath;
+    /**
+     * The root folder containing event folders which have observed SAC files to
+     * be filtered
+     */
+    private Path obsPath;
+    /**
+     * The root folder containing event folders which have synthetic SAC files
+     * to be filtered
+     */
+    private Path synPath;
+    /**
+     * The value 'DELTA' in SAC files. The SAC files with another value of
+     * 'DELTA' are to be ignored.
+     */
+    private double delta;
+    /**
+     * components to be applied the filter
+     */
+    private Set<SACComponent> components;
+    /**
+     * minimum frequency [Hz] フィルターバンドの最小周波数
+     */
+    private double lowFreq;
+    /**
+     * maximum frequency [Hz] フィルターバンドの最大周波数
+     */
+    private double highFreq;
+    /**
+     * If backward computation is performed. true: zero-phase false: causal
+     */
+    private boolean backward;
+    /**
+     * see Saito, n
+     */
+    private int np;
 
     public FilterDivider(Properties property) {
         this.property = (Properties) property.clone();
@@ -71,9 +106,21 @@ public class FilterDivider implements Operation {
     }
 
     /**
-     * Path for the work folder
+     * @param args [a property file name]
+     * @throws Exception if any
      */
-    private Path workPath;
+    public static void main(String[] args) throws Exception {
+        Properties property = new Properties();
+        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
+        else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
+        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
+        FilterDivider divider = new FilterDivider(property);
+        long startTime = System.nanoTime();
+        System.err.println(FilterDivider.class.getName() + " is going.");
+        divider.run();
+        System.err.println(FilterDivider.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime));
+    }
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
@@ -105,71 +152,6 @@ public class FilterDivider implements Operation {
         lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
         backward = Boolean.parseBoolean(property.getProperty("backward"));
         np = Integer.parseInt(property.getProperty("np"));
-    }
-
-    private Properties property;
-
-    private ButterworthFilter filter;
-
-    private Path outPath;
-
-    /**
-     * The root folder containing event folders which have observed SAC files to
-     * be filtered
-     */
-    private Path obsPath;
-    /**
-     * The root folder containing event folders which have synthetic SAC files
-     * to be filtered
-     */
-    private Path synPath;
-
-    /**
-     * The value 'DELTA' in SAC files. The SAC files with another value of
-     * 'DELTA' are to be ignored.
-     */
-    private double delta;
-
-    /**
-     * components to be applied the filter
-     */
-    private Set<SACComponent> components;
-
-    /**
-     * minimum frequency [Hz] フィルターバンドの最小周波数
-     */
-    private double lowFreq;
-
-    /**
-     * maximum frequency [Hz] フィルターバンドの最大周波数
-     */
-    private double highFreq;
-
-    /**
-     * If backward computation is performed. true: zero-phase false: causal
-     */
-    private boolean backward;
-
-    /**
-     * see Saito, n
-     */
-    private int np;
-
-    /**
-     * @param args [a property file name]
-     * @throws Exception if any
-     */
-    public static void main(String[] args) throws Exception {
-        Properties property = new Properties();
-        if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
-        else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
-        else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-        FilterDivider divider = new FilterDivider(property);
-        long startTime = System.nanoTime();
-        System.err.println(FilterDivider.class.getName() + " is going.");
-        divider.run();
-        System.err.println(FilterDivider.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime));
     }
 
     private Runnable process(EventFolder folder) {

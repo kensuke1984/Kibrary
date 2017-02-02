@@ -19,13 +19,14 @@ import org.apache.commons.math3.util.FastMath;
  * @version 0.0.3.1.1
  */
 public class LowPassFilter extends ButterworthFilter {
-    public double getOmegaP() {
-        return omegaP;
-    }
-
-    public double getOmegaS() {
-        return omegaS;
-    }
+    /**
+     * 透過域の最大角周波数
+     */
+    private double omegaP;
+    /**
+     * 遮断域の最小角周波数
+     */
+    private double omegaS;
 
     /**
      * @param ap     透過域の最小振幅 （1+A<sub>p</sub><sup>2</sup>）<sup>-1</sup>
@@ -53,19 +54,6 @@ public class LowPassFilter extends ButterworthFilter {
     }
 
     /**
-     * @return if input &omega;<sub>S</sub> and &omega;<sub>P</sub> are valid
-     */
-    private boolean omegaValid() {
-        boolean valid = true;
-        double halfPI = 0.5 * Math.PI;
-        if (omegaP < 0 || halfPI <= omegaP) {
-            System.err.println("omegaP: " + omegaP + " is invalid");
-            valid = false;
-        }
-        return valid;
-    }
-
-    /**
      * ap 透過域の最小振幅（1+A<sub>p</sub><sup>2</sup>）<sup>-1</sup>: 0.9<br>
      * as 遮断域の最大振幅(1+A<sub>s</sub><sup>2</sup>)<sup>-1</sup>: 0.1
      *
@@ -88,19 +76,51 @@ public class LowPassFilter extends ButterworthFilter {
         createRecursiveFilter();
     }
 
+    /**
+     * <sub></sub>
+     * y[t]=a<sub>0</sub>x[t]+a<sub>1</sub>x[t-1]+a<sub>2</sub>x[t-2]-b<sub>1</sub>y[t-1]-b<sub>2</sub>y[t-2] <br>
+     * a<sub>0</sub> =1, a<sub>1</sub>= 0, a<sub>2</sub> = -1
+     *
+     * @param b1 b<sub>1</sub>
+     * @param b2 b<sub>2</sub>
+     * @param x  x
+     * @return {@link Complex}[] y
+     */
+    private static Complex[] computeRecursion(double b1, double b2, Complex[] x) {
+        Complex[] y = new Complex[x.length];
+        y[0] = x[0];
+        y[1] = x[1].add(x[0].multiply(2)).subtract(y[0].multiply(b1));
+        for (int i = 2; i < x.length; i++)
+            y[i] = x[i].add(x[i - 1].multiply(2)).add(x[i - 2]).subtract(y[i - 1].multiply(b1))
+                    .subtract(y[i - 2].multiply(b2));
+        return y;
+    }
+
+    public double getOmegaP() {
+        return omegaP;
+    }
+
+    public double getOmegaS() {
+        return omegaS;
+    }
+
+    /**
+     * @return if input &omega;<sub>S</sub> and &omega;<sub>P</sub> are valid
+     */
+    private boolean omegaValid() {
+        boolean valid = true;
+        double halfPI = 0.5 * Math.PI;
+        if (omegaP < 0 || halfPI <= omegaP) {
+            System.err.println("omegaP: " + omegaP + " is invalid");
+            valid = false;
+        }
+        return valid;
+    }
+
     private void setC() {
         double c2 = FastMath.pow(ap * as, 1.0 / n) / FastMath.tan(omegaP / 2) / FastMath.tan(omegaS / 2);
         c = FastMath.sqrt(c2);
     }
-
-    /**
-     * 透過域の最大角周波数
-     */
-    private double omegaP;
-    /**
-     * 遮断域の最小角周波数
-     */
-    private double omegaS;
 
     /**
      * Compute &sigma;<sub>s</sub>/&sigma;<sub>p</sub>
@@ -221,26 +241,6 @@ public class LowPassFilter extends ButterworthFilter {
             for (int i = 0; i < y.length; i++)
                 y[i] = reverseY[y.length - i - 1];
         }
-        return y;
-    }
-
-    /**
-     * <sub></sub>
-     * y[t]=a<sub>0</sub>x[t]+a<sub>1</sub>x[t-1]+a<sub>2</sub>x[t-2]-b<sub>1</sub>y[t-1]-b<sub>2</sub>y[t-2] <br>
-     * a<sub>0</sub> =1, a<sub>1</sub>= 0, a<sub>2</sub> = -1
-     *
-     * @param b1 b<sub>1</sub>
-     * @param b2 b<sub>2</sub>
-     * @param x  x
-     * @return {@link Complex}[] y
-     */
-    private static Complex[] computeRecursion(double b1, double b2, Complex[] x) {
-        Complex[] y = new Complex[x.length];
-        y[0] = x[0];
-        y[1] = x[1].add(x[0].multiply(2)).subtract(y[0].multiply(b1));
-        for (int i = 2; i < x.length; i++)
-            y[i] = x[i].add(x[i - 1].multiply(2)).add(x[i - 2]).subtract(y[i - 1].multiply(b1))
-                    .subtract(y[i - 2].multiply(b2));
         return y;
     }
 

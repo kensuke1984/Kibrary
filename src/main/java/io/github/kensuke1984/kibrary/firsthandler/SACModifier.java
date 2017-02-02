@@ -1,16 +1,16 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Map;
-
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 /**
  * {@link SeedSAC}内で行うSacの修正
@@ -21,13 +21,25 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 class SACModifier {
 
     /**
+     * taperをかける時間（msec）
+     */
+    private static final int taperTime = 60 * 1000;
+    /**
      * Sacのイベント
      */
     private GlobalCMTData event;
-
     private Path sacPath;
-
     private Map<SACHeaderEnum, String> headerMap;
+    /**
+     * PDEによる解凍かどうか デフォルトはCMT
+     */
+    private boolean byPDE;
+
+    private Path modifiedSacPath;
+    /**
+     * sac start time when this instance is made
+     */
+    private LocalDateTime initialSacStartTime;
 
     /**
      * @param globalCMTData cmt data
@@ -43,18 +55,6 @@ class SACModifier {
         this.byPDE = byPDE;
         setInitialSacStartTime();
     }
-
-    /**
-     * PDEによる解凍かどうか デフォルトはCMT
-     */
-    private boolean byPDE;
-
-    private Path modifiedSacPath;
-
-    /**
-     * taperをかける時間（msec）
-     */
-    private static final int taperTime = 60 * 1000;
 
     /**
      * Headerをチェックする CMPINC、khole
@@ -101,11 +101,6 @@ class SACModifier {
         LocalDateTime eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
         return eventTime.until(initialSacStartTime, ChronoUnit.MILLIS) < taperTime;
     }
-
-    /**
-     * sac start time when this instance is made
-     */
-    private LocalDateTime initialSacStartTime;
 
     /**
      * set {@link #initialSacStartTime}

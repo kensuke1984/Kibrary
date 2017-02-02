@@ -1,5 +1,13 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.sac.SACData;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.DftNormalization;
+import org.apache.commons.math3.transform.FastFourierTransformer;
+import org.apache.commons.math3.transform.TransformType;
+import org.apache.commons.math3.util.ArithmeticUtils;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -9,15 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
-
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.DftNormalization;
-import org.apache.commons.math3.transform.FastFourierTransformer;
-import org.apache.commons.math3.transform.TransformType;
-import org.apache.commons.math3.util.ArithmeticUtils;
-
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
 
 /**
  * Source time function. <br>
@@ -32,6 +31,35 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  * @version 0.0.6.4
  */
 public class SourceTimeFunction {
+
+    static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+    /**
+     * The number of steps in frequency domain. It must be a power of 2.
+     */
+    protected final int np;
+    /**
+     * timeLength [s]. It must be a tenth of powers of 2
+     */
+    protected final double tlen;
+    protected final double samplingHz;
+    /**
+     * The length is np
+     */
+    protected Complex[] sourceTimeFunction;
+    private int nptsInTimeDomain;
+
+    /**
+     * @param np         must be a power of 2
+     * @param tlen       [s] must be a tenth of powers of 2
+     * @param samplingHz 20 preferred (now must)
+     */
+    protected SourceTimeFunction(int np, double tlen, double samplingHz) {
+        if (!checkValues(np, tlen, samplingHz)) throw new RuntimeException();
+        this.np = np;
+        this.tlen = tlen;
+        this.samplingHz = samplingHz;
+        nptsInTimeDomain = np * 2 * computeLsmooth(np, tlen, samplingHz);
+    }
 
     /**
      * Triangle source time function
@@ -125,19 +153,6 @@ public class SourceTimeFunction {
         return sourceTimeFunction;
     }
 
-    /**
-     * @param np         must be a power of 2
-     * @param tlen       [s] must be a tenth of powers of 2
-     * @param samplingHz 20 preferred (now must)
-     */
-    protected SourceTimeFunction(int np, double tlen, double samplingHz) {
-        if (!checkValues(np, tlen, samplingHz)) throw new RuntimeException();
-        this.np = np;
-        this.tlen = tlen;
-        this.samplingHz = samplingHz;
-        nptsInTimeDomain = np * 2 * computeLsmooth(np, tlen, samplingHz);
-    }
-
     protected static boolean checkValues(int np, double tlen, double samplingHz) {
         boolean bool = true;
         if (samplingHz != 20) {
@@ -155,61 +170,6 @@ public class SourceTimeFunction {
         }
 
         return bool;
-    }
-
-    public int getNp() {
-        return np;
-    }
-
-    public double getTlen() {
-        return tlen;
-    }
-
-    public double getSamplingHz() {
-        return samplingHz;
-    }
-
-    /**
-     * The number of steps in frequency domain. It must be a power of 2.
-     */
-    protected final int np;
-
-    /**
-     * timeLength [s]. It must be a tenth of powers of 2
-     */
-    protected final double tlen;
-
-    protected final double samplingHz;
-
-    /**
-     * The length is np
-     */
-    protected Complex[] sourceTimeFunction;
-
-    /**
-     * @return source time function in frequency domain. the length is
-     * {@link #np}
-     */
-    public Complex[] getSourceTimeFunctionInFrequencyDomain() {
-        return sourceTimeFunction;
-    }
-
-    /**
-     * @param outPath Path for a file.
-     * @param options for writing the file
-     * @throws IOException if the source time function is not computed, then an error
-     *                     occurs
-     */
-    public void writeSourceTimeFunction(Path outPath, OpenOption... options) throws IOException {
-        Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
-
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            pw.println("#np tlen samplingHz");
-            pw.println(np + " " + tlen + " " + samplingHz);
-            for (Complex aSourceTimeFunction : sourceTimeFunction)
-                pw.println(aSourceTimeFunction.getReal() + " " + aSourceTimeFunction.getImaginary());
-        }
-
     }
 
     private static Complex toComplex(String line) {
@@ -243,9 +203,75 @@ public class SourceTimeFunction {
         return i < lsmooth ? i * 2 : lsmooth;
     }
 
-    static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+    /**
+     * Source time function is computed simply by division.
+     *
+     * @param obs        waveform of observed
+     * @param syn        waveform of syn
+     * @param np         steps of frequency [should be same as synthetics]
+     * @param tlen       [s] length of waveform [should be same as synthetics]
+     * @param samplingHz [Hz]
+     * @return Source time function F(obs)/F(syn) in <b>frequency domain</b>
+     */
+    public static SourceTimeFunction computeSourceTimeFunction(int np, double tlen, double samplingHz, double[] obs,
+                                                               double[] syn) {
+        int inputLength = obs.length;
+        if (inputLength != syn.length)
+            throw new IllegalArgumentException("Input obs and syn waveform must have same lengths");
+        int nptsInTimeDomain = computeLsmooth(np, tlen, samplingHz) * np * 2;
+        double[] realObs = new double[nptsInTimeDomain];
+        double[] realSyn = new double[nptsInTimeDomain];
+        for (int i = 0; i < inputLength; i++) {
+            realObs[i] = obs[i];
+            realSyn[i] = syn[i];
+        }
+        Complex[] obsInFrequencyDomain = fft.transform(realObs, TransformType.FORWARD);
+        Complex[] synInFrequencyDomain = fft.transform(realSyn, TransformType.FORWARD);
+        Complex[] sourceTimeFunction = new Complex[np];
+        for (int i = 0; i < np; i++)
+            sourceTimeFunction[i] = obsInFrequencyDomain[i + 1].divide(synInFrequencyDomain[i + 1]);
+        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz);
+        stf.sourceTimeFunction = sourceTimeFunction;
+        return stf;
+    }
 
-    private int nptsInTimeDomain;
+    public int getNp() {
+        return np;
+    }
+
+    public double getTlen() {
+        return tlen;
+    }
+
+    public double getSamplingHz() {
+        return samplingHz;
+    }
+
+    /**
+     * @return source time function in frequency domain. the length is
+     * {@link #np}
+     */
+    public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+        return sourceTimeFunction;
+    }
+
+    /**
+     * @param outPath Path for a file.
+     * @param options for writing the file
+     * @throws IOException if the source time function is not computed, then an error
+     *                     occurs
+     */
+    public void writeSourceTimeFunction(Path outPath, OpenOption... options) throws IOException {
+        Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
+
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+            pw.println("#np tlen samplingHz");
+            pw.println(np + " " + tlen + " " + samplingHz);
+            for (Complex aSourceTimeFunction : sourceTimeFunction)
+                pw.println(aSourceTimeFunction.getReal() + " " + aSourceTimeFunction.getImaginary());
+        }
+
+    }
 
     private double[] inverseFourierTransform(Complex[] dataInFrequency) {
         // pack to temporary Complex array
@@ -321,38 +347,6 @@ public class SourceTimeFunction {
         }
         double[] stfInTime = Arrays.stream(inverseFourierTransform(stf)).map(d -> d * samplingHz).toArray();
         return new Trace(time, stfInTime);
-    }
-
-    /**
-     * Source time function is computed simply by division.
-     *
-     * @param obs        waveform of observed
-     * @param syn        waveform of syn
-     * @param np         steps of frequency [should be same as synthetics]
-     * @param tlen       [s] length of waveform [should be same as synthetics]
-     * @param samplingHz [Hz]
-     * @return Source time function F(obs)/F(syn) in <b>frequency domain</b>
-     */
-    public static SourceTimeFunction computeSourceTimeFunction(int np, double tlen, double samplingHz, double[] obs,
-                                                               double[] syn) {
-        int inputLength = obs.length;
-        if (inputLength != syn.length)
-            throw new IllegalArgumentException("Input obs and syn waveform must have same lengths");
-        int nptsInTimeDomain = computeLsmooth(np, tlen, samplingHz) * np * 2;
-        double[] realObs = new double[nptsInTimeDomain];
-        double[] realSyn = new double[nptsInTimeDomain];
-        for (int i = 0; i < inputLength; i++) {
-            realObs[i] = obs[i];
-            realSyn[i] = syn[i];
-        }
-        Complex[] obsInFrequencyDomain = fft.transform(realObs, TransformType.FORWARD);
-        Complex[] synInFrequencyDomain = fft.transform(realSyn, TransformType.FORWARD);
-        Complex[] sourceTimeFunction = new Complex[np];
-        for (int i = 0; i < np; i++)
-            sourceTimeFunction[i] = obsInFrequencyDomain[i + 1].divide(synInFrequencyDomain[i + 1]);
-        SourceTimeFunction stf = new SourceTimeFunction(np, tlen, samplingHz);
-        stf.sourceTimeFunction = sourceTimeFunction;
-        return stf;
     }
 
 }

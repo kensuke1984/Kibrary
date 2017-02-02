@@ -1,21 +1,12 @@
 package io.github.kensuke1984.anisotime;
 
-import java.awt.Component;
+import javax.swing.*;
+import javax.swing.LayoutStyle.ComponentPlacement;
+import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
 import java.util.HashSet;
-
-import javax.swing.DefaultListModel;
-import javax.swing.GroupLayout;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import javax.swing.LayoutStyle.ComponentPlacement;
-import javax.swing.ListCellRenderer;
-import javax.swing.WindowConstants;
 
 /**
  * Window for choosing phases.
@@ -31,6 +22,9 @@ class PhaseWindow extends javax.swing.JFrame {
     private static final long serialVersionUID = -8346038785047175817L;
 
     private final ANISOtimeGUI gui;
+    private DefaultListModel<String> phaseLists;
+    private JList<String> jList1;
+    private JTextField jTextFieldPhaseAdd;
 
     /**
      * Creates new form NewJFrame
@@ -133,8 +127,4 @@ class PhaseWindow extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>
-
-    private DefaultListModel<String> phaseLists;
-    private JList<String> jList1;
-    private JTextField jTextFieldPhaseAdd;
 }

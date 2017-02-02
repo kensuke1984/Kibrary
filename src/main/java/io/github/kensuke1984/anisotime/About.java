@@ -2,7 +2,7 @@ package io.github.kensuke1984.anisotime;
 
 import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
-import java.awt.GraphicsEnvironment;
+import java.awt.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,10 +21,39 @@ final class About extends javax.swing.JFrame {
      * 2016/12/3
      */
     private static final long serialVersionUID = 776525631440857483L;
+    private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
+            ") Copyright \u00a9 2015 Kensuke Konishi\n\n" +
+            "Licensed under the Apache License, Version 2.0 (the \"License\")\n" +
+            "You may not use this file except in compliance with the License.\n" +
+            "You may obtain a copy of the License at\n\n" + "\thttp://www.apache.org/licenses/LICENSE-2.0\n\n" +
+            "Unless required by applicable law or agreed to in writing, " +
+            "software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n" +
+            "See the License for the specific language governing permissions and limitations under the License.";
+    // Variables declaration - do not modify
+    private JScrollPane jScrollPane1;
 
     private About() {
         super("About ANISOtime");
         initComponents();
+    }
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        try {
+            for (LookAndFeelInfo info : getInstalledLookAndFeels())
+                if ("Nimbus".equals(info.getName())) {
+                    setLookAndFeel(info.getClassName());
+                    break;
+                }
+        } catch (ClassNotFoundException | UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException ex) {
+            Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        // </editor-fold>
+        /* Create and display the form */
+        if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
+        else System.out.println(line);
     }
 
     private void initComponents() {
@@ -46,36 +75,5 @@ final class About extends javax.swing.JFrame {
         pack();
         SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
     }
-
-    private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
-            ") Copyright \u00a9 2015 Kensuke Konishi\n\n" +
-            "Licensed under the Apache License, Version 2.0 (the \"License\")\n" +
-            "You may not use this file except in compliance with the License.\n" +
-            "You may obtain a copy of the License at\n\n" + "\thttp://www.apache.org/licenses/LICENSE-2.0\n\n" +
-            "Unless required by applicable law or agreed to in writing, " +
-            "software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n" +
-            "See the License for the specific language governing permissions and limitations under the License.";
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        try {
-            for (LookAndFeelInfo info : getInstalledLookAndFeels())
-                if ("Nimbus".equals(info.getName())) {
-                    setLookAndFeel(info.getClassName());
-                    break;
-                }
-        } catch (ClassNotFoundException | UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException ex) {
-            Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        // </editor-fold>
-        /* Create and display the form */
-        if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
-        else System.out.println(line);
-    }
-
-    // Variables declaration - do not modify
-    private JScrollPane jScrollPane1;
     // End of variables declaration
 }

@@ -1,5 +1,14 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import org.apache.commons.io.FilenameUtils;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -13,16 +22,6 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.apache.commons.io.FilenameUtils;
-
-import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Utilities for a pair of an ID file and a waveform file. <br>
@@ -48,6 +47,14 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * @version 0.3.0.3
  */
 public final class PartialIDFile {
+
+    /**
+     * File size for an ID
+     */
+    public static final int oneIDByte = 30;
+
+    private PartialIDFile() {
+    }
 
     public static PartialID[] readPartialIDandDataFile(Path idPath, Path dataPath, Predicate<PartialID> chooser)
             throws IOException {
@@ -163,16 +170,10 @@ public final class PartialIDFile {
         Path outPath = Paths.get(header + ".station");
         if (Files.exists(outPath)) return;
         List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct()
-                .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition())
-                .collect(Collectors.toList());
+                .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
         Files.write(outPath, lines);
         System.out.println(outPath + " is created as a list of stations.");
     }
-
-    /**
-     * File size for an ID
-     */
-    public static final int oneIDByte = 30;
 
     /**
      * An ID information contains<br>
@@ -211,9 +212,6 @@ public final class PartialIDFile {
 
     public static PartialID[] readPartialIDandDataFile(Path idPath, Path dataPath) throws IOException {
         return readPartialIDandDataFile(idPath, dataPath, id -> true);
-    }
-
-    private PartialIDFile() {
     }
 
     private static void outputGlobalCMTID(String header, PartialID[] ids) throws IOException {

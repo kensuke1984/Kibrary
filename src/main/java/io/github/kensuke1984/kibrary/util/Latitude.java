@@ -15,6 +15,56 @@ import org.apache.commons.math3.util.Precision;
  */
 class Latitude implements Comparable<Latitude> {
 
+    /**
+     * Geographic latitude 地理緯度 [-90, 90]
+     */
+    private double geographicLatitude;
+    /**
+     * 地心緯度 [-90, 90]
+     */
+    private double geocentricLatitude;
+    /**
+     * [0, pi] radian θ in spherical coordinates.
+     */
+    private double theta;
+    private double inGeographicLatitude;
+
+    /**
+     * @param geographicLatitude 地理緯度
+     *                           [deg] geographicLatitude [-90, 90]
+     */
+    Latitude(double geographicLatitude) {
+        inGeographicLatitude = geographicLatitude;
+        this.geographicLatitude = Precision.round(geographicLatitude, 4);
+        if (!checkLatitude(geographicLatitude)) throw new IllegalArgumentException(
+                "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
+        geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
+        theta = 0.5 * Math.PI - geocentricLatitude;
+    }
+
+    /**
+     * check if the latitude works for this class
+     *
+     * @param latitude [deg] latitude
+     * @return true or false
+     */
+    private static boolean checkLatitude(double latitude) {
+        return -90 <= latitude && latitude <= 90;
+    }
+
+    /**
+     * @param theta [rad] spherical coordinates 球座標 [0, &pi;]
+     * @return geographic latitude [deg] 地理緯度(度）
+     */
+    static double toLatitude(double theta) {
+        if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
+                "Invalid theta(must be[0, pi]): " + theta + " @" +
+                        Thread.currentThread().getStackTrace()[1].getMethodName());
+
+        double geocentric = 0.5 * Math.PI - theta;
+        return FastMath.toDegrees(Earth.toGeographical(geocentric));
+    }
+
     @Override
     public int compareTo(Latitude o) {
         return Double.compare(geographicLatitude, o.geographicLatitude);
@@ -39,48 +89,8 @@ class Latitude implements Comparable<Latitude> {
         return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
     }
 
-    /**
-     * Geographic latitude 地理緯度 [-90, 90]
-     */
-    private double geographicLatitude;
-
-    /**
-     * 地心緯度 [-90, 90]
-     */
-    private double geocentricLatitude;
-
-    /**
-     * [0, pi] radian θ in spherical coordinates.
-     */
-    private double theta;
-
-    private double inGeographicLatitude;
-
-    /**
-     * @param geographicLatitude 地理緯度
-     *                           [deg] geographicLatitude [-90, 90]
-     */
-    Latitude(double geographicLatitude) {
-        inGeographicLatitude = geographicLatitude;
-        this.geographicLatitude = Precision.round(geographicLatitude, 4);
-        if (!checkLatitude(geographicLatitude)) throw new IllegalArgumentException(
-                "The input latitude: " + geographicLatitude + " is invalid (must be [-90, 90]).");
-        geocentricLatitude = Earth.toGeocentric(FastMath.toRadians(geographicLatitude));
-        theta = 0.5 * Math.PI - geocentricLatitude;
-    }
-
     public double getInGeographicLatitude() {
         return inGeographicLatitude;
-    }
-
-    /**
-     * check if the latitude works for this class
-     *
-     * @param latitude [deg] latitude
-     * @return true or false
-     */
-    private static boolean checkLatitude(double latitude) {
-        return -90 <= latitude && latitude <= 90;
     }
 
     /**
@@ -102,19 +112,6 @@ class Latitude implements Comparable<Latitude> {
      */
     public double getTheta() {
         return theta;
-    }
-
-    /**
-     * @param theta [rad] spherical coordinates 球座標 [0, &pi;]
-     * @return geographic latitude [deg] 地理緯度(度）
-     */
-    static double toLatitude(double theta) {
-        if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
-                "Invalid theta(must be[0, pi]): " + theta + " @" +
-                        Thread.currentThread().getStackTrace()[1].getMethodName());
-
-        double geocentric = 0.5 * Math.PI - theta;
-        return FastMath.toDegrees(Earth.toGeographical(geocentric));
     }
 
 }

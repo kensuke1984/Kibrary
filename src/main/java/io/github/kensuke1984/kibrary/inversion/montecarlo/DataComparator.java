@@ -8,16 +8,16 @@ package io.github.kensuke1984.kibrary.inversion.montecarlo;
 public interface DataComparator<D> {
 
     /**
-     * @param data to compute likelihood for
-     * @return likelihood
-     */
-    double likelihood(D data);
-
-    /**
      * @param sigma &sigma;
      * @return exp (-2*variance/&sigma;)
      */
     static DataComparator<Double> varianceComparator(double sigma) {
         return variance -> Math.exp(-2 * variance / sigma);
     }
+
+    /**
+     * @param data to compute likelihood for
+     * @return likelihood
+     */
+    double likelihood(D data);
 }

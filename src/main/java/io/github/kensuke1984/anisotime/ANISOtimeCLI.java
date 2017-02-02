@@ -1,28 +1,24 @@
 package io.github.kensuke1984.anisotime;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+import net.sf.epsgraphics.ColorMode;
+import net.sf.epsgraphics.EpsGraphics;
+import org.apache.commons.cli.*;
+import org.apache.commons.math3.util.Precision;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.MissingArgumentException;
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.math3.util.Precision;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
-import net.sf.epsgraphics.ColorMode;
-import net.sf.epsgraphics.EpsGraphics;
 
 /**
  * This class is only for CLI use of ANISOtime.
@@ -37,26 +33,9 @@ import net.sf.epsgraphics.EpsGraphics;
 final class ANISOtimeCLI {
 
     /**
-     * @param args arguments
-     * @throws ParseException if any
-     */
-    private ANISOtimeCLI(String[] args) throws ParseException {
-        cmd = new DefaultParser().parse(options, args);
-        INPUT = Arrays.stream(args).collect(Collectors.joining(" "));
-    }
-
-    private final String INPUT;
-
-    /**
-     * Input for ANISOtime
-     */
-    private final CommandLine cmd;
-
-    /**
      * Options
      */
     private final static Options options = new Options();
-
     /**
      * Help Formatter
      */
@@ -66,6 +45,47 @@ final class ANISOtimeCLI {
         // add options
         setBooleanOptions();
         setArgumentOptions();
+    }
+
+    private final String INPUT;
+    /**
+     * Input for ANISOtime
+     */
+    private final CommandLine cmd;
+    private RaypathCatalog catalog;
+    /**
+     * [rad]
+     */
+    private double targetDelta;
+    private VelocityStructure structure;
+    private double eventR;
+    private Phase[] targetPhases;
+    private boolean relativeAngleMode;
+    /**
+     * [rad]
+     */
+    private double dDelta;
+    private double rayParameter;
+    /**
+     * Number of decimal places. Default:2
+     */
+    private int decimalPlaces;
+    /**
+     * 1:ray parameter 2:&Delta; 4:T
+     */
+    private int showFlag;
+    /**
+     * String for a file name.
+     */
+    private String tmpStr = Utilities.getTemporaryString();
+
+    /**
+     * @param args arguments
+     * @throws ParseException if any
+     */
+    private ANISOtimeCLI(String[] args) throws ParseException {
+        cmd = new DefaultParser().parse(options, args);
+        INPUT = Arrays.stream(args).collect(Collectors.joining(" "));
     }
 
     /**
@@ -97,42 +117,40 @@ final class ANISOtimeCLI {
         }
     }
 
-    private RaypathCatalog catalog;
+    static void printHelp() {
+        helpFormatter.printHelp("ANISOtime (CLI)", options);
+    }
 
-    /**
-     * [rad]
-     */
-    private double targetDelta;
+    private static void setBooleanOptions() {
+        options.addOption("SV", false, "Computes travel time for SV. (default:SH)");
+        options.addOption("SH", false, "Computes travel time for SH. (default:SH)");
+        options.addOption("help", "Shows this message. This option has the highest priority.");
+        options.addOption("eps", false, "Outputs path figure.");
+        options.addOption(null, "rayp", false, "Shows ray parameters");
+        options.addOption(null, "time", false, "Shows travel times");
+        options.addOption(null, "delta", false, "Shows epicentral distances");
+        options.addOption("v", "version", false,
+                "Shows information of the tool. This option has the 2nd highest priority.");
+        options.addOption("s", "send", false,
+                "If you find any problem with a set of commands, add this argument to send the situation to Kensuke Konishi.");
+        options.addOption(null, "relative", false, "Relative angle mode. (default:absolute)");
+        options.addOption(null, "absolute", false, "Absolute angle mode. (default:absolute)");
+    }
 
-    private VelocityStructure structure;
-
-    private double eventR;
-
-    private Phase[] targetPhases;
-
-    private boolean relativeAngleMode;
-
-    /**
-     * [rad]
-     */
-    private double dDelta;
-
-    private double rayParameter;
-
-    /**
-     * Number of decimal places. Default:2
-     */
-    private int decimalPlaces;
-
-    /**
-     * 1:ray parameter 2:&Delta; 4:T
-     */
-    private int showFlag;
-
-    /**
-     * String for a file name.
-     */
-    private String tmpStr = Utilities.getTemporaryString();
+    private static void setArgumentOptions() {
+        options.addOption("h", true, "Depth of source [km] (default:0)");
+        options.addOption("deg", "epicentral-distance", true, "Epicentral distance \u0394 [deg]");
+        options.addOption("ph", "phase", true, "Seismic phase (default:P,PCP,PKiKP,S,ScS,SKiKS)");
+        options.addOption("mod", true, "Structure (default:prem)");
+        options.addOption("dec", true, "Number of decimal places.");
+        options.addOption("p", true, "Ray parameter");
+        options.addOption("dR", true, "Integral interval [km] (default:10)");
+        options.addOption("dD", true, "Parameter for a catalog creation (\u03b4\u0394).");
+        options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
+        options.addOption("rs", "record-section", true,
+                "start,end(,interval) [deg]\n Computes a table of a record section for the range.");
+        options.addOption("o", true, "Directory for ray path figures or file name for record sections.");
+    }
 
     /**
      * Sets parameters according to the input arguments.
@@ -289,7 +307,6 @@ final class ANISOtimeCLI {
 
     }
 
-
     private void run() {
         try {
             if (checkArgumentOption()) throw new RuntimeException("Input arguments have problems.");
@@ -404,8 +421,7 @@ final class ANISOtimeCLI {
         delta0 = Math.toDegrees(delta0);
         if (0 < targetDelta) {
             double time1 = catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
-                    relativeAngleMode,
-                            raypath);
+                    relativeAngleMode, raypath);
             if (!Double.isNaN(time1)) {
                 time0 = time1;
                 delta0 = targetDelta;
@@ -413,10 +429,6 @@ final class ANISOtimeCLI {
         }
         printLine(targetPhase, out, decimalPlaces, p0, delta0, time0);
         return new double[]{delta0, time0};
-    }
-
-    static void printHelp() {
-        helpFormatter.printHelp("ANISOtime (CLI)", options);
     }
 
     /**
@@ -456,37 +468,6 @@ final class ANISOtimeCLI {
             throw new RuntimeException("Input model file is not acceptable.");
         }
         throw new RuntimeException("No input model file " + modelPath + " is found.");
-    }
-
-    private static void setBooleanOptions() {
-        options.addOption("SV", false, "Computes travel time for SV. (default:SH)");
-        options.addOption("SH", false, "Computes travel time for SH. (default:SH)");
-        options.addOption("help", "Shows this message. This option has the highest priority.");
-        options.addOption("eps", false, "Outputs path figure.");
-        options.addOption(null, "rayp", false, "Shows ray parameters");
-        options.addOption(null, "time", false, "Shows travel times");
-        options.addOption(null, "delta", false, "Shows epicentral distances");
-        options.addOption("v", "version", false,
-                "Shows information of the tool. This option has the 2nd highest priority.");
-        options.addOption("s", "send", false,
-                "If you find any problem with a set of commands, add this argument to send the situation to Kensuke Konishi.");
-        options.addOption(null, "relative", false, "Relative angle mode. (default:absolute)");
-        options.addOption(null, "absolute", false, "Absolute angle mode. (default:absolute)");
-    }
-
-    private static void setArgumentOptions() {
-        options.addOption("h", true, "Depth of source [km] (default:0)");
-        options.addOption("deg", "epicentral-distance", true, "Epicentral distance \u0394 [deg]");
-        options.addOption("ph", "phase", true, "Seismic phase (default:P,PCP,PKiKP,S,ScS,SKiKS)");
-        options.addOption("mod", true, "Structure (default:prem)");
-        options.addOption("dec", true, "Number of decimal places.");
-        options.addOption("p", true, "Ray parameter");
-        options.addOption("dR", true, "Integral interval [km] (default:10)");
-        options.addOption("dD", true, "Parameter for a catalog creation (\u03b4\u0394).");
-        options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
-        options.addOption("rs", "record-section", true,
-                "start,end(,interval) [deg]\n Computes a table of a record section for the range.");
-        options.addOption("o", true, "Directory for ray path figures or file name for record sections.");
     }
 
     /**

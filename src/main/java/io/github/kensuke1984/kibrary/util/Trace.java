@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.util;
 
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.linear.*;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,15 +12,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-
-import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 
 /**
  * Utility for a function y = f(x)
@@ -32,20 +27,23 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
  */
 public class Trace {
 
-    /**
-     * @param i index for x [0, length -1]
-     * @return x[i]
-     */
-    public double getXAt(int i) {
-        return X[i];
-    }
+    private final double[] X;
+    private final double[] Y;
+    private final RealVector X_VECTOR;
+    private final RealVector Y_VECTOR;
 
     /**
-     * @param i index for y [0, length -1]
-     * @return y[i]
+     * Deep copy
+     *
+     * @param x array for X
+     * @param y array for Y
      */
-    public double getYAt(int i) {
-        return Y[i];
+    public Trace(double[] x, double[] y) {
+        if (x.length != y.length) throw new IllegalArgumentException("Input arrays have different lengths");
+        X = x.clone();
+        Y = y.clone();
+        X_VECTOR = new ArrayRealVector(x, false);
+        Y_VECTOR = new ArrayRealVector(y, false);
     }
 
     /**
@@ -82,23 +80,57 @@ public class Trace {
         return createTrace(path, 0, 1);
     }
 
-    private final double[] X;
-    private final double[] Y;
-    private final RealVector X_VECTOR;
-    private final RealVector Y_VECTOR;
+    /**
+     * 最も相関の高い位置を探す 探し方は、短い方をずらしていく 同じ長さだと探さない。
+     *
+     * @param base    array
+     * @param compare array
+     * @return compareを何ポイントずらすか 0だと先頭から
+     */
+    public static int findBestShift(double[] base, double[] compare) {
+        double[] shorter;
+        double[] longer;
+        if (base.length == compare.length) return 0;
+        if (base.length < compare.length) {
+            shorter = base;
+            longer = compare;
+        } else {
+            shorter = compare;
+            longer = base;
+        }
+        int gap = longer.length - shorter.length;
+        int bestShift = 0;
+        double bestCorrelation = 0;
+        for (int shift = 0; shift < gap + 1; shift++) {
+            double[] partY = new double[shorter.length];
+            System.arraycopy(longer, shift, partY, 0, shorter.length);
+            RealVector partYVec = new ArrayRealVector(partY);
+            RealVector shorterVec = new ArrayRealVector(shorter);
+            double correlation = partYVec.dotProduct(shorterVec) / partYVec.getNorm() / shorterVec.getNorm();
+            if (bestCorrelation < correlation) {
+                bestCorrelation = correlation;
+                bestShift = shift;
+            }
+            // System.out.println(correlation);
+        }
+
+        return compare.length < base.length ? bestShift : -bestShift;
+    }
 
     /**
-     * Deep copy
-     *
-     * @param x array for X
-     * @param y array for Y
+     * @param i index for x [0, length -1]
+     * @return x[i]
      */
-    public Trace(double[] x, double[] y) {
-        if (x.length != y.length) throw new IllegalArgumentException("Input arrays have different lengths");
-        X = x.clone();
-        Y = y.clone();
-        X_VECTOR = new ArrayRealVector(x, false);
-        Y_VECTOR = new ArrayRealVector(y, false);
+    public double getXAt(int i) {
+        return X[i];
+    }
+
+    /**
+     * @param i index for y [0, length -1]
+     * @return y[i]
+     */
+    public double getYAt(int i) {
+        return Y[i];
     }
 
     /**
@@ -249,43 +281,6 @@ public class Trace {
             }
         }
         return shift;
-    }
-
-    /**
-     * 最も相関の高い位置を探す 探し方は、短い方をずらしていく 同じ長さだと探さない。
-     *
-     * @param base    array
-     * @param compare array
-     * @return compareを何ポイントずらすか 0だと先頭から
-     */
-    public static int findBestShift(double[] base, double[] compare) {
-        double[] shorter;
-        double[] longer;
-        if (base.length == compare.length) return 0;
-        if (base.length < compare.length) {
-            shorter = base;
-            longer = compare;
-        } else {
-            shorter = compare;
-            longer = base;
-        }
-        int gap = longer.length - shorter.length;
-        int bestShift = 0;
-        double bestCorrelation = 0;
-        for (int shift = 0; shift < gap + 1; shift++) {
-            double[] partY = new double[shorter.length];
-            System.arraycopy(longer, shift, partY, 0, shorter.length);
-            RealVector partYVec = new ArrayRealVector(partY);
-            RealVector shorterVec = new ArrayRealVector(shorter);
-            double correlation = partYVec.dotProduct(shorterVec) / partYVec.getNorm() / shorterVec.getNorm();
-            if (bestCorrelation < correlation) {
-                bestCorrelation = correlation;
-                bestShift = shift;
-            }
-            // System.out.println(correlation);
-        }
-
-        return compare.length < base.length ? bestShift : -bestShift;
     }
 
     /**

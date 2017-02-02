@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.Location;
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -11,261 +15,236 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.io.FileUtils;
-
-import io.github.kensuke1984.kibrary.util.Earth;
-import io.github.kensuke1984.kibrary.util.Location;
-
 /**
- * 
  * 深さを含んだ実際にインバージョンで求める摂動点情報
- * 
+ * <p>
  * dr dlatitude dlongitude で dVを作る
- * 
+ * <p>
  * TODO 名前のチェック validity
- * 
- * @version 0.1.2.2
- * 
+ *
  * @author Kensuke Konishi
- * 
+ * @version 0.1.2.2
  */
 public class PerturbationPoint extends HorizontalPoint {
 
-	private double dR;
+    private double dR;
 
-	private double dLatitude;
+    private double dLatitude;
 
-	private double dLongitude;
+    private double dLongitude;
 
-	private Map<Location, Double> volumeMap;
+    private Map<Location, Double> volumeMap;
+    /**
+     * （インバージョンに使う）摂動点の情報（中枢） 順番も保持
+     */
+    private Location[] perturbationLocation;
+    /**
+     * ポイント数
+     */
+    private int pointN;
+    /**
+     * i番目の摂動点の名前 （
+     */
+    private String[] pointName;
+    /**
+     * perturbation point file <br>
+     * <p>
+     * ex) XY??? r
+     */
+    private File perturbationPointFile;
 
-	private class VolumeCalculator implements Runnable {
+    /**
+     * @param horizontalPointFile   {@link File} for {@link HorizontalPoint}
+     * @param perturbationPointFile {@link File} for link PerturbationPoint}
+     * @throws NoSuchFileException if any
+     */
+    public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws NoSuchFileException {
+        super(horizontalPointFile);
+        this.perturbationPointFile = perturbationPointFile;
+        readPerturbationPointFile();
+    }
 
-		private Location loc;
+    /**
+     * @param args dir dR dLatitude dLongitude
+     * @throws FileAlreadyExistsException if any
+     * @throws NoSuchFileException        if any
+     */
+    public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
+        if (args.length != 4) {
+            System.out.println("dir dR dLatitude dLongitude");
+            return;
+        }
+        File dir = new File(args[0]);
+        PerturbationPoint pp =
+                new PerturbationPoint(new File(dir, "horizontalPoint.inf"), new File(dir, "perturbationPoint.inf"));
+        pp.dR = Double.parseDouble(args[1]);
+        pp.dLatitude = Double.parseDouble(args[2]);
+        pp.dLongitude = Double.parseDouble(args[3]);
+        pp.createUnknownParameterSetFile(new File(dir, "unknown.inf"));
+        // System.out.println(pp.perturbationLocation[0]);
+    }
 
-		private VolumeCalculator(Location loc) {
-			this.loc = loc;
-		}
+    /**
+     * 全てのr、水平分布に対しての摂動点情報のperturbationInfoファイルを書く
+     *
+     * @param r              array of radius
+     * @param horizontalInfo file for {@link HorizontalPoint}
+     * @param out            for output
+     * @throws NoSuchFileException if any
+     */
+    public static void createPerturbationPoint(double[] r, File horizontalInfo, File out) throws NoSuchFileException {
+        HorizontalPoint hp = new HorizontalPoint(horizontalInfo);
+        Set<String> pointNameSet = hp.getHorizontalPointNameSet();
+        // Map<String, HorizontalPosition> pointMap = hp.getPerPointMap();
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(out)))) {
+            for (String name : pointNameSet)
+                for (double aR : r) pw.println(name + " " + aR);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-		@Override
-		public void run() {
-			volumeMap.put(loc, Earth.getVolume(loc, dR, dLatitude, dLongitude));
-			System.out.println(loc);
-		}
+    }
 
-	}
+    public void printVolumes() {
+        for (Location perLoc : perturbationLocation)
+            System.out.println(perLoc + " " + volumeMap.get(perLoc));
+    }
 
-	public void printVolumes() {
-		for (Location perLoc : perturbationLocation)
-			System.out.println(perLoc + " " + volumeMap.get(perLoc));
-	}
+    /**
+     * 各点の体積を計算する
+     */
+    public void computeVolumes() {
+        volumeMap = new HashMap<>();
+        ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        for (Location perLoc : perturbationLocation)
+            es.execute(new VolumeCalculator(perLoc));
 
-	/**
-	 * 各点の体積を計算する
-	 */
-	public void computeVolumes() {
-		volumeMap = new HashMap<>();
-		ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-		for (Location perLoc : perturbationLocation)
-			es.execute(new VolumeCalculator(perLoc));
+        es.shutdown();
+        while (!es.isTerminated()) {
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
-		es.shutdown();
-		while (!es.isTerminated()) {
-			try {
-				Thread.sleep(1000);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+    }
 
-	}
+    // TODO
+    public void createUnknownParameterSetFile(File outFile) throws FileAlreadyExistsException {
+        if (outFile.exists()) throw new FileAlreadyExistsException(outFile.getPath());
 
-	// TODO
-	public void createUnknownParameterSetFile(File outFile) throws FileAlreadyExistsException {
-		if (outFile.exists())
-			throw new FileAlreadyExistsException(outFile.getPath());
+        computeVolumes();
 
-		computeVolumes();
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)))) {
+            for (int i = 0; i < perturbationLocation.length; i++) {
+                Location loc = perturbationLocation[i];
+                System.out.println(loc);
+                double volume = volumeMap.get(loc);
+                pw.println("MU " + loc + " " + volume);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)))) {
-			for (int i = 0; i < perturbationLocation.length; i++) {
-				Location loc = perturbationLocation[i];
-				System.out.println(loc);
-				double volume = volumeMap.get(loc);
-				pw.println("MU " + loc + " " + volume);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+    public void setDr(double dr) {
+        dR = dr;
+    }
 
-	public void setDr(double dr) {
-		dR = dr;
-	}
-
-	public void setDlatitude(double dlatitude) {
+    public void setDlatitude(double dlatitude) {
         dLatitude = dlatitude;
-	}
+    }
 
-	public void setDlongitude(double dlongitude) {
+    public void setDlongitude(double dlongitude) {
         dLongitude = dlongitude;
-	}
+    }
 
-	public Map<Location, Double> getVolumeMap() {
-		return volumeMap;
-	}
+    public Map<Location, Double> getVolumeMap() {
+        return volumeMap;
+    }
 
-	/**
-	 * （インバージョンに使う）摂動点の情報（中枢） 順番も保持
-	 */
-	private Location[] perturbationLocation;
+    public String[] getPointName() {
+        return pointName;
+    }
 
-	/**
-	 * ポイント数
-	 */
-	private int pointN;
+    public File getPerturbationPointFile() {
+        return perturbationPointFile;
+    }
 
-	/**
-	 * i番目の摂動点の名前 （
-	 */
-	private String[] pointName;
+    /**
+     * @return array of radius
+     */
+    public double[] getR() {
+        return Arrays.stream(perturbationLocation).mapToDouble(Location::getR).toArray();
+    }
 
-	/**
-	 * perturbation point file <br>
-	 * 
-	 * ex) XY??? r
-	 * 
-	 */
-	private File perturbationPointFile;
+    /**
+     * @param i index
+     * @return i番目の深さ
+     */
+    public double getR(int i) {
+        return perturbationLocation[i].getR();
+    }
 
-	/**
-	 * @param args
-	 *            dir dR dLatitude dLongitude
-	 * @throws FileAlreadyExistsException if any
-	 * @throws NoSuchFileException if any
-	 */
-	public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
-		if (args.length != 4) {
-			System.out.println("dir dR dLatitude dLongitude");
-			return;
-		}
-		File dir = new File(args[0]);
-		PerturbationPoint pp = new PerturbationPoint(new File(dir, "horizontalPoint.inf"),
-				new File(dir, "perturbationPoint.inf"));
-		pp.dR = Double.parseDouble(args[1]);
-		pp.dLatitude = Double.parseDouble(args[2]);
-		pp.dLongitude = Double.parseDouble(args[3]);
-		pp.createUnknownParameterSetFile(new File(dir, "unknown.inf"));
-		// System.out.println(pp.perturbationLocation[0]);
-	}
+    /**
+     * perturbation point file を読み込む<br>
+     * XY??? r1 XY??? r2 .....
+     */
+    private void readPerturbationPointFile() {
+        try {
+            List<String> lines = FileUtils.readLines(perturbationPointFile, Charset.defaultCharset());
+            lines.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));
 
-	public String[] getPointName() {
-		return pointName;
-	}
+            pointN = lines.size();
+            perturbationLocation = new Location[pointN];
+            pointName = new String[pointN];
 
-	public File getPerturbationPointFile() {
-		return perturbationPointFile;
-	}
+            for (int i = 0; i < pointN; i++) {
+                String[] parts = lines.get(i).split("\\s+");
+                pointName[i] = parts[0];
+                double r = Double.parseDouble(parts[1]);
+                perturbationLocation[i] = new Location(getHorizontalPosition(pointName[i]).getLatitude(),
+                        getHorizontalPosition(pointName[i]).getLongitude(), r);
+                // perturbationLocation[i].setR(r);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	/**
-	 * 
-	 * 全てのr、水平分布に対しての摂動点情報のperturbationInfoファイルを書く
-	 * 
-	 * @param r
-	 *            array of radius
-	 * @param horizontalInfo
-	 *            file for {@link HorizontalPoint}
-	 * @param out
-	 *            for output
-	 * @throws NoSuchFileException if any
-	 */
-	public static void createPerturbationPoint(double[] r, File horizontalInfo, File out) throws NoSuchFileException {
-		HorizontalPoint hp = new HorizontalPoint(horizontalInfo);
-		Set<String> pointNameSet = hp.getHorizontalPointNameSet();
-		// Map<String, HorizontalPosition> pointMap = hp.getPerPointMap();
-		try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(out)))) {
-			for (String name : pointNameSet)
-				for (double aR : r) pw.println(name + " " + aR);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+    public Location[] getPerturbationLocation() {
+        return perturbationLocation;
+    }
 
-	}
+    public int getPointN() {
+        return pointN;
+    }
 
-	/**
-	 * @param horizontalPointFile
-	 *            {@link File} for {@link HorizontalPoint}
-	 * @param perturbationPointFile
-	 *            {@link File} for link PerturbationPoint}
-	 * @throws NoSuchFileException if any
-	 */
-	public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws NoSuchFileException {
-		super(horizontalPointFile);
-		this.perturbationPointFile = perturbationPointFile;
-		readPerturbationPointFile();
-	}
+    /**
+     * @param location {@link Location} for target
+     * @return location に近い順でポイントのLocationを返す
+     */
+    public Location[] getNearestLocation(Location location) {
+        Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
+        Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location)));
+        return locations;
+    }
 
-	/**
-	 * @return array of radius
-	 */
-	public double[] getR() {
-		return Arrays.stream(perturbationLocation).mapToDouble(Location::getR).toArray();
-	}
+    private class VolumeCalculator implements Runnable {
 
-	/**
-	 * 
-	 * @param i
-	 *            index
-	 * @return i番目の深さ
-	 */
-	public double getR(int i) {
-		return perturbationLocation[i].getR();
-	}
+        private Location loc;
 
-	/**
-	 * perturbation point file を読み込む<br>
-	 * XY??? r1 XY??? r2 .....
-	 * 
-	 */
-	private void readPerturbationPointFile() {
-		try {
-			List<String> lines = FileUtils.readLines(perturbationPointFile, Charset.defaultCharset());
-			lines.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));
-			
-			pointN = lines.size();
-			perturbationLocation = new Location[pointN];
-			pointName = new String[pointN];
+        private VolumeCalculator(Location loc) {
+            this.loc = loc;
+        }
 
-			for (int i = 0; i < pointN; i++) {
-				String[] parts = lines.get(i).split("\\s+");
-				pointName[i] = parts[0];
-				double r = Double.parseDouble(parts[1]);
-				perturbationLocation[i] = new Location(getHorizontalPosition(pointName[i]).getLatitude(),
-						getHorizontalPosition(pointName[i]).getLongitude(), r);
-				// perturbationLocation[i].setR(r);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+        @Override
+        public void run() {
+            volumeMap.put(loc, Earth.getVolume(loc, dR, dLatitude, dLongitude));
+            System.out.println(loc);
+        }
 
-	public Location[] getPerturbationLocation() {
-		return perturbationLocation;
-	}
-
-	public int getPointN() {
-		return pointN;
-	}
-
-	/**
-	 * @param location
-	 *            {@link Location} for target
-	 * @return location に近い順でポイントのLocationを返す
-	 */
-	public Location[] getNearestLocation(Location location) {
-		Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
-		Arrays.sort(locations, Comparator.comparingDouble(o -> o.getDistance(location)));
-		return locations;
-	}
+    }
 
 }
