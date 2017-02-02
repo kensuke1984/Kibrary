@@ -43,9 +43,6 @@ public class Phase {
 
     // Pattern for repetition
     private static final Pattern repetition = Pattern.compile("\\((\\d*)([^\\d]+?)\\)");
-    // nesting of parenthesis is prohibited
-    private static Pattern nestParentheses = Pattern.compile("\\([^\\)]*\\(|\\)[^\\(]*\\)");
-
     // first letter is sSpP
     private static final Pattern firstLetter = Pattern.compile("^[^psSP]");
     // static final letter is psSP
@@ -58,27 +55,23 @@ public class Phase {
     private static final Pattern nextJ = Pattern.compile("[^IJK]J|J[^IJK]");
     private static final Pattern smallI = Pattern.compile("[^Kd]i|i[^fK]|[^PSK]Ki|iK[^KPS]");
     private static final Pattern largeI = Pattern.compile("[^IJK]I|I[^IJK]");
-
     // phase turning R is above the CMB
     private static final Pattern mantleP = Pattern.compile("^P$|^P[PS]|[psPS]P$|[psPS]P[PS]");
     private static final Pattern mantleS = Pattern.compile("^S$|^S[PS]|[psPS]S$|[psPS]S[PS]");
-
     // diffraction phase
     private static final Pattern pDiff = Pattern.compile("Pdiff\\d*(\\.\\d+)?$");
     private static final Pattern sDiff = Pattern.compile("Sdiff\\d*(\\.?\\d+)?$");
     private static final Pattern diffRule = Pattern.compile("diff.+diff|P.*Pdiff|S.*Sdiff|diff.*[^\\d]$");
-
     // phase reflected at the cmb
     private static final Pattern cmbP = Pattern.compile("Pc|cP");
     private static final Pattern cmbS = Pattern.compile("Sc|cS");
-
     // phase turning R r <cmb
     private static final Pattern outercoreP = Pattern.compile("PK|KP");
     private static final Pattern outercoreS = Pattern.compile("SK|KS");
-
     // phase turning R icb < r < cmb, i.e., the phase does not go to inner core.
     private static final Pattern outercore = Pattern.compile("[PSK]K[PSK]");
-
+    // nesting of parenthesis is prohibited
+    private static Pattern nestParentheses = Pattern.compile("\\([^\\)]*\\(|\\)[^\\(]*\\)");
     // frequently use
     public static final Phase p = create("p");
     public static final Phase P = create("P");
@@ -94,53 +87,63 @@ public class Phase {
     public static final Phase SKS = create("SKS");
     public static final Phase SKiKS = create("SKiKS");
     public static final Phase SKIKS = create("SKIKS");
-
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        result = prime * result + ((expandedName == null) ? 0 : expandedName.hashCode());
-        result = prime * result + (psv ? 1231 : 1237);
-        return result;
-    }
-
-    /**
-     * It returns true, when compiled names are same. In other words, S(2K)S and
-     * SKKS are equal (if the polarity is same).
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        Phase other = (Phase) obj;
-        if (expandedName == null) {
-            if (other.expandedName != null) return false;
-        } else if (!expandedName.equals(other.expandedName)) return false;
-        return psv == other.psv;
-    }
-
-    /**
-     * @return P-SV (true), SH (false)
-     */
-    public boolean isPSV() {
-        return psv;
-    }
-
     /**
      * If this is P-SV(true) or SH(false).
      */
     private final boolean psv;
-
     /**
      * (input) phase name e.g. S(mK)S
      */
     private final String phaseName;
-
     /**
      * name for parsing e.g. SKKKKKS
      */
     private final String expandedName;
+    /**
+     * the number of Parts part is for each layer and each direction. if there
+     * is a turning point in one layer the number of parts will increase for
+     * example S wave has 2 parts. Sdiff has 3 parts.
+     */
+    private int nPart;
+    /**
+     * If each part waveforms go deeper(true) or shallower(false). When the part
+     * is diffraction, it is false,
+     */
+    private boolean[] isDownGoing;
+    /**
+     * Which phase is at each part
+     */
+    private Partition[] partition;
+    private PhasePart[] phaseParts;
+    /**
+     * Angle of Diffraction
+     */
+    private double diffractionAngle;
+    private Propagation mantlePPropagation;
+    private Propagation innerCorePPropagation;
+    private Propagation kPropagation;
+    private Propagation mantleSPropagation;
+    private Propagation innerCoreSPropagation;
+    /**
+     * Number of P wave parts in the path. Each down or upgoing is 0.5
+     */
+    private double mantlePTravel;
+    /**
+     * @see #mantlePTravel
+     */
+    private double mantleSTravel;
+    /**
+     * @see #mantlePTravel
+     */
+    private double outerCoreTravel;
+    /**
+     * @see #mantlePTravel
+     */
+    private double innerCorePTravel;
+    /**
+     * @see #mantlePTravel
+     */
+    private double innerCoreSTravel;
 
     /**
      * @param phaseName    of the phase (e.g. SKKS)
@@ -195,25 +198,87 @@ public class Phase {
         }
     }
 
-    /**
-     * the number of Parts part is for each layer and each direction. if there
-     * is a turning point in one layer the number of parts will increase for
-     * example S wave has 2 parts. Sdiff has 3 parts.
-     */
-    private int nPart;
+    public static void main(String[] args) {
+        Phase p = create("P(2K)P");
+        System.out.println(p.phaseName + " " + p.expandedName);
+        System.out.println(p.isDownGoing[1]);
+        p.printInformation();
+    }
 
     /**
-     * If each part waveforms go deeper(true) or shallower(false). When the part
-     * is diffraction, it is false,
+     * @param phase phase name
+     * @return if is well known phase?
      */
-    private boolean[] isDownGoing;
+    static boolean isValid(String phase) {
+        if (phase.isEmpty()) return false;
+        // diffraction phase
+        if (diffRule.matcher(phase).find()) return false;
+        if (!pDiff.matcher(phase).find() && !sDiff.matcher(phase).find() && finalLetter.matcher(phase).find())
+            return false;
+
+        // check if other letters are used.
+        if (others.matcher(phase).find()) return false;
+
+        if (firstLetter.matcher(phase).find()) return false;
+
+        if (ps.matcher(phase).find()) return false;
+
+        if (nextC.matcher(phase).find()) return false;
+
+        if (nextK.matcher(phase).find()) return false;
+
+        if (nextJ.matcher(phase).find()) return false;
+
+        if (smallI.matcher(phase).find()) return false;
+
+        if (largeI.matcher(phase).find()) return false;
+
+        // phase reflected at the icb
+        boolean icb = phase.contains("Ki") || phase.contains("iK");
+        boolean innercoreP = phase.contains("I");
+        boolean innercoreS = phase.contains("J");
+
+        if (mantleP.matcher(phase).find())
+            if (cmbP.matcher(phase).find() || outercoreP.matcher(phase).find() || innercoreP) return false;
+
+        if (mantleS.matcher(phase).find())
+            if (cmbS.matcher(phase).find() || outercoreS.matcher(phase).find() || innercoreS) return false;
+
+        if (outercore.matcher(phase).find()) if (innercoreP || icb || innercoreS) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int prime = 31;
+        int result = 1;
+        result = prime * result + ((expandedName == null) ? 0 : expandedName.hashCode());
+        result = prime * result + (psv ? 1231 : 1237);
+        return result;
+    }
 
     /**
-     * Which phase is at each part
+     * It returns true, when compiled names are same. In other words, S(2K)S and
+     * SKKS are equal (if the polarity is same).
      */
-    private Partition[] partition;
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        Phase other = (Phase) obj;
+        if (expandedName == null) {
+            if (other.expandedName != null) return false;
+        } else if (!expandedName.equals(other.expandedName)) return false;
+        return psv == other.psv;
+    }
 
-    private PhasePart[] phaseParts;
+    /**
+     * @return P-SV (true), SH (false)
+     */
+    public boolean isPSV() {
+        return psv;
+    }
 
     /**
      * @return angle of diffraction [rad] TODO
@@ -252,11 +317,6 @@ public class Phase {
     boolean isDiffracted() {
         return expandedName.contains("diff");
     }
-
-    /**
-     * Angle of Diffraction
-     */
-    private double diffractionAngle;
 
     private void digitalize() {
         // P
@@ -415,67 +475,10 @@ public class Phase {
 
     }
 
-    public static void main(String[] args) {
-        Phase p = create("P(2K)P");
-        System.out.println(p.phaseName + " " + p.expandedName);
-        System.out.println(p.isDownGoing[1]);
-        p.printInformation();
-    }
-
     void printInformation() {
         IntStream.range(0, nPart).forEach(
                 i -> System.out.println(phaseParts[i] + " " + (isDownGoing[i] ? "down" : "up") + " " + partition[i]));
     }
-
-    /**
-     * @param phase phase name
-     * @return if is well known phase?
-     */
-    static boolean isValid(String phase) {
-        if (phase.isEmpty()) return false;
-        // diffraction phase
-        if (diffRule.matcher(phase).find()) return false;
-        if (!pDiff.matcher(phase).find() && !sDiff.matcher(phase).find() && finalLetter.matcher(phase).find())
-            return false;
-
-        // check if other letters are used.
-        if (others.matcher(phase).find()) return false;
-
-        if (firstLetter.matcher(phase).find()) return false;
-
-        if (ps.matcher(phase).find()) return false;
-
-        if (nextC.matcher(phase).find()) return false;
-
-        if (nextK.matcher(phase).find()) return false;
-
-        if (nextJ.matcher(phase).find()) return false;
-
-        if (smallI.matcher(phase).find()) return false;
-
-        if (largeI.matcher(phase).find()) return false;
-
-        // phase reflected at the icb
-        boolean icb = phase.contains("Ki") || phase.contains("iK");
-        boolean innercoreP = phase.contains("I");
-        boolean innercoreS = phase.contains("J");
-
-        if (mantleP.matcher(phase).find())
-            if (cmbP.matcher(phase).find() || outercoreP.matcher(phase).find() || innercoreP) return false;
-
-        if (mantleS.matcher(phase).find())
-            if (cmbS.matcher(phase).find() || outercoreS.matcher(phase).find() || innercoreS) return false;
-
-        if (outercore.matcher(phase).find()) if (innercoreP || icb || innercoreS) return false;
-        return true;
-    }
-
-    private Propagation mantlePPropagation;
-    private Propagation innerCorePPropagation;
-    private Propagation kPropagation;
-
-    private Propagation mantleSPropagation;
-    private Propagation innerCoreSPropagation;
 
     Propagation getMantlePPropagation() {
         return mantlePPropagation;
@@ -541,31 +544,6 @@ public class Phase {
                 expandedName.contains("SK") || expandedName.contains("diff")) return Partition.CORE_MANTLE_BOUNDARY;
         return Partition.MANTLE;
     }
-
-    /**
-     * Number of P wave parts in the path. Each down or upgoing is 0.5
-     */
-    private double mantlePTravel;
-
-    /**
-     * @see #mantlePTravel
-     */
-    private double mantleSTravel;
-
-    /**
-     * @see #mantlePTravel
-     */
-    private double outerCoreTravel;
-
-    /**
-     * @see #mantlePTravel
-     */
-    private double innerCorePTravel;
-
-    /**
-     * @see #mantlePTravel
-     */
-    private double innerCoreSTravel;
 
     /**
      * how many times P wave travels in the inner core. Each down or upgoing is

@@ -1,10 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.*;
 
 /**
  * Conjugate gradient method
@@ -18,15 +14,10 @@ import org.apache.commons.math3.linear.RealVector;
  */
 public class ConjugateGradientMethod extends InverseProblem {
 
-    public RealMatrix getP() {
-        return p;
-    }
-
     /**
      * m = ai*pi
      */
     private RealVector a;
-
     /**
      * P = (p1, p2,....)
      */
@@ -45,6 +36,10 @@ public class ConjugateGradientMethod extends InverseProblem {
         p = MatrixUtils.createRealMatrix(column, column);
         ans = MatrixUtils.createRealMatrix(column, column);
         a = new ArrayRealVector(column);
+    }
+
+    public RealMatrix getP() {
+        return p;
     }
 
     /**

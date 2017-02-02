@@ -1,5 +1,16 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
+import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveformdata.PartialID;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
@@ -11,18 +22,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-
-import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-
-import io.github.kensuke1984.kibrary.math.Matrix;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 
 /**
  * A&delta;m=&delta;d
@@ -37,7 +36,13 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
  */
 public class ObservationEquation {
 
+    private final List<UnknownParameter> PARAMETER_LIST;
+    private final Dvector DVECTOR;
+    private final DataGenerator<RealVector, RealVector[]> BORN_GENERATOR;
+    private final DataGenerator<RealVector, Double> VARIANCE_GENERATOR;
     private Matrix a;
+    private RealVector atd;
+    private RealMatrix ata;
 
     /**
      * @param partialIDs    for A
@@ -52,9 +57,6 @@ public class ObservationEquation {
         BORN_GENERATOR = model -> DVECTOR.separate(operate(model).add(dVector.getSyn()));
         VARIANCE_GENERATOR = this::varianceOf;
     }
-
-    private final List<UnknownParameter> PARAMETER_LIST;
-    private final Dvector DVECTOR;
 
     public int getDlength() {
         return DVECTOR.getNpts();
@@ -89,8 +91,6 @@ public class ObservationEquation {
                 DVECTOR.getDNorm() * DVECTOR.getDNorm() - 2 * atd.dotProduct(m) + m.dotProduct(getAtA().operate(m));
         return variance / obs2;
     }
-
-    private RealVector atd;
 
     /**
      * Am=dのAを作る まずmとdの情報から Aに必要な偏微分波形を決める。
@@ -165,8 +165,6 @@ public class ObservationEquation {
         return a.copy();
     }
 
-    private RealMatrix ata;
-
     public RealMatrix getAtA() {
         if (ata == null) synchronized (this) {
             if (ata == null) ata = a.computeAtA();
@@ -196,7 +194,6 @@ public class ObservationEquation {
     public RealVector getPartialOf(BasicID basicID, UnknownParameter parameter) {
         return DVECTOR.separate(getPartialOf(parameter))[DVECTOR.whichTimewindow(basicID)];
     }
-
 
     /**
      * Aを書く それぞれのpartialごとに分けて出す debug用？
@@ -280,16 +277,12 @@ public class ObservationEquation {
         return a.operate(m);
     }
 
-    private final DataGenerator<RealVector, RealVector[]> BORN_GENERATOR;
-
     /**
      * @return generator of born waveforms
      */
     public DataGenerator<RealVector, RealVector[]> getBornGenerator() {
         return BORN_GENERATOR;
     }
-
-    private final DataGenerator<RealVector, Double> VARIANCE_GENERATOR;
 
     public DataGenerator<RealVector, Double> getVarianceGenerator() {
         return VARIANCE_GENERATOR;

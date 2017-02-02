@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * Interface of SAC header data<br>
@@ -39,12 +39,40 @@ public interface SACHeaderData {
     }
 
     /**
+     * Changes EVDP EVLO EVLA
+     *
+     * @param eventLocation {@link Location} to be set to EVLA, EVLO and EVDP. Earth
+     *                      radius is considered as 6371.
+     * @return {@link SACHeaderData} with the location
+     */
+    default SACHeaderData setEventLocation(Location eventLocation) {
+        return setValue(SACHeaderEnum.EVLA, eventLocation.getLatitude())
+                .setValue(SACHeaderEnum.EVLO, eventLocation.getLongitude())
+                .setValue(SACHeaderEnum.EVDP, 6371 - eventLocation.getR());
+    }
+
+    /**
      * @return date and time of CMT.
      */
     default LocalDateTime getEventTime() {
         return LocalDateTime.of(LocalDate.ofYearDay(getInt(SACHeaderEnum.NZYEAR), getInt(SACHeaderEnum.NZJDAY)),
                 LocalTime.of(getInt(SACHeaderEnum.NZHOUR), getInt(SACHeaderEnum.NZMIN), getInt(SACHeaderEnum.NZSEC),
                         getInt(SACHeaderEnum.NZMSEC) * 1000 * 1000));
+    }
+
+    /**
+     * Set(Change) event time and date
+     *
+     * @param eventDateTime to set in SacHeader
+     * @return {@link SACHeaderData} with the time
+     */
+    default SACHeaderData setEventTime(LocalDateTime eventDateTime) {
+        return setInt(SACHeaderEnum.NZYEAR, eventDateTime.getYear())
+                .setInt(SACHeaderEnum.NZJDAY, eventDateTime.getDayOfYear())
+                .setInt(SACHeaderEnum.NZHOUR, eventDateTime.getHour())
+                .setInt(SACHeaderEnum.NZMIN, eventDateTime.getMinute())
+                .setInt(SACHeaderEnum.NZSEC, eventDateTime.getSecond())
+                .setInt(SACHeaderEnum.NZMSEC, eventDateTime.getNano() / 1000 / 1000);
     }
 
     /**
@@ -55,8 +83,22 @@ public interface SACHeaderData {
     }
 
     /**
+     * Changes KSTNM, KNETWK, STLA, STLO
+     *
+     * @param station to be set
+     * @return {@link SACHeaderData} with the station
+     */
+    default SACHeaderData setStation(Station station) {
+        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, station.getName());
+        sd = sd.setSACString(SACHeaderEnum.KNETWK, station.getNetwork());
+        return sd.setValue(SACHeaderEnum.STLA, station.getPosition().getLatitude())
+                .setValue(SACHeaderEnum.STLO, station.getPosition().getLongitude());
+    }
+
+    /**
      * KCMPNM (vertical, radial or trnsvers)
      * vertical:Z, radial:R, trnsvers:T
+     *
      * @return component
      */
     default SACComponent getComponent() {
@@ -117,34 +159,6 @@ public interface SACHeaderData {
     SACHeaderData setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool);
 
     /**
-     * Changes EVDP EVLO EVLA
-     *
-     * @param eventLocation {@link Location} to be set to EVLA, EVLO and EVDP. Earth
-     *                      radius is considered as 6371.
-     * @return {@link SACHeaderData} with the location
-     */
-    default SACHeaderData setEventLocation(Location eventLocation) {
-        return setValue(SACHeaderEnum.EVLA, eventLocation.getLatitude())
-                .setValue(SACHeaderEnum.EVLO, eventLocation.getLongitude())
-                .setValue(SACHeaderEnum.EVDP, 6371 - eventLocation.getR());
-    }
-
-    /**
-     * Set(Change) event time and date
-     *
-     * @param eventDateTime to set in SacHeader
-     * @return {@link SACHeaderData} with the time
-     */
-    default SACHeaderData setEventTime(LocalDateTime eventDateTime) {
-        return setInt(SACHeaderEnum.NZYEAR, eventDateTime.getYear())
-                .setInt(SACHeaderEnum.NZJDAY, eventDateTime.getDayOfYear())
-                .setInt(SACHeaderEnum.NZHOUR, eventDateTime.getHour())
-                .setInt(SACHeaderEnum.NZMIN, eventDateTime.getMinute())
-                .setInt(SACHeaderEnum.NZSEC, eventDateTime.getSecond())
-                .setInt(SACHeaderEnum.NZMSEC, eventDateTime.getNano() / 1000 / 1000);
-    }
-
-    /**
      * If the value KEVNM is not valid for GlobalCMTID, then it will throw RuntimeException.
      *
      * @return GlobalCMTID by KEVNM
@@ -183,19 +197,6 @@ public interface SACHeaderData {
      *                                  if the input string has a invalid length.
      */
     SACHeaderData setSACString(SACHeaderEnum sacHeaderEnum, String string);
-
-    /**
-     * Changes KSTNM, KNETWK, STLA, STLO
-     *
-     * @param station to be set
-     * @return {@link SACHeaderData} with the station
-     */
-    default SACHeaderData setStation(Station station) {
-        SACHeaderData sd = setSACString(SACHeaderEnum.KSTNM, station.getName());
-        sd = sd.setSACString(SACHeaderEnum.KNETWK, station.getNetwork());
-        return sd.setValue(SACHeaderEnum.STLA, station.getPosition().getLatitude())
-                .setValue(SACHeaderEnum.STLO, station.getPosition().getLongitude());
-    }
 
     /**
      * マーカーに時間を設定する ぴっちりdelta * n の時刻に少し修正する round(time/delta)*delta Set a time

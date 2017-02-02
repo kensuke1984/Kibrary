@@ -18,53 +18,29 @@ import org.apache.commons.math3.util.FastMath;
 public class BandPassFilter extends ButterworthFilter {
 
     /**
-     * @return &omega;<sub>H</sub>
+     * maximum value of transmission band
+     * |ω| < omegaH transmits.
      */
-    public double getOmegaH() {
-        return omegaH;
-    }
-
+    private double omegaH;
     /**
-     * @return &omega;<sub>L</sub>
+     * minimum value of transmission band
+     * |ω| > omegaL transmits
      */
-    public double getOmegaL() {
-        return omegaL;
-    }
-
+    private double omegaL;
     /**
-     * @return &omega;<sub>Sh</sub>
+     * maximum value of stop band
+     * |ω| > omegaSh stopped.
      */
-    public double getOmegaSh() {
-        return omegaSh;
-    }
-
+    private double omegaSh;
     /**
-     * @return &omega;<sub>Sl</sub>
+     * minimum value of stop band
+     * |ω| < omegaSl stopped.
      */
-    public double getOmegaSl() {
-        return omegaSl;
-    }
-
+    private double omegaSl;
     /**
-     * @return if input &omega;<sub>H</sub> and &omega;<sub>L</sub> are valid
+     * &lambda;<sub>0</sub><sup>2</sup>
      */
-    private boolean omegaValid() {
-        boolean valid = true;
-        double halfPI = 0.5 * Math.PI;
-        if (omegaH < 0 || halfPI <= omegaH) {
-            System.err.println("omegaH: " + omegaH + " is invalid");
-            valid = false;
-        }
-        if (omegaL < 0 || halfPI <= omegaL) {
-            System.err.println("omegaL: " + omegaL + " is invalid");
-            valid = false;
-        }
-        if (omegaH <= omegaL) {
-            System.err.println("omegaH, omegaL: " + omegaH + ", " + omegaL + " are invalid");
-            valid = false;
-        }
-        return valid;
-    }
+    private double lambda02;
 
     /**
      * &omega; = 2&pi;f&Delta;t
@@ -120,6 +96,80 @@ public class BandPassFilter extends ButterworthFilter {
         // printParameters();
     }
 
+    /**
+     * y[t]=a<sub>0</sub>x[t]+a<sub>1</sub>x[t-1]+a<sub>2</sub>x[t-2]-b<sub>1</sub>y[t-1]-b<sub>2</sub>y[t-2] <br>
+     * a<sub>0</sub> =1, a<sub>1</sub>= 0, a<sub>2</sub> = -1
+     *
+     * @param b1 b<sub>1</sub>
+     * @param b2 b<sub>2</sub>
+     * @param x  x
+     * @return {@link Complex}[] y
+     */
+    private static Complex[] computeRecursion(double b1, double b2, Complex[] x) {
+        Complex[] y = new Complex[x.length];
+
+        y[0] = x[0];
+        // y[0] = x[0].multiply(a0);
+        y[1] = x[1].subtract(y[0].multiply(b1));
+        // y[1] = x[1].multiply(a0).add(x[0].multiply(a1))
+        // .subtract(y[0].multiply(b1));
+        for (int i = 2; i < x.length; i++)
+            y[i] = x[i].subtract(x[i - 2]).subtract(y[i - 1].multiply(b1)).subtract(y[i - 2].multiply(b2));
+        // y[i] = x[i].multiply(a0).add(x[i - 1].multiply(a1))
+        // .add(x[i - 2].multiply(a2)).subtract(y[i - 1].multiply(b1))
+        // .subtract(y[i - 2].multiply(b2));
+        return y;
+    }
+
+    /**
+     * @return &omega;<sub>H</sub>
+     */
+    public double getOmegaH() {
+        return omegaH;
+    }
+
+    /**
+     * @return &omega;<sub>L</sub>
+     */
+    public double getOmegaL() {
+        return omegaL;
+    }
+
+    /**
+     * @return &omega;<sub>Sh</sub>
+     */
+    public double getOmegaSh() {
+        return omegaSh;
+    }
+
+    /**
+     * @return &omega;<sub>Sl</sub>
+     */
+    public double getOmegaSl() {
+        return omegaSl;
+    }
+
+    /**
+     * @return if input &omega;<sub>H</sub> and &omega;<sub>L</sub> are valid
+     */
+    private boolean omegaValid() {
+        boolean valid = true;
+        double halfPI = 0.5 * Math.PI;
+        if (omegaH < 0 || halfPI <= omegaH) {
+            System.err.println("omegaH: " + omegaH + " is invalid");
+            valid = false;
+        }
+        if (omegaL < 0 || halfPI <= omegaL) {
+            System.err.println("omegaL: " + omegaL + " is invalid");
+            valid = false;
+        }
+        if (omegaH <= omegaL) {
+            System.err.println("omegaH, omegaL: " + omegaH + ", " + omegaL + " are invalid");
+            valid = false;
+        }
+        return valid;
+    }
+
     @Override
     public String toString() {
         double permeability = 1 / (1 + ap * ap);
@@ -128,35 +178,6 @@ public class BandPassFilter extends ButterworthFilter {
                 omegaL / 2.0 / Math.PI / 0.05 + "  " + omegaH / 2.0 / Math.PI / 0.05 + "\n" + "cut region (Hz): " +
                 omegaSl / 2.0 / Math.PI / 0.05 + ",  " + omegaSh / 2.0 / Math.PI / 0.05 + "backword " + backward;
     }
-
-    /**
-     * maximum value of transmission band
-     * |ω| < omegaH transmits.
-     */
-    private double omegaH;
-
-    /**
-     * minimum value of transmission band
-     * |ω| > omegaL transmits
-     */
-    private double omegaL;
-
-    /**
-     * maximum value of stop band
-     * |ω| > omegaSh stopped.
-     */
-    private double omegaSh;
-
-    /**
-     * minimum value of stop band
-     * |ω| < omegaSl stopped.
-     */
-    private double omegaSl;
-
-    /**
-     * &lambda;<sub>0</sub><sup>2</sup>
-     */
-    private double lambda02;
 
     /**
      * By eq. 2.25, computes {@link #sigmaSoverSigmaP}
@@ -268,12 +289,10 @@ public class BandPassFilter extends ButterworthFilter {
         System.arraycopy(data, 0, y, 0, data.length);
         // Complex[] x = data;
         for (int j = 0; j < n / 2 * 2; j++) {
-            // System.out.println("yo");
             Complex[] x = y;
             y = computeRecursion(b1[j], b2[j], x);
         }
         if (n % 2 == 1) {
-            // System.out.println("orz");
             int j = n - 1;
             Complex[] x = y;
             y = computeRecursion(b1[j], b2[j], x);
@@ -288,12 +307,10 @@ public class BandPassFilter extends ButterworthFilter {
                 reverseY[i] = y[y.length - i - 1];
 
             for (int j = 0; j < n / 2 * 2; j++) {
-                // System.out.println("yo");
                 Complex[] x = reverseY;
                 reverseY = computeRecursion(b1[j], b2[j], x);
             }
             if (n % 2 == 1) {
-                // System.out.println("orz");
                 int j = n - 1;
                 Complex[] x = reverseY;
                 reverseY = computeRecursion(b1[j], b2[j], x);
@@ -303,31 +320,6 @@ public class BandPassFilter extends ButterworthFilter {
             for (int i = 0; i < y.length; i++)
                 y[i] = reverseY[y.length - i - 1];
         }
-        return y;
-    }
-
-    /**
-     * y[t]=a<sub>0</sub>x[t]+a<sub>1</sub>x[t-1]+a<sub>2</sub>x[t-2]-b<sub>1</sub>y[t-1]-b<sub>2</sub>y[t-2] <br>
-     * a<sub>0</sub> =1, a<sub>1</sub>= 0, a<sub>2</sub> = -1
-     *
-     * @param b1 b<sub>1</sub>
-     * @param b2 b<sub>2</sub>
-     * @param x  x
-     * @return {@link Complex}[] y
-     */
-    private static Complex[] computeRecursion(double b1, double b2, Complex[] x) {
-        Complex[] y = new Complex[x.length];
-
-        y[0] = x[0];
-        // y[0] = x[0].multiply(a0);
-        y[1] = x[1].subtract(y[0].multiply(b1));
-        // y[1] = x[1].multiply(a0).add(x[0].multiply(a1))
-        // .subtract(y[0].multiply(b1));
-        for (int i = 2; i < x.length; i++)
-            y[i] = x[i].subtract(x[i - 2]).subtract(y[i - 1].multiply(b1)).subtract(y[i - 2].multiply(b2));
-        // y[i] = x[i].multiply(a0).add(x[i - 1].multiply(a1))
-        // .add(x[i - 2].multiply(a2)).subtract(y[i - 1].multiply(b1))
-        // .subtract(y[i - 2].multiply(b2));
         return y;
     }
 

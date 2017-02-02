@@ -6,51 +6,51 @@ import org.apache.commons.math3.linear.RealVector;
 /**
  * Names of methods for inversion. such as conjugate gradient method, singular
  * value decomposition.. etc
- * 
+ *
  * @author Kensuke Konishi
  * @version 0.0.3
  */
 public enum InverseMethodEnum {
-	SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD;
+    SINGULAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD;
 
-	public String simple() {
-		switch (this) {
-		case SINGULAR_VALUE_DECOMPOSITION:
-			return "SVD";
-		case CONJUGATE_GRADIENT:
-			return "CG";
-		case LEAST_SQUARES_METHOD:
-			return "LSM";
-		default:
-			throw new RuntimeException("UnEXpECCted");
-		}
-	}
+    public static InverseMethodEnum of(String simple) {
+        switch (simple) {
+            case "svd":
+            case "SVD":
+                return SINGULAR_VALUE_DECOMPOSITION;
+            case "cg":
+            case "CG":
+                return CONJUGATE_GRADIENT;
+            case "LSM":
+            case "lsm":
+                return LEAST_SQUARES_METHOD;
+            default:
+                throw new IllegalArgumentException("Invalid name for InverseMethod");
+        }
+    }
 
-	public static InverseMethodEnum of(String simple) {
-		switch (simple) {
-		case "svd":
-		case "SVD":
-			return SINGULAR_VALUE_DECOMPOSITION;
-		case "cg":
-		case "CG":
-			return CONJUGATE_GRADIENT;
-		case "LSM":
-		case "lsm":
-			return LEAST_SQUARES_METHOD;
-		default:
-			throw new IllegalArgumentException("Invalid name for InverseMethod");
-		}
-	}
+    public String simple() {
+        switch (this) {
+            case SINGULAR_VALUE_DECOMPOSITION:
+                return "SVD";
+            case CONJUGATE_GRADIENT:
+                return "CG";
+            case LEAST_SQUARES_METHOD:
+                return "LSM";
+            default:
+                throw new RuntimeException("UnEXpECCted");
+        }
+    }
 
-	InverseProblem getMethod(RealMatrix ata, RealVector atd) {
-		switch (this) {
-		case SINGULAR_VALUE_DECOMPOSITION:
-			return new SingularValueDecomposition(ata, atd);
-		case CONJUGATE_GRADIENT:
-			return new ConjugateGradientMethod(ata, atd);
-		default:
-			throw new RuntimeException("soteigai");
-		}
-	}
+    InverseProblem getMethod(RealMatrix ata, RealVector atd) {
+        switch (this) {
+            case SINGULAR_VALUE_DECOMPOSITION:
+                return new SingularValueDecomposition(ata, atd);
+            case CONJUGATE_GRADIENT:
+                return new ConjugateGradientMethod(ata, atd);
+            default:
+                throw new RuntimeException("soteigai");
+        }
+    }
 
 }

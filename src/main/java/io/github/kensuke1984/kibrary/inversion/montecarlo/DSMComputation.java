@@ -22,7 +22,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,10 +37,25 @@ import java.util.stream.Stream;
 class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
 
 
+    private static final int NP = 256;
+    private static final double SAMPLING_HZ = 20;
+    private static final double TLEN = 1638.4;
+    private final static Set<SACComponent> components = new HashSet<>(Collections.singletonList(SACComponent.T));
+    private final SyntheticDSMInfo[] DSM_INFOS;
+    private final Path outPath;
+    private final Path PSVPATH;
+    private ButterworthFilter filter;
+    private Path hostFilePath;
+    // MPI thread
+    private ExecutorService pool = Executors.newSingleThreadExecutor();
+    private int sequentialNumber;
+    private Path obsDir;
+    private Set<Station> stationSet;
+
     /**
-     * @param obsDir path of observed waveforms
-     * @param outDir path of output data
-     * @param psvPath path of PSV spectors
+     * @param obsDir     path of observed waveforms
+     * @param outDir     path of output data
+     * @param psvPath    path of PSV spectors
      * @param stationSet station information
      * @throws IOException if any
      */
@@ -47,14 +64,11 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         PSVPATH = psvPath;
         outPath = outDir;
         this.stationSet = stationSet;
-        if (Files.exists(outDir))
-            throw new FileAlreadyExistsException(outDir.toString());
+        if (Files.exists(outDir)) throw new FileAlreadyExistsException(outDir.toString());
         Files.createDirectories(outDir);
         DSM_INFOS = init(obsDir, stationSet);
         setFilter(0.005, 0.08, 4);
     }
-
-    private final SyntheticDSMInfo[] DSM_INFOS;
 
     private SyntheticDSMInfo[] init(Path obsDir, Set<Station> stationSet) throws IOException {
         return Utilities.eventFolderSet(obsDir).parallelStream().map(eventDir -> {
@@ -71,9 +85,6 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         }).toArray(SyntheticDSMInfo[]::new);
     }
 
-    private ButterworthFilter filter;
-
-
     /**
      * @param fMin 透過帯域 最小周波数
      * @param fMax 透過帯域 最大周波数
@@ -85,18 +96,6 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         filter = new BandPassFilter(omegaH, omegaL, n);
         filter.setBackward(true);
     }
-
-    private Path hostFilePath;
-    // MPI thread
-    private ExecutorService pool = Executors.newSingleThreadExecutor();
-
-    private static final int NP = 256;
-    private static final double SAMPLING_HZ = 20;
-    private static final double TLEN = 1638.4;
-
-    private final Path outPath;
-
-    private int sequentialNumber;
 
     @Override
     public SACData[] generate(PolynomialStructure model) {
@@ -124,14 +123,10 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         }
     }
 
-    private Path obsDir;
-
     private Station pickup(String stationName) {
         return stationSet.stream().filter(station -> station.getName().equals(stationName)).findAny()
                 .orElseThrow(() -> new RuntimeException("No information about " + stationName));
     }
-
-    private Set<Station> stationSet;
 
     private SyntheticDSMInfo[] createDSMInfo(PolynomialStructure model) {
         return Arrays.stream(DSM_INFOS).map(info -> info.replaceStructure(model)).toArray(SyntheticDSMInfo[]::new);
@@ -148,8 +143,6 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
             }
         });
     }
-
-    private final static Set<SACComponent> components = new HashSet<>(Collections.singletonList(SACComponent.T));
 
     private void makeSacFiles(EventFolder eventDir) throws IOException {
         Path spcPath = eventDir.toPath();
@@ -178,6 +171,4 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         GlobalCMTID id = new GlobalCMTID(shName.getSourceID());
         return new SpcFileName(PSVPATH.resolve(id + "/" + psvname));
     }
-
-    private final Path PSVPATH;
 }

@@ -1,10 +1,9 @@
 package io.github.kensuke1984.kibrary.util;
 
-import java.util.Arrays;
-
+import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
+import java.util.Arrays;
 
 /**
  * Earth utility.
@@ -13,6 +12,31 @@ import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
  * @version 0.1.1.1
  */
 public final class Earth {
+    /**
+     * Earth radius[km] 標準半径
+     */
+    public final static double EARTH_RADIUS = 6371;
+    /**
+     * Equatorial radius[km] 赤道半径
+     */
+    public final static double EQUATORIAL_RADIUS = 6378.137;
+    /**
+     * Polar radius[km] 極半径
+     */
+    public final static double POLAR_RADIUS = 6356.752314140356;
+    /**
+     * eccentricity （第一）離心率
+     */
+    public final static double E = 0.08181919104281514;
+    /**
+     * 第一扁平率 1/298.25
+     */
+    public final static double FLATTENING = 1 / 298.25;
+    /**
+     * tire profile 第三扁平率
+     */
+    public final static double N = 0.0016792443125758178;
+
     private Earth() {
     }
 
@@ -118,36 +142,6 @@ public final class Earth {
 
         return s;
     }
-
-    /**
-     * Earth radius[km] 標準半径
-     */
-    public final static double EARTH_RADIUS = 6371;
-
-    /**
-     * Equatorial radius[km] 赤道半径
-     */
-    public final static double EQUATORIAL_RADIUS = 6378.137;
-
-    /**
-     * Polar radius[km] 極半径
-     */
-    public final static double POLAR_RADIUS = 6356.752314140356;
-
-    /**
-     * eccentricity （第一）離心率
-     */
-    public final static double E = 0.08181919104281514;
-
-    /**
-     * 第一扁平率 1/298.25
-     */
-    public final static double FLATTENING = 1 / 298.25;
-
-    /**
-     * tire profile 第三扁平率
-     */
-    public final static double N = 0.0016792443125758178;
 
     /**
      * 位置 loc1とloc2の震央距離を求める Compute epicentral distance between loc1 and loc2

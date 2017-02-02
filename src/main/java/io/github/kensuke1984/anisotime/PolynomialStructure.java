@@ -1,16 +1,15 @@
 package io.github.kensuke1984.anisotime;
 
+import io.github.kensuke1984.kibrary.dsminformation.TransverselyIsotropicParameter;
+import io.github.kensuke1984.kibrary.math.LinearEquation;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.complex.Complex;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.IntStream;
-
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.complex.Complex;
-
-import io.github.kensuke1984.kibrary.dsminformation.TransverselyIsotropicParameter;
-import io.github.kensuke1984.kibrary.math.LinearEquation;
 
 /**
  * Polynomial structure.
@@ -22,9 +21,38 @@ public class PolynomialStructure implements VelocityStructure {
 
 
     /**
+     * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
+     */
+    public static final PolynomialStructure PREM =
+            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.PREM);
+    /**
+     * isotropic PREM by Dziewonski &amp; Anderson 1981
+     */
+    public static final PolynomialStructure ISO_PREM =
+            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.ISO_PREM);
+    /**
+     * AK135 by Kennett <i>et al</i>. (1995)
+     */
+    public static final PolynomialStructure AK135 =
+            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.AK135);
+    /**
      * Serialization identifier 2016/8/23
      */
     private static final long serialVersionUID = -5415364557337661053L;
+    final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
+    /*
+     * -radius x this is only for computations for bouncing points.
+     */
+    private final PolynomialFunction RADIUS_SUBTRACTION;
+
+    public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
+        STRUCTURE = structure;
+        RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
+    }
+
+    public PolynomialStructure(Path path) throws IOException {
+        this(new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(path));
+    }
 
     @Override
     public int hashCode() {
@@ -44,35 +72,6 @@ public class PolynomialStructure implements VelocityStructure {
             if (other.STRUCTURE != null) return false;
         } else if (!STRUCTURE.equals(other.STRUCTURE)) return false;
         return true;
-    }
-
-    final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
-
-    public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
-        STRUCTURE = structure;
-        RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
-    }
-
-    /**
-     * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
-     */
-    public static final PolynomialStructure PREM =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.PREM);
-
-    /**
-     * isotropic PREM by Dziewonski &amp; Anderson 1981
-     */
-    public static final PolynomialStructure ISO_PREM =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.ISO_PREM);
-
-    /**
-     * AK135 by Kennett <i>et al</i>. (1995)
-     */
-    public static final PolynomialStructure AK135 =
-            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.AK135);
-
-    public PolynomialStructure(Path path) throws IOException {
-        this(new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(path));
     }
 
     /**
@@ -120,11 +119,6 @@ public class PolynomialStructure implements VelocityStructure {
     public double[] additionalBoundaries() {
         return IntStream.range(1, STRUCTURE.getNzone()).mapToDouble(STRUCTURE::getRMinOf).toArray();
     }
-
-    /*
-     * -radius x this is only for computations for bouncing points.
-     */
-    private final PolynomialFunction RADIUS_SUBTRACTION;
 
     @Override
     public double pTurningR(double p) {

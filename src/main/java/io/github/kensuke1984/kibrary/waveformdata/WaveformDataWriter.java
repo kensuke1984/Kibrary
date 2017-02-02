@@ -1,24 +1,19 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
-import java.io.BufferedOutputStream;
-import java.io.Closeable;
-import java.io.DataOutputStream;
-import java.io.Flushable;
-import java.io.IOException;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
-
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
 /**
  * BasicDatasetやPartialDatasetの書き込み
@@ -29,52 +24,27 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * @version 0.4.0.3
  */
 public class WaveformDataWriter implements Closeable, Flushable {
-    public Path getIDPath() {
-        return IDPATH;
-    }
-
-    public Path getDataPath() {
-        return DATAPATH;
-    }
-
-    /**
-     * id情報の書き出し
-     */
-    private DataOutputStream idStream;
-
-    /**
-     * 波形情報の書き出し
-     */
-    private DataOutputStream dataStream;
-
     /**
      * id information file
      */
     private final Path IDPATH;
-
     /**
      * 波形情報ファイル
      */
     private final Path DATAPATH;
-
-    @Override
-    public void close() throws IOException {
-        idStream.close();
-        dataStream.close();
-    }
-
-    @Override
-    public void flush() throws IOException {
-        idStream.flush();
-        dataStream.flush();
-    }
-
     /**
      * Because the header part is decided when this is constructed, the mode is
      * also decided(0: BasicID, 1: PartialID)
      */
     private final int MODE;
-
+    /**
+     * id情報の書き出し
+     */
+    private DataOutputStream idStream;
+    /**
+     * 波形情報の書き出し
+     */
+    private DataOutputStream dataStream;
     /**
      * index map for stations
      */
@@ -83,7 +53,6 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * index map for global CMT IDs
      */
     private Map<GlobalCMTID, Integer> globalCMTIDMap;
-
     /**
      * index map for perturbation location
      */
@@ -92,7 +61,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * index for period ranges
      */
     private double[][] periodRanges;
-
+    /**
+     * The file size (byte). (should be StartByte)
+     */
+    private long dataLength;
     /**
      * This constructor is only for BasicID. All output ID must have a station,
      * a Global CMT ID and period ranges in the input ones.
@@ -148,6 +120,33 @@ public class WaveformDataWriter implements Closeable, Flushable {
         MODE = perturbationPoints == null ? 0 : 1;
     }
 
+    private static boolean checkDuplication(double[][] periodRanges) {
+        for (int i = 0; i < periodRanges.length - 1; i++)
+            for (int j = i + 1; j < periodRanges.length; j++)
+                if (Arrays.equals(periodRanges[i], periodRanges[j])) return true;
+        return false;
+    }
+
+    public Path getIDPath() {
+        return IDPATH;
+    }
+
+    public Path getDataPath() {
+        return DATAPATH;
+    }
+
+    @Override
+    public void close() throws IOException {
+        idStream.close();
+        dataStream.close();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        idStream.flush();
+        dataStream.flush();
+    }
+
     private void makeGlobalCMTIDMap(Set<GlobalCMTID> globalCMTIDSet) throws IOException {
         int i = 0;
         globalCMTIDMap = new HashMap<>();
@@ -180,18 +179,6 @@ public class WaveformDataWriter implements Closeable, Flushable {
             idStream.writeFloat((float) pos.getLongitude());
         }
     }
-
-    private static boolean checkDuplication(double[][] periodRanges) {
-        for (int i = 0; i < periodRanges.length - 1; i++)
-            for (int j = i + 1; j < periodRanges.length; j++)
-                if (Arrays.equals(periodRanges[i], periodRanges[j])) return true;
-        return false;
-    }
-
-    /**
-     * The file size (byte). (should be StartByte)
-     */
-    private long dataLength;
 
     /**
      * Writes a waveform

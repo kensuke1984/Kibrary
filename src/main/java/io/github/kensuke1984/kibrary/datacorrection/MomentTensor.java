@@ -49,6 +49,17 @@ public class MomentTensor {
         this.mw = mw;
     }
 
+    /**
+     * 10<sup>5</sup> dyne = N, 100 cm = 1 m
+     *
+     * @param scalarMoment M<sub>0</sub> (N*m)
+     * @return moment magnitude M<sub>w</sub> for the scalar Moment
+     */
+    public static double toMw(double scalarMoment) {
+        double mw = (FastMath.log10(scalarMoment) - 9.1) / 1.5;
+        return Precision.round(mw, 1);
+    }
+
     public double getMrr() {
         return mrr;
     }
@@ -102,16 +113,6 @@ public class MomentTensor {
         dsmMT[4] = Precision.round(mtp * factor, 5);
         dsmMT[5] = Precision.round(mpp * factor, 5);
         return dsmMT;
-    }
-
-    /**
-     * 10<sup>5</sup> dyne = N, 100 cm = 1 m
-     * @param scalarMoment M<sub>0</sub> (N*m)
-     * @return moment magnitude M<sub>w</sub> for the scalar Moment
-     */
-    public static double toMw(double scalarMoment) {
-        double mw = (FastMath.log10(scalarMoment) - 9.1) / 1.5;
-        return Precision.round(mw, 1);
     }
 
     @Override

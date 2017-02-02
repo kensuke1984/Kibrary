@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
+import io.github.kensuke1984.kibrary.external.SAC;
+import io.github.kensuke1984.kibrary.util.Trace;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -9,9 +12,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
-
-import io.github.kensuke1984.kibrary.external.SAC;
-import io.github.kensuke1984.kibrary.util.Trace;
 
 /**
  * Read/Write of a SAC file. (SAC: seismic analysis code)

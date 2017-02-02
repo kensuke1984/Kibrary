@@ -1,14 +1,13 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import java.util.Arrays;
-
+import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.apache.commons.math3.util.FastMath;
 
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import java.util.Arrays;
 
 /**
  * Data for one element in one {@link SpcBody} in a {@link SpectrumFile}
@@ -19,31 +18,17 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 public class SpcComponent {
 
     /**
-     * @return DEEP copy of this
-     */
-    public SpcComponent copy() {
-        SpcComponent s = new SpcComponent(NP);
-        s.nptsInTimeDomain = nptsInTimeDomain;
-        System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
-        if (uTime != null) s.uTime = uTime.clone();
-        return s;
-    }
-
-    /**
      * number of step in frequency domain
      */
     private final int NP;
-
     /**
      * number of datapoints in time domain
      */
     private int nptsInTimeDomain;
-
     /**
      * 周波数領域のデータ u[i] i=[0, NP] The length is NP+1
      */
     private Complex[] uFreq;
-
     /**
      * 時間領域のデータ u[i] i=[0,nptsInTimedomain-1]
      */
@@ -52,6 +37,17 @@ public class SpcComponent {
     SpcComponent(int np) {
         NP = np;
         uFreq = new Complex[np + 1];
+    }
+
+    /**
+     * @return DEEP copy of this
+     */
+    public SpcComponent copy() {
+        SpcComponent s = new SpcComponent(NP);
+        s.nptsInTimeDomain = nptsInTimeDomain;
+        System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
+        if (uTime != null) s.uTime = uTime.clone();
+        return s;
     }
 
     /**

@@ -1,12 +1,11 @@
 package io.github.kensuke1984.kibrary.util;
 
-import java.util.Arrays;
-import java.util.Comparator;
-
-import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
+import org.apache.commons.math3.util.Precision;
+
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * <p>
@@ -26,16 +25,6 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 public class Location extends HorizontalPosition {
 
     /**
-     * Sorting order is latitude &rarr; longitude &rarr; radius.
-     */
-    @Override
-    public int compareTo(HorizontalPosition o) {
-        int horizontalCompare = super.compareTo(o);
-        if (horizontalCompare != 0 || !(o instanceof Location)) return horizontalCompare;
-        return Double.compare(R, ((Location) o).R);
-    }
-
-    /**
      * [km] radius rounded off to the 3 decimal places.
      */
     private final double R;
@@ -48,6 +37,20 @@ public class Location extends HorizontalPosition {
     public Location(double latitude, double longitude, double r) {
         super(latitude, longitude);
         R = Precision.round(r, 3);
+    }
+
+    public static double toLatitude(double theta) {
+        return Latitude.toLatitude(theta);
+    }
+
+    /**
+     * Sorting order is latitude &rarr; longitude &rarr; radius.
+     */
+    @Override
+    public int compareTo(HorizontalPosition o) {
+        int horizontalCompare = super.compareTo(o);
+        if (horizontalCompare != 0 || !(o instanceof Location)) return horizontalCompare;
+        return Double.compare(R, ((Location) o).R);
     }
 
     /**
@@ -108,10 +111,6 @@ public class Location extends HorizontalPosition {
         Location[] newLocations = locations.clone();
         Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
         return newLocations;
-    }
-
-    public static double toLatitude(double theta) {
-        return Latitude.toLatitude(theta);
     }
 
     @Override

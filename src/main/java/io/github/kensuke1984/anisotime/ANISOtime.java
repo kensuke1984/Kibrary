@@ -1,13 +1,12 @@
 package io.github.kensuke1984.anisotime;
 
-import java.awt.GraphicsEnvironment;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.cli.UnrecognizedOptionException;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-
-import org.apache.commons.cli.UnrecognizedOptionException;
+import java.awt.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * ANISOtime launcher.

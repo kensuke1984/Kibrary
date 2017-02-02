@@ -1,11 +1,10 @@
 package io.github.kensuke1984.kibrary.util;
 
-import org.apache.commons.math3.util.FastMath;
-
 import io.github.kensuke1984.kibrary.math.geometry.Ellipse;
 import io.github.kensuke1984.kibrary.math.geometry.Point2D;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.math.geometry.XYZ;
+import org.apache.commons.math3.util.FastMath;
 
 /**
  * <p>
@@ -20,6 +19,20 @@ import io.github.kensuke1984.kibrary.math.geometry.XYZ;
  * @version 0.1.1.2
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
+
+    private final Latitude latitude;
+    private final Longitude longitude;
+
+    /**
+     * 地理緯度、経度でのコンストラクト
+     *
+     * @param latitude  [deg] geographic latitude [-90, 90] {@link Location#latitude}
+     * @param longitude [deg] (-180, 360)
+     */
+    public HorizontalPosition(double latitude, double longitude) {
+        this.latitude = new Latitude(latitude);
+        this.longitude = new Longitude(longitude);
+    }
 
     /**
      * Sorting order is Latitude &rarr; Longitude
@@ -71,10 +84,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     public double getBackAzimuth(HorizontalPosition position) {
         return Earth.getBackAzimuth(this, position);
     }
-
-    private final Latitude latitude;
-
-    private final Longitude longitude;
 
     /**
      * @return geographic latitude [deg] [-90, 90]（地理緯度）
@@ -157,17 +166,6 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
      */
     public XYZ toXYZ(double r) {
         return RThetaPhi.toCartesian(r, getTheta(), getPhi());
-    }
-
-    /**
-     * 地理緯度、経度でのコンストラクト
-     *
-     * @param latitude  [deg] geographic latitude [-90, 90] {@link Location#latitude}
-     * @param longitude [deg] (-180, 360)
-     */
-    public HorizontalPosition(double latitude, double longitude) {
-        this.latitude = new Latitude(latitude);
-        this.longitude = new Longitude(longitude);
     }
 
     @Override

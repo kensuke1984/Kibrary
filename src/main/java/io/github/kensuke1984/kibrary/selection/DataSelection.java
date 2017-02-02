@@ -1,26 +1,5 @@
 package io.github.kensuke1984.kibrary.selection;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.util.Precision;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
@@ -33,11 +12,23 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
-import io.github.kensuke1984.kibrary.util.sac.SACExtension;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.util.sac.*;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 
 /**
  * 理論波形と観測波形の比較から使えるものを選択する。<br>
@@ -50,6 +41,53 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * @version 0.1.2
  */
 public class DataSelection implements Operation {
+    private Set<EventFolder> eventDirs;
+    private String dateStr;
+    private Set<SACComponent> components;
+    private Path obsPath;
+    private Path synPath;
+    private boolean convolute;
+    private Path timewindowInformationFilePath;
+    private Path staticCorrectionInformationFilePath;
+    /**
+     * Minimum correlation coefficients
+     */
+    private double minCorrelation;
+    /**
+     * Maximum correlation coefficients
+     */
+    private double maxCorrelation;
+    /**
+     * Minimum variance
+     */
+    private double minVariance;
+    /**
+     * Maximum variance
+     */
+    private double maxVariance;
+    /**
+     * amplitude のしきい値
+     */
+    private double ratio;
+    private Set<TimewindowInformation> sourceTimewindowInformationSet;
+    private Set<TimewindowInformation> goodTimewindowInformationSet;
+    private Path outputGoodWindowPath;
+    private Set<StaticCorrection> staticCorrectionSet;
+    /**
+     * ID for static correction and time window information Default is station
+     * name, global CMT id, component.
+     */
+    private BiPredicate<StaticCorrection, TimewindowInformation> isPair =
+            (s, t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID()) &&
+                    s.getComponent() == t.getComponent();
+    private Path workPath;
+    private Properties property;
+
+    public DataSelection(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(DataSelection.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -85,46 +123,30 @@ public class DataSelection implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    private Set<EventFolder> eventDirs;
-
-    private String dateStr;
-
-    public DataSelection(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
+    /**
+     * @param args [parameter file name]
+     * @throws Exception if an I/O happens
+     */
+    public static void main(String[] args) throws Exception {
+        DataSelection ds = new DataSelection(Property.parse(args));
+        long start = System.nanoTime();
+        System.err.println(DataSelection.class.getName() + " is going");
+        ds.run();
+        System.err.println(
+                DataSelection.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
     }
 
-    private Set<SACComponent> components;
-    private Path obsPath;
-    private Path synPath;
-    private boolean convolute;
-    private Path timewindowInformationFilePath;
-    private Path staticCorrectionInformationFilePath;
-
     /**
-     * Minimum correlation coefficients
+     * @param sac        {@link SACData} to cut
+     * @param timeWindow time window
+     * @return new Trace for the timewindow [tStart:tEnd]
      */
-    private double minCorrelation;
-
-    /**
-     * Maximum correlation coefficients
-     */
-    private double maxCorrelation;
-
-    /**
-     * Minimum variance
-     */
-    private double minVariance;
-
-    /**
-     * Maximum variance
-     */
-    private double maxVariance;
-
-    /**
-     * amplitude のしきい値
-     */
-    private double ratio;
+    private static RealVector cutSAC(SACData sac, Timewindow timeWindow) {
+        Trace trace = sac.createTrace();
+        double tStart = timeWindow.getStartTime();
+        double tEnd = timeWindow.getEndTime();
+        return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
+    }
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
@@ -171,28 +193,88 @@ public class DataSelection implements Operation {
         goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
     }
 
-    private Set<TimewindowInformation> sourceTimewindowInformationSet;
-    private Set<TimewindowInformation> goodTimewindowInformationSet;
-
-    private Path outputGoodWindowPath;
-
-    private Set<StaticCorrection> staticCorrectionSet;
-
-    /**
-     * @param args [parameter file name]
-     * @throws Exception if an I/O happens
-     */
-    public static void main(String[] args) throws Exception {
-        DataSelection ds = new DataSelection(Property.parse(args));
-        long start = System.nanoTime();
-        System.err.println(DataSelection.class.getName() + " is going");
-        ds.run();
-        System.err.println(
-                DataSelection.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
-    }
-
     private void output() throws IOException {
         TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
+    }
+
+    private StaticCorrection getStaticCorrection(TimewindowInformation window) {
+        return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
+    }
+
+    /**
+     * @param timewindow timewindow to shift
+     * @return if there is time shift information for the input timewindow, then
+     * creates new timewindow and returns it, otherwise, just returns
+     * the input one.
+     */
+    private TimewindowInformation shift(TimewindowInformation timewindow) {
+        if (staticCorrectionSet.isEmpty()) return timewindow;
+        StaticCorrection foundShift = getStaticCorrection(timewindow);
+        double value = foundShift.getTimeshift();
+        return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
+                foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent());
+    }
+
+    private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
+                          TimewindowInformation window, RealVector obsU, RealVector synU) throws IOException {
+        if (obsU.getDimension() < synU.getDimension()) synU = synU.getSubVector(0, obsU.getDimension() - 1);
+        else if (synU.getDimension() < obsU.getDimension()) obsU = obsU.getSubVector(0, synU.getDimension() - 1);
+
+        // check
+        double synMax = synU.getMaxValue();
+        double synMin = synU.getMinValue();
+        double obsMax = obsU.getMaxValue();
+        double obsMin = obsU.getMinValue();
+        double obs2 = obsU.dotProduct(obsU);
+        double syn2 = synU.dotProduct(synU);
+        double cor = obsU.dotProduct(synU);
+        double var = obs2 + syn2 - 2 * cor;
+        double maxRatio = Precision.round(synMax / obsMax, 2);
+        double minRatio = Precision.round(synMin / obsMin, 2);
+        double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
+        var /= obs2;
+        cor /= Math.sqrt(obs2 * syn2);
+
+        absRatio = Precision.round(absRatio, 2);
+        var = Precision.round(var, 2);
+        cor = Precision.round(cor, 2);
+        boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio ||
+                ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor ||
+                var < minVariance || maxVariance < var);
+
+        writer.println(
+                stationName + " " + id + " " + component + " " + window.getStartTime() + " " + isok + " " + absRatio +
+                        " " + maxRatio + " " + minRatio + " " + var + " " + cor);
+        return isok;
+    }
+
+    @Override
+    public Path getWorkPath() {
+        return workPath;
+    }
+
+    @Override
+    public Properties getProperties() {
+        return (Properties) property.clone();
+    }
+
+    @Override
+    public void run() throws Exception {
+        int N_THREADS = Runtime.getRuntime().availableProcessors();
+
+        ExecutorService exec = Executors.newFixedThreadPool(N_THREADS);
+
+        for (EventFolder eventDirectory : eventDirs)
+            exec.execute(new Worker(eventDirectory));
+
+        exec.shutdown();
+        while (!exec.isTerminated()) try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.err.println();
+        output();
     }
 
     private class Worker implements Runnable {
@@ -275,108 +357,5 @@ public class DataSelection implements Operation {
             System.err.print(".");
             // System.out.println(obsEventDirectory + " is done");
         }
-    }
-
-    /**
-     * ID for static correction and time window information Default is station
-     * name, global CMT id, component.
-     */
-    private BiPredicate<StaticCorrection, TimewindowInformation> isPair =
-            (s, t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID()) &&
-                    s.getComponent() == t.getComponent();
-
-    private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-        return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
-    }
-
-    /**
-     * @param timewindow timewindow to shift
-     * @return if there is time shift information for the input timewindow, then
-     * creates new timewindow and returns it, otherwise, just returns
-     * the input one.
-     */
-    private TimewindowInformation shift(TimewindowInformation timewindow) {
-        if (staticCorrectionSet.isEmpty()) return timewindow;
-        StaticCorrection foundShift = getStaticCorrection(timewindow);
-        double value = foundShift.getTimeshift();
-        return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
-                foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent());
-    }
-
-    private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
-                          TimewindowInformation window, RealVector obsU, RealVector synU) throws IOException {
-        if (obsU.getDimension() < synU.getDimension()) synU = synU.getSubVector(0, obsU.getDimension() - 1);
-        else if (synU.getDimension() < obsU.getDimension()) obsU = obsU.getSubVector(0, synU.getDimension() - 1);
-
-        // check
-        double synMax = synU.getMaxValue();
-        double synMin = synU.getMinValue();
-        double obsMax = obsU.getMaxValue();
-        double obsMin = obsU.getMinValue();
-        double obs2 = obsU.dotProduct(obsU);
-        double syn2 = synU.dotProduct(synU);
-        double cor = obsU.dotProduct(synU);
-        double var = obs2 + syn2 - 2 * cor;
-        double maxRatio = Precision.round(synMax / obsMax, 2);
-        double minRatio = Precision.round(synMin / obsMin, 2);
-        double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
-        var /= obs2;
-        cor /= Math.sqrt(obs2 * syn2);
-
-        absRatio = Precision.round(absRatio, 2);
-        var = Precision.round(var, 2);
-        cor = Precision.round(cor, 2);
-        boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio ||
-                ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor ||
-                var < minVariance || maxVariance < var);
-
-        writer.println(stationName + " " + id + " " + component + " " + window.getStartTime() + " " + isok + " " + absRatio + " " + maxRatio + " " +
-                minRatio + " " + var + " " + cor);
-        return isok;
-    }
-
-    /**
-     * @param sac        {@link SACData} to cut
-     * @param timeWindow time window
-     * @return new Trace for the timewindow [tStart:tEnd]
-     */
-    private static RealVector cutSAC(SACData sac, Timewindow timeWindow) {
-        Trace trace = sac.createTrace();
-        double tStart = timeWindow.getStartTime();
-        double tEnd = timeWindow.getEndTime();
-        return new ArrayRealVector(trace.cutWindow(tStart, tEnd).getY(), false);
-    }
-
-    private Path workPath;
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    private Properties property;
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
-    }
-
-    @Override
-    public void run() throws Exception {
-        int N_THREADS = Runtime.getRuntime().availableProcessors();
-
-        ExecutorService exec = Executors.newFixedThreadPool(N_THREADS);
-
-        for (EventFolder eventDirectory : eventDirs)
-            exec.execute(new Worker(eventDirectory));
-
-        exec.shutdown();
-        while (!exec.isTerminated()) try {
-            Thread.sleep(1000);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.err.println();
-        output();
     }
 }

@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
+
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -11,11 +15,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import javax.swing.JOptionPane;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CloseShieldInputStream;
 
 /**
  * Catalog of global CMT solutions.
@@ -32,6 +31,15 @@ final class GlobalCMTCatalog {
      * 読み込んだNDK
      */
     private final static Set<NDK> NDKs;
+
+    static {
+        Set<NDK> readSet = readJar();
+        if (null == readSet) readSet = read(selectCatalogFile());
+        NDKs = Collections.unmodifiableSet(readSet);
+    }
+
+    private GlobalCMTCatalog() {
+    }
 
     private static Path selectCatalogFile() {
         Path catalogFile;
@@ -71,15 +79,6 @@ final class GlobalCMTCatalog {
             e.printStackTrace();
             return null;
         }
-    }
-
-    private GlobalCMTCatalog() {
-    }
-
-    static {
-        Set<NDK> readSet = readJar();
-        if (null == readSet) readSet = read(selectCatalogFile());
-        NDKs = Collections.unmodifiableSet(readSet);
     }
 
     /**

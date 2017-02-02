@@ -24,7 +24,8 @@ public interface ModelGenerator<M> {
 
     /**
      * Write a model on a file.
-     * @param path file name of the output
+     *
+     * @param path  file name of the output
      * @param model to write in the path
      */
     void write(Path path, M model) throws IOException;

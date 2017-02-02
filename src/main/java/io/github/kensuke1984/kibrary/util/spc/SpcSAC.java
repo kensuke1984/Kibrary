@@ -1,22 +1,5 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
@@ -25,6 +8,18 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * SpcSAC Converter from {@link SpectrumFile} to {@link SACData} file. According
@@ -41,17 +36,85 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
  */
 public final class SpcSAC implements Operation {
 
+    private Properties property;
+    /**
+     * Path for the work folder
+     */
+    private Path workPath;
+    private Path sourceTimeFunctionPath;
+    /**
+     * 計算するcomponents
+     */
+    private Set<SACComponent> components;
+    /**
+     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+     */
+    private String modelName;
+    /**
+     * サンプリングヘルツ 当面は２０Hz固定
+     */
+    private double samplingHz;
+    /**
+     * source time function.-1:Users, 0: none, 1: boxcar, 2: triangle
+     */
+    private int sourceTimeFunction;
+    private Path psvPath;
+    private Path shPath;
+    /**
+     * If it computes temporal partial or not.
+     */
+    private boolean computesPartial;
+    private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
+    private Set<SpcFileName> psvSPCs;
+    private Set<SpcFileName> shSPCs;
+    private Path outPath;
+
     public SpcSAC(Properties properties) throws IOException {
         property = (Properties) properties.clone();
         set();
     }
 
-    private Properties property;
-
     /**
-     * Path for the work folder
+     * @param args [parameter file name]
+     * @throws IOException if any
      */
-    private Path workPath;
+    public static void main(String[] args) throws IOException {
+        Properties property = Property.parse(args);
+        SpcSAC ss = new SpcSAC(property);
+        long start = System.nanoTime();
+        System.err.println(SpcSAC.class.getName() + " is going.");
+        ss.run();
+        System.err
+                .println(SpcSAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
+    }
+
+    public static void writeDefaultPropertiesFile() throws IOException {
+        Path outPath = Paths.get(SpcSAC.class.getName() + Utilities.getTemporaryString() + ".properties");
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+            pw.println("manhattan SpcSAC");
+            pw.println("##Path of a working folder (.)");
+            pw.println("#workPath");
+            pw.println("##SACComponents for output (Z R T)");
+            pw.println("#components");
+            pw.println("###If you do NOT want to use PSV or SH, you set the one 'null'.");
+            pw.println("##Path of a PSV folder (.)");
+            pw.println("#psvPath");
+            pw.println("##Path of an SH folder (.)");
+            pw.println("#shPath");
+            pw.println("##String if it is PREM spectrum file is in eventDir/PREM ");
+            pw.println("##if it is unset, then automatically set as the name of a folder in eventDir");
+            pw.println("##but the eventDirs can have only one folder inside.");
+            pw.println("#modelName");
+            pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
+            pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
+            pw.println("#sourceTimeFunction");
+            pw.println("#SamplingHz (20) !You can not change yet!");
+            pw.println("#samplingHz");
+            pw.println("#timePartial If it is true, then temporal partial is computed. (false)");
+            pw.println("#timePartial");
+        }
+        System.err.println(outPath + " is created.");
+    }
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
@@ -99,50 +162,6 @@ public final class SpcSAC implements Operation {
         samplingHz = 20; // TODO
     }
 
-    private Path sourceTimeFunctionPath;
-
-    /**
-     * 計算するcomponents
-     */
-    private Set<SACComponent> components;
-
-    /**
-     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
-     */
-    private String modelName;
-
-    /**
-     * サンプリングヘルツ 当面は２０Hz固定
-     */
-    private double samplingHz;
-
-    /**
-     * source time function.-1:Users, 0: none, 1: boxcar, 2: triangle
-     */
-    private int sourceTimeFunction;
-
-    private Path psvPath;
-    private Path shPath;
-
-    /**
-     * If it computes temporal partial or not.
-     */
-    private boolean computesPartial;
-
-    /**
-     * @param args [parameter file name]
-     * @throws IOException if any
-     */
-    public static void main(String[] args) throws IOException {
-        Properties property = Property.parse(args);
-        SpcSAC ss = new SpcSAC(property);
-        long start = System.nanoTime();
-        System.err.println(SpcSAC.class.getName() + " is going.");
-        ss.run();
-        System.err
-                .println(SpcSAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
-    }
-
     private void readUserSourceTimeFunctions() throws IOException {
         Set<GlobalCMTID> ids = Utilities.globalCMTIDSet(workPath);
         userSourceTimeFunctions = new HashMap<>(ids.size());
@@ -150,8 +169,6 @@ public final class SpcSAC implements Operation {
             userSourceTimeFunctions
                     .put(id, SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath.resolve(id + ".stf")));
     }
-
-    private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 
     private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
         double halfDuration = id.getEvent().getHalfDuration();
@@ -207,9 +224,6 @@ public final class SpcSAC implements Operation {
         return psvSet;
     }
 
-    private Set<SpcFileName> psvSPCs;
-    private Set<SpcFileName> shSPCs;
-
     private SpcFileName pairFile(SpcFileName psvFileName) {
         if (psvFileName.getMode() == SpcFileComponent.SH) return null;
         return new SpcFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
@@ -262,36 +276,6 @@ public final class SpcSAC implements Operation {
         }
 
     }
-
-    public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(SpcSAC.class.getName() + Utilities.getTemporaryString() + ".properties");
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan SpcSAC");
-            pw.println("##Path of a working folder (.)");
-            pw.println("#workPath");
-            pw.println("##SACComponents for output (Z R T)");
-            pw.println("#components");
-            pw.println("###If you do NOT want to use PSV or SH, you set the one 'null'.");
-            pw.println("##Path of a PSV folder (.)");
-            pw.println("#psvPath");
-            pw.println("##Path of an SH folder (.)");
-            pw.println("#shPath");
-            pw.println("##String if it is PREM spectrum file is in eventDir/PREM ");
-            pw.println("##if it is unset, then automatically set as the name of a folder in eventDir");
-            pw.println("##but the eventDirs can have only one folder inside.");
-            pw.println("#modelName");
-            pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
-            pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
-            pw.println("#sourceTimeFunction");
-            pw.println("#SamplingHz (20) !You can not change yet!");
-            pw.println("#samplingHz");
-            pw.println("#timePartial If it is true, then temporal partial is computed. (false)");
-            pw.println("#timePartial");
-        }
-        System.err.println(outPath + " is created.");
-    }
-
-    private Path outPath;
 
     /**
      * 二つのspc(sh, psv)から SacMakerを作る {@link SACMaker}

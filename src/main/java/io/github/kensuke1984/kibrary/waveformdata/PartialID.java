@@ -40,18 +40,10 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  */
 public class PartialID extends BasicID {
 
-    @Override
-    public String toString() {
-        return STATION + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " " + START_TIME +
-                " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " " + START_BYTE + " " + CONVOLUTE + " " +
-                POINT_LOCATION + " " + PARTIAL_TYPE;
-    }
-
     /**
      * location of perturbation
      */
     protected final Location POINT_LOCATION;
-
     /**
      * type of parameter
      */
@@ -65,6 +57,13 @@ public class PartialID extends BasicID {
                 startByte, isConvolved, waveformData);
         PARTIAL_TYPE = partialType;
         POINT_LOCATION = perturbationLocation;
+    }
+
+    @Override
+    public String toString() {
+        return STATION + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " " + START_TIME +
+                " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " " + START_BYTE + " " + CONVOLUTE + " " +
+                POINT_LOCATION + " " + PARTIAL_TYPE;
     }
 
     public Location getPerturbationLocation() {

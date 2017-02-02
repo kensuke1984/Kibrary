@@ -1,5 +1,11 @@
 package io.github.kensuke1984.kibrary.util;
 
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.FastMath;
+
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -16,23 +22,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.FastMath;
-
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 
 /**
  * Utilities for a workpath containing event folders which have SAC files. also
@@ -42,6 +36,9 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * @version 0.1.2
  */
 public final class Utilities {
+
+    private Utilities() {
+    }
 
     /**
      * Change the input to an intelligible expression.
@@ -90,9 +87,6 @@ public final class Utilities {
     public static double computeAIC(double variance, int n, int k) {
         double log2pi = Math.log(2 * Math.PI);
         return n * (log2pi + Math.log(variance) + 1) + 2 * k + 2;
-    }
-
-    private Utilities() {
     }
 
     /**

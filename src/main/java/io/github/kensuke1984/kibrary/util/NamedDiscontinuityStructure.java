@@ -97,13 +97,24 @@ public class NamedDiscontinuityStructure {
      * structure file
      */
     private Path infPath;
+    private double coreMantleBoundary;
+    private double innerCoreBoundary;
+    private double mohoDiscontinuity;
+
+    protected NamedDiscontinuityStructure() {
+    }
+
+    /**
+     * @param path model file written by nd format.
+     */
+    public NamedDiscontinuityStructure(Path path) {
+        infPath = path;
+        readInfFile();
+    }
 
     public static void main(String[] args) {
         NamedDiscontinuityStructure nd = prem();
         System.out.println(nd.getVs(3480 + 10e-9));
-    }
-
-    protected NamedDiscontinuityStructure() {
     }
 
     /**
@@ -169,11 +180,13 @@ public class NamedDiscontinuityStructure {
     }
 
     /**
-     * @param path model file written by nd format.
+     * @param r radius [km]
+     * @param a a
+     * @param b b
+     * @return a*(6371-r)<sup>b</sup>
      */
-    public NamedDiscontinuityStructure(Path path) {
-        infPath = path;
-        readInfFile();
+    private static double computeBullenLaw(double r, double a, double b) {
+        return a * Math.pow(r, b);
     }
 
     /**
@@ -189,9 +202,6 @@ public class NamedDiscontinuityStructure {
     public double getInnerCoreBoundary() {
         return innerCoreBoundary;
     }
-
-    private double coreMantleBoundary;
-    private double innerCoreBoundary;
 
     private void readInfFile() {
         if (!Files.exists(infPath)) {
@@ -262,8 +272,6 @@ public class NamedDiscontinuityStructure {
     public double getMohoDiscontinuity() {
         return mohoDiscontinuity;
     }
-
-    private double mohoDiscontinuity;
 
     /**
      * @param r radius [km]
@@ -342,16 +350,6 @@ public class NamedDiscontinuityStructure {
         return vsB[izone];
     }
 
-    /**
-     * @param r radius [km]
-     * @param a a
-     * @param b b
-     * @return a*(6371-r)<sup>b</sup>
-     */
-    private static double computeBullenLaw(double r, double a, double b) {
-        return a * Math.pow(r, b);
-    }
-
     private int rToZone(double r) {
         for (int i = 0; i < this.r.length - 1; i++)
             if (this.r[i] <= r && r <= this.r[i + 1]) return i;
@@ -395,7 +393,7 @@ public class NamedDiscontinuityStructure {
      * obtain the valued a, b of v(r) = a* r **b r is radius
      *
      * @param izone izone
-     * @param val val
+     * @param val   val
      * @return the value a, b in Bullen expression.
      */
     private double[] computeBullenLaw(int izone, double[] val) {

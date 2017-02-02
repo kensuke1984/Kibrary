@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.math;
 
-import java.util.Arrays;
-import java.util.Comparator;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.complex.Complex;
+
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Solver for cubic equations with coefficients of real numbers.

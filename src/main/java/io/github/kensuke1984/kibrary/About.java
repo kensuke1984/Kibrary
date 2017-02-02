@@ -1,13 +1,12 @@
 package io.github.kensuke1984.kibrary;
 
-import java.awt.GraphicsEnvironment;
-import java.nio.charset.Charset;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.apache.commons.io.IOUtils;
 
 import javax.swing.*;
+import java.awt.*;
+import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * About Kibrary (this library).
@@ -23,37 +22,9 @@ import javax.swing.*;
  */
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
-
-    private static final long serialVersionUID = -2485772755944862822L;
-
     public static final String CODENAME = "Sahagin";
-
-    public static final String VERSION = "0.4.2.4.1";
-
-    private About() {
-        super("About Kibrary");
-        initComponents();
-    }
-
-    private void initComponents() {
-        JTextArea jTextArea1 = new JTextArea(line, 5, 20);
-        jScrollPane1 = new JScrollPane(jTextArea1);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        jTextArea1.setLineWrap(true);
-        jTextArea1.setEditable(false);
-        GroupLayout layout = new GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
-                layout.createSequentialGroup().addContainerGap()
-                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE).addContainerGap()));
-        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
-                layout.createSequentialGroup().addContainerGap()
-                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE).addContainerGap()));
-        pack();
-        SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
-    }
-
+    public static final String VERSION = "0.4.2.4.2";
+    private static final long serialVersionUID = -2485772755944862822L;
     private static final String line;
 
     static {
@@ -63,6 +34,13 @@ public final class About extends javax.swing.JFrame {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private JScrollPane jScrollPane1;
+
+    private About() {
+        super("About Kibrary");
+        initComponents();
     }
 
     /**
@@ -85,5 +63,22 @@ public final class About extends javax.swing.JFrame {
         else System.out.println(line);
     }
 
-    private JScrollPane jScrollPane1;
+    private void initComponents() {
+        JTextArea jTextArea1 = new JTextArea(line, 5, 20);
+        jScrollPane1 = new JScrollPane(jTextArea1);
+        setLocationRelativeTo(null);
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setEditable(false);
+        GroupLayout layout = new GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup().addContainerGap()
+                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE).addContainerGap()));
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup().addContainerGap()
+                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE).addContainerGap()));
+        pack();
+        SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
+    }
 }

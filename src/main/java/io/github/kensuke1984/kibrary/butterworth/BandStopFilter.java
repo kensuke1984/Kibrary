@@ -28,22 +28,11 @@ public class BandStopFilter extends ButterworthFilter {
      * 遮断域の最小角周波数 minimum &omega; for blocking region
      */
     private double omegaSl;
-
-    public double getOmegaH() {
-        return omegaH;
-    }
-
-    public double getOmegaL() {
-        return omegaL;
-    }
-
-    public double getOmegaSh() {
-        return omegaSh;
-    }
-
-    public double getOmegaSl() {
-        return omegaSl;
-    }
+    private double a1;
+    /**
+     * &lambda;<sub>0</sub><sup>2</sup>
+     */
+    private double lambda02;
 
     /**
      * &omega; = 2&pi;f&Delta;t
@@ -75,27 +64,6 @@ public class BandStopFilter extends ButterworthFilter {
     }
 
     /**
-     * @return if input &omega;<sub>H</sub> and &omega;<sub>L</sub> are valid
-     */
-    private boolean omegaValid() {
-        boolean valid = true;
-        double halfPI = 0.5 * Math.PI;
-        if (omegaH < 0 || halfPI <= omegaH) {
-            System.err.println("omegaH: " + omegaH + " is invalid");
-            valid = false;
-        }
-        if (omegaL < 0 || halfPI <= omegaL) {
-            System.err.println("omegaL: " + omegaL + " is invalid");
-            valid = false;
-        }
-        if (omegaH <= omegaL) {
-            System.err.println("omegaH, omegaL: " + omegaH + ", " + omegaL + " are invalid");
-            valid = false;
-        }
-        return valid;
-    }
-
-    /**
      * &omega; = 2&pi;f&Delta;t <br>
      * ap 透過域の最小振幅（1+A<sub>p</sub><sup>2</sup>）<sup>-1</sup>: 0.9<br>
      * as 遮断域の最大振幅(1+A<sub>s</sub><sup>2</sup>)<sup>-1</sup>: 0.1
@@ -122,6 +90,43 @@ public class BandStopFilter extends ButterworthFilter {
         createRecursiveFilter();
         printParameters();
 
+    }
+
+    public double getOmegaH() {
+        return omegaH;
+    }
+
+    public double getOmegaL() {
+        return omegaL;
+    }
+
+    public double getOmegaSh() {
+        return omegaSh;
+    }
+
+    public double getOmegaSl() {
+        return omegaSl;
+    }
+
+    /**
+     * @return if input &omega;<sub>H</sub> and &omega;<sub>L</sub> are valid
+     */
+    private boolean omegaValid() {
+        boolean valid = true;
+        double halfPI = 0.5 * Math.PI;
+        if (omegaH < 0 || halfPI <= omegaH) {
+            System.err.println("omegaH: " + omegaH + " is invalid");
+            valid = false;
+        }
+        if (omegaL < 0 || halfPI <= omegaL) {
+            System.err.println("omegaL: " + omegaL + " is invalid");
+            valid = false;
+        }
+        if (omegaH <= omegaL) {
+            System.err.println("omegaH, omegaL: " + omegaH + ", " + omegaL + " are invalid");
+            valid = false;
+        }
+        return valid;
     }
 
     public void printParameters() {
@@ -177,8 +182,6 @@ public class BandStopFilter extends ButterworthFilter {
         a1 = -2 * (c * c - lambda02) / (c * c + lambda02);
     }
 
-    private double a1;
-
     /**
      * A root of &lambda;<sup>2</sup>+&sigma;<sub>j</sub><sup>-1</sup>
      * &lambda;-&lambda; <sub>0</sub><sup>2</sup>=0
@@ -198,11 +201,6 @@ public class BandStopFilter extends ButterworthFilter {
         // System.out.println(j+" compute "+lambdaJ);
         return lambdaJ;
     }
-
-    /**
-     * &lambda;<sub>0</sub><sup>2</sup>
-     */
-    private double lambda02;
 
     private void setLambda02() {
         lambda02 = c * c * FastMath.tan(omegaH / 2) * FastMath.tan(omegaL / 2);

@@ -12,13 +12,160 @@ import java.io.IOException;
  */
 class SACHeader implements SACHeaderData, Cloneable {
 
-    @Override
-    public SACHeader clone() {
-        try {
-            return (SACHeader) super.clone();
-        } catch (Exception e) {
-            throw new RuntimeException("UNEXPecTEd");
-        }
+    private double delta = -12345;
+    private double depmin = -12345;
+    private double depmax = -12345;
+    private double scale = -12345;
+    private double odelta = -12345;
+    private double b = -12345;
+    private double e = -12345;
+    private double o = -12345;
+    private double a = -12345;
+    private double num9 = -12345;
+    // T マーカー
+    private double T0 = -12345;
+    private double T1 = -12345;
+    private double T2 = -12345;
+    private double T3 = -12345;
+    private double T4 = -12345;
+    private double T5 = -12345;
+    private double T6 = -12345;
+    private double T7 = -12345;
+    private double T8 = -12345;
+    private double T9 = -12345;
+    //
+    private double F = -12345;
+    private double RESP0 = -12345;
+    private double RESP1 = -12345;
+    private double RESP2 = -12345;
+    private double RESP3 = -12345;
+    private double RESP4 = -12345;
+    private double RESP5 = -12345;
+    private double RESP6 = -12345;
+    private double RESP7 = -12345;
+    private double RESP8 = -12345;
+    private double RESP9 = -12345;
+    private double stla = -12345;
+    private double stlo = -12345;
+    private double STEL = -12345;
+    private double STDP = -12345;
+    private double evla = -12345;
+    private double evlo = -12345;
+    private double EVEL = -12345;
+    private double evdp = -12345;
+    private double MAG = -12345;
+    private double USER0 = -12345;
+    private double USER1 = -12345;
+    private double USER2 = -12345;
+    private double USER3 = -12345;
+    private double USER4 = -12345;
+    private double USER5 = -12345;
+    private double USER6 = -12345;
+    private double USER7 = -12345;
+    private double USER8 = -12345;
+    private double USER9 = -12345;
+    private double DIST = -12345;
+    private double AZ = -12345;
+    private double BAZ = -12345;
+    private double GCARC = -12345;
+    private double num54 = -12345;
+    private double num55 = -12345;
+    private double DEPMEN = -12345;
+    private double CMPAZ = -12345;
+    private double CMPINC = -12345;
+    private double XMINIMUM = -12345;
+    private double XMAXIMUM = -12345;
+    private double YMINIMUM = -12345;
+    private double YMAXIMUM = -12345;
+    private double num63 = -12345;
+    private double num64 = -12345;
+    private double num65 = -12345;
+    private double num66 = -12345;
+    private double num67 = -12345;
+    private double num68 = -12345;
+    private double num69 = -12345;
+    private int nzyear = -12345;
+    private int nzjday = -12345;
+    private int nzhour = -12345;
+    private int nzmin = -12345;
+    private int nzsec = -12345;
+    private int nzmsec = -12345;
+    /**
+     * a version of header
+     */
+    private int nvhdr = 6; // ヘッダーのバージョン
+    private int NORID = -12345;
+    private int NEVID = -12345;
+    private int npts = -12345;
+    private int num80 = -12345;
+    private int NWFID = -12345;
+    private int nxsize = -12345;
+    private int NYSIZE = -12345;
+    private int num84 = -12345;
+    private int IFTYPE = 1; // timeseries
+    private int IDEP = 5; // Unknown
+    private int IZTYPE = -12345;
+    private int num88 = -12345;
+    private int IINST = -12345;
+    private int ISTREG = -12345;
+    private int IEVREG = -12345;
+    private int IEVTYP = -12345;
+    private int IQUAL = -12345;
+    private int ISYNTH = -12345;
+    private int IMAGTYP = -12345;
+    private int IMAGSRC = -12345;
+    private int num97 = -12345;
+    private int num98 = -12345;
+    private int num99 = -12345;
+    private int num100 = -12345;
+    private int num101 = -12345;
+    private int num102 = -12345;
+    private int num103 = -12345;
+    private int num104 = -12345;
+    private boolean leven = true;
+    private boolean lpspol = false;
+    // write over ok or not
+    private boolean lovrok = true;
+    private boolean lcalda = true;
+    private boolean num109 = false;
+    /**
+     * a name of station
+     */
+    private String kstnm = "-12345";
+    private String KEVNM = "-12345";
+    private String KHOLE = "-12345";
+    private String KO = "-12345";
+    private String KA = "-12345";
+    private String KT0 = "-12345";
+    private String KT1 = "-12345";
+    private String KT2 = "-12345";
+    private String KT3 = "-12345";
+    private String KT4 = "-12345";
+    private String KT5 = "-12345";
+    private String KT6 = "-12345";
+    private String KT7 = "-12345";
+    private String KT8 = "-12345";
+    private String KT9 = "-12345";
+    private String KF = "-12345";
+    private String KUSER0 = "-12345";
+    private String KUSER1 = "-12345";
+    private String KUSER2 = "-12345";
+    private String KCMPNM = "-12345";
+    /**
+     * a name of network
+     */
+    private String knetwk = "-12345";
+    private String KDATRD = "-12345";
+    private String KINST = "-12345";
+
+    /**
+     * Header values will be read in SAC named the input sacFileName
+     *
+     * @param sacFileName to be read
+     * @throws IOException if an I/O error occurs.
+     */
+    SACHeader(SACFileName sacFileName) throws IOException {
+        read(sacFileName);
     }
 
     /**
@@ -29,6 +176,15 @@ class SACHeader implements SACHeaderData, Cloneable {
      */
     private static double toDouble(float value) {
         return Double.parseDouble(Float.toString(value));
+    }
+
+    @Override
+    public SACHeader clone() {
+        try {
+            return (SACHeader) super.clone();
+        } catch (Exception e) {
+            throw new RuntimeException("UNEXPecTEd");
+        }
     }
 
     /**
@@ -172,16 +328,6 @@ class SACHeader implements SACHeaderData, Cloneable {
             KDATRD = stream.readString(8);
             KINST = stream.readString(8);
         }
-    }
-
-    /**
-     * Header values will be read in SAC named the input sacFileName
-     *
-     * @param sacFileName to be read
-     * @throws IOException if an I/O error occurs.
-     */
-    SACHeader(SACFileName sacFileName) throws IOException {
-        read(sacFileName);
     }
 
     @Override
@@ -1054,151 +1200,5 @@ class SACHeader implements SACHeaderData, Cloneable {
                 throw new RuntimeException("Unanticipated happens");
         }
     }
-
-    private double delta = -12345;
-    private double depmin = -12345;
-    private double depmax = -12345;
-    private double scale = -12345;
-    private double odelta = -12345;
-    private double b = -12345;
-    private double e = -12345;
-    private double o = -12345;
-    private double a = -12345;
-    private double num9 = -12345;
-    // T マーカー
-    private double T0 = -12345;
-    private double T1 = -12345;
-    private double T2 = -12345;
-    private double T3 = -12345;
-    private double T4 = -12345;
-    private double T5 = -12345;
-    private double T6 = -12345;
-    private double T7 = -12345;
-    private double T8 = -12345;
-    private double T9 = -12345;
-    //
-    private double F = -12345;
-    private double RESP0 = -12345;
-    private double RESP1 = -12345;
-    private double RESP2 = -12345;
-    private double RESP3 = -12345;
-    private double RESP4 = -12345;
-    private double RESP5 = -12345;
-    private double RESP6 = -12345;
-    private double RESP7 = -12345;
-    private double RESP8 = -12345;
-    private double RESP9 = -12345;
-    private double stla = -12345;
-    private double stlo = -12345;
-    private double STEL = -12345;
-    private double STDP = -12345;
-    private double evla = -12345;
-    private double evlo = -12345;
-    private double EVEL = -12345;
-    private double evdp = -12345;
-    private double MAG = -12345;
-    private double USER0 = -12345;
-    private double USER1 = -12345;
-    private double USER2 = -12345;
-    private double USER3 = -12345;
-    private double USER4 = -12345;
-    private double USER5 = -12345;
-    private double USER6 = -12345;
-    private double USER7 = -12345;
-    private double USER8 = -12345;
-    private double USER9 = -12345;
-    private double DIST = -12345;
-    private double AZ = -12345;
-    private double BAZ = -12345;
-    private double GCARC = -12345;
-    private double num54 = -12345;
-    private double num55 = -12345;
-    private double DEPMEN = -12345;
-    private double CMPAZ = -12345;
-    private double CMPINC = -12345;
-    private double XMINIMUM = -12345;
-    private double XMAXIMUM = -12345;
-    private double YMINIMUM = -12345;
-    private double YMAXIMUM = -12345;
-    private double num63 = -12345;
-    private double num64 = -12345;
-    private double num65 = -12345;
-    private double num66 = -12345;
-    private double num67 = -12345;
-    private double num68 = -12345;
-    private double num69 = -12345;
-    private int nzyear = -12345;
-    private int nzjday = -12345;
-    private int nzhour = -12345;
-    private int nzmin = -12345;
-    private int nzsec = -12345;
-    private int nzmsec = -12345;
-    /**
-     * a version of header
-     */
-    private int nvhdr = 6; // ヘッダーのバージョン
-    private int NORID = -12345;
-    private int NEVID = -12345;
-    private int npts = -12345;
-    private int num80 = -12345;
-    private int NWFID = -12345;
-    private int nxsize = -12345;
-    private int NYSIZE = -12345;
-    private int num84 = -12345;
-    private int IFTYPE = 1; // timeseries
-    private int IDEP = 5; // Unknown
-    private int IZTYPE = -12345;
-    private int num88 = -12345;
-    private int IINST = -12345;
-    private int ISTREG = -12345;
-    private int IEVREG = -12345;
-    private int IEVTYP = -12345;
-    private int IQUAL = -12345;
-    private int ISYNTH = -12345;
-    private int IMAGTYP = -12345;
-    private int IMAGSRC = -12345;
-    private int num97 = -12345;
-    private int num98 = -12345;
-    private int num99 = -12345;
-    private int num100 = -12345;
-    private int num101 = -12345;
-    private int num102 = -12345;
-    private int num103 = -12345;
-    private int num104 = -12345;
-    private boolean leven = true;
-    private boolean lpspol = false;
-    // write over ok or not
-    private boolean lovrok = true;
-    private boolean lcalda = true;
-    private boolean num109 = false;
-    /**
-     * a name of station
-     */
-    private String kstnm = "-12345";
-    private String KEVNM = "-12345";
-    private String KHOLE = "-12345";
-    private String KO = "-12345";
-    private String KA = "-12345";
-    private String KT0 = "-12345";
-    private String KT1 = "-12345";
-    private String KT2 = "-12345";
-    private String KT3 = "-12345";
-    private String KT4 = "-12345";
-    private String KT5 = "-12345";
-    private String KT6 = "-12345";
-    private String KT7 = "-12345";
-    private String KT8 = "-12345";
-    private String KT9 = "-12345";
-    private String KF = "-12345";
-    private String KUSER0 = "-12345";
-    private String KUSER1 = "-12345";
-    private String KUSER2 = "-12345";
-    private String KCMPNM = "-12345";
-    /**
-     * a name of network
-     */
-    private String knetwk = "-12345";
-    private String KDATRD = "-12345";
-    private String KINST = "-12345";
 
 }
