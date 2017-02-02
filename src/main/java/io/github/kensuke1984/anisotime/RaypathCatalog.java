@@ -1,10 +1,12 @@
 package io.github.kensuke1984.anisotime;
 
-import java.io.IOException;
-import java.io.InvalidClassException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+import org.apache.commons.math3.fitting.PolynomialCurveFitter;
+import org.apache.commons.math3.fitting.WeightedObservedPoints;
+
+import java.io.*;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
@@ -13,13 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
-
-import io.github.kensuke1984.kibrary.Environment;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
-import org.apache.commons.math3.fitting.WeightedObservedPoints;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Raypath catalogue for one model
@@ -35,50 +30,22 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  */
 public class RaypathCatalog implements Serializable {
     /**
-     * 2017/1/20
-     */
-    private static final long serialVersionUID = 6217165062016323038L;
-
-    /**
-     * check which phases exist.
-     * if P and SV exist, then 0b101000 returns.
-     *
-     * @param raypath to check
-     * @return binary of P PcP SV SvcS SH SHcS (NaN:0 or 1)
-     */
-    private static int checkRaypath(Raypath raypath) {
-        int flag = 0;
-        double earthRadius = raypath.getStructure().earthRadius();
-        if (raypath.exists(earthRadius, Phase.P)) flag |= 32;
-        else if (raypath.exists(earthRadius, Phase.PcP)) flag |= 16;
-        if (raypath.exists(earthRadius, Phase.SV)) flag |= 8;
-        else if (raypath.exists(earthRadius, Phase.SVcS)) flag |= 4;
-        if (raypath.exists(earthRadius, Phase.S)) flag |= 2;
-        else if (raypath.exists(earthRadius, Phase.ScS)) flag |= 1;
-        return flag;
-    }
-
-    private static final Path share = Environment.KIBRARY_HOME.resolve("share");
-
-    /**
-     * Woodhouse formula with certain velocity structure
-     */
-    private final Woodhouse1981 WOODHOUSE;
-
-    /**
      * Catalog for PREM. &delta;&Delta; = 1. Mesh is simple.
      */
     public final static RaypathCatalog PREM;
-
     /**
      * Catalog for the isotropic PREM. &delta;&Delta; = 1. Mesh is simple.
      */
     public final static RaypathCatalog ISO_PREM;
-
     /**
      * Catalog for AK135. &delta;&Delta; = 1. Mesh is simple.
      */
     public final static RaypathCatalog AK135;
+    /**
+     * 2017/1/20
+     */
+    private static final long serialVersionUID = 6217165062016323038L;
+    private static final Path share = Environment.KIBRARY_HOME.resolve("share");
 
     static {
         try {
@@ -120,26 +87,15 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @return Woodhouse1981 used in the catalog.
+     * Minimum value of &delta;p (ray parameter). Even if similar raypaths
+     * satisfying {@link #D_DELTA} are not found within this value, a catalogue
+     * does not have a denser ray parameter than the value.
      */
-    Woodhouse1981 getWoodhouse1981() {
-        return WOODHOUSE;
-    }
-
+    final double MINIMUM_DELTA_P = 0.01;
     /**
-     * @return Velocity structure used in the catalog.
+     * Woodhouse formula with certain velocity structure
      */
-    public VelocityStructure getStructure() {
-        return WOODHOUSE.getStructure();
-    }
-
-    /**
-     * @return Raypaths in a catalog in order by the p (ray parameter).
-     */
-    public Raypath[] getRaypaths() {
-        return raypathList.toArray(new Raypath[raypathList.size()]);
-    }
-
+    private final Woodhouse1981 WOODHOUSE;
     /**
      * This value is in [rad].
      * <p>
@@ -151,36 +107,70 @@ public class RaypathCatalog implements Serializable {
      * otherwise either only one of them is stored.
      */
     private final double D_DELTA;
-
     /**
      * Standard &delta;p (ray parameter). In case the &delta;p is too big to
      * have &Delta; satisfying {@link #D_DELTA}, another value (2.5, 1.25) is
      * used instantly.
      */
     private final double DELTA_P = 5;
-
-    /**
-     * Minimum value of &delta;p (ray parameter). Even if similar raypaths
-     * satisfying {@link #D_DELTA} are not found within this value, a catalogue
-     * does not have a denser ray parameter than the value.
-     */
-    final double MINIMUM_DELTA_P = 0.01;
-
     /**
      * List of stored raypaths. Ordered by each ray parameter p.
      */
     private final TreeSet<Raypath> raypathList = new TreeSet<>();
-
     /**
      * Mesh for computation
      */
     private final ComputationalMesh MESH;
+    private final transient TreeSet<Raypath> raypathPool = new TreeSet<>();
+    /**
+     * Raypath of Pdiff
+     */
+    private Raypath pDiff;
+    /**
+     * Raypath of SVdiff
+     */
+    private Raypath svDiff;
+    /**
+     * Raypath of SHdiff
+     */
+    private Raypath shDiff;
 
     /**
-     * @return {@link ComputationalMesh} used in the catalog.
+     * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
+     * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
+     * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue.<br>
+     * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
+     * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
+     * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
+     *
+     * @param structure for computation of raypaths
+     * @param mesh      for computation of raypaths.
+     * @param dDelta    &delta;&Delta; [rad] for creation of a catalog.
      */
-    ComputationalMesh getMesh() {
-        return MESH;
+    private RaypathCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
+        WOODHOUSE = new Woodhouse1981(structure);
+        if (dDelta <= 0) throw new IllegalArgumentException("Input dDelta must be positive.");
+        D_DELTA = dDelta;
+        MESH = mesh;
+    }
+
+    /**
+     * check which phases exist.
+     * if P and SV exist, then 0b101000 returns.
+     *
+     * @param raypath to check
+     * @return binary of P PcP SV SvcS SH SHcS (NaN:0 or 1)
+     */
+    private static int checkRaypath(Raypath raypath) {
+        int flag = 0;
+        double earthRadius = raypath.getStructure().earthRadius();
+        if (raypath.exists(earthRadius, Phase.P)) flag |= 32;
+        else if (raypath.exists(earthRadius, Phase.PcP)) flag |= 16;
+        if (raypath.exists(earthRadius, Phase.SV)) flag |= 8;
+        else if (raypath.exists(earthRadius, Phase.SVcS)) flag |= 4;
+        if (raypath.exists(earthRadius, Phase.S)) flag |= 2;
+        else if (raypath.exists(earthRadius, Phase.ScS)) flag |= 1;
+        return flag;
     }
 
     /**
@@ -235,38 +225,80 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
-     * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
-     * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue.<br>
-     * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
-     * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
-     * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
-     *
-     * @param structure for computation of raypaths
-     * @param mesh      for computation of raypaths.
-     * @param dDelta    &delta;&Delta; [rad] for creation of a catalog.
+     * @param path    the path for the catalogue file.
+     * @param options open option
+     * @return Catalogue read from the path
+     * @throws IOException            if any
+     * @throws ClassNotFoundException if any
      */
-    private RaypathCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
-        WOODHOUSE = new Woodhouse1981(structure);
-        if (dDelta <= 0) throw new IllegalArgumentException("Input dDelta must be positive.");
-        D_DELTA = dDelta;
-        MESH = mesh;
+    public static RaypathCatalog read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
+        try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(path, options))) {
+            return (RaypathCatalog) oi.readObject();
+        }
     }
 
     /**
-     * Raypath of Pdiff
+     * If an input angle is a radian for 370 deg, then one for 10 deg returns.
+     * If an input angle is a radian for 190 deg, then one for 170 deg returns.
+     *
+     * @param angle [rad]
+     * @return a relative angle for the input angle. The angle is [0,180]
      */
-    private Raypath pDiff;
+    private static double toRelativeAngle(double angle) {
+        while (0 < angle) angle -= 2 * Math.PI;
+        angle += 2 * Math.PI;
+        return angle <= Math.PI ? angle : 2 * Math.PI - angle;
+    }
 
     /**
-     * Raypath of SVdiff
+     * Assume that there is a regression curve f(&Delta;) = T for the small
+     * range. The function f is assumed to be a polynomial function. The degree
+     * of the function depends on the number of the input raypaths.
+     *
+     * @param targetPhase target phase
+     * @param eventR      [km] radius of event
+     * @param targetDelta [rad] epicentral distance to get T for
+     * @param raypaths    Polynomial interpolation is done with these. All the raypaths
+     *                    must be computed.
+     * @return travel time [s] for the target Delta estimated by the polynomial
+     * interpolation with the raypaths.
      */
-    private Raypath svDiff;
+    private static double interpolateTraveltime(Phase targetPhase, double eventR, double targetDelta,
+                                                Raypath... raypaths) {
+        WeightedObservedPoints deltaTime = new WeightedObservedPoints();
+        for (Raypath raypath : raypaths)
+            deltaTime.add(raypath.computeDelta(eventR, targetPhase), raypath.computeT(eventR, targetPhase));
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
+        return new PolynomialFunction(fitter.fit(deltaTime.toList())).value(targetDelta);
+    }
 
     /**
-     * Raypath of SHdiff
+     * @return Woodhouse1981 used in the catalog.
      */
-    private Raypath shDiff;
+    Woodhouse1981 getWoodhouse1981() {
+        return WOODHOUSE;
+    }
+
+    /**
+     * @return Velocity structure used in the catalog.
+     */
+    public VelocityStructure getStructure() {
+        return WOODHOUSE.getStructure();
+    }
+
+    /**
+     * @return Raypaths in a catalog in order by the p (ray parameter).
+     */
+    public Raypath[] getRaypaths() {
+        return raypathList.toArray(new Raypath[raypathList.size()]);
+    }
+
+    /**
+     * @return {@link ComputationalMesh} used in the catalog.
+     */
+    ComputationalMesh getMesh() {
+        return MESH;
+    }
 
     /**
      * TODO boundaries Computes ray parameters of diffraction phases (Pdiff and
@@ -411,8 +443,6 @@ public class RaypathCatalog implements Serializable {
         }
     }
 
-    private final transient TreeSet<Raypath> raypathPool = new TreeSet<>();
-
     /**
      * Look for a raypath to be a next one for the {@link #raypathList}. If one
      * is found and another is also found for the next next one, all are added
@@ -506,19 +536,6 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param path    the path for the catalogue file.
-     * @param options open option
-     * @return Catalogue read from the path
-     * @throws IOException            if any
-     * @throws ClassNotFoundException if any
-     */
-    public static RaypathCatalog read(Path path, OpenOption... options) throws IOException, ClassNotFoundException {
-        try (ObjectInputStream oi = new ObjectInputStream(Files.newInputStream(path, options))) {
-            return (RaypathCatalog) oi.readObject();
-        }
-    }
-
-    /**
      * Assume that there is a regression curve f(&Delta;) = p(ray parameter) for
      * the small range. The function f is assumed to be a polynomial function.
      * The degree of the function is 1.<S>depends on the number of the input raypaths.</S>
@@ -600,19 +617,6 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * If an input angle is a radian for 370 deg, then one for 10 deg returns.
-     * If an input angle is a radian for 190 deg, then one for 170 deg returns.
-     *
-     * @param angle [rad]
-     * @return a relative angle for the input angle. The angle is [0,180]
-     */
-    private static double toRelativeAngle(double angle) {
-        while (0 < angle) angle -= 2 * Math.PI;
-        angle += 2 * Math.PI;
-        return angle <= Math.PI ? angle : 2 * Math.PI - angle;
-    }
-
-    /**
      * @param targetPhase   target phase
      * @param eventR        [km] event radius
      * @param targetDelta   [rad] target &Delta;
@@ -648,28 +652,6 @@ public class RaypathCatalog implements Serializable {
             timeList.add(interpolateTraveltime(targetPhase, eventR, targetDelta, rayI, rayC, rayP, rayIn));
         }
         return timeList.stream().mapToDouble(Double::doubleValue).toArray();
-    }
-
-    /**
-     * Assume that there is a regression curve f(&Delta;) = T for the small
-     * range. The function f is assumed to be a polynomial function. The degree
-     * of the function depends on the number of the input raypaths.
-     *
-     * @param targetPhase target phase
-     * @param eventR      [km] radius of event
-     * @param targetDelta [rad] epicentral distance to get T for
-     * @param raypaths    Polynomial interpolation is done with these. All the raypaths
-     *                    must be computed.
-     * @return travel time [s] for the target Delta estimated by the polynomial
-     * interpolation with the raypaths.
-     */
-    private static double interpolateTraveltime(Phase targetPhase, double eventR, double targetDelta,
-                                                Raypath... raypaths) {
-        WeightedObservedPoints deltaTime = new WeightedObservedPoints();
-        for (Raypath raypath : raypaths)
-            deltaTime.add(raypath.computeDelta(eventR, targetPhase), raypath.computeT(eventR, targetPhase));
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypaths.length - 1);
-        return new PolynomialFunction(fitter.fit(deltaTime.toList())).value(targetDelta);
     }
 
     /**

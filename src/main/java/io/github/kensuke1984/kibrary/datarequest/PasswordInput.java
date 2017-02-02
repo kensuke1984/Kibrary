@@ -1,23 +1,12 @@
 package io.github.kensuke1984.kibrary.datarequest;
 
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.awt.Window;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Arrays;
-
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 
 /**
  * This class is based on a class provided as a Sample by Oracle. The copyright
@@ -34,6 +23,7 @@ class PasswordInput extends JPanel implements ActionListener {
 
     private JFrame controllingFrame; // needed for dialogs
     private JPasswordField passwordField;
+    private String password;
 
     private PasswordInput(JFrame f) {
         // Use the default FlowLayout.
@@ -56,51 +46,6 @@ class PasswordInput extends JPanel implements ActionListener {
 
         add(textPane);
         add(buttonPane);
-    }
-
-    private JComponent createButtonPanel() {
-        JPanel p = new JPanel(new GridLayout(0, 1));
-        JButton okButton = new JButton("OK");
-        JButton helpButton = new JButton("Help");
-
-        okButton.setActionCommand(OK);
-        helpButton.setActionCommand(HELP);
-        okButton.addActionListener(this);
-        helpButton.addActionListener(this);
-        p.add(okButton);
-        p.add(helpButton);
-        return p;
-    }
-
-    private String password;
-
-    String getPassword() throws InterruptedException {
-        while (password == null) Thread.sleep(10);
-        return password;
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String cmd = e.getActionCommand();
-
-        if (OK.equals(cmd)) { // Process the password.
-            char[] input = passwordField.getPassword();
-            password = String.copyValueOf(input);
-            // Zero out the possible password, for security.
-            Arrays.fill(input, '0');
-
-            passwordField.selectAll();
-            resetFocus();
-
-            ((Window) SwingUtilities.getRoot(this)).dispose();
-        } else { // The user has asked for help.
-            JOptionPane.showMessageDialog(controllingFrame, "Recall Geller's group password, would you?");
-        }
-    }
-
-    // Must be called from the event dispatch thread.
-    private void resetFocus() {
-        passwordField.requestFocusInWindow();
     }
 
     /*
@@ -131,6 +76,49 @@ class PasswordInput extends JPanel implements ActionListener {
         frame.pack();
         frame.setVisible(true);
         return newContentPane;
+    }
+
+    private JComponent createButtonPanel() {
+        JPanel p = new JPanel(new GridLayout(0, 1));
+        JButton okButton = new JButton("OK");
+        JButton helpButton = new JButton("Help");
+
+        okButton.setActionCommand(OK);
+        helpButton.setActionCommand(HELP);
+        okButton.addActionListener(this);
+        helpButton.addActionListener(this);
+        p.add(okButton);
+        p.add(helpButton);
+        return p;
+    }
+
+    String getPassword() throws InterruptedException {
+        while (password == null) Thread.sleep(10);
+        return password;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        String cmd = e.getActionCommand();
+
+        if (OK.equals(cmd)) { // Process the password.
+            char[] input = passwordField.getPassword();
+            password = String.copyValueOf(input);
+            // Zero out the possible password, for security.
+            Arrays.fill(input, '0');
+
+            passwordField.selectAll();
+            resetFocus();
+
+            ((Window) SwingUtilities.getRoot(this)).dispose();
+        } else { // The user has asked for help.
+            JOptionPane.showMessageDialog(controllingFrame, "Recall Geller's group password, would you?");
+        }
+    }
+
+    // Must be called from the event dispatch thread.
+    private void resetFocus() {
+        passwordField.requestFocusInWindow();
     }
 
 }

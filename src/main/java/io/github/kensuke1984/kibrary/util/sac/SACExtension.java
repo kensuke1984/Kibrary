@@ -16,42 +16,10 @@ package io.github.kensuke1984.kibrary.util.sac;
 public enum SACExtension {
     Z(1), R(2), T(3), Zs(1), Rs(2), Ts(3), Zsc(1), Rsc(2), Tsc(3), Zst(1), Rst(2), Tst(3), Zsct(1), Rsct(2), Tsct(3),;
 
-    /**
-     * If a waveform is an observed one, true.
-     *
-     * @return if it is convoluted.
-     */
-    public boolean isConvoluted() {
-        return this == Z || this == R || this == T || this == Zsc || this == Rsc || this == Tsc || this == Zsct ||
-                this == Rsct || this == Tsct;
-    }
-
     private final int value;
 
     SACExtension(int n) {
         value = n;
-    }
-
-    public SACComponent getComponent() {
-        return SACComponent.getComponent(value);
-    }
-
-    /**
-     * 観測波形かは\.[ZRT]$で終わるかどうか Z, R or T.
-     *
-     * @return if this is observed or not
-     */
-    public boolean isOBS() {
-        return this == Z || this == R || this == T;
-    }
-
-    /**
-     * 時間の偏微分係数かどうか
-     *
-     * @return if it is temporal partial.
-     */
-    public boolean isTemporalPartial() {
-        return this == Zsct || this == Rsct || this == Tsct || this == Zst || this == Rst || this == Tst;
     }
 
     /**
@@ -137,6 +105,38 @@ public enum SACExtension {
             default:
                 throw new RuntimeException("Unexpected happens.");
         }
+    }
+
+    /**
+     * If a waveform is an observed one, true.
+     *
+     * @return if it is convoluted.
+     */
+    public boolean isConvoluted() {
+        return this == Z || this == R || this == T || this == Zsc || this == Rsc || this == Tsc || this == Zsct ||
+                this == Rsct || this == Tsct;
+    }
+
+    public SACComponent getComponent() {
+        return SACComponent.getComponent(value);
+    }
+
+    /**
+     * 観測波形かは\.[ZRT]$で終わるかどうか Z, R or T.
+     *
+     * @return if this is observed or not
+     */
+    public boolean isOBS() {
+        return this == Z || this == R || this == T;
+    }
+
+    /**
+     * 時間の偏微分係数かどうか
+     *
+     * @return if it is temporal partial.
+     */
+    public boolean isTemporalPartial() {
+        return this == Zsct || this == Rsct || this == Tsct || this == Zst || this == Rst || this == Tst;
     }
 
 }

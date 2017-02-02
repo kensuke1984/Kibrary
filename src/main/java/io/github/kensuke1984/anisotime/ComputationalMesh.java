@@ -1,14 +1,14 @@
 package io.github.kensuke1984.anisotime;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.stream.DoubleStream;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.RealVector;
 
 /**
  * Radius interval for integration. TODO
@@ -24,16 +24,14 @@ import org.apache.commons.math3.linear.RealVector;
 public class ComputationalMesh implements Serializable {
 
     /**
-     * 2016/12/3
-     */
-    private static final long serialVersionUID = 9145563734176848831L;
-
-    /**
      * when integrate values on boundaries, use the value at point very close to
      * the boundaries by eps. The value is 1e-7
      */
     static final double eps = 1e-7;
-
+    /**
+     * 2016/12/3
+     */
+    private static final long serialVersionUID = 9145563734176848831L;
     /**
      * Threshold for the integration. This value (ratio) must be positive and
      * less than 1. If it is a, the difference between two Q<sub>T</sub> at
@@ -67,16 +65,38 @@ public class ComputationalMesh implements Serializable {
     private transient RealVector mantleMesh;
 
     /**
-     * @param structure to create mesh for
+     * @param structure         to create mesh for
      * @param innerCoreInterval [km] interval in the inner-core
      * @param outerCoreInterval [km] interval in the outer-core
-     * @param mantleInterval [km] interval in the mantle
+     * @param mantleInterval    [km] interval in the mantle
      */
     ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                       double mantleInterval) {
         if (innerCoreInterval < eps || outerCoreInterval < eps || mantleInterval < eps)
             throw new RuntimeException("Intervals are too small.");
         createSimpleMesh(structure, innerCoreInterval, outerCoreInterval, mantleInterval);
+    }
+
+    /**
+     * Interval of integration startR to endR is divided by deltaR
+     *
+     * @param startR [km]
+     * @param endR   [km]
+     * @param deltaR [km]
+     * @return Array of radius [km]
+     */
+    private static double[] point(double startR, double endR, double deltaR) {
+        int n = Math.max(1, (int) Math.round((endR - startR) / deltaR));
+        double[] x = new double[n + 1];
+        for (int i = 0; i < n; i++)
+            x[i] = startR + i * deltaR;
+        x[0] = startR + eps;
+        x[n] = endR - eps;
+        return x;
+    }
+
+    public static ComputationalMesh simple(VelocityStructure structure) {
+        return new ComputationalMesh(structure, 1, 1, 1);
     }
 
     /**
@@ -157,24 +177,6 @@ public class ComputationalMesh implements Serializable {
     }
 
     /**
-     * Interval of integration startR to endR is divided by deltaR
-     *
-     * @param startR [km]
-     * @param endR   [km]
-     * @param deltaR [km]
-     * @return Array of radius [km]
-     */
-    private static double[] point(double startR, double endR, double deltaR) {
-        int n = Math.max(1, (int) Math.round((endR - startR) / deltaR));
-        double[] x = new double[n + 1];
-        for (int i = 0; i < n; i++)
-            x[i] = startR + i * deltaR;
-        x[0] = startR + eps;
-        x[n] = endR - eps;
-        return x;
-    }
-
-    /**
      * @param r         [km] must be [min, max(+{@link #eps})] of the partition.
      * @param partition in which the r is found
      * @return index of maximum r<sub>i</sub> (r<sub>i</sub> &le; r) in the
@@ -192,10 +194,6 @@ public class ComputationalMesh implements Serializable {
             if (r < mesh.getEntry(i)) return i - 1;
 
         return mesh.getDimension() - 1;
-    }
-
-    public static ComputationalMesh simple(VelocityStructure structure) {
-        return new ComputationalMesh(structure, 1, 1, 1);
     }
 
     private void writeObject(ObjectOutputStream stream) throws IOException {

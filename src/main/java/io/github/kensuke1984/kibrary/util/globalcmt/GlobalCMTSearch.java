@@ -1,5 +1,10 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
+import io.github.kensuke1984.kibrary.util.Location;
+import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.math3.util.Precision;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
@@ -9,12 +14,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.commons.math3.util.Precision;
-
-import io.github.kensuke1984.kibrary.util.Location;
 
 /**
  * Global CMT searchを行う時のQuery
@@ -26,6 +25,121 @@ import io.github.kensuke1984.kibrary.util.Location;
 public class GlobalCMTSearch {
 
     private static DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+    /**
+     * Added predicate set.
+     */
+    private Set<Predicate<GlobalCMTData>> predicateSet = new HashSet<>();
+    /**
+     * end date and time for CMT
+     */
+    private LocalDateTime endDate;
+    /**
+     * the lower limit of centroid time shift Default: -9999
+     */
+    private double lowerCentroidTimeShift = -9999;
+    /**
+     * the lower limit of depth range Default: 0
+     */
+    private double lowerDepth;
+    /**
+     * the lower limit of latitude range [-90:90] Default: -90
+     */
+    private double lowerLatitude = -90;
+    /**
+     * the lower limit of longitude range [-180:180] Default: -180
+     */
+    private double lowerLongitude = -180;
+    /**
+     * the lower limit of bodywave magnitude Default: 0
+     */
+    private double lowerMb;
+    /**
+     * the lower limit of surface wave magnitude Default: 0
+     */
+    private double lowerMs;
+    /**
+     * the lower limit of moment magnitude Default: 0
+     */
+    private double lowerMw;
+    /**
+     * the lower limit of null axis plunge [0, 90] (degree) Default: 0
+     */
+    private int lowerNullAxisPlunge;
+    /**
+     * the lower limit of tension axis plunge [0, 90] (degree) Default: 0
+     */
+    private int lowerTensionAxisPlunge;
+    /**
+     * start date and time for CMT
+     */
+    private LocalDateTime startDate;
+    /**
+     * the upper limit of centroid time shift Default: 9999
+     */
+    private double upperCentroidTimeShift = 9999;
+    /**
+     * the upper limit of depth range Default: 1000
+     */
+    private double upperDepth = 1000;
+    /**
+     * the upper limit of latitude range [-90:90] Default: 90
+     */
+    private double upperLatitude = 90;
+    /**
+     * the upper limit of longitude range [-180:180] Default: 180
+     */
+    private double upperLongitude = 180;
+    /**
+     * the upper limit of bodywave magnitude Default: 10
+     */
+    private double upperMb = 10;
+    /**
+     * the upper limit of surface wave magnitude Default: 10
+     */
+    private double upperMs = 10;
+    /**
+     * the upper limit of moment magnitude Default: 10
+     */
+    private double upperMw = 10;
+    /**
+     * the upper limit of null axis plunge [0, 90] (degree) Default: 90
+     */
+    private int upperNullAxisPlunge = 90;
+    /**
+     * the upper limit of tension axis plunge [0, 90] (degree) Default: 90
+     */
+    private int upperTensionAxisPlunge = 90;
+
+    /**
+     * Search on 1 day.
+     *
+     * @param startDate on which this searches
+     */
+    public GlobalCMTSearch(LocalDate startDate) {
+        this(startDate, startDate);
+    }
+
+    /**
+     * Search from the startDate to endDate
+     *
+     * @param startDate starting date of the search (included)
+     * @param endDate   end date of the search (included)
+     */
+    public GlobalCMTSearch(LocalDate startDate, LocalDate endDate) {
+        this.startDate = startDate.atTime(0, 0);
+        this.endDate = endDate.plusDays(1).atTime(0, 0);
+    }
+
+    /**
+     * Search from the startDate to endDate
+     *
+     * @param startDate starting date of the search (included)
+     * @param endDate   end date of the search (included)
+     */
+    public GlobalCMTSearch(LocalDateTime startDate, LocalDateTime endDate) {
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 
     /**
      * show date and time of event id
@@ -72,142 +186,6 @@ public class GlobalCMTSearch {
         return new HashSet<>(predicateSet);
     }
 
-    /**
-     * Added predicate set.
-     */
-    private Set<Predicate<GlobalCMTData>> predicateSet = new HashSet<>();
-
-    /**
-     * end date and time for CMT
-     */
-    private LocalDateTime endDate;
-
-    /**
-     * the lower limit of centroid time shift Default: -9999
-     */
-    private double lowerCentroidTimeShift = -9999;
-
-    /**
-     * the lower limit of depth range Default: 0
-     */
-    private double lowerDepth;
-
-    /**
-     * the lower limit of latitude range [-90:90] Default: -90
-     */
-    private double lowerLatitude = -90;
-
-    /**
-     * the lower limit of longitude range [-180:180] Default: -180
-     */
-    private double lowerLongitude = -180;
-
-    /**
-     * the lower limit of bodywave magnitude Default: 0
-     */
-    private double lowerMb;
-
-    /**
-     * the lower limit of surface wave magnitude Default: 0
-     */
-    private double lowerMs;
-
-    /**
-     * the lower limit of moment magnitude Default: 0
-     */
-    private double lowerMw;
-
-    /**
-     * the lower limit of null axis plunge [0, 90] (degree) Default: 0
-     */
-    private int lowerNullAxisPlunge;
-
-    /**
-     * the lower limit of tension axis plunge [0, 90] (degree) Default: 0
-     */
-    private int lowerTensionAxisPlunge;
-
-    /**
-     * start date and time for CMT
-     */
-    private LocalDateTime startDate;
-
-    /**
-     * the upper limit of centroid time shift Default: 9999
-     */
-    private double upperCentroidTimeShift = 9999;
-
-    /**
-     * the upper limit of depth range Default: 1000
-     */
-    private double upperDepth = 1000;
-
-    /**
-     * the upper limit of latitude range [-90:90] Default: 90
-     */
-    private double upperLatitude = 90;
-
-    /**
-     * the upper limit of longitude range [-180:180] Default: 180
-     */
-    private double upperLongitude = 180;
-
-    /**
-     * the upper limit of bodywave magnitude Default: 10
-     */
-    private double upperMb = 10;
-
-    /**
-     * the upper limit of surface wave magnitude Default: 10
-     */
-    private double upperMs = 10;
-
-    /**
-     * the upper limit of moment magnitude Default: 10
-     */
-    private double upperMw = 10;
-
-    /**
-     * the upper limit of null axis plunge [0, 90] (degree) Default: 90
-     */
-    private int upperNullAxisPlunge = 90;
-
-    /**
-     * the upper limit of tension axis plunge [0, 90] (degree) Default: 90
-     */
-    private int upperTensionAxisPlunge = 90;
-
-    /**
-     * Search on 1 day.
-     *
-     * @param startDate on which this searches
-     */
-    public GlobalCMTSearch(LocalDate startDate) {
-        this(startDate, startDate);
-    }
-
-    /**
-     * Search from the startDate to endDate
-     *
-     * @param startDate starting date of the search (included)
-     * @param endDate   end date of the search (included)
-     */
-    public GlobalCMTSearch(LocalDate startDate, LocalDate endDate) {
-        this.startDate = startDate.atTime(0, 0);
-        this.endDate = endDate.plusDays(1).atTime(0, 0);
-    }
-
-    /**
-     * Search from the startDate to endDate
-     *
-     * @param startDate starting date of the search (included)
-     * @param endDate   end date of the search (included)
-     */
-    public GlobalCMTSearch(LocalDateTime startDate, LocalDateTime endDate) {
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
-
     public LocalDateTime getEndDate() {
         return endDate;
     }
@@ -244,8 +222,16 @@ public class GlobalCMTSearch {
         return lowerNullAxisPlunge;
     }
 
+    public void setLowerNullAxisPlunge(int lowerNullAxisPlunge) {
+        this.lowerNullAxisPlunge = lowerNullAxisPlunge;
+    }
+
     public int getLowerTensionAxisPlunge() {
         return lowerTensionAxisPlunge;
+    }
+
+    public void setLowerTensionAxisPlunge(int lowerTensionAxisPlunge) {
+        this.lowerTensionAxisPlunge = lowerTensionAxisPlunge;
     }
 
     public LocalDateTime getStartDate() {
@@ -284,8 +270,16 @@ public class GlobalCMTSearch {
         return upperNullAxisPlunge;
     }
 
+    public void setUpperNullAxisPlunge(int upperNullAxisPlunge) {
+        this.upperNullAxisPlunge = upperNullAxisPlunge;
+    }
+
     public int getUpperTensionAxisPlunge() {
         return upperTensionAxisPlunge;
+    }
+
+    public void setUpperTensionAxisPlunge(int upperTensionAxisPlunge) {
+        this.upperTensionAxisPlunge = upperTensionAxisPlunge;
     }
 
     /**
@@ -384,14 +378,6 @@ public class GlobalCMTSearch {
         this.upperLongitude = upperLongitude;
     }
 
-    public void setLowerNullAxisPlunge(int lowerNullAxisPlunge) {
-        this.lowerNullAxisPlunge = lowerNullAxisPlunge;
-    }
-
-    public void setLowerTensionAxisPlunge(int lowerTensionAxisPlunge) {
-        this.lowerTensionAxisPlunge = lowerTensionAxisPlunge;
-    }
-
     /**
      * Set mb range
      *
@@ -452,14 +438,6 @@ public class GlobalCMTSearch {
         if (lowerTensionAxisPlunge < 0 || upperTensionAxisPlunge < lowerTensionAxisPlunge ||
                 90 < upperTensionAxisPlunge) throw new RuntimeException("invalid tension axis plunge range");
         this.lowerTensionAxisPlunge = lowerTensionAxisPlunge;
-        this.upperTensionAxisPlunge = upperTensionAxisPlunge;
-    }
-
-    public void setUpperNullAxisPlunge(int upperNullAxisPlunge) {
-        this.upperNullAxisPlunge = upperNullAxisPlunge;
-    }
-
-    public void setUpperTensionAxisPlunge(int upperTensionAxisPlunge) {
         this.upperTensionAxisPlunge = upperTensionAxisPlunge;
     }
 

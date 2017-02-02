@@ -1,12 +1,12 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -14,10 +14,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import io.github.kensuke1984.kibrary.Operation;
-import io.github.kensuke1984.kibrary.Property;
-import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Java version First handler ported from the perl software.<br>
@@ -45,6 +41,27 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @version 0.2.1.3
  */
 public class FirstHandler implements Operation {
+    private double samplingHz;
+    /**
+     * which catalog to use 0:CMT 1: PDE
+     */
+    private int catalog;
+    /**
+     * if remove intermediate file
+     */
+    private boolean removeIntermediateFile;
+    /**
+     * output directory
+     */
+    private Path outPath;
+    private Path workPath;
+    private Properties property;
+
+    public FirstHandler(Properties property) {
+        this.property = (Properties) property.clone();
+        set();
+    }
+
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(FirstHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -64,9 +81,16 @@ public class FirstHandler implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    public FirstHandler(Properties property) {
-        this.property = (Properties) property.clone();
-        set();
+    /**
+     * @param args [parameter file name]
+     */
+    public static void main(String[] args) throws IOException {
+        FirstHandler fh = new FirstHandler(Property.parse(args));
+        long startT = System.nanoTime();
+        System.err.println(FirstHandler.class.getName() + " is going");
+        fh.run();
+        System.err.println(
+                FirstHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
     }
 
     private void checkAndPutDefaults() {
@@ -96,35 +120,6 @@ public class FirstHandler implements Operation {
                 throw new RuntimeException("Invalid catalog name.");
         }
         removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
-    }
-
-    private double samplingHz;
-
-    /**
-     * which catalog to use 0:CMT 1: PDE
-     */
-    private int catalog;
-
-    /**
-     * if remove intermediate file
-     */
-    private boolean removeIntermediateFile;
-
-    /**
-     * output directory
-     */
-    private Path outPath;
-
-    /**
-     * @param args [parameter file name]
-     */
-    public static void main(String[] args) throws IOException {
-        FirstHandler fh = new FirstHandler(Property.parse(args));
-        long startT = System.nanoTime();
-        System.err.println(FirstHandler.class.getName() + " is going");
-        fh.run();
-        System.err.println(
-                FirstHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
     }
 
     @Override
@@ -192,14 +187,10 @@ public class FirstHandler implements Operation {
 
     }
 
-    private Path workPath;
-
     @Override
     public Path getWorkPath() {
         return workPath;
     }
-
-    private Properties property;
 
     @Override
     public Properties getProperties() {

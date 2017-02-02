@@ -13,12 +13,8 @@ public enum ElasticMN {
 
     private final int value;
 
-    public int getM() {
-        return value / 10;
-    }
-
-    public int getN() {
-        return value % 10;
+    ElasticMN(int n) {
+        value = n;
     }
 
     private static int toInt(int i) {
@@ -64,14 +60,6 @@ public enum ElasticMN {
         return valueOf(m, n);
     }
 
-    ElasticMN(int n) {
-        value = n;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
     /**
      * @param m index m
      * @param n index n
@@ -82,6 +70,18 @@ public enum ElasticMN {
         for (ElasticMN mn : values())
             if (mn.getValue() == k) return mn;
         throw new IllegalArgumentException("input (m,n) : (" + m + ", " + n + ") is invalid");
+    }
+
+    public int getM() {
+        return value / 10;
+    }
+
+    public int getN() {
+        return value % 10;
+    }
+
+    public int getValue() {
+        return value;
     }
 
 }

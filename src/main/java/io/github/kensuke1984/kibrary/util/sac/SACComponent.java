@@ -18,13 +18,6 @@ public enum SACComponent {
     }
 
     /**
-     * @return 1(Z), 2(R), 3(T)
-     */
-    public int valueOf() {
-        return value;
-    }
-
-    /**
      * @param n index 1, 2, 3
      * @return Z(1) R(2) T(3)
      * @throws IllegalArgumentException if the input n is not 1,2,3
@@ -48,6 +41,13 @@ public enum SACComponent {
      */
     public static SACComponent of(SACHeaderData sacHeaderData) {
         return sacHeaderData.getComponent();
+    }
+
+    /**
+     * @return 1(Z), 2(R), 3(T)
+     */
+    public int valueOf() {
+        return value;
     }
 
 }

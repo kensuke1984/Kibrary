@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.firsthandler;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,8 +9,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
-
-import io.github.kensuke1984.kibrary.util.Utilities;
 
 /**
  * Merging of SAC files
@@ -32,6 +32,11 @@ class UnevenSACMerger {
      * box for files that cannot be merged マージできなかったファイルの行き先
      */
     private Path notMergedBoxPath;
+    /**
+     * SacFileNameのリスト
+     */
+    private SACFileName[] sacFileNameList;
+    private Set<SACGroup> sacGroupSet = new HashSet<>();
 
     /**
      * Uneven Sacをmergeする作業フォルダ
@@ -44,11 +49,6 @@ class UnevenSACMerger {
         notMergedBoxPath = workPath.resolve("nonMergedUnevendata");
         listUpSacFiles();
     }
-
-    /**
-     * SacFileNameのリスト
-     */
-    private SACFileName[] sacFileNameList;
 
     /**
      * 作業フォルダの下から.SACファイルを拾う
@@ -66,8 +66,6 @@ class UnevenSACMerger {
         createGroups(sacFileNameList);
 
     }
-
-    private Set<SACGroup> sacGroupSet = new HashSet<>();
 
     /**
      * すべての {@link #sacGroupSet}をmergeする その後ファイルはゴミ箱へ

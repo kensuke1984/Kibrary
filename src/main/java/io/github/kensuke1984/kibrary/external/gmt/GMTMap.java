@@ -1,317 +1,271 @@
 package io.github.kensuke1984.kibrary.external.gmt;
 
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Utilities;
+
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Utilities;
-
 /**
  * Helper for use of GMT
- * 
- * 
- * @version 0.0.3.4
- * 
- * 
+ *
  * @author Kensuke Konishi
- * 
+ * @version 0.0.3.4
  */
 public final class GMTMap {
 
-	/**
-	 * the minimum value of longitude range the default value is 0
-	 */
-	private int minLongitude = 0;
+    String rOption;
+    /**
+     * the minimum value of longitude range the default value is 0
+     */
+    private int minLongitude = 0;
+    /**
+     * the maximum value of longitude range the default value is 360
+     */
+    private int maxLongitude = 360;
+    /**
+     * the minimum value of latitude range the default value is -90
+     */
+    private int minLatitude = -90;
+    /**
+     * the maximum value of latitude range the default value is 90
+     */
+    private int maxLatitude = 90;
+    private String bOption = " -Bpxy30f10g10 ";
+    private String eventFile = "event.inf";
+    private String stationFile = "station.inf";
+    private String gridFile = "ans.grd";
+    private String perturbationPointFile = "perturbationPoint.inf";
+    private String mapName;
+    /**
+     * a name of an eps
+     */
+    private String epsFileName;
+    /**
+     * a name of a script
+     */
+    private String scriptFileName;
 
-	/**
-	 * the maximum value of longitude range the default value is 360
-	 */
-	private int maxLongitude = 360;
+    /**
+     * @param title        for the map
+     * @param minLongitude [deg]
+     * @param maxLongitude [deg]
+     * @param minLatitude  [deg]
+     * @param maxLatitude  [deg]
+     */
+    public GMTMap(String title, int minLongitude, int maxLongitude, int minLatitude, int maxLatitude) {
+        this.minLongitude = minLongitude;
+        this.maxLongitude = maxLongitude;
+        this.minLatitude = minLatitude;
+        this.maxLatitude = maxLatitude;
+        mapName = title.isEmpty() ? " " : title;
+        setROption();
+        epsFileName = "gmt" + Utilities.getTemporaryString() + ".eps";
+        scriptFileName = "gmt" + Utilities.getTemporaryString() + ".sh";
+    }
 
-	/**
-	 * the minimum value of latitude range the default value is -90
-	 */
-	private int minLatitude = -90;
+    /**
+     * @param symbol            type of marking
+     * @param symbolSize        size of symbols
+     * @param value             of plotting
+     * @param colorPalletPath   Path of a color pallet
+     * @param position          on the map
+     * @param additionalOptions if any options
+     * @return echo latitude longitude value | psxy -V -: -J -R -P -K -O symbol
+     * [additional] &gt;&gt; $psname
+     */
+    public static String psxy(Symbol symbol, double symbolSize, double value, Path colorPalletPath,
+                              HorizontalPosition position, String additionalOptions) {
+        String cpOption = " -C" + colorPalletPath;
+        return "echo " + position + " " + value + " " + symbolSize + " | " + "psxy -V -: -J -R " + symbol.getOption() +
+                cpOption + " " + additionalOptions + " -K -O -P  >> $psname";
+    }
 
-	/**
-	 * the maximum value of latitude range the default value is 90
-	 */
-	private int maxLatitude = 90;
+    /**
+     * @param symbol            type of marking
+     * @param symbolSize        size of symbols
+     * @param position          on the map
+     * @param additionalOptions if any options
+     * @return echo latitude longitude | psxy -V -: -J -R -P -K -O symbol
+     * [additional] &gt;&gt; $psname
+     */
+    public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position,
+                              String... additionalOptions) {
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
+        return "echo " + position.getLatitude() + " " + position.getLongitude() + " " + symbolSize + " | " +
+                "psxy -V -: -J -R " + symbol.getOption() + " " + additional + " -P -K -O >> $psname";
+    }
 
-	String rOption;
+    /**
+     * Draw a line from start to end
+     *
+     * @param start             start position of the line
+     * @param end               end position of the line
+     * @param additionalOptions any other options
+     * @return psxy -V -: -J -R -P -K -O [additional] &gt;&gt; $psname
+     */
+    public static String psxy(HorizontalPosition start, HorizontalPosition end, String... additionalOptions) {
+        String echoPart =
+                "echo -e " + start.getLatitude() + " " + start.getLongitude() + "\\\\n" + end.getLatitude() + " " +
+                        end.getLongitude();
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
+        String psxyPart = "psxy -V -: -J -R -P -K -O " + additional + " >>$psname";
+        // System.out.println(psxyPart);
+        return echoPart + " | " + psxyPart;
+    }
 
-	private void setROption() {
-		rOption = " -R" + minLongitude + "/" + maxLongitude + "/" + minLatitude + "/" + maxLatitude + " ";
-	}
+    /**
+     * @param name              of scale
+     * @param interval          of tics
+     * @param xpos              x position of edge
+     * @param ypos              y position of edge
+     * @param length            of scale
+     * @param width             of scale
+     * @param cptPath           Path of pallet
+     * @param additionalOptions if any
+     * @return psxy -V -K -O -P -Bname -Dxpos/ypos/length/width(h) -CcptPath >>
+     * $psname
+     */
+    public static String psscale(String name, double interval, double xpos, double ypos, double length, double width,
+                                 Path cptPath, String... additionalOptions) {
+        String dOption = " -D" + xpos + "/" + ypos + "/" + length + "/" + width + "h";
+        String bOption = " -B" + interval + "+l\"" + name + "\"";
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
+        String cOption = " -C" + cptPath;
+        return "psscale -V -K -O -P " + dOption + bOption + cOption + " " + additional + " >>$psname";
+    }
 
-	String getrOption() {
-		return rOption;
-	}
+    /**
+     * If you want to fill dry areas, then -Gcolor (e.g. -Gbrown)
+     *
+     * @param additionalOptions if any the return will have them. ex) National boundaries -N1
+     * @return pscoast -J -R -Bs -Dc -V -W -K -O (additional) &gt;&gt; $psname
+     */
+    public static String psCoast(String... additionalOptions) {
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
+        return "pscoast -J -R -B -Dc -W " + additional + " -V -P -K -O >> $psname";
+    }
 
-	void setrOption(String rOption) {
-		this.rOption = rOption;
-	}
+    private static void createGrid() {
+        String cmd;
+        String fileName = " hoge.dat ";
+        String gridFileName = " -G hoge.grd "; //
+        String region = " -R0/10/20/30 "; // xmin/xmax/ymin/ymax -F
+        String increment = " -I1/2 "; // x/y
+        cmd = "xyz2grd " + fileName + gridFileName + " -I0.4 " + region;
+        // surface test -Greal.grd -I1 -R-100/-85/0/40
+        // psxy g.txt -R-4/4/-4/4 -Jx1 -Ba1 -Sc0.6 -Ccp.cpt > g.eps
+        // grdsample
+        // xyz2grd 3505.dat -G3505.grd -R0/40/-100/-85 -I5
+        // xyz2grd 3505.dat -G3505.grd -R-105/-75/-10/40 -I5 -N0
+        // grdsample 3505.grd -G3505comp.grd -I1
+        // psscale -Ccp2.cpt -B5 -D7/3/8/1h -K -O >>$outputps
+        // project 3505.dat -Fxyzpqrs -C-90/0 -E-90/30 -L0/0 -W0/0
+        // grdimage cs.grd -Jx1 -Ccp2.cpt -Ba1 > test
+        // grdimage cs.grd -Jx0.5/0.1 -Ccp2.cpt -Ba10/a10 > test.ps
+        // surface cs.dat -Gcs.grd -I1 -R0/35/3505/3605 -N10
+        // grdimage 3505cs.grd -Jx0.5/0.1 -Ccp2.cpt -Ba10/a10 > test.ps
 
-	String getbOption() {
-		return bOption;
-	}
+    }
 
-	void setbOption(String bOption) {
-		this.bOption = bOption;
-	}
+    private void setROption() {
+        rOption = " -R" + minLongitude + "/" + maxLongitude + "/" + minLatitude + "/" + maxLatitude + " ";
+    }
 
-	private String bOption = " -Bpxy30f10g10 ";
+    String getrOption() {
+        return rOption;
+    }
 
-	private String eventFile = "event.inf";
+    void setrOption(String rOption) {
+        this.rOption = rOption;
+    }
 
-	private String stationFile = "station.inf";
+    String getbOption() {
+        return bOption;
+    }
 
-	private String gridFile = "ans.grd";
+    void setbOption(String bOption) {
+        this.bOption = bOption;
+    }
 
-	private String perturbationPointFile = "perturbationPoint.inf";
+    /**
+     * @return the name of the eps file name
+     */
+    public String getEPSfilename() {
+        return epsFileName;
+    }
 
-	private String mapName;
+    /**
+     * $header.eps and $header.sh If it is not set, the default is
+     * gmt+'dateString'.eps and .sh
+     *
+     * @param header set the name of the eps and script files
+     */
+    public void setFileNameHeader(String header) {
+        epsFileName = header + ".eps";
+        scriptFileName = header + ".sh";
+    }
 
-	/**
-	 * @param title
-	 *            for the map
-	 * @param minLongitude
-	 *            [deg]
-	 * @param maxLongitude
-	 *            [deg]
-	 * @param minLatitude
-	 *            [deg]
-	 * @param maxLatitude
-	 *            [deg]
-	 */
-	public GMTMap(String title, int minLongitude, int maxLongitude, int minLatitude, int maxLatitude) {
-		this.minLongitude = minLongitude;
-		this.maxLongitude = maxLongitude;
-		this.minLatitude = minLatitude;
-		this.maxLatitude = maxLatitude;
-		mapName = title.isEmpty() ? " " : title;
-		setROption();
-		epsFileName = "gmt" + Utilities.getTemporaryString() + ".eps";
-		scriptFileName = "gmt" + Utilities.getTemporaryString() + ".sh";
-	}
+    public String psHeader() {
+        return "#!/bin/sh\npsname=" + epsFileName;
+    }
 
-	/**
-	 * @return the name of the eps file name
-	 */
-	public String getEPSfilename() {
-		return epsFileName;
-	}
+    /**
+     * Create postscript by psbasemap
+     *
+     * @param additionalOptions if you want to add options
+     * @return psbasemap -L -R??/??/??/?? -JQ15 -B+t"hoge" -K
+     */
+    public String psStart(String... additionalOptions) {
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
+        return "psbasemap" + rOption + "-JQ15 -B+t\"" + mapName + "\" " + additional + " -K -V -P > $psname";
+    }
 
-	/**
-	 * $header.eps and $header.sh If it is not set, the default is
-	 * gmt+'dateString'.eps and .sh
-	 * 
-	 * @param header
-	 *            set the name of the eps and script files
-	 */
-	public void setFileNameHeader(String header) {
-		epsFileName = header + ".eps";
-		scriptFileName = header + ".sh";
-	}
+    /**
+     * @param additionalOptions if you want to add options
+     * @return psbasemap -R -Bhoge -O -V -P -J
+     */
+    public String psEnd(String... additionalOptions) {
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
+        return "psbasemap -R -J" + bOption + additional + " -O -V -P >> $psname";
 
-	/**
-	 * @param symbol
-	 *            type of marking
-	 * @param symbolSize
-	 *            size of symbols
-	 * @param value
-	 *            of plotting
-	 * @param colorPalletPath
-	 *            Path of a color pallet
-	 * @param position
-	 *            on the map
-	 * @param additionalOptions
-	 *            if any options
-	 * @return echo latitude longitude value | psxy -V -: -J -R -P -K -O symbol
-	 *         [additional] &gt;&gt; $psname
-	 */
-	public static String psxy(Symbol symbol, double symbolSize, double value, Path colorPalletPath,
-			HorizontalPosition position, String additionalOptions) {
-		String cpOption = " -C" + colorPalletPath;
-		return "echo " + position + " " + value + " " + symbolSize + " | " + "psxy -V -: -J -R " + symbol.getOption()
-				+ cpOption + " " + additionalOptions + " -K -O -P  >> $psname";
-	}
+    }
 
-	/**
-	 * @param symbol
-	 *            type of marking
-	 * @param symbolSize
-	 *            size of symbols
-	 * @param position
-	 *            on the map
-	 * @param additionalOptions
-	 *            if any options
-	 * @return echo latitude longitude | psxy -V -: -J -R -P -K -O symbol
-	 *         [additional] &gt;&gt; $psname
-	 */
-	public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position,
-			String... additionalOptions) {
-		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		return "echo " + position.getLatitude() + " " + position.getLongitude() + " " + symbolSize + " | "
-				+ "psxy -V -: -J -R " + symbol.getOption() + " " + additional + " -P -K -O >> $psname";
-	}
+    public String fixEPS() {
+        return "eps2eps $psname .$psname && mv .$psname $psname";
+    }
 
-	/**
-	 * Draw a line from start to end
-	 * 
-	 * @param start
-	 *            start position of the line
-	 * @param end
-	 *            end position of the line
-	 * @param additionalOptions
-	 *            any other options
-	 * @return psxy -V -: -J -R -P -K -O [additional] &gt;&gt; $psname
-	 */
-	public static String psxy(HorizontalPosition start, HorizontalPosition end, String... additionalOptions) {
-		String echoPart = "echo -e " + start.getLatitude() + " " + start.getLongitude() + "\\\\n" + end.getLatitude()
-				+ " " + end.getLongitude();
-		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		String psxyPart = "psxy -V -: -J -R -P -K -O " + additional + " >>$psname";
-		// System.out.println(psxyPart);
-		return echoPart + " | " + psxyPart;
-	}
+    private String[] outputMap() {
+        setROption();
+        String[] out = new String[8];
+        out[0] = "#!/bin/sh";
+        out[1] = "psname=\"" + epsFileName + "\"";
+        out[2] = "gmtset BASEMAP_FRAME_RGB 0/0/0";
+        out[3] = "gmtset LABEL_FONT_SIZE 15";
+        out[4] = "";// TODO
+        out[5] = "awk '{print $1, $2}' " + eventFile + " | psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " +
+                " > $psname";
+        out[6] = "awk '{print $1, $2}' " + stationFile + " |psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " +
+                " >> $psname";
+        out[7] = "awk '{print $1, $2}' " + perturbationPointFile +
+                " |psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + " >> $psname";
 
-	/**
-	 * 
-	 * @param name
-	 *            of scale
-	 * @param interval
-	 *            of tics
-	 * @param xpos
-	 *            x position of edge
-	 * @param ypos
-	 *            y position of edge
-	 * @param length
-	 *            of scale
-	 * @param width
-	 *            of scale
-	 * @param cptPath
-	 *            Path of pallet
-	 * @param additionalOptions
-	 *            if any
-	 * @return psxy -V -K -O -P -Bname -Dxpos/ypos/length/width(h) -CcptPath >>
-	 *         $psname
-	 */
-	public static String psscale(String name, double interval, double xpos, double ypos, double length, double width,
-			Path cptPath, String... additionalOptions) {
-		String dOption = " -D" + xpos + "/" + ypos + "/" + length + "/" + width + "h";
-		String bOption = " -B" + interval + "+l\"" + name + "\"";
-		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		String cOption = " -C" + cptPath;
-		return "psscale -V -K -O -P " + dOption + bOption + cOption + " " + additional + " >>$psname";
-	}
+        return out;
+    }
 
-	public String psHeader() {
-		return "#!/bin/sh\npsname=" + epsFileName;
-	}
+    public String[] outputMapwGrid() {
+        setROption();
+        String[] out = new String[6];
+        out[0] = "#!/bin/sh";
 
-	/**
-	 * Create postscript by psbasemap
-	 * 
-	 * @param additionalOptions
-	 *            if you want to add options
-	 * @return psbasemap -L -R??/??/??/?? -JQ15 -B+t"hoge" -K
-	 */
-	public String psStart(String... additionalOptions) {
-		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		return "psbasemap" + rOption + "-JQ15 -B+t\"" + mapName + "\" " + additional + " -K -V -P > $psname";
-	}
-
-	/**
-	 * @param additionalOptions
-	 *            if you want to add options
-	 * @return psbasemap -R -Bhoge -O -V -P -J
-	 */
-	public String psEnd(String... additionalOptions) {
-		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		return "psbasemap -R -J" + bOption + additional + " -O -V -P >> $psname";
-
-	}
-
-	public String fixEPS() {
-		return "eps2eps $psname .$psname && mv .$psname $psname";
-	}
-
-	/**
-	 * If you want to fill dry areas, then -Gcolor (e.g. -Gbrown)
-	 * 
-	 * @param additionalOptions
-	 *            if any the return will have them. ex) National boundaries -N1
-	 * @return pscoast -J -R -Bs -Dc -V -W -K -O (additional) &gt;&gt; $psname
-	 */
-	public static String psCoast(String... additionalOptions) {
-		String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-		return "pscoast -J -R -B -Dc -W " + additional + " -V -P -K -O >> $psname";
-	}
-
-	/**
-	 * a name of an eps
-	 */
-	private String epsFileName;
-
-	/**
-	 * a name of a script
-	 */
-	private String scriptFileName;
-
-	private String[] outputMap() {
-		setROption();
-		String[] out = new String[8];
-		out[0] = "#!/bin/sh";
-		out[1] = "psname=\"" + epsFileName + "\"";
-		out[2] = "gmtset BASEMAP_FRAME_RGB 0/0/0";
-		out[3] = "gmtset LABEL_FONT_SIZE 15";
-		out[4] = "";// TODO
-		out[5] = "awk '{print $1, $2}' " + eventFile + " | psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K "
-				+ " > $psname";
-		out[6] = "awk '{print $1, $2}' " + stationFile + " |psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O "
-				+ " >> $psname";
-		out[7] = "awk '{print $1, $2}' " + perturbationPointFile + " |psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O "
-				+ " >> $psname";
-
-		return out;
-	}
-
-	public String[] outputMapwGrid() {
-		setROption();
-		String[] out = new String[6];
-		out[0] = "#!/bin/sh";
-
-		out[1] = "pscoast -K -JQ " + rOption + bOption + " >> " + epsFileName;
-		out[2] = "psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " + eventFile + " > " + epsFileName;
-		out[3] = "psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " + stationFile + " >> " + epsFileName;
-		out[4] = "psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + perturbationPointFile + " >> " + epsFileName;
-		out[5] = "grdimage ans.grd -J -Ccp2.cpt -B -O -R >> " + epsFileName;
-		return out;
-	}
-
-	private static void createGrid() {
-		String cmd;
-		String fileName = " hoge.dat ";
-		String gridFileName = " -G hoge.grd "; //
-		String region = " -R0/10/20/30 "; // xmin/xmax/ymin/ymax -F
-		String increment = " -I1/2 "; // x/y
-		cmd = "xyz2grd " + fileName + gridFileName + " -I0.4 " + region;
-		// surface test -Greal.grd -I1 -R-100/-85/0/40
-		// psxy g.txt -R-4/4/-4/4 -Jx1 -Ba1 -Sc0.6 -Ccp.cpt > g.eps
-		// grdsample
-		// xyz2grd 3505.dat -G3505.grd -R0/40/-100/-85 -I5
-		// xyz2grd 3505.dat -G3505.grd -R-105/-75/-10/40 -I5 -N0
-		// grdsample 3505.grd -G3505comp.grd -I1
-		// psscale -Ccp2.cpt -B5 -D7/3/8/1h -K -O >>$outputps
-		// project 3505.dat -Fxyzpqrs -C-90/0 -E-90/30 -L0/0 -W0/0
-		// grdimage cs.grd -Jx1 -Ccp2.cpt -Ba1 > test
-		// grdimage cs.grd -Jx0.5/0.1 -Ccp2.cpt -Ba10/a10 > test.ps
-		// surface cs.dat -Gcs.grd -I1 -R0/35/3505/3605 -N10
-		// grdimage 3505cs.grd -Jx0.5/0.1 -Ccp2.cpt -Ba10/a10 > test.ps
-
-	}
+        out[1] = "pscoast -K -JQ " + rOption + bOption + " >> " + epsFileName;
+        out[2] = "psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " + eventFile + " > " + epsFileName;
+        out[3] = "psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " + stationFile + " >> " + epsFileName;
+        out[4] = "psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + perturbationPointFile + " >> " + epsFileName;
+        out[5] = "grdimage ans.grd -J -Ccp2.cpt -B -O -R >> " + epsFileName;
+        return out;
+    }
 }
 
 /*

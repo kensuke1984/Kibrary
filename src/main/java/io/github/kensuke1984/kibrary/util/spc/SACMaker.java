@@ -1,35 +1,25 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.datacorrection.SCARDEC;
+import io.github.kensuke1984.kibrary.datacorrection.SCARDEC.SCARDEC_ID;
+import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.util.Raypath;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.*;
+import org.apache.commons.math3.util.FastMath;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
-
-import org.apache.commons.math3.util.FastMath;
-
-import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.datacorrection.SCARDEC;
-import io.github.kensuke1984.kibrary.datacorrection.SCARDEC.SCARDEC_ID;
-import io.github.kensuke1984.kibrary.util.Raypath;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Trace;
-import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
-import io.github.kensuke1984.kibrary.util.sac.SACExtension;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * This class create SAC files from one or two spector files(
@@ -167,137 +157,12 @@ public class SACMaker implements Runnable {
         initialMap.put(SACHeaderEnum.num99, "-12345");
     }
 
-    private class SAC implements SACData, Cloneable {
-        private double[] waveData;
-
-        @Override
-        protected SAC clone() {
-            try {
-                SAC sac = (SAC) super.clone();
-                sac.headerMap = new EnumMap<>(headerMap);
-                return sac;
-            } catch (Exception e) {
-                throw new RuntimeException("UneXPectED");
-            }
-        }
-
-        private SAC of(SACComponent component) {
-            SAC sac = clone();
-            switch (component.valueOf()) {
-                case 1:
-                    sac = sac.setSACString(SACHeaderEnum.KCMPNM, "vertical");
-                    break;
-                case 2:
-                    sac = sac.setSACString(SACHeaderEnum.KCMPNM, "radial");
-                    break;
-                case 3:
-                    sac = sac.setSACString(SACHeaderEnum.KCMPNM, "trnsvers");
-                    break;
-                default:
-            }
-            return sac;
-        }
-
-        private Map<SACHeaderEnum, String> headerMap = new EnumMap<>(initialMap);
-
-        private SAC() {
-        }
-
-        @Override
-        public boolean getBoolean(SACHeaderEnum sacHeaderEnum) {
-            return Boolean.parseBoolean(headerMap.get(sacHeaderEnum));
-        }
-
-        @Override
-        public int getInt(SACHeaderEnum sacHeaderEnum) {
-            return Integer.parseInt(headerMap.get(sacHeaderEnum));
-        }
-
-        @Override
-        public int getSACEnumerated(SACHeaderEnum sacHeaderEnum) {
-            return Integer.parseInt(headerMap.get(sacHeaderEnum));
-        }
-
-        @Override
-        public String getSACString(SACHeaderEnum sacHeaderEnum) {
-            return headerMap.get(sacHeaderEnum);
-        }
-
-        @Override
-        public double getValue(SACHeaderEnum sacHeaderEnum) {
-            return Double.parseDouble(headerMap.get(sacHeaderEnum));
-        }
-
-        @Override
-        public Trace createTrace() {
-            throw new RuntimeException("UnEXPEcteD");
-        }
-
-        @Override
-        public SAC setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
-            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
-            headerMap.put(sacHeaderEnum, String.valueOf(bool));
-            return this;
-        }
-
-        @Override
-        public SAC applyButterworthFilter(ButterworthFilter filter) {
-            throw new RuntimeException("UnEXPEcteD");
-        }
-
-        @Override
-        public SAC setValue(SACHeaderEnum sacHeaderEnum, double value) {
-            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
-            headerMap.put(sacHeaderEnum, String.valueOf(value));
-            return this;
-        }
-
-        @Override
-        public SAC setInt(SACHeaderEnum sacHeaderEnum, int value) {
-            if (headerMap.containsKey(sacHeaderEnum) && !headerMap.get(sacHeaderEnum).equals("-12345"))
-                throw new RuntimeException("UNEeXpExted");
-            headerMap.put(sacHeaderEnum, String.valueOf(value));
-            return this;
-        }
-
-        @Override
-        public SAC setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
-            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
-            headerMap.put(sacHeaderEnum, String.valueOf(value));
-            return this;
-        }
-
-        @Override
-        public SAC setSACString(SACHeaderEnum sacHeaderEnum, String string) {
-            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
-            headerMap.put(sacHeaderEnum, string);
-            return this;
-        }
-
-        @Override
-        public SAC setSACData(double[] waveData) {
-            Objects.requireNonNull(waveData);
-            if (waveData.length != getInt(SACHeaderEnum.NPTS)) throw new RuntimeException("UNEeXpExted");
-            this.waveData = waveData;
-            return this;
-        }
-
-        @Override
-        public double[] getData() {
-            return waveData.clone();
-        }
-
-    }
-
     private DSMOutput secondarySPC;
-
     private DSMOutput primeSPC;
-
     /**
      * 時間領域に持ってくるときのサンプリングヘルツ
      */
     private double samplingHz = 20;
-
     /**
      * 書き出す成分 デフォルトでは R, T, Z （すべて）
      */
@@ -306,6 +171,22 @@ public class SACMaker implements Runnable {
      * SACを書き出すディレクトリ
      */
     private Path outDirectoryPath;
+    private GlobalCMTID globalCMTID;
+    /**
+     * 時間微分させるか
+     */
+    private boolean temporalDifferentiation;
+    private SourceTimeFunction sourceTimeFunction;
+    /**
+     * true: PDE time, false: CMT time TODO scardec??
+     */
+    private boolean pde;
+    private LocalDateTime beginDateTime;
+    private Station station;
+    private Raypath path;
+    private int lsmooth;
+    private double delta;
+    private int npts;
 
     /**
      * @param oneSPC  one spc
@@ -331,7 +212,6 @@ public class SACMaker implements Runnable {
         }
         this.sourceTimeFunction = sourceTimeFunction;
     }
-
     /**
      * @param oneSPC Spector for SAC
      */
@@ -339,12 +219,98 @@ public class SACMaker implements Runnable {
         this(oneSPC, null, null);
     }
 
-    private GlobalCMTID globalCMTID;
+    /**
+     * @param spc1 primary
+     * @param spc2 secondary
+     * @return if spc1 and spc2 have same information
+     */
+    private static boolean check(DSMOutput spc1, DSMOutput spc2) {
+        boolean isOK = true;
+        if (spc1.nbody() != spc2.nbody()) {
+            System.err
+                    .println("Numbers of bodies (nbody) are different. fp, bp: " + spc1.nbody() + " ," + spc2.nbody());
+            isOK = false;
+        }
+
+        if (!spc1.getSourceID().equals(spc2.getSourceID())) {
+            System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
+            isOK = false;
+        }
+
+        if (!spc1.getObserverID().equals(spc2.getObserverID())) {
+            System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
+            isOK = false;
+        }
+
+        if (isOK) {
+            if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR())) isOK = false;
+
+            if (!isOK) {
+                System.err.println("the depths are invalid(different) as below  fp : bp");
+                for (int i = 0; i < spc1.nbody(); i++)
+                    System.err.println(spc1.getBodyR()[i] + " : " + spc2.getBodyR()[i]);
+            }
+        }
+        if (spc1.np() != spc2.np()) {
+            System.err.println("nps are different. fp, bp: " + spc1.np() + ", " + spc2.np());
+            isOK = false;
+        }
+
+        // double tlen
+        if (spc1.tlen() != spc2.tlen()) {
+            System.err.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
+            isOK = false;
+        }
+
+        if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
+            System.err.println("locations of sources of input spcfiles are different");
+            System.err.println(spc1.getSourceLocation() + " " + spc2.getSourceLocation());
+            isOK = false;
+        }
+
+        if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
+            System.err.println("locations of stations of input spcfiles are different");
+            isOK = false;
+        }
+        return isOK;
+    }
 
     /**
-     * 時間微分させるか
+     * Creates and outputs synthetic SAC files of Z R T from input spectrums
+     *
+     * @param args [onespc] [pairspc]
+     * @throws IOException if an I/O error occurs
      */
-    private boolean temporalDifferentiation;
+    public static void main(String[] args) throws IOException {
+        if (args == null || args.length == 0) {
+            System.err.println("Usage: spcfile1 (spcfile2)");
+            return;
+        }
+
+        SpcFileName oneName = new SpcFileName(args[0]);
+        DSMOutput oneSPC = SpectrumFile.getInstance(oneName);
+
+        DSMOutput pairSPC = null;
+        if (1 < args.length) {
+            SpcFileName pairName = new SpcFileName(args[1]);
+            pairSPC = SpectrumFile.getInstance(pairName);
+        }
+
+        SACMaker sm = new SACMaker(oneSPC, pairSPC);
+        if (2 < args.length && args[2].equals("-scardec")) {
+            if (args.length < 4)
+                throw new IllegalArgumentException("please use as spcfile1 spcfile2 -scardec yyyyMMdd_HHmmss");
+            System.err.println("OUTPUTTING with SCARDEC");
+            Predicate<SCARDEC_ID> predicate =
+                    id -> id.getOriginTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")).equals(args[3]);
+            SCARDEC_ID id = SCARDEC.pick(predicate);
+            SCARDEC sc = id.toSCARDEC();
+            sm.beginDateTime = id.getOriginTime();
+            sm.setSourceTimeFunction(sc.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
+        }
+        sm.setOutPath(Paths.get(System.getProperty("user.dir")));
+        sm.run();
+    }
 
     /**
      * @param bool If set true, the time in Sac is PDE time.
@@ -353,28 +319,13 @@ public class SACMaker implements Runnable {
         pde = bool;
     }
 
-    private SourceTimeFunction sourceTimeFunction;
-
     public void setSourceTimeFunction(SourceTimeFunction sourceTimeFunction) {
         this.sourceTimeFunction = sourceTimeFunction;
     }
 
-    /**
-     * true: PDE time, false: CMT time TODO scardec??
-     */
-    private boolean pde;
-
     public void setTemporalDifferentiation(boolean temporalDifferentiation) {
         this.temporalDifferentiation = temporalDifferentiation;
     }
-
-    private LocalDateTime beginDateTime;
-    private Station station;
-    private Raypath path;
-
-    private int lsmooth;
-    private double delta;
-    private int npts;
 
     private void setInformation() {
         station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition(), "DSM");
@@ -520,97 +471,125 @@ public class SACMaker implements Runnable {
         outDirectoryPath = outPath;
     }
 
-    /**
-     * @param spc1 primary
-     * @param spc2 secondary
-     * @return if spc1 and spc2 have same information
-     */
-    private static boolean check(DSMOutput spc1, DSMOutput spc2) {
-        boolean isOK = true;
-        if (spc1.nbody() != spc2.nbody()) {
-            System.err
-                    .println("Numbers of bodies (nbody) are different. fp, bp: " + spc1.nbody() + " ," + spc2.nbody());
-            isOK = false;
+    private class SAC implements SACData, Cloneable {
+        private double[] waveData;
+        private Map<SACHeaderEnum, String> headerMap = new EnumMap<>(initialMap);
+
+        private SAC() {
         }
 
-        if (!spc1.getSourceID().equals(spc2.getSourceID())) {
-            System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
-            isOK = false;
-        }
-
-        if (!spc1.getObserverID().equals(spc2.getObserverID())) {
-            System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
-            isOK = false;
-        }
-
-        if (isOK) {
-            if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR())) isOK = false;
-
-            if (!isOK) {
-                System.err.println("the depths are invalid(different) as below  fp : bp");
-                for (int i = 0; i < spc1.nbody(); i++)
-                    System.err.println(spc1.getBodyR()[i] + " : " + spc2.getBodyR()[i]);
+        @Override
+        protected SAC clone() {
+            try {
+                SAC sac = (SAC) super.clone();
+                sac.headerMap = new EnumMap<>(headerMap);
+                return sac;
+            } catch (Exception e) {
+                throw new RuntimeException("UneXPectED");
             }
         }
-        if (spc1.np() != spc2.np()) {
-            System.err.println("nps are different. fp, bp: " + spc1.np() + ", " + spc2.np());
-            isOK = false;
+
+        private SAC of(SACComponent component) {
+            SAC sac = clone();
+            switch (component.valueOf()) {
+                case 1:
+                    sac = sac.setSACString(SACHeaderEnum.KCMPNM, "vertical");
+                    break;
+                case 2:
+                    sac = sac.setSACString(SACHeaderEnum.KCMPNM, "radial");
+                    break;
+                case 3:
+                    sac = sac.setSACString(SACHeaderEnum.KCMPNM, "trnsvers");
+                    break;
+                default:
+            }
+            return sac;
         }
 
-        // double tlen
-        if (spc1.tlen() != spc2.tlen()) {
-            System.err.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
-            isOK = false;
+        @Override
+        public boolean getBoolean(SACHeaderEnum sacHeaderEnum) {
+            return Boolean.parseBoolean(headerMap.get(sacHeaderEnum));
         }
 
-        if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
-            System.err.println("locations of sources of input spcfiles are different");
-            System.err.println(spc1.getSourceLocation() + " " + spc2.getSourceLocation());
-            isOK = false;
+        @Override
+        public int getInt(SACHeaderEnum sacHeaderEnum) {
+            return Integer.parseInt(headerMap.get(sacHeaderEnum));
         }
 
-        if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
-            System.err.println("locations of stations of input spcfiles are different");
-            isOK = false;
-        }
-        return isOK;
-    }
-
-    /**
-     * Creates and outputs synthetic SAC files of Z R T from input spectrums
-     *
-     * @param args [onespc] [pairspc]
-     * @throws IOException if an I/O error occurs
-     */
-    public static void main(String[] args) throws IOException {
-        if (args == null || args.length == 0) {
-            System.err.println("Usage: spcfile1 (spcfile2)");
-            return;
+        @Override
+        public int getSACEnumerated(SACHeaderEnum sacHeaderEnum) {
+            return Integer.parseInt(headerMap.get(sacHeaderEnum));
         }
 
-        SpcFileName oneName = new SpcFileName(args[0]);
-        DSMOutput oneSPC = SpectrumFile.getInstance(oneName);
-
-        DSMOutput pairSPC = null;
-        if (1 < args.length) {
-            SpcFileName pairName = new SpcFileName(args[1]);
-            pairSPC = SpectrumFile.getInstance(pairName);
+        @Override
+        public String getSACString(SACHeaderEnum sacHeaderEnum) {
+            return headerMap.get(sacHeaderEnum);
         }
 
-        SACMaker sm = new SACMaker(oneSPC, pairSPC);
-        if (2 < args.length && args[2].equals("-scardec")) {
-            if (args.length < 4)
-                throw new IllegalArgumentException("please use as spcfile1 spcfile2 -scardec yyyyMMdd_HHmmss");
-            System.err.println("OUTPUTTING with SCARDEC");
-            Predicate<SCARDEC_ID> predicate =
-                    id -> id.getOriginTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")).equals(args[3]);
-            SCARDEC_ID id = SCARDEC.pick(predicate);
-            SCARDEC sc = id.toSCARDEC();
-            sm.beginDateTime = id.getOriginTime();
-            sm.setSourceTimeFunction(sc.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
+        @Override
+        public double getValue(SACHeaderEnum sacHeaderEnum) {
+            return Double.parseDouble(headerMap.get(sacHeaderEnum));
         }
-        sm.setOutPath(Paths.get(System.getProperty("user.dir")));
-        sm.run();
+
+        @Override
+        public Trace createTrace() {
+            throw new RuntimeException("UnEXPEcteD");
+        }
+
+        @Override
+        public SAC setBoolean(SACHeaderEnum sacHeaderEnum, boolean bool) {
+            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
+            headerMap.put(sacHeaderEnum, String.valueOf(bool));
+            return this;
+        }
+
+        @Override
+        public SAC applyButterworthFilter(ButterworthFilter filter) {
+            throw new RuntimeException("UnEXPEcteD");
+        }
+
+        @Override
+        public SAC setValue(SACHeaderEnum sacHeaderEnum, double value) {
+            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
+            headerMap.put(sacHeaderEnum, String.valueOf(value));
+            return this;
+        }
+
+        @Override
+        public SAC setInt(SACHeaderEnum sacHeaderEnum, int value) {
+            if (headerMap.containsKey(sacHeaderEnum) && !headerMap.get(sacHeaderEnum).equals("-12345"))
+                throw new RuntimeException("UNEeXpExted");
+            headerMap.put(sacHeaderEnum, String.valueOf(value));
+            return this;
+        }
+
+        @Override
+        public SAC setSACEnumerated(SACHeaderEnum sacHeaderEnum, int value) {
+            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
+            headerMap.put(sacHeaderEnum, String.valueOf(value));
+            return this;
+        }
+
+        @Override
+        public SAC setSACString(SACHeaderEnum sacHeaderEnum, String string) {
+            if (headerMap.containsKey(sacHeaderEnum)) throw new RuntimeException("UNEeXpExted");
+            headerMap.put(sacHeaderEnum, string);
+            return this;
+        }
+
+        @Override
+        public SAC setSACData(double[] waveData) {
+            Objects.requireNonNull(waveData);
+            if (waveData.length != getInt(SACHeaderEnum.NPTS)) throw new RuntimeException("UNEeXpExted");
+            this.waveData = waveData;
+            return this;
+        }
+
+        @Override
+        public double[] getData() {
+            return waveData.clone();
+        }
+
     }
 
 }

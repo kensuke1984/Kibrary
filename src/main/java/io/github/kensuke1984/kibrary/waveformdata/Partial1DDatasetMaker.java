@@ -1,21 +1,5 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
@@ -30,11 +14,15 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
+import io.github.kensuke1984.kibrary.util.spc.*;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.*;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Creates a pair of files containing 1-D partial derivatives
@@ -54,6 +42,88 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
+    private Set<SACComponent> components;
+    private Path workPath;
+    /**
+     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+     */
+    private String modelName;
+    /**
+     * Path of a timewindow information file
+     */
+    private Path timewindowPath;
+    /**
+     * Partial types
+     */
+    private Set<PartialType> partialTypes;
+    /**
+     * bandpassの最小周波数（Hz）
+     */
+    private double minFreq;
+    /**
+     * bandpassの最大周波数（Hz）
+     */
+    private double maxFreq;
+    /**
+     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
+     */
+    private double partialSamplingHz = 20;
+    /**
+     * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
+     */
+    private double finalSamplingHz;
+    /**
+     * The folder contains source time functions.
+     */
+    private Path sourceTimeFunctionPath;
+    /**
+     * 0:none, 1:boxcar, 2:triangle.
+     */
+    private int sourceTimeFunction;
+    /**
+     * time length (DSM parameter)
+     */
+    private double tlen;
+    /**
+     * step of frequency domain (DSM parameter)
+     */
+    private int np;
+    /**
+     * radius of perturbation
+     */
+    private double[] bodyR;
+    /**
+     * 追加したID数
+     */
+    private int numberOfAddedID;
+    private int lsmooth;
+    private Properties property;
+    /**
+     * filter いじらなくていい
+     */
+    private ButterworthFilter filter;
+    /**
+     * sacdataを何ポイントおきに取り出すか
+     */
+    private int step;
+    /**
+     * タイムウインドウの情報
+     */
+    private Set<TimewindowInformation> timewindowInformationSet;
+    //
+    private WaveformDataWriter partialDataWriter;
+    private Path logPath;
+    private FujiConversion fujiConversion;
+    private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
+    private Set<GlobalCMTID> idSet;
+    private Set<Station> stationSet;
+    private Set<Location> perturbationLocationSet;
+    private double[][] periodRanges;
+
+    public Partial1DDatasetMaker(Properties property) throws IOException {
+        this.property = (Properties) property.clone();
+        set();
+    }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath =
@@ -93,9 +163,16 @@ public class Partial1DDatasetMaker implements Operation {
         System.err.println(outPath + " is created.");
     }
 
-    private Set<SACComponent> components;
+    /**
+     * @param args [parameter file name]
+     */
+    public static void main(String[] args) throws IOException {
+        Partial1DDatasetMaker pdm = new Partial1DDatasetMaker(Property.parse(args));
 
-    private Path workPath;
+        if (!Files.exists(pdm.timewindowPath)) throw new NoSuchFileException(pdm.timewindowPath.toString());
+
+        pdm.run();
+    }
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
@@ -149,75 +226,9 @@ public class Partial1DDatasetMaker implements Operation {
 
     }
 
-    /**
-     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
-     */
-    private String modelName;
-
-    /**
-     * Path of a timewindow information file
-     */
-    private Path timewindowPath;
-
-    /**
-     * Partial types
-     */
-    private Set<PartialType> partialTypes;
-
-    /**
-     * bandpassの最小周波数（Hz）
-     */
-    private double minFreq;
-
-    /**
-     * bandpassの最大周波数（Hz）
-     */
-    private double maxFreq;
-
-    /**
-     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
-     */
-    private double partialSamplingHz = 20;
-
-    /**
-     * 最後に時系列で切り出す時のサンプリングヘルツ(Hz)
-     */
-    private double finalSamplingHz;
-
-    /**
-     * The folder contains source time functions.
-     */
-    private Path sourceTimeFunctionPath;
-
-    /**
-     * 0:none, 1:boxcar, 2:triangle.
-     */
-    private int sourceTimeFunction;
-
-    /**
-     * time length (DSM parameter)
-     */
-    private double tlen;
-
-    /**
-     * step of frequency domain (DSM parameter)
-     */
-    private int np;
-
-    /**
-     * radius of perturbation
-     */
-    private double[] bodyR;
-    /**
-     * 追加したID数
-     */
-    private int numberOfAddedID;
-
     private synchronized void add() {
         numberOfAddedID++;
     }
-
-    private int lsmooth;
 
     private void setLsmooth() {
         int pow2np = Integer.highestOneBit(np);
@@ -228,10 +239,133 @@ public class Partial1DDatasetMaker implements Operation {
         this.lsmooth = ismooth == lsmooth ? lsmooth : ismooth * 2;
     }
 
+    private void readSourceTimeFunctions() throws IOException {
+        Set<GlobalCMTID> ids = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
+                .collect(Collectors.toSet());
+        userSourceTimeFunctions = ids.stream().collect(Collectors.toMap(id -> id, id -> {
+            try {
+                Path sourceTimeFunctionPath = this.sourceTimeFunctionPath.resolve(id + ".stf");
+                return SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath);
+            } catch (Exception e) {
+                throw new RuntimeException("Source time function file for " + id + " is broken.");
+            }
+        }));
+
+    }
+
+    private void setPerturbationLocation() {
+        perturbationLocationSet = Arrays.stream(bodyR).mapToObj(r -> new Location(0, 0, r)).collect(Collectors.toSet());
+    }
+
+    @Override
+    public void run() throws IOException {
+        String dateString = Utilities.getTemporaryString();
+
+        logPath = workPath.resolve("partial1D" + dateString + ".log");
+
+        System.err.println(Partial1DDatasetMaker.class.getName() + " is going.");
+        long startTime = System.nanoTime();
+
+        // pdm.createStreams();
+        int N_THREADS = Runtime.getRuntime().availableProcessors();
+        // N_THREADS = 2;
+        writeLog("going with " + N_THREADS + " threads");
+
+        if (partialTypes.contains(PartialType.PARQ)) fujiConversion = new FujiConversion(PolynomialStructure.PREM);
+
+        setLsmooth();
+        writeLog("Set lsmooth " + lsmooth);
+
+        // タイムウインドウの情報を読み取る。
+        System.err.print("Reading timewindow information ");
+        timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
+        System.err.println("done");
+
+        if (sourceTimeFunction == -1) readSourceTimeFunctions();
+
+        // filter設計
+        System.err.println("Designing filter.");
+        setBandPassFilter();
+        writeLog(filter.toString());
+        setPerturbationLocation();
+        stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
+                .collect(Collectors.toSet());
+        idSet = Utilities.globalCMTIDSet(workPath);
+        // information about output partial types
+        writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
+
+        // sacdataを何ポイントおきに取り出すか
+        step = (int) (partialSamplingHz / finalSamplingHz);
+
+        Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
+
+        // create ThreadPool
+        ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+
+        Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
+        Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
+        try (WaveformDataWriter pdw = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
+                perturbationLocationSet)) {
+
+            partialDataWriter = pdw;
+            for (EventFolder eventDir : eventDirs)
+                execs.execute(new Worker(eventDir));
+            // break;
+            execs.shutdown();
+
+            while (!execs.isTerminated()) Thread.sleep(100);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.err.println();
+        String endLine = Partial1DDatasetMaker.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - startTime);
+        System.err.println(endLine);
+        writeLog(endLine);
+        writeLog(idPath + " " + datasetPath + " were created");
+        writeLog(numberOfAddedID + " IDs are added.");
+
+    }
+
+    private void setBandPassFilter() throws IOException {
+        double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
+        double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
+        filter = new BandPassFilter(omegaH, omegaL, 4);
+        filter.setBackward(backward);
+        periodRanges = new double[][]{{1 / maxFreq, 1 / minFreq}};
+        writeLog(filter.toString());
+    }
+
+    private void writeLog(String line) throws IOException {
+        Date now = new Date();
+        synchronized (this) {
+            try (PrintWriter pw = new PrintWriter(
+                    Files.newBufferedWriter(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
+                pw.println(now + " : " + line);
+            }
+        }
+    }
+
+    @Override
+    public Path getWorkPath() {
+        return workPath;
+    }
+
+    @Override
+    public Properties getProperties() {
+        return (Properties) property.clone();
+    }
+
     private class Worker implements Runnable {
 
         private SourceTimeFunction sourceTimeFunction;
         private GlobalCMTID id;
+        private EventFolder eventDir;
+
+        private Worker(EventFolder eventDir) {
+            this.eventDir = eventDir;
+            id = eventDir.getGlobalCMTID();
+        }
 
         @Override
         public void run() {
@@ -417,178 +551,6 @@ public class Partial1DDatasetMaker implements Operation {
             return sampleU;
         }
 
-        private EventFolder eventDir;
-
-        private Worker(EventFolder eventDir) {
-            this.eventDir = eventDir;
-            id = eventDir.getGlobalCMTID();
-        }
-
-    }
-
-    public Partial1DDatasetMaker(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
-        set();
-    }
-
-    private Properties property;
-
-    /**
-     * filter いじらなくていい
-     */
-    private ButterworthFilter filter;
-
-    /**
-     * sacdataを何ポイントおきに取り出すか
-     */
-    private int step;
-
-    /**
-     * タイムウインドウの情報
-     */
-    private Set<TimewindowInformation> timewindowInformationSet;
-
-    //
-    private WaveformDataWriter partialDataWriter;
-
-    private Path logPath;
-
-    private FujiConversion fujiConversion;
-
-    private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
-
-    private void readSourceTimeFunctions() throws IOException {
-        Set<GlobalCMTID> ids = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
-                .collect(Collectors.toSet());
-        userSourceTimeFunctions = ids.stream().collect(Collectors.toMap(id -> id, id -> {
-            try {
-                Path sourceTimeFunctionPath = this.sourceTimeFunctionPath.resolve(id + ".stf");
-                return SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath);
-            } catch (Exception e) {
-                throw new RuntimeException("Source time function file for " + id + " is broken.");
-            }
-        }));
-
-    }
-
-    /**
-     * @param args [parameter file name]
-     */
-    public static void main(String[] args) throws IOException {
-        Partial1DDatasetMaker pdm = new Partial1DDatasetMaker(Property.parse(args));
-
-        if (!Files.exists(pdm.timewindowPath)) throw new NoSuchFileException(pdm.timewindowPath.toString());
-
-        pdm.run();
-    }
-
-    private Set<GlobalCMTID> idSet;
-    private Set<Station> stationSet;
-    private Set<Location> perturbationLocationSet;
-
-    private void setPerturbationLocation() {
-        perturbationLocationSet = Arrays.stream(bodyR).mapToObj(r -> new Location(0, 0, r)).collect(Collectors.toSet());
-    }
-
-    @Override
-    public void run() throws IOException {
-        String dateString = Utilities.getTemporaryString();
-
-        logPath = workPath.resolve("partial1D" + dateString + ".log");
-
-        System.err.println(Partial1DDatasetMaker.class.getName() + " is going.");
-        long startTime = System.nanoTime();
-
-        // pdm.createStreams();
-        int N_THREADS = Runtime.getRuntime().availableProcessors();
-        // N_THREADS = 2;
-        writeLog("going with " + N_THREADS + " threads");
-
-        if (partialTypes.contains(PartialType.PARQ)) fujiConversion = new FujiConversion(PolynomialStructure.PREM);
-
-        setLsmooth();
-        writeLog("Set lsmooth " + lsmooth);
-
-        // タイムウインドウの情報を読み取る。
-        System.err.print("Reading timewindow information ");
-        timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
-        System.err.println("done");
-
-        if (sourceTimeFunction == -1) readSourceTimeFunctions();
-
-        // filter設計
-        System.err.println("Designing filter.");
-        setBandPassFilter();
-        writeLog(filter.toString());
-        setPerturbationLocation();
-        stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
-                .collect(Collectors.toSet());
-        idSet = Utilities.globalCMTIDSet(workPath);
-        // information about output partial types
-        writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
-
-        // sacdataを何ポイントおきに取り出すか
-        step = (int) (partialSamplingHz / finalSamplingHz);
-
-        Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
-
-        // create ThreadPool
-        ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-
-        Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
-        Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
-        try (WaveformDataWriter pdw = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
-                perturbationLocationSet)) {
-
-            partialDataWriter = pdw;
-            for (EventFolder eventDir : eventDirs)
-                execs.execute(new Worker(eventDir));
-            // break;
-            execs.shutdown();
-
-            while (!execs.isTerminated()) Thread.sleep(100);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.err.println();
-        String endLine = Partial1DDatasetMaker.class.getName() + " finished in " +
-                Utilities.toTimeString(System.nanoTime() - startTime);
-        System.err.println(endLine);
-        writeLog(endLine);
-        writeLog(idPath + " " + datasetPath + " were created");
-        writeLog(numberOfAddedID + " IDs are added.");
-
-    }
-
-    private double[][] periodRanges;
-
-    private void setBandPassFilter() throws IOException {
-        double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
-        double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
-        filter = new BandPassFilter(omegaH, omegaL, 4);
-        filter.setBackward(backward);
-        periodRanges = new double[][]{{1 / maxFreq, 1 / minFreq}};
-        writeLog(filter.toString());
-    }
-
-    private void writeLog(String line) throws IOException {
-        Date now = new Date();
-        synchronized (this) {
-            try (PrintWriter pw = new PrintWriter(
-                    Files.newBufferedWriter(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-                pw.println(now + " : " + line);
-            }
-        }
-    }
-
-    @Override
-    public Path getWorkPath() {
-        return workPath;
-    }
-
-    @Override
-    public Properties getProperties() {
-        return (Properties) property.clone();
     }
 
 }

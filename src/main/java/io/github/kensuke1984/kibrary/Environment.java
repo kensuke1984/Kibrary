@@ -10,6 +10,8 @@ import java.nio.file.Paths;
  * @version 0.0.1.1
  */
 public class Environment {
+    public final static Path KIBRARY_HOME = Paths.get(System.getProperty("user.home") + "/.Kibrary");
+
     private Environment() {
     }
 
@@ -32,7 +34,5 @@ public class Environment {
         System.out.println("Available processor: " + Runtime.getRuntime().availableProcessors());
         System.out.println("Max memory[GB]: " + Runtime.getRuntime().maxMemory() / 1000000000.0);
     }
-
-    public final static Path KIBRARY_HOME = Paths.get(System.getProperty("user.home") + "/.Kibrary");
 
 }

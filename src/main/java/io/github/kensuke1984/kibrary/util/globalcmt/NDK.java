@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Location;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * NDK format in Global CMT Catalogue
@@ -69,43 +69,21 @@ import io.github.kensuke1984.kibrary.util.Location;
  */
 final class NDK implements GlobalCMTData {
 
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        result = prime * result + (id == null ? 0 : id.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        NDK other = (NDK) obj;
-        if (id == null) {
-            if (other.id != null) return false;
-        } else if (!id.equals(other.id)) return false;
-        return true;
-    }
-
+    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
     /**
      * hypocenter [1-4] <br>
      * Hypocenter reference catalog (e.g., PDE for USGS location, ISC for ISC
      * catalog, SWE for surface-wave location, [Ekstrom, BSSA, 2006])
      */
     private String hypocenterReferenceCatalog;
-
     /**
      * [6-15] Date of reference event [17-26] Time of reference event
      */
     private LocalDateTime referenceDateTime;
-
     /**
      * hypocenter location [28-33] Latitude [35-41] Longitude [43-47] Depth
      */
     private Location hypocenterLocation;
-
     /**
      * [49-55] Reported magnitudes, usually mb and MS
      */
@@ -114,15 +92,10 @@ final class NDK implements GlobalCMTData {
      * [49-55] Reported magnitudes, usually mb and MS
      */
     private double ms;
-
     /**
      * [57-80] Geographical location (24 characters)
      */
     private String geographicalLocation;
-
-    // //////////////////////
-    // Second line: CMT info (1)
-    // ////////////////////
     /**
      * [1-16] CMT event name. <br>
      * This string is a unique CMT-event identifier. Older events have
@@ -131,6 +104,9 @@ final class NDK implements GlobalCMTData {
      */
     private GlobalCMTID id;
 
+    // //////////////////////
+    // Second line: CMT info (1)
+    // ////////////////////
     /**
      * [18-61] Data used in the CMT inversion. Three data types may be used:
      * Long-period body waves (B), Intermediate-period surface waves (S), and
@@ -141,14 +117,12 @@ final class NDK implements GlobalCMTData {
     private int[] b;
     private int[] s;
     private int[] m;
-
     /**
      * [63-68] Type of source inverted for: "CMT: 0" - general moment tensor;
      * "CMT: 1" - moment tensor with constraint of zero trace (standard);
      * "CMT: 2" - double-couple source.
      */
     private int cmtType;
-
     /**
      * [70-80] Type and duration of moment-rate function assumed in the
      * inversion. "TRIHD" indicates a triangular moment-rate function, "BOXHD"
@@ -158,13 +132,10 @@ final class NDK implements GlobalCMTData {
      * below), and is not derived from the analysis.
      */
     private String momentRateFunctionType;
-
     /**
      * half duration of the moment rate function
      */
     private double halfDurationMomentRateFunction;
-    // ///////////////////////////
-
     /**
      * Third line: CMT info (2) <br>
      * [1-58] Centroid parameters determined in the inversion. Centroid time,
@@ -174,12 +145,11 @@ final class NDK implements GlobalCMTData {
      * hypocentral coordinates are held fixed. Centroidとreference Timeとの違い
      */
     private double timeDifference;
-
+    // ///////////////////////////
     /**
      * Centroidの位置
      */
     private Location centroidLocation;
-
     /**
      * [60-63] Type of depth. "FREE" indicates that the depth was a result of
      * the inversion; "FIX " that the depth was fixed and not inverted for;
@@ -187,7 +157,6 @@ final class NDK implements GlobalCMTData {
      * waveforms.
      */
     private String depthType;
-
     /**
      * [65-80] Timestamp. This 16-character string identifies the type of
      * analysis that led to the given CMT results and, for recent events, the
@@ -197,10 +166,6 @@ final class NDK implements GlobalCMTData {
      * considered fixed.
      */
     private String timeStamp;
-
-    // ///////////////////////////
-    // Fourth line: CMT info (3)
-    // //////////////////////
     /**
      * [1-2] The exponent for all following moment values. For example, if the
      * exponent is given as 24, the moment values that follow, expressed in
@@ -212,17 +177,21 @@ final class NDK implements GlobalCMTData {
      * elements are constrained in the inversion.
      */
     private int momentExponent;
-    private MomentTensor momentTensor;
-    // ///////////////////////
 
-    // ////////////////////
-    // Fifth line: CMT info (4)
-    // /////////////////////////
+    // ///////////////////////////
+    // Fourth line: CMT info (3)
+    // //////////////////////
+    private MomentTensor momentTensor;
     /**
      * [1-3] Version code. This three-character string is used to track the
      * version of the program that generates the "ndk" file.
      */
     private String versionCode;
+    // ///////////////////////
+
+    // ////////////////////
+    // Fifth line: CMT info (4)
+    // /////////////////////////
     /**
      * [4-48] Moment tensor expressed in its principal-axis system: eigenvalue,
      * plunge, and azimuth of the three eigenvectors. The eigenvalue should be
@@ -253,13 +222,7 @@ final class NDK implements GlobalCMTData {
     private int strike1;
     private int dip1;
     private int rake1;
-
     private NDK() {
-    }
-
-    @Override
-    public GlobalCMTID getGlobalCMTID() {
-        return id;
     }
 
     /**
@@ -355,14 +318,37 @@ final class NDK implements GlobalCMTData {
         return ndk;
     }
 
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
-
     /**
      * @param date YYYY/MM/DD
      * @param time HH:MM:SS.MS
      */
     private static LocalDateTime parseDateTime(String date, String time) {
         return LocalDateTime.parse(date + " " + time, dateFormat);
+    }
+
+    @Override
+    public int hashCode() {
+        int prime = 31;
+        int result = 1;
+        result = prime * result + (id == null ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        NDK other = (NDK) obj;
+        if (id == null) {
+            if (other.id != null) return false;
+        } else if (!id.equals(other.id)) return false;
+        return true;
+    }
+
+    @Override
+    public GlobalCMTID getGlobalCMTID() {
+        return id;
     }
 
     /**

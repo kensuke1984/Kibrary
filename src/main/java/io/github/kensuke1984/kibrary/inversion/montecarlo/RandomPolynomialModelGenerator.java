@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.inversion.montecarlo;
 
+import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,10 +11,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-
-import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 
 /**
  * @author Kensuke Konishi
@@ -30,18 +29,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
                 .setVs(8, polynomialFunction).setVs(9, polynomialFunction);
     }
 
-
-    /*
-     * +-4% <br> 0:3480-3530 V<br> 1:3530-3580 V<br> .<br> 7:3830-3880 V<br>
-     *
-     * +- 10%<br> 8:3480-3530 Q<br> 9:3530-3580 Q<br> .<br> 15:3830-3880 Q<br>
-     *
-     */
-    private PolynomialStructure nextStructure(PolynomialStructure former) {
-        double[] percentage = extractPercentage(former);
-        double[] changed = change(percentage);
-        return createStructure(changed);
-    }
+    private final Random RANDOM = new Random();
 
     private static void outputModelValue(Path runPath, PolynomialStructure structure) throws IOException {
         double[] vs = ModelProbability.readVs(structure);
@@ -64,24 +52,6 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
         return structure;
     }
 
-    private double[] change(double[] percentage) {
-        double[] changed = new double[16];
-        for (int i = 0; i < 8; i++) {
-            double v = percentage[i] + RANDOM.nextGaussian() * 4;
-            if (v < -4) v = -8 - v;
-            else if (4 < v) v = 8 - v;
-            changed[i] = v;
-        }
-        for (int i = 8; i < 16; i++) {
-            double q = percentage[i] + RANDOM.nextGaussian() * 5;
-            if (q < -10) q = -20 - q;
-            else if (10 < q) q = 20 - q;
-            changed[i] = q;
-        }
-
-        return changed;
-    }
-
     private static double[] extractPercentage(PolynomialStructure structure) {
         double[] percentage = new double[16];
         for (int i = 0; i < 8; i++)
@@ -91,8 +61,6 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
             percentage[i] = structure.getQMuOf(i - 6) / 312 * 100 - 100;
         return percentage;
     }
-
-    private final Random RANDOM = new Random();
 
     public static void main(String[] args) throws IOException {
         Path p = Paths.get("/home/kensuke/data/WesternPacific/anelasticity/NobuakiInversion/raw");
@@ -111,6 +79,36 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
         }
         PolynomialStructure ps1 = createStructure(percentage);
         ps1.writePSV(p.resolve("opposite50.model"));
+    }
+
+    /*
+     * +-4% <br> 0:3480-3530 V<br> 1:3530-3580 V<br> .<br> 7:3830-3880 V<br>
+     *
+     * +- 10%<br> 8:3480-3530 Q<br> 9:3530-3580 Q<br> .<br> 15:3830-3880 Q<br>
+     *
+     */
+    private PolynomialStructure nextStructure(PolynomialStructure former) {
+        double[] percentage = extractPercentage(former);
+        double[] changed = change(percentage);
+        return createStructure(changed);
+    }
+
+    private double[] change(double[] percentage) {
+        double[] changed = new double[16];
+        for (int i = 0; i < 8; i++) {
+            double v = percentage[i] + RANDOM.nextGaussian() * 4;
+            if (v < -4) v = -8 - v;
+            else if (4 < v) v = 8 - v;
+            changed[i] = v;
+        }
+        for (int i = 8; i < 16; i++) {
+            double q = percentage[i] + RANDOM.nextGaussian() * 5;
+            if (q < -10) q = -20 - q;
+            else if (10 < q) q = 20 - q;
+            changed[i] = q;
+        }
+
+        return changed;
     }
 
     @Override

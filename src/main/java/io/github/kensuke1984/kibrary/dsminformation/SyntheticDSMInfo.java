@@ -1,5 +1,10 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -10,11 +15,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * Information file for TIPSV and TISH

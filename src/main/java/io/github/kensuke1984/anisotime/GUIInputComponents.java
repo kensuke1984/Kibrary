@@ -1,11 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
+import javax.swing.*;
 import java.util.Arrays;
-
-import javax.swing.InputVerifier;
-import javax.swing.JComponent;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 /**
  * Set of several GUI input components used in ANISOtime.
@@ -14,6 +10,31 @@ import javax.swing.SwingConstants;
  * @version 0.0.2.2
  */
 final class GUIInputComponents {
+
+    /**
+     * verifier for doubles check if its positive
+     */
+    private static InputVerifier positiveInputVerifier = new InputVerifier() {
+        @Override
+        public boolean verify(JComponent input) {
+            try {
+                JTextField textField = (JTextField) input;
+                return 0 <= Double.parseDouble(textField.getText());
+            } catch (Exception e) {
+                return false;
+            }
+        }
+    };
+    private static InputVerifier phaseVerifier = new InputVerifier() {
+        @Override
+        public boolean verify(JComponent input) {
+            JTextField field = (JTextField) input;
+            String inputString = field.getText();
+            if (inputString.isEmpty()) return true;
+            String[] phaseNames = inputString.trim().split(",");
+            return Arrays.stream(phaseNames).map(String::trim).allMatch(Phase::isValid);
+        }
+    };
 
     /**
      * @return {@link JTextField} only accepting positive double
@@ -34,31 +55,5 @@ final class GUIInputComponents {
         field.setHorizontalAlignment(SwingConstants.CENTER);
         return field;
     }
-
-    /**
-     * verifier for doubles check if its positive
-     */
-    private static InputVerifier positiveInputVerifier = new InputVerifier() {
-        @Override
-        public boolean verify(JComponent input) {
-            try {
-                JTextField textField = (JTextField) input;
-                return 0 <= Double.parseDouble(textField.getText());
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    };
-
-    private static InputVerifier phaseVerifier = new InputVerifier() {
-        @Override
-        public boolean verify(JComponent input) {
-            JTextField field = (JTextField) input;
-            String inputString = field.getText();
-            if (inputString.isEmpty()) return true;
-            String[] phaseNames = inputString.trim().split(",");
-            return Arrays.stream(phaseNames).map(String::trim).allMatch(Phase::isValid);
-        }
-    };
 
 }

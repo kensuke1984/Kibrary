@@ -30,6 +30,7 @@ public class MetroPoliceHastings<M, D> {
     private final DataComparator<D> DATA_COMPARATOR;
 
     private final DataGenerator<M, D> DATA_GENERATOR;
+    private final Path MODEL_PATH;
 
     /**
      * @param workDir        working directory
@@ -49,7 +50,15 @@ public class MetroPoliceHastings<M, D> {
         Files.createDirectories(MODEL_PATH);
     }
 
-    private final Path MODEL_PATH;
+    /**
+     * @param lastAdoptedLikelihood likelihood for the last model
+     * @param currentLikelihood     likelihood for the current model
+     * @return if the current model is accept.
+     */
+    private static boolean acceptsCurrent(double lastAdoptedLikelihood, double currentLikelihood) {
+        double percentage = currentLikelihood / lastAdoptedLikelihood;
+        return 1 < percentage || Math.random() < percentage;
+    }
 
     public void run(int nRun) throws IOException, InterruptedException {
         System.err.println("MetroPoliceHastings is going.");
@@ -86,16 +95,6 @@ public class MetroPoliceHastings<M, D> {
             for (int i = 0; i < likelihoods.length; i++)
                 printWriter.println(i + " " + likelihoods[i]);
         }
-    }
-
-    /**
-     * @param lastAdoptedLikelihood likelihood for the last model
-     * @param currentLikelihood     likelihood for the current model
-     * @return if the current model is accept.
-     */
-    private static boolean acceptsCurrent(double lastAdoptedLikelihood, double currentLikelihood) {
-        double percentage = currentLikelihood / lastAdoptedLikelihood;
-        return 1 < percentage || Math.random() < percentage;
     }
 
 }

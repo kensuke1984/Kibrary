@@ -1,10 +1,10 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * Output stream for a SAC file

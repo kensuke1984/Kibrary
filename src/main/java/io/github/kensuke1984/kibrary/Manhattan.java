@@ -1,27 +1,25 @@
 package io.github.kensuke1984.kibrary;
 
+import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.datarequest.DataRequestor;
+import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
+import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
+import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
+import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
+import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
+import io.github.kensuke1984.kibrary.selection.DataSelection;
+import io.github.kensuke1984.kibrary.selection.FilterDivider;
+import io.github.kensuke1984.kibrary.selection.SecondHandler;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
+import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
+import io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
 
 import java.util.Arrays;
-
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
-import io.github.kensuke1984.kibrary.selection.FilterDivider;
-import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
-
-import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
-import io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker;
-import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
-import io.github.kensuke1984.kibrary.datarequest.DataRequestor;
-import io.github.kensuke1984.kibrary.selection.DataSelection;
-import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
-import io.github.kensuke1984.kibrary.selection.SecondHandler;
-import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
-import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
-import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
-import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
-import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 
 /**
  * The list of names of manhattan (operation)
@@ -50,21 +48,20 @@ public enum Manhattan {
     TimewindowMaker(18, TimewindowMaker.class),//
     ;
 
+    private Class<? extends Operation> c;
+    private int value;
+
+    Manhattan(int n, Class<? extends Operation> c) {
+        value = n;
+        this.c = c;
+    }
+
     public static void printList() {
         Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
     }
 
     static Manhattan valueOf(int n) {
         return Arrays.stream(values()).filter(m -> m.value == n).findAny().get();
-    }
-
-    private Class<? extends Operation> c;
-
-    private int value;
-
-    Manhattan(int n, Class<? extends Operation> c) {
-        value = n;
-        this.c = c;
     }
 
     /**

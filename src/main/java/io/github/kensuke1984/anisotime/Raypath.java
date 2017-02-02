@@ -1,24 +1,14 @@
 package io.github.kensuke1984.anisotime;
 
-import static io.github.kensuke1984.kibrary.math.Integrand.bySimpsonRule;
-import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
+import io.github.kensuke1984.kibrary.math.Integrand;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.Precision;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.DoubleFunction;
@@ -26,10 +16,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.util.Precision;
-
-import io.github.kensuke1984.kibrary.math.Integrand;
+import static io.github.kensuke1984.kibrary.math.Integrand.bySimpsonRule;
+import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
 
 /**
  * Every depth is written as <b>radius [km]</b>. Every angle value returns in
@@ -68,23 +56,20 @@ import io.github.kensuke1984.kibrary.math.Integrand;
 public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
-     * 2016/12/16
-     */
-    private static final long serialVersionUID = 8243323152285239494L;
-
-    /**
      * If the gap between the CMB and the turning r is under this value, then
      * diffracted phase can be computed.
      */
     static final double permissibleGapForDiff = 1e-5;
-
     /**
-     * @return {@link VelocityStructure} of this raypath.
+     * 2016/12/16
      */
-    VelocityStructure getStructure() {
-        return WOODHOUSE.getStructure();
-    }
-
+    private static final long serialVersionUID = 8243323152285239494L;
+    private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
+    private final Woodhouse1981 WOODHOUSE;
+    /**
+     * Mesh for integration
+     */
+    private final ComputationalMesh MESH;
     /**
      * &delta;&Delta;<sub>i</sub> at r<sub>i</sub> &le; r &le; r<sub>i+1</sub>
      * (i = 0, 1, ..., n-1)
@@ -97,7 +82,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * the Jefferey's range.
      */
     private transient Map<PhasePart, double[]> dThetaMap;
-
     /**
      * &delta;T<sub>i</sub> at r<sub>i</sub>&le; r &le; r<sub>i+1</sub> (i = 0,
      * 1, ..., n-1)
@@ -110,16 +94,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * Jefferey's range.
      */
     private transient Map<PhasePart, double[]> dTMap;
-
-    private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
-
     /**
      * Radius of bouncing points for all phase parts.
      */
     private transient Map<PhasePart, Double> turningRMap;
-
-    private final Woodhouse1981 WOODHOUSE;
-
     /**
      * &Delta; of phase parts
      */
@@ -139,11 +117,15 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * The boundary is on mesh. If the phase penetrates a part, the value is {@link Double#NaN}
      */
     private transient Map<PhasePart, Double> jeffreysBoundaryMap;
-
     /**
-     * Mesh for integration
+     * If this method has &Delta; and T for partitions.
      */
-    private final ComputationalMesh MESH;
+    private boolean isComputed;
+    /**
+     * If this has transient values the route theta and time.
+     */
+    private transient boolean hasTransients;
+    private transient Map<PhasePart, Propagation> propagationMap;
 
     /**
      * ray parameter p the source is on the surface PREM structure
@@ -182,6 +164,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         MESH = mesh == null ? ComputationalMesh.simple(woodhouse.getStructure()) : mesh;
         setTurningRs();
         computeJeffreysRange();
+    }
+
+    /**
+     * @return {@link VelocityStructure} of this raypath.
+     */
+    VelocityStructure getStructure() {
+        return WOODHOUSE.getStructure();
     }
 
     /**
@@ -358,16 +347,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         for (double value : outputList)
             stream.writeDouble(value);
     }
-
-    /**
-     * If this method has &Delta; and T for partitions.
-     */
-    private boolean isComputed;
-
-    /**
-     * If this has transient values the route theta and time.
-     */
-    private transient boolean hasTransients;
 
     /**
      * TODO Range is from the turning point to a radius which is good enough for
@@ -836,7 +815,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 .anyMatch(phasePart -> propagationMap.get(phasePart) != Propagation.NOEXIST);
     }
 
-
     /**
      * The center of the Earth is (0, 0) Starting point is (0, eventR)
      *
@@ -1036,8 +1014,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             throw new RuntimeException("Could not compute epicentral distances.");
         }
     }
-
-    private transient Map<PhasePart, Propagation> propagationMap;
 
     /**
      * @param pp target phase part

@@ -1,133 +1,91 @@
 package io.github.kensuke1984.kibrary.external.gnuplot;
 
 /**
- * 
  * Settings in gnuplot
- * 
- * @version 0.0.2
- * 
- * @author Kensuke Konishi
  *
+ * @author Kensuke Konishi
+ * @version 0.0.2
  */
 public class LineAppearance {
 
-	
-	/**
-	 * 線種　　－１：１０
-	 */
-	private int linetype = 1;
-	 
-	/**
-	 * 線の色
-	 */
-	private GnuplotColorNames linecolor = GnuplotColorNames.black;
-	
-	/**
-	 * 線の太さ
-	 */
-	private int linewidth = 1;
-	
-	/**
-	 * データをどう使うか　using ????? の　???の分　
-	 * （例　1:3, 1:($3+$1)）
-	 */
-	private String plotPart;
-	
-	/**
-	 * plotPartの情報があるか
-	 */
-	private boolean plotPartSetting;
-	
-	
-	
-	/**
-	 * using ????
-	 * @param plotPart ????の部分　（例　1:3, 1:($3+$1)）
-	 */
-	public void setPlotPart(String plotPart) {
-		this.plotPart = plotPart;
-		plotPartSetting = true;
-	}
 
+    /**
+     * 線種　　－１：１０
+     */
+    private int linetype = 1;
 
+    /**
+     * 線の色
+     */
+    private GnuplotColorNames linecolor = GnuplotColorNames.black;
 
+    /**
+     * 線の太さ
+     */
+    private int linewidth = 1;
 
-	public int getLinetype() {
-		return linetype;
-	}
+    /**
+     * データをどう使うか　using ????? の　???の分
+     * （例　1:3, 1:($3+$1)）
+     */
+    private String plotPart;
 
+    /**
+     * plotPartの情報があるか
+     */
+    private boolean plotPartSetting;
+    private boolean withLine = true;
 
+    /**
+     * using ????
+     *
+     * @param plotPart ????の部分　（例　1:3, 1:($3+$1)）
+     */
+    public void setPlotPart(String plotPart) {
+        this.plotPart = plotPart;
+        plotPartSetting = true;
+    }
 
+    public int getLinetype() {
+        return linetype;
+    }
 
-	public void setLinetype(int linetype) {
-		this.linetype = linetype;
-	}
+    public void setLinetype(int linetype) {
+        this.linetype = linetype;
+    }
 
+    public GnuplotColorNames getLinecolor() {
+        return linecolor;
+    }
 
+    public void setLinecolor(GnuplotColorNames linecolor) {
+        this.linecolor = linecolor;
+    }
 
+    public int getLinewidth() {
+        return linewidth;
+    }
 
+    public void setLinewidth(int linewidth) {
+        this.linewidth = linewidth;
+    }
 
+    public boolean isWithLine() {
+        return withLine;
+    }
 
-	public GnuplotColorNames getLinecolor() {
-		return linecolor;
-	}
+    public void setWithLine(boolean withLine) {
+        this.withLine = withLine;
+    }
 
+    public String getString() {
+        String str = " linetype " + linetype + " linecolor rgbcolor \"" + linecolor.nameColorName() + "\" linewidth " +
+                linewidth;
+        if (withLine) str = str + " w l";
 
-
-
-
-
-	public void setLinecolor(GnuplotColorNames linecolor) {
-		this.linecolor = linecolor;
-	}
-
-
-
-
-
-
-	public int getLinewidth() {
-		return linewidth;
-	}
-
-	
-	private boolean withLine = true;
-
-
-
-
-
-	public boolean isWithLine() {
-		return withLine;
-	}
-
-
-
-
-	public void setWithLine(boolean withLine) {
-		this.withLine = withLine;
-	}
-
-
-
-
-	public void setLinewidth(int linewidth) {
-		this.linewidth = linewidth;
-	}
-
-
-	public String getString(){
-		String str = " linetype "+ linetype+" linecolor rgbcolor \""+linecolor.nameColorName()+"\" linewidth "+linewidth;
-		if(withLine)
-			str = str+" w l";
-		
-		if (plotPartSetting)
-			return "u "+plotPart+str;
-		else
-			return str;
-	}
-	
-
+        if (plotPartSetting) return "u " + plotPart + str;
+        else return str;
+    }
 
 
 }

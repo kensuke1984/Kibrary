@@ -20,13 +20,16 @@ import java.util.Comparator;
  */
 class SACVarianceComparator implements DataComparator<SACData[]> {
 
+    private final double OBS2;
+    private final SACData[] OBSERVED_DATASET;
+    private final double SIGMA = 0.5;
+
+
     SACVarianceComparator(Path obsDir) throws IOException {
         OBSERVED_DATASET = readObserved(obsDir);
         OBS2 = Arrays.stream(OBSERVED_DATASET).map(SACData::getData).flatMapToDouble(Arrays::stream)
                 .reduce(0, (i, j) -> i + j * j);
     }
-
-    private final double OBS2;
 
     private SACData[] readObserved(Path obsDir) throws IOException {
         SACFileName[] names = Utilities.sacFileNameSet(obsDir).stream().filter(SACFileName::isOBS)
@@ -36,9 +39,6 @@ class SACVarianceComparator implements DataComparator<SACData[]> {
             dataset[i] = names[i].read();
         return dataset;
     }
-
-
-    private final SACData[] OBSERVED_DATASET;
 
     private boolean same(SACData data1, SACData data2) {
         return data1.getGlobalCMTID().equals(data2.getGlobalCMTID()) && data1.getStation().equals(data2.getStation()) &&
@@ -67,8 +67,6 @@ class SACVarianceComparator implements DataComparator<SACData[]> {
             if (!same(OBSERVED_DATASET[i], dataset[i])) return true;
         return false;
     }
-
-    private final double SIGMA = 0.5;
 
     @Override
     public double likelihood(SACData[] data) {

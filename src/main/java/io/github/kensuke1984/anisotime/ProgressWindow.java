@@ -6,7 +6,7 @@
 
 package io.github.kensuke1984.anisotime;
 
-import java.awt.Frame;
+import java.awt.*;
 
 /**
  * Progress window for computation
@@ -16,12 +16,16 @@ import java.awt.Frame;
  */
 final class ProgressWindow extends javax.swing.JFrame {
 
+    private static final long serialVersionUID = 4174550805475268586L;
     /**
      * if "cancel" button is pushed.
      */
     private boolean canceled;
-
-    private static final long serialVersionUID = 4174550805475268586L;
+    private int iProgress;
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton jButtonCancel;
+    private javax.swing.JLabel jLabelComputing;
+    private javax.swing.JProgressBar jProgressBar;
 
     /**
      * @param min of progressbar
@@ -79,15 +83,8 @@ final class ProgressWindow extends javax.swing.JFrame {
 
     }// </editor-fold>//GEN-END:initComponents
 
-    private int iProgress;
-
     synchronized void addProgress() {
         jProgressBar.setValue(++iProgress);
     }
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButtonCancel;
-    private javax.swing.JLabel jLabelComputing;
-    private javax.swing.JProgressBar jProgressBar;
     // End of variables declaration//GEN-END:variables
 }

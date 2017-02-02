@@ -1,11 +1,5 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
-import java.util.Arrays;
-import java.util.Set;
-
-import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.transform.TransformType;
-
 import io.github.kensuke1984.kibrary.stacking.PeakStack;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -14,6 +8,11 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.transform.TransformType;
+
+import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Source time function estimation by stacked peaks.
@@ -32,7 +31,8 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
      * Ratio of peak to peak (Observed/Synthetic)
      */
     private double[] ampRatio;
-
+    private PeakStack ps = new PeakStack();
+    private Set<TimewindowInformation> timewindow;
     /**
      * @param np         the number of steps in frequency domain
      * @param tlen       the time length
@@ -48,25 +48,6 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         this.timewindow = timewindow;
         this.obsSacs = obsSacs;
         this.synSacs = synSacs;
-    }
-
-    private PeakStack ps = new PeakStack();
-    private Set<TimewindowInformation> timewindow;
-
-    private Trace toStackTrace(Trace trace) {
-        return ps.stack(null, null, null, null, trace);
-    }
-
-    private Trace createTrace(SACData sacFile) {
-        Station station = sacFile.getStation();
-        GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
-        SACComponent component = SACComponent.of(sacFile);
-
-        TimewindowInformation window = timewindow.stream()
-                .filter(info -> info.getStation().equals(station) && info.getGlobalCMTID().equals(id) &&
-                        info.getComponent() == component).findAny().get();
-
-        return sacFile.createTrace().cutWindow(window);
     }
 
     /**
@@ -88,6 +69,22 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         }
 
         return true;
+    }
+
+    private Trace toStackTrace(Trace trace) {
+        return ps.stack(null, null, null, null, trace);
+    }
+
+    private Trace createTrace(SACData sacFile) {
+        Station station = sacFile.getStation();
+        GlobalCMTID id = new GlobalCMTID(sacFile.getSACString(SACHeaderEnum.KEVNM));
+        SACComponent component = SACComponent.of(sacFile);
+
+        TimewindowInformation window = timewindow.stream()
+                .filter(info -> info.getStation().equals(station) && info.getGlobalCMTID().equals(id) &&
+                        info.getComponent() == component).findAny().get();
+
+        return sacFile.createTrace().cutWindow(window);
     }
 
     private int findLsmooth() {

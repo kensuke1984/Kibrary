@@ -19,61 +19,22 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 public class Raypath {
 
     /**
-     * {@link Location} of a seismic source
-     */
-    private final Location sourceLocation;
-
-    /**
-     * {@link HorizontalPosition} of a seismic station
-     */
-    private final HorizontalPosition stationPosition;
-
-    /**
-     * @return {@link Location} of the seismic source on the raypath
-     */
-    public Location getSource() {
-        return sourceLocation;
-    }
-
-    /**
-     * @return {@link HorizontalPosition} of the seismic station on the raypath
-     */
-    public HorizontalPosition getStation() {
-        return stationPosition;
-    }
-
-    /**
      * source-to-receiver(station) Azimuth [rad] 震源から観測点をみた方位角
      */
     protected final double azimuth;
-
     protected final double backAzimuth;
-
-    /**
-     * @return epicentral distance of this raypath [rad]
-     */
-    public double getEpicentralDistance() {
-        return epicentralDistance;
-    }
-
-    /**
-     * @return azimuth [rad]
-     */
-    public double getAzimuth() {
-        return azimuth;
-    }
-
-    /**
-     * @return back azimuth [rad]
-     */
-    public double getBackAzimuth() {
-        return backAzimuth;
-    }
-
     /**
      * epicentral distance [rad]
      */
     protected final double epicentralDistance;
+    /**
+     * {@link Location} of a seismic source
+     */
+    private final Location sourceLocation;
+    /**
+     * {@link HorizontalPosition} of a seismic station
+     */
+    private final HorizontalPosition stationPosition;
 
     /**
      * Create a raypath for the source and station.
@@ -96,6 +57,41 @@ public class Raypath {
      */
     public Raypath(SACHeaderData sacHeaderData) {
         this(sacHeaderData.getEventLocation(), sacHeaderData.getStation().getPosition());
+    }
+
+    /**
+     * @return {@link Location} of the seismic source on the raypath
+     */
+    public Location getSource() {
+        return sourceLocation;
+    }
+
+    /**
+     * @return {@link HorizontalPosition} of the seismic station on the raypath
+     */
+    public HorizontalPosition getStation() {
+        return stationPosition;
+    }
+
+    /**
+     * @return epicentral distance of this raypath [rad]
+     */
+    public double getEpicentralDistance() {
+        return epicentralDistance;
+    }
+
+    /**
+     * @return azimuth [rad]
+     */
+    public double getAzimuth() {
+        return azimuth;
+    }
+
+    /**
+     * @return back azimuth [rad]
+     */
+    public double getBackAzimuth() {
+        return backAzimuth;
     }
 
     /**

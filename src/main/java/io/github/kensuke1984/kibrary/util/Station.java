@@ -1,9 +1,9 @@
 package io.github.kensuke1984.kibrary.util;
 
-import java.nio.ByteBuffer;
-
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+
+import java.nio.ByteBuffer;
 
 /**
  * <p>
@@ -26,12 +26,30 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  */
 public class Station implements Comparable<Station> {
 
-    @Override
-    public int compareTo(Station o) {
-        int name = NAME.compareTo(o.NAME);
-        if (name != 0) return name;
-        int net = NETWORK.compareTo(o.NETWORK);
-        return net != 0 ? net : POSITION.compareTo(o.POSITION);
+    /**
+     * NETWORK name
+     */
+    private final String NETWORK;
+    /**
+     * the {@link HorizontalPosition} of the station
+     */
+    private final HorizontalPosition POSITION;
+    /**
+     * name of the station
+     */
+    private final String NAME;
+
+    /**
+     * @param stationName Name of the station (must be 8 or less letters)
+     * @param network     Name of the network of the station (must be 8 or less letters)
+     * @param position    Horizontal POSITION of the station
+     */
+    public Station(String stationName, HorizontalPosition position, String network) {
+        if (8 < stationName.length() || 8 < network.length())
+            throw new IllegalArgumentException("Both station and NETWORK name must be 8 or less letters.");
+        NAME = stationName;
+        NETWORK = network;
+        POSITION = position;
     }
 
     /**
@@ -50,9 +68,33 @@ public class Station implements Comparable<Station> {
     }
 
     /**
-     * NETWORK name
+     * Creates station from the input bytes.
+     * <p>
+     * The bytes must contain Name(8), NETWORK(8), latitude(4), longitude(4)
+     * <p>
+     * The bytes are written in header parts of BasicIDFile PartialIDFile
+     * TimewindowInformationFile.
+     *
+     * @param bytes for one station
+     * @return Station created from the input bytes
      */
-    private final String NETWORK;
+    public static Station createStation(byte[] bytes) {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        byte[] str = new byte[8];
+        bb.get(str);
+        String name = new String(str).trim();
+        bb.get(str);
+        String network = new String(str).trim();
+        return new Station(name, new HorizontalPosition(bb.getFloat(), bb.getFloat()), network);
+    }
+
+    @Override
+    public int compareTo(Station o) {
+        int name = NAME.compareTo(o.NAME);
+        if (name != 0) return name;
+        int net = NETWORK.compareTo(o.NETWORK);
+        return net != 0 ? net : POSITION.compareTo(o.POSITION);
+    }
 
     @Override
     public int hashCode() {
@@ -82,16 +124,6 @@ public class Station implements Comparable<Station> {
     }
 
     /**
-     * the {@link HorizontalPosition} of the station
-     */
-    private final HorizontalPosition POSITION;
-
-    /**
-     * name of the station
-     */
-    private final String NAME;
-
-    /**
      * @return name of the station
      */
     public String getName() {
@@ -115,40 +147,6 @@ public class Station implements Comparable<Station> {
      */
     public String getNetwork() {
         return NETWORK;
-    }
-
-    /**
-     * @param stationName Name of the station (must be 8 or less letters)
-     * @param network     Name of the network of the station (must be 8 or less letters)
-     * @param position    Horizontal POSITION of the station
-     */
-    public Station(String stationName, HorizontalPosition position, String network) {
-        if (8 < stationName.length() || 8 < network.length())
-            throw new IllegalArgumentException("Both station and NETWORK name must be 8 or less letters.");
-        NAME = stationName;
-        NETWORK = network;
-        POSITION = position;
-    }
-
-    /**
-     * Creates station from the input bytes.
-     * <p>
-     * The bytes must contain Name(8), NETWORK(8), latitude(4), longitude(4)
-     * <p>
-     * The bytes are written in header parts of BasicIDFile PartialIDFile
-     * TimewindowInformationFile.
-     *
-     * @param bytes for one station
-     * @return Station created from the input bytes
-     */
-    public static Station createStation(byte[] bytes) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        byte[] str = new byte[8];
-        bb.get(str);
-        String name = new String(str).trim();
-        bb.get(str);
-        String network = new String(str).trim();
-        return new Station(name, new HorizontalPosition(bb.getFloat(), bb.getFloat()), network);
     }
 
 }
