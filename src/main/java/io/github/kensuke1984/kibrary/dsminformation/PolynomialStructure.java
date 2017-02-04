@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
@@ -25,9 +27,28 @@ import java.util.stream.IntStream;
  * shallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi
- * @version 0.2.4
+ * @version 0.2.5
  */
 public class PolynomialStructure implements Serializable {
+
+    public static void main(String[] args) throws IOException {
+        if (args.length != 1) throw new IllegalArgumentException("Usage: model file.");
+        Path path = Paths.get(args[0]);
+        PolynomialStructure ps = new PolynomialStructure(path);
+        ps.printValues(1);
+    }
+
+    private void printValues(double deltaR) {
+        System.out.println("#r \u03C1 Vpv Vph Vsv Vsh \u03B7 Q\u03BC Q\u03BA");
+        for (int izone = 0; izone < nzone; izone++) {
+            for (double r = rmin[izone]; r < rmax[izone]; r += deltaR)
+                Utilities.println(r, getVpvAt(r), getVphAt(r), getVsvAt(r), getVshAt(r), getEtaAt(r), getQmuAt(r),
+                        getQkappaAt(r));
+        }
+
+
+    }
+
 
     /**
      * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -296,7 +317,7 @@ public class PolynomialStructure implements Serializable {
      * <p>
      * if there is already a boundary at r then nothing will be done.
      *
-     * @param boundaries radiuses for boundaries. Values smaller than 0 or bigger than
+     * @param boundaries radii for boundaries. Values smaller than 0 or bigger than
      *                   earth radius will be ignored
      * @return a new structure which have additional layers at the input
      * boundaries or this if there all the radiuses already exist in
@@ -548,6 +569,14 @@ public class PolynomialStructure implements Serializable {
      */
     public double getVshAt(double r) {
         return vsh[zoneOf(r)].value(toX(r));
+    }
+
+    /**
+     * @param r [km] radius
+     * @return &eta; at the radius r
+     */
+    public double getEtaAt(double r) {
+        return eta[zoneOf(r)].value(toX(r));
     }
 
     /**
