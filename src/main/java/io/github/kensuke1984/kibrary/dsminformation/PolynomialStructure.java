@@ -44,6 +44,9 @@ public class PolynomialStructure implements Serializable {
             for (double r = rmin[izone]; r < rmax[izone]; r += deltaR)
                 Utilities.println(r, getVpvAt(r), getVphAt(r), getVsvAt(r), getVshAt(r), getEtaAt(r), getQmuAt(r),
                         getQkappaAt(r));
+            double r1 = rmax[izone];
+            Utilities.println(r1, getVpvAt(r1), getVphAt(r1), getVsvAt(r1), getVshAt(r1), getEtaAt(r1), getQmuAt(r1),
+                    getQkappaAt(r1));
         }
 
 
