@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
     public static final String CODENAME = "Sahagin";
-    public static final String VERSION = "0.4.2.4.2";
+    public static final String VERSION = "0.4.2.5";
     private static final long serialVersionUID = -2485772755944862822L;
     private static final String line;
 
