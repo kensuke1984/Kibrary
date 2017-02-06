@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2.1
+ * @version 0.1.2.2.2
  */
 public class Trace {
 
@@ -188,9 +188,6 @@ public class Trace {
         if (n < 0) throw new IllegalArgumentException("n is invalid");
 
         int[] j = nearPoints(n + 1, c);
-        for (int i : j) {
-            System.out.println(i + " " + X[i]);
-        }
         if (n == 0) return Y[j[0]];
 
         double[] xi = Arrays.stream(j).parallel().mapToDouble(i -> X[i]).toArray();

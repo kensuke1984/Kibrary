@@ -20,10 +20,10 @@ import java.util.stream.IntStream;
  * Catalog of global CMT solutions.
  * <p>
  * The catalog contains event list from <b>1976 January</b> to <b>2016
- * November</b>.
+ * September</b>.
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1.1
+ * @version 0.1.3
  */
 final class GlobalCMTCatalog {
 
@@ -64,11 +64,11 @@ final class GlobalCMTCatalog {
         return catalogFile;
     }
 
+    //TODO structure has changed...
     private static Set<NDK> readJar() {
         try {
-            List<String> lines =
-                    IOUtils.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
-                            Charset.defaultCharset());
+            List<String> lines = IOUtils.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
+                    Charset.defaultCharset());
             if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog contained in the jar file is broken");
             return IntStream.range(0, lines.size() / 5).mapToObj(
                     i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
