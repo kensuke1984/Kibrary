@@ -33,7 +33,7 @@ import java.util.stream.Stream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.2.1
  */
 public final class Utilities {
 
@@ -258,7 +258,7 @@ public final class Utilities {
      * @param destDirectory {@link Path} of the destination directory
      * @param createDestDir If {@code true} create the destination directory, otherwise if
      *                      {@code false} throw an IOException
-     * @param options       for copyint
+     * @param options       for copying
      * @throws IOException if an I/O error occurs
      */
     public static void moveToDirectory(Path srcPath, Path destDirectory, boolean createDestDir, CopyOption... options)
