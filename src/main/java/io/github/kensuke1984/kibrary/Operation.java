@@ -16,7 +16,7 @@ import java.util.Properties;
  * Main procedures in Kibrary
  *
  * @author Kensuke Konishi
- * @version 0.0.4.2.1
+ * @version 0.0.4.2.2
  */
 public interface Operation {
 
@@ -29,7 +29,7 @@ public interface Operation {
                 list.add(path);
             }
             if (list.isEmpty()) throw new NoSuchFileException("No property file is found");
-            System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "]");
+            System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             return list.get(Integer.parseInt(reader.readLine()) - 1);
         }
