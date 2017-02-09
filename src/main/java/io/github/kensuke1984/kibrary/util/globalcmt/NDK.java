@@ -62,7 +62,7 @@ import java.time.format.DateTimeFormatter;
  * ====
  *
  * @author Kensuke Konishi
- * @version 0.0.6.3
+ * @version 0.0.6.4
  * @see <a href=
  * http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
  * guide</a>
@@ -146,9 +146,6 @@ final class NDK implements GlobalCMTData {
      */
     private double timeDifference;
     // ///////////////////////////
-    /**
-     * Centroidの位置
-     */
     private Location centroidLocation;
     /**
      * [60-63] Type of depth. "FREE" indicates that the depth was a result of
@@ -222,6 +219,7 @@ final class NDK implements GlobalCMTData {
     private int strike1;
     private int dip1;
     private int rake1;
+
     private NDK() {
     }
 
@@ -242,12 +240,9 @@ final class NDK implements GlobalCMTData {
         // System.out.println(referenceCalendar.get(Calendar.DAY_OF_YEAR));
         ndk.hypocenterLocation = new Location(Double.parseDouble(parts[3]), Double.parseDouble(parts[4]),
                 6371 - Double.parseDouble(parts[5]));
-        // System.out.println(hypocenterLocation);
         ndk.mb = Double.parseDouble(parts[6]);
         ndk.ms = Double.parseDouble(parts[7]);
-        // System.out.println(mb + " " + ms);
         ndk.geographicalLocation = lines[0].substring(56).trim();
-//		 System.out.println(ndk.geographicalLocation + " " + lines[0].length());
 
         // line2
         parts = lines[1].split("\\s+");
@@ -266,13 +261,10 @@ final class NDK implements GlobalCMTData {
         ndk.m[0] = Integer.parseInt(bsmParts[6]);
         ndk.m[1] = Integer.parseInt(bsmParts[7]);
         ndk.m[2] = Integer.parseInt(bsmParts[8]);
-        // System.out.println(lines[1].substring(61));
         String[] cmtParts = lines[1].substring(61).trim().split("\\s+");
         ndk.cmtType = Integer.parseInt(cmtParts[1]);
         ndk.momentRateFunctionType = cmtParts[2].substring(0, 5);
-        // System.out.println(ndk.momentRateFunctionType);
         ndk.halfDurationMomentRateFunction = Double.parseDouble(cmtParts[3]);
-        // System.out.println(ndk.halfDurationMomentRateFunction);
 
         // line3
         parts = lines[2].split("\\s+");
@@ -381,13 +373,15 @@ final class NDK implements GlobalCMTData {
         // timeshift
         if (timeDifference < search.getLowerCentroidTimeShift() || search.getUpperCentroidTimeShift() < timeDifference)
             return false;
-        // bodywave magnitude
+        // body wave magnitude
         if (mb < search.getLowerMb() || search.getUpperMb() < mb) return false;
         // surface wave magnitude
         if (ms < search.getLowerMs() || search.getUpperMs() < ms) return false;
         // moment magnitude
         if (momentTensor.getMw() < search.getLowerMw() || search.getUpperMw() < momentTensor.getMw()) return false;
-
+        // half duration
+        if (halfDurationMomentRateFunction < search.getLowerHalfDuration() ||
+                search.getUpperHalfDuration() < halfDurationMomentRateFunction) return false;
         // tension axis plunge
         if (plunge0 < search.getLowerTensionAxisPlunge() || search.getUpperTensionAxisPlunge() < plunge0) return false;
         // null axis plunge
