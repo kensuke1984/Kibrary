@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * Global CMT searchを行う時のQuery
  *
  * @author Kensuke Konishi
- * @version 0.1.10.5
+ * @version 0.1.11
  *          TODO thread safe
  */
 public class GlobalCMTSearch {
@@ -34,39 +34,43 @@ public class GlobalCMTSearch {
      */
     private LocalDateTime endDate;
     /**
-     * the lower limit of centroid time shift Default: -9999
+     * lower limit of centroid time shift Default: -9999
      */
     private double lowerCentroidTimeShift = -9999;
     /**
-     * the lower limit of depth range Default: 0
+     * lower limit of depth range Default: 0
      */
     private double lowerDepth;
     /**
-     * the lower limit of latitude range [-90:90] Default: -90
+     * lower limit of latitude range [-90:90] Default: -90
      */
     private double lowerLatitude = -90;
     /**
-     * the lower limit of longitude range [-180:180] Default: -180
+     * lower limit of longitude range [-180:180] Default: -180
      */
     private double lowerLongitude = -180;
     /**
-     * the lower limit of bodywave magnitude Default: 0
+     * lower limit of bodywave magnitude Default: 0
      */
     private double lowerMb;
     /**
-     * the lower limit of surface wave magnitude Default: 0
+     * lower limit of surface wave magnitude Default: 0
      */
     private double lowerMs;
     /**
-     * the lower limit of moment magnitude Default: 0
+     * lower limit of moment magnitude Default: 0
      */
     private double lowerMw;
     /**
-     * the lower limit of null axis plunge [0, 90] (degree) Default: 0
+     * lower limit of half duration
+     */
+    private double lowerHalfDuration;
+    /**
+     * lower limit of null axis plunge [0, 90] (degree) Default: 0
      */
     private int lowerNullAxisPlunge;
     /**
-     * the lower limit of tension axis plunge [0, 90] (degree) Default: 0
+     * lower limit of tension axis plunge [0, 90] (degree) Default: 0
      */
     private int lowerTensionAxisPlunge;
     /**
@@ -74,39 +78,43 @@ public class GlobalCMTSearch {
      */
     private LocalDateTime startDate;
     /**
-     * the upper limit of centroid time shift Default: 9999
+     * upper limit of centroid time shift Default: 9999
      */
     private double upperCentroidTimeShift = 9999;
     /**
-     * the upper limit of depth range Default: 1000
+     * upper limit of depth range Default: 1000
      */
     private double upperDepth = 1000;
     /**
-     * the upper limit of latitude range [-90:90] Default: 90
+     * upper limit of latitude range [-90:90] Default: 90
      */
     private double upperLatitude = 90;
     /**
-     * the upper limit of longitude range [-180:180] Default: 180
+     * upper limit of longitude range [-180:180] Default: 180
      */
     private double upperLongitude = 180;
     /**
-     * the upper limit of bodywave magnitude Default: 10
+     * upper limit of bodywave magnitude Default: 10
      */
     private double upperMb = 10;
     /**
-     * the upper limit of surface wave magnitude Default: 10
+     * upper limit of surface wave magnitude Default: 10
      */
     private double upperMs = 10;
     /**
-     * the upper limit of moment magnitude Default: 10
+     * upper limit of moment magnitude Default: 10
      */
     private double upperMw = 10;
     /**
-     * the upper limit of null axis plunge [0, 90] (degree) Default: 90
+     * upper limit of half duration Default: 20
+     */
+    private double upperHalfDuration = 20;
+    /**
+     * upper limit of null axis plunge [0, 90] (degree) Default: 90
      */
     private int upperNullAxisPlunge = 90;
     /**
-     * the upper limit of tension axis plunge [0, 90] (degree) Default: 90
+     * upper limit of tension axis plunge [0, 90] (degree) Default: 90
      */
     private int upperTensionAxisPlunge = 90;
 
@@ -335,14 +343,38 @@ public class GlobalCMTSearch {
     }
 
     /**
+     * @param lowerHalfDuration [s] lower limit of half duration
+     * @param upperHalfDuration [s] uppper limit of half duration
+     */
+    public void setHalfDurationRange(double lowerHalfDuration, double upperHalfDuration) {
+        if (upperHalfDuration < lowerHalfDuration)
+            throw new IllegalArgumentException("Input halfDuration range is invalid.");
+        this.lowerHalfDuration = lowerHalfDuration;
+        this.upperHalfDuration = upperHalfDuration;
+    }
+
+    /**
+     * @return lower limit of half duration
+     */
+    public double getLowerHalfDuration() {
+        return lowerHalfDuration;
+    }
+
+    /**
+     * @return [s] upper limit of half duration
+     */
+    public double getUpperHalfDuration() {
+        return upperHalfDuration;
+    }
+
+    /**
      * Set depth range (<b>NOT</b> radius)
      *
      * @param lowerDepth [km] lower limit of depth
      * @param upperDepth [km] upper limit of depth
      */
     public void setDepthRange(double lowerDepth, double upperDepth) {
-        if (lowerDepth < 0 || upperDepth < lowerDepth)
-            throw new IllegalArgumentException("input depth range is invalid");
+        if (lowerDepth < 0 || upperDepth < lowerDepth) throw new IllegalArgumentException("input depth range is invalid");
         this.lowerDepth = lowerDepth;
         this.upperDepth = upperDepth;
     }
