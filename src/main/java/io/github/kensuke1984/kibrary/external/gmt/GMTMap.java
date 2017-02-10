@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  */
 public final class GMTMap {
 
-    String rOption;
+    private String rOption;
     /**
      * the minimum value of longitude range the default value is 0
      */
@@ -78,8 +78,8 @@ public final class GMTMap {
     public static String psxy(Symbol symbol, double symbolSize, double value, Path colorPalletPath,
                               HorizontalPosition position, String additionalOptions) {
         String cpOption = " -C" + colorPalletPath;
-        return "echo " + position + " " + value + " " + symbolSize + " | " + "psxy -V -: -J -R " + symbol.getOption() +
-                cpOption + " " + additionalOptions + " -K -O -P  >> $psname";
+        return "echo " + position + " " + value + " " + symbolSize + " | psxy -V -: -J -R " + symbol.getOption() +
+                cpOption + " " + additionalOptions + " -K -O -P  >>$psname";
     }
 
     /**
@@ -93,8 +93,8 @@ public final class GMTMap {
     public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position,
                               String... additionalOptions) {
         String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        return "echo " + position.getLatitude() + " " + position.getLongitude() + " " + symbolSize + " | " +
-                "psxy -V -: -J -R " + symbol.getOption() + " " + additional + " -P -K -O >> $psname";
+        return "echo " + position.getLatitude() + " " + position.getLongitude() + " " + symbolSize +
+                " | psxy -V -: -J -R " + symbol.getOption() + " " + additional + " -P -K -O >>$psname";
     }
 
     /**
@@ -144,7 +144,7 @@ public final class GMTMap {
      */
     public static String psCoast(String... additionalOptions) {
         String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        return "pscoast -J -R -B -Dc -W " + additional + " -V -P -K -O >> $psname";
+        return "pscoast -J -R -B -Dc -W " + additional + " -V -P -K -O >>$psname";
     }
 
     private static void createGrid() {
@@ -166,7 +166,6 @@ public final class GMTMap {
         // grdimage cs.grd -Jx0.5/0.1 -Ccp2.cpt -Ba10/a10 > test.ps
         // surface cs.dat -Gcs.grd -I1 -R0/35/3505/3605 -N10
         // grdimage 3505cs.grd -Jx0.5/0.1 -Ccp2.cpt -Ba10/a10 > test.ps
-
     }
 
     private void setROption() {
@@ -219,7 +218,7 @@ public final class GMTMap {
      */
     public String psStart(String... additionalOptions) {
         String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        return "psbasemap" + rOption + "-JQ15 -B+t\"" + mapName + "\" " + additional + " -K -V -P > $psname";
+        return "psbasemap" + rOption + "-JQ15 -B+t\"" + mapName + "\" " + additional + " -K -V -P >$psname";
     }
 
     /**
@@ -228,7 +227,7 @@ public final class GMTMap {
      */
     public String psEnd(String... additionalOptions) {
         String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        return "psbasemap -R -J" + bOption + additional + " -O -V -P >> $psname";
+        return "psbasemap -R -J" + bOption + additional + " -O -V -P >>$psname";
 
     }
 
@@ -244,12 +243,11 @@ public final class GMTMap {
         out[2] = "gmtset BASEMAP_FRAME_RGB 0/0/0";
         out[3] = "gmtset LABEL_FONT_SIZE 15";
         out[4] = "";// TODO
-        out[5] = "awk '{print $1, $2}' " + eventFile + " | psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " +
-                " > $psname";
-        out[6] = "awk '{print $1, $2}' " + stationFile + " |psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " +
-                " >> $psname";
+        out[5] = "awk '{print $1, $2}' " + eventFile + " | psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1 -K >$psname";
+        out[6] = "awk '{print $1, $2}' " + stationFile +
+                " | psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1 -K -O >>$psname";
         out[7] = "awk '{print $1, $2}' " + perturbationPointFile +
-                " |psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + " >> $psname";
+                " | psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1 -O >>$psname";
 
         return out;
     }
@@ -259,11 +257,11 @@ public final class GMTMap {
         String[] out = new String[6];
         out[0] = "#!/bin/sh";
 
-        out[1] = "pscoast -K -JQ " + rOption + bOption + " >> " + epsFileName;
-        out[2] = "psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1  -K " + eventFile + " > " + epsFileName;
-        out[3] = "psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1  -K -O " + stationFile + " >> " + epsFileName;
-        out[4] = "psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1  -O " + perturbationPointFile + " >> " + epsFileName;
-        out[5] = "grdimage ans.grd -J -Ccp2.cpt -B -O -R >> " + epsFileName;
+        out[1] = "pscoast -K -JQ " + rOption + bOption + " >>" + epsFileName;
+        out[2] = "psxy -V -: -JQ -R -O -P -Sa0.2 -G255/0/0 -W1 -K " + eventFile + " > " + epsFileName;
+        out[3] = "psxy -V -: -JQ -R -O -P -Si0.2 -G255/0/0 -W1 -K -O " + stationFile + " >> " + epsFileName;
+        out[4] = "psxy -V -: -JQ -R -O -P -Sx0.2 -G255/0/0 -W1 -O " + perturbationPointFile + " >> " + epsFileName;
+        out[5] = "grdimage ans.grd -J -Ccp2.cpt -B -O -R >>" + epsFileName;
         return out;
     }
 }
