@@ -28,21 +28,21 @@ import java.util.zip.ZipInputStream;
  * Information of a seismic event in
  * <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>.
  *
+ * The database is as of 20161115.
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.1
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  * <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
  */
 public class SCARDEC {
 
     public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss");
-    private static final URL SCARDEC_ROOT_PATH = SCARDEC.class.getClassLoader().getResource("scardec_20141231.zip");
+    private static final URL SCARDEC_ROOT_PATH = SCARDEC.class.getClassLoader().getResource("scardec20161115.zip");
     private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
     static {
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()))) {
             ZipEntry entry;
-
             while ((entry = zis.getNextEntry()) != null) {
                 if (entry.isDirectory()) {
                     Path path = Paths.get(entry.getName());
@@ -55,7 +55,7 @@ public class SCARDEC {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Exception occured in reading a SCARDEC catalog.");
+            throw new RuntimeException("Exception occurred in reading a SCARDEC catalog.");
         }
     }
 
@@ -116,7 +116,8 @@ public class SCARDEC {
     public static SCARDEC getSCARDEC(SCARDEC_ID id) {
         if (!EXISTING_ID.contains(id))
             throw new RuntimeException("No information for " + id.ORIGIN_TIME + " " + id.REGION);
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()))) {
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()));
+             DataInputStream dis = new DataInputStream(zis)) {
             ZipEntry entry;
             Location loc = null;
             double m0 = Double.NaN;
@@ -134,7 +135,6 @@ public class SCARDEC {
                 if (entry.isDirectory()) continue;
                 if (!path.contains(id.REGION) || !path.contains(id.getDateTimeString()) || path.contains("cmt.png"))
                     continue;
-                DataInputStream dis = new DataInputStream(zis);
                 for (int i = 0; i < 6; i++)
                     dis.readInt(); // origin time
                 loc = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
@@ -193,7 +193,7 @@ public class SCARDEC {
                 String numStr = br.readLine();
                 if (NumberUtils.isCreatable(numStr)) k = Integer.parseInt(numStr);
                 if (k < 1 || ids.length <= k - 1) {
-                    System.out.println("... which one? " + 0 + " - " + (ids.length - 1));
+                    System.out.println("... which one? [" + 0 + " - " + (ids.length - 1) + "] ");
                     k = -1;
                 }
             }
@@ -202,6 +202,17 @@ public class SCARDEC {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * @param folder a folder must have original name forms (e.g. FCTs_yyyymmdd_...)
+     * @return SCARDEC in the folder
+     */
+    private static SCARDEC readAscii(Path folder) throws IOException {
+        String name = folder.getFileName().toString();
+        Path averagePath = folder.resolve(name.replace("FCTs", "fctmoysource"));
+        Path optimalPath = folder.resolve(name.replace("FCTs", "fctoptsource"));
+        return readAscii(averagePath, optimalPath);
     }
 
     /**
@@ -224,7 +235,6 @@ public class SCARDEC {
             scid.toSCARDEC().printInfo();
         }
 
-        // printList();
     }
 
     /**
@@ -268,73 +278,65 @@ public class SCARDEC {
     }
 
     public static SCARDEC readBinary(Path averagePath, Path optimalPath, OpenOption... options) throws IOException {
-        try (DataInputStream aveDIS = new DataInputStream(
-                new BufferedInputStream(Files.newInputStream(averagePath, options)));
-             DataInputStream optDIS = new DataInputStream(
-                     new BufferedInputStream(Files.newInputStream(optimalPath, options)))) {
-            SCARDEC_ID averageID = SCARDEC_ID.of(averagePath.getFileName().toString());
-            SCARDEC_ID optimalID = SCARDEC_ID.of(optimalPath.getFileName().toString());
-            if (!averageID.equals(optimalID))
-                throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
+        SCARDEC_ID averageID = SCARDEC_ID.of(averagePath.getFileName().toString());
+        SCARDEC_ID optimalID = SCARDEC_ID.of(optimalPath.getFileName().toString());
+        if (!averageID.equals(optimalID))
+            throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
 
-            try (DataInputStream averageDIS = new DataInputStream(Files.newInputStream(averagePath, options));
-                 DataInputStream optimalDIS = new DataInputStream(Files.newInputStream(optimalPath, options))) {
-                LocalDateTime aveLDT = LocalDateTime
-                        .of(averageDIS.readInt(), averageDIS.readInt(), averageDIS.readInt(), averageDIS.readInt(),
-                                averageDIS.readInt(), averageDIS.readInt());
-                LocalDateTime optLDT = LocalDateTime
-                        .of(optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(),
-                                optimalDIS.readInt(), optimalDIS.readInt());
+        try (DataInputStream averageDIS = new DataInputStream(Files.newInputStream(averagePath, options));
+             DataInputStream optimalDIS = new DataInputStream(Files.newInputStream(optimalPath, options))) {
+            LocalDateTime aveLDT = LocalDateTime
+                    .of(averageDIS.readInt(), averageDIS.readInt(), averageDIS.readInt(), averageDIS.readInt(),
+                            averageDIS.readInt(), averageDIS.readInt());
+            LocalDateTime optLDT = LocalDateTime
+                    .of(optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(), optimalDIS.readInt(),
+                            optimalDIS.readInt(), optimalDIS.readInt());
 
-                Location aveloc =
-                        new Location(averageDIS.readDouble(), averageDIS.readDouble(), averageDIS.readDouble());
-                if (!aveLDT.equals(averageID.ORIGIN_TIME))
-                    throw new RuntimeException("ORIGIN time in the file name and in the file are different!!");
-                double avem0 = averageDIS.readDouble();
-                double avemw = averageDIS.readDouble();
-                double avestrike1 = averageDIS.readDouble();
-                double avedip1 = averageDIS.readDouble();
-                double averake1 = averageDIS.readDouble();
-                double avestrike2 = averageDIS.readDouble();
-                double avedip2 = averageDIS.readDouble();
-                double averake2 = averageDIS.readDouble();
-                int aven = averageDIS.readInt();
-                double[] avetime = new double[aven];
-                double[] avestf = new double[aven];
-                for (int i = 0; i < aven; i++) {
-                    avetime[i] = averageDIS.readDouble();
-                    avestf[i] = averageDIS.readDouble();
-                }
-
-                Location optloc =
-                        new Location(optimalDIS.readDouble(), optimalDIS.readDouble(), optimalDIS.readDouble());
-                double optm0 = optimalDIS.readDouble();
-                double optmw = optimalDIS.readDouble();
-                double optstrike1 = optimalDIS.readDouble();
-                double optdip1 = optimalDIS.readDouble();
-                double optrake1 = optimalDIS.readDouble();
-                double optstrike2 = optimalDIS.readDouble();
-                double optdip2 = optimalDIS.readDouble();
-                double optrake2 = optimalDIS.readDouble();
-                if (!aveLDT.equals(optLDT) || !aveloc.equals(optloc) || optm0 != avem0 || optmw != avemw ||
-                        optstrike1 != avestrike1 || optdip1 != avedip1 || optrake1 != averake1 ||
-                        optstrike2 != avestrike2 || optdip2 != avedip2 || optrake2 != averake2)
-                    throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
-
-                int optn = optimalDIS.readInt();
-                double[] opttime = new double[optn];
-                double[] optstf = new double[optn];
-                for (int i = 0; i < optn; i++) {
-                    opttime[i] = optimalDIS.readDouble();
-                    optstf[i] = optimalDIS.readDouble();
-                }
-
-                Trace averageSTF = new Trace(avetime, avestf);
-                Trace optimalSTF = new Trace(opttime, optstf);
-                return new SCARDEC(optimalID, aveloc, avem0, avemw, avestrike1, avedip1, averake1, avestrike2, avedip2,
-                        averake2, averageSTF, optimalSTF);
+            Location aveloc = new Location(averageDIS.readDouble(), averageDIS.readDouble(), averageDIS.readDouble());
+            if (!aveLDT.equals(averageID.ORIGIN_TIME))
+                throw new RuntimeException("ORIGIN time in the file name and in the file are different!!");
+            double avem0 = averageDIS.readDouble();
+            double avemw = averageDIS.readDouble();
+            double avestrike1 = averageDIS.readDouble();
+            double avedip1 = averageDIS.readDouble();
+            double averake1 = averageDIS.readDouble();
+            double avestrike2 = averageDIS.readDouble();
+            double avedip2 = averageDIS.readDouble();
+            double averake2 = averageDIS.readDouble();
+            int aven = averageDIS.readInt();
+            double[] avetime = new double[aven];
+            double[] avestf = new double[aven];
+            for (int i = 0; i < aven; i++) {
+                avetime[i] = averageDIS.readDouble();
+                avestf[i] = averageDIS.readDouble();
             }
 
+            Location optloc = new Location(optimalDIS.readDouble(), optimalDIS.readDouble(), optimalDIS.readDouble());
+            double optm0 = optimalDIS.readDouble();
+            double optmw = optimalDIS.readDouble();
+            double optstrike1 = optimalDIS.readDouble();
+            double optdip1 = optimalDIS.readDouble();
+            double optrake1 = optimalDIS.readDouble();
+            double optstrike2 = optimalDIS.readDouble();
+            double optdip2 = optimalDIS.readDouble();
+            double optrake2 = optimalDIS.readDouble();
+            if (!aveLDT.equals(optLDT) || !aveloc.equals(optloc) || optm0 != avem0 || optmw != avemw ||
+                    optstrike1 != avestrike1 || optdip1 != avedip1 || optrake1 != averake1 ||
+                    optstrike2 != avestrike2 || optdip2 != avedip2 || optrake2 != averake2)
+                throw new RuntimeException(averagePath + " and " + optimalPath + " is not a pair.");
+
+            int optn = optimalDIS.readInt();
+            double[] opttime = new double[optn];
+            double[] optstf = new double[optn];
+            for (int i = 0; i < optn; i++) {
+                opttime[i] = optimalDIS.readDouble();
+                optstf[i] = optimalDIS.readDouble();
+            }
+
+            Trace averageSTF = new Trace(avetime, avestf);
+            Trace optimalSTF = new Trace(opttime, optstf);
+            return new SCARDEC(optimalID, aveloc, avem0, avemw, avestrike1, avedip1, averake1, avestrike2, avedip2,
+                    averake2, averageSTF, optimalSTF);
         }
     }
 
@@ -507,8 +509,6 @@ public class SCARDEC {
 
     /**
      * ID for information
-     *
-     * @author KENSUKE KONISHI
      */
     public static class SCARDEC_ID implements Comparable<SCARDEC_ID> {
 
@@ -519,13 +519,13 @@ public class SCARDEC {
         private final LocalDateTime ORIGIN_TIME;
         private final String REGION;
 
-        public SCARDEC_ID(LocalDateTime origin, String region) {
+        SCARDEC_ID(LocalDateTime origin, String region) {
             ORIGIN_TIME = origin;
             REGION = region;
         }
 
         /**
-         * @param string must be in the form yyyyMMdd_HHmmss
+         * @param string must be in the form FCTs_yyyyMMdd_HHmmss_(region)
          * @return SCARDEC_ID for the string
          */
         private static SCARDEC_ID of(String string) {
