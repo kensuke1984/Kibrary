@@ -26,5 +26,6 @@
 	<classpathentry kind="lib" path="lib/commons-net-examples-3.5.jar"/>
 	<classpathentry kind="lib" path="lib/epsgraphics-1.4.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
+	<classpathentry kind="lib" path="/System/Library/Java/Extensions/vecmath.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

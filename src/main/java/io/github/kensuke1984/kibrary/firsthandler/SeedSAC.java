@@ -211,8 +211,6 @@ class SeedSAC implements Runnable {
 		// System.out.println("Conducting deconvolution");
 
 		Path noSpectraPath = eventDir.toPath().resolve("noSpectraOrInvalidMOD");
-		Files.deleteIfExists(noSpectraPath);
-		Files.createDirectories(noSpectraPath);
 		Path duplicateChannelPath = eventDir.toPath().resolve("duplicateChannel");
 		// evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
 		Path respBoxPath = eventDir.toPath().resolve("resp");
