@@ -133,7 +133,7 @@ public class SshDSMInformationMaker_forStationFile implements Operation {
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
-			pw.println("#stationPath");
+			pw.println("##Staion file path");
 			pw.println("##stationPath");
 			pw.println("##header for names of information files, header_[psv, sh].inf, (PREM)");
 			pw.println("#header");
@@ -166,6 +166,7 @@ public class SshDSMInformationMaker_forStationFile implements Operation {
 		for (EventFolder eventDir : eventDirs) {
 			// Event e = eventinfo.getEvent(eventDir.getEventName());
 			Set<Station> stations = StationInformationFile.read(stationPath);
+			System.out.println("Station file "+ stationPath+ " used!");
 			if (stations.isEmpty())
 				continue;
 			int numberOfStation = (int) stations.stream().map(Station::getName).count();
