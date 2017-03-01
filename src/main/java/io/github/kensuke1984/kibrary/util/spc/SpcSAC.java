@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * the folder.
  *
  * @author Kensuke Konishi
- * @version 0.2.4.3
+ * @version 0.2.4.4
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SpcSAC implements Operation {
@@ -101,9 +101,9 @@ public final class SpcSAC implements Operation {
             pw.println("#psvPath");
             pw.println("##Path of an SH folder (.)");
             pw.println("#shPath");
-            pw.println("##String if it is PREM spectrum file is in eventDir/PREM ");
-            pw.println("##if it is unset, then automatically set as the name of a folder in eventDir");
-            pw.println("##but the eventDirs can have only one folder inside.");
+            pw.println("##String if 'modelName' is PREM, spectrum files in 'eventDir/PREM' are used.");
+            pw.println("##If it is unset, then automatically set as the name of the folder in the eventDirs");
+            pw.println("##but the eventDirs can have only one folder inside and they must be same.");
             pw.println("#modelName");
             pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
             pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
@@ -126,6 +126,25 @@ public final class SpcSAC implements Operation {
         if (!property.containsKey("modelName")) property.setProperty("modelName", "");
     }
 
+    private void setSourceTimeFunction() {
+        String s = property.getProperty("sourceTimeFunction");
+        if (s.length() == 1 && Character.isDigit(s.charAt(0)))
+            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
+        else {
+            sourceTimeFunction = -1;
+            sourceTimeFunctionPath = getPath("sourceTimeFunction");
+        }
+        switch (sourceTimeFunction) {
+            case -1:
+            case 0:
+            case 1:
+            case 2:
+                return;
+            default:
+                throw new RuntimeException("Integer for source time function is invalid.");
+        }
+    }
+
     private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
@@ -139,23 +158,12 @@ public final class SpcSAC implements Operation {
             throw new RuntimeException("The shPath: " + shPath + " does not exist");
 
         modelName = property.getProperty("modelName");
-
         if (modelName.isEmpty()) setModelName();
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
 
-        try {
-            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-            if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction != 2)
-                throw new IllegalArgumentException(
-                        "The property for Source time function is invalid. It must be 0, 1 or a source time function folder path.");
-        } catch (Exception e) {
-            sourceTimeFunction = -1;
-            sourceTimeFunctionPath = workPath.resolve(property.getProperty("sourceTimeFunction"));
-            if (!Files.exists(sourceTimeFunctionPath)) throw new RuntimeException(
-                    "Source time function folder: " + sourceTimeFunctionPath + " does not exist");
-        }
+        setSourceTimeFunction();
 
         computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
 

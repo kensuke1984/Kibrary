@@ -12,28 +12,21 @@ import java.util.List;
 
 /**
  * Conversion of a partial derivative<br>
- * for &mu;<sub>0</sub> to Q<sub>&mu;</sub>(&ne;q) following Fuji <i>et al</i>.
+ * for &mu;<sub>0</sub> to q(&ne;Q<sub>&mu;</sub>) following Fuji <i>et al</i>.
  * (2010)
  *
  * @author Kensuke Konishi
- * @version 0.0.1.3
+ * @version 0.1.0
  */
 public final class FujiConversion {
 
-    private PolynomialStructure structure;
+    private final PolynomialStructure STRUCTURE;
 
     /**
-     * @param structure structure
+     * @param structure STRUCTURE
      */
     public FujiConversion(PolynomialStructure structure) {
-        this.structure = structure == null ? PolynomialStructure.PREM : structure;
-    }
-
-    /**
-     * Conversion with respect to PREM
-     */
-    public FujiConversion() {
-        this(null);
+        STRUCTURE = structure;
     }
 
     public DSMOutput convert(DSMOutput spectrum) {
@@ -54,23 +47,24 @@ public final class FujiConversion {
         double omega0 = spectrum.tlen(); // TODO
         for (int i = 0; i < spectrum.nbody(); i++) {
             double r = bodyR[i];
-            double q = 1 / structure.getQmuAt(r);
-            double mu0 = structure.computeMu(r);
+            double q = 1 / STRUCTURE.getQmuAt(r);
+            double mu0 = STRUCTURE.computeMu(r);
             SpcBody body = spectrum.getSpcBodyList().get(i);
             SpcBody newBody = new SpcBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {
-                Complex[] uQ = new Complex[body.getNumberOfComponent()];
+                Complex[] dudq = new Complex[body.getNumberOfComponent()];
                 double omegaOverOmega0 = (ip + 1) / omega0;
+                double log = 2 * FastMath.log(omegaOverOmega0) / Math.PI;
+                double dmudmu0Real = (1 + q * log);
+                Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
+                Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
                 for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
-                    Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
+                    Complex dudmu0 = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
                             .getValueInFrequencyDomain()[ip];
-                    double log = 2 * FastMath.log(omegaOverOmega0) / Math.PI;
-                    double dmudmu0Real = (1 + q * log);
-                    Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
-                    Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
-                    uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
+//                    dudQ[iComponent] = dudmu0.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
+                    dudq[iComponent] = dudmu0.multiply(dmudq).divide(dmudmu0);
                 }
-                newBody.add(ip, uQ);
+                newBody.add(ip, dudq);
             }
             spcBodyList.add(newBody);
         }

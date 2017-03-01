@@ -81,6 +81,7 @@ public final class TauPTimeReader {
                 String line;
                 while ((line = br.readLine()) != null) outLines.add(line);
             }
+            if (p.waitFor() != 0) throw new RuntimeException("Launching TauP faced problems");
             return outLines;
         } catch (Exception e) {
             System.err.println("Error occured. Could not find the time.");
