@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * timeshift fileを一つに統一
  *
  * @author Kensuke Konishi
- * @version 0.2.1.5
+ * @version 0.2.1.6
  */
 public class FujiStaticCorrection implements Operation {
 
@@ -200,7 +200,7 @@ public class FujiStaticCorrection implements Operation {
     }
 
     private void output() throws IOException {
-        StaticCorrectionFile.write(staticCorrectionSet, outPath);
+        StaticCorrectionFile.write(outPath, staticCorrectionSet);
     }
 
     //

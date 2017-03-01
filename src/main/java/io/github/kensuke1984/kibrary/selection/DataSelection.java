@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * {@link TimewindowInformationFile} necessary.
  *
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.2.1
  */
 public class DataSelection implements Operation {
     private Set<EventFolder> eventDirs;
@@ -185,7 +185,6 @@ public class DataSelection implements Operation {
         // sacSamplingHz = 20;
         staticCorrectionSet = staticCorrectionInformationFilePath == null ? Collections.emptySet() :
                 StaticCorrectionFile.read(staticCorrectionInformationFilePath);
-        // eventDirs = WorkingDirectory.listEventDirs(workDir);
         eventDirs = Utilities.eventFolderSet(obsPath);
         sourceTimewindowInformationSet = TimewindowInformationFile.read(timewindowInformationFilePath);
         dateStr = Utilities.getTemporaryString();
@@ -194,7 +193,7 @@ public class DataSelection implements Operation {
     }
 
     private void output() throws IOException {
-        TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
+        TimewindowInformationFile.write(outputGoodWindowPath, goodTimewindowInformationSet);
     }
 
     private StaticCorrection getStaticCorrection(TimewindowInformation window) {

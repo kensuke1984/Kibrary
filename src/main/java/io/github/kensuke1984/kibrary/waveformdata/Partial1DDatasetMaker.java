@@ -16,6 +16,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.*;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  * same events</b> TODO
  *
  * @author Kensuke Konishi
- * @version 0.2.0.4
+ * @version 0.2.0.5
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
@@ -52,9 +53,7 @@ public class Partial1DDatasetMaker implements Operation {
      * Path of a timewindow information file
      */
     private Path timewindowPath;
-    /**
-     * Partial types
-     */
+
     private Set<PartialType> partialTypes;
     /**
      * bandpassの最小周波数（Hz）
@@ -65,7 +64,8 @@ public class Partial1DDatasetMaker implements Operation {
      */
     private double maxFreq;
     /**
-     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
+     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは20
+     * TODOまだ触れない
      */
     private double partialSamplingHz = 20;
     /**
@@ -85,30 +85,26 @@ public class Partial1DDatasetMaker implements Operation {
      */
     private double tlen;
     /**
-     * step of frequency domain (DSM parameter)
+     * number of steps in frequency domain (DSM parameter)
      */
     private int np;
     /**
-     * radius of perturbation
+     * radii of perturbation
      */
     private double[] bodyR;
-    /**
-     * 追加したID数
-     */
+
     private int numberOfAddedID;
     private int lsmooth;
     private Properties property;
     /**
-     * filter いじらなくていい
+     * filter to be applied
      */
     private ButterworthFilter filter;
     /**
      * sacdataを何ポイントおきに取り出すか
      */
     private int step;
-    /**
-     * タイムウインドウの情報
-     */
+
     private Set<TimewindowInformation> timewindowInformationSet;
     //
     private WaveformDataWriter partialDataWriter;
@@ -134,7 +130,9 @@ public class Partial1DDatasetMaker implements Operation {
             pw.println("#workPath");
             pw.println("##SacComponents to be used(Z R T)");
             pw.println("#components");
-            pw.println("##String if it is PREM, spector files are found in [event folder]/PREM (PREM)");
+            pw.println("##String if 'modelName' is PREM, spectrum files in 'eventDir/PREM' are used.");
+            pw.println("##If it is unset, then automatically set as the name of the folder in the eventDirs");
+            pw.println("##but the eventDirs can have only one folder inside and they must be same.");
             pw.println("#modelName");
             pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
             pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
@@ -168,49 +166,69 @@ public class Partial1DDatasetMaker implements Operation {
      */
     public static void main(String[] args) throws IOException {
         Partial1DDatasetMaker pdm = new Partial1DDatasetMaker(Property.parse(args));
-
         if (!Files.exists(pdm.timewindowPath)) throw new NoSuchFileException(pdm.timewindowPath.toString());
-
         pdm.run();
     }
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("modelName")) property.setProperty("modelName", "PREM");
+        if (!property.containsKey("modelName")) property.setProperty("modelName", "");
         if (!property.containsKey("sourceTimeFunction")) property.setProperty("sourceTimeFunction", "0");
         if (!property.containsKey("partialTypes")) property.setProperty("partialTypes", "PAR2");
         if (!property.containsKey("backward")) property.setProperty("backward", "true");
         if (!property.containsKey("minFreq")) property.setProperty("minFreq", "0.005");
         if (!property.containsKey("maxFreq")) property.setProperty("maxFreq", "0.08");
         if (!property.containsKey("finalSamplingHz")) property.setProperty("finalSamplingHz", "1");
-        if (!property.containsKey("timewindowPath"))
-            throw new IllegalArgumentException("There is no information about timewindowPath.");
+        if (!property.containsKey("timewindowPath")) throw new IllegalArgumentException("There is no information about timewindowPath.");
+        if (!property.containsKey("bodyR")) throw new IllegalArgumentException("There is no information about bodyR.");
+    }
+
+    private void setModelName() throws IOException {
+        Set<EventFolder> eventFolders = Utilities.eventFolderSet(workPath);
+        Set<String> possibleNames =
+                eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory))).map(File::getName)
+                        .collect(Collectors.toSet());
+        if (possibleNames.size() != 1) throw new RuntimeException(
+                "There are no model folder in event folders or more than one folder. You must specify 'modelName' in the case.");
+
+        String modelName = possibleNames.iterator().next();
+        if (eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists))
+            this.modelName = modelName;
+        else throw new RuntimeException("There are some events without model folder " + modelName);
+    }
+
+    private void setSourceTimeFunction() throws NoSuchFileException {
+        String s = property.getProperty("sourceTimeFunction");
+        if (s.length() == 1 && Character.isDigit(s.charAt(0)))
+            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
+        else {
+            sourceTimeFunction = -1;
+            sourceTimeFunctionPath = getPath("sourceTimeFunction");
+            if (!Files.exists(sourceTimeFunctionPath)) throw new NoSuchFileException(sourceTimeFunctionPath.toString());
+        }
+        if (sourceTimeFunction < -1 || 2 < sourceTimeFunction)
+            throw new RuntimeException("Integer for source time function is invalid.");
     }
 
     /**
-     * parameterのセット
+     * set parameter
      */
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
 
         if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
         timewindowPath = getPath("timewindowPath");
-        // pointFile = newFile(reader.getFirstValue("pointFile"));
-        // System.out.println(reader.getFirstValue("pointFile"));
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
 
-        try {
-            sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-        } catch (Exception e) {
-            sourceTimeFunction = -1;
-            sourceTimeFunctionPath = getPath("sourceTimeFunction");
-        }
+        setSourceTimeFunction();
+
         backward = Boolean.parseBoolean(property.getProperty("backward"));
 
         modelName = property.getProperty("modelName");
+        if (modelName.isEmpty()) setModelName();
 
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
@@ -286,6 +304,7 @@ public class Partial1DDatasetMaker implements Operation {
         // filter設計
         System.err.println("Designing filter.");
         setBandPassFilter();
+        System.err.println("Model name is " + modelName);
         writeLog(filter.toString());
         setPerturbationLocation();
         stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
@@ -396,7 +415,6 @@ public class Partial1DDatasetMaker implements Operation {
             for (SpcFileName spcFileName : spcFileNameSet) {
                 // 理論波形（非偏微分係数波形）ならスキップ
                 if (spcFileName.isSynthetic()) continue;
-                System.out.println(spcFileName);
 
                 if (!spcFileName.getSourceID().equals(id.toString())) {
                     try {
@@ -433,7 +451,7 @@ public class Partial1DDatasetMaker implements Operation {
                     }
                 }
             }
-            System.out.print(".");
+            System.err.print(".");
         }
 
         private SourceTimeFunction computeSourceTimeFunction() {

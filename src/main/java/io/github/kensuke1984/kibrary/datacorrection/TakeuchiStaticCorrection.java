@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * networks in an event</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.1.3
+ * @version 0.1.1.4
  * @see StaticCorrection
  */
 public class TakeuchiStaticCorrection implements Operation {
@@ -65,6 +65,7 @@ public class TakeuchiStaticCorrection implements Operation {
     private Set<StaticCorrection> outStaticCorrectionSet;
     private Path outStaticCorrectionPath;
     private Set<TimewindowInformation> timewindow;
+
     public TakeuchiStaticCorrection(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         String date = Utilities.getTemporaryString();
@@ -146,7 +147,7 @@ public class TakeuchiStaticCorrection implements Operation {
             throw new RuntimeException(obsPath + " may have problems");
         }
         nameSet.parallelStream().filter(name -> components.contains(name.getComponent())).forEach(this::compare);
-        StaticCorrectionFile.write(outStaticCorrectionSet, outStaticCorrectionPath);
+        StaticCorrectionFile.write(outStaticCorrectionPath, outStaticCorrectionSet);
     }
 
     private void compare(SACFileName obsName, SACFileName synName) throws IOException {

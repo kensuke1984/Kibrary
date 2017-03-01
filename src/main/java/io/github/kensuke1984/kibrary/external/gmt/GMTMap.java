@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Helper for use of GMT
  *
  * @author Kensuke Konishi
- * @version 0.0.3.4
+ * @version 0.0.3.5
  */
 public final class GMTMap {
 
@@ -76,7 +76,7 @@ public final class GMTMap {
      * [additional] &gt;&gt; $psname
      */
     public static String psxy(Symbol symbol, double symbolSize, double value, Path colorPalletPath,
-                              HorizontalPosition position, String additionalOptions) {
+                              HorizontalPosition position, String... additionalOptions) {
         String cpOption = " -C" + colorPalletPath;
         return "echo " + position + " " + value + " " + symbolSize + " | psxy -V -: -J -R " + symbol.getOption() +
                 cpOption + " " + additionalOptions + " -K -O -P  >>$psname";
