@@ -4,8 +4,10 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.linear.*;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +25,7 @@ import java.util.stream.IntStream;
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2.2
+ * @version 0.1.3
  */
 public class Trace {
 
@@ -166,10 +168,11 @@ public class Trace {
      * f(x) &rarr; f(x-shift) Shifts "shift" in the direction of x axis. If you
      * want to change like below: <br>
      * x:(3, 4, 5) -> (0, 1, 2) <br>
+     * f(3) -> f'(0)
      * then the value 'shift' should be -3
      *
      * @param shift value of shift
-     * @return f(x-shift), the values in y are deep copied.
+     * @return f (x - shift), the values in y are deep copied.
      */
     public Trace shiftX(double shift) {
         return new Trace(Arrays.stream(X).map(d -> d + shift).toArray(), Y);
@@ -424,5 +427,22 @@ public class Trace {
         double average = average();
         return Arrays.stream(Y).map(d -> d - average).map(d -> d * d).sum() / Y.length;
     }
+
+    /**
+     * Writes X and Y.
+     * Each line has X<sub>i</sub> and Y<sub>i</sub>
+     *
+     * @param path    of the output file
+     * @param options if any
+     * @throws IOException if any
+     */
+    public void write(Path path, OpenOption... options) throws IOException {
+        List<String> outLines = new ArrayList<>(X.length);
+        for (int i = 0; i < X.length; i++) {
+            outLines.add(X[i] + " " + Y[i]);
+        }
+        Files.write(path, outLines, options);
+    }
+
 
 }

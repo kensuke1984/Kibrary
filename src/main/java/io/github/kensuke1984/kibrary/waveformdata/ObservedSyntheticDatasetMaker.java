@@ -48,7 +48,7 @@ import java.util.stream.IntStream;
  * network in one event</b>
  *
  * @author Kensuke Konishi
- * @version 0.2.1.1
+ * @version 0.2.2
  */
 public class ObservedSyntheticDatasetMaker implements Operation {
 
@@ -114,6 +114,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
     private BiPredicate<StaticCorrection, TimewindowInformation> isPair =
             (s, t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID()) &&
                     s.getComponent() == t.getComponent();
+
     public ObservedSyntheticDatasetMaker(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
@@ -289,8 +290,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
     /**
      * 与えられたイベントフォルダの観測波形と理論波形を書き込む 両方ともが存在しないと書き込まない
-     *
-     * @author kensuke
      */
     private class Worker implements Runnable {
 
@@ -331,14 +330,13 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                         .filter(info -> info.getGlobalCMTID().equals(id))
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
-                // タイムウインドウの情報が入っていなければ次へ
                 if (windows.isEmpty()) continue;
 
                 SACData obsSac;
                 try {
                     obsSac = obsFileName.read();
                 } catch (IOException e1) {
-                    System.err.println("error occured in reading " + obsFileName);
+                    System.err.println("error occurred in reading " + obsFileName);
                     e1.printStackTrace();
                     continue;
                 }
@@ -347,7 +345,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                 try {
                     synSac = synFileName.read();
                 } catch (IOException e1) {
-                    System.err.println("error occured in reading " + synFileName);
+                    System.err.println("error occurred in reading " + synFileName);
                     e1.printStackTrace();
                     continue;
                 }
@@ -364,15 +362,13 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                 }
 
                 // bandpassの読み込み 観測波形と理論波形とで違えばスキップ
-                double minPeriod = 0;
-                double maxPeriod = Double.POSITIVE_INFINITY;
                 if (obsSac.getValue(SACHeaderEnum.USER0) != synSac.getValue(SACHeaderEnum.USER0) ||
                         obsSac.getValue(SACHeaderEnum.USER1) != synSac.getValue(SACHeaderEnum.USER1)) {
                     System.err.println("band pass filter difference");
                     continue;
                 }
-                minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
-                maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
+                double minPeriod = obsSac.getValue(SACHeaderEnum.USER0);
+                double maxPeriod = obsSac.getValue(SACHeaderEnum.USER1);
 
                 Station station = obsSac.getStation();
 

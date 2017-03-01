@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * window is set to integer multiple of DELTA in SAC files.
  *
  * @author Kensuke Konishi
- * @version 0.2.2.3
+ * @version 0.2.2.4
  */
 public class TimewindowMaker implements Operation {
 
@@ -244,7 +244,7 @@ public class TimewindowMaker implements Operation {
         }, 10, TimeUnit.HOURS);
 
         if (timewindowSet.isEmpty()) System.err.println("No timewindow is created");
-        else TimewindowInformationFile.write(timewindowSet, outputPath);
+        else TimewindowInformationFile.write(outputPath, timewindowSet);
     }
 
     private void makeTimeWindow(SACFileName sacFileName) throws IOException {

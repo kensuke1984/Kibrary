@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * - see {@link #create(byte[], Station[], GlobalCMTID[])}
  *
  * @author Kensuke Konishi
- * @version 0.3.0.4.1
+ * @version 0.3.1
  */
 public final class TimewindowInformationFile {
 
@@ -66,12 +66,12 @@ public final class TimewindowInformationFile {
     /**
      * Output TimeWindowInformation
      *
-     * @param infoSet    Set of timewindow information
      * @param outputPath to write the information on
+     * @param infoSet    Set of timewindow information
      * @param options    for output
      * @throws IOException if an I/O error occurs.
      */
-    public static void write(Set<TimewindowInformation> infoSet, Path outputPath, OpenOption... options)
+    public static void write(Path outputPath, Set<TimewindowInformation> infoSet, OpenOption... options)
             throws IOException {
         if (infoSet.isEmpty()) throw new RuntimeException("Input information is empty..");
         try (DataOutputStream dos = new DataOutputStream(

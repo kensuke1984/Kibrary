@@ -16,7 +16,7 @@ import java.util.Properties;
  * Main procedures in Kibrary
  *
  * @author Kensuke Konishi
- * @version 0.0.4.2.2
+ * @version 0.0.5
  */
 public interface Operation {
 
@@ -62,7 +62,11 @@ public interface Operation {
             String manhattan = prop.getProperty("manhattan");
             if (!EnumUtils.isValidEnum(Manhattan.class, manhattan))
                 throw new RuntimeException(manhattan + " is not a valid name of Manhattan.");
-            Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
+            try {
+                Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
+            } catch (Exception e) {
+                e.getCause().printStackTrace();
+            }
         }
     }
 

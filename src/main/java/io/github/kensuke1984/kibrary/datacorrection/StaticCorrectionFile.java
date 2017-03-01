@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
  * - see in {@link #read(Path)}<br>
  *
  * @author Kensuke Konishi
- * @version 0.2.0.6.1
+ * @version 0.2.1
  */
 public final class StaticCorrectionFile {
     /**
@@ -105,12 +105,12 @@ public final class StaticCorrectionFile {
     }
 
     /**
-     * @param correctionSet of static correction to write
      * @param outPath       of an output file.
+     * @param correctionSet of static correction to write
      * @param options       for output
      * @throws IOException if an I/O error occurs.
      */
-    public static void write(Set<StaticCorrection> correctionSet, Path outPath, OpenOption... options)
+    public static void write(Path outPath, Set<StaticCorrection> correctionSet, OpenOption... options)
             throws IOException {
         Station[] stations =
                 correctionSet.stream().map(StaticCorrection::getStation).distinct().sorted().toArray(Station[]::new);
