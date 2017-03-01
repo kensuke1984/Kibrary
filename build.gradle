@@ -75,7 +75,7 @@ task downloadAndUnzip {
     }
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '3.3' }
+task wrapper(type: Wrapper) { gradleVersion = '3.4' }
 
 task setupSourceCodes {
 	doLast {	
