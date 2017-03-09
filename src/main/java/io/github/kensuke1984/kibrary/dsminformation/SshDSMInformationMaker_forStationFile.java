@@ -41,7 +41,7 @@ public class SshDSMInformationMaker_forStationFile implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
-		if (!property.containsKey("statopmPath"))
+		if (!property.containsKey("stationPath"))
 			property.setProperty("stationPath", "station.inf");
 		if (!property.containsKey("tlen"))
 			property.setProperty("tlen", "3276.8");
@@ -166,7 +166,7 @@ public class SshDSMInformationMaker_forStationFile implements Operation {
 		for (EventFolder eventDir : eventDirs) {
 			// Event e = eventinfo.getEvent(eventDir.getEventName());
 			Set<Station> stations = StationInformationFile.read(stationPath);
-			System.out.println("Station file "+ stationPath+ " used!");
+			System.out.println("Station file \""+ stationPath+ "\" used!");
 			if (stations.isEmpty())
 				continue;
 			int numberOfStation = (int) stations.stream().map(Station::getName).count();

@@ -89,7 +89,8 @@ public class BreakFastMail {
         email.setFrom("waveformrequest2015@gmail.com");
         email.setSubject("Request" + Utilities.getTemporaryString());
         email.setMsg(String.join("\n", lines));
-        email.addTo(IRIS_EMAIL);
+//        email.addTo(IRIS_EMAIL);
+        email.addTo(OHP_EMAIL);
         email.send();
     }
 

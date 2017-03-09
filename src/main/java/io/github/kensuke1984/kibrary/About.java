@@ -24,9 +24,9 @@ import javax.swing.*;
 final class About extends javax.swing.JFrame {
     private static final long serialVersionUID = -2485772755944862822L;
 
-    public static final String codename = "Sahagin";
+    public static final String codename = "Sahagin-yuki";
 
-    public static final String version = "0.4.2.2";
+    public static final String version = "0.1.0";
 
     private About() {
         super("About Kibrary");

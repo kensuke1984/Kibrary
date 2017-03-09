@@ -128,6 +128,8 @@ public class InformationFileMaker implements Operation {
 			Path psPath = getPath("structureFile");
 			ps = psPath == null ? PolynomialStructure.PREM : new PolynomialStructure(psPath);
 		}
+		else
+			ps = PolynomialStructure.PREM;
 	}
 
 	private Properties property;
