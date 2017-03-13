@@ -29,4 +29,9 @@ public interface UnknownParameter {
 	 */
 	PartialType getPartialType();
 
+	/**
+	 * @return
+	 */
+	public Object getLocation();
+
 }

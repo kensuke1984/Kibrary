@@ -299,7 +299,7 @@ public class DataSelection implements Operation {
         StaticCorrection foundShift = getStaticCorrection(timewindow);
         double value = foundShift.getTimeshift();
         return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
-                foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent());
+                foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
     }
 
     private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,

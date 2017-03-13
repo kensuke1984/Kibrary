@@ -19,9 +19,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -69,7 +66,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
  * @author Kensuke Konishi
  * @version 0.2.1.1
  */
-public class ObservedSyntheticDatasetMaker implements Operation {
+public class SyntheticDatasetMaker implements Operation {
 
     private Path workPath;
     private Properties property;
@@ -79,7 +76,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
      */
     private Set<SACComponent> components;
 
-    public ObservedSyntheticDatasetMaker(Properties property) throws IOException {
+    public SyntheticDatasetMaker(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
     }
@@ -127,7 +124,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(
-                ObservedSyntheticDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+                SyntheticDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan ObservedSyntheticDatasetMaker");
             pw.println("##Path of a working directory (.)");
@@ -178,7 +175,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
     private Path staticCorrectionPath;
 
     /**
-     * Sacのサンプリングヘルツ （これと異なるSACはスキップ）
+     * Sacのサンプリングヘルツ （これと異なるSACファイルはスキップ）
      */
     private double sacSamplingHz;
 
@@ -245,12 +242,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
         if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
         else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
         else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-        ObservedSyntheticDatasetMaker osdm = new ObservedSyntheticDatasetMaker(property);
+        SyntheticDatasetMaker osdm = new SyntheticDatasetMaker(property);
 
         long startT = System.nanoTime();
-        System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " is running.");
+        System.err.println(SyntheticDatasetMaker.class.getName() + " is running.");
         osdm.run();
-        System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " finished in " +
+        System.err.println(SyntheticDatasetMaker.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startT));
 
     }
@@ -267,10 +264,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                 .collect(Collectors.toSet());
         idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)
                 .collect(Collectors.toSet());
-        
-//        phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p)).distinct().toArray(Phase[]::new);
-        phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases)
-        		.distinct().flatMap(p -> Stream.of(p)).distinct().toArray(Phase[]::new);
         readPeriodRanges();
 
         int n = Runtime.getRuntime().availableProcessors();
@@ -298,42 +291,42 @@ public class ObservedSyntheticDatasetMaker implements Operation {
     private AtomicInteger numberOfPairs = new AtomicInteger();
 
     /**
-     * 与えられたイベントフォルダの観測波形と理論波形を書き込む 両方ともが存在しないと書き込まない
+     * 与えられたイベントフォルダの理論波形を書き込む 
      *
      * @author kensuke
      */
     private class Worker implements Runnable {
 
-        private EventFolder obsEventDir;
+        private EventFolder synEventDir;
 
         private Worker(EventFolder eventDir) {
-            obsEventDir = eventDir;
+            synEventDir = eventDir;
         }
 
         @Override
         public void run() {
-            Path synEventPath = synPath.resolve(obsEventDir.getGlobalCMTID().toString());
+            Path synEventPath = synPath.resolve(synEventDir.getGlobalCMTID().toString());
             if (!Files.exists(synEventPath)) throw new RuntimeException(synEventPath + " does not exist.");
 
-            Set<SACFileName> obsFiles;
+            Set<SACFileName> synFiles;
             try {
-                (obsFiles = obsEventDir.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
-//                obsFiles = obsEventDir.sacFileSet();
+//                (obsFiles = obsEventDir.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
+                (synFiles = synEventDir.sacFileSet()).removeIf(sfn -> !sfn.isSYN());
             } catch (IOException e2) {
                 e2.printStackTrace();
                 return;
             }
 
-            for (SACFileName obsFileName : obsFiles) {
+            for (SACFileName synFileName : synFiles) {
                 // データセットに含める成分かどうか
-                if (!components.contains(obsFileName.getComponent())) continue;
-                String stationName = obsFileName.getStationName();
-                GlobalCMTID id = obsFileName.getGlobalCMTID();
-                SACComponent component = obsFileName.getComponent();
+                if (!components.contains(synFileName.getComponent())) continue;
+                String stationName = synFileName.getStationName();
+                GlobalCMTID id = synFileName.getGlobalCMTID();
+                SACComponent component = synFileName.getComponent();
                 String name =
                         convolute ? stationName + "." + id + "." + SACExtension.valueOfConvolutedSynthetic(component) :
                                 stationName + "." + id + "." + SACExtension.valueOfSynthetic(component);
-                SACFileName synFileName = new SACFileName(synEventPath.resolve(name));
+//                SACFileName synFileName = new SACFileName(synEventPath.resolve(name));
 
                 if (!synFileName.exists()) continue;
 
@@ -343,16 +336,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                         .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
                 // タイムウインドウの情報が入っていなければ次へ
-                if (windows.isEmpty()) continue;
-
-                SACData obsSac;
-                try {
-                    obsSac = obsFileName.read();
-                } catch (IOException e1) {
-                    System.err.println("error occured in reading " + obsFileName);
-                    e1.printStackTrace();
-                    continue;
-                }
+                if (windows.isEmpty()) continue;         
 
                 SACData synSac;
                 try {
@@ -363,29 +347,18 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                     continue;
                 }
 
-                // Sampling Hz of observed and synthetic must be same as the
-                // value declared in the input file
-                if (obsSac.getValue(SACHeaderEnum.DELTA) != 1 / sacSamplingHz &&
-                        obsSac.getValue(SACHeaderEnum.DELTA) == synSac.getValue(SACHeaderEnum.DELTA)) {
-                    System.err.println("Values of sampling Hz of observed and synthetic " +
-                            (1 / obsSac.getValue(SACHeaderEnum.DELTA)) + ", " +
-                            (1 / synSac.getValue(SACHeaderEnum.DELTA)) + " are invalid, they should be " +
-                            sacSamplingHz);
-                    continue;
-                }
-
                 // bandpassの読み込み 観測波形と理論波形とで違えばスキップ
                 double minPeriod = 0;
                 double maxPeriod = Double.POSITIVE_INFINITY;
-                if (obsSac.getValue(SACHeaderEnum.USER0) != synSac.getValue(SACHeaderEnum.USER0) ||
-                        obsSac.getValue(SACHeaderEnum.USER1) != synSac.getValue(SACHeaderEnum.USER1)) {
+                if (synSac.getValue(SACHeaderEnum.USER0) != synSac.getValue(SACHeaderEnum.USER0) ||
+                        synSac.getValue(SACHeaderEnum.USER1) != synSac.getValue(SACHeaderEnum.USER1)) {
                     System.err.println("band pass filter difference");
                     continue;
                 }
-                minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
-                maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
+                minPeriod = synSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : synSac.getValue(SACHeaderEnum.USER0);
+                maxPeriod = synSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : synSac.getValue(SACHeaderEnum.USER1);
 
-                Station station = obsSac.getStation();
+                Station station = synSac.getStation();
 
                 for (TimewindowInformation window : windows) {
                     int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
@@ -401,19 +374,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                         continue;
                     }
 
-                    double[] obsData = cutDataSac(obsSac, startTime - shift, npts);
                     double[] synData = cutDataSac(synSac, startTime, npts);
-                    double correctionRatio = ratio;
-                    Phase[] includePhases = window.getPhases();
 
-                    obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
                     BasicID synID =
                             new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id, component,
-                                    minPeriod, maxPeriod, includePhases, 0, convolute, synData);
-                    BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
-                            component, minPeriod, maxPeriod, includePhases, 0, convolute, obsData);
+                                    minPeriod, maxPeriod, phases, 0, convolute, synData);
                     try {
-                        dataWriter.addBasicID(obsID);
                         dataWriter.addBasicID(synID);
                         numberOfPairs.incrementAndGet();
                     } catch (Exception e) {

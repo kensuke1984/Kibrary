@@ -31,7 +31,7 @@ public class Station implements Comparable<Station> {
         int name = NAME.compareTo(o.NAME);
         if (name != 0) return name;
         int net = NETWORK.compareTo(o.NETWORK);
-        return net != 0 ? net : POSITION.compareTo(o.POSITION);
+        return net != 0 ? net : POSITION.compareTo(o.getPosition());
     }
 
     /**
@@ -58,8 +58,9 @@ public class Station implements Comparable<Station> {
     public int hashCode() {
         int prime = 31;
         int result = 1;
-        result = prime * result + ((POSITION == null) ? 0 : POSITION.hashCode());
-        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+//        result = prime * result + ((POSITION == null) ? 0 : POSITION.hashCode());
+//        result = prime * result + ((NAME == null) ? 0 : NAME.hashCode());
+        result = 314159 * prime * NAME.hashCode();
         return result;
     }
 

@@ -75,6 +75,14 @@ public class SpcFileName extends File {
 	private static String getObserverID(String fileName) {
 		return fileName.split("\\.")[0];
 	}
+	
+	private static String getObserverName(String fileName) {
+ 		return fileName.split("\\.")[0].split("_")[0];
+ 	}
+ 	
+  	private static String getObserverNetwork(String fileName) {
+  		return fileName.split("\\.")[0].split("_")[1];
+  	}
 
 	private static String getX(String fileName) {
 		String[] parts = fileName.split("\\.");
@@ -85,6 +93,10 @@ public class SpcFileName extends File {
 		String[] parts = fileName.split("\\.");
 		return parts.length != 7 ? null : parts[4];
 	}
+	
+//	public String getObserverString() {
+//		 return observerName + "_" + observerNetwork;
+//	}
 
 	/**
 	 * @param fileName
@@ -97,6 +109,16 @@ public class SpcFileName extends File {
 	}
 
 	private String observerID;
+	
+	/**
+ 	 * Station name
+ 	 */
+ 	private String observerName;
+ 	
+ 	/**
+ 	 * Network name
+ 	 */
+ 	private String observerNetwork;
 
 	/**
 	 * PB: backward or PF: forward, PAR2: mu
@@ -227,6 +249,18 @@ public class SpcFileName extends File {
 	public String getY() {
 		return y;
 	}
+	
+	public String getObserverString() {
+		return observerName + "_" + observerNetwork;
+	}
+	
+	public String getObserverName() {
+ 		return observerName;
+ 	}
+ 	
+ 	public String getObserverNetwork() {
+  		return observerNetwork;
+  	}
 
 	/**
 	 * @return 理論波形（非偏微分波形）かどうか

@@ -62,4 +62,13 @@ public class TimeshiftParameter implements UnknownParameter{
 		return PartialType.TIME;
 	}
 
+	/* (非 Javadoc)
+	 * @see io.github.kensuke1984.kibrary.inversion.UnknownParameter#getLocation()
+	 */
+	@Override
+	public Object getLocation() {
+		// TODO 自動生成されたメソッド・スタブ
+		return null;
+	}
+
 }

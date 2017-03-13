@@ -15,7 +15,9 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
@@ -257,6 +259,11 @@ public class Partial1DDatasetMaker implements Operation {
 
             // compute source time function
             sourceTimeFunction = computeSourceTimeFunction();
+            
+            Set<TimewindowInformation> timewindowCurrentEvent = timewindowInformationSet
+            		 					.stream()
+            		 					.filter(tw -> tw.getGlobalCMTID().equals(id))
+            		 					.collect(Collectors.toSet());
 
             // すべてのspcファイルに対しての処理
             for (SpcFileName spcFileName : spcFileNameSet) {
@@ -285,7 +292,7 @@ public class Partial1DDatasetMaker implements Operation {
                         (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2))) continue;
 
                 try {
-                    addPartialSpectrum(spcFileName);
+                	addPartialSpectrum(spcFileName, timewindowCurrentEvent);
                 } catch (ClassCastException e) {
                     // 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
                     System.err.println(spcFileName + "is not 1D partial.");
@@ -325,7 +332,7 @@ public class Partial1DDatasetMaker implements Operation {
             double[] cutU = sampleOutput(filteredUt, t);
 
             PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-                    1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
+                    1 / maxFreq, 1 / minFreq, t.getPhases(), 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
                     cutU);
             try {
                 partialDataWriter.addPartialID(pid);
@@ -347,7 +354,13 @@ public class Partial1DDatasetMaker implements Operation {
                         });
         }
 
-        private void addPartialSpectrum(SpcFileName spcname) throws IOException {
+        private void addPartialSpectrum(SpcFileName spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+        	 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
+        	 					.filter(info -> info.getStation().toString().equals(spcname.getObserverString()))
+        	 					.collect(Collectors.toSet());
+        	 			if (tmpTws.size() == 0) {
+        	 				return;
+        	 			}
             DSMOutput spectrum = spcname.read();
             if (spectrum.tlen() != tlen || spectrum.np() != np) {
                 System.err.println(spcname + " has different np or tlen.");
@@ -366,12 +379,20 @@ public class Partial1DDatasetMaker implements Operation {
             process(spectrum);
 
             for (SACComponent component : components) {
-                Set<TimewindowInformation> tw = timewindowInformationSet.stream()
+            	Set<TimewindowInformation> tw = tmpTws.stream()
                         .filter(info -> info.getStation().getName().equals(stationName))
                         .filter(info -> info.getGlobalCMTID().equals(id))
-                        .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
+                        .filter(info -> info.getComponent().equals(component)).collect(Collectors.toSet());
 
-                if (tw.isEmpty()) continue;
+                if (tw.isEmpty()) {
+                	tmpTws.forEach(window -> {
+                	 		System.out.println(window);
+                	 		System.out.println(window.getStation().getPosition());
+                	});
+                	System.err.println(station.getPosition());
+                	System.err.println("Ignoring empty timewindow " + spcname + " " + station);
+                	continue;
+                }
 
                 for (int k = 0; k < spectrum.nbody(); k++) {
                     double bodyR = spectrum.getBodyR()[k];
@@ -385,6 +406,7 @@ public class Partial1DDatasetMaker implements Operation {
                     for (TimewindowInformation t : tw)
                         cutAndWrite(station, filteredUt, t, bodyR, partialType);
                 }
+                
                 if (qSpectrum != null) for (int k = 0; k < spectrum.nbody(); k++) {
                     double bodyR = spectrum.getBodyR()[k];
                     boolean exists = false;
@@ -485,6 +507,7 @@ public class Partial1DDatasetMaker implements Operation {
     private Set<GlobalCMTID> idSet;
     private Set<Station> stationSet;
     private Set<Location> perturbationLocationSet;
+    private Phase[] phases;
 
     private void setPerturbationLocation() {
         perturbationLocationSet = Arrays.stream(bodyR).mapToObj(r -> new Location(0, 0, r)).collect(Collectors.toSet());
@@ -524,6 +547,9 @@ public class Partial1DDatasetMaker implements Operation {
         stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
                 .collect(Collectors.toSet());
         idSet = Utilities.globalCMTIDSet(workPath);
+        phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases)
+        		.distinct().flatMap(p -> Stream.of(p)).distinct().toArray(Phase[]::new);
+        
         // information about output partial types
         writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
@@ -538,7 +564,7 @@ public class Partial1DDatasetMaker implements Operation {
         Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
         Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
         try (WaveformDataWriter pdw = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
-                perturbationLocationSet)) {
+                phases, perturbationLocationSet)) {
 
             partialDataWriter = pdw;
             for (EventFolder eventDir : eventDirs)

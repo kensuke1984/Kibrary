@@ -59,8 +59,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * <p>
  * timeshift fileを一つに統一
  *
+ *
  * @author Kensuke Konishi
  * @version 0.2.1.3
+ * 
  */
 public class FujiStaticCorrection implements Operation {
 
@@ -123,14 +125,22 @@ public class FujiStaticCorrection implements Operation {
     private Properties property;
 
     private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
-        if (!property.containsKey("synPath")) property.setProperty("synPath", "");
-        if (!property.containsKey("convolute")) property.setProperty("convolute", "false");
-        if (!property.containsKey("threshold")) property.setProperty("threshold", "0.2");
-        if (!property.containsKey("searchRange")) property.setProperty("searchRange", "10");
-        if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
+        if (!property.containsKey("workPath")) 
+        	property.setProperty("workPath", "");
+        if (!property.containsKey("components")) 
+        	property.setProperty("components", "Z R T");
+        if (!property.containsKey("obsPath")) 
+        	property.setProperty("obsPath", "");
+        if (!property.containsKey("synPath")) 
+        	property.setProperty("synPath", "");
+        if (!property.containsKey("convolute")) 
+        	property.setProperty("convolute", "false");
+        if (!property.containsKey("threshold")) 
+        	property.setProperty("threshold", "0.2");
+        if (!property.containsKey("searchRange")) 
+        	property.setProperty("searchRange", "10");
+        if (!property.containsKey("sacSamplingHz")) 
+        	property.setProperty("sacSamplingHz", "20");
     }
 
     /**
@@ -145,7 +155,8 @@ public class FujiStaticCorrection implements Operation {
     private void set() {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) 
+        	throw new RuntimeException("The workPath: " + workPath + " does not exist");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
         synPath = getPath("synPath");
@@ -247,16 +258,17 @@ public class FujiStaticCorrection implements Operation {
     private FujiStaticCorrection(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         String date = Utilities.getTemporaryString();
-        outPath = workPath.resolve("staticCorrection" + date + ".dat");
         staticCorrectionSet = Collections.synchronizedSet(new HashSet<>());
         set();
+        outPath = workPath.resolve("staticCorrection" + date + ".dat");
     }
 
     private Path outPath;
     private Set<TimewindowInformation> timewindowInformation;
 
     /**
-     * @param args [parameter file name]
+     * @param args 
+     * [parameter file name]
      * @throws Exception if any
      */
     public static void main(String[] args) throws Exception {

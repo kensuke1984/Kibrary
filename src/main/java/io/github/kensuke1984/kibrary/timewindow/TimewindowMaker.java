@@ -182,7 +182,7 @@ public class TimewindowMaker implements Operation {
 	public void run() throws Exception {
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
-				eventDir.sacFileSet().stream().filter(sfn -> sfn.isSYN() && components.contains(sfn.getComponent()))
+				eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 						.forEach(sfn -> {
 					try {
 						makeTimeWindow(sfn);
@@ -208,37 +208,46 @@ public class TimewindowMaker implements Operation {
 		// 震源観測点ペアの震央距離
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 
-		Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
-		Set<TauPPhase> exPhases = this.exPhases == null ? Collections.emptySet()
-				: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
-
-		if (usePhases.isEmpty()) {
-			writeInvalid(sacFileName);
-			return;
-		}
-		double[] phaseTime = toTravelTime(usePhases);
-		double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
-		Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime);
-		// System.exit(0);
-		if (windows == null) {
-			writeInvalid(sacFileName);
-			return;
-		}
-		// System.out.println(sacFile.getValue(SacHeaderEnum.E));
-		// delta (time step) in SacFile
-		double delta = sacFile.getValue(SACHeaderEnum.DELTA);
-		double e = sacFile.getValue(SACHeaderEnum.E);
-		// station of SacFile
-		Station station = sacFile.getStation();
-		// global cmt id of SacFile
-		GlobalCMTID id = sacFileName.getGlobalCMTID();
-		// component of SacFile
-		SACComponent component = sacFileName.getComponent();
-
-		// window fix
-		Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.endTime <= e).map(
-				window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component))
-				.forEach(timewindowSet::add);
+		try {
+			 	Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
+			 			
+			 	usePhases.forEach(phase -> phase.getDistance());			
+			 	Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
+			 					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
+			 			
+			 	if (usePhases.isEmpty()) {
+			 		writeInvalid(sacFileName);
+			 		return;
+			 	}
+			 	double[] phaseTime = toTravelTime(usePhases);
+			 	double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+			 			
+			    Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime);
+			 			// System.exit(0);
+			 	if (windows == null) {
+			 		writeInvalid(sacFileName);
+			 		return;
+			 	}
+			 			
+			 	// System.out.println(sacFile.getValue(SacHeaderEnum.E));
+			 	// delta (time step) in SacFile
+			 	double delta = sacFile.getValue(SACHeaderEnum.DELTA);
+			 	double e = sacFile.getValue(SACHeaderEnum.E);
+			 	// station of SacFile
+			 	Station station = sacFile.getStation();
+			 	// global cmt id of SacFile
+			 	GlobalCMTID id = sacFileName.getGlobalCMTID();
+			 	// component of SacFile
+			 	SACComponent component = sacFileName.getComponent();
+			 	
+			 	// window fix
+			 	Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
+			 					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
+			 					.forEach(timewindowSet::add);
+			 		} catch (RuntimeException e) {
+			 			e.printStackTrace();
+			  		}
+		
 	}
 
 	/**
@@ -367,6 +376,16 @@ public class TimewindowMaker implements Operation {
 			pw.println(sacFileName);
 		}
 	}
+	
+	private Phase[] containPhases(Timewindow window, Set<TauPPhase> usePhases) {
+ 		List<Phase> phases = new ArrayList<>();
+  		for (TauPPhase phase : usePhases) {
+  			double time = phase.getTravelTime();
+  			if (time < window.endTime && time > window.startTime)
+ 				phases.add(phase.getPhaseName());
+  		}
+  		return phases.toArray(new Phase[phases.size()]);
+  	}
 
 	@Override
 	public Properties getProperties() {

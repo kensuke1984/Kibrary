@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
@@ -268,7 +269,7 @@ public class PartialDatasetMaker implements Operation {
 							double[] cutU = sampleOutput(u, info);
 
 							PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
-									cutU.length, 1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != 0, location, type,
+									cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
 									cutU);
 							try {
 								partialDataWriter.addPartialID(pid);
@@ -428,7 +429,7 @@ public class PartialDatasetMaker implements Operation {
 		Path datasetPath = workPath.resolve("partial" + dateString + ".dat");
 
 		partialDataWriter = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
-				perturbationLocationSet);
+				phases, perturbationLocationSet);
 		writeLog("Creating " + idPath + " " + datasetPath);
 		System.out.println("Creating " + idPath + " " + datasetPath);
 	}
@@ -438,6 +439,7 @@ public class PartialDatasetMaker implements Operation {
 	private Set<GlobalCMTID> idSet;
 	private double[][] periodRanges;
 	private Set<Location> perturbationLocationSet;
+	private Phase[] phases;
 
 	private void readPerturbationPoints() throws IOException {
 		try (Stream<String> lines = Files.lines(perturbationPath)) {
@@ -623,6 +625,9 @@ public class PartialDatasetMaker implements Operation {
 			idSet.add(t.getGlobalCMTID());
 			stationSet.add(t.getStation());
 		});
+		
+		phases = timewindowInformation.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+				.distinct().toArray(Phase[]::new);
 
 		// TODO
 		if (stationSet.size() != stationSet.stream().map(Station::getName).distinct().count())

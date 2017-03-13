@@ -18,6 +18,7 @@ import java.util.Set;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
@@ -160,13 +161,17 @@ public class CheckerBoardTest implements Operation {
 	protected Path inputDataPath;
 	private Set<Station> stationSet = new HashSet<>();
 	private double[][] ranges;
+	private Phase[] phases;
 	private Set<GlobalCMTID> idSet = new HashSet<>();
 
 	private void readIDs() {
 		List<double[]> ranges = new ArrayList<>();
+		Set<Phase> tmpPhases = new HashSet<>();
 		for (BasicID id : eq.getDVector().getObsIDs()) {
 			stationSet.add(id.getStation());
 			idSet.add(id.getGlobalCMTID());
+			for (Phase phase : id.getPhases())
+				tmpPhases.add(phase);
 			double[] range = new double[] { id.getMinPeriod(), id.getMaxPeriod() };
 			if (ranges.isEmpty())
 				ranges.add(range);
@@ -178,6 +183,8 @@ public class CheckerBoardTest implements Operation {
 				ranges.add(range);
 		}
 		this.ranges = ranges.toArray(new double[0][]);
+		phases = new Phase[tmpPhases.size()];
+		phases = tmpPhases.toArray(phases);
 	}
 
 	private void read() throws IOException {
@@ -205,7 +212,7 @@ public class CheckerBoardTest implements Operation {
 		Dvector dVector = eq.getDVector();
 		RealVector[] bornPart = dVector.separate(bornVec);
 		System.err.println("outputting " + outIDPath + " " + outDataPath);
-		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
+		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges, phases)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
@@ -233,7 +240,7 @@ public class CheckerBoardTest implements Operation {
 		Dvector dVector = eq.getDVector();
 		RealVector[] bornPart = dVector.separate(bornVec);
 		System.err.println("outputting " + outIDPath + " " + outDataPath);
-		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges)) {
+		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges, phases)) {
 			BasicID[] obsIDs = dVector.getObsIDs();
 			BasicID[] synIDs = dVector.getSynIDs();
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {

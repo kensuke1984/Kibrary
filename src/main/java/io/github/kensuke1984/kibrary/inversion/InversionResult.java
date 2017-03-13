@@ -17,6 +17,7 @@ import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -110,9 +111,13 @@ public class InversionResult {
 	private static BasicID toBasicID(String[] parts) {
 		Station station = new Station(parts[1],
 				new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
-		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
+		String[] phaseParts = parts[13].split(",");
+ 		Phase[] phases = new Phase[phaseParts.length];
+ 		for (int i = 0; i < phases.length; i++)
+ 			phases[9] = Phase.create(phaseParts[i], false);
+		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[8]), Double.parseDouble(parts[9]),
 				Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
-				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), Long.parseLong(parts[13]), true);
+				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[13]), true);
 	}
 
 	/**

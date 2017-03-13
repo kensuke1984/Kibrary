@@ -1,5 +1,10 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -82,13 +87,19 @@ public class TimewindowInformation extends Timewindow {
 	 * component
 	 */
 	private final SACComponent component;
+	
+	/**
+ 	 * seismic phases included in the timewindow (e.g. S, ScS) 
+ 	 */
+ 	private final Phase[] phases; 
 
 	public TimewindowInformation(double startTime, double endTime, Station station, GlobalCMTID id,
-			SACComponent component) {
+			SACComponent component, Phase[] phases) {
 		super(startTime, endTime);
 		this.id = id;
 		this.component = component;
 		this.station = station;
+		this.phases = phases;
 	}
 
 	public Station getStation() {
@@ -102,10 +113,15 @@ public class TimewindowInformation extends Timewindow {
 	public SACComponent getComponent() {
 		return component;
 	}
+	
+	public Phase[] getPhases() {
+ 		return phases;
+ 	}
 
 	@Override
 	public String toString() {
-		return station + " " + id + " " + component + " " + startTime + " " + endTime;
+		List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+		return station + " " + id + " " + component + " " + startTime + " " + endTime + " " + String.join(",", phaseStrings);
 	}
 
 }
