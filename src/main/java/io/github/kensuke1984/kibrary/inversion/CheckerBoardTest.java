@@ -14,10 +14,7 @@ import org.apache.commons.math3.linear.RealVector;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 
 /**
@@ -26,7 +23,7 @@ import java.util.*;
  * Creates born-waveforms for checkerboard tests
  *
  * @author Kensuke Konishi
- * @version 0.2.0.10
+ * @version 0.2.1
  */
 public class CheckerBoardTest implements Operation {
 
@@ -130,7 +127,7 @@ public class CheckerBoardTest implements Operation {
             throw new RuntimeException("There is no information about 'noisePower'");
     }
 
-    private void set() {
+    private void set() throws NoSuchFileException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
         if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
@@ -140,6 +137,7 @@ public class CheckerBoardTest implements Operation {
         partialWaveformPath = getPath("partialWaveformPath");
         unknownParameterListPath = getPath("unknownParameterListPath");
         inputDataPath = getPath("inputDataPath");
+        if (!Files.exists(inputDataPath)) throw new NoSuchFileException(inputDataPath.toString());
         noise = Boolean.parseBoolean(property.getProperty("noise"));
         if (noise) noisePower = Double.parseDouble(property.getProperty("noisePower"));
         iterate = Boolean.parseBoolean(property.getProperty("iterate"));
