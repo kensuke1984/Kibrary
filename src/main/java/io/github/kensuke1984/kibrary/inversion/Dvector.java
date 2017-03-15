@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.inversion.montecarlo.DataComparator;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -27,7 +28,7 @@ import java.util.stream.IntStream;
  * TODO 同じ震源観測点ペアの波形も周波数やタイムウインドウによってあり得るから それに対処 varianceも
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1
+ * @version 0.2.2.2
  */
 public class Dvector {
 
@@ -55,11 +56,11 @@ public class Dvector {
      */
     private Map<GlobalCMTID, Double> eventVariance;
     /**
-     * dの長さ (トータルのポイント数)
+     * Number of data points
      */
     private int npts;
     /**
-     * 含まれるタイムウインドウ数
+     * Number of timewindow
      */
     private int nTimeWindow;
     /**
@@ -91,7 +92,7 @@ public class Dvector {
      */
     private RealVector[] synVectors;
     /**
-     * 理論波形のベクトル Vector syn
+     * Vector syn
      */
     private RealVector synVector;
     /**
@@ -99,7 +100,7 @@ public class Dvector {
      */
     private Set<GlobalCMTID> usedGlobalCMTIDset;
     /**
-     * Set of stations read in vector.
+     * Set of stations used in vector.
      */
     private Set<Station> usedStationSet;
     /**
@@ -111,11 +112,11 @@ public class Dvector {
      */
     private double variance;
     /**
-     * |obs|
+     * L<sub>2</sub> norm of OBS
      */
     private double obsNorm;
     /**
-     * |obs-syn|
+     * L<sub>2</sub> norm of OBS-SYN
      */
     private double dNorm;
 
@@ -437,7 +438,8 @@ public class Dvector {
         dVector = RealVector.unmodifiableRealVector(combine(dVectors));
         obsVector = RealVector.unmodifiableRealVector(combine(obsVectors));
         synVector = RealVector.unmodifiableRealVector(combine(synVectors));
-        System.err.println("Vector D was created. The variance is " + variance + ". The number of points is " + npts);
+        System.err.println(nTimeWindow + " timewindows were used to create a vector D. The variance is " + variance +
+                ". The number of points is " + npts);
     }
 
     /**
@@ -477,7 +479,6 @@ public class Dvector {
      * データを選り分ける 観測波形 理論波形両方ともにあるものだけを採用する 重複があったときには終了
      */
     private void sort() {
-        // //////
         // 観測波形の抽出 list observed IDs
         List<BasicID> obsList =
                 Arrays.stream(BASICIDS).filter(id -> id.getWaveformType() == WaveformType.OBS).filter(CHOOSER)
@@ -531,7 +532,6 @@ public class Dvector {
         obsVectors = new RealVector[nTimeWindow];
         synVectors = new RealVector[nTimeWindow];
         dVectors = new RealVector[nTimeWindow];
-        System.err.println(nTimeWindow + " timewindows are used");
         usedGlobalCMTIDset = new HashSet<>();
         usedStationSet = new HashSet<>();
         for (BasicID obsID : obsIDs) {
