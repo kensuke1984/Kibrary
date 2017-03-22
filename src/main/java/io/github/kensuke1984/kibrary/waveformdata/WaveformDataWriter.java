@@ -150,6 +150,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
         for (double[] periodRange : periodRanges) {
             idStream.writeFloat((float) periodRange[0]);
             idStream.writeFloat((float) periodRange[1]);
+        	//4 byte * 2
+//        	idStream.writeUTF(Double.toString(periodRange[0]));
+//        	idStream.writeUTF(Double.toString(periodRange[1]));
         }
         makePhaseMap(phases);
         if (perturbationPoints != null) makePerturbationMap(perturbationPoints);
@@ -161,7 +164,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         globalCMTIDMap = new HashMap<>();
         for (GlobalCMTID id : globalCMTIDSet) {
             globalCMTIDMap.put(id, i++);
-            idStream.writeBytes(StringUtils.rightPad(id.toString(), 15));
+            idStream.writeBytes(StringUtils.rightPad(id.toString(), 15));	//TODO
         }
     }
 
@@ -181,11 +184,15 @@ public class WaveformDataWriter implements Closeable, Flushable {
         stationMap = new HashMap<>();
         for (Station station : stationSet) {
             stationMap.put(station, i++);
-            idStream.writeBytes(StringUtils.rightPad(station.getName(), 8));
-            idStream.writeBytes(StringUtils.rightPad(station.getNetwork(), 8));
+            idStream.writeBytes(StringUtils.rightPad(station.getName(), 8));	//TODO
+//            idStream.writeUTF(station.getName());
+            idStream.writeBytes(StringUtils.rightPad(station.getNetwork(), 8));	//TODO
+//            idStream.writeUTF(station.getNetwork());
             HorizontalPosition pos = station.getPosition();
             idStream.writeFloat((float) pos.getLatitude());
+//            idStream.writeUTF(Double.toString(pos.getLatitude()));
             idStream.writeFloat((float) pos.getLongitude());
+//            idStream.writeUTF(Double.toString(pos.getLongitude()));
         }
     }
     
@@ -194,7 +201,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     	phaseMap = new HashMap<>();
     	for (Phase phase : phases)	{
     	 	phaseMap.put(phase, i++);
-    	 	idStream.writeBytes(StringUtils.rightPad(phase.toString(), 16));
+    	 	idStream.writeBytes(StringUtils.rightPad(phase.toString(), 16));	//TODO
     	}
    	}
 
@@ -216,7 +223,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
      * @param data waveform data
      */
     private void addWaveform(double[] data) throws IOException {
-        for (double aData : data) dataStream.writeDouble(aData);
+        for (double aData : data) dataStream.writeDouble(aData);	//TODO
+//    	for (double aData : data) dataStream.writeUTF(Double.toString(aData));
         dataLength += 8 * data.length;
     }
 
@@ -239,33 +247,40 @@ public class WaveformDataWriter implements Closeable, Flushable {
         }
         long startByte = dataLength;
         addWaveform(basicID.getData());
+
         idStream.writeShort(stationMap.get(basicID.STATION));
+//        System.out.println(basicID.STATION);
         idStream.writeShort(globalCMTIDMap.get(basicID.ID));
+//        System.out.println(basicID.ID);
         idStream.writeByte(basicID.COMPONENT.valueOf());
-//        idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
+//        System.out.println(basicID.COMPONENT);
+        idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
+//        System.out.println(basicID.MIN_PERIOD+" "+ basicID.MAX_PERIOD);
         
         Phase[] phases = basicID.PHASES;
-        for (int i = 0; i < 10; i++) { // 10 * 2 Byte
+        for (int i = 0; i < 10; i++) { // 10 * 2(short type) Byte
         	if (i < phases.length) {
-        		idStream.writeShort(phaseMap.get(phases[i]));
+        		idStream.writeShort(phaseMap.get(phases[i])); //TODO
+//        		System.out.println(phases[i]);
         	}
         	else
         		idStream.writeShort(-1);
         }
         
         // 4Byte * 3
+        //TODO
         idStream.writeFloat((float) basicID.getStartTime()); // start time
         idStream.writeInt(basicID.getNpts()); // number of points
         idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz
 
 
         // convolutionされているか 観測波形なら true
-        idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.CONVOLUTE); // 1Byte
-        idStream.writeLong(startByte); // データの格納場所 8 Byte
+        //1bit
+        idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.CONVOLUTE);
+        //8 byte
+        idStream.writeLong(startByte);
 
     }
-    
-    
 
     private int getIndexOfRange(double min, double max) {
         for (int i = 0; i < periodRanges.length; i++) // TODO
@@ -293,6 +308,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
         	if (i < phases.length) {
         		idStream.writeShort(phaseMap.get(phases[i]));
+        		System.out.println(phases[i]);
         	}
         	else
         		idStream.writeShort(-1);
@@ -301,10 +317,11 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeInt(partialID.NPTS); // データポイント数 4 Byte
         idStream.writeFloat((float) partialID.SAMPLINGHZ); // sampling Hz 4 Byte
         // convolutionされているか
-        idStream.writeBoolean(partialID.CONVOLUTE); // 1Byte
+        idStream.writeBoolean(partialID.CONVOLUTE); // 1Bit
         idStream.writeLong(startByte); // データの格納場所 8 Byte
         // partial type 1 Byte
         idStream.writeByte(partialID.getPartialType().getValue());
+        // 2 byte
         idStream.writeShort(perturbationLocationMap.get(partialID.POINT_LOCATION));
     }
 

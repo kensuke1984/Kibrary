@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.anisotime.Phase;
 
 /**
  * Timewindow for a raypath (a pair of a source and a receiver).
@@ -17,8 +17,14 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * 
  * The information contains a component, a station and a global CMT ID.
  * 
+ * 
  * @version 0.1.3
+ * 
  * @author Kensuke Konishi
+ */
+/**
+ * @author Anselme
+ *
  */
 public class TimewindowInformation extends Timewindow {
 
@@ -41,7 +47,7 @@ public class TimewindowInformation extends Timewindow {
 
 	@Override
 	public int hashCode() {
-		int prime = 31;
+		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + ((component == null) ? 0 : component.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
@@ -88,10 +94,11 @@ public class TimewindowInformation extends Timewindow {
 	 */
 	private final SACComponent component;
 	
+	
 	/**
- 	 * seismic phases included in the timewindow (e.g. S, ScS) 
- 	 */
- 	private final Phase[] phases; 
+	 * seismic phases included in the timewindow (e.g. S, ScS) 
+	 */
+	private final Phase[] phases; 
 
 	public TimewindowInformation(double startTime, double endTime, Station station, GlobalCMTID id,
 			SACComponent component, Phase[] phases) {
@@ -115,8 +122,8 @@ public class TimewindowInformation extends Timewindow {
 	}
 	
 	public Phase[] getPhases() {
- 		return phases;
- 	}
+		return phases;
+	}
 
 	@Override
 	public String toString() {

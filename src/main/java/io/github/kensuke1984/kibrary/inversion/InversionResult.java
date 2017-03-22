@@ -7,11 +7,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -34,7 +36,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * 
  * @author Kensuke Konishi
  * 
- * @version 0.1.2.1
+ * @version 0.1.2
  */
 public class InversionResult {
 
@@ -57,7 +59,9 @@ public class InversionResult {
 	 * obs vs initial model.
 	 */
 	private Map<InverseMethodEnum, Double[]> answerVarianceMap = new EnumMap<>(InverseMethodEnum.class);
-
+	
+	private Set<InverseMethodEnum> inverseMethods;
+	
 	/**
 	 * 
 	 * @param rootPath
@@ -67,10 +71,23 @@ public class InversionResult {
 	 */
 	public InversionResult(Path rootPath) throws IOException {
 		this.rootPath = rootPath;
+		inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simple()).toFile().exists())
+			.collect(Collectors.toSet());
 		readVarianceMap();
 		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
+		originalUnknownParameterList = UnknownParameterFile.read(rootPath.resolve("originalUnknownParameterOrder.inf"));
+	}
+	
+	public InversionResult(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {
+		this.rootPath = rootPath;
+		this.inverseMethods = inverseMethods;
+		readVarianceMap();
+		readOrder();
+		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
+		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
+		originalUnknownParameterList = UnknownParameterFile.read(rootPath.resolve("originalUnknownParameterOrder.inf"));
 	}
 
 	/**
@@ -78,6 +95,10 @@ public class InversionResult {
 	 */
 	public List<UnknownParameter> getUnknownParameterList() {
 		return unknownParameterList;
+	}
+	
+	public List<UnknownParameter> getOriginalUnknownParameterList() {
+		return originalUnknownParameterList;
 	}
 
 	/**
@@ -100,6 +121,10 @@ public class InversionResult {
 	public int getNumberOfUnknowns() {
 		return unknownParameterList.size();
 	}
+	
+	public Set<InverseMethodEnum> getInverseMethods() {
+		return inverseMethods;
+	}
 
 	/**
 	 * type is always obs
@@ -112,12 +137,12 @@ public class InversionResult {
 		Station station = new Station(parts[1],
 				new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])), parts[2]);
 		String[] phaseParts = parts[13].split(",");
- 		Phase[] phases = new Phase[phaseParts.length];
- 		for (int i = 0; i < phases.length; i++)
- 			phases[9] = Phase.create(phaseParts[i], false);
-		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[8]), Double.parseDouble(parts[9]),
+		Phase[] phases = new Phase[phaseParts.length];
+		for (int i = 0; i < phases.length; i++)
+			phases[i] = Phase.create(phaseParts[i], false);
+		return new BasicID(WaveformType.OBS, Double.parseDouble(parts[10]), Double.parseDouble(parts[8]),
 				Integer.parseInt(parts[9]), station, new GlobalCMTID(parts[5]), SACComponent.valueOf(parts[6]),
-				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[13]), true);
+				Double.parseDouble(parts[11]), Double.parseDouble(parts[12]), phases, Long.parseLong(parts[14]), true);
 	}
 
 	/**
@@ -141,6 +166,7 @@ public class InversionResult {
 	 */
 	private double[] weightingOrder;
 	private List<UnknownParameter> unknownParameterList;
+	private List<UnknownParameter> originalUnknownParameterList;
 
 	private void readOrder() throws IOException {
 		Path orderPath = rootPath.resolve("order.inf");
@@ -153,10 +179,14 @@ public class InversionResult {
 		IntStream.range(0, n).forEach(i -> {
 			String[] parts = orderLines.get(i + 1).split("\\s+");
 			basicIDList.add(toBasicID(parts));
+//			System.out.println(i + " " + parts.length);
+//			int j = 0;
+//			for (String s : parts)
+//				System.out.println(j++ + " " + s);
 			npts += Integer.parseInt(parts[9]);
-			startPointOrder[i] = Integer.parseInt(parts[15]);
-			synStartTimeOrder[i] = Double.parseDouble(parts[16]);
-			weightingOrder[i] = Double.parseDouble(parts[17]);
+			startPointOrder[i] = Integer.parseInt(parts[16]);
+			synStartTimeOrder[i] = Double.parseDouble(parts[17]);
+			weightingOrder[i] = Double.parseDouble(parts[18]);
 		});
 		basicIDList = Collections.unmodifiableList(basicIDList);
 	}
@@ -246,7 +276,7 @@ public class InversionResult {
 	/**
 	 * @param id
 	 *            ID of the partial
-	 * @param parameter
+	 * @param parN
 	 *            index of a partial in unknown parameters
 	 * @return {@link Trace} of parN in nth time window. time axis is Synthetic
 	 *         one
@@ -352,7 +382,7 @@ public class InversionResult {
 	 * @return txt file name of the id including "eventID/" at head. e.g., if
 	 *         its partial "partial/(txt file name)" is fine.
 	 */
-	private String getTxtName(BasicID id) {
+	protected String getTxtName(BasicID id) {
 		return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "." + basicIDList.indexOf(id) + ".txt";
 	}
@@ -384,16 +414,16 @@ public class InversionResult {
 		Path stationPath = rootPath.resolve("trace/stationVariance.inf");
 		eventVarianceMap = Collections
 				.unmodifiableMap(Files.readAllLines(eventPath).stream().skip(1).map(line -> line.split("\\s+")).collect(
-						Collectors.toMap(parts -> new GlobalCMTID(parts[0]), parts -> Double.parseDouble(parts[4]))));
+						Collectors.toMap(parts -> new GlobalCMTID(((String[]) parts)[0]), parts -> Double.parseDouble(((String[]) parts)[4]))));
 		stationVarianceMap = Collections
 				.unmodifiableMap(Files.readAllLines(stationPath).stream().skip(1).map(line -> line.split("\\s+"))
 						.collect(Collectors.toMap(
-								parts -> new Station(parts[0],
-										new HorizontalPosition(Double.parseDouble(parts[2]),
-												Double.parseDouble(parts[3])),
-										parts[1]),
-								parts -> Double.parseDouble(parts[4]))));
-		for (InverseMethodEnum inverse : InverseMethodEnum.values()) {
+								parts -> new Station(((String[]) parts)[0],
+										new HorizontalPosition(Double.parseDouble(((String[]) parts)[2]),
+												Double.parseDouble(((String[]) parts)[3])),
+												((String[]) parts)[1]),
+								parts -> Double.parseDouble(((String[]) parts)[4]))));
+		for (InverseMethodEnum inverse : inverseMethods) {
 			// TODO
 			if (inverse == InverseMethodEnum.LEAST_SQUARES_METHOD)
 				continue;
@@ -446,7 +476,7 @@ public class InversionResult {
 		return born;
 
 	}
-
+	
 	private static void writeBorn(Path outBornPath, Trace born) throws IOException {
 		List<String> lines = new ArrayList<>(born.getLength() + 1);
 		lines.add("#syntime synthetic+");
@@ -581,7 +611,7 @@ public class InversionResult {
 		Map<Location, Double> ansMap = answer.keySet().stream().filter(key -> key.getPartialType() == type).collect(
 				Collectors.toMap(key -> ((Physical3DParameter) key).getPointLocation(), key -> answer.get(key)));
 
-		if (type == PartialType.TIME)
+		if (type.equals(PartialType.TIME_RECEIVER) || type.equals(PartialType.TIME_SOURCE) )
 			throw new RuntimeException("TIME PARTIAL MADADAMEEEEEEEE");
 		if (ansMap.containsKey(location))
 			return ansMap.get(location);

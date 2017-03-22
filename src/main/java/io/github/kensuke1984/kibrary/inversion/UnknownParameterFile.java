@@ -10,7 +10,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -28,9 +31,9 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 
  * Duplication is NOT allowed.
  * 
- * @version 0.0.5.2
+ * @version 0.0.5.1
  * 
- * @author Kensuke Konishi
+ * @author kensuke
  * 
  */
 public class UnknownParameterFile {
@@ -51,14 +54,22 @@ public class UnknownParameterFile {
 			String line;
 			while (null != (line = br.readLine())) {
 				line = line.trim();
-				if (line.isEmpty() || line.startsWith("#"))
+				if (line.length() == 0 || line.startsWith("#"))
 					continue;
 				String[] parts = line.split("\\s+");
 				PartialType type = PartialType.valueOf(parts[0]);
 				UnknownParameter unknown;
 				switch (type) {
-				case TIME:
-					throw new RuntimeException("time  madamuripo");
+				case TIME_SOURCE:
+					unknown = new TimeSourceSideParameter(new GlobalCMTID(parts[1]));
+					pars.add(unknown);
+					break;
+				case TIME_RECEIVER:
+					unknown = new TimeReceiverSideParameter(new Station(parts[1],
+							new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])),
+							parts[2]), Integer.parseInt(parts[5]));
+					pars.add(unknown);
+					break;
 				case PARA:
 				case PARC:
 				case PARF:
@@ -86,7 +97,8 @@ public class UnknownParameterFile {
 			for (int j = i + 1; j < pars.size(); j++)
 				if (pars.get(i).equals(pars.get(j)))
 					System.err.println("!Caution there is duplication in " + path);
-		return Collections.unmodifiableList(pars);
+//		return Collections.unmodifiableList(pars);
+		return pars;
 	}
 
 	/**

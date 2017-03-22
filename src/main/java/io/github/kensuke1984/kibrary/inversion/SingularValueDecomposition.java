@@ -78,7 +78,7 @@ public class SingularValueDecomposition extends InverseProblem {
 		// BtB = VtAtAV VtStSV
 		RealMatrix btb = vt.multiply(ata).multiply(vt.transpose());
 		// sometime btb is too small to be LUdecomposed
-		double factor = 1 / ata.getEntry(0, ata.getColumnDimension() - 1);
+		final double factor = 1 / ata.getEntry(0, ata.getColumnDimension() - 1);
 		btb = btb.scalarMultiply(factor);
 
 		// Btd = VtAtd
@@ -123,7 +123,7 @@ public class SingularValueDecomposition extends InverseProblem {
 
 	@Override
 	InverseMethodEnum getEnum() {
-		return InverseMethodEnum.SINGULAR_VALUE_DECOMPOSITION;
+		return InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
 	}
 
 }

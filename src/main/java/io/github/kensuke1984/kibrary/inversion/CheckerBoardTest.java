@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
@@ -37,7 +38,7 @@ import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
  * 
  * Creates born-waveforms for checkerboard tests
  * 
- * @version 0.2.0.10
+ * @version 0.2.0.9
  * 
  * @author Kensuke Konishi
  * 
@@ -173,7 +174,7 @@ public class CheckerBoardTest implements Operation {
 			for (Phase phase : id.getPhases())
 				tmpPhases.add(phase);
 			double[] range = new double[] { id.getMinPeriod(), id.getMaxPeriod() };
-			if (ranges.isEmpty())
+			if (ranges.size() == 0)
 				ranges.add(range);
 			boolean exists = false;
 			for (int i = 0; !exists && i < ranges.size(); i++)
@@ -184,7 +185,7 @@ public class CheckerBoardTest implements Operation {
 		}
 		this.ranges = ranges.toArray(new double[0][]);
 		phases = new Phase[tmpPhases.size()];
-		phases = tmpPhases.toArray(phases);
+		phases = tmpPhases.toArray(phases); 
 	}
 
 	private void read() throws IOException {
@@ -192,7 +193,7 @@ public class CheckerBoardTest implements Operation {
 		Dvector dVector = new Dvector(ids);
 		PartialID[] pids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
-		eq = new ObservationEquation(pids, parameterList, dVector);
+		eq = new ObservationEquation(pids, parameterList, dVector, false, false, -1, null);
 	}
 
 	/**
