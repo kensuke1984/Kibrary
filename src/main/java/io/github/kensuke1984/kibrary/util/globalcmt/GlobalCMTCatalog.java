@@ -20,16 +20,13 @@ import java.util.stream.IntStream;
  * Catalog of global CMT solutions.
  * <p>
  * The catalog contains event list from <b>1976 January</b> to <b>2016
- * September</b>.
+ * November</b>.
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @version 0.1.3.1
  */
 final class GlobalCMTCatalog {
 
-    /**
-     * 読み込んだNDK
-     */
     private final static Set<NDK> NDKs;
 
     static {
@@ -64,7 +61,6 @@ final class GlobalCMTCatalog {
         return catalogFile;
     }
 
-    //TODO structure has changed...
     private static Set<NDK> readJar() {
         try {
             List<String> lines = IOUtils.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
@@ -83,7 +79,6 @@ final class GlobalCMTCatalog {
 
     /**
      * read catalogFile and returns NDKs inside.
-     *
      * @param catalogPath path of a catalog
      * @return NDKs in catalogFile
      */
@@ -100,7 +95,6 @@ final class GlobalCMTCatalog {
     }
 
     /**
-     * idと一致するNDKを返す
      *
      * @param id for the NDK
      * @return NDK of the input id
