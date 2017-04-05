@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
  *
  * @author Kensuke Konishi
- * @version 0.2.2
+ * @version 0.2.2.1
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 
@@ -89,9 +89,12 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
         else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
         else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-
+        long start = System.nanoTime();
+        System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " is going.");
         SyntheticDSMInformationFileMaker sdif = new SyntheticDSMInformationFileMaker(property);
         sdif.run();
+        System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " finished in " +
+                Utilities.toTimeString(System.nanoTime() - start));
     }
 
     private void checkAndPutDefaults() {

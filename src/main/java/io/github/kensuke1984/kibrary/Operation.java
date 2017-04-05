@@ -16,7 +16,7 @@ import java.util.Properties;
  * Main procedures in Kibrary
  *
  * @author Kensuke Konishi
- * @version 0.0.5
+ * @version 0.0.5.1
  */
 public interface Operation {
 
@@ -65,7 +65,7 @@ public interface Operation {
             try {
                 Manhattan.valueOf(manhattan).invokeMain(new String[]{args[0]});
             } catch (Exception e) {
-                e.getCause().printStackTrace();
+                System.err.println("Could not run " + manhattan + " due to " + e.getCause());
             }
         }
     }

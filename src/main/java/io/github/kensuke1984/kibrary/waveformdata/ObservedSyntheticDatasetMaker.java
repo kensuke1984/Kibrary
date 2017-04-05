@@ -48,7 +48,7 @@ import java.util.stream.IntStream;
  * network in one event</b>
  *
  * @author Kensuke Konishi
- * @version 0.2.2
+ * @version 0.2.2.1
  */
 public class ObservedSyntheticDatasetMaker implements Operation {
 
@@ -80,7 +80,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
      */
     private double sacSamplingHz;
     /**
-     * 切り出すサンプリングヘルツ
+     * sampling Hz in the output file
      */
     private double finalSamplingHz;
     /**
@@ -157,19 +157,16 @@ public class ObservedSyntheticDatasetMaker implements Operation {
      * @throws Exception if any
      */
     public static void main(String[] args) throws Exception {
-
         Properties property = new Properties();
         if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
         else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
         else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
         ObservedSyntheticDatasetMaker osdm = new ObservedSyntheticDatasetMaker(property);
-
         long startT = System.nanoTime();
         System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " is running.");
         osdm.run();
         System.err.println(ObservedSyntheticDatasetMaker.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startT));
-
     }
 
     private void checkAndPutDefaults() {
@@ -233,6 +230,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
         }
     }
 
+
     @Override
     public void run() throws Exception {
         if (timeCorrection || amplitudeCorrection)
@@ -257,10 +255,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
             dataWriter = bdw;
             for (EventFolder eventDir : eventDirs)
                 execs.execute(new Worker(eventDir));
-
             execs.shutdown();
             while (!execs.isTerminated()) Thread.sleep(1000);
-            System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
+            System.err.println("\rCreating finished.");
+            System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -287,6 +285,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
     public Path getWorkPath() {
         return workPath;
     }
+
+    private AtomicInteger numberOfFinishedEvents = new AtomicInteger();
 
     /**
      * 与えられたイベントフォルダの観測波形と理論波形を書き込む 両方ともが存在しないと書き込まない
@@ -405,7 +405,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                     }
                 }
             }
-            System.err.print(".");
+            int p = (int) (100.0 * numberOfFinishedEvents.incrementAndGet() / eventDirs.size());
+            System.err.print("\rCreating " + p + "%");
         }
     }
 

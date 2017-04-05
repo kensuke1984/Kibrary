@@ -1,6 +1,5 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.inversion.montecarlo.DataComparator;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -68,11 +67,11 @@ public class Dvector {
      */
     private BasicID[] obsIDs;
     /**
-     * 観測波形のベクトル（各IDに対するタイムウインドウ）
+     * obs vector of each time window
      */
     private RealVector[] obsVectors;
     /**
-     * 観測波形のベクトル Vector obs
+     * Vector obs
      */
     private RealVector obsVector;
     /**
@@ -84,11 +83,11 @@ public class Dvector {
      */
     private Map<Station, Double> stationVariance;
     /**
-     * 観測波形の波形情報
+     * Synthetic
      */
     private BasicID[] synIDs;
     /**
-     * 理論波形のベクトル（各IDに対するタイムウインドウ）
+     * syn vector of each time window
      */
     private RealVector[] synVectors;
     /**
@@ -121,8 +120,8 @@ public class Dvector {
     private double dNorm;
 
     /**
-     * Use all waveforms in the IDs Weighting factor is reciprocal of maximum
-     * value in each obs time window
+     * Use all waveforms in the IDs. Weighting factor is the reciprocal of the maximum
+     * value in each obs time window.
      *
      * @param basicIDs must contain waveform data
      */
@@ -131,24 +130,24 @@ public class Dvector {
     }
 
     /**
-     * chooserを通った波形のみを使う 観測波形を選別しその観測波形に対する理論波形を用いる Weighting factor is
-     * reciprocal of maximum value in each obs time window
+     * Use selected waveforms.
+     * Weighting factor is reciprocal of maximum value in each obs time window.
      *
      * @param basicIDs must contain waveform data
-     * @param chooser  {@link Predicate}
+     * @param chooser  {@link Predicate} for selection of obs data to be used
      */
     public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser) {
         this(basicIDs, chooser, null);
     }
 
     /**
-     * chooserを通った観測波形のみを使う 観測波形を選別しその観測波形に対する理論波形を用いる
+     * Use selected waveforms.
      *
      * @param basicIDs          must contain waveform data
      * @param chooser           {@link Predicate} used for filtering Observed (not synthetic)
-     *                          ID if one ID is true, then the observed ID and the pair
-     *                          synethetic are used.
-     * @param weightingFunction {@link ToDoubleBiFunction} (observed, synthetic) if null, the reciprocal of the max value in observed is a weighting value.
+     *                          ID. If one ID is true, then the observed ID and the pair
+     *                          synthetic are used.
+     * @param weightingFunction {@link ToDoubleBiFunction} (observed, synthetic). If null, the reciprocal of the max value in observed is a weighting value.
      */
     public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser,
                    ToDoubleBiFunction<BasicID, BasicID> weightingFunction) {
@@ -174,12 +173,12 @@ public class Dvector {
 
     /**
      * compare id0 and id1 if component npts sampling Hz start time max min
-     * period station global cmt id are same This method does NOT consider if
-     * the input BASICIDS are observed or synthetic. TODO start time
+     * period station global cmt id are same This method ignore if
+     * the input IDs are observed or synthetic. TODO start time
      *
      * @param id0 {@link BasicID}
      * @param id1 {@link BasicID}
-     * @return if the BASICIDS are same （理論波形と観測波形は違うけど＾＾＠）
+     * @return if the IDs are same
      */
     private static boolean isPair(BasicID id0, BasicID id1) {
         return id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID()) &&
@@ -203,10 +202,10 @@ public class Dvector {
     }
 
     /**
-     * vectorsがtimewindowの数とそれぞれの要素数を守っていないとerror
+     * Every vector must have the same length as the corresponding timewindow.
      *
      * @param vectors to combine
-     * @return vectorsをつなげる
+     * @return combined vectors
      */
     public RealVector combine(RealVector[] vectors) {
         if (vectors.length != nTimeWindow) throw new RuntimeException("the number of input vector is invalid");
@@ -276,10 +275,8 @@ public class Dvector {
     }
 
     /**
-     * i番目のウインドウが何ポイント目から始まるか
-     *
      * @param i index of timewindow
-     * @return point where the i th timewindow starts
+     * @return the index of start point where the i th timewindow starts
      */
     public int getStartPoints(int i) {
         return startPoints[i];
@@ -337,21 +334,20 @@ public class Dvector {
 
     /**
      * vectors（各タイムウインドウ）に対して、観測波形とのvarianceを求めてファイルに書き出す
-     * outDir下にイベントフォルダを作りその下に書くステーションごとに書き込む
+     * Create event folders under the outPath and variances are written for each path.
      *
-     * @param outPath 書き出すフォルダ
+     * @param outPath Root for the output
      * @param vectors {@link RealVector}s for output
      * @throws IOException if an I/O error occurs
      */
     public void outputVarianceOf(Path outPath, RealVector[] vectors) throws IOException {
         Files.createDirectories(outPath);
-        Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
-        Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
+        Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0d));
+        Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0d));
         Map<GlobalCMTID, Double> eventDenominator =
                 usedGlobalCMTIDset.stream().collect(Collectors.toMap(id -> id, id -> 0d));
         Map<GlobalCMTID, Double> eventNumerator =
                 usedGlobalCMTIDset.stream().collect(Collectors.toMap(id -> id, id -> 0d));
-//		usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0d));
 
         Path eachVariancePath = outPath.resolve("eachVariance.txt");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
@@ -363,7 +359,6 @@ public class Dvector {
                 double del2 = del.dotProduct(del);
                 eventDenominator.put(id, eventDenominator.get(id) + obs2);
                 stationDenominator.put(station, stationDenominator.get(station) + obs2);
-
                 eventNumerator.put(id, eventNumerator.get(id) + del2);
                 stationNumerator.put(station, stationNumerator.get(station) + del2);
                 pw.println(i + " " + station + " " + id + " " + del2 / obs2);
@@ -378,7 +373,6 @@ public class Dvector {
                     .forEach(id -> pwEvent.println(id + " " + eventNumerator.get(id) / eventDenominator.get(id)));
             usedStationSet.forEach(station -> pwStation
                     .println(station + " " + stationNumerator.get(station) / stationDenominator.get(station)));
-
         }
     }
 
@@ -398,15 +392,15 @@ public class Dvector {
             this.npts += npts;
             start += npts;
 
-            // 観測波形の読み込み
+            // read obs
             obsVectors[i] = new ArrayRealVector(obsIDs[i].getData(), false);
 
-            // 観測波形の最大値の逆数で重み付け TODO 重み付けの方法を決める
+            // apply weighting
             weighting[i] = WEIGHTING_FUNCTION.applyAsDouble(obsIDs[i], synIDs[i]);
 
             obsVectors[i] = obsVectors[i].mapMultiply(weighting[i]);
 
-            // 理論波形の読み込み
+            // read syn
             synVectors[i] = new ArrayRealVector(synIDs[i].getData(), false);
             synVectors[i].mapMultiplyToSelf(weighting[i]);
 
@@ -465,7 +459,7 @@ public class Dvector {
 
     /**
      * @param vector to separate
-     * @return 入力したベクトルをタイムウインドウ毎に分ける 長さが違うとerror
+     * @return Separated vectors for each time window. Error occurs if the input is invalid.
      */
     public RealVector[] separate(RealVector vector) {
         if (vector.getDimension() != npts)
@@ -476,10 +470,10 @@ public class Dvector {
     }
 
     /**
-     * データを選り分ける 観測波形 理論波形両方ともにあるものだけを採用する 重複があったときには終了
+     * Look for data which can be used. Existence of duplication throws an exception.
      */
     private void sort() {
-        // 観測波形の抽出 list observed IDs
+        // list obs IDs
         List<BasicID> obsList =
                 Arrays.stream(BASICIDS).filter(id -> id.getWaveformType() == WaveformType.OBS).filter(CHOOSER)
                         .collect(Collectors.toList());
@@ -489,23 +483,20 @@ public class Dvector {
             for (int j = i + 1; j < obsList.size(); j++)
                 if (obsList.get(i).equals(obsList.get(j))) throw new RuntimeException("Duplicate observed detected");
 
-        // 理論波形の抽出
+        // list syn
         List<BasicID> synList =
                 Arrays.stream(BASICIDS).filter(id -> id.getWaveformType() == WaveformType.SYN).filter(CHOOSER)
                         .collect(Collectors.toList());
 
-        // 重複チェック
+        // Duplication check
         for (int i = 0; i < synList.size(); i++)
             for (int j = i + 1; j < synList.size(); j++)
                 if (synList.get(i).equals(synList.get(j))) throw new RuntimeException("Duplicate synthetic detected");
 
-        // System.out.println("There are "+synList.size()+" synthetic IDs");
 
-        // System.out.println(synList.size() +
-        // " synthetic waveforms are found.");
         if (obsList.size() != synList.size()) System.err.println(
-                "The numbers of observed IDs " + obsList.size() + " and " + " synthetic IDs " + synList.size() +
-                        " are different ");
+                "The numbers of observed IDs " + obsList.size() + " and synthetic IDs " + synList.size() +
+                        " are different.");
         int size = obsList.size() < synList.size() ? synList.size() : obsList.size();
 
         List<BasicID> useObsList = new ArrayList<>(size);
@@ -520,8 +511,6 @@ public class Dvector {
                 }
 
         if (useObsList.size() != useSynList.size()) throw new RuntimeException("unanticipated");
-        // System.out.println(useObsList.size() + " observed and synthetic pairs
-        // are used.");
 
         nTimeWindow = useSynList.size();
         obsIDs = useObsList.toArray(new BasicID[nTimeWindow]);
@@ -543,10 +532,11 @@ public class Dvector {
     }
 
     /**
-     * idが何番目のタイムウインドウに等しいか 入力が観測波形なら観測波形のidとして理論か偏微分係数ならそっちから調べる なければ -1を返す
+     * Look for the index for the input ID.
+     * If the input is obs, the search is for obs, while if the input is syn or partial, the search is in syn.
      *
      * @param id {@link BasicID}
-     * @return index for the id
+     * @return index for the ID. -1 if no ID found.
      */
     int whichTimewindow(BasicID id) {
         BasicID[] ids = id.getWaveformType() == WaveformType.OBS ? obsIDs : synIDs;
