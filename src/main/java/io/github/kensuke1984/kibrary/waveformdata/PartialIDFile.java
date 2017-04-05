@@ -76,9 +76,9 @@ public final class PartialIDFile {
                     data[j] = dis.readDouble();
                 ids[i] = ids[i].setData(data);
                 if (i % (ids.length / 20) == 0)
-                    System.err.print("\r\u001B[2KReading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
+                    System.err.print("\rReading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
             }
-            System.err.println("\r\u001B[2KReading partial data ... 100.0 %");
+            System.err.println("\rReading partial data ... 100.0 %");
         }
         if (chooser != null) ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
         System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
