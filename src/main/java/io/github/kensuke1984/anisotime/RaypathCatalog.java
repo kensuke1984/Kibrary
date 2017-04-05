@@ -356,7 +356,6 @@ public class RaypathCatalog implements Serializable {
 
     /**
      * Creates a catalogue.
-     * TODO eliminate ray paths which have only NaN
      * when running into a ray path with all NaN. what should we do.
      */
     private void create() {

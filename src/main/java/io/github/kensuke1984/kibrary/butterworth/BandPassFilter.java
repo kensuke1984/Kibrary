@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
  * ω=2πfδt
  *
  * @author Kensuke Konishi
- * @version 0.1.3.2.1
+ * @version 0.1.3.3
  */
 public class BandPassFilter extends ButterworthFilter {
 
@@ -174,9 +174,9 @@ public class BandPassFilter extends ButterworthFilter {
     public String toString() {
         double permeability = 1 / (1 + ap * ap);
         double cut = 1 / (1 + as * as);
-        return "filter permeability, cut: " + permeability + "  " + cut + "\n" + "band pass (Hz):" +
-                omegaL / 2.0 / Math.PI / 0.05 + "  " + omegaH / 2.0 / Math.PI / 0.05 + "\n" + "cut region (Hz): " +
-                omegaSl / 2.0 / Math.PI / 0.05 + ",  " + omegaSh / 2.0 / Math.PI / 0.05 + "backword " + backward;
+        return "Bandpass (Hz):" + omegaL / 2.0 / Math.PI / 0.05 + ", " + omegaH / 2.0 / Math.PI / 0.05 + ". Backward " +
+                backward + ".\nFilter permeability, cut: " + permeability + "  " + cut + ".\nCut region (Hz): " +
+                omegaSl / 2.0 / Math.PI / 0.05 + ", " + omegaSh / 2.0 / Math.PI / 0.05 + ".";
     }
 
     /**

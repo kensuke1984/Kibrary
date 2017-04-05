@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
  * TODO customize for catalog ddelta dR
  * <p>
  * <p>
+ * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
  *
  * @author Kensuke Konishi
  * @version 0.3.12b
@@ -402,8 +403,6 @@ final class ANISOtimeCLI {
     }
 
     /**
-     * TODO print result according to options
-     *
      * @param targetDelta [deg] a target &Delta; for the interpolation. If it is 0, the interpolation will not be done.
      * @param raypath     Raypath
      * @param targetPhase phase to be printed

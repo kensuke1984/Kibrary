@@ -19,6 +19,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  * the folder.
  *
  * @author Kensuke Konishi
- * @version 0.2.4.4
+ * @version 0.2.4.5
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SpcSAC implements Operation {
@@ -162,11 +163,8 @@ public final class SpcSAC implements Operation {
 
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-
         setSourceTimeFunction();
-
         computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
-
         samplingHz = 20; // TODO
     }
 
@@ -256,10 +254,13 @@ public final class SpcSAC implements Operation {
 
         ExecutorService execs = Executors.newFixedThreadPool(nThread);
         // single
+        int nSAC = 0;
         if (psvPath == null || shPath == null) for (SpcFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
             SpectrumFile one = SpectrumFile.getInstance(spc);
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             execs.execute(createSACMaker(one, null));
+            nSAC++;
+            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
         }
             // both
         else for (SpcFileName spc : psvSPCs) {
@@ -272,18 +273,21 @@ public final class SpcSAC implements Operation {
             SpectrumFile two = SpectrumFile.getInstance(pairFile(spc));
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             execs.execute(createSACMaker(one, two));
+            nSAC++;
+            if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
         }
-
+        System.err.println("\rReading SPC files finished.");
         execs.shutdown();
-        while (!execs.isTerminated()) {
-            try {
-                Thread.sleep(100);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        while (!execs.isTerminated()) try {
+            System.err.print("\rConverting " + Math.ceil(100.0 * numberOfCreatedSAC.get() / nSAC) + "%");
+            Thread.sleep(100);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
+        System.err.println("\rConverting finished.");
     }
+
+    private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
 
     /**
      * 二つのspc(sh, psv)から SacMakerを作る {@link SACMaker}
@@ -295,7 +299,13 @@ public final class SpcSAC implements Operation {
     private SACMaker createSACMaker(SpectrumFile primeSPC, SpectrumFile secondarySPC) {
         SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
                 new GlobalCMTID(primeSPC.getSourceID()));
-        SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction);
+        SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {
+            @Override
+            public void run() {
+                super.run();
+                numberOfCreatedSAC.incrementAndGet();
+            }
+        };
         sm.setComponents(components);
         sm.setTemporalDifferentiation(computesPartial);
         sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
