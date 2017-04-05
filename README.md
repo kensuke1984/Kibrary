@@ -1,12 +1,12 @@
 # Kibrary 
 
 ![version][version-image]
-[ ![release] [release-image] ][release]
-[ ![aLicense] [alicense-image] ] [alicense]
-[ ![oLicense] [olicense-image] ] [olicense]
-[ ![Java8][Java8-image]] [Java8]  
-Library for waveform inversion.   
+[![release][release-image]][release]
+[![aLicense][alicense-image]][alicense]
+[![oLicense][olicense-image]][olicense]
+[![Java8][Java8-image]][Java8]
 
+Library for waveform inversion.   
 It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([ANISOtime][ANISOtime]) package.  
 
 
@@ -50,10 +50,10 @@ The latest versions are strongly recommended.
 ## Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
-##Contact me
+## Contact me
 If you have any comments or questions, please feel free to contact me by [E-mail][mailto].
 
-##Copyright and Licence
+## Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
 Last updated Jul 26, 2016
@@ -63,8 +63,8 @@ Last updated Jul 26, 2016
 [release]:https://en.wikipedia.org/wiki/Sahuagin
 [version-image]:https://img.shields.io/badge/version-0.4-yellow.svg
 
-[alicense-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
-[alicense]: http://www.apache.org/licenses/LICENSE-2.0
+[alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
+[alicense]: https://www.apache.org/licenses/LICENSE-2.0
 
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
