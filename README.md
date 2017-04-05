@@ -1,15 +1,16 @@
-#Kibrary 
+# Kibrary 
+
 ![version][version-image]
-[![release] [release-image] ][release]
+[ ![release] [release-image] ][release]
 [ ![aLicense] [alicense-image] ] [alicense]
 [ ![oLicense] [olicense-image] ] [olicense]
-[![Java8][Java8-image]] [Java8]  
+[ ![Java8][Java8-image]] [Java8]  
 Library for waveform inversion.   
 
 It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([ANISOtime][ANISOtime]) package.  
 
 
-##<a name="installation">Installation
+## <a name="installation">Installation
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
 If you are not sure about the version you have, 
@@ -34,7 +35,7 @@ It installs Kibrary under HOME directory. In order to setup environment like PAT
 If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), the download may fail. In that case, you must update it, otherwise you can download the binary release of Kibrary. 
 
 
-##Build by yourself
+## Build by yourself
 If you just want to use Kibrary, just install as [above](#installation).
 However if you want to modify source codes and build by yourself,
 you have to care about dependencies by yourself.  
@@ -46,7 +47,7 @@ The latest versions are strongly recommended.
 
 
 
-##Usage
+## Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
 ##Contact me
