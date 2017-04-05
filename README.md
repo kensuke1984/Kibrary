@@ -1,15 +1,16 @@
-#Kibrary 
-![version][version-image]
-[![release] [release-image] ][release]
-[ ![aLicense] [alicense-image] ] [alicense]
-[ ![oLicense] [olicense-image] ] [olicense]
-[![Java8][Java8-image]] [Java8]  
-Library for waveform inversion.   
+# Kibrary 
 
+![version][version-image]
+[![release][release-image]][release]
+[![aLicense][alicense-image]][alicense]
+[![oLicense][olicense-image]][olicense]
+[![Java8][Java8-image]][Java8]
+
+Library for waveform inversion.   
 It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([ANISOtime][ANISOtime]) package.  
 
 
-##<a name="installation">Installation
+## <a name="installation">Installation
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
 If you are not sure about the version you have, 
@@ -34,7 +35,7 @@ It installs Kibrary under HOME directory. In order to setup environment like PAT
 If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), the download may fail. In that case, you must update it, otherwise you can download the binary release of Kibrary. 
 
 
-##Build by yourself
+## Build by yourself
 If you just want to use Kibrary, just install as [above](#installation).
 However if you want to modify source codes and build by yourself,
 you have to care about dependencies by yourself.  
@@ -46,13 +47,13 @@ The latest versions are strongly recommended.
 
 
 
-##Usage
+## Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
 
-##Contact me
+## Contact me
 If you have any comments or questions, please feel free to contact me by [E-mail][mailto].
 
-##Copyright and Licence
+## Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
 Last updated Jul 26, 2016
@@ -62,8 +63,8 @@ Last updated Jul 26, 2016
 [release]:https://en.wikipedia.org/wiki/Sahuagin
 [version-image]:https://img.shields.io/badge/version-0.4-yellow.svg
 
-[alicense-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
-[alicense]: http://www.apache.org/licenses/LICENSE-2.0
+[alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
+[alicense]: https://www.apache.org/licenses/LICENSE-2.0
 
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
