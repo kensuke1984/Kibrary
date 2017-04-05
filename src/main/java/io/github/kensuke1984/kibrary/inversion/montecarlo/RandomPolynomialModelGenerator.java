@@ -5,16 +5,18 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.1
  */
 class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructure> {
 
@@ -122,8 +124,13 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
     }
 
     @Override
-    public void write(Path path, PolynomialStructure model) throws IOException {
-        model.writePSV(path, StandardOpenOption.CREATE_NEW);
+    public void write(Path path, PolynomialStructure model, OpenOption... options) throws IOException {
+        model.writePSV(path, options);
+    }
+
+    @Override
+    public String toString(PolynomialStructure model) {
+        return Arrays.stream(model.toPSVlines()).collect(Collectors.joining("\n"));
     }
 
 }

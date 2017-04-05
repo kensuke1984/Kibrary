@@ -17,6 +17,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1.1
+ * @version 0.2.2.2
  */
 public class FilterDivider implements Operation {
 
@@ -154,17 +155,21 @@ public class FilterDivider implements Operation {
         np = Integer.parseInt(property.getProperty("np"));
     }
 
+    private AtomicInteger processedFolders = new AtomicInteger(); // already processed
+
     private Runnable process(EventFolder folder) {
         return () -> {
             String eventname = folder.getName();
             try {
-                Files.createDirectories(outPath.resolve(eventname));
                 Set<SACFileName> set = folder.sacFileSet();
+                Files.createDirectories(outPath.resolve(eventname));
                 set.removeIf(s -> !components.contains(s.getComponent()));
                 set.forEach(this::filterAndout);
             } catch (Exception e) {
                 System.err.println("Error on " + folder);
                 e.printStackTrace();
+            } finally {
+                processedFolders.incrementAndGet();
             }
         };
     }
@@ -223,15 +228,16 @@ public class FilterDivider implements Operation {
         events.addAll(Files.exists(obsPath) ? Utilities.eventFolderSet(obsPath) : Collections.emptySet());
         events.addAll(Files.exists(synPath) ? Utilities.eventFolderSet(synPath) : Collections.emptySet());
         if (events.isEmpty()) return;
-
         outPath = workPath.resolve("filtered" + Utilities.getTemporaryString());
         Files.createDirectories(outPath);
         ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         events.stream().map(this::process).forEach(es::submit);
         es.shutdown();
         while (!es.isTerminated()) {
+            System.err.print("\rFiltering " + Math.ceil(100.0 * processedFolders.get() / events.size()) + "%");
             Thread.sleep(100);
         }
+        System.err.println("\rFiltering finished.");
     }
 
     @Override

@@ -23,6 +23,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  * same events</b> TODO
  *
  * @author Kensuke Konishi
- * @version 0.2.0.5
+ * @version 0.2.1
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
@@ -65,7 +66,7 @@ public class Partial1DDatasetMaker implements Operation {
     private double maxFreq;
     /**
      * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは20
-     * TODOまだ触れない
+     * TODO まだ触れない
      */
     private double partialSamplingHz = 20;
     /**
@@ -180,7 +181,8 @@ public class Partial1DDatasetMaker implements Operation {
         if (!property.containsKey("minFreq")) property.setProperty("minFreq", "0.005");
         if (!property.containsKey("maxFreq")) property.setProperty("maxFreq", "0.08");
         if (!property.containsKey("finalSamplingHz")) property.setProperty("finalSamplingHz", "1");
-        if (!property.containsKey("timewindowPath")) throw new IllegalArgumentException("There is no information about timewindowPath.");
+        if (!property.containsKey("timewindowPath"))
+            throw new IllegalArgumentException("There is no information about timewindowPath.");
         if (!property.containsKey("bodyR")) throw new IllegalArgumentException("There is no information about bodyR.");
     }
 
@@ -286,7 +288,6 @@ public class Partial1DDatasetMaker implements Operation {
 
         // pdm.createStreams();
         int N_THREADS = Runtime.getRuntime().availableProcessors();
-        // N_THREADS = 2;
         writeLog("going with " + N_THREADS + " threads");
 
         if (partialTypes.contains(PartialType.PARQ)) fujiConversion = new FujiConversion(PolynomialStructure.PREM);
@@ -294,14 +295,12 @@ public class Partial1DDatasetMaker implements Operation {
         setLsmooth();
         writeLog("Set lsmooth " + lsmooth);
 
-        // タイムウインドウの情報を読み取る。
         System.err.print("Reading timewindow information ");
         timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
         System.err.println("done");
 
         if (sourceTimeFunction == -1) readSourceTimeFunctions();
 
-        // filter設計
         System.err.println("Designing filter.");
         setBandPassFilter();
         System.err.println("Model name is " + modelName);
@@ -320,6 +319,8 @@ public class Partial1DDatasetMaker implements Operation {
 
         // create ThreadPool
         ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+        int characterLength = 20 + 3 * N_THREADS + 21 + 8;
+        String blankLine = String.format("%-" + characterLength + "s", "\r");
 
         Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
         Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
@@ -329,14 +330,19 @@ public class Partial1DDatasetMaker implements Operation {
             partialDataWriter = pdw;
             for (EventFolder eventDir : eventDirs)
                 execs.execute(new Worker(eventDir));
-            // break;
             execs.shutdown();
 
-            while (!execs.isTerminated()) Thread.sleep(100);
+            while (!execs.isTerminated()) {
+                Thread.sleep(100);
+                String per = processMap.entrySet().stream().map(e -> e.getValue().toString())
+                        .collect(Collectors.joining(" "));
+                System.err.print(blankLine + "\rWorking each thread " + per + " % : entire progress " +
+                        Math.ceil(100.0 * numberOfFinishedEvents.get() / eventDirs.size()) + " %");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.err.println();
+        System.err.println(blankLine + "\rWorking " + 100.0 + " %");
         String endLine = Partial1DDatasetMaker.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime);
         System.err.println(endLine);
@@ -375,6 +381,9 @@ public class Partial1DDatasetMaker implements Operation {
         return (Properties) property.clone();
     }
 
+    private AtomicInteger numberOfFinishedEvents = new AtomicInteger();
+    private Map<GlobalCMTID, Integer> processMap = Collections.synchronizedMap(new HashMap<>());
+
     private class Worker implements Runnable {
 
         private SourceTimeFunction sourceTimeFunction;
@@ -399,6 +408,7 @@ public class Partial1DDatasetMaker implements Operation {
                 System.err.println(spcFolder + " does not exist...");
                 return;
             }
+            processMap.put(id, 0);
 
             Set<SpcFileName> spcFileNameSet;
             try {
@@ -411,9 +421,10 @@ public class Partial1DDatasetMaker implements Operation {
             // compute source time function
             sourceTimeFunction = computeSourceTimeFunction();
 
-            // すべてのspcファイルに対しての処理
+            int finished = 0;
+            // process for all SPC files
             for (SpcFileName spcFileName : spcFileNameSet) {
-                // 理論波形（非偏微分係数波形）ならスキップ
+                // ignore syn.
                 if (spcFileName.isSynthetic()) continue;
 
                 if (!spcFileName.getSourceID().equals(id.toString())) {
@@ -427,19 +438,17 @@ public class Partial1DDatasetMaker implements Operation {
 
                 SpcFileType spcFileType = spcFileName.getFileType();
 
-                // 3次元用のスペクトルなら省く
+                // eliminate SPC for 3D
                 if (spcFileType == SpcFileType.PB || spcFileType == SpcFileType.PF) continue;
 
-                // check if the partialtype is included in computing list.
+                // check if the partialType is included in the computing list.
                 PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
                 if (!(partialTypes.contains(partialType) ||
                         (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2))) continue;
-
                 try {
                     addPartialSpectrum(spcFileName);
                 } catch (ClassCastException e) {
-                    // 出来上がったインスタンスがOneDPartialSpectrumじゃない可能性
                     System.err.println(spcFileName + "is not 1D partial.");
                 } catch (Exception e) {
                     System.err.println(spcFileName + " is invalid.");
@@ -450,8 +459,11 @@ public class Partial1DDatasetMaker implements Operation {
                         e1.printStackTrace();
                     }
                 }
+                int percent = finished++ * 100 / spcFileNameSet.size();
+                processMap.put(id, percent);
             }
-            System.err.print(".");
+            processMap.remove(id);
+            numberOfFinishedEvents.incrementAndGet();
         }
 
         private SourceTimeFunction computeSourceTimeFunction() {
@@ -488,16 +500,38 @@ public class Partial1DDatasetMaker implements Operation {
 
         }
 
+        // to time domain
         private void process(DSMOutput spectrum) {
             for (SACComponent component : components)
-                spectrum.getSpcBodyList().stream().map(body -> body.getSpcComponent(component))
-                        .forEach(spcComponent -> {
-                            if (sourceTimeFunction != null) spcComponent.applySourceTimeFunction(sourceTimeFunction);
-                            spcComponent.toTimeDomain(lsmooth);
-                            spcComponent.applyGrowingExponential(spectrum.omegai(), tlen);
-                            spcComponent.amplitudeCorrection(tlen);
-                        });
+                spectrum.getSpcBodyList().stream().map(body -> body.getSpcComponent(component)).forEach(spcComponent -> {
+                    if (sourceTimeFunction != null) spcComponent.applySourceTimeFunction(sourceTimeFunction);
+                    spcComponent.toTimeDomain(lsmooth);
+                    spcComponent.applyGrowingExponential(spectrum.omegai(), tlen);
+                    spcComponent.amplitudeCorrection(tlen);
+                });
         }
+
+        private void outputProcess(Station station, PartialType partialType, DSMOutput spectrum,
+                                   SACComponent component) {
+            Set<TimewindowInformation> tw = timewindowInformationSet.stream()
+                    .filter(info -> info.getStation().getName().equals(station.getName()))
+                    .filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
+                    .collect(Collectors.toSet());
+            if (tw.isEmpty()) return;
+            for (int k = 0; k < spectrum.nbody(); k++) {
+                double bodyR = spectrum.getBodyR()[k];
+                boolean exists = false;
+                for (double r : Partial1DDatasetMaker.this.bodyR)
+                    if (r == bodyR) exists = true;
+                if (!exists) continue;
+                double[] ut = spectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
+                // applying the filter
+                double[] filteredUt = filter.applyFilter(ut);
+                for (TimewindowInformation t : tw)
+                    cutAndWrite(station, filteredUt, t, bodyR, partialType);
+            }
+        }
+
 
         private void addPartialSpectrum(SpcFileName spcname) throws IOException {
             DSMOutput spectrum = spcname.read();
@@ -506,50 +540,21 @@ public class Partial1DDatasetMaker implements Operation {
                 writeLog(spcname + " has different np or tlen.");
                 return;
             }
-
             String stationName = spcname.getObserverID();
             Station station = new Station(stationName, spectrum.getObserverPosition(), "DSM");
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
-            DSMOutput qSpectrum = null;
             if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
-                qSpectrum = fujiConversion.convert(spectrum);
+                DSMOutput qSpectrum = fujiConversion.convert(spectrum);
                 process(qSpectrum);
+                for (SACComponent component : components)
+                    outputProcess(station, PartialType.PARQ, qSpectrum, component);
             }
-            process(spectrum);
+            if (spcname.getFileType() == SpcFileType.PAR2 && !partialTypes.contains(PartialType.PAR2)) return;
+            else process(spectrum);
 
-            for (SACComponent component : components) {
-                Set<TimewindowInformation> tw = timewindowInformationSet.stream()
-                        .filter(info -> info.getStation().getName().equals(stationName))
-                        .filter(info -> info.getGlobalCMTID().equals(id))
-                        .filter(info -> info.getComponent() == component).collect(Collectors.toSet());
+            for (SACComponent component : components)
+                outputProcess(station, partialType, spectrum, component);
 
-                if (tw.isEmpty()) continue;
-
-                for (int k = 0; k < spectrum.nbody(); k++) {
-                    double bodyR = spectrum.getBodyR()[k];
-                    boolean exists = false;
-                    for (double r : Partial1DDatasetMaker.this.bodyR)
-                        if (r == bodyR) exists = true;
-                    if (!exists) continue;
-                    double[] ut = spectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
-                    // applying the filter
-                    double[] filteredUt = filter.applyFilter(ut);
-                    for (TimewindowInformation t : tw)
-                        cutAndWrite(station, filteredUt, t, bodyR, partialType);
-                }
-                if (qSpectrum != null) for (int k = 0; k < spectrum.nbody(); k++) {
-                    double bodyR = spectrum.getBodyR()[k];
-                    boolean exists = false;
-                    for (double r : Partial1DDatasetMaker.this.bodyR)
-                        if (r == bodyR) exists = true;
-                    if (!exists) continue;
-                    double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
-                    // applying the filter
-                    double[] filteredUt = filter.applyFilter(ut);
-                    for (TimewindowInformation t : tw)
-                        cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ);
-                }
-            }
         }
 
         /**

@@ -44,7 +44,7 @@ import java.util.stream.IntStream;
  * READing has problem. TODO
  *
  * @author Kensuke Konishi
- * @version 0.3.0.3
+ * @version 0.3.1
  */
 public final class PartialIDFile {
 
@@ -75,10 +75,14 @@ public final class PartialIDFile {
                 for (int j = 0; j < data.length; j++)
                     data[j] = dis.readDouble();
                 ids[i] = ids[i].setData(data);
+                if (i % (ids.length / 20) == 0)
+                    System.err.print("\r\u001B[2KReading partial data ... " + Math.ceil(i * 100.0 / ids.length) + " %");
             }
+            System.err.println("\r\u001B[2KReading partial data ... 100.0 %");
         }
         if (chooser != null) ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
         System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
+
         return ids;
     }
 
@@ -124,9 +128,8 @@ public final class PartialIDFile {
             for (int i = 0; i < nid; i++)
                 dis.read(bytes[i]);
             PartialID[] ids = new PartialID[nid];
-            IntStream.range(0, nid).parallel().forEach(i -> {
-                ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, perturbationLocations);
-            });
+            IntStream.range(0, nid).parallel()
+                    .forEach(i -> ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, perturbationLocations));
             System.err
                     .println(ids.length + " partial IDs are read in " + Utilities.toTimeString(System.nanoTime() - t));
             return ids;
@@ -143,7 +146,6 @@ public final class PartialIDFile {
     public static void main(String[] args) throws IOException {
         if (args.length == 1) {
             PartialID[] ids = readPartialIDFile(Paths.get(args[0]));
-            // print(Paths.get(args[0]));
             String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
             outputStations(header, ids);
             outputGlobalCMTID(header, ids);

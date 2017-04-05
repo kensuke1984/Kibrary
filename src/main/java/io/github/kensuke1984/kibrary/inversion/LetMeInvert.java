@@ -30,45 +30,45 @@ import java.util.stream.Collectors;
  * Let's invert
  *
  * @author Kensuke Konishi
- * @version 2.0.3.4
+ * @version 2.0.3.5
  */
 public class LetMeInvert implements Operation {
     /**
-     * 観測波形、理論波形の入ったファイル (BINARY)
+     * path of waveform data
      */
     protected Path waveformPath;
 
     /**
-     * 求めたい未知数を羅列したファイル (ASCII)
+     * Path of unknown parameter file
      */
     protected Path unknownParameterListPath;
 
     /**
-     * partialIDの入ったファイル
+     * path of partial ID file
      */
     protected Path partialIDPath;
 
     /**
-     * partial波形の入ったファイル
+     * path of partial data
      */
     protected Path partialPath;
 
     /**
-     * 観測、理論波形のID情報
+     * path of basic ID file
      */
     protected Path waveIDPath;
 
     /**
-     * ステーション位置情報のファイル
+     * path of station file
      */
     protected Path stationInformationPath;
 
     /**
-     * どうやって方程式を解くか。 cg svd
+     * Solvers for equation
      */
     protected Set<InverseMethodEnum> inverseMethods;
     /**
-     * AIC計算に用いるα 独立データ数はn/αと考える
+     * α for AIC 独立データ数:n/α
      */
     protected double[] alpha;
     private ObservationEquation eq;
@@ -172,15 +172,20 @@ public class LetMeInvert implements Operation {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Create an equation
+     *
+     * @throws IOException if any
+     */
     private void setEquation() throws IOException {
         BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
 
         // set Dvector
-        System.err.println("Creating D vector");
+        System.err.println("Creating D vector.");
         Dvector dVector = new Dvector(ids);
 
         // set unknown parameter
-        System.err.println("setting up unknown parameter set");
+        System.err.println("Setting up unknown parameter set.");
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
         // set partial matrix
@@ -189,10 +194,9 @@ public class LetMeInvert implements Operation {
     }
 
     /**
-     * Output information of observation equation
+     * Output information of equation
      */
     private Future<Void> output() throws IOException {
-        // // ステーションの情報の読み込み
         System.err.print("reading station Information");
         if (stationSet == null) stationSet = StationInformationFile.read(stationInformationPath);
         System.err.println(" done");
@@ -224,7 +228,7 @@ public class LetMeInvert implements Operation {
 
         long start = System.nanoTime();
 
-        // 観測方程式
+        // equation
         Future<Void> future;
         try {
             future = output();
@@ -233,7 +237,7 @@ public class LetMeInvert implements Operation {
             return;
         }
 
-        // 逆問題
+        // inverse problem
         solve();
         try {
             future.get();
@@ -282,14 +286,14 @@ public class LetMeInvert implements Operation {
                          Files.newBufferedWriter(w, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
                  PrintWriter plotWa = new PrintWriter(
                          Files.newBufferedWriter(wa, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-
-                plotW.println("set title\"" + id + "\"");
+                String title = "set title\"" + id + "\"";
+                plotW.println(title);
                 plotW.print("p ");
-                plotO.println("set title\"" + id + "\"");
+                plotO.println(title);
                 plotO.print("p ");
-                plotS.println("set title\"" + id + "\"");
+                plotS.println(title);
                 plotS.print("p ");
-                plotWa.println("set title\"" + id + "\"");
+                plotWa.println(title);
                 plotWa.print("p ");
             }
 
@@ -529,7 +533,6 @@ public class LetMeInvert implements Operation {
             new NoSuchFileException(workPath.toString()).printStackTrace();
             cango = false;
         }
-
         return cango;
     }
 

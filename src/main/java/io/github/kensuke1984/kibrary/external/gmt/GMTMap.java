@@ -68,18 +68,19 @@ public final class GMTMap {
     /**
      * @param symbol            type of marking
      * @param symbolSize        size of symbols
+     * @param position          on the map
      * @param value             of plotting
      * @param colorPalletPath   Path of a color pallet
-     * @param position          on the map
      * @param additionalOptions if any options
      * @return echo latitude longitude value | psxy -V -: -J -R -P -K -O symbol
      * [additional] &gt;&gt; $psname
      */
-    public static String psxy(Symbol symbol, double symbolSize, double value, Path colorPalletPath,
-                              HorizontalPosition position, String... additionalOptions) {
+    public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position, double value,
+                              Path colorPalletPath, String... additionalOptions) {
         String cpOption = " -C" + colorPalletPath;
+        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
         return "echo " + position + " " + value + " " + symbolSize + " | psxy -V -: -J -R " + symbol.getOption() +
-                cpOption + " " + additionalOptions + " -K -O -P  >>$psname";
+                cpOption + " " + additional + " -K -O -P  >>$psname";
     }
 
     /**
