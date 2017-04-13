@@ -47,6 +47,8 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 public class ObservationEquation {
 
 	private Matrix a;
+	
+	private Matrix cm;
 
 	/**
 	 * @param partialIDs
@@ -57,7 +59,7 @@ public class ObservationEquation {
 	 *            for equation
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
-			boolean time_source, boolean time_receiver, int nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
+			boolean time_source, boolean time_receiver, Map<PartialType, Integer[]> nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
 		this.originalParameterList = parameterList;
@@ -74,7 +76,123 @@ public class ObservationEquation {
 		}
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns, nNewParameter);
 		atd = computeAtD(dVector.getD());
+	}
+	
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
+			boolean time_source, boolean time_receiver, Map<PartialType, Integer[]> nUnknowns, double lambdaMU, double lambdaQ, double correlationScaling) {
+		this.dVector = dVector;
+		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
+		List<Integer> bouncingOrders = null;
+		if (time_receiver) {
+			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
+					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
+			Collections.sort(bouncingOrders);
+			System.out.print("Bouncing orders (at Earth's surface): ");
+			for (Integer i : bouncingOrders) {
+				System.out.print(i + " ");
+			}
+			System.out.println();
+		}
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns, null);
 		
+		double AtANormalizedTrace = 0;
+		double count = 0;
+		for (int i = 0; i < this.parameterList.size(); i++) {
+			AtANormalizedTrace += a.getColumnVector(i).getNorm();
+			count++;
+		}
+		AtANormalizedTrace /= count;
+		System.out.println("AtANormalizedTrace = " + AtANormalizedTrace);
+		
+		// model covariance matrix
+		cm = new Matrix(this.parameterList.size(), this.parameterList.size());
+		for (int i = 0; i < this.parameterList.size(); i++) {
+			UnknownParameter unknown_i = this.parameterList.get(i);
+			if (unknown_i.getPartialType().isTimePartial()) {
+				cm.setEntry(i, i, 1e4);
+				continue;
+			}
+			for (int j = i; j < this.parameterList.size(); j++) {
+				UnknownParameter unknown_j = this.parameterList.get(j);
+				if (!unknown_i.getPartialType().equals(unknown_j.getPartialType()))
+					continue; // cm.setEntry(i, j, 0.);
+				double ri = (Double) unknown_i.getLocation();
+				double rj = (Double) unknown_j.getLocation();
+				double vij = .5 * (computeCorrelationLength(ri, correlationScaling)
+						+ computeCorrelationLength(rj, correlationScaling));
+				if (unknown_i.getPartialType().equals(PartialType.PARQ))
+					vij = 200. * correlationScaling;
+				if ((Double) unknown_i.getLocation() >= 6346.6)
+					vij = 1e-3;
+				double rij = ri - rj;
+				double cmij = Math.exp(-2 * rij * rij / vij / vij);
+				if ((Double) unknown_i.getLocation() >= 6346.6) {
+					if (unknown_i.getPartialType().equals(PartialType.PAR2))
+						cmij *= 1. / (lambdaMU * AtANormalizedTrace * 20);
+					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
+						cmij *= 1. / (lambdaQ * AtANormalizedTrace * 20);
+					else
+						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
+				}
+				else {
+					if (unknown_i.getPartialType().equals(PartialType.PAR2))
+						cmij *= 1. / (lambdaMU * AtANormalizedTrace);
+					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
+						cmij *= 1. / (lambdaQ * AtANormalizedTrace);
+					else
+						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
+				}
+				cm.setEntry(i, j, cmij);
+				cm.setEntry(j, i, cmij);
+			}
+		}
+		
+		Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+		for (int i = 0; i < a.getColumnDimension(); i++)
+			identity.setEntry(i, i, 1.);
+		
+//		Matrix tmpata = a.computeAtA();
+//		for (int i = 0; i < parameterList.size(); i++) {
+//			for (int j = 0; j < parameterList.size(); j++) {
+//				System.out.println(i + " " + j + " " + tmpata.getEntry(i, j) + " " + cm.getEntry(i, j));
+//			}
+//		}
+		
+		ata = a.computeAtA();
+		cmAtA_1 = (cm.multiply(ata)).add(identity);
+
+		atd = computeAtD(dVector.getD());
+		cmAtd = cm.operate(a.transpose().operate(dVector.getD()));
+		
+//		for (int i = 0; i < parameterList.size(); i++) {
+//			for (int j = 0; j < parameterList.size(); j++) {
+//				System.out.println(i + " " + j + " " + ata.getEntry(i, j) + " " + atd.getEntry(j) + " " + cmAtA_1.getEntry(i, j) + " " + cmAtd.getEntry(j));
+//			}
+//		}
+	}
+	
+	// scaling = 1. gives a correlation lenght of 50 km in the uppermost mantle
+	private static double computeCorrelationLength(double r, double scaling) {
+//		if (r < 3550.0 && r >= 3480.0)
+//			return scaling * 186.68;
+//		else if (r < 3690.0 && r >= 3550.0)
+//			return scaling * (4.565e-01 * (r-3690.0) + 250.59);
+		if (r < 3690.0 && r >= 3480.0)
+			return scaling * (0.24089 * (r - 3690.0) + 250.588);
+//			return scaling * 250.;
+		else if (r < 4410.0 && r >= 3690.0)
+			return scaling * (-2.064e-03 * (r-4410.0) + 249.10);
+		else if (r < 5330.0 && r >= 4410.0)
+			return scaling * (-7.354e-02 * (r-5330.0) + 181.45);
+		else if (r < 5670.0 && r >= 5330.0)
+			return scaling * (-1.555e-01 * (r-5670.0) + 128.57);
+		else if (r < 6310.0 && r >= 5670.0)
+			return scaling * (-1.051e-01 * (r-6310.0) + 61.30);
+//			return scaling * (-0.1384 * (r-6310.0) + 40.);
+		else
+			return scaling * (-1.853e-01 * (r-6371.0) + 50.00);
+//			return scaling * (-0.1639 * (r-6371.0) + 30.);
 	}
 	
 	private List<UnknownParameter> originalParameterList;
@@ -120,13 +238,15 @@ public class ObservationEquation {
 
 	private RealVector atd;
 
+	private RealVector cmAtd;
+	
 	/**
 	 * Am=dのAを作る まずmとdの情報から Aに必要な偏微分波形を決める。
 	 * 
 	 * @param ids
 	 *            source for A
 	 */
-	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, int nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
+	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, Map<PartialType, Integer[]> nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
 		if (time_source)
 			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
 		if (time_receiver) {
@@ -182,89 +302,139 @@ public class ObservationEquation {
 					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + 2)");  
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
-		if (nUnknowns != -1) {
-			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() - numberOfParameterForSturcture + nUnknowns);
+		// simple partial combination
+		if (nUnknowns != null) {
+			int totalUnknown = 0; 
+			for (Integer[] ns : nUnknowns.values())
+				totalUnknown += ns[0] + ns[1];
+			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() - numberOfParameterForSturcture + totalUnknown);
 			List<UnknownParameter> parameterPrime = new ArrayList<>();
 			
-			double[] layers = new double[nUnknowns - 1];
-			int nnUnknowns = nUnknowns / 2;
-			double UpperWidth = Earth.EARTH_RADIUS - 24.4 - 5721.;
-			double LowerWidth = 5721. - 3480.;
-			double deltaUpper = UpperWidth / nnUnknowns;
-			double deltaLower = LowerWidth / nnUnknowns;
-			if (nUnknowns == 2)
-				layers[0] = 5721.;
-			else {
-				for (int i = 0; i < nnUnknowns - 1; i++) {
-					layers[i] = Earth.EARTH_RADIUS - 24.4 - (i+1) * deltaUpper;
-				}
-				layers[nnUnknowns - 1] = 5721.;
-				for (int i = 0; i < nnUnknowns - 1; i++) {
-					layers[i + nnUnknowns] = 5721. - (i + 1) * deltaLower;
-				}
-			}
-			
-			for (int i = 0; i < numberOfParameterForSturcture; i++) {
-				int j = -1;
-				for (int k = 0; k < layers.length; k++) {
-					double r = (Double) parameterList.get(i).getLocation();
-					if (r > layers[k]) {
-						System.out.println((Double) parameterList.get(i).getLocation() + " " + layers[k]);
-						j = k;
-						break;
+			int jCurrent = 0;
+			for (Map.Entry<PartialType, Integer[]> entry : nUnknowns.entrySet()) {
+				int thisNunknowns = entry.getValue()[0] + entry.getValue()[1]; 
+				
+				double[] layers = new double[thisNunknowns - 1];
+//				int nnUnknowns = nUnknowns / 2;
+				double UpperWidth = Earth.EARTH_RADIUS - 24.4 - 5721.;
+				double LowerWidth = 5721. - 3480.;
+				double deltaUpper = UpperWidth / entry.getValue()[0];
+				double deltaLower = LowerWidth / entry.getValue()[1];
+				if (thisNunknowns == 2)
+					layers[0] = 5721.;
+				else {
+					for (int i = 0; i < entry.getValue()[0] - 1; i++) {
+						layers[i] = Earth.EARTH_RADIUS - 24.4 - (i+1) * deltaUpper;
+					}
+					layers[entry.getValue()[0] - 1] = 5721.;
+					for (int i = 0; i < entry.getValue()[1] - 1; i++) {
+						layers[i + entry.getValue()[0]] = 5721. - (i + 1) * deltaLower;
 					}
 				}
-				if (j == -1)
-					j = nUnknowns - 1;
-				aPrime.setColumnVector(j, aPrime.getColumnVector(j).add(a.getColumnVector(i)));
+				
+				for (int i = 0; i < numberOfParameterForSturcture; i++) {
+					if (!parameterList.get(i).getPartialType().equals(entry.getKey()))
+						continue;
+					int j = -1;
+					for (int k = 0; k < layers.length; k++) {
+						double r = (Double) parameterList.get(i).getLocation();
+						if (r > layers[k]) {
+							System.out.println(parameterList.get(i).getPartialType() + " " + (Double) parameterList.get(i).getLocation() + " " + layers[k] + " " + k);
+							j = k;
+							break;
+						}
+					}
+					if (j == -1)
+						j = thisNunknowns - 1;
+					j += jCurrent;
+					aPrime.setColumnVector(j, aPrime.getColumnVector(j).add(a.getColumnVector(i)));
+				}
+				
+				for (int i = 0; i < layers.length; i++) {
+					double r = 0;
+					double w = 0;
+					if (i < entry.getValue()[0]) {
+						r = layers[i] + deltaUpper / 2.;
+						w = deltaUpper;
+					}
+					else {
+						r = layers[i] + deltaLower / 2.;
+						w = deltaLower;
+					}
+					parameterPrime.add(new Physical1DParameter(entry.getKey(), r, w));
+				}
+				double r = 3480. + deltaLower / 2.;
+				double w = deltaLower;
+				parameterPrime.add(new Physical1DParameter(entry.getKey(), r, w));
+				for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++)
+					parameterPrime.add(parameterList.get(i));
+				
+				jCurrent += thisNunknowns;
 			}
-			for (int i = 0; i < a.getColumnDimension() - numberOfParameterForSturcture; i++)
-				aPrime.setColumnVector(i + nUnknowns, a.getColumnVector(i + numberOfParameterForSturcture));
-			a = aPrime;
 			
-			for (int i = 0; i < layers.length; i++) {
-				double r = 0;
-				double w = 0;
-				if (i < nnUnknowns) {
-					r = layers[i] + deltaUpper / 2.;
-					w = deltaUpper;
-				}
-				else {
-					r = layers[i] + deltaLower / 2.;
-					w = deltaLower;
-				}
-				parameterPrime.add(new Physical1DParameter(PartialType.PAR2, r, w));
-			}
-			double r = 3480. + deltaLower / 2.;
-			double w = deltaLower;
-			parameterPrime.add(new Physical1DParameter(PartialType.PAR2, r, w));
-			for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++)
-				parameterPrime.add(parameterList.get(i));
 			parameterList = parameterPrime;
+			
+			// set time partials if needed
+			for (int i = 0; i < a.getColumnDimension() - numberOfParameterForSturcture; i++)
+				aPrime.setColumnVector(i + totalUnknown, a.getColumnVector(i + numberOfParameterForSturcture));
+			a = aPrime;
 		}
 		
+		// Triangle splines
 		if (nNewParameter != null) {
 			TriangleRadialSpline trs = new TriangleRadialSpline(nNewParameter, parameterList);
 			a = trs.computeNewA(a);
 			parameterList = trs.getNewParameters();
 		}
-			
+		
+		// Normalize time partials
 		double meanAColumnNorm = 0;
 		int ntmp = 0;
 		for (int j = 0; j < a.getColumnDimension(); j++) {
+//			if (!parameterList.get(j).getPartialType().equals(PartialType.PAR2))
 			if (parameterList.get(j).getPartialType().isTimePartial())
 				continue;
-			meanAColumnNorm += a.getColumnVector(j).getL1Norm();
+			meanAColumnNorm += a.getColumnVector(j).getNorm();
 			ntmp++;
 		}
 		meanAColumnNorm /= ntmp; 
 		for (int j = 0; j < a.getColumnDimension(); j++) {
 			if (!parameterList.get(j).getPartialType().isTimePartial())
 				continue;
-			double tmpNorm = a.getColumnVector(j).getL1Norm();
+			double tmpNorm = a.getColumnVector(j).getNorm();
 			if (tmpNorm > 0)
 				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(meanAColumnNorm / tmpNorm));
+			System.out.println(j + " " + meanAColumnNorm / tmpNorm);
 		}
+		
+		//normalize PARQ
+		double empiricalFactor = .1;
+		meanAColumnNorm = 0;
+		double meanAQNorm = 0;
+		ntmp = 0;
+		int ntmpQ = 0;
+		for (int j = 0; j < a.getColumnDimension(); j++) {
+			if (parameterList.get(j).getPartialType().isTimePartial())
+				continue;
+			if (parameterList.get(j).getPartialType().equals(PartialType.PARQ)) {
+				meanAQNorm += a.getColumnVector(j).getNorm();
+				ntmpQ++;
+			}
+			else if (parameterList.get(j).getPartialType().equals(PartialType.PAR2)){
+				meanAColumnNorm += a.getColumnVector(j).getNorm();
+				ntmp++;
+			}
+		}
+		meanAColumnNorm /= ntmp;
+		meanAQNorm /= ntmpQ;
+		for (int j = 0; j < a.getColumnDimension(); j++) {
+			if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
+				continue;
+			if (ntmp == 0 || ntmpQ == 0)
+				continue;
+			a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+		}
+		System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
 		
 //		for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++) {
 //			int j = 0;
@@ -307,6 +477,9 @@ public class ObservationEquation {
 			case PARL:
 			case PARN:
 			case PARQ:
+				if (location.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
+					return i;
+				break;
 			case PAR1:
 			case PAR2:
 				if (location.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
@@ -333,14 +506,36 @@ public class ObservationEquation {
 	}
 
 	private RealMatrix ata;
-
+	
+	private RealMatrix cmAtA_1;
+	
 	public RealMatrix getAtA() {
 		if (ata == null)
 			synchronized (this) {
-				if (ata == null)
+				if (ata == null) {
 					ata = a.computeAtA();
+				}
 			}
 		return ata;
+	}
+	
+	public RealMatrix getCmAtA_1() {
+		if (cm == null)
+			throw new RuntimeException("The model covariance matrix Cm is not set");
+		if (ata == null) {
+			synchronized (this) {
+				if (ata == null) {
+					ata = a.computeAtA();
+				}
+				if (cmAtA_1 == null) {
+					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+					for (int i = 0; i < a.getColumnDimension(); i++)
+						identity.setEntry(i, i, 1.);
+					cmAtA_1 = (cm.multiply(ata)).add(identity);
+				}
+			}
+		}
+		return cmAtA_1;
 	}
 
 	/**
@@ -382,9 +577,7 @@ public class ObservationEquation {
 			} catch (Exception e2) {
 				e2.printStackTrace();
 			}
-
 		});
-
 	}
 	
 	void outputSensitivity(Path outPath) throws IOException {
@@ -394,14 +587,21 @@ public class ObservationEquation {
 		}
 		if (ata == null) {
 			System.err.println(" No more ata. Computing again");
-			ata = a.computeAtA();
+				if (cm == null)
+					ata = a.computeAtA();
+				else {
+					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+					for (int i = 0; i < a.getColumnDimension(); i++)
+						identity.setEntry(i, i, 1.);
+					ata = (cm.multiply(a.computeAtA())).add(identity);
+				}
 		}
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 			Map<UnknownParameter, Double> sMap = Sensitivity.sensitivityMap(ata, parameterList);
 			List<UnknownParameter> unknownForStructure = parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 			for (UnknownParameter unknown : unknownForStructure)
-				pw.println((Double) unknown.getLocation() + " " + sMap.get(unknown));
+				pw.println(unknown.getPartialType() + " " + (Double) unknown.getLocation() + " " + sMap.get(unknown));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -419,7 +619,7 @@ public class ObservationEquation {
 	 * @return A<sup>T</sup>d
 	 */
 	public RealVector computeAtD(RealVector d) {
-		return a.preMultiply(d);
+			return a.preMultiply(d);
 	}
 
 	public List<UnknownParameter> getOriginalParameterList() {
@@ -432,6 +632,12 @@ public class ObservationEquation {
 
 	public RealVector getAtD() {
 		return atd;
+	}
+	
+	public RealVector getCmAtD() {
+		if (cm == null)
+			throw new RuntimeException("The model covariance matrix Cm is not set");
+		return cmAtd;
 	}
 
 	public Dvector getDVector() {

@@ -102,6 +102,8 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("#bodyR 3505 3555 3605");
 			pw.println("##path of the time partials directory, must be set if PartialType containes TIME_SOURCE or TIME_RECEIVER");
 			pw.println("#timePartialPath");
+			pw.println("##Polynomial structure file (leave blank if PREM)");
+			pw.println("#ps");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -137,6 +139,8 @@ public class Partial1DDatasetMaker implements Operation {
 			property.setProperty("tlen", "6553.6");
 		if (!property.containsKey("np"))
 			property.setProperty("np", "1024");
+		if (!property.containsKey("ps"))
+			property.setProperty("ps", "PREM");
 	}
 
 	/**
@@ -181,12 +185,16 @@ public class Partial1DDatasetMaker implements Operation {
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+		
+		structurePath = property.getProperty("ps");
 	}
 
 	/**
 	 * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
 	 */
 	private String modelName;
+	
+	private String structurePath;
 
 	/**
 	 * Path of a timewindow information file
@@ -730,10 +738,28 @@ public class Partial1DDatasetMaker implements Operation {
 		int N_THREADS = Runtime.getRuntime().availableProcessors();
 		// N_THREADS = 2;
 		writeLog("going with " + N_THREADS + " threads");
-
+		
+		PolynomialStructure structure = null;
+		switch (structurePath) {
+		case "PREM":
+		case "prem":
+			structure = PolynomialStructure.PREM;
+			break;
+		default:
+			try {
+				structure = new PolynomialStructure(Paths.get(structurePath));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			break;
+		}
+		
 		if (partialTypes.contains(PartialType.PARQ))
-			fujiConversion = new FujiConversion(PolynomialStructure.PREM);
-
+			fujiConversion = new FujiConversion(structure);
+		
+		System.err.println("going with the structure " + structurePath);
+		writeLog("going with the structure " + structurePath);
+		
 		setLsmooth();
 		writeLog("Set lsmooth " + lsmooth);
 

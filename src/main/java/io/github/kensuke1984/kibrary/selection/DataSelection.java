@@ -6,10 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -24,6 +26,8 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -76,7 +80,7 @@ public class DataSelection implements Operation {
 			pw.println("#timewindowInformationFilePath timewindow.dat");
 			pw.println("##Path of a static correction file");
 			pw.println("##If you do not want to consider static correction, then comment out the next line");
-			pw.println("#staticCorrectionformationFilePath staticCorrection.dat");
+			pw.println("#staticCorrectionInformationFilePath staticCorrection.dat");
 			pw.println("##double sacSamplingHz (20)");
 			pw.println("#sacSamplingHz cant change now");
 			pw.println("##double minCorrelation (0)");
@@ -89,6 +93,8 @@ public class DataSelection implements Operation {
 			pw.println("#maxVariance");
 			pw.println("##double ratio (2)");
 			pw.println("#ratio");
+			pw.println("##double minSNratio (2)");
+			pw.println("#minSNratio");
 			pw.println("#boolean SnScSnPair (false). Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset");
 			pw.println("SnScSnPair false");
 		}
@@ -136,8 +142,10 @@ public class DataSelection implements Operation {
 	 */
 	private double ratio;
 	
+	private double minSNratio;
+	
 	private boolean SnScSnPair;
-
+	
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
@@ -157,6 +165,8 @@ public class DataSelection implements Operation {
 			property.setProperty("maxVariance", "2");
 		if (!property.containsKey("ratio"))
 			property.setProperty("ratio", "2");
+		if (!property.contains("minSNratio"))
+			property.setProperty("minSNratio", "2");
 		if (!property.containsKey("convolute"))
 			property.setProperty("convolute", "true");
 		if (!property.containsKey("SnScSnPair"))
@@ -195,15 +205,21 @@ public class DataSelection implements Operation {
 		outputGoodWindowPath = workPath.resolve("selectedTimewindow" + dateStr + ".dat");
 		goodTimewindowInformationSet = Collections.synchronizedSet(new HashSet<>());
 		SnScSnPair = Boolean.parseBoolean(property.getProperty("SnScSnPair"));
+		
+		minSNratio = Double.parseDouble(property.getProperty("minSNratio"));
+		
+		dataSelectionInfo = new ArrayList<>();
 	}
 
 	private Set<TimewindowInformation> sourceTimewindowInformationSet;
 	private Set<TimewindowInformation> goodTimewindowInformationSet;
+	
+	private List<DataSelectionInformation> dataSelectionInfo;
 
 	private Path outputGoodWindowPath;
 
 	private Set<StaticCorrection> staticCorrectionSet;
-
+	
 	/**
 	 * @param args
 	 *            [parameter file name]
@@ -222,7 +238,7 @@ public class DataSelection implements Operation {
 	private void output() throws IOException {
 		TimewindowInformationFile.write(goodTimewindowInformationSet, outputGoodWindowPath);
 	}
-
+	
 	private class Worker implements Runnable {
 
 		private Set<SACFileName> obsFiles;
@@ -303,21 +319,19 @@ public class DataSelection implements Operation {
 					lpw.println("#convolved");
 				else
 					lpw.println("#not convolved");
-				lpw.println("#s e c use ratio(syn/obs){abs max min} variance correlation");
+				lpw.println("#s e c phase use ratio(syn/obs){abs max min} variance correlation SNratio");
 
 				for (SACFileName obsName : obsFiles) {
 					// check components
 					if (!components.contains(obsName.getComponent()))
 						continue;
 					String stationName = obsName.getStationName();
-//					String network = obsName.read().getStation().getNetwork();
-					String stationString = stationName;
 					SACComponent component = obsName.getComponent();
 					// double timeshift = 0;
 					SACExtension synExt = convolute ? SACExtension.valueOfConvolutedSynthetic(component)
 							: SACExtension.valueOfSynthetic(component);
 
-					SACFileName synName = new SACFileName(synEventDirectory, stationString + "." + id + "." + synExt);
+					SACFileName synName = new SACFileName(synEventDirectory, stationName + "." + id + "." + synExt);
 					if (!synName.exists()) {
 						System.err.println("Ignoring non-existing synthetics " + synName);
 						continue;
@@ -326,6 +340,8 @@ public class DataSelection implements Operation {
 					// synthetic sac
 					SACData obsSac = obsName.read();
 					SACData synSac = synName.read();
+					
+					stationName = obsSac.getStation().getStationName() + "_" + obsSac.getStation().getNetwork();
 
 					Station station = obsSac.getStation();
 					//
@@ -343,11 +359,23 @@ public class DataSelection implements Operation {
 					if (windowInformations.isEmpty())
 						continue;
 					
+					// noise per second (in obs)
+					double noise = noisePerSecond(obsSac, component);
+					
 					Set<TimewindowInformation> tmpGoodWindows = new HashSet<>();
 					for (TimewindowInformation window : windowInformations) {
+						TimewindowInformation shiftedWindow = shift(window);
+						if (shiftedWindow == null)
+							continue;
+							
 						RealVector synU = cutSAC(synSac, window);
-						RealVector obsU = cutSAC(obsSac, shift(window));
-						if (check(lpw, stationName, id, component, window, obsU, synU)) {
+						RealVector obsU = cutSAC(obsSac, shiftedWindow);
+						
+						// signal-to-noise ratio
+						double signal = obsU.getNorm() / (window.getEndTime() - window.getStartTime());
+						double SNratio = signal / noise;
+						
+						if (check(lpw, stationName, id, component, window, obsU, synU, SNratio)) {
 							if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
 								System.out.println(window);
 							}
@@ -359,8 +387,9 @@ public class DataSelection implements Operation {
 					for (TimewindowInformation window : tmpGoodWindows)
 						goodTimewindowInformationSet.add(window);
 					
-					// lpw.close();
 				}
+				
+				lpw.close();
 				// spw.close();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -395,12 +424,15 @@ public class DataSelection implements Operation {
 			return timewindow;
 		StaticCorrection foundShift = getStaticCorrection(timewindow);
 		double value = foundShift.getTimeshift();
+//		return value == 10. || value == -10. ? null : new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
+//				foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
 		return new TimewindowInformation(timewindow.getStartTime() - value, timewindow.getEndTime() - value,
 				foundShift.getStation(), foundShift.getGlobalCMTID(), foundShift.getComponent(), timewindow.getPhases());
+		
 	}
 
 	private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
-			TimewindowInformation window, RealVector obsU, RealVector synU) throws IOException {
+			TimewindowInformation window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
 		if (obsU.getDimension() < synU.getDimension())
 			synU = synU.getSubVector(0, obsU.getDimension() - 1);
 		else if (synU.getDimension() < obsU.getDimension())
@@ -424,16 +456,60 @@ public class DataSelection implements Operation {
 		absRatio = Precision.round(absRatio, 2);
 		var = Precision.round(var, 2);
 		cor = Precision.round(cor, 2);
+		
+		SNratio = Precision.round(SNratio, 2);
+		
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
-				|| var < minVariance || maxVariance < var);
-
-		writer.println(stationName + " " + id + " " + component + " " + isok + " " + absRatio + " " + maxRatio + " "
-				+ minRatio + " " + var + " " + cor);
+				|| var < minVariance || maxVariance < var
+				|| SNratio < minSNratio);
+		
+		Phases phases = new Phases(window.getPhases());
+		
+		writer.println(stationName + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
+				+ minRatio + " " + var + " " + cor + " " + SNratio);
+		
+		dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
+		
 		return isok;
 	}
 	
+	private double noisePerSecond(SACData sac, SACComponent component) {
+		double len = 50;
+		double distance = sac.getValue(SACHeaderEnum.GCARC);
+		double depth = sac.getValue(SACHeaderEnum.EVDP);
+		double firstArrivalTime = 0;
+		try {
+			TauP_Time timeTool = new TauP_Time("prem");
+			switch (component) {
+			case T:
+				timeTool.parsePhaseList("S, Sdiff, s");
+				timeTool.setSourceDepth(depth);
+				timeTool.calculate(distance);
+				if (timeTool.getNumArrivals() == 0)
+					throw new IllegalArgumentException("No arrivals for " + sac.getStation() + " " + sac.getGlobalCMTID() 
+							+ " " + String.format("(%.2f deg, %.2f km)", distance, depth));
+				firstArrivalTime = timeTool.getArrival(0).getTime();
+				break;
+			case Z:
+			case R:
+				timeTool.parsePhaseList("P, Pdiff, p");
+				timeTool.setSourceDepth(depth);
+				timeTool.calculate(distance);
+				if (timeTool.getNumArrivals() == 0)
+					throw new IllegalArgumentException("No arrivals for " + sac.getStation() + " " + sac.getGlobalCMTID()
+							+ " " + String.format("(%.2f deg, %.2f km)", distance, depth));
+				firstArrivalTime = timeTool.getArrival(0).getTime();
+				break;
+			default:
+				break;
+			}
+		} catch (TauModelException e) {
+			e.printStackTrace();
+		}
 	
+		return sac.createTrace().cutWindow(firstArrivalTime - 20 - len, firstArrivalTime - 20).getYVector().getNorm() / len;
+	}
 
 	/**
 	 * @param sac
@@ -470,7 +546,7 @@ public class DataSelection implements Operation {
 		int N_THREADS = Runtime.getRuntime().availableProcessors();
 
 		ExecutorService exec = Executors.newFixedThreadPool(N_THREADS);
-
+		
 		for (EventFolder eventDirectory : eventDirs)
 			exec.execute(new Worker(eventDirectory));
 
@@ -480,8 +556,17 @@ public class DataSelection implements Operation {
 				Thread.sleep(1000);
 			} catch (Exception e) {
 			}
-
+		
+		Path infoOutpath = workPath.resolve("dataSelection" + Utilities.getTemporaryString() + ".inf");
+		try {
+			DataSelectionInformationFile.write(infoOutpath, dataSelectionInfo);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 		System.err.println();
 		output();
 	}
+	
+	
 }

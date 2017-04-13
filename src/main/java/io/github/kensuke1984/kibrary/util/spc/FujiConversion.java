@@ -79,7 +79,12 @@ public final class FujiConversion {
 					double dmudmu0Real = (1 + q * log);
 					Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
 					Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
-					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
+					
+//					partials with respect to large Q
+//					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
+					
+//					partials with respect to small q
+					uQ[iComponent] = u.multiply(dmudq).divide(dmudmu0);
 				}
 				newBody.add(ip, uQ);
 			}

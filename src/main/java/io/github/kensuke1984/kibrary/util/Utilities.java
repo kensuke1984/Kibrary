@@ -170,7 +170,7 @@ public final class Utilities {
 			}
 		}).collect(Collectors.toSet()));
 	}
-
+	
 	/**
 	 * Runs process for all event folders under the workPath
 	 * 

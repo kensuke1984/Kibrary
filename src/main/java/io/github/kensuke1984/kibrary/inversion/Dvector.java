@@ -8,22 +8,32 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.transform.DftNormalization;
+import org.apache.commons.math3.transform.FastFourierTransformer;
+import org.apache.commons.math3.transform.TransformType;
 
-import ucar.nc2.dt.RadialDatasetSweep.Sweep;
+import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
@@ -116,6 +126,8 @@ public class Dvector {
 	private Map<Station, Double> stationVariance;
 	
 	private boolean atLeastThreeRecordsPerStation;
+	
+	List<DataSelectionInformation> selectionInfo;
 
 	/**
 	 * @return map of variance of waveforms in each event
@@ -185,7 +197,7 @@ public class Dvector {
 	 * @param chooser
 	 *            {@link Predicate}
 	 */
-	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType, boolean atLeastThreeRecordsPerStation) {
+	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType, boolean atLeastThreeRecordsPerStation, List<DataSelectionInformation> selectionInfo) {
 		this.atLeastThreeRecordsPerStation = atLeastThreeRecordsPerStation;
 		ids = basicIDs;
 		if (!check(ids))
@@ -197,7 +209,7 @@ public class Dvector {
 		case RECIPROCAL:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue())) * weightingEpicentralDistance(obs);
 			};
 			break;
 		case IDENTITY:
@@ -211,8 +223,70 @@ public class Dvector {
 		read();
 	}
 	
+	private static double weightingEpicentralDistance(BasicID obs) {
+		double weight = 1.;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		Phases phases = new Phases(obs.getPhases());
+		
+//		double[][] histogram = new double[][] { {45, 0.741}, {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
+//		double[][] histogram = new double[][] { {55, 2.07}, {65, 1.13}, {70, 1.03}, {75, 1.}, {80, 1.09}, {85, 1.59}, {90, 2.}, {95, 2.} };
+		double[][] histogram = new double[][] { {55, 2.07}, {65, 1.2}, {70, 1.03}, {75, 1.}, {80, 1.19}, {85, 2.5}, {90, 2.5}, {95, 2.5} };
+		
+		double meanAmpli = 0;
+		for (double[] bin : histogram)
+			meanAmpli += bin[1];
+		meanAmpli /= histogram.length;
+		
+		double tmpamp = 1.;
+		
+		if (phases.equals(new Phases("S,ScS")) || phases.equals(new Phases("sS,sScS")) || phases.equals(new Phases("Sdiff")) || phases.equals(new Phases("sSdiff"))) {
+			for (int i = 0; i < histogram.length - 1; i++) {
+				if (distance >= histogram[i][0] && distance < histogram[i+1][0])
+					weight = histogram[i][1] * 2.;
+			}
+			if (distance >= histogram[histogram.length - 1][0])
+				weight = histogram[histogram.length - 1][1] * 2.;
+		}
+		
+		double[][] histogram2 = new double[][] { {25., 1.}, {30., 1.}, {35., 3.}, {40., 3.}, {45., 3.}, {50., 3.}, {55., 1.4} };
+		
+		
+		if (phases.equals(new Phases("S")))
+			for (double[] bin : histogram2) {
+				if (distance >= bin[0] && distance < bin[0] + 5.)
+					weight *= 1.5 * tmpamp * bin[1];
+			}
+		else if (phases.equals(new Phases("SS")))
+			for (double[] bin : histogram2) {
+				if (distance >= bin[0] && distance < bin[0] + 5.)
+					weight *= 1.5 * tmpamp * bin[1];
+			}
+		else if (phases.equals(new Phases("SSS,sSS")))
+			for (double[] bin : histogram2) {
+				if (distance >= bin[0] && distance < bin[0] + 5.)
+					weight *= 1.5 * tmpamp * bin[1];
+			}
+		else if (phases.equals(new Phases("sSSS,SSS")))
+			for (double[] bin : histogram2) {
+				if (distance >= bin[0] && distance < bin[0] + 5.)
+					weight *= 1.5 * tmpamp * bin[1];
+			}
+		
+		
+//		else if (phases.equals(new Phases("S"))) {
+//			for (int i = 0; i < histogram.length - 1; i++) {
+//				if (distance >= histogram[i][0] && distance < histogram[i+1][0])
+//					weight = histogram[i][1] / meanAmpli * 3.;
+//			}
+//			if (distance >= histogram[histogram.length - 1][0])
+//				weight = histogram[histogram.length - 1][1] / meanAmpli * 3.;
+//		}
+		
+		return weight;
+	}
+	
 	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {
-		this(basicIDs, chooser, weigthingType, false);
+		this(basicIDs, chooser, weigthingType, false, null);
 	}
 
 	/**
@@ -276,8 +350,11 @@ public class Dvector {
 		case TAKEUCHIKOBAYASHI:
 			this.weighting = weighting.clone();
 			break;
+		case FINAL:
+			this.weighting = weighting.clone();
+			break;
 		default:
-			throw new RuntimeException("Weighting type for this constructor can be only LOWERUPPERMANTLE or TAKEUCHIKOBAYASHI");
+			throw new RuntimeException("Weighting type for this constructor can be only LOWERUPPERMANTLE or TAKEUCHIKOBAYASHI or FINAL");
 		}
 		this.weightingFunction = (obs, syn) -> {
 			return 1.;
@@ -426,6 +503,25 @@ public class Dvector {
 						+ weighting[i]);
 		}
 	}
+	
+	public void outPhases(Path outPath) throws IOException {
+		Path phases = outPath.resolve("phases.inf");
+		Map<Phases, Integer> nums = new HashMap<>();
+		for (BasicID id : obsIDs) {
+			Phases p = new Phases(id.getPhases());
+			Integer n = nums.get(p);
+			if (n == null)
+				nums.put(p, 1);
+			else
+				nums.put(p, n + 1);
+		}
+		
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(phases))) {
+			pw.println("#Phase #timewindows");
+			nums.entrySet().stream().sorted(Map.Entry.<Phases, Integer>comparingByValue().reversed())
+				.forEach(e -> pw.println(e.getKey() + " " + e.getValue()));
+		}
+	}
 
 	/**
 	 * vectors（各タイムウインドウ）に対して、観測波形とのvarianceを求めてファイルに書き出す
@@ -501,15 +597,100 @@ public class Dvector {
 		Map<GlobalCMTID, Double> eventNumerator = usedGlobalCMTIDset.stream()
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		double obs2 = 0;
+		
+		Map<Double, Double> periodLMW = new HashMap<>();
+		Map<Double, Double> periodUMW = new HashMap<>();
+		Map<Double, Double> periodTotalW = new HashMap<>();
+		double minTmin = Double.MAX_VALUE;
+		//same weight for different frequency bands
+		for (int i = 0; i < nTimeWindow; i++) {
+			Double T = obsIDs[i].getMinPeriod();
+			if (T < minTmin)
+				minTmin = T;
+			double w = new ArrayRealVector(obsIDs[i].getData()).getNorm();
+			double totalW = 0;
+			if (periodTotalW.containsKey(T))
+				totalW = periodTotalW.get(T) + w;
+			else
+				totalW = w;
+			periodTotalW.put(T, totalW);
+			
+			Phases phases = new Phases(obsIDs[i].getPhases());
+			// upper mantle
+			if (phases.isUpperMantle()) {
+				double tmpw = 0;
+				if (periodUMW.containsKey(T))
+					tmpw = periodUMW.get(T) + w;
+				else
+					tmpw = w;
+				periodUMW.put(T, tmpw);
+			}
+			else if (phases.isLowerMantle()) {
+				double tmpw = 0;
+				if (periodLMW.containsKey(T))
+					tmpw = periodLMW.get(T) + w;
+				else
+					tmpw = w;
+				periodLMW.put(T, tmpw);
+			}
+		}
+		periodTotalW.forEach((T, w) -> System.out.println(T + "s " + w));
+		double[] maxW = new double[] {Double.MIN_VALUE};
+		periodTotalW.forEach((T, w) -> {
+			if (w > maxW[0])
+				maxW[0] = w;
+		});
+		for (Double T : periodTotalW.keySet())
+			periodTotalW.replace(T, periodTotalW.get(T) / maxW[0]);
+		Map<Double, Double> periodWeight = new HashMap<>();
+		final double minTmin_ = minTmin;
+		periodTotalW.forEach((T, w) -> periodWeight.put(T, 1. / w));
+		
+//		Map<Double, Double> periodUMWeight = new HashMap<>();
+//		Map<Double, Double> periodLMWeight = new HashMap<>();
+//		double T0LMUMAverage = 0;
+//		int count = 0;
+//		for (double T : periodUMW.keySet()) {
+//			double max = periodUMW.get(T) > periodLMW.get(T) * 4. ? periodUMW.get(T) : periodLMW.get(T) * 4.;
+//			if (count == 0) {
+//				T0LMUMAverage = .5 * max * (1. / periodUMW.get(T) + 1. / periodLMW.get(T) * 4.);
+//			}
+//			double factor = T0LMUMAverage / ( .5 * max * (1. / periodUMW.get(T) + 1. / periodLMW.get(T) * 4.) );
+//			periodUMWeight.put(T, max / periodUMW.get(T) * factor);
+//			periodLMWeight.put(T, max / periodLMW.get(T) * factor * 4.);
+//			System.out.println(T + "s um: " + max / periodUMW.get(T) * factor + " lm: " + max / periodLMW.get(T) * factor * 4.);
+//			count++;
+//		}
+		
 		for (int i = 0; i < nTimeWindow; i++) {
 			startPoints[i] = start;
 			int npts = obsIDs[i].getNpts();
 			this.npts += npts;
 			start += npts;
+			
+			DataSelectionInformation info = null;
+			if (selectionInfo != null) {
+				GlobalCMTID id = obsIDs[i].getGlobalCMTID();
+				Station station = obsIDs[i].getStation();
+				double startTime = obsIDs[i].getStartTime();
+				SACComponent component = obsIDs[i].getSacComponent();
+				System.out.println(obsIDs[i]);
+				info = selectionInfo.stream().filter(selec -> {
+					TimewindowInformation tw = selec.getTimewindow();
+					if (tw.getStation().getStationName().equals("SAO")) {
+						System.out.println(tw);
+						System.out.println(tw.getStation().equals(station) + " " + tw.getGlobalCMTID().equals(id) + " " + tw.getComponent().equals(component) + " " + Math.abs(tw.getStartTime() - startTime));
+					}
+					return tw.getStation().equals(station) 
+							&& tw.getGlobalCMTID().equals(id)
+							&& tw.getComponent().equals(component)
+							&& Math.abs(tw.getStartTime() - startTime) < 0.1;
+				}).findFirst().get();
+			}
 
 			// 観測波形の読み込み
 			obsVec[i] = new ArrayRealVector(obsIDs[i].getData(), false);
-
+			
 			// 観測波形の最大値の逆数で重み付け TODO 重み付けの方法を決める
 			switch (weightingType) {
 			case LOWERUPPERMANTLE:		
@@ -517,7 +698,15 @@ public class Dvector {
 						lowerUpperMantleWeighting[0] : lowerUpperMantleWeighting[1];
 				break;
 			case RECIPROCAL:
-				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				if (info != null)
+					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio() * periodTotalW.get(obsIDs[i].getMinPeriod());
+				else {
+					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * periodWeight.get(obsIDs[i].getMinPeriod());
+//					if (new Phases(obsIDs[i].getPhases()).isLowerMantle())
+//						weighting[i] *= periodLMWeight.get(obsIDs[i].getMinPeriod());
+//					else if (new Phases(obsIDs[i].getPhases()).isUpperMantle())
+//						weighting[i] *= periodUMWeight.get(obsIDs[i].getMinPeriod());
+				}
 				break;
 			case IDENTITY:
 				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
@@ -527,6 +716,10 @@ public class Dvector {
 				break;
 			case TAKEUCHIKOBAYASHI: // double[] weighting already set in sort()
 				break;
+			case FINAL:
+				Trace obstrace = obsIDs[i].getTrace();
+				weighting[i] *= obstrace.getMaxValue() > -obstrace.getMinValue() ? 1. / obstrace.getMaxValue() : -1. / obstrace.getMinValue();
+				break;	
 			default:
 				break;
 			}
@@ -667,7 +860,7 @@ public class Dvector {
 		obsIDs = useObsList.toArray(new BasicID[0]);
 		synIDs = useSynList.toArray(new BasicID[0]);
 		
-		if (!weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI))
+		if (!(weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI) || weightingType.equals(WeightingType.FINAL)))
 			weighting = new double[nTimeWindow];
 		else {
 			if (weighting.length != nTimeWindow)
@@ -687,24 +880,34 @@ public class Dvector {
 		
 		switch (weightingType) {
 		case LOWERUPPERMANTLE:
-			System.err.println("Using weighting for lower mantle (" + lowerUpperMantleWeighting[0] 
+			System.out.println("Using weighting for lower mantle (" + lowerUpperMantleWeighting[0] 
 					+ ") and upper mantle (" + lowerUpperMantleWeighting[1] +")");
 			break;
 		case TAKEUCHIKOBAYASHI:
-			System.err.println("Using Takeuchi-Kobayashi weighting scheme");
+			System.out.println("Using Takeuchi-Kobayashi weighting scheme");
 			break;
 		case RECIPROCAL:
-			System.err.println("Using observed reciprocal amplitude as weighting");
+			System.out.println("Using observed reciprocal amplitude as weighting");
 			break;
 		case IDENTITY:
-			System.err.println("Using identity weighting");
+			System.out.println("Using identity weighting");
 			break;
 		case USERFUNCTION:
-			System.err.println("Using user specified weighting function");
+			System.out.println("Using user specified weighting function");
+		case FINAL:
+			System.out.println("Using Takeuchi-Kobayashi weighting * reciprocal weighting (final)");
 		default:
 			break;
 		}
 	}
+	
+	protected static final FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+	
+//	private Complex[] equalizer(RealVector obsVec) {
+//		Complex[] obsSpc = fft.transform(obsVec.toArray(), TransformType.FORWARD);
+//		//smooth obsSpc doing a running average
+//		
+//	}
 	
 	public void outWeighting(Path outPath) {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {

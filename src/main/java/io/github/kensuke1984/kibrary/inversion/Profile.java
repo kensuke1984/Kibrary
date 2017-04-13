@@ -31,7 +31,7 @@ import org.apache.commons.math3.linear.RealVector;
 public class Profile {
 	public static void main(String[] args) {
 		int methodOrder = Integer.parseInt(args[0]);
-		InverseMethodEnum method = InverseMethodEnum.CONJUGATE_GRADIENT;
+		InverseMethodEnum method = InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
 		String inversionResultString = null;
 		Path inversionResultPath = null;
 		try {
@@ -223,9 +223,9 @@ public class Profile {
 						e.printStackTrace();
 						}
 						
-						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs, i) + "w lines lc \"black\",\\");
-						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs, i) + "w lines lc \"red\",\\");
-						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs, i) + "w lines lc \"blue\",\\");
+						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"black\",\\");
+						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"red\",\\");
+						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"blue\",\\");
 					}
 					pw.println();
 					

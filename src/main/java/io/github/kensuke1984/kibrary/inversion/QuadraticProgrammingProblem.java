@@ -17,7 +17,7 @@ public class QuadraticProgrammingProblem {
 	
 	final int MAX_ITERATION = 100;
 	
-	final double tolerance = 1e-5;
+	final double tolerance = 1e-8;
 	
 	public QuadraticProgrammingProblem(RealMatrix a, RealVector b) {
 		if (a.getColumnDimension() != b.getDimension())

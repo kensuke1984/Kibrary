@@ -87,7 +87,7 @@ public class TakeuchiStaticCorrection implements Operation {
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		synPath = getPath("synPath");
 		obsPath = getPath("obsPath");
-		timewindowInformationPath = getPath("timeWindowInformationPath");
+		timewindowInformationPath = getPath("timewindowInformationPath");
 
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
@@ -176,30 +176,32 @@ public class TakeuchiStaticCorrection implements Operation {
 	}
 
 	private void compare(SACFileName obsName, SACFileName synName) throws IOException {
-		String stationName = obsName.getStationName();
-		GlobalCMTID id = obsName.getGlobalCMTID();
-		SACComponent component = obsName.getComponent();
-		Set<TimewindowInformation> timeWindowSet = timewindow.stream()
-				.filter(info -> info.getStation().getStationName().equals(stationName))
-				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
-				.collect(Collectors.toSet());
-		if (timeWindowSet.size() != 1)
-			throw new RuntimeException(timewindowInformationPath + " is invalid.");
-		TimewindowInformation timeWindow = timeWindowSet.iterator().next();
 		SACData obsSac = obsName.read();
 		SACData synSac = synName.read();
 		Station station = obsSac.getStation();
-		Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
-		Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
-		double obsT = (obsTrace.getXforMaxValue() + obsTrace.getXforMinValue()) / 2;
-		double synT = (synTrace.getXforMaxValue() + synTrace.getXforMinValue()) / 2;
-		double timeShift = synT - obsT;
-		double obsAmp = (obsTrace.getMaxValue() - obsTrace.getMinValue()) / 2;
-		double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
-		double amplitudeRatio = obsAmp / synAmp;
-		StaticCorrection sc = new StaticCorrection(station, id, component, timeWindow.getStartTime(), timeShift,
-				amplitudeRatio);
-		outStaticCorrectionSet.add(sc);
+		GlobalCMTID id = obsName.getGlobalCMTID();
+		SACComponent component = obsName.getComponent();
+		Set<TimewindowInformation> timeWindowSet = timewindow.stream()
+				.filter(info -> info.getStation().equals(station))
+				.filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
+				.collect(Collectors.toSet());
+		if (timeWindowSet.size() == 0) {
+//			System.err.println("Ignoring non-existent timewindow " + station + " " + id + " " + component);
+			return;
+		}
+		for (TimewindowInformation timeWindow : timeWindowSet) {
+			Trace obsTrace = obsSac.createTrace().cutWindow(timeWindow);
+			Trace synTrace = synSac.createTrace().cutWindow(timeWindow);
+			double obsT = (obsTrace.getXforMaxValue() + obsTrace.getXforMinValue()) / 2;
+			double synT = (synTrace.getXforMaxValue() + synTrace.getXforMinValue()) / 2;
+			double timeShift = synT - obsT;
+			double obsAmp = (obsTrace.getMaxValue() - obsTrace.getMinValue()) / 2;
+			double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
+			double amplitudeRatio = obsAmp / synAmp;
+			StaticCorrection sc = new StaticCorrection(station, id, component, timeWindow.getStartTime(), timeShift,
+					amplitudeRatio);
+			outStaticCorrectionSet.add(sc);
+		}
 	}
 
 	private void compare(SACFileName obsSacFileName) {

@@ -107,7 +107,7 @@ public class Weighting {
 		
 		Matrix a = new Matrix(n, n);
 		
-		ObservationEquation eq = new ObservationEquation(ids, parameterList, dVector, false, false, -1, null);
+		ObservationEquation eq = new ObservationEquation(ids, parameterList, dVector, false, false, null, null);
 		Matrix eqA = (Matrix) eq.getA();
 		
 		for (int i = 0; i < eqA.getRowDimension(); i++) {
@@ -169,7 +169,7 @@ public class Weighting {
 				for (int k = 0; k < m; k++)
 					value += (s[i][k] - Tbar[i]) * (s[j][k] - Tbar[j]);
 				if (j == i)
-					a.setEntry(i, i, 2 * value + gamma);
+					a.setEntry(i, i, 2 * (value + gamma));
 				else {
 					a.setEntry(i, j, 2 * value);
 					a.setEntry(j, i, 2 * value);
@@ -194,7 +194,7 @@ public class Weighting {
 		
 		Matrix a = new Matrix(n, n);
 		
-		ObservationEquation eq = new ObservationEquation(ids, parameterList, dVector, false, false, -1, null);
+		ObservationEquation eq = new ObservationEquation(ids, parameterList, dVector, false, false, null, null);
 		Matrix eqA = (Matrix) eq.getA();
 		
 		double maxEqA = Double.MIN_VALUE;

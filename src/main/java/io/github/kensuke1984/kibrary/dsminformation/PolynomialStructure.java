@@ -341,6 +341,17 @@ public class PolynomialStructure implements Serializable {
 	public int getNzone() {
 		return nzone;
 	}
+	
+	public int getiZoneOf(double r) {
+		int iz = 0;
+		for (int i = 0; i < nzone; i++) {
+			if (rmin[i] <= r && rmax[i] > r) {
+				iz = i;
+				break;
+			}
+		}
+		return iz;
+	}
 
 	/**
 	 * @param i

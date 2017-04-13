@@ -102,6 +102,8 @@ public class Phases {
 			return Stream.of(phases).collect(Collectors.toSet()).contains(phase);
 		}
 		public boolean isLowerMantle() {
+			if (this.equals(new Phases(new Phase[] {Phase.S})))
+				return true;
 			if (this.equals(new Phases(new Phase[] {Phase.S, Phase.ScS})))
 				return true;
 			if (this.equals(new Phases(new Phase[] {Phase.ScS})))
@@ -131,10 +133,39 @@ public class Phases {
 				return true;
 			if (this.equals(new Phases(new Phase[] {Phase.create("sScSScSScSScS", false)})))
 				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sS", false), Phase.create("sScS", false), Phase.create("ScS", false), Phase.S})))
+				return true;
 			return false;
 		}
 		public boolean isUpperMantle() {
 //			return !(isLowerMantle() || isMixte());
-			return !isLowerMantle();
+//			return !isLowerMantle();
+			if (this.equals(new Phases(new Phase[] {Phase.create("SS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("SSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("SSSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("SSSSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSSSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSS", false), Phase.create("SS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sS", false), Phase.create("SS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSSS", false), Phase.create("SSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSSSS", false), Phase.create("SSSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSS", false), Phase.create("SSS", false)})))
+				return true;
+			if (this.equals(new Phases(new Phase[] {Phase.create("sSSS", false), Phase.create("SSSS", false)})))
+				return true;
+			return false;
 		}
 }

@@ -218,10 +218,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	}
 
 	private static boolean checkDuplication(double[][] periodRanges) {
-		for (int i = 0; i < periodRanges.length - 1; i++)
-			for (int j = i + 1; j < periodRanges.length; j++)
-				if (Arrays.equals(periodRanges[i], periodRanges[j]))
-					return true;
+//		for (int i = 0; i < periodRanges.length - 1; i++)
+//			for (int j = i + 1; j < periodRanges.length; j++)
+//				if (Arrays.equals(periodRanges[i], periodRanges[j]))
+//					return true;
 		return false;
 	}
 

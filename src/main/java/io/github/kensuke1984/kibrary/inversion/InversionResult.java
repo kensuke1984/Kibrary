@@ -473,8 +473,8 @@ public class InversionResult {
 		for (UnknownParameter par : unknownParameterList)
 			born = born.add(partialOf(id, par).multiply(answer.get(par)));
 		writeBorn(bornPath, born);
+		
 		return born;
-
 	}
 	
 	private static void writeBorn(Path outBornPath, Trace born) throws IOException {

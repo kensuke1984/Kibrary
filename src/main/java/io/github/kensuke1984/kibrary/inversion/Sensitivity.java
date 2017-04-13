@@ -47,10 +47,10 @@ public class Sensitivity {
 		if (parameterList == null)
 			throw new RuntimeException("unknownParameterList is undefined");
 		if(ata.getColumnDimension() != parameterList.size())
-			throw new RuntimeException("Expect ata and unknownParameterList to have the same length " 
+			throw new RuntimeException("Expect ata and unknownParameterList to have the same length "
 					+ ata.getColumnDimension() + " " + parameterList.size());
-		for (int i = 0; i < parameterList.size(); i++) 
-			sensitivity.put(parameterList.get(i), Math.sqrt(ata.getEntry(i, i)) * parameterList.get(i).getWeighting());
+		for (int i = 0; i < parameterList.size(); i++)
+			sensitivity.put(parameterList.get(i), Math.sqrt(ata.getEntry(i, i)));
 		return sensitivity;
 	}
 }

@@ -95,7 +95,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 		workPath = Paths.get(property.getProperty("workPath"));
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-
+		
 		predicate = createPredicate();
 	}
 
@@ -108,7 +108,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
 		double minGCARC = property.containsKey("minGCARC") ? Double.parseDouble(property.getProperty("minGCARC")) : 0;
 		double maxGCARC = property.containsKey("maxGCARC") ? Double.parseDouble(property.getProperty("maxGCARC")) : 180;
-
+		
 		double minStationLatitude = property.containsKey("minStationLatitude")
 				? Double.parseDouble(property.getProperty("minStationLatitude")) : -90;
 		double maxStationLatitude = property.containsKey("maxStationLatitude")
@@ -151,7 +151,8 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 						if (obsSac.getInt(SACHeaderEnum.NPTS) == n)
 							res = true;
 					}
-					return res;
+					if (!res)
+						return false;
 				}
 
 				// GCARC
