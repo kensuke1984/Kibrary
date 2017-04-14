@@ -82,18 +82,19 @@ public class Weighting {
 		ConjugateGradientMethod cgMethod = new ConjugateGradientMethod(a.computeAtA(), a.transpose().operate(d));
 		cgMethod.compute();
 		RealMatrix m = cgMethod.getANS();
+//		System.out.println(m.getData());
 		double[] cgn = m.getColumnVector(n-1).toArray();
 		
-		System.out.println();
-		for (double cgi : cgn)
-			System.out.println(cgi);
-		System.out.println();
+//		System.out.println();
+//		for (double cgi : cgn)
+//			System.out.println(cgi);
+//		System.out.println();
 		
-//		for (int i = 0; i < m.getColumnDimension(); i++) {
-//			for (int j = 0; j < m.getRowDimension(); j++)
-//				System.out.printf("%.3f ", m.getColumn(i)[j]);
-//			System.out.println();
-//		}
+		for (int i = 0; i < m.getColumnDimension(); i++) {
+			for (int j = 0; j < m.getRowDimension(); j++)
+				System.out.printf("%.3f ", m.getColumn(i)[j]);
+			System.out.println();
+		}
 		
 		return cgn;
 	}

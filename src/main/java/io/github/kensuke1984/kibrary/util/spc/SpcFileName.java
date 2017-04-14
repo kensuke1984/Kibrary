@@ -182,6 +182,8 @@ public class SpcFileName extends File {
 		mode = getMode(fileName);
 		x = getX(fileName);
 		y = getY(fileName);
+//		observerNetwork = getObserverNetwork(fileName);
+		
 	}
 
 	public DSMOutput read() throws IOException {

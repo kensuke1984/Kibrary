@@ -38,6 +38,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
 /**
  * 理論波形と観測波形の比較から使えるものを選択する。<br>
@@ -333,6 +334,26 @@ public class DataSelection implements Operation {
                 minRatio + " " + var + " " + cor);
         return isok;
     }
+    
+    public static boolean selectNPTS(BasicID obs, int[] npts, Path root) {
+		boolean result = false;
+		
+		String sacStringname = obs.getStation().getName() + "." + obs.getGlobalCMTID().toString() + "." + obs.getSacComponent().toString();
+		Path sacpath = Paths.get(root.toString(), obs.getGlobalCMTID().toString(), sacStringname);
+		SACFileName sacname = new SACFileName(sacpath);
+		int sacNPTS = 0;
+		
+		try {
+			sacNPTS = sacname.readHeader().getInt(SACHeaderEnum.NPTS);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		for (int npt : npts)
+			result = result || sacNPTS == npt;
+			
+		return result;
+	}
 
     /**
      * @param sac        {@link SACData} to cut

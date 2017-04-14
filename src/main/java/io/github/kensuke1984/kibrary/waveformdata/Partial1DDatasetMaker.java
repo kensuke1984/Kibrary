@@ -374,6 +374,7 @@ public class Partial1DDatasetMaker implements Operation {
 					cutU);
 			try {
 				partialDataWriter.addPartialID(pid);
+//				System.out.println("Hi");
 				add();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -394,8 +395,9 @@ public class Partial1DDatasetMaker implements Operation {
 		}
 
 		private void addPartialSpectrum(SpcFileName spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+//			System.out.println(spcname.getObserverID());
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().toString().equals(spcname.getObserverString()))
+					.filter(info -> info.getStation().toString().equals(spcname.getObserverID().toString()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;
@@ -409,8 +411,11 @@ public class Partial1DDatasetMaker implements Operation {
 				return;
 			}
 
-			String stationName = spcname.getObserverName();
-			String network = spcname.getObserverNetwork();
+			String stationName = spcname.getObserverID().toString();
+//			System.out.println(stationName);
+//			String network = spcname.getObserverNetwork();
+			String network = "DSM";
+//			System.out.println(spcname.getObserverNetwork());
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
@@ -625,6 +630,8 @@ public class Partial1DDatasetMaker implements Operation {
 			PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
 					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
 					cutU);
+//			PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+//					1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType, cutU);
 			
 			try {
 				partialDataWriter.addPartialID(PIDReceiverSide);
@@ -778,8 +785,8 @@ public class Partial1DDatasetMaker implements Operation {
 			for (EventFolder eventDir : eventDirs)
 				execs.execute(new Worker(eventDir));
 			// break;
-			for (EventFolder eventDir2 : timePartialEventDirs)
-				execs.execute(new WorkerTimePartial(eventDir2));
+//			for (EventFolder eventDir2 : timePartialEventDirs)
+//				execs.execute(new WorkerTimePartial(eventDir2));
 			execs.shutdown();
 
 			while (!execs.isTerminated())

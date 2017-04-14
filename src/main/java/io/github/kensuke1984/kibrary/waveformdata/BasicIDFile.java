@@ -209,7 +209,7 @@ public final class BasicIDFile {
 				dis.read(bytes[i]);
 			IntStream.range(0, nid).parallel().forEach(i -> {
 				ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges, phases);
-				System.out.println("kakuninnshiteyo "+ids[i].COMPONENT);
+//				System.out.println("kakuninnshiteyo "+ids[i].COMPONENT);
 			});
 			System.err.println(
 					"Reading " + ids.length + " basic IDs done in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -251,7 +251,7 @@ public final class BasicIDFile {
 		Set<Phase> tmpset = new HashSet<>();
 		for (int i = 0; i < 10; i++) {
 			short iphase = bb.getShort();
-			System.out.println("iphase is "+iphase+" "+i);
+//			System.out.println("iphase is "+iphase+" "+i);
 			if (iphase != -1)
 				tmpset.add(phases[iphase]);
 		}

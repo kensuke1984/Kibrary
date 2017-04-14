@@ -54,8 +54,12 @@ public class Sensitivity1D {
 	
 	
 	public static void main(String[] args) throws IOException {
-		Path partialPath = Paths.get("partial.dat");
-		Path partialIDPath = Paths.get("partialID.dat");
+		if (args.length != 2)
+			System.err.println("usage: path for partial.dat and partialID.dat are need.");
+//		Path partialPath = Paths.get("partial.dat");
+		Path partialPath = Paths.get(args[0]);
+//		Path partialIDPath = Paths.get("partialID.dat");
+		Path partialIDPath = Paths.get(args[1]);
 //		Set<Phase> S_ScS_Sdiff = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff", false)).stream().collect(Collectors.toSet());
 //		Set<Phase> ScS4 = Arrays.asList(Phase.create("ScSScSScSScS", false)).stream().collect(Collectors.toSet());
 //		Set<Phase> ScS3 = Arrays.asList(Phase.create("ScSScSScS", false)).stream().collect(Collectors.toSet());
@@ -64,24 +68,24 @@ public class Sensitivity1D {
 		
 		PartialID[] ids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
-//		Map<Phases, Double> phasesSensitivityMap = Sensitivity.sensitivityPerWindowType(ids);
-//		Set<Phases> keySet = phasesSensitivityMap.keySet();
-//		Set<Phases> lowerMantle = keySet.stream().filter(phases -> phases.isLowerMantle())
-//				.collect(Collectors.toSet());
-//		Set<Phases> upperMantle = keySet.stream().filter(phases -> phases.isUpperMantle())
-//				.collect(Collectors.toSet());
-//		Set<Phases> mixte = keySet.stream().filter(phases -> phases.isMixte())
-//				.collect(Collectors.toSet());
-//		double upperMantleSensitivity = 0;
-//		double lowerMantleSensitivity = 0;
-//		for (Map.Entry<Phases, Double> entry : phasesSensitivityMap.entrySet()) {
-//			Phases p = entry.getKey();
-//			double s = entry.getValue();
-//			if (upperMantle.contains(p))
-//				upperMantleSensitivity += s;
-//			else if (lowerMantle.contains(p))
-//				lowerMantleSensitivity += s;
-//		}
+		Map<Phases, Double> phasesSensitivityMap = Sensitivity.sensitivityPerWindowType(ids);
+		Set<Phases> keySet = phasesSensitivityMap.keySet();
+		Set<Phases> lowerMantle = keySet.stream().filter(phases -> phases.isLowerMantle())
+				.collect(Collectors.toSet());
+		Set<Phases> upperMantle = keySet.stream().filter(phases -> phases.isUpperMantle())
+				.collect(Collectors.toSet());
+		Set<Phases> mixte = keySet.stream().filter(phases -> phases.isMixte())
+				.collect(Collectors.toSet());
+		double upperMantleSensitivity = 0;
+		double lowerMantleSensitivity = 0;
+		for (Map.Entry<Phases, Double> entry : phasesSensitivityMap.entrySet()) {
+			Phases p = entry.getKey();
+			double s = entry.getValue();
+			if (upperMantle.contains(p))
+				upperMantleSensitivity += s;
+			else if (lowerMantle.contains(p))
+				lowerMantleSensitivity += s;
+		}
 //		System.out.println("Upper mantle " + upperMantleSensitivity);
 //		System.out.println("Lower mantle " + lowerMantleSensitivity);
 		
@@ -89,8 +93,8 @@ public class Sensitivity1D {
 //		Sensitivity1D s1D = new Sensitivity1D(ids);
 //		s1D.write1D(outPath);
 		
-		List<Phase> phaseList = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff"), Phase.create("SS"), Phase.create("SSS"),
-				Phase.create("SSSS"), Phase.create("ScSScS"), Phase.create("ScSScSScS"), Phase.create("ScSScSScSScS"));
+		List<Phase> phaseList = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff"), Phase.SKS, Phase.create("SKKS"),
+				Phase.create("SKKKS"), Phase.P, Phase.PcP, Phase.PKP, Phase.create("Pdiff"));
 		
 		for (Phase phase : phaseList) {
 			Set<Phases> phaseSet = new HashSet<>();

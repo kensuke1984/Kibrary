@@ -288,8 +288,8 @@ public class LetMeInvert implements Operation {
 			List<UnknownParameter> parameterForStructure = parameterList.stream()
 					.filter(unknonw -> !unknonw.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
-//			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
-			double[] weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
+			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
+//			double[] weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
 			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
 			break;
 		default:

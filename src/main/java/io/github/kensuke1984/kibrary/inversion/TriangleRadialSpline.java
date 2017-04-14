@@ -58,14 +58,25 @@ public class TriangleRadialSpline {
 					iLM++;
 			}
 //			iUM--; // crustal layer
+			System.out.println("iUM: "+iUM+", iLM: "+iLM+", nUM: "+nUM+", nLM: "+nLM);
+			System.out.println(iLM / (nLM - 1) +" "+ ((double) iLM) / (nLM - 1));
+			System.out.println((double) iLM);
+			System.out.println(iLM + " " + (nLM-1));
+			System.out.println(iLM/(nLM-1));
+			System.out.println(iLM / (nLM - 1) * 2);
 			if (nUM > iUM || nLM > iLM)
 				throw new RuntimeException("nUM or nLM greater than the number of parameters available");
 			
 			if (iUM / (nUM - 1) != ((double) iUM) / (nUM - 1))
 				throw new RuntimeException("nUM is incompatible with the number of parameters available in the upper mantle " + nUM + " " + iUM);
-			if (iLM / (nLM - 1) != ((double) iLM) / (nLM - 1))
+			if (iLM / (nLM - 1) != ((double) iLM) / (nLM - 1)){
+				System.out.println(iLM / (nLM - 1) +" "+ ((double) iLM) / (nLM - 1));
+				System.out.println((double) iLM);
+				System.out.println(iLM + " " + (nLM-1));
+				System.out.println(iLM/(nLM-1));
+				System.out.println(iLM / (nLM - 1) * 2);
 				throw new RuntimeException("nLM is incompatible with the number of parameters available in the lower mantle " + nLM + " " + iLM);
-			
+			}
 			int orderUM = iUM / (nUM - 1) * 2;
 			int orderLM = iLM / (nLM - 1) * 2;
 			orders.put(type, new Integer[] {orderUM, orderLM});

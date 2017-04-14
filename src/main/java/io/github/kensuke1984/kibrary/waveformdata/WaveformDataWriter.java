@@ -308,7 +308,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         for (int i = 0; i < 10; i++) { // 10 * 2 Byte
         	if (i < phases.length) {
         		idStream.writeShort(phaseMap.get(phases[i]));
-        		System.out.println(phases[i]);
+//        		System.out.println(phases[i]);
         	}
         	else
         		idStream.writeShort(-1);
@@ -322,7 +322,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
         // partial type 1 Byte
         idStream.writeByte(partialID.getPartialType().getValue());
         // 2 byte
-        idStream.writeShort(perturbationLocationMap.get(partialID.POINT_LOCATION));
+        idStream.writeShort(perturbationLocationMap.get(partialID.pointLocation));
     }
 
 }

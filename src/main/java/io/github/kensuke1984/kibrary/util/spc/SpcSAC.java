@@ -237,6 +237,7 @@ public final class SpcSAC implements Operation {
 	@Override
 	public void run() throws IOException {
 		int nThread = Runtime.getRuntime().availableProcessors();
+		System.err.println("We use "+nThread+"threads.");
 		outPath = workPath.resolve("spcsac" + Utilities.getTemporaryString());
 		System.err.println("Work folder is " + workPath.toAbsolutePath());
 		System.err.println("Converting SPC files in the work folder to SAC files in " + outPath);

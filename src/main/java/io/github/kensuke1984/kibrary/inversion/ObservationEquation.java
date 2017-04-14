@@ -63,7 +63,7 @@ public class ObservationEquation {
 		this.originalParameterList = parameterList;
 		List<Integer> bouncingOrders = null;
 		if (time_receiver) {					
-			Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).distinct().flatMap(Arrays::stream).distinct()
+			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).distinct().flatMap(Arrays::stream).distinct()
 					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
 			Collections.sort(bouncingOrders);
 			System.out.print("Bouncing orders (at Earth's surface): ");
@@ -220,7 +220,7 @@ public class ObservationEquation {
 			}
 			for (int i = 0; i < a.getColumnDimension() - numberOfParameterForSturcture; i++)
 				aPrime.setColumnVector(i + nUnknowns, a.getColumnVector(i + numberOfParameterForSturcture));
-			a = aPrime;
+//			a = aPrime;
 			
 			for (int i = 0; i < layers.length; i++) {
 				double r = 0;
@@ -244,9 +244,9 @@ public class ObservationEquation {
 		}
 		
 		if (nNewParameter != null) {
-			TriangleRadialSpline trs = new TriangleRadialSpline(nNewParameter, parameterList);
-			a = trs.computeNewA(a);
-			parameterList = trs.getNewParameters();
+//			TriangleRadialSpline trs = new TriangleRadialSpline(nNewParameter, parameterList);
+//			a = trs.computeNewA(a);
+//			parameterList = trs.getNewParameters();
 		}
 			
 		double meanAColumnNorm = 0;
@@ -401,7 +401,7 @@ public class ObservationEquation {
 			List<UnknownParameter> unknownForStructure = parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 			for (UnknownParameter unknown : unknownForStructure)
-				pw.println((Double) unknown.getLocation() + " " + sMap.get(unknown));
+				pw.println(unknown.getLocation() + " " + sMap.get(unknown));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -45,7 +45,7 @@ import ucar.unidata.io.RandomAccessFile;
  */
 public class NetCDFutil {
 	public NetCDFutil() throws IOException {
-		this.netcdffile = NetcdfFile.open("/Users/Anselme/Dropbox/Kenji/FWICarib/global3D/TX2011/TX2011_percent.nc");
+		this.netcdffile = NetcdfFile.open("/TX2011_percent.nc");
 		
 	}
 	

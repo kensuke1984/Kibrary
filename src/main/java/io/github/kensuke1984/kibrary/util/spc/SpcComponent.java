@@ -73,11 +73,11 @@ public class SpcComponent {
      */
     public void addComponent(SpcComponent anotherComponent) {
         if (NP != anotherComponent.getNP()) throw new RuntimeException("Error: Size of body is not equal!");
-
+//        System.out.println(anotherComponent.);
         Complex[] another = anotherComponent.getValueInFrequencyDomain();
-        for (int i = 0; i < NP + 1; i++)
+        for (int i = 0; i < NP + 1; i++) {
             uFreq[i] = uFreq[i].add(another[i]);
-
+        }    
     }
 
     /**

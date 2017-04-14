@@ -239,6 +239,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				SACHeaderData header = name.readHeader();
 				double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
 						header.getValue(SACHeaderEnum.USER1) };
+//				double[] range = new double[] { 20,
+//						header.getValue(SACHeaderEnum.USER1) };
 				boolean exists = false;
 				if (ranges.size() == 0)
 					ranges.add(range);
