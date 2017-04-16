@@ -82,7 +82,6 @@ public final class PartialIDFile {
         }
         if (chooser != null) ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
         System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
-
         return ids;
     }
 
@@ -165,7 +164,7 @@ public final class PartialIDFile {
                 Arrays.stream(pids).parallel().map(id -> new Physical3DParameter(id.PARTIAL_TYPE, id.POINT_LOCATION, 1))
                         .distinct().map(Physical3DParameter::toString).sorted().collect(Collectors.toList());
         Files.write(outPath, lines);
-        System.out.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");
+        System.err.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");
     }
 
     private static void outputStations(String header, PartialID[] ids) throws IOException {
@@ -222,7 +221,7 @@ public final class PartialIDFile {
         List<String> lines = Arrays.stream(ids).parallel().map(id -> id.ID.toString()).distinct().sorted()
                 .collect(Collectors.toList());
         Files.write(outPath, lines);
-        System.out.println(outPath + " is created as a list of global CMT IDs.");
+        System.err.println(outPath + " is created as a list of global CMT IDs.");
     }
 
 }

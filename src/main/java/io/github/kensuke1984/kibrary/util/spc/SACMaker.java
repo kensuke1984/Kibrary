@@ -276,7 +276,7 @@ public class SACMaker implements Runnable {
     }
 
     /**
-     * Creates and outputs synthetic SAC files of Z R T from input spectrums
+     * Creates and outputs synthetic SAC files of Z R T from input spectra
      *
      * @param args [onespc] [pairspc]
      * @throws IOException if an I/O error occurs
