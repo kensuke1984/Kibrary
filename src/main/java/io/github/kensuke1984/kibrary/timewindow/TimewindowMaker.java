@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +36,7 @@ import java.util.stream.Collectors;
  * window is set to integer multiple of DELTA in SAC files.
  *
  * @author Kensuke Konishi
- * @version 0.2.2.4
+ * @version 0.2.3
  */
 public class TimewindowMaker implements Operation {
 
@@ -228,7 +229,10 @@ public class TimewindowMaker implements Operation {
 
     @Override
     public void run() throws Exception {
+        int n = Utilities.eventFolderSet(workPath).size();
+        AtomicInteger numFinishedEvent = new AtomicInteger();
         Utilities.runEventProcess(workPath, eventDir -> {
+            System.err.print("\rProcessing " + numFinishedEvent.get() + "/" + n);
             try {
                 eventDir.sacFileSet().stream().filter(sfn -> sfn.isSYN() && components.contains(sfn.getComponent()))
                         .forEach(sfn -> {
@@ -241,10 +245,13 @@ public class TimewindowMaker implements Operation {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            System.err.print("\rProcessing " + numFinishedEvent.incrementAndGet() + "/" + n);
         }, 10, TimeUnit.HOURS);
-
         if (timewindowSet.isEmpty()) System.err.println("No timewindow is created");
-        else TimewindowInformationFile.write(outputPath, timewindowSet);
+        else {
+            TimewindowInformationFile.write(outputPath, timewindowSet);
+            System.err.println("\r" + timewindowSet.size() + " windows are created.");
+        }
     }
 
     private void makeTimeWindow(SACFileName sacFileName) throws IOException {
