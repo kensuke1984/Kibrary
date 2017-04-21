@@ -628,13 +628,14 @@ public class PartialDatasetMaker implements Operation {
 		
 		phases = timewindowInformation.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
-
+		
 		// TODO
-		if (stationSet.size() != stationSet.stream().map(Station::getName).distinct().count())
-			throw new RuntimeException("Station duplication...");
+//		if (stationSet.size() != stationSet.stream().map(Station::getName).distinct().count())
+//			throw new RuntimeException("Station duplication...");
 
 		boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
 		boolean bpExistence = stationSet.stream().allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));
+//		System.err.println(fpExistence+" "+bpExistence);
 		if (!fpExistence || !bpExistence)
 			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
 		writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()

@@ -32,5 +32,6 @@
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="/System/Library/Java/Extensions/vecmath.jar"/>
 	<classpathentry kind="lib" path="lib/netcdfAll-4.6.4.jar"/>
+	<classpathentry kind="lib" path="lib/TauP-2.1.2/TauP-2.1.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
