@@ -8,28 +8,28 @@ import java.nio.file.*;
  * Color pallet for GMT.
  *
  * @author Kensuke Konishi
- * @version 0.0.5
+ * @version 0.0.6
  */
 public interface ColorPallet {
 
     /**
      * If there is no min value, then the range is [-max, max]
      *
-     * @param args [output file name](Option min value of range) [max value of
+     * @param args [write file name](Option min value of range) [max value of
      *             range]
      * @throws IOException if an I/O error occurs
      */
     static void main(String[] args) throws IOException {
         if (args.length < 2)
-            throw new IllegalArgumentException("Usage: [output file name] (Option min value) [max value of range]");
+            throw new IllegalArgumentException("Usage: [write file name] (Option min value) [max value of range]");
         Path path = Paths.get(args[0]);
         if (2 < args.length) oobayashi(Double.parseDouble(args[1]), Double.parseDouble(args[2]))
-                .output(path, StandardOpenOption.CREATE_NEW);
-        else oobayashi(Double.parseDouble(args[1])).output(path, StandardOpenOption.CREATE_NEW);
+                .write(path, StandardOpenOption.CREATE_NEW);
+        else oobayashi(Double.parseDouble(args[1])).write(path, StandardOpenOption.CREATE_NEW);
     }
 
     /**
-     * output the color pallet
+     * write the color pallet
      *
      * @param min min value of range
      * @param max max value of range
@@ -58,7 +58,7 @@ public interface ColorPallet {
             }
 
             @Override
-            public void output(Path outPath, OpenOption... options) throws IOException {
+            public void write(Path outPath, OpenOption... options) throws IOException {
                 try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
                     // -red blue+
                     double range = max - min;
@@ -68,6 +68,9 @@ public interface ColorPallet {
                         String rgbPart = " " + rgb[i][0] + " " + rgb[i][1] + "  " + rgb[i][2] + " ";
                         pw.println(start + rgbPart + end + rgbPart);
                     }
+                    pw.println("F " + rgb[0][0] + " " + rgb[0][1] + "  " + rgb[0][2]);
+                    pw.println("B " + rgb[16][0] + " " + rgb[16][1] + "  " + rgb[16][2]);
+                    pw.println("N 0 0 0");
                 }
 
             }
@@ -77,7 +80,7 @@ public interface ColorPallet {
     }
 
     /**
-     * output the color pallet
+     * write the color pallet
      *
      * @param max max value of range
      * @return Color pallet by Oobayashi
@@ -87,12 +90,12 @@ public interface ColorPallet {
     }
 
     /**
-     * @param outPath {@link Path} of an output file. This is supposed to be used
+     * @param outPath {@link Path} of an write file. This is supposed to be used
      *                GMT color pallet.
-     * @param options for output
+     * @param options for write
      * @throws IOException if an I/O error occurs
      */
-    void output(Path outPath, OpenOption... options) throws IOException;
+    void write(Path outPath, OpenOption... options) throws IOException;
 
     /**
      * @param value target value for the RGB
