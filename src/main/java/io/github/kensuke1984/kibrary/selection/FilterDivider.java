@@ -175,7 +175,7 @@ public class FilterDivider implements Operation {
     }
 
     /**
-     * Apply the filter on the sacFile and output in the outDir
+     * Apply the filter on the sacFile and write in the outDir
      *
      * @param sacFileName a sacfilename to be filtered
      */

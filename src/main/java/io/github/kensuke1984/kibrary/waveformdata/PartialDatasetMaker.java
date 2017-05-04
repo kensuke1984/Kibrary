@@ -195,7 +195,7 @@ public class PartialDatasetMaker implements Operation {
             pw.println("#maxFreq");
             pw.println("#double (20)");
             pw.println("#partialSamplingHz cant change now");
-            pw.println("##double SamplingHz in output dataset (1)");
+            pw.println("##double SamplingHz in write dataset (1)");
             pw.println("#finalSamplingHz");
             pw.println("##perturbationPath, must be set");
             pw.println("#perturbationPath perturbationPoint.inf");

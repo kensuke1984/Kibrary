@@ -47,7 +47,7 @@ public class PlotConfiguration {
     /**
      * sacマクロの出力
      *
-     * @param out for output
+     * @param out for write
      */
     public void output(File out) {
         try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(out)))) {

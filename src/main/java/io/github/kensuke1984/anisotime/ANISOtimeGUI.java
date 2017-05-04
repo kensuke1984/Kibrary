@@ -287,7 +287,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             } catch (Exception e) {
                 e.printStackTrace();
                 SwingUtilities
-                        .invokeLater(() -> JOptionPane.showMessageDialog(null, "Cannot output files about the path"));
+                        .invokeLater(() -> JOptionPane.showMessageDialog(null, "Cannot write files about the path"));
             }
         };
         new Thread(output).start();

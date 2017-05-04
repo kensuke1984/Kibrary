@@ -236,7 +236,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * @param dataFile Path of a dataFile
-     * @param phase    to output
+     * @param phase    to write
      */
     public void outputDat(Path dataFile, double eventR, Phase phase) {
         if (!exists(eventR, phase)) return;
@@ -350,7 +350,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * TODO Range is from the turning point to a radius which is good enough for
-     * a given mesh threshold ({@link ComputationalMesh#integralThreshold}).
+     * a given mesh threshold ({@link ComputationalMesh#INTEGRAL_THRESHOLD}).
      * <p>
      * Each boundary is one of the radius set in {@link #MESH}.
      */
@@ -375,7 +375,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 double q = WOODHOUSE.computeQT(pp, RAY_PARAMETER, boundary);
                 double qNext = WOODHOUSE.computeQT(pp, RAY_PARAMETER, next);
                 double ratio = q < qNext ? q / qNext : qNext / q;
-                if (MESH.integralThreshold < ratio) break;
+                if (MESH.INTEGRAL_THRESHOLD < ratio) break;
                 boundary = next;
             }
             jeffreysBoundaryMap.put(pp, boundary);
@@ -1073,7 +1073,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * Information to Standard output. Note that if the method is called before
+     * Information to Standard write. Note that if the method is called before
      * this is computed, an exception happens.
      */
     public void printInfo() {

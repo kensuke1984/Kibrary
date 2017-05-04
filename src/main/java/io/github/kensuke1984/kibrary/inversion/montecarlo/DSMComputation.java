@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Computes DSM(tish) output will be in outdir.
+ * Computes DSM(tish) write will be in outdir.
  *
  * @author Kensuke Konishi
  * @version 0.0.1
@@ -54,7 +54,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
 
     /**
      * @param obsDir     path of observed waveforms
-     * @param outDir     path of output data
+     * @param outDir     path of write data
      * @param psvPath    path of PSV spectors
      * @param stationSet station information
      * @throws IOException if any

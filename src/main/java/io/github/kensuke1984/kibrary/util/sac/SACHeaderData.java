@@ -235,4 +235,12 @@ public interface SACHeaderData {
      */
     SACHeaderData setValue(SACHeaderEnum sacHeaderEnum, double value);
 
+
+    /**
+     * @return if the SACfile is filtered. true: filtered, false: not filtered
+     */
+    default boolean isFiltered() {
+        return getValue(SACHeaderEnum.USER0) != -12345 || getValue(SACHeaderEnum.USER1) != -12345;
+    }
+
 }

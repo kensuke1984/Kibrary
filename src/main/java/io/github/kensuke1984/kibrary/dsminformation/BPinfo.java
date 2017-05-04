@@ -30,7 +30,7 @@ public class BPinfo extends DSMheader {
 
     /**
      * @param station              Information of station
-     * @param outputDir            the name of the output folder
+     * @param outputDir            the name of the write folder
      * @param structure            velocity structure
      * @param tlen                 must be a power of 2 / 10 (2<sup>n</sup>)/10
      * @param np                   must be a power of 2 (2<sup>n</sup>)
@@ -48,7 +48,7 @@ public class BPinfo extends DSMheader {
     }
 
     /**
-     * @return name of the output folder
+     * @return name of the write folder
      */
     public String getOutputDir() {
         return OUTPUT;
@@ -90,8 +90,8 @@ public class BPinfo extends DSMheader {
             pw.println("0 " + // BPINFOには震源深さいらない
                     stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
-            // output info
-            pw.println("c output directory");
+            // write info
+            pw.println("c write directory");
             pw.println(OUTPUT + "/");
             pw.println(STATION.getName());
             pw.println("c events and stations");
@@ -128,8 +128,8 @@ public class BPinfo extends DSMheader {
             pw.println("0 " + // BPINFOには震源深さいらない
                     stationPosition.getLatitude() + " " + stationPosition.getLongitude());
 
-            // output info
-            pw.println("c output directory");
+            // write info
+            pw.println("c write directory");
             pw.println(OUTPUT + "/");
             pw.println(STATION.getName());
             pw.println("c events and stations");

@@ -169,9 +169,9 @@ public class CheckerBoardTest implements Operation {
     /**
      * 読み込んだデータセットに対してボルン波形を観測波形として 理論波形を理論波形として書き込む（上書きではない）
      *
-     * @param outIDPath   for output
-     * @param outDataPath for output
-     * @param bornVec     for output
+     * @param outIDPath   for write
+     * @param outDataPath for write
+     * @param bornVec     for write
      */
     public void output4ChekeBoardTest(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
         // bornVec = dVector.getObsVectors();
@@ -194,8 +194,8 @@ public class CheckerBoardTest implements Operation {
     /**
      * 読み込んだデータセットに対してボルン波形を理論波形として書き込む（上書きではない）
      *
-     * @param outIDPath   {@link File} for output ID file
-     * @param outDataPath {@link File} for output data file
+     * @param outIDPath   {@link File} for write ID file
+     * @param outDataPath {@link File} for write data file
      * @param bornVec     {@link RealVector} of born
      */
     public void output4Iterate(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {

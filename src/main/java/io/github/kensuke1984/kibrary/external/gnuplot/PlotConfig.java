@@ -30,7 +30,7 @@ public class PlotConfig {
 
     public void setOutput(String output) {
         this.output = output;
-        plotConfigLine = plotConfigLine + "set output \"" + output + "\"/n";
+        plotConfigLine = plotConfigLine + "set write \"" + output + "\"/n";
     }
 
     public double[] getXrange() {

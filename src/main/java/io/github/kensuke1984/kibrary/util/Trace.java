@@ -432,7 +432,7 @@ public class Trace {
      * Writes X and Y.
      * Each line has X<sub>i</sub> and Y<sub>i</sub>
      *
-     * @param path    of the output file
+     * @param path    of the write file
      * @param options if any
      * @throws IOException if any
      */

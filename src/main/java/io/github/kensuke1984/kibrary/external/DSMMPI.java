@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
  * Utility for execution of DSM software such as tish and tipsv .<br>
  * They must be in PATH. When you run, mpirun also must be in PATH. <br>
  * <p>
- * All standard output and standard error will be thrown in the same way as the
+ * All standard write and standard error will be thrown in the same way as the
  * current process.
  * <p>
  * The MPI process will run in the same directory as an input information file,
@@ -32,7 +32,7 @@ public final class DSMMPI {
             throw new RuntimeException("So sorry, I love Bill Gates but still this does not work on Windows");
         if (!psvExists) System.err.println("mpi-tipsv is not in PATH");
         if (!shExists) System.err.println("mpi-tish is not in PATH");
-        System.err.println("All standard output and error is going to a bit bucket.");
+        System.err.println("All standard write and error is going to a bit bucket.");
     }
 
     private DSMMPI() {

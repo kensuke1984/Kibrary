@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 
 /**
  * Creates dataset containing observed and synthetic waveforms. <br>
- * The output is a set of an ID and waveform files.
+ * The write is a set of an ID and waveform files.
  * <p>
  * Observed and synthetic waveforms in SAC files are collected from the obsDir
  * and synDir, respectively. Only SAC files, which sample rates are
@@ -80,7 +80,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
      */
     private double sacSamplingHz;
     /**
-     * sampling Hz in the output file
+     * sampling Hz in the write file
      */
     private double finalSamplingHz;
     /**
@@ -146,7 +146,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
             pw.println("#staticCorrectionPath staticCorrection.dat");
             pw.println("##double value of sac sampling Hz (20) can't be changed now");
             pw.println("#sacSamplingHz the value will be ignored");
-            pw.println("##double value of sampling Hz in output files (1)");
+            pw.println("##double value of sampling Hz in write files (1)");
             pw.println("#finalSamplingHz");
         }
         System.err.println(outPath + " is created.");
@@ -258,7 +258,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
             execs.shutdown();
             while (!execs.isTerminated()) Thread.sleep(1000);
             System.err.println("\rCreating finished.");
-            System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
+            System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are write.");
         } catch (Exception e) {
             e.printStackTrace();
         }
