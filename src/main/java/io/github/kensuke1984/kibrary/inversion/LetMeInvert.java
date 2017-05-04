@@ -98,7 +98,7 @@ public class LetMeInvert implements Operation {
             pw.println("##These properties for LetMeInvert");
             pw.println("##Path of a work folder (.)");
             pw.println("#workPath");
-            pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
+            pw.println("##Path of an write folder (workPath/lmiyymmddhhmmss)");
             pw.println("#outPath");
             pw.println("##Path of a waveID file, must be set");
             pw.println("#waveIDPath waveID.dat");
@@ -218,7 +218,7 @@ public class LetMeInvert implements Operation {
     @Override
     public void run() {
         try {
-            System.err.println("The output folder: " + outPath);
+            System.err.println("The write folder: " + outPath);
             Files.createDirectory(outPath);
             if (property != null) writeProperties(outPath.resolve("lmi.properties"));
         } catch (Exception e) {
@@ -250,7 +250,7 @@ public class LetMeInvert implements Operation {
     /**
      * outDirectory下にtraceフォルダを作りその下に理論波形と観測波形を書き込む
      *
-     * @param outPath {@link Path} for output folder
+     * @param outPath {@link Path} for write folder
      * @throws IOException if an I/O error occurs
      */
     public void outEachTrace(Path outPath) throws IOException {
@@ -375,8 +375,8 @@ public class LetMeInvert implements Operation {
     /**
      * vectorsをidの順の波形だとしてファイルに書き込む
      *
-     * @param outPath {@link File} for output
-     * @param vectors {@link RealVector}s for output
+     * @param outPath {@link File} for write
+     * @param vectors {@link RealVector}s for write
      * @throws IOException if an I/O error occurs
      */
     public void outEachTrace(Path outPath, RealVector[] vectors) throws IOException {
@@ -539,7 +539,7 @@ public class LetMeInvert implements Operation {
     /**
      * station と 震源の位置関係の出力
      *
-     * @param outPath {@link File} for output
+     * @param outPath {@link File} for write
      * @throws IOException if an I/O error occurs
      */
     public void outputDistribution(Path outPath) throws IOException {

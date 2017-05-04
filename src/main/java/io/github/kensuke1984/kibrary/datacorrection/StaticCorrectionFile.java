@@ -105,9 +105,9 @@ public final class StaticCorrectionFile {
     }
 
     /**
-     * @param outPath       of an output file.
+     * @param outPath       of an write file.
      * @param correctionSet of static correction to write
-     * @param options       for output
+     * @param options       for write
      * @throws IOException if an I/O error occurs.
      */
     public static void write(Path outPath, Set<StaticCorrection> correctionSet, OpenOption... options)

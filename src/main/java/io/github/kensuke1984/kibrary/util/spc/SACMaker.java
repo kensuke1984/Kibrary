@@ -349,7 +349,7 @@ public class SACMaker implements Runnable {
     /**
      * Create sacFiles for partials in outDirectory.
      *
-     * @param outDirectoryPath {@link Path} of an output folder
+     * @param outDirectoryPath {@link Path} of an write folder
      * @throws IOException if an I/O error occurs
      */
     public void outputPAR(Path outDirectoryPath) throws IOException {
@@ -441,7 +441,7 @@ public class SACMaker implements Runnable {
     }
 
     /**
-     * compute {@link SpcBody} for output.
+     * compute {@link SpcBody} for write.
      *
      * @param body to compute
      */
@@ -465,7 +465,7 @@ public class SACMaker implements Runnable {
     }
 
     /**
-     * @param outPath {@link Path} of a foldew which will conatin output sac files.
+     * @param outPath {@link Path} of a foldew which will conatin write sac files.
      */
     public void setOutPath(Path outPath) {
         outDirectoryPath = outPath;

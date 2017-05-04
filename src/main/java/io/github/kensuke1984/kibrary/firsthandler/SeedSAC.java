@@ -35,7 +35,7 @@ class SeedSAC implements Runnable {
      */
     private static final double delta = 0.05;
     /**
-     * Sampling Hz in output SacFile
+     * Sampling Hz in write SacFile
      */
     private static final double samplingHz = 20;
     /**
@@ -63,11 +63,11 @@ class SeedSAC implements Runnable {
      */
     private GlobalCMTID id;
     /**
-     * Minimum epicentral distance of output sac files 震央距離の最小値
+     * Minimum epicentral distance of write sac files 震央距離の最小値
      */
     private double epicentralDistanceMin = 0;
     /**
-     * Maximum epicentral distance of output sac files 震央距離の最大値
+     * Maximum epicentral distance of write sac files 震央距離の最大値
      */
     private double epicentralDistanceMax = 180;
     /**
@@ -457,7 +457,7 @@ class SeedSAC implements Runnable {
     public void run() {
         if (!eventDirAlreadyExists) throw new RuntimeException("The condition is no good.");
         System.err.println("Opening " + seedFile + " in " + eventDir);
-        // run rdseed -q output -fRd
+        // run rdseed -q write -fRd
         try {
             seedFile.extract(seedFile.getSeedPath().getParent());
         } catch (IOException e1) {

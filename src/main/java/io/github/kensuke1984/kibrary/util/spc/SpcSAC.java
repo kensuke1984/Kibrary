@@ -95,7 +95,7 @@ public final class SpcSAC implements Operation {
             pw.println("manhattan SpcSAC");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
-            pw.println("##SACComponents for output (Z R T)");
+            pw.println("##SACComponents for write (Z R T)");
             pw.println("#components");
             pw.println("###If you do NOT want to use PSV or SH, you set the one 'null'.");
             pw.println("##Path of a PSV folder (.)");

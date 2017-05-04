@@ -27,7 +27,9 @@ import java.util.stream.IntStream;
  * <p>
  * <p>
  * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
- *
+ * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
+ * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
+
  * @author Kensuke Konishi
  * @version 0.3.12b
  */
@@ -230,7 +232,7 @@ final class ANISOtimeCLI {
         Path outfile = Paths.get(cmd.getOptionValue("o", "anisotime.rcs"));
 
         if (Files.exists(outfile)) {
-            System.err.println(outfile + " already exists. Option '-o' allows changing the output file name.");
+            System.err.println(outfile + " already exists. Option '-o' allows changing the write file name.");
             return;
         }
         double[] ranges = Arrays.stream(cmd.getOptionValue("rs").split(",")).mapToDouble(Double::parseDouble).toArray();
@@ -244,8 +246,8 @@ final class ANISOtimeCLI {
         targets[targets.length - 1] = max;
         try (PrintStream ps = new PrintStream(Files.newOutputStream(outfile, StandardOpenOption.CREATE_NEW))) {
             ps.println("#created by " + INPUT);
+            Map<Raypath, Double> deltaPathMap = new HashMap<>();
             for (Phase phase : targetPhases) {
-                Map<Raypath, Double> deltaPathMap = new HashMap<>();
                 if (phase.isDiffracted()) {
                     Raypath diff = catalog.searchPath(phase, eventR, 0, relativeAngleMode)[0];
                     double sAngle = Math.toDegrees(diff.computeDelta(eventR, phase));
@@ -257,7 +259,7 @@ final class ANISOtimeCLI {
                     }
                     continue;
                 }
-
+                deltaPathMap.clear();
                 for (double d : targets)
                     for (Raypath p : catalog.searchPath(phase, eventR, Math.toRadians(d), relativeAngleMode))
                         deltaPathMap.put(p, d);

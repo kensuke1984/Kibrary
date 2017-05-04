@@ -23,7 +23,7 @@ public class ExternalProcess {
     }
 
     /**
-     * {@link Stream} for standard output
+     * {@link Stream} for standard write
      */
     protected final InputStreamThread standardOutput;
     /**
@@ -81,7 +81,7 @@ public class ExternalProcess {
     }
 
     /**
-     * @return {@link InputStreamThread} connected to a standard output to the
+     * @return {@link InputStreamThread} connected to a standard write to the
      * process
      */
     public InputStreamThread getStandardOutput() {

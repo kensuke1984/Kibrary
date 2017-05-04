@@ -1,21 +1,50 @@
 package io.github.kensuke1984.kibrary.butterworth;
 
+import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * 斎藤正徳 漸化式ディジタルフィルタ<br>
  * |B(σ)|<sup>2</sup> = 1/(1+σ<sup>2n</sup>)<br>
  * B(σ)= Π{1/i(σ-σ<sub>j</sub>)} <br>
- * バンドパス実装を目指す 透過域の振幅は1/(1+ap<sup>2</sup>)以上<br>
- * 遮断域の振幅は1/(1+as<sup>2</sup>)以下<br>
+ * Amplitude ratio in a band is equal or more than 1/(1+ap<sup>2</sup>) <br>
+ * Amplitude ratio at outside cutoff frequency is reduced to equal or less than 1/(1+as<sup>2</sup>) <br>
+ * <p>
  * ω=2πfδt
  *
  * @author Kensuke Konishi
- * @version 0.1.3.3
+ * @version 0.1.4
  */
 public class BandPassFilter extends ButterworthFilter {
+
+    /**
+     * @param args [np] [low limiter (Hz)] [higher limit (Hz)] [SAC file]
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length != 4)
+            throw new IllegalArgumentException("Usage:[np] [lower limit (Hz)] [higher limit (Hz)] [SAC file]");
+        int n = Integer.parseInt(args[0]);
+        Path path = Paths.get(args[3]);
+        SACData sac = new SACFileName(path).read();
+        if (sac.isFiltered()) throw new RuntimeException(args[3] + " is already filtered.");
+        double delta = sac.getValue(SACHeaderEnum.DELTA);
+
+        double low = 2 * Math.PI * Double.parseDouble(args[1]) * delta;
+        double high = 2 * Math.PI * Double.parseDouble(args[2]) * delta;
+
+        ButterworthFilter filter = new BandPassFilter(high, low, n);
+        Path out = Files.createTempDirectory(Paths.get("."), "filtered");
+        sac.applyButterworthFilter(filter).writeSAC(out.resolve(path.getFileName()));
+    }
 
     /**
      * maximum value of transmission band

@@ -66,14 +66,14 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     private long dataLength;
     /**
-     * This constructor is only for BasicID. All output ID must have a station,
+     * This constructor is only for BasicID. All write ID must have a station,
      * a Global CMT ID and period ranges in the input ones.
      *
      * @param idPath         Path for ID file (must not exist)
      * @param dataPath       Path for data file (must not exist)
-     * @param stationSet     must contain all information of the IDs to output
-     * @param globalCMTIDSet must contain all information of the IDs to output
-     * @param periodRanges   must contain all information of the IDs to output. If you want
+     * @param stationSet     must contain all information of the IDs to write
+     * @param globalCMTIDSet must contain all information of the IDs to write
+     * @param periodRanges   must contain all information of the IDs to write. If you want
      *                       to use ranges [10, 30] and [50,100] then the periodRanges
      *                       should be new double[][]{{10,30},{50,100}}
      * @throws IOException if an error occurs
@@ -84,17 +84,17 @@ public class WaveformDataWriter implements Closeable, Flushable {
     }
 
     /**
-     * This constructor is only for PartialID. All output ID must have a
+     * This constructor is only for PartialID. All write ID must have a
      * station, a Global CMT ID and period ranges in the input ones.
      *
      * @param idPath             Path for ID file (must not exist)
      * @param dataPath           Path for data file (must not exist)
-     * @param stationSet         must contain all information of the IDs to output
-     * @param globalCMTIDSet     must contain all information of the IDs to output
-     * @param periodRanges       must contain all information of the IDs to output. If you want
+     * @param stationSet         must contain all information of the IDs to write
+     * @param globalCMTIDSet     must contain all information of the IDs to write
+     * @param periodRanges       must contain all information of the IDs to write. If you want
      *                           to use ranges [10, 30] and [50,100] then the periodRanges
      *                           should be new double[][]{{10,30},{50,100}}
-     * @param perturbationPoints must contain all information of the IDs to output
+     * @param perturbationPoints must contain all information of the IDs to write
      * @throws IOException if an error occurs
      */
     public WaveformDataWriter(Path idPath, Path dataPath, Set<Station> stationSet, Set<GlobalCMTID> globalCMTIDSet,
@@ -191,7 +191,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
     }
 
     /**
-     * @param basicID StartByte will be ignored and set properly in the output file.
+     * @param basicID StartByte will be ignored and set properly in the write file.
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addBasicID(BasicID basicID) throws IOException {
@@ -235,7 +235,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 
     /**
      * @param partialID {@link PartialID} must contain waveform data. StartByte will
-     *                  be ignored and set properly in the output file.
+     *                  be ignored and set properly in the write file.
      * @throws IOException if an I/O error occurs
      */
     public synchronized void addPartialID(PartialID partialID) throws IOException {

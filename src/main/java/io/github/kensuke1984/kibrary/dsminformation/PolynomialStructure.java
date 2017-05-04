@@ -756,8 +756,8 @@ public class PolynomialStructure implements Serializable {
     }
 
     /**
-     * @param outPath {@link Path} of an output file.
-     * @param options for output
+     * @param outPath {@link Path} of an write file.
+     * @param options for write
      * @throws IOException if an I/O error occurs
      */
     public void writePSV(Path outPath, OpenOption... options) throws IOException {
@@ -765,8 +765,8 @@ public class PolynomialStructure implements Serializable {
     }
 
     /**
-     * @param outPath {@link Path} of an output file.
-     * @param options for output
+     * @param outPath {@link Path} of an write file.
+     * @param options for write
      * @throws IOException if an I/O error occurs
      */
     public void writeSH(Path outPath, OpenOption... options) throws IOException {

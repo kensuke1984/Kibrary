@@ -202,7 +202,7 @@ public class DataRequestor implements Operation {
     }
 
     /**
-     * output a break fast mail for the input id
+     * write a break fast mail for the input id
      *
      * @param id of {@link GlobalCMTID}
      * @return BreakFastMail for the id

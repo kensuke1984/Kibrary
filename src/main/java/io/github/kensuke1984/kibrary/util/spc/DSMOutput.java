@@ -9,7 +9,7 @@ import io.github.kensuke1984.kibrary.util.Location;
 import java.util.List;
 
 /**
- * Data of DSM output
+ * Data of DSM write
  *
  * @author Kensuke Konishi
  * @version 0.0.1

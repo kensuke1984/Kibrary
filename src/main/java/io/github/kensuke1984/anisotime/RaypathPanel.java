@@ -58,7 +58,7 @@ final class RaypathPanel extends JPanel {
     }
 
     /**
-     * @param outputStream output stream (will not be closed by this method.)
+     * @param outputStream write stream (will not be closed by this method.)
      * @param phase        to be shown
      * @param rayparameter p
      * @param delta        [rad] to be shown.

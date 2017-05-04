@@ -55,8 +55,8 @@ public class SyntheticDSMInfo extends DSMheader {
     /**
      * PSV計算用のファイル出力
      *
-     * @param psvPath Path of an output file
-     * @param options for output
+     * @param psvPath Path of an write file
+     * @param options for write
      * @throws IOException if an I/O error occurs
      */
     public void writePSV(Path psvPath, OpenOption... options) throws IOException {
@@ -87,8 +87,8 @@ public class SyntheticDSMInfo extends DSMheader {
             STATIONS.stream().sorted().map(Station::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
-            // output
-            pw.println("c parameter for the output file");
+            // write
+            pw.println("c parameter for the write file");
             STATIONS.stream().sorted().map(Station::getName)
                     .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "PSV.spc"));
             pw.println("end");
@@ -99,8 +99,8 @@ public class SyntheticDSMInfo extends DSMheader {
     /**
      * SH計算用のファイル出力
      *
-     * @param outPath output path
-     * @param options for output
+     * @param outPath write path
+     * @param options for write
      * @throws IOException if an I/O error occurs
      */
     public void writeSH(Path outPath, OpenOption... options) throws IOException {
@@ -128,8 +128,8 @@ public class SyntheticDSMInfo extends DSMheader {
             STATIONS.stream().sorted().map(Station::getPosition)
                     .forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
-            // output
-            pw.println("c parameter for the output file");
+            // write
+            pw.println("c parameter for the write file");
             STATIONS.stream().sorted().map(Station::getName)
                     .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "SH.spc"));
             pw.println("end");

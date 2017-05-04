@@ -27,7 +27,7 @@ public interface ModelGenerator<M> {
     /**
      * Write a model on a file.
      *
-     * @param path    file name of the output
+     * @param path    file name of the write
      * @param model   to write in the path
      * @param options options for writing
      */
@@ -38,7 +38,7 @@ public interface ModelGenerator<M> {
     /**
      * This method is used by {@link #write(Path, Object, OpenOption...)} as default.
      *
-     * @param model to output
+     * @param model to write
      * @return string describing the model
      */
     String toString(M model);

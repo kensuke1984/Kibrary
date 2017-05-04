@@ -89,7 +89,7 @@ public class PerturbationPoint extends HorizontalPoint {
      *
      * @param r              array of radius
      * @param horizontalInfo file for {@link HorizontalPoint}
-     * @param out            for output
+     * @param out            for write
      * @throws NoSuchFileException if any
      */
     public static void createPerturbationPoint(double[] r, File horizontalInfo, File out) throws NoSuchFileException {

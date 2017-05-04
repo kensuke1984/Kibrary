@@ -68,7 +68,7 @@ public final class TimewindowInformationFile {
      *
      * @param outputPath to write the information on
      * @param infoSet    Set of timewindow information
-     * @param options    for output
+     * @param options    for write
      * @throws IOException if an I/O error occurs.
      */
     public static void write(Path outputPath, Set<TimewindowInformation> infoSet, OpenOption... options)
@@ -141,7 +141,7 @@ public final class TimewindowInformationFile {
             Set<TimewindowInformation> infoSet =
                     Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs)).collect(Collectors.toSet());
             System.err.println(
-                    infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));
+                    infoSet.size() + " timewindow data found in " + Utilities.toTimeString(System.nanoTime() - t));
             return Collections.unmodifiableSet(infoSet);
         }
     }
