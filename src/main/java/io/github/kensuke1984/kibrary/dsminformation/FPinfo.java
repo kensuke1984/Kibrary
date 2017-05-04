@@ -29,7 +29,7 @@ public class FPinfo extends DSMheader {
 
     /**
      * @param event              source
-     * @param outputDir          output folder
+     * @param outputDir          write folder
      * @param structure          structure
      * @param tlen               must be a power of 2 (2<sup>n</sup>)/10
      * @param np                 must be a power of 2 (2<sup>n</sup>)
@@ -71,8 +71,8 @@ public class FPinfo extends DSMheader {
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
 
-            // output info
-            pw.println("c output directory");
+            // write info
+            pw.println("c write directory");
             pw.println(OUTPUT + "/");
             pw.println(EVENT);
             pw.println("c events and stations");
@@ -113,8 +113,8 @@ public class FPinfo extends DSMheader {
             pw.println(Arrays.stream(mt).mapToObj(Double::toString).collect(Collectors.joining(" ")) +
                     " Moment Tensor (1.e25 dyne cm)");
 
-            // output info
-            pw.println("c output directory");
+            // write info
+            pw.println("c write directory");
             pw.println(OUTPUT + "/");
             pw.println(EVENT);
             pw.println("c events and stations");
@@ -131,7 +131,7 @@ public class FPinfo extends DSMheader {
     }
 
     /**
-     * @return name of the output folder
+     * @return name of the write folder
      */
     public String getOutputDir() {
         return OUTPUT;

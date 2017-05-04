@@ -26,16 +26,16 @@ public final class SACUtil {
     }
 
     /**
-     * By rotating hoge.E and hoge.N, output hoge.R and hoge.T The rotation is
+     * By rotating hoge.E and hoge.N, write hoge.R and hoge.T The rotation is
      * done by SAC.
      *
      * @param sacEPath    SAC file which component is E. must exist.
      * @param sacNPath    SAC file which component is N. must exist.
-     * @param outputRPath for output SAC with respect to R
-     * @param outputTPath for output SAC with respect to T
-     * @return if the output is successful
+     * @param outputRPath for write SAC with respect to R
+     * @param outputTPath for write SAC with respect to T
+     * @return if the write is successful
      * @throws IOException if an I/O error occurs. If sacEPath or sacNPath does not
-     *                     exist, if output Paths already exist.
+     *                     exist, if write Paths already exist.
      */
     public static boolean rotate(Path sacEPath, Path sacNPath, Path outputRPath, Path outputTPath) throws IOException {
         if (Files.exists(outputRPath)) throw new FileAlreadyExistsException(outputRPath.toString());
@@ -73,10 +73,10 @@ public final class SACUtil {
     }
 
     /**
-     * @param outPath   for output (If the file exists, it will be overwritten)
-     * @param headerMap of output SAC
-     * @param data      of output SAC. The length must be same as NPTS.
-     * @param options   Options for output
+     * @param outPath   for write (If the file exists, it will be overwritten)
+     * @param headerMap of write SAC
+     * @param data      of write SAC. The length must be same as NPTS.
+     * @param options   Options for write
      * @throws IOException if an I/O error occurs
      */
     public static void writeSAC(Path outPath, Map<SACHeaderEnum, String> headerMap, double[] data,

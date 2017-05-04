@@ -75,6 +75,34 @@ public class ObservationEquation {
     }
 
     /**
+     * TODO
+     * Finite frequency kernel of time correlation with respect to the input.
+     *
+     * @param id        of the kernel.
+     * @param parameter for K.
+     * @return K<sub>p</sub><sup>T</sup>.
+     */
+    public double computeTraveltimeKernel(BasicID id, UnknownParameter parameter) {
+        RealVector jt = DVECTOR.computeJtime(id);
+        RealVector kUt = getPartialOf(id, parameter);
+        return jt.dotProduct(kUt) / id.getSamplingHz();
+    }
+
+    /**
+     * TODO
+     * Finite frequency kernel of amplitude with respect to the parameter.
+     *
+     * @param id        of the kernel.
+     * @param parameter for K.
+     * @return K<sub>p</sub><sup>lnA</sup>.
+     */
+    public double computeAmplitudeKernel(BasicID id, UnknownParameter parameter) {
+        RealVector jlnA = DVECTOR.computeJlnA(id);
+        RealVector kUt = getPartialOf(id, parameter);
+        return jlnA.dotProduct(kUt) / id.getSamplingHz();
+    }
+
+    /**
      * A&delta;m = &delta;d 求めたいのは (&delta;d - A&delta;m)<sup>T</sup>(&delta;d - A&delta;m) / |obs|<sup>2</sup>
      * <p>
      * (&delta;d<sup>T</sup> - &delta;m<sup>T</sup>A<sup>T</sup>)(&delta;d - A&delta;m) = &delta;d<sup>T</sup>&delta;d - &delta;d<sup>T
@@ -198,7 +226,7 @@ public class ObservationEquation {
     /**
      * Aを書く それぞれのpartialごとに分けて出す debug用？
      *
-     * @param outputPath {@link Path} for an output folder
+     * @param outputPath {@link Path} for an write folder
      */
     void outputA(Path outputPath) throws IOException {
         if (a == null) {

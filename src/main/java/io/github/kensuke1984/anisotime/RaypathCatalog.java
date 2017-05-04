@@ -5,12 +5,10 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
+import org.apache.commons.math3.util.Precision;
 
 import java.io.*;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
@@ -26,9 +24,48 @@ import java.util.function.BiFunction;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.12b
+ * @version 0.0.13b
  */
 public class RaypathCatalog implements Serializable {
+
+    /**
+     * Creates a catalog for a model file (model file, or prem, iprem, ak135).
+     * The catalog computes so densely as any adjacent raypath pairs has smaller gap
+     * than (&delta;&Delta;) in P, PcP, S and ScS.
+     * Computation mesh in each part is (inner-core, outer-core and mantle), respectively.
+     * (Integral threshold) controls the range for Jeffreys and Jeffreys.
+     *
+     * @param args [model file (prem, iprem, ak135 or a polynomial file only now)] [&delta&Delta (deg)] [inner-core]
+     *             [outer-core] [mantle] intervals [integral threshold (0,1)]
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length != 6) throw new IllegalArgumentException(
+                "Usage: [model name, polynomial file] [\u03b4\u0394 (deg)] [inner-core] [outer-core] [mantle] [integral threshold (0,1)]");
+        VelocityStructure structure;
+        switch (args[0]) {
+            case "prem":
+            case "PREM":
+                structure = VelocityStructure.prem();
+                break;
+            case "iprem":
+            case "iPREM":
+                structure = VelocityStructure.iprem();
+                break;
+            case "ak135":
+            case "AK135":
+                structure = VelocityStructure.ak135();
+                break;
+            default:
+                structure = new PolynomialStructure(Paths.get(args[0]));
+        }
+        double dDelta = Math.toRadians(Double.parseDouble(args[1]));
+        ComputationalMesh mesh =
+                new ComputationalMesh(structure, Double.parseDouble(args[2]), Double.parseDouble(args[3]),
+                        Double.parseDouble(args[4]), Double.parseDouble(args[5]));
+        computeCatalogue(structure, mesh, dDelta);
+    }
+
+
     /**
      * Catalog for PREM. &delta;&Delta; = 1. Mesh is simple.
      */
@@ -206,7 +243,10 @@ public class RaypathCatalog implements Serializable {
                         default:
                             c = read(p);
                     }
-                    if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta) return c;
+                    if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta) {
+                        System.err.println("Catalog is found. " + p);
+                        return c;
+                    }
                 } catch (InvalidClassException ice) {
                     System.err.println(p + " may be out of date.");
                 }
@@ -218,6 +258,7 @@ public class RaypathCatalog implements Serializable {
         try {
             Path p = Files.createTempFile(share, "raypath", ".cat");
             cat.write(p);
+            System.err.println(p + " is created.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -564,7 +605,7 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param path the path to the output file
+     * @param path the path to the write file
      * @throws IOException If an I/O error happens. it throws error.
      */
     public void write(Path path, OpenOption... options) throws IOException {
@@ -578,16 +619,15 @@ public class RaypathCatalog implements Serializable {
      * @param eventR        [km] event radius
      * @param targetDelta   [rad] target &Delta;
      * @param relativeAngle if the input targetDelta is a relative angle.
-     * @return Never returns null. zero length array is possible.
+     * @return Arrays of raypaths which epicentral distances are close to the targetDelta. Never returns null. zero length array is possible.
      */
     public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
 
         Raypath[] raypaths = getRaypaths();
-        // System.err.println("Looking for Phase:" + targetPhase + ",
-        // \u0394[\u02da]:"
-        // + Precision.round(Math.toDegrees(targetDelta), 4));
+        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" +
+                Precision.round(Math.toDegrees(targetDelta), 4));
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
@@ -623,9 +663,8 @@ public class RaypathCatalog implements Serializable {
      * @return [s] arrays of travel times.
      */
     public double[] searchTime(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
-        // System.err.println("Looking for Phase:" + targetPhase + ",
-        // \u0394[\u02da]:"
-        // + Precision.round(Math.toDegrees(targetDelta), 4));
+        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" +
+                Precision.round(Math.toDegrees(targetDelta), 4));
         List<Double> timeList = new ArrayList<>();
         Raypath[] raypaths = getRaypaths();
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
@@ -654,6 +693,8 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
+     * The returning travel time is computed by the input raypath0 and the 2 raypaths with the closest larger and smaller rayparameters.
+     *
      * @param targetPhase   to look for
      * @param eventR        [km] radius of the source
      * @param targetDelta   [rad]

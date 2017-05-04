@@ -91,7 +91,7 @@ public class TimewindowInformation extends Timewindow {
 
     @Override
     public String toString() {
-        return station + " " + id + " " + component + " " + startTime + " " + endTime;
+        return station + " " + station.getNetwork() + " " + id + " " + component + " " + startTime + " " + endTime;
     }
 
 }

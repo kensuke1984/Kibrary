@@ -86,8 +86,8 @@ public class UnknownParameterFile {
 
     /**
      * @param parameterList List of unknown parameters
-     * @param outPath       for output
-     * @param options       for output
+     * @param outPath       for write
+     * @param options       for write
      * @throws IOException if an I/O error occurs
      */
     public static void write(List<UnknownParameter> parameterList, Path outPath, OpenOption... options)

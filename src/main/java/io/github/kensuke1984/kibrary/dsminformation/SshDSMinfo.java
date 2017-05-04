@@ -35,7 +35,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     /**
      * sshpsv(TI)計算用のファイル出力
      *
-     * @param psvPath output path
+     * @param psvPath write path
      * @param options options for writing
      * @throws IOException if any
      */
@@ -78,7 +78,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     /**
      * sshpsvi(isotropic)計算用のファイル出力
      *
-     * @param psvPath output path
+     * @param psvPath write path
      * @param options options for writing
      * @throws IOException if any
      */
@@ -114,7 +114,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     /**
      * sshsh(TI)計算用のファイル出力
      *
-     * @param shPath  output path
+     * @param shPath  write path
      * @param options options for writing
      * @throws IOException if any
      */
@@ -153,7 +153,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     /**
      * sshshi(isotropic)計算用のファイル出力
      *
-     * @param shPath  output path
+     * @param shPath  write path
      * @param options for writing
      * @throws IOException if any
      */

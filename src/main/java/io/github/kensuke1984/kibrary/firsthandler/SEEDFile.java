@@ -168,7 +168,7 @@ public class SEEDFile {
      * array of String
      *
      * @param option -cf 等
-     * @return output of rdseed$option. (this method never returns null)
+     * @return write of rdseed$option. (this method never returns null)
      * @throws IOException if any
      */
     private String[] readSeed(String option) throws IOException {
@@ -185,7 +185,7 @@ public class SEEDFile {
     }
 
     /**
-     * Run rdseed -q output -fRd $seedFile<br>
+     * Run rdseed -q write -fRd $seedFile<br>
      *
      * @param outputPath rdseed の出力先 if this is relative path, then the root is the
      *                   directory of the seed file

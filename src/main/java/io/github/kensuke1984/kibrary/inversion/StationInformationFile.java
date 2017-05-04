@@ -35,8 +35,8 @@ public final class StationInformationFile {
 
     /**
      * @param stationSet Set of station information
-     * @param outPath    of output file
-     * @param options    for output
+     * @param outPath    of write file
+     * @param options    for write
      * @throws IOException if an I/O error occurs
      */
     public static void write(Set<Station> stationSet, Path outPath, OpenOption... options) throws IOException {
@@ -78,7 +78,7 @@ public final class StationInformationFile {
      *
      * @param workPath under which this looks for event folders and stations under
      *                 the folders
-     * @param options  for output
+     * @param options  for write
      * @throws IOException if an I/O error occurs
      */
     public static void createStationInformationFile(Path workPath, OpenOption... options) throws IOException {

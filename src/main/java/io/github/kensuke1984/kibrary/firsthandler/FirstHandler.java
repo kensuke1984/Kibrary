@@ -51,7 +51,7 @@ public class FirstHandler implements Operation {
      */
     private boolean removeIntermediateFile;
     /**
-     * output directory
+     * write directory
      */
     private Path outPath;
     private Path workPath;
@@ -125,7 +125,7 @@ public class FirstHandler implements Operation {
     @Override
     public void run() throws IOException {
         System.err.println("Working directory is " + workPath);
-        // check if conditions. if for example there are already existing output
+        // check if conditions. if for example there are already existing write
         // files, this program starts here,
         if (!Files.exists(workPath)) throw new NoSuchFileException(workPath.toString());
         outPath = workPath.resolve("fh" + Utilities.getTemporaryString());
@@ -137,7 +137,7 @@ public class FirstHandler implements Operation {
         System.err.println(seedPaths.size() + " seeds are found.");
         if (seedPaths.isEmpty()) return;
 
-        // creates environment (make output folder ...)
+        // creates environment (make write folder ...)
         Files.createDirectories(outPath);
         System.err.println("Output directory is " + outPath);
 

@@ -19,7 +19,7 @@ import java.util.stream.DoubleStream;
  * TODO Automesh by QDelta ?
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1.1
+ * @version 0.0.3
  */
 public class ComputationalMesh implements Serializable {
 
@@ -29,16 +29,17 @@ public class ComputationalMesh implements Serializable {
      */
     static final double eps = 1e-7;
     /**
-     * 2016/12/3
+     * 2017/4/17
      */
-    private static final long serialVersionUID = 9145563734176848831L;
+    private static final long serialVersionUID = 6288675010169012591L;
     /**
      * Threshold for the integration. This value (ratio) must be positive and
      * less than 1. If it is a, the difference between two Q<sub>T</sub> at
      * adjacent points must be with in a. a &lt; Q<sub>T</sub> (i)/Q<sub>T</sub>
      * (i+1) &lt; 1/a
+     * TODO for meshing
      */
-    final double integralThreshold = 0.9;
+    final double INTEGRAL_THRESHOLD;
 
     /**
      * Mesh for the inner-core [0, inner-core boundary] [km]
@@ -71,9 +72,12 @@ public class ComputationalMesh implements Serializable {
      * @param mantleInterval    [km] interval in the mantle
      */
     ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
-                      double mantleInterval) {
+                      double mantleInterval, double integralThreshold) {
         if (innerCoreInterval < eps || outerCoreInterval < eps || mantleInterval < eps)
             throw new RuntimeException("Intervals are too small.");
+        if (1 <= integralThreshold || integralThreshold <= 0)
+            throw new RuntimeException("Integral threshold must be (0,1). " + integralThreshold);
+        INTEGRAL_THRESHOLD = integralThreshold;
         createSimpleMesh(structure, innerCoreInterval, outerCoreInterval, mantleInterval);
     }
 
@@ -88,7 +92,7 @@ public class ComputationalMesh implements Serializable {
     private static double[] point(double startR, double endR, double deltaR) {
         int n = Math.max(1, (int) Math.round((endR - startR) / deltaR));
         double[] x = new double[n + 1];
-        for (int i = 0; i < n; i++)
+        for (int i = 1; i < n; i++)
             x[i] = startR + i * deltaR;
         x[0] = startR + eps;
         x[n] = endR - eps;
@@ -96,7 +100,7 @@ public class ComputationalMesh implements Serializable {
     }
 
     public static ComputationalMesh simple(VelocityStructure structure) {
-        return new ComputationalMesh(structure, 1, 1, 1);
+        return new ComputationalMesh(structure, 1, 1, 1, 0.9);
     }
 
     /**
@@ -158,12 +162,19 @@ public class ComputationalMesh implements Serializable {
         return result;
     }
 
+    /**
+     * All the radii in the mesh and the integral_threshold are checked.
+     *
+     * @param obj another mesh
+     * @return if the mesh (obj) equals to this.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         ComputationalMesh other = (ComputationalMesh) obj;
+        if (Double.compare(INTEGRAL_THRESHOLD, other.INTEGRAL_THRESHOLD) != 0) return false;
         if (innerCoreMesh == null) {
             if (other.innerCoreMesh != null) return false;
         } else if (!Arrays.equals(innerCoreMesh.toArray(), other.innerCoreMesh.toArray())) return false;
@@ -192,7 +203,6 @@ public class ComputationalMesh implements Serializable {
         if (r <= mesh.getEntry(0)) return 0;
         for (int i = 1; i < mesh.getDimension(); i++)
             if (r < mesh.getEntry(i)) return i - 1;
-
         return mesh.getDimension() - 1;
     }
 

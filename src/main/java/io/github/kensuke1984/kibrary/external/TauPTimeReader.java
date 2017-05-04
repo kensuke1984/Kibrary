@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
  * </p>
  * <p>
  * taup_time must be in PATH and it must run correctly.<br>
- * All the standard output and errors will go to the bit bucket
+ * All the standard write and errors will go to the bit bucket
  * <p>
  * PREM is used for travel times.
  *

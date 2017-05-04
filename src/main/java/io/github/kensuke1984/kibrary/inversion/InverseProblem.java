@@ -58,7 +58,7 @@ public abstract class InverseProblem {
     /**
      * 解のアウトプット
      *
-     * @param outPath {@link File} for output of solutions
+     * @param outPath {@link File} for write of solutions
      * @throws IOException if an I/O error occurs
      */
     public void outputAns(Path outPath) throws IOException {

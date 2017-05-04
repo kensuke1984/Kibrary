@@ -50,6 +50,35 @@ public class Dvector {
      */
     private RealVector dVector;
 
+    //TODO
+    RealVector computeJlnA(BasicID id) {
+        RealVector u = synVectors[whichTimewindow(id)];
+        double h = 1 / id.getSamplingHz();
+        double denominator = u.dotProduct(u) * h;
+        return u.mapDivide(denominator);
+    }
+
+    //TODO
+    RealVector computeJtime(BasicID id) {
+        RealVector u = synVectors[whichTimewindow(id)];
+        double h = 1 / id.getSamplingHz();
+        RealVector partial = derivative(u, h);
+        double denominator = partial.dotProduct(partial) * h;
+        return partial.mapDivide(-denominator);
+    }
+
+    //TODO
+    private static RealVector derivative(RealVector u, double h) {
+        int length = u.getDimension();
+        RealVector par = new ArrayRealVector(length);
+        //forward difference
+        for (int i = 0; i < length - 1; i++)
+            par.setEntry(i, (u.getEntry(i + 1) - u.getEntry(i)) / h);
+        par.setEntry(length - 1, par.getEntry(length - 2));
+        return par;
+    }
+
+
     /**
      * イベントごとのvariance
      */
@@ -318,7 +347,7 @@ public class Dvector {
     /**
      * syn.dat del.dat obs.dat obsOrder synOrder.datを outDirectory下に書き込む
      *
-     * @param outPath Path for output
+     * @param outPath Path for write
      * @throws IOException if an I/O error occurs
      */
     public void outOrder(Path outPath) throws IOException {
@@ -336,8 +365,8 @@ public class Dvector {
      * vectors（各タイムウインドウ）に対して、観測波形とのvarianceを求めてファイルに書き出す
      * Create event folders under the outPath and variances are written for each path.
      *
-     * @param outPath Root for the output
-     * @param vectors {@link RealVector}s for output
+     * @param outPath Root for the write
+     * @param vectors {@link RealVector}s for write
      * @throws IOException if an I/O error occurs
      */
     public void outputVarianceOf(Path outPath, RealVector[] vectors) throws IOException {

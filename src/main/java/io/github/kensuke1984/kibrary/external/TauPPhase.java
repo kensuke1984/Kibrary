@@ -3,7 +3,7 @@ package io.github.kensuke1984.kibrary.external;
 import io.github.kensuke1984.anisotime.Phase;
 
 /**
- * The output from taup_time.
+ * The write from taup_time.
  * <p>
  * This class is <b>immutable</b>
  *

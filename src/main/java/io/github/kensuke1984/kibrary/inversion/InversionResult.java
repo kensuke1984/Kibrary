@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Utilities for output of {@link LetMeInvert}.
+ * Utilities for write of {@link LetMeInvert}.
  *
  * @author Kensuke Konishi
  * @version 0.1.2.1

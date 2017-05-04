@@ -154,7 +154,7 @@ public class Partial1DDatasetMaker implements Operation {
             pw.println("#maxFreq");
             pw.println("#double");
             pw.println("#partialSamplingHz cant change now");
-            pw.println("##double sampling Hz in output dataset (1)");
+            pw.println("##double sampling Hz in write dataset (1)");
             pw.println("#finalSamplingHz");
             pw.println("##radius for perturbation points, must be set");
             pw.println("#bodyR 3505 3555 3605");
@@ -309,7 +309,7 @@ public class Partial1DDatasetMaker implements Operation {
         stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
                 .collect(Collectors.toSet());
         idSet = Utilities.globalCMTIDSet(workPath);
-        // information about output partial types
+        // information about write partial types
         writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
         // sacdataを何ポイントおきに取り出すか
@@ -319,14 +319,11 @@ public class Partial1DDatasetMaker implements Operation {
 
         // create ThreadPool
         ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-        int characterLength = 20 + 3 * N_THREADS + 21 + 8;
-        String blankLine = String.format("%-" + characterLength + "s", "\r");
 
         Path idPath = workPath.resolve("partial1DID" + dateString + ".dat");
         Path datasetPath = workPath.resolve("partial1D" + dateString + ".dat");
         try (WaveformDataWriter pdw = new WaveformDataWriter(idPath, datasetPath, stationSet, idSet, periodRanges,
                 perturbationLocationSet)) {
-
             partialDataWriter = pdw;
             for (EventFolder eventDir : eventDirs)
                 execs.execute(new Worker(eventDir));
@@ -336,13 +333,13 @@ public class Partial1DDatasetMaker implements Operation {
                 Thread.sleep(100);
                 String per = processMap.entrySet().stream().map(e -> e.getValue().toString())
                         .collect(Collectors.joining(" "));
-                System.err.print(blankLine + "\rWorking each thread " + per + " % : entire progress " +
+                System.err.print("\033[2K\rWorking each thread " + per + " % : entire progress " +
                         Math.ceil(100.0 * numberOfFinishedEvents.get() / eventDirs.size()) + " %");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.err.println(blankLine + "\rWorking " + 100.0 + " %");
+        System.err.println("\u001B[2K\rWorking " + 100.0 + " %");
         String endLine = Partial1DDatasetMaker.class.getName() + " finished in " +
                 Utilities.toTimeString(System.nanoTime() - startTime);
         System.err.println(endLine);

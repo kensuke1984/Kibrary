@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
 public interface SACData extends SACHeaderData {
 
     /**
-     * @param sacFileName name of an output file
+     * @param sacFileName name of an write file
      * @param options     open options for outputting
      * @throws IOException if an I/O error occurs
      */
@@ -33,7 +33,7 @@ public interface SACData extends SACHeaderData {
     }
 
     /**
-     * @param outPath {@link Path} to output this SacFile
+     * @param outPath {@link Path} to write this SacFile
      * @param options {@link OpenOption} for outputting
      * @throws IOException if an I/O error occurs
      */
