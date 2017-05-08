@@ -168,7 +168,6 @@ public class SourceTimeFunction {
             System.err.println("tlen must be a tenth of a power of 2");
             bool = false;
         }
-
         return bool;
     }
 
@@ -273,6 +272,12 @@ public class SourceTimeFunction {
 
     }
 
+    /**
+     * TODO
+     *
+     * @param dataInFrequency
+     * @return
+     */
     private double[] inverseFourierTransform(Complex[] dataInFrequency) {
         // pack to temporary Complex array
         Complex[] data = new Complex[nptsInTimeDomain];
