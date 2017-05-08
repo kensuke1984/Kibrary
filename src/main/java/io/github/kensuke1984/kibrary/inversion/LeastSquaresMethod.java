@@ -1,9 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.*;
 
 import java.util.Arrays;
 
@@ -14,14 +11,14 @@ import java.util.Arrays;
  * <sup>T</sup>d
  *
  * @author Kensuke Konishi
- * @version 0.0.1b
+ * @version 0.0.2
  */
 public class LeastSquaresMethod extends InverseProblem {
 
-    private final double lambda;
+    private final double LAMBDA;
 
     /**
-     * Solve A<sup>T</sup>A + &lambda;I = A<sup>T</sup>d
+     * Solve A<sup>T</sup>A + &LAMBDA;I = A<sup>T</sup>d
      *
      * @param ata    Matrix A<sup>T</sup>A
      * @param atd    Vector A<sup>T</sup>d
@@ -30,7 +27,7 @@ public class LeastSquaresMethod extends InverseProblem {
     public LeastSquaresMethod(RealMatrix ata, RealVector atd, double lambda) {
         this.ata = ata;
         this.atd = atd;
-        this.lambda = lambda;
+        LAMBDA = lambda;
     }
 
     @Override
@@ -47,10 +44,9 @@ public class LeastSquaresMethod extends InverseProblem {
     @Override
     public void compute() {
         double[] diagonals = new double[ata.getColumnDimension()];
-        Arrays.fill(diagonals, lambda);
+        Arrays.fill(diagonals, LAMBDA);
         RealMatrix j = ata.add(MatrixUtils.createRealDiagonalMatrix(diagonals));
-        ans = new Array2DRowRealMatrix(ata.getRowDimension(), 1);
-        ans.setRowVector(0, MatrixUtils.inverse(j).operate(atd));
+        ans = new Array2DRowRealMatrix(MatrixUtils.inverse(j).operate(atd).toArray());
     }
 
     @Override

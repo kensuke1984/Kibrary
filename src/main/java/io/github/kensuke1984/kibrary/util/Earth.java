@@ -300,6 +300,8 @@ public final class Earth {
     }
 
     /**
+     * Compute volume with in an input range.
+     * Note that, for instance, the range is [point-0.5*dX, point+0.5*dX]
      * @param point      center location
      * @param dr         [km] radius
      * @param dLatitude  [deg] 地理緯度での間隔
@@ -310,7 +312,7 @@ public final class Earth {
         double r = point.getR();
         if (r <= 0) throw new RuntimeException("location has an invalid R:" + r);
 
-        double latitude = point.getLatitude();// 地理緯度
+        double latitude = point.getLatitude();
         double longitude = point.getLongitude();
         double startA = getExtendedShaft(point.toLocation(r - 0.5 * dr));
         double endA = getExtendedShaft(point.toLocation(r + 0.5 * dr));
