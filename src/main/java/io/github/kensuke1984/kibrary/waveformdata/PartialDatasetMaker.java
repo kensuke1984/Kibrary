@@ -8,6 +8,7 @@ import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -19,6 +20,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import org.apache.commons.math3.complex.Complex;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -60,7 +62,7 @@ import java.util.stream.Stream;
  * Because of DSM condition, stations can not have the same name...
  *
  * @author Kensuke Konishi
- * @version 2.3.0.5
+ * @version 2.3.1
  */
 public class PartialDatasetMaker implements Operation {
 
@@ -176,7 +178,9 @@ public class PartialDatasetMaker implements Operation {
             pw.println("#bpPath");
             pw.println("##Path of a forward propagate spc folder (FPinfo)");
             pw.println("#fpPath");
-            pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
+            pw.println("##String if 'modelName' is PREM, spectrum files in 'eventDir/PREM' are used.");
+            pw.println("##If it is unset, then automatically set as the name of the folder in the eventDirs");
+            pw.println("##but the eventDirs can have only one folder inside and they must be same.");
             pw.println("#modelName");
             pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
             pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
@@ -233,7 +237,7 @@ public class PartialDatasetMaker implements Operation {
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
         if (!property.containsKey("bpPath")) property.setProperty("bpPath", "BPinfo");
         if (!property.containsKey("fpPath")) property.setProperty("fpPath", "FPinfo");
-        if (!property.containsKey("modelName")) property.setProperty("modelName", "PREM");
+        if (!property.containsKey("modelName")) property.setProperty("modelName", "");
         if (!property.containsKey("maxFreq")) property.setProperty("maxFreq", "0.08");
         if (!property.containsKey("minFreq")) property.setProperty("minFreq", "0.005");
         // if (!property.containsKey("backward")) TODO allow user to change
@@ -266,7 +270,6 @@ public class PartialDatasetMaker implements Operation {
             sourceTimeFunction = -1;
             sourceTimeFunctionPath = getPath("sourceTimeFunction");
         }
-        modelName = property.getProperty("modelName");
 
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
@@ -279,6 +282,42 @@ public class PartialDatasetMaker implements Operation {
         // =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 
         finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+    }
+
+    /**
+     * TODO check
+     * Automatically find a model folder.
+     * Runtime exception occurs when fp or bp folders have more than 1 possible model folder.
+     * If a model name is already set in an information file, check if the name is valid.
+     *
+     * @throws IOException if any
+     */
+    private void setModelName() throws IOException {
+
+        modelName = property.getProperty("modelName");
+        Set<Path> bpFolderSet =
+                stationSet.stream().map(s -> bpPath.resolve("0000" + s.getName())).collect(Collectors.toSet());
+        Set<EventFolder> eventFolders = Utilities.eventFolderSet(fpPath);
+        if (modelName.isEmpty()) {
+            Set<String> possible =
+                    bpFolderSet.stream().flatMap(b -> Arrays.stream(b.toFile().listFiles(File::isDirectory)))
+                            .map(File::getName).collect(Collectors.toSet());
+            if (possible.size() != 1) throw new RuntimeException(
+                    "There are no model folder in bp folders or more than one folder. You must specify 'modelName' in the case.");
+            String model = possible.iterator().next();
+
+            Set<String> possibleNames =
+                    eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory)))
+                            .map(File::getName).collect(Collectors.toSet());
+            if (possibleNames.size() != 1) throw new RuntimeException(
+                    "There are no model folder in fp folders or more than one folder. You must specify 'modelName' in the case.");
+
+            if (!model.equals(possibleNames.iterator().next())) throw new RuntimeException("No valid model folder.");
+
+        }
+        if (!eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists) ||
+                !bpFolderSet.stream().map(p -> p.resolve(modelName)).allMatch(Files::exists))
+            throw new RuntimeException("There are some events without model folder " + modelName);
     }
 
     private void setLog() throws IOException {
@@ -317,6 +356,8 @@ public class PartialDatasetMaker implements Operation {
         int N_THREADS = Runtime.getRuntime().availableProcessors();
         writeLog("Running " + N_THREADS + " threads");
         setTimeWindow();
+        setModelName();
+
         // filter設計
         setBandPassFilter();
         // read a file for perturbation points.
