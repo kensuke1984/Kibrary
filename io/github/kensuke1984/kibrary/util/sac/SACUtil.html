@@ -162,7 +162,7 @@ extends java.lang.Object</pre>
       java.nio.file.Path&nbsp;sacNPath,
       java.nio.file.Path&nbsp;outputRPath,
       java.nio.file.Path&nbsp;outputTPath)</code>
-<div class="block">By rotating hoge.E and hoge.N, output hoge.R and hoge.T The rotation is
+    <div class="block">By rotating hoge.E and hoge.N, write hoge.R and hoge.T The rotation is
  done by SAC.</div>
 </td>
 </tr>
@@ -206,19 +206,20 @@ extends java.lang.Object</pre>
                              java.nio.file.Path&nbsp;outputRPath,
                              java.nio.file.Path&nbsp;outputTPath)
                       throws java.io.IOException</pre>
-<div class="block">By rotating hoge.E and hoge.N, output hoge.R and hoge.T The rotation is
+    <div class="block">By rotating hoge.E and hoge.N, write hoge.R and hoge.T The rotation is
  done by SAC.</div>
 <dl>
 <dt><span class="paramLabel">パラメータ:</span></dt>
 <dd><code>sacEPath</code> - SAC file which component is E. must exist.</dd>
 <dd><code>sacNPath</code> - SAC file which component is N. must exist.</dd>
-<dd><code>outputRPath</code> - for output SAC with respect to R</dd>
-<dd><code>outputTPath</code> - for output SAC with respect to T</dd>
+    <dd><code>outputRPath</code> - for write SAC with respect to R</dd>
+    <dd><code>outputTPath</code> - for write SAC with respect to T</dd>
 <dt><span class="returnLabel">戻り値:</span></dt>
-<dd>if the output is successful</dd>
+    <dd>if the write is successful</dd>
 <dt><span class="throwsLabel">例外:</span></dt>
 <dd><code>java.io.IOException</code> - if an I/O error occurs. If sacEPath or sacNPath does not
-             exist, if output Paths already exist.</dd>
+    exist, if write Paths already exist.
+</dd>
 </dl>
 </li>
 </ul>
@@ -235,10 +236,10 @@ extends java.lang.Object</pre>
                      throws java.io.IOException</pre>
 <dl>
 <dt><span class="paramLabel">パラメータ:</span></dt>
-<dd><code>outPath</code> - for output (If the file exists, it will be overwritten)</dd>
-<dd><code>headerMap</code> - of output SAC</dd>
-<dd><code>data</code> - of output SAC. The length must be same as NPTS.</dd>
-<dd><code>options</code> - Options for output</dd>
+    <dd><code>outPath</code> - for write (If the file exists, it will be overwritten)</dd>
+    <dd><code>headerMap</code> - of write SAC</dd>
+    <dd><code>data</code> - of write SAC. The length must be same as NPTS.</dd>
+    <dd><code>options</code> - Options for write</dd>
 <dt><span class="throwsLabel">例外:</span></dt>
 <dd><code>java.io.IOException</code> - if an I/O error occurs</dd>
 </dl>

@@ -234,15 +234,15 @@ implements java.io.Closeable, java.io.Flushable</pre>
                           java.util.Set&lt;<a href="../../../../../io/github/kensuke1984/kibrary/util/globalcmt/GlobalCMTID.html" title="io.github.kensuke1984.kibrary.util.globalcmt内のクラス">GlobalCMTID</a>&gt;&nbsp;globalCMTIDSet,
                           double[][]&nbsp;periodRanges)
                    throws java.io.IOException</pre>
-<div class="block">This constructor is only for BasicID. All output ID must have a station,
+    <div class="block">This constructor is only for BasicID. All write ID must have a station,
  a Global CMT ID and period ranges in the input ones.</div>
 <dl>
 <dt><span class="paramLabel">パラメータ:</span></dt>
 <dd><code>idPath</code> - Path for ID file (must not exist)</dd>
 <dd><code>dataPath</code> - Path for data file (must not exist)</dd>
-<dd><code>stationSet</code> - must contain all information of the IDs to output</dd>
-<dd><code>globalCMTIDSet</code> - must contain all information of the IDs to output</dd>
-<dd><code>periodRanges</code> - must contain all information of the IDs to output. If you want
+    <dd><code>stationSet</code> - must contain all information of the IDs to write</dd>
+    <dd><code>globalCMTIDSet</code> - must contain all information of the IDs to write</dd>
+    <dd><code>periodRanges</code> - must contain all information of the IDs to write. If you want
             to use ranges [10, 30] and [50,100] then the periodRanges
             should be new double[][]{{10,30},{50,100}}</dd>
 <dt><span class="throwsLabel">例外:</span></dt>
@@ -263,18 +263,18 @@ implements java.io.Closeable, java.io.Flushable</pre>
                           double[][]&nbsp;periodRanges,
                           java.util.Set&lt;<a href="../../../../../io/github/kensuke1984/kibrary/util/Location.html" title="io.github.kensuke1984.kibrary.util内のクラス">Location</a>&gt;&nbsp;perturbationPoints)
                    throws java.io.IOException</pre>
-<div class="block">This constructor is only for PartialID. All output ID must have a
+    <div class="block">This constructor is only for PartialID. All write ID must have a
  station, a Global CMT ID and period ranges in the input ones.</div>
 <dl>
 <dt><span class="paramLabel">パラメータ:</span></dt>
 <dd><code>idPath</code> - Path for ID file (must not exist)</dd>
 <dd><code>dataPath</code> - Path for data file (must not exist)</dd>
-<dd><code>stationSet</code> - must contain all information of the IDs to output</dd>
-<dd><code>globalCMTIDSet</code> - must contain all information of the IDs to output</dd>
-<dd><code>periodRanges</code> - must contain all information of the IDs to output. If you want
+    <dd><code>stationSet</code> - must contain all information of the IDs to write</dd>
+    <dd><code>globalCMTIDSet</code> - must contain all information of the IDs to write</dd>
+    <dd><code>periodRanges</code> - must contain all information of the IDs to write. If you want
             to use ranges [10, 30] and [50,100] then the periodRanges
             should be new double[][]{{10,30},{50,100}}</dd>
-<dd><code>perturbationPoints</code> - must contain all information of the IDs to output</dd>
+    <dd><code>perturbationPoints</code> - must contain all information of the IDs to write</dd>
 <dt><span class="throwsLabel">例外:</span></dt>
 <dd><code>java.io.IOException</code> - if an error occurs</dd>
 </dl>
@@ -350,7 +350,7 @@ implements java.io.Closeable, java.io.Flushable</pre>
                 throws java.io.IOException</pre>
 <dl>
 <dt><span class="paramLabel">パラメータ:</span></dt>
-<dd><code>basicID</code> - StartByte will be ignored and set properly in the output file.</dd>
+    <dd><code>basicID</code> - StartByte will be ignored and set properly in the write file.</dd>
 <dt><span class="throwsLabel">例外:</span></dt>
 <dd><code>java.io.IOException</code> - if an I/O error occurs</dd>
 </dl>
@@ -367,7 +367,8 @@ implements java.io.Closeable, java.io.Flushable</pre>
 <dl>
 <dt><span class="paramLabel">パラメータ:</span></dt>
 <dd><code>partialID</code> - <a href="../../../../../io/github/kensuke1984/kibrary/waveformdata/PartialID.html" title="io.github.kensuke1984.kibrary.waveformdata内のクラス"><code>PartialID</code></a> must contain waveform data. StartByte will
-            be ignored and set properly in the output file.</dd>
+    be ignored and set properly in the write file.
+</dd>
 <dt><span class="throwsLabel">例外:</span></dt>
 <dd><code>java.io.IOException</code> - if an I/O error occurs</dd>
 </dl>
