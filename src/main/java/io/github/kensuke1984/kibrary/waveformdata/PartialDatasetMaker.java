@@ -62,7 +62,7 @@ import java.util.stream.Stream;
  * Because of DSM condition, stations can not have the same name...
  *
  * @author Kensuke Konishi
- * @version 2.3.1
+ * @version 2.3.1.1
  */
 public class PartialDatasetMaker implements Operation {
 
@@ -293,7 +293,6 @@ public class PartialDatasetMaker implements Operation {
      * @throws IOException if any
      */
     private void setModelName() throws IOException {
-
         modelName = property.getProperty("modelName");
         Set<Path> bpFolderSet =
                 stationSet.stream().map(s -> bpPath.resolve("0000" + s.getName())).collect(Collectors.toSet());
@@ -315,6 +314,7 @@ public class PartialDatasetMaker implements Operation {
             if (!model.equals(possibleNames.iterator().next())) throw new RuntimeException("No valid model folder.");
 
         }
+        System.err.println("Model name is set " + modelName);
         if (!eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists) ||
                 !bpFolderSet.stream().map(p -> p.resolve(modelName)).allMatch(Files::exists))
             throw new RuntimeException("There are some events without model folder " + modelName);

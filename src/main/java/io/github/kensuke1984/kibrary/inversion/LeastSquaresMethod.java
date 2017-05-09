@@ -17,8 +17,17 @@ public class LeastSquaresMethod extends InverseProblem {
 
     private final double LAMBDA;
 
+    public static void main(String[] args) {
+        double[][] data = new double[][]{{1, 0.0002}, {0.0003, 4}};
+        double[] datd = new double[]{0, 1};
+        RealMatrix ata = new Array2DRowRealMatrix(data);
+        RealVector atd = new ArrayRealVector(datd);
+        LeastSquaresMethod lsm = new LeastSquaresMethod(ata, atd, 0);
+        lsm.compute();
+    }
+
     /**
-     * Solve A<sup>T</sup>A + &LAMBDA;I = A<sup>T</sup>d
+     * Solve A<sup>T</sup>A + &lambda;I = A<sup>T</sup>d
      *
      * @param ata    Matrix A<sup>T</sup>A
      * @param atd    Vector A<sup>T</sup>d
