@@ -395,15 +395,16 @@ public class PartialDatasetMaker implements Operation {
             for (SpcFileName bpname : bpFiles) {
                 // create ThreadPool
                 ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
-                System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
+                System.err.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
                 // 摂動点の名前
                 DSMOutput bp = bpname.read();
                 String pointName = bp.getObserverID();
 
                 // timewindowの存在するfpdirに対して
-                // ｂｐファイルに対する全てのfpファイルを
+                // bpファイルに対する全てのfpファイルを
                 for (Path fpEventPath : fpEventPaths) {
                     String eventName = fpEventPath.getParent().getFileName().toString();
+                    System.err.print("\033[2K" + eventName);
                     SpcFileName fpfile = new SpcFileName(
                             fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
                     if (!fpfile.exists()) continue;
@@ -610,7 +611,6 @@ public class PartialDatasetMaker implements Operation {
                         double[] partial = threedPartialMaker.createPartial(component, ibody, type);
                         timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
                             Complex[] u = cutPartial(partial, info);
-
                             u = filter.applyFilter(u);
                             double[] cutU = sampleOutput(u, info);
 
@@ -619,15 +619,13 @@ public class PartialDatasetMaker implements Operation {
                                     cutU);
                             try {
                                 partialDataWriter.addPartialID(pid);
-                                System.out.print(".");
+                                System.err.print(".");
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         });
                     }
-
             }
         }
     }
-
 }
