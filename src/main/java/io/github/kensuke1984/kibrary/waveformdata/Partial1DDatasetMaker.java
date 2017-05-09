@@ -567,7 +567,6 @@ public class Partial1DDatasetMaker implements Operation {
             double[] sampleU = new double[outnpts];
             // cutting a waveform for outputting
             Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
-
             return sampleU;
         }
 
