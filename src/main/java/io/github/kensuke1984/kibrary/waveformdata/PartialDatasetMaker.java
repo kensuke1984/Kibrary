@@ -297,25 +297,25 @@ public class PartialDatasetMaker implements Operation {
         Set<Path> bpFolderSet =
                 stationSet.stream().map(s -> bpPath.resolve("0000" + s.getName())).collect(Collectors.toSet());
         Set<EventFolder> eventFolders = Utilities.eventFolderSet(fpPath);
-        System.out.println(modelName.isEmpty() + " a" + modelName + "b");
         if (modelName.isEmpty()) {
             Set<String> possible =
                     bpFolderSet.stream().flatMap(b -> Arrays.stream(b.toFile().listFiles(File::isDirectory)))
                             .map(File::getName).collect(Collectors.toSet());
             if (possible.size() != 1) throw new RuntimeException(
                     "There are no model folder in bp folders or more than one folder. You must specify 'modelName' in the case.");
-            String model = possible.iterator().next();
+            modelName = possible.iterator().next();
             Set<String> possibleNames =
                     eventFolders.stream().flatMap(ef -> Arrays.stream(ef.listFiles(File::isDirectory)))
                             .map(File::getName).collect(Collectors.toSet());
             if (possibleNames.size() != 1) throw new RuntimeException(
                     "There are no model folder in fp folders or more than one folder. You must specify 'modelName' in the case.");
-            if (!model.equals(possibleNames.iterator().next())) throw new RuntimeException("No valid model folder.");
+            if (!modelName.equals(possibleNames.iterator().next()))
+                throw new RuntimeException("No valid model folder.");
         }
-        System.err.println("Model name is set " + modelName);
         if (!eventFolders.stream().map(EventFolder::toPath).map(p -> p.resolve(modelName)).allMatch(Files::exists) ||
                 !bpFolderSet.stream().map(p -> p.resolve(modelName)).allMatch(Files::exists))
             throw new RuntimeException("There are some events without model folder " + modelName);
+        System.err.println("Model name is set " + modelName);
     }
 
     private void setLog() throws IOException {
