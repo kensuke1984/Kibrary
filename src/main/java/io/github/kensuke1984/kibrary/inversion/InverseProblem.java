@@ -64,7 +64,7 @@ public abstract class InverseProblem {
     public void outputAns(Path outPath) throws IOException {
         Files.createDirectories(outPath);
         System.err.println("outputting the answer files in " + outPath);
-        for (int i = 0; i < getParN(); i++) {
+        for (int i = 0; i < ans.getColumnDimension(); i++) {
             Path out = outPath.resolve(getEnum().simple() + (i + 1) + ".txt");
             double[] m = ans.getColumn(i);
             writeDat(out, m);

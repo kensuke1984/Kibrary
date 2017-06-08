@@ -7,6 +7,7 @@ import io.github.kensuke1984.anisotime.RaypathCatalog;
 import io.github.kensuke1984.anisotime.VelocityStructure;
 import io.github.kensuke1984.kibrary.math.geometry.RThetaPhi;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
+import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
 /**
  * Raypath between a source at {@link #sourceLocation} and a receiver at
@@ -14,7 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.2
+ * @version 0.0.6.3
  */
 public class Raypath {
 
@@ -57,6 +58,15 @@ public class Raypath {
      */
     public Raypath(SACHeaderData sacHeaderData) {
         this(sacHeaderData.getEventLocation(), sacHeaderData.getStation().getPosition());
+    }
+
+    /**
+     * Create a raypath for an input id
+     *
+     * @param basicID of a raypath to create
+     */
+    public Raypath(BasicID basicID) {
+        this(basicID.getGlobalCMTID().getEvent().getCmtLocation(), basicID.getStation().getPosition());
     }
 
     /**

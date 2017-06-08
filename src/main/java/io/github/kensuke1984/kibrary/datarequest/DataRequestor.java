@@ -22,7 +22,7 @@ import java.util.Set;
  * It makes a data requesting mail.
  *
  * @author Kensuke Konishi
- * @version 0.1.3.1
+ * @version 0.1.3.2
  */
 public class DataRequestor implements Operation {
 
@@ -143,7 +143,7 @@ public class DataRequestor implements Operation {
             pw.println("#headAdjustment -10");
             pw.println("##Adjustment at the foot [min], must be integer and defined");
             pw.println("#footAdjustment 120");
-            pw.println("##If you just want to create emails, then set it true (false)");
+            pw.println("##If you want to send emails, then set it true (false)");
             pw.println("#send");
         }
         System.err.println(outPath + " is created.");
@@ -238,9 +238,9 @@ public class DataRequestor implements Operation {
         requestedIDs = listIDs();
         System.out.println(requestedIDs.size() + " events are found.");
         System.out.println("Label contains \"" + date + "\"");
-        try {
-            System.out.println("Sending requests in 10 sec");
-            Thread.sleep(1000 * 10);
+        if (send) try {
+            System.out.println("Sending requests in 5 sec");
+            Thread.sleep(1000 * 5);
         } catch (Exception e2) {
         }
         requestedIDs.forEach(id -> {

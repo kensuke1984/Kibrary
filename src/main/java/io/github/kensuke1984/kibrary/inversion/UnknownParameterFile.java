@@ -28,7 +28,7 @@ import java.util.List;
  * Duplication is NOT allowed.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.2
+ * @version 0.0.5.3
  */
 public class UnknownParameterFile {
 
@@ -85,12 +85,12 @@ public class UnknownParameterFile {
     }
 
     /**
-     * @param parameterList List of unknown parameters
      * @param outPath       for write
+     * @param parameterList List of unknown parameters
      * @param options       for write
      * @throws IOException if an I/O error occurs
      */
-    public static void write(List<UnknownParameter> parameterList, Path outPath, OpenOption... options)
+    public static void write(Path outPath, List<UnknownParameter> parameterList, OpenOption... options)
             throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
             parameterList.forEach(pw::println);
