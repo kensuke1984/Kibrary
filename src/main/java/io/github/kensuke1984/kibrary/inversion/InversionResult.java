@@ -145,7 +145,7 @@ public class InversionResult {
     }
 
     /**
-     * @return (unmodifiable) List of {@link BasicID} in order.
+     * @return (unmodifiable) List of {@link BasicID} in order. Observed IDs.
      */
     public List<BasicID> getBasicIDList() {
         return basicIDList;
@@ -422,7 +422,7 @@ public class InversionResult {
      * @param n      number of eigen vectors(SVD) or CG vectors (CG) or...<br>
      *               if it is 1 and method is CG then CG1
      * @return Trace of Born
-     * @throws IOException
+     * @throws IOException if any
      */
     public Trace bornOf(BasicID id, InverseMethodEnum method, int n) throws IOException {
         String txtname = getTxtName(id);
@@ -430,15 +430,12 @@ public class InversionResult {
         if (Files.exists(bornPath)) return readBORNTrace(id, method, n);
 
         Files.createDirectories(bornPath.getParent());
-        Trace syn = syntheticOf(id);
+        Trace born = syntheticOf(id);
         Map<UnknownParameter, Double> answer = answerMapOf(method, n);
-        Trace born = syn;
-
         for (UnknownParameter par : unknownParameterList)
             born = born.add(partialOf(id, par).multiply(answer.get(par)));
         writeBorn(bornPath, born);
         return born;
-
     }
 
     /**

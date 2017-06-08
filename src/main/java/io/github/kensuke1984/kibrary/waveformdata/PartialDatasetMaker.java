@@ -404,7 +404,6 @@ public class PartialDatasetMaker implements Operation {
                 // bpファイルに対する全てのfpファイルを
                 for (Path fpEventPath : fpEventPaths) {
                     String eventName = fpEventPath.getParent().getFileName().toString();
-                    System.err.print("\033[2K" + eventName);
                     SpcFileName fpfile = new SpcFileName(
                             fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
                     if (!fpfile.exists()) continue;
@@ -550,7 +549,6 @@ public class PartialDatasetMaker implements Operation {
             int cutend = (int) (timewindowInformation.getEndTime() * partialSamplingHz) + ext;
             Complex[] cut = new Complex[cutend - cutstart];
             Arrays.parallelSetAll(cut, i -> new Complex(u[i + cutstart]));
-
             return cut;
         }
 
@@ -601,7 +599,7 @@ public class PartialDatasetMaker implements Operation {
             threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
             if (structure != null) threedPartialMaker.setStructure(structure);
 
-            // i番目の深さの偏微分波形を作る
+            // partial for ith radius
             for (int ibody = 0, nbody = fp.nbody(); ibody < nbody; ibody++) {
                 // とりあえずtransverse（２）成分についての名前
                 Location location = fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
@@ -613,7 +611,6 @@ public class PartialDatasetMaker implements Operation {
                             Complex[] u = cutPartial(partial, info);
                             u = filter.applyFilter(u);
                             double[] cutU = sampleOutput(u, info);
-
                             PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
                                     cutU.length, 1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != 0, location, type,
                                     cutU);
