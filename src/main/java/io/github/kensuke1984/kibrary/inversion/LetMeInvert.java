@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * Let's invert
  *
  * @author Kensuke Konishi
- * @version 2.0.3.5
+ * @version 2.0.3.6
  */
 public class LetMeInvert implements Operation {
     /**
@@ -205,7 +205,7 @@ public class LetMeInvert implements Operation {
             outputDistribution(outPath.resolve("stationEventDistribution.inf"));
             dVector.outOrder(outPath);
             outEachTrace(outPath.resolve("trace"));
-            UnknownParameterFile.write(eq.getparameterList(), outPath.resolve("unknownParameterOrder.inf"));
+            UnknownParameterFile.write(outPath.resolve("unknownParameterOrder.inf"), eq.getparameterList());
             eq.outputA(outPath.resolve("partial"));
             return null;
         };
