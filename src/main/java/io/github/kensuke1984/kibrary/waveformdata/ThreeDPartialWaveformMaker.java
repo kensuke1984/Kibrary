@@ -71,7 +71,7 @@ public class ThreeDPartialWaveformMaker {
 		GlobalCMTID gcmtid = new GlobalCMTID("201308041556A");
 		String[] stationName = {"062Z"};	//Q44A 544A 456A 062Z	//"SPMN", "Z57A", "I49A", "062Z", "959A", "N58A"
 		String ppName = "XY080";
-		String[] mode = {"sh","psv"};	//SH or PSV
+		String[] mode = {"SH","SPV"};	//SH or PSV
 		Arrays.stream(stationName).forEach(station -> {
 		Path suzukiDir = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/basePREM/threeDPartial_5deg");
 		Path bpDirPath = suzukiDir.resolve("BPtmp/").resolve("0000"+station+"/PREM");
