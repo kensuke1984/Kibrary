@@ -46,7 +46,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * fpDIR, bpDIR(未定義の場合workDir)の下に イベントごとのフォルダ（FP）、ステーションごとのフォルダ(BP)があり その下の
  * modelNameにspcfileをおく
  * 
- * イベントフォルダはeventnameで定義されたもの ステーショフォルダは0000(stationname)
+ * イベントフォルダはeventname(gloalCMTID)で定義されたもの ステーショフォルダは0000(stationname)
  * 
  * spcfileの名前は (point name).(station or eventname).(PB or PF)...(sh or psv).spc
  * 
@@ -222,9 +222,10 @@ public class PartialDatasetMaker implements Operation {
 		@Override
 		public void run() {
 			String stationName = bp.getSourceID();
-			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
+			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation())) {
+				System.out.println(station.getName()+" "+station.getPosition().toLocation(0)+" "+bp.getSourceLocation());
 				throw new RuntimeException("There may be a station with the same name but other networks.");
-
+			}
 			if (bp.tlen() != tlen || bp.np() != np)
 				throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
 			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
@@ -261,10 +262,10 @@ public class PartialDatasetMaker implements Operation {
 					for (SACComponent component : components) {
 						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
 							continue;
-						double[] partial = threedPartialMaker.createPartial(component, ibody, type);
+						//creating partial one waveform.
+						double[] partial = threedPartialMaker.createPartial(component, ibody, type);	
 						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
 							Complex[] u = cutPartial(partial, info);
-
 							u = filter.applyFilter(u);
 							double[] cutU = sampleOutput(u, info);
 

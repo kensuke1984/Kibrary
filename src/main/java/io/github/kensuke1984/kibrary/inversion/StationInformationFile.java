@@ -102,6 +102,7 @@ public final class StationInformationFile {
 		Set<SACFileName> sacNameSet = Utilities.sacFileNameSet(workPath);
 		Set<Station> stationSet = sacNameSet.stream().map(sacName -> {
 			try {
+				System.out.println(sacName+" "+sacName.readHeader().getStation().getPosition().toLocation(0));
 				return sacName.readHeader();
 			} catch (Exception e) {
 				System.err.println(sacName + " is an invalid SAC file.");

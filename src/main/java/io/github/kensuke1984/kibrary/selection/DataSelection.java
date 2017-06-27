@@ -353,7 +353,7 @@ public class DataSelection implements Operation {
 					// Pickup a time window of obsName
 					Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
 							.stream().filter(info -> info.getStation().equals(station)
-									&& info.getGlobalCMTID().equals(id) && info.getComponent() == component)
+									&& info.getGlobalCMTID().equals(id) && info.getComponent() == component).sorted()
 							.collect(Collectors.toSet());
 
 					if (windowInformations.isEmpty())
@@ -462,7 +462,10 @@ public class DataSelection implements Operation {
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
 				|| var < minVariance || maxVariance < var
-				|| SNratio < minSNratio);
+				|| SNratio < minSNratio
+				|| Double.isNaN(absRatio) || Double.isNaN(maxRatio) 
+				|| Double.isNaN(minRatio) || Double.isNaN(var) 
+				|| Double.isNaN(cor) || Double.isNaN(SNratio));
 		
 		Phases phases = new Phases(window.getPhases());
 		

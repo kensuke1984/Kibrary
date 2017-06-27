@@ -207,7 +207,7 @@ public class ThreeDPartialMaker {
 
     /**
      * compute tensor culculus of u Cijkl eta
-     *
+     * compute cross correlation of forward and back
      * @param component {@link SACComponent}
      * @param iBody     index for sacbody
      * @param type      {@link PartialType}
@@ -297,7 +297,7 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * compute waveform in timedomain from spector in frequency domain. aplitude
+     * compute waveform in timedomain from spector in frequency domain. amplitude
      * correction and growing exponential will be considered.
      *
      * @param spector u in frequency domain

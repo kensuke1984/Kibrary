@@ -20,11 +20,13 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
 
 /**
  * SpcSAC Converter from {@link SpectrumFile} to {@link SACData} file. According
@@ -69,6 +71,8 @@ public final class SpcSAC implements Operation {
 			property.setProperty("timePartial", "false");
 		if (!property.containsKey("modelName"))
 			property.setProperty("modelName", "");
+		if (!property.containsKey("partialWaveform"))
+			property.setProperty("partialWaveform", "false");
 	}
 
 	private void set() throws IOException {
@@ -108,6 +112,8 @@ public final class SpcSAC implements Operation {
 		}
 
 		computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
+		
+		partialWaveform = Boolean.parseBoolean(property.getProperty("partialWaveform"));
 
 		samplingHz = 20; // TODO
 	}
@@ -141,6 +147,18 @@ public final class SpcSAC implements Operation {
 	 * If it computes temporal partial or not.
 	 */
 	private boolean computesPartial;
+	
+	/**
+	 * If it compute 1D partial waveforms
+	 */
+	private boolean partialWaveform;
+
+	
+	/**
+	 * You should set partial type, if you want to compute 1D partial waveform.
+	 */
+	private PartialType partialType;
+
 
 	/**
 	 * @param args
@@ -205,11 +223,23 @@ public final class SpcSAC implements Operation {
 	private Set<SpcFileName> collectSHSPCs() throws IOException {
 		Set<SpcFileName> shSet = new HashSet<>();
 		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(shPath);
-		for (EventFolder eventFolder : eventFolderSet) {
-			Path modelFolder = eventFolder.toPath().resolve(modelName);
-			Utilities.collectSpcFileName(modelFolder).stream()
+//		if (!partialWaveform) {
+			for (EventFolder eventFolder : eventFolderSet) {
+				Path modelFolder = eventFolder.toPath().resolve(modelName);
+				Utilities.collectSpcFileName(modelFolder).stream()
 					.filter(f -> !f.getName().contains("par") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
+			}
+//		}	
+		/**
+		if (partialWaveform) {
+			for (EventFolder eventFolder : eventFolderSet) {
+				Path modelFolder = eventFolder.toPath().resolve(modelName);
+				Utilities.collectSpcFileName(modelFolder).stream()
+					.filter(f -> !f.getName().contains("par") && f.getName().endsWith("SH.spc") && f.getName().contains(partialType.name()))
+					.forEach(shSet::add);
+			}
 		}
+		**/
 		return shSet;
 	}
 
@@ -258,6 +288,8 @@ public final class SpcSAC implements Operation {
 			for (SpcFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
 				SpectrumFile one = SpectrumFile.getInstance(spc);
 				Files.createDirectories(outPath.resolve(spc.getSourceID()));
+				if (partialWaveform)
+					Files.createDirectories(outPath.resolve(spc.getSourceID()).resolve("partialWaveform"));
 				execs.execute(createSACMaker(one, null));
 			}
 
@@ -332,6 +364,14 @@ public final class SpcSAC implements Operation {
 		sm.setComponents(components);
 		sm.setTemporalDifferentiation(computesPartial);
 		sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
+		if (partialWaveform){
+			try {
+				sm.outputPAR(outPath.resolve(primeSPC.getSourceID()).resolve("partialWaveform"));
+			} catch (IOException e) {
+				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+			}
+		}
 		return sm;
 	}
 

@@ -18,7 +18,7 @@ import java.util.Arrays;
 public enum PartialType {
 
 	A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9), PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(
-			14), PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23);
+			14), PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23), PAR0(24);
 
 	public boolean is3D() {
 		return 8 < value;
@@ -109,6 +109,8 @@ public enum PartialType {
 			return SpcFileType.G5;
 		case G6:
 			return SpcFileType.G6;
+		case PAR0:
+			return SpcFileType.PAR0;
 		default:
 			throw new RuntimeException("unexpected");
 		}

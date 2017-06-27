@@ -56,15 +56,16 @@ public class Sensitivity1D {
 	public static void main(String[] args) throws IOException {
 		if (args.length != 2)
 			System.err.println("usage: path for partial.dat and partialID.dat are need.");
-//		Path partialPath = Paths.get("partial.dat");
+//		Path partialPath = Paths.get("/Users/Yuki/Dropbox/SKB_debug/Sensitivity1D_debug/partial1D_RHO_P_PcP_Pdiff_100-200s_Z.dat");
 		Path partialPath = Paths.get(args[0]);
-//		Path partialIDPath = Paths.get("partialID.dat");
+//		Path partialIDPath = Paths.get("/Users/Yuki/Dropbox/SKB_debug/Sensitivity1D_debug/partial1DID_P_PcP_Pdiff_100-200s_Z.dat");
 		Path partialIDPath = Paths.get(args[1]);
-//		Set<Phase> S_ScS_Sdiff = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff", false)).stream().collect(Collectors.toSet());
-//		Set<Phase> ScS4 = Arrays.asList(Phase.create("ScSScSScSScS", false)).stream().collect(Collectors.toSet());
-//		Set<Phase> ScS3 = Arrays.asList(Phase.create("ScSScSScS", false)).stream().collect(Collectors.toSet());
-//		Set<Phase> SS_SSS = Arrays.asList(Phase.create("SS", false), Phase.create("SSS", false)).stream().collect(Collectors.toSet());
-//		Set<Phase> all = new HashSet<>();
+		Set<Phase> SKS = Arrays.asList(Phase.SKS).stream().collect(Collectors.toSet());
+		Set<Phase> S_ScS_Sdiff = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff", false)).stream().collect(Collectors.toSet());
+		Set<Phase> ScS4 = Arrays.asList(Phase.create("ScSScSScSScS", false)).stream().collect(Collectors.toSet());
+		Set<Phase> ScS3 = Arrays.asList(Phase.create("ScSScSScS", false)).stream().collect(Collectors.toSet());
+		Set<Phase> SS_SSS = Arrays.asList(Phase.create("SS", false), Phase.create("SSS", false)).stream().collect(Collectors.toSet());
+		Set<Phase> all = new HashSet<>();
 		
 		PartialID[] ids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
@@ -93,8 +94,9 @@ public class Sensitivity1D {
 //		Sensitivity1D s1D = new Sensitivity1D(ids);
 //		s1D.write1D(outPath);
 		
-		List<Phase> phaseList = Arrays.asList(Phase.S, Phase.ScS, Phase.create("Sdiff"), Phase.SKS, Phase.create("SKKS"),
-				Phase.create("SKKKS"), Phase.P, Phase.PcP, Phase.PKP, Phase.create("Pdiff"));
+//		List<Phase> phaseList = Arrays.asList(Phase.SKS, Phase.S, Phase.ScS, Phase.create("Sdiff"), Phase.create("SKKS"),
+//				Phase.create("SKKKS"), Phase.P, Phase.PcP, Phase.PKP, Phase.create("Pdiff"), Phase.create("ScSScS"), Phase.create("ScSScSScS"));
+		List<Phase> phaseList = Arrays.asList(Phase.SKS);
 		
 		for (Phase phase : phaseList) {
 			Set<Phases> phaseSet = new HashSet<>();
@@ -110,18 +112,19 @@ public class Sensitivity1D {
 			copy.normalizePerDistance();
 			copy.writeComplemented(outPath2, 10., 1.);
 		}
-		Set<Phases> phaseSet = new HashSet<>();
-		phaseSet.add(new Phases(new Phase[] {Phase.S, Phase.ScS}));
-		Path outPath = Paths.get("sensitivity1D-S_ScS.inf");
-		Path outPath1 = Paths.get("sensitivityMap-S_ScS.inf");
-		Path outPath2 = Paths.get("sensitivityMapDistanceNormalized-S_ScS.inf");
-		Sensitivity1D s1D = new Sensitivity1D(ids, phaseSet);
-		Sensitivity1D copy = new Sensitivity1D(s1D);
-		s1D.write1D(outPath);
-		s1D.normalize();
-		s1D.writeComplemented(outPath1, 10., 1.);
-		copy.normalizePerDistance();
-		copy.writeComplemented(outPath2, 10., 1.);
+//		Set<Phases> phaseSet = new HashSet<>();
+//		phaseSet.add(new Phases(new Phase[] {Phase.S, Phase.ScS}));
+		
+//		Path outPath = Paths.get("sensitivity1D-S_ScS.inf");
+//		Path outPath1 = Paths.get("sensitivityMap-S_ScS.inf");
+//		Path outPath2 = Paths.get("sensitivityMapDistanceNormalized-S_ScS.inf");
+//		Sensitivity1D s1D = new Sensitivity1D(ids, phaseSet);
+//		Sensitivity1D copy = new Sensitivity1D(s1D);
+//		s1D.write1D(outPath);
+//		s1D.normalize();
+//		s1D.writeComplemented(outPath1, 10., 1.);
+//		copy.normalizePerDistance();
+//		copy.writeComplemented(outPath2, 10., 1.);
 		
 //		Path outPath = Paths.get("sensitivity1D-upperMantle.txt");
 //		Path outPath1 = Paths.get("sensitivityMap-upperMantle.txt");
@@ -159,7 +162,7 @@ public class Sensitivity1D {
 	
 	public void write(Path outpath) throws IOException{
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))) {
-			pw.println("#perturbationR, epicentralDistanceBin, NormalizedSensitivity");
+			pw.println("#epicentralDistanceBin, perturbationR, NormalizedSensitivity");
 			pw.println("#max " + getMax());
 			sensitivityMap.forEach((rDistance, sensitivity) -> {
 				pw.println(rDistance.r + " " + rDistance.distance + " " + sensitivity);
@@ -170,7 +173,7 @@ public class Sensitivity1D {
 	public void writeComplemented(Path outpath, double deltaR, double deltaD) throws IOException {
 		double[][] complemented = complement(deltaR, deltaD);
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE))) {
-			pw.println("#perturbationR, epicentralDistanceBin, NormalizedSensitivity");
+			pw.println("#epicentralDistanceBin, perturbationR, NormalizedSensitivity");
 			pw.println("#max " + getMax());
 			for (double[] c : complemented)
 				pw.println(c[0] + " " + c[1] + " " + c[2]);
@@ -179,6 +182,7 @@ public class Sensitivity1D {
 	
 	public double[][] complement(double deltaR, double deltaD) {
 		List<Double> distanceList = sensitivityMap.keySet().stream().map(key -> key.distance).collect(Collectors.toList());
+//		System.out.println(sensitivityMap.size());
 		Collections.sort(distanceList);
 		double minD = distanceList.get(0);
 		double maxD = distanceList.get(distanceList.size() - 1);
@@ -187,7 +191,7 @@ public class Sensitivity1D {
 		deltaR = (Earth.EARTH_RADIUS - 3480.) / (nR-1);
 		int nD = (int) ((maxD - minD) / deltaD) + 1;
 		deltaD = (maxD - minD) / (nD-1);
-		
+//		System.out.println(minD+" "+maxD);
 		System.out.println(nR + " " + nD);
 		
 		double[][] complemented = new double[nR * nD][];
@@ -202,8 +206,11 @@ public class Sensitivity1D {
 				Location loc = new Location(0., minD + j * deltaD, 3480. + i * deltaR);
 				Location[] nearPoints = c.getNearest4(locations, loc);
 				double[] nearpointsValue = new double[nearPoints.length];
-				for (int k = 0; k < nearPoints.length; k++)
-					nearpointsValue[k] = sensitivityMap.get(new PerturbationR_distance(nearPoints[k].getR(), nearPoints[k].getLongitude()));
+				for (int k = 0; k < nearPoints.length; k++)	{
+//					System.out.println(nearPoints[k].getEpicentralDistance(loc)* 180. / Math.PI);
+					nearpointsValue[k] = sensitivityMap.get(new PerturbationR_distance(nearPoints[k].getR(), nearPoints[k].getLongitude()));	//TODO
+//					System.out.println(nearPoints[k].getLongitude());
+				}
 				double value = c.complement(nearPoints, nearpointsValue, loc);
 				
 				complemented[i*nD + j] = new double[] {loc.getLongitude(), loc.getR(), value};
@@ -223,9 +230,12 @@ public class Sensitivity1D {
 	}
 	
 	public void compute() {
-		for (PartialID id : ids) {
-			if (id.getPartialType().isTimePartial())
+		for (PartialID id : ids) {		//ids はpartialIDのリスト
+//			includePhases.stream().forEach(System.out::println);
+			if (id.getPartialType().isTimePartial()) {
+				System.out.println("Ignoring for time partial...");
 				continue;
+			}	
 			if (includePhases == null || includePhases.contains(new Phases(id.getPhases()))) {
 				PerturbationR_distance rDistance = new PerturbationR_distance(id);
 				if (sensitivityMap.containsKey(rDistance)) {
@@ -331,10 +341,12 @@ public class Sensitivity1D {
 		}
 		public PerturbationR_distance(PartialID id) {
 			this.r = id.getPerturbationLocation().getR();
-			double distance = (id.getGlobalCMTID().getEvent().getCmtLocation()
-					.getEpicentralDistance(id.getStation().getPosition())
-					* 180. / Math.PI);
+			double distance = id.getPerturbationLocation().getEpicentralDistance(id.getStation().getPosition())* 180. / Math.PI;
+//			double distance = (id.getGlobalCMTID().getEvent().getCmtLocation()
+//					.getEpicentralDistance(id.getStation().getPosition())
+//					* 180. / Math.PI);
 			this.distance = (int) (distance / 2.) * 2;
+//			System.out.println(distance);
 		}
 		@Override
 		public boolean equals(Object obj) {

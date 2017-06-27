@@ -157,28 +157,28 @@ public final class BasicIDFile {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public static BasicID[] readBasicIDFile(Path idPath) throws IOException {
+	public static BasicID[] readBasicIDFile(Path idPath) throws IOException, NegativeArraySizeException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
 			long t = System.nanoTime();
 			long fileSize = Files.size(idPath);
-			// Read header
 			
+			// Read header
 			Station[] stations = new Station[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
 			Phase[] phases = new Phase[dis.readShort()];
-//			System.out.println("station number is " + stations.length);
-//			System.out.println("cmtID number is " + cmtIDs.length);
-//			System.out.println("period range number is " + periodRanges.length);
-//			System.out.println("phase number is " + phases.length);
+			System.out.println("station number is " + stations.length);
+			System.out.println("cmtID number is " + cmtIDs.length);
+			System.out.println("period range number is " + periodRanges.length);
+			System.out.println("phase number is " + phases.length);
 			int headerBytes = 2 * 4 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
 					+ 16 * phases.length + 4 * 2 * periodRanges.length;
 			long idParts = fileSize - headerBytes;
-//			System.out.println(fileSize);
-//			System.out.println(headerBytes);
-//			System.out.println(idParts);
-//			System.out.println("please check " + idParts % oneIDByte);
-//			System.out.println(idParts/oneIDByte);
+			System.out.println(fileSize);
+			System.out.println(headerBytes);
+			System.out.println(idParts);
+			System.out.println("please check " + idParts % oneIDByte);
+			System.out.println(idParts/oneIDByte);
 			if (idParts % oneIDByte != 0)
 				throw new RuntimeException(idPath + " is not valid.");
 			// name(8),network(8),position(4*2)

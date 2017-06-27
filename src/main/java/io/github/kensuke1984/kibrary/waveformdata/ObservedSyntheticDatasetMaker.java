@@ -236,9 +236,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
 				if (!name.isOBS())
 					continue;
+//				System.out.println(name);
 				SACHeaderData header = name.readHeader();
+//				System.out.println(header.getStation()+" "+header.getGlobalCMTID());
 				double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
 						header.getValue(SACHeaderEnum.USER1) };
+//				System.out.println(range[0]+" "+range[1]);
 //				double[] range = new double[] { 20,
 //						header.getValue(SACHeaderEnum.USER1) };
 				boolean exists = false;
@@ -252,6 +255,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			}
 			periodRanges = ranges.toArray(new double[0][]);
 		} catch (Exception e) {
+			
 			throw new RuntimeException("Error in reading period ranges from SAC files.");
 		}
 	}
