@@ -99,7 +99,7 @@ public final class StationInformationFile {
 			});
 			nameToStation.forEach((name, sta) -> {
 				if (sta.size() > 1) {
-					sta.stream().forEach(s -> System.out.println(s));
+					sta.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
 				}
 			});
 		}
@@ -152,7 +152,7 @@ public final class StationInformationFile {
 			});
 			nameToStation.forEach((name, sta) -> {
 				if (sta.size() > 1) {
-					sta.stream().forEach(s -> System.out.println(s));
+					sta.stream().forEach(s -> System.out.println(s + " " + s.getPosition()));
 				}
 			});
 		}

@@ -199,8 +199,10 @@ class SpectrumFile implements DSMOutput {
 				for (SpcBody body : specFile.spcBody) {
 					Complex[] u = new Complex[specFile.nComponent];
 					int ip = dis.readInt();
-					for (int k = 0; k < specFile.nComponent; k++)
+					for (int k = 0; k < specFile.nComponent; k++) {
 						u[k] = new Complex(dis.readDouble(), dis.readDouble());
+//						System.out.println(u[k]);
+					}
 					body.add(ip, u);
 				}
 			return specFile;

@@ -218,10 +218,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	}
 
 	private static boolean checkDuplication(double[][] periodRanges) {
-//		for (int i = 0; i < periodRanges.length - 1; i++)
-//			for (int j = i + 1; j < periodRanges.length; j++)
-//				if (Arrays.equals(periodRanges[i], periodRanges[j]))
-//					return true;
+		for (int i = 0; i < periodRanges.length - 1; i++)
+			for (int j = i + 1; j < periodRanges.length; j++)
+				if (Arrays.equals(periodRanges[i], periodRanges[j]))
+					return true;
 		return false;
 	}
 
@@ -290,9 +290,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	}
 
 	private int getIndexOfRange(double min, double max) {
-		for (int i = 0; i < periodRanges.length; i++) // TODO
-			if (Math.abs(periodRanges[i][0] - min) < 0.000000001 && Math.abs(periodRanges[i][1] - max) < 0.000000001)
+		for (int i = 0; i < periodRanges.length; i++) { // TODO
+			if (Math.abs(periodRanges[i][0] - min) < 0.00001 && Math.abs(periodRanges[i][1] - max) < 0.00001)
 				return i;
+		}
 		throw new RuntimeException("A range is N/A");
 	}
 

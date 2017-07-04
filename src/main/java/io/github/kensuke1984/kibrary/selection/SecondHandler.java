@@ -48,9 +48,9 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 			pw.println("####If the below values are set, then SecondHandler will check the values");
 			pw.println("##double delta of SAC file");
 			pw.println("#delta");
-			pw.println("##int npts");
+			pw.println("##int[] npts");
 			pw.println("#npts");
-			pw.println("####The below values are in [deg] gcarc [0:180] latitude [-90:90], longitude (-180:180]");
+			pw.println("####The below values are in [deg] gcarc [0:180] latitude [-90:90], longitude (0:360]");
 			pw.println("#minGCARC");
 			pw.println("#maxGCARC");
 			pw.println("#minStationLatitude");
@@ -120,14 +120,14 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 				? Double.parseDouble(property.getProperty("maxEventLatitude")) : 90;
 
 		double minStationLongitude = property.containsKey("minStationLongitude")
-				? Double.parseDouble(property.getProperty("minStationLongitude")) : -180;
+				? Double.parseDouble(property.getProperty("minStationLongitude")) : 0;
 		double maxStationLongitude = property.containsKey("maxStationLongitude")
-				? Double.parseDouble(property.getProperty("maxStationLongitude")) : 180;
+				? Double.parseDouble(property.getProperty("maxStationLongitude")) : 360;
 
 		double minEventLongitude = property.containsKey("minEventLongitude")
-				? Double.parseDouble(property.getProperty("minEventLongitude")) : -180;
+				? Double.parseDouble(property.getProperty("minEventLongitude")) : 0;
 		double maxEventLongitude = property.containsKey("maxEventLongitude")
-				? Double.parseDouble(property.getProperty("maxEventLongitude")) : 180;
+				? Double.parseDouble(property.getProperty("maxEventLongitude")) : 360;
 		Predicate<SACData> p = new Predicate<SACData>() {
 
 			@Override
@@ -167,6 +167,8 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
 				// station Longitude
 				double stationLongitude = obsSac.getValue(SACHeaderEnum.STLO);
+				if (stationLongitude < 0)
+					stationLongitude = stationLongitude + 360.;
 				if (stationLongitude < minStationLongitude || maxStationLongitude < stationLongitude)
 					return false;
 
@@ -177,6 +179,8 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
 				// Event Longitude
 				double eventLongitude = obsSac.getValue(SACHeaderEnum.EVLO);
+				if (eventLongitude < 0)
+					eventLongitude += 360;
 				if (eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude)
 					return false;
 

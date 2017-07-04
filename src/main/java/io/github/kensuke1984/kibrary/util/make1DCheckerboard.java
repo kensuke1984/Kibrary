@@ -19,7 +19,7 @@ import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 public class make1DCheckerboard {
 	
 	public static void main(String[] args) throws IOException {
-		Path initialStructurePath = Paths.get("/mnt/melonpan/anpan/inversion/Dpp/POLY/checkerboard/stw105_smallCoeffcb_6-1-2_0.00per.poly");
+		Path initialStructurePath = Paths.get("/mnt/melonpan/anpan/inversion/Dpp/POLY/checkerboard/stw105_005Hzcb_6-1-2_0.00per.poly");
 		PolynomialStructure structure = new PolynomialStructure(initialStructurePath);
 		PolynomialStructure structure0 = new PolynomialStructure(initialStructurePath);
 		int ilm = Integer.parseInt(args[0]);
@@ -27,7 +27,7 @@ public class make1DCheckerboard {
 		int ium = Integer.parseInt(args[2]);
 		
 		double dVper = Double.parseDouble(args[3]);
-		double dq = 6e-4;
+		double dq = 0.;//6e-4;
 		
 		double ttz = 5961.;
 		double btz = 5721.;

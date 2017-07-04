@@ -485,5 +485,10 @@ final class NDK implements GlobalCMTData {
 	public String toString() {
 		return id.toString();
 	}
+	
+	@Override
+	public void setCmt(MomentTensor mt) {
+		momentTensor = mt;
+	}
 
 }

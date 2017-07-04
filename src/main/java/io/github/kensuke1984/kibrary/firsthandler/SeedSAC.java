@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.math3.stat.inference.KolmogorovSmirnovTest;
 
 import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -210,7 +211,7 @@ class SeedSAC implements Runnable {
 	 * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
 	 */
 	private void deconvolute() throws IOException {
-		// System.out.println("Conducting deconvolution");
+		 System.out.println("Conducting deconvolution");
 
 		Path noSpectraPath = eventDir.toPath().resolve("noSpectraOrInvalidMOD");
 		Path duplicateChannelPath = eventDir.toPath().resolve("duplicateChannel");
@@ -232,6 +233,7 @@ class SeedSAC implements Runnable {
 						+ componentName;
 				Path spectraPath = eventDir.toPath().resolve(spectraFileName);
 				Path respPath = eventDir.toPath().resolve(respFileName);
+				
 				String component;
 				switch (componentName) {
 				case "BHE":
@@ -240,11 +242,21 @@ class SeedSAC implements Runnable {
 				case "HLE":
 					component = "E";
 					break;
+				case "BH1":
+					component = "E";
+					System.out.println(headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) 
+							+ "." + headerMap.get(SACHeaderEnum.KEVNM) + ": BH1 chanel taken as E component");
+					break;
 				case "BHN":
 				case "BLN":
 				case "HHN":
 				case "HLN":
 					component = "N";
+					break;
+				case "BH2":
+					component = "N";
+					System.out.println(headerMap.get(SACHeaderEnum.KSTNM) + "_" + headerMap.get(SACHeaderEnum.KNETWK) 
+							+ "." + headerMap.get(SACHeaderEnum.KEVNM) + ": BH2 chanel taken as N component");
 					break;
 				case "BHZ":
 				case "BLZ":
@@ -252,13 +264,11 @@ class SeedSAC implements Runnable {
 				case "HLZ":
 					component = "Z";
 					break;
-				case "BH1":
 				case "BL1":
 				case "HH1":
 				case "HL1":
 					component = "1";
 					break;
-				case "BH2":
 				case "BL2":
 				case "HH2":
 				case "HL2":
@@ -296,12 +306,14 @@ class SeedSAC implements Runnable {
 					}
 					SACDeconvolution.compute(modPath, spectraPath, afterPath, samplingHz / npts, samplingHz);
 				} catch (Exception e) {
-					// SPECTRAをつくれなかった*.MODファイルをnoSpectraに移す
-					Utilities.moveToDirectory(modPath, noSpectraPath, true);
-					// SPECTRAをつくれなかったSPECTRA.*ファイルをnoSpectraに移す
-					Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
-					// SPECTRAをつくれなかったRESP.*ファイルをnoSpectraに移す
-					Utilities.moveToDirectory(respPath, noSpectraPath, true);
+					if (Files.exists(afterPath)) {
+						// SPECTRAをつくれなかった*.MODファイルをnoSpectraに移す
+						Utilities.moveToDirectory(modPath, noSpectraPath, true);
+						// SPECTRAをつくれなかったSPECTRA.*ファイルをnoSpectraに移す
+						Utilities.moveToDirectory(spectraPath, noSpectraPath, true);
+						// SPECTRAをつくれなかったRESP.*ファイルをnoSpectraに移す
+						Utilities.moveToDirectory(respPath, noSpectraPath, true);
+					}
 					continue;
 				}
 
@@ -641,7 +653,7 @@ class SeedSAC implements Runnable {
 	 * 
 	 */
 	private void selectChannels() {
-		// System.out.println("Selecting Channels");
+		System.out.println("Selecting Channels");
 		Path trashBox = eventDir.toPath().resolve("invalidChannel");
 		try (DirectoryStream<Path> modStream = Files.newDirectoryStream(eventDir.toPath(), "*.MOD")) {
 			for (Path modPath : modStream) {
@@ -651,7 +663,8 @@ class SeedSAC implements Runnable {
 				if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE")
 						|| channel.equals("BLN") || channel.equals("BLE") || channel.equals("HHZ")
 						|| channel.equals("HLZ") || channel.equals("HHN") || channel.equals("HHE")
-						|| channel.equals("HLN") || channel.equals("HLE"))
+						|| channel.equals("HLN") || channel.equals("HLE")
+						|| channel.equals("BH1") || channel.equals("BH2"))
 					continue;
 				Utilities.moveToDirectory(modPath, trashBox, true);
 			}

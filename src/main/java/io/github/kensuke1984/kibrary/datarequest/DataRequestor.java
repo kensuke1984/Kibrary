@@ -186,6 +186,7 @@ public class DataRequestor implements Operation {
 	}
 
 	private Set<GlobalCMTID> listIDs() {
+		
 		GlobalCMTSearch search = new GlobalCMTSearch(startDate, endDate);
 		search.setLatitudeRange(lowerLatitude, upperLatitude);
 		search.setLongitudeRange(lowerLongitude, upperLongitude);
@@ -218,7 +219,7 @@ public class DataRequestor implements Operation {
 				pw.println("#fax 03-5841-8791");
 			}
 			pw.println("##Email address, must be defined");
-			pw.println("#email waveformrequest2015@gmail.com");
+			pw.println("#email timeseries.request@gmail.com");
 			pw.println("##media(FTP)");
 			pw.println("#media");
 			pw.println("##Network names for request, must be defined");
@@ -283,7 +284,7 @@ public class DataRequestor implements Operation {
 					return;
 				System.err.println("Sending a request for " + id);
 				m.sendIris();
-				Thread.sleep(300 * 1000);
+				Thread.sleep(30 * 1000);
 			} catch (Exception e) {
 				System.out.println(m.getLabel() + " was not sent");
 				e.printStackTrace();

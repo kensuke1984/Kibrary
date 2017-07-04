@@ -7,6 +7,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
@@ -90,10 +91,8 @@ public class Partial1DDatasetMaker implements Operation {
 			pw.println("#tlen 6553.6");
 			pw.println("##int step of frequency domain DSM parameter np (1024)");
 			pw.println("#np 1024");
-			pw.println("##double minimum value of passband (0.005)");
-			pw.println("#minFreq");
-			pw.println("##double maximum value of passband (0.08)");
-			pw.println("#maxFreq");
+			pw.println("##double[] freqRanges (input several ranges following the format minFreq1,maxFreq1 minFreq2,maxFreq2) (0.005,0.08)");
+			pw.println("#freqRanges 0.005,0.08");
 			pw.println("#double");
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("##double sampling Hz in output dataset (1)");
@@ -127,10 +126,8 @@ public class Partial1DDatasetMaker implements Operation {
 			property.setProperty("partialTypes", "PAR2");
 		if (!property.containsKey("backward"))
 			property.setProperty("backward", "true");
-		if (!property.containsKey("minFreq"))
-			property.setProperty("minFreq", "0.005");
-		if (!property.containsKey("maxFreq"))
-			property.setProperty("maxFreq", "0.08");
+		if (!property.containsKey("freqRanges"))
+			property.setProperty("freqRanges", "0.005,0.08");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
 		if (!property.containsKey("timewindowPath"))
@@ -179,12 +176,15 @@ public class Partial1DDatasetMaker implements Operation {
 		
 		tlen = Double.parseDouble(property.getProperty("tlen"));
 		np = Integer.parseInt(property.getProperty("np"));
-		minFreq = Double.parseDouble(property.getProperty("minFreq"));
-		maxFreq = Double.parseDouble(property.getProperty("maxFreq"));
+		Set<double[]> periodsSet = Arrays.stream(property.getProperty("freqRanges").split("\\s+")).map(s 
+				-> new double[] {1. / Double.parseDouble(s.split(",")[1]), 1. / Double.parseDouble(s.split(",")[0])}).collect(Collectors.toSet());
+		periodRanges = periodsSet.toArray(new double[periodsSet.size()][]);
 		bodyR = Arrays.stream(property.getProperty("bodyR").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+		
+		filter = new ArrayList<>();
 		
 		structurePath = property.getProperty("ps");
 	}
@@ -209,13 +209,13 @@ public class Partial1DDatasetMaker implements Operation {
 	/**
 	 * bandpassの最小周波数（Hz）
 	 */
-	private double minFreq;
+//	private double minFreq;
 
 	/**
 	 * bandpassの最大周波数（Hz）
 	 */
-	private double maxFreq;
-
+//	private double maxFreq;
+	
 	/**
 	 * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは２０ TODOまだ触れない
 	 */
@@ -373,20 +373,20 @@ public class Partial1DDatasetMaker implements Operation {
 		}
 
 		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t, double bodyR,
-				PartialType partialType) {
+				PartialType partialType, double[] periodRange) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
-
+			
 			PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
+					periodRange[0], periodRange[1], t.getPhases(), 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
 					cutU);
+		
 			try {
 				partialDataWriter.addPartialID(pid);
 				add();
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
 		}
 
 		private void process(DSMOutput spectrum) {
@@ -454,9 +454,13 @@ public class Partial1DDatasetMaker implements Operation {
 						continue;
 					double[] ut = spectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
 					// applying the filter
-					double[] filteredUt = filter.applyFilter(ut);
-					for (TimewindowInformation t : tw)
-						cutAndWrite(station, filteredUt, t, bodyR, partialType);
+					
+					for (int i = 0; i < periodRanges.length; i++) {
+						ButterworthFilter tmpfilter = filter.get(i);
+						double[] filteredUt = tmpfilter.applyFilter(ut);
+						for (TimewindowInformation t : tw)
+							cutAndWrite(station, filteredUt, t, bodyR, partialType, periodRanges[i]);
+					}
 				}
 				if (qSpectrum != null)
 					for (int k = 0; k < spectrum.nbody(); k++) {
@@ -469,9 +473,13 @@ public class Partial1DDatasetMaker implements Operation {
 							continue;
 						double[] ut = qSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
 						// applying the filter
-						double[] filteredUt = filter.applyFilter(ut);
-						for (TimewindowInformation t : tw)
-							cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ);
+						
+						for (int i = 0; i < periodRanges.length; i++) {
+							ButterworthFilter tmpfilter = filter.get(i);
+							double[] filteredUt = tmpfilter.applyFilter(ut);
+							for (TimewindowInformation t : tw)
+								cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ, periodRanges[i]);
+						}
 					}
 			}
 		}
@@ -593,9 +601,11 @@ public class Partial1DDatasetMaker implements Operation {
 					continue;
 				}
 				
-				for (TimewindowInformation t : tw) {
+				for (int i = 0; i < periodRanges.length; i++) {
+					ButterworthFilter tmpfilter = filter.get(i); // TO DO
 					double[] filteredUt = sacdata.createTrace().getY();
-					cutAndWrite(station, filteredUt, t);
+					for (TimewindowInformation t : tw)
+						cutAndWrite(station, filteredUt, t, periodRanges[i]);
 				}
 			}
 		}
@@ -619,7 +629,7 @@ public class Partial1DDatasetMaker implements Operation {
 			return sampleU;
 		}
 		
-		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t) {
+		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t, double[] periodRange) {
 
 			double[] cutU = sampleOutput(filteredUt, t);
 			Location stationLocation = new Location(station.getPosition().getLatitude(), station.getPosition().getLongitude(), Earth.EARTH_RADIUS);
@@ -628,10 +638,10 @@ public class Partial1DDatasetMaker implements Operation {
 				System.err.println("Warning: check that the source time function used for the time partial is the same as the one used here.");
 			
 			PartialID PIDReceiverSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
+					periodRange[0], periodRange[1], t.getPhases(), 0, true, stationLocation, PartialType.TIME_RECEIVER,
 					cutU);
 			PartialID PIDSourceSide = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
-					1 / maxFreq, 1 / minFreq, t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
+					periodRange[0], periodRange[1], t.getPhases(), 0, true, id.getEvent().getCmtLocation(), PartialType.TIME_SOURCE,
 					cutU);
 			
 			try {
@@ -642,7 +652,7 @@ public class Partial1DDatasetMaker implements Operation {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-
+			
 		}
 		
 		private WorkerTimePartial(EventFolder eventDir) {
@@ -661,7 +671,7 @@ public class Partial1DDatasetMaker implements Operation {
 	/**
 	 * filter いじらなくていい
 	 */
-	private ButterworthFilter filter;
+	private List<ButterworthFilter> filter;
 
 	/**
 	 * sacdataを何ポイントおきに取り出すか
@@ -826,12 +836,14 @@ public class Partial1DDatasetMaker implements Operation {
 	private double[][] periodRanges;
 
 	private void setBandPassFilter() throws IOException {
-		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
-		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
-		filter = new BandPassFilter(omegaH, omegaL, 4);
-		filter.setBackward(backward);
-		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
-		writeLog(filter.toString());
+		for (double[] periods : periodRanges) {
+			double omegaH = 1. / periods[0] * 2 * Math.PI / partialSamplingHz;
+			double omegaL = 1. / periods[1] * 2 * Math.PI / partialSamplingHz;
+			ButterworthFilter tmpfilter = new BandPassFilter(omegaH, omegaL, 4);
+			tmpfilter.setBackward(backward);
+			filter.add(tmpfilter);
+			writeLog(tmpfilter.toString());
+		}
 	}
 
 	private void writeLog(String line) throws IOException {

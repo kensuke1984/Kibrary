@@ -33,6 +33,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
@@ -48,6 +49,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.util.spc.SpcBody;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 
@@ -268,11 +270,44 @@ public class PartialDatasetMaker implements Operation {
 			threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
 			if (structure != null)
 				threedPartialMaker.setStructure(structure);
-
+			
+			
+//			if (bp.getSourceLocation().getLongitude() == fp.getObserverPosition().getLongitude()) {
+//				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + bp.getSourceLocation().getLongitude() 
+//						+ "." + fp.getSourceID() + ".txt");
+//				try {
+//					Files.deleteIfExists(path);
+//					Files.createFile(path);
+//					int lsmooth = (int) (0.5 * 6553.6 * 20. / 1024.);
+//					int j = Integer.highestOneBit(lsmooth);
+//					if (j < lsmooth)
+//						j *= 2;
+//					lsmooth = j;
+//					SpcBody fpBody = fp.getSpcBodyList().get(0);
+//					SpcBody bpBody = bp.getSpcBodyList().get(0);
+//					
+//					System.out.println("To time domain lmsooth=" + lsmooth);
+//					fpBody.toTimeDomain(lsmooth);
+//					bpBody.toTimeDomain(lsmooth);
+//					
+//					double[] fpserie = fpBody.getTimeseries(SACComponent.T);
+//					double[] bpserie = bpBody.getTimeseries(SACComponent.T);
+//					System.out.println("FP serie has npts=" + fpserie.length);
+//					System.out.println("BP serie has npts=" + bpserie.length);
+//					
+//					for (int i = 0; i < fpserie.length / 20; i++) {
+//						Files.write(path, (i + " " + fpserie[i * 20] + " " + bpserie[i * 20] + "\n").getBytes(), StandardOpenOption.APPEND);
+//					}
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+			
 			// i番目の深さの偏微分波形を作る
 			for (int ibody = 0, nbody = fp.nbody(); ibody < nbody; ibody++) {
 				// とりあえずtransverse（２）成分についての名前
 				Location location = fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
+				
 				for (PartialType type : partialTypes)
 					for (SACComponent component : components) {
 						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
@@ -637,6 +672,8 @@ private class WorkerTimePartial implements Runnable {
 	private long startTime = System.nanoTime();
 	private long endTime;
 	
+	private boolean jointCMT;
+	
 	/*
 	 * sort timewindows comparing stations
 	 */
@@ -717,9 +754,17 @@ private class WorkerTimePartial implements Runnable {
 			System.out.println(bpFiles.size() + " bpfiles are found");
 
 			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
-			Path[] fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id + "/" + modelName))
+			Path[] fpEventPaths = null;
+			List<Path[]> fpPathList = null;
+			if (!jointCMT) {
+				fpEventPaths = idSet.stream().map(id -> fpPath.resolve(id + "/" + modelName))
 					.filter(Files::exists).toArray(Path[]::new);
-
+			}
+			else {
+				fpPathList = collectFP_jointCMT(idSet);
+			}
+			
+			
 			int donebp = 0;
 			// bpフォルダ内の各bpファイルに対して
 			for (SpcFileName bpname : bpFiles) {
@@ -732,15 +777,34 @@ private class WorkerTimePartial implements Runnable {
 
 				// timewindowの存在するfpdirに対して
 				// ｂｐファイルに対する全てのfpファイルを
-				for (Path fpEventPath : fpEventPaths) {
-					String eventName = fpEventPath.getParent().getFileName().toString();
-					SpcFileName fpfile = new SpcFileName(
-							fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-					if (!fpfile.exists())
-						continue;
-					PartialComputation pc = new PartialComputation(bp, station, fpfile);
-					execs.execute(pc);
-				}
+//				if (!jointCMT)
+//				{
+					for (Path fpEventPath : fpEventPaths) {
+						String eventName = fpEventPath.getParent().getFileName().toString();
+						SpcFileName fpfile = new SpcFileName(
+								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
+						if (!fpfile.exists())
+							continue;
+						PartialComputation pc = new PartialComputation(bp, station, fpfile);
+						execs.execute(pc);
+					}
+//				}
+//				else {
+//					for (Path[] fpEventGreenPath : fpPathList) {
+//						String eventName = fpEventGreenPath[0].getParent().getFileName().toString().split("_")[0];
+//						System.out.println(eventName);
+//						SpcFileName[] fpfiles = new SpcFileName[6];
+//						for (int i = 0; i < 6; i++) {
+//							fpfiles[i] = new SpcFileName(fpEventGreenPath[i]
+//									.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
+//						}
+//						SpcFileName fpfile = computeFP(SpcFileName[] fpGreenFiles);
+////						if (!fpfile.exists())
+////							continue;
+//						PartialComputation pc = new PartialComputation(bp, station, fpfile);
+//						execs.execute(pc);
+//					}
+//				}
 				execs.shutdown();
 				while (!execs.isTerminated()) {
 					try {
@@ -756,6 +820,34 @@ private class WorkerTimePartial implements Runnable {
 		}
 		terminate();
 	}
+	
+	private List<Path[]> collectFP_jointCMT(Set<GlobalCMTID> idSet) {
+		List<Path[]> paths = new ArrayList<>();
+		
+		for (GlobalCMTID id : idSet) {
+			Path[] tmpPaths = new Path[6];
+			for (int i = 0; i < 6; i++)
+				tmpPaths[i] = fpPath.resolve(id + "_mt" + i + "/" + modelName);
+			paths.add(tmpPaths);
+		}
+		
+		return paths;
+	}
+	
+//	private DSMOutput computeFP(SpcFileName[] fpGreenFiles) {
+//		DSMOutput fp = fpGreenFiles[0];
+//		MomentTensor mt = new GlobalCMTID(fpGreenFiles[0].getSourceID())
+//			.getEvent().getCmt();
+//		
+//		if (fpGreenFiles.length != 6)
+//			System.err.println("FP green functions must have 6 components");
+//		
+//		for (int i = 0; i < 6; i++) {
+//			
+//		}
+//		
+//		return fp;
+//	}
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 

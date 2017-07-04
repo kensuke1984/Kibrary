@@ -240,12 +240,12 @@ public class FujiStaticCorrection implements Operation {
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 
 				if (windows != null && windows.size() != 0)
-					for (Timewindow window : windows)
+					for (TimewindowInformation window : windows)
 						try {
 							double shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
 							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
 							StaticCorrection t = new StaticCorrection(station, eventID, component,
-									window.getStartTime(), shift, ratio);
+									window.getStartTime(), shift, ratio, window.getPhases());
 							staticCorrectionSet.add(t);
 						} catch (Exception e) {
 							System.err.println(window + " is ignored because an error occurs");

@@ -150,6 +150,16 @@ class TensorCalculationUCE {
 		// angle= 0;
 		double cosine = FastMath.cos(angle);
 		double sine = FastMath.sin(angle);
+//		double e = 1e-2;
+//		double absAngle = Math.abs(angle);
+//		if (absAngle < Math.PI/2. + e && absAngle > Math.PI/2. - e) {
+//			System.out.println("Set cosine to 0");
+//			cosine = 0.;
+//		}
+//		else if (absAngle < Math.PI + e && absAngle > Math.PI - e) {
+//			System.out.println("Set sine to 0");
+//			sine = 0.;
+//		}
 
 		// 回転行列 前から
 		double[][] forwardMatrix = new double[][] { { 1, 0, 0 }, { 0, cosine, sine }, { 0, -sine, cosine } };

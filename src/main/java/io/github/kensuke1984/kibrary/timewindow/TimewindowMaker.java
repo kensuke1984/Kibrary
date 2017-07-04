@@ -9,18 +9,24 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.ArrayUtils;
+
+import ucar.jpeg.jj2000.j2k.util.ArrayUtil;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -74,6 +80,12 @@ public class TimewindowMaker implements Operation {
 			pw.println("#frontShift");
 			pw.println("##double time after last phase. If it is 60, then 60 s after arrival (0)");
 			pw.println("#rearShift");
+			pw.println("##boolean corridor (false)");
+			pw.println("#corridor ");
+			pw.println("##String model to compute travel times using TauP (prem)");
+			pw.println("#model ");
+			pw.println("##double minLength for the time windows in seconds (40.)");
+			pw.println("#minLength ");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -91,8 +103,14 @@ public class TimewindowMaker implements Operation {
 			property.setProperty("exPhases", "");
 		if (!property.containsKey("usePhases"))
 			property.setProperty("usePhases", "S");
-		if (!property.containsKey("majorArc"));
+		if (!property.containsKey("majorArc"))
 			property.setProperty("majorArc", "false");
+		if (!property.containsKey("corridor"))
+			property.setProperty("corridor", "false");
+		if (!property.containsKey("model"))
+			property.setProperty("model", "prem");
+		if (!property.containsKey("minLength"))
+			property.setProperty("minLength", "40");
 	}
 
 	private Path workPath;
@@ -115,6 +133,12 @@ public class TimewindowMaker implements Operation {
 		
 		frontShift = Double.parseDouble(property.getProperty("frontShift"));
 		rearShift = Double.parseDouble(property.getProperty("rearShift"));
+		
+		corridor = Boolean.parseBoolean(property.getProperty("corridor"));
+		
+		model = property.getProperty("model").trim().toLowerCase();
+		
+		minLength = Double.parseDouble(property.getProperty("minLength"));
 	}
 
 	private static Set<Phase> phaseSet(String arg) {
@@ -159,6 +183,12 @@ public class TimewindowMaker implements Operation {
 	 * タイムウインドウがおかしくて省いたリスト とりあえず startが０以下になるもの
 	 */
 	private Path invalidList;
+	
+	private boolean corridor;
+	
+	private double minLength;
+	
+	String model;
 
 	/**
 	 * Run must finish within 10 hours.
@@ -193,7 +223,10 @@ public class TimewindowMaker implements Operation {
 				eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 						.forEach(sfn -> {
 					try {
-						makeTimeWindow(sfn);
+						if (corridor)
+							makeTimeWindowForCorridor(sfn);
+						else
+							makeTimeWindow(sfn);
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -207,6 +240,257 @@ public class TimewindowMaker implements Operation {
 			System.err.println("No timewindow is created");
 		else
 			TimewindowInformationFile.write(timewindowSet, outputPath);
+	}
+	
+	private void makeTimeWindowForCorridor(SACFileName sacFileName) throws IOException {
+		SACData sacFile = sacFileName.read();
+		// 震源深さ radius
+		double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
+		// 震源観測点ペアの震央距離
+		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
+		try {
+			// group 1
+//			this.frontShift = 20.;
+//			this.rearShift = 50.;
+//			Set<Phase> usePhasesCorridor = Arrays.stream("s S ScS Sdiff".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+//			if (!majorArc) {
+//				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+//			}
+//			Set<Phase> exPhasesCorridor = Arrays.stream("sS sSdiff sScS SS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			Set<TauPPhase> exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+//					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+//			if (usePhases.isEmpty()) {
+//				writeInvalid(sacFileName);
+//				return;
+//			}
+//			double[] phaseTime = toTravelTime(usePhases);
+//			double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+//			
+//			Timewindow[] windows1 = createTimeWindows(phaseTime, exPhaseTime);
+//			//
+//			
+//			// group 2
+//			this.frontShift = 20.;
+//			this.rearShift = 50.;
+//			usePhasesCorridor = Arrays.stream("sS sScS sSdiff".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+//			if (!majorArc) {
+//				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+//			}
+//			exPhasesCorridor = Arrays.stream("S ScS SS sSS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+//					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+//			if (usePhases.isEmpty()) {
+//				writeInvalid(sacFileName);
+//				return;
+//			}
+//			phaseTime = toTravelTime(usePhases);
+//			exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+//			
+//			Timewindow[] windows2 = createTimeWindows(phaseTime, exPhaseTime);
+//			//
+//			
+//			// group 3
+//			this.frontShift = 20.;
+//			this.rearShift = 70.;
+//			usePhasesCorridor = Arrays.stream("SS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+//			if (!majorArc) {
+//				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+//			}
+//			exPhasesCorridor = Arrays.stream("sScS sSS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+//					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+//			if (usePhases.isEmpty()) {
+//				writeInvalid(sacFileName);
+//				return;
+//			}
+//			phaseTime = toTravelTime(usePhases);
+//			exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+//			
+//			Timewindow[] windows3 = createTimeWindows(phaseTime, exPhaseTime);
+//			//
+//			
+//			// group 4
+//			this.frontShift = 20.;
+//			this.rearShift = 70.;
+//			usePhasesCorridor = Arrays.stream("sSS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+//			if (!majorArc) {
+//				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+//			}
+//			exPhasesCorridor = Arrays.stream("SS SSS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+//					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+//			if (usePhases.isEmpty()) {
+//				writeInvalid(sacFileName);
+//				return;
+//			}
+//			phaseTime = toTravelTime(usePhases);
+//			exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+//			
+//			Timewindow[] windows4 = createTimeWindows(phaseTime, exPhaseTime);
+			//
+			
+			// group 1
+			this.frontShift = 10.;
+			this.rearShift = 60.;
+//			double eventDepth = Earth.EARTH_RADIUS - sacFileName.getGlobalCMTID().getEvent().getCmtLocation().getR();
+			Set<Phase> usePhasesCorridor = null;
+//			if (eventDepth < 200)
+//				usePhasesCorridor = Arrays.stream("s S ScS Sdiff sS sScS sSdiff SS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			else
+				usePhasesCorridor = Arrays.stream("s S ScS Sdiff sS sScS sSdiff SS sSS".split(" "))
+				.map(Phase::create).collect(Collectors.toSet());
+			List<TauPPhase> usePhasesList = TauPTimeReader.getTauPPhaseList(eventR, epicentralDistance, usePhasesCorridor, model);
+			if (!majorArc) {
+				usePhasesList.removeIf(phase -> phase.getPuristDistance() >= 180.);
+			}
+			Set<Phase> exPhasesCorridor = null;
+//			if (eventDepth < 200)
+//				exPhasesCorridor = Arrays.stream("sSS SSS sSSS SSSS sSSSS".split(" "))
+//					.map(Phase::create).collect(Collectors.toSet());
+//			else
+				exPhasesCorridor = Arrays.stream("SSS sSSS SSSS sSSSS".split(" "))
+				.map(Phase::create).collect(Collectors.toSet());
+			Set<TauPPhase> exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+			if (usePhases.isEmpty()) {
+				writeInvalid(sacFileName);
+				return;
+			}
+			double[] phaseTime = toTravelTime(usePhasesList);
+			Phase[] phaseNames = toPhaseName(usePhasesList);
+			double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+			
+			Timewindow[] windows1 = createTimeWindowsAndSplit(phaseTime, phaseNames, exPhaseTime);
+//			//
+			
+			// group 5
+			this.frontShift = 6.;
+			this.rearShift = 70.;
+			usePhasesCorridor = Arrays.stream("ScSScS sScSScS".split(" "))
+					.map(Phase::create).collect(Collectors.toSet());
+			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+			if (!majorArc) {
+				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+			}
+			exPhasesCorridor = Arrays.stream("SSS sSSS SSSS sSSSS SSSSS sSSSSS SSSSSS sSSSSSS".split(" "))
+					.map(Phase::create).collect(Collectors.toSet());
+			exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+			if (usePhases.isEmpty()) {
+				writeInvalid(sacFileName);
+				return;
+			}
+			phaseTime = toTravelTime(usePhases);
+			phaseNames = toPhaseName(usePhasesList);
+			exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+			
+			Timewindow[] windows5 = createTimeWindowsAndSplit(phaseTime, phaseNames, exPhaseTime);
+			//
+			
+			// group 6
+			this.frontShift = 6.;
+			this.rearShift = 75.;
+			usePhasesCorridor = Arrays.stream("ScSScSScS sScSScSScS".split(" "))
+					.map(Phase::create).collect(Collectors.toSet());
+			usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, usePhasesCorridor, model);
+			if (!majorArc) {
+				usePhases.removeIf(phase -> phase.getPuristDistance() >= 180.);
+			}
+			exPhasesCorridor = Collections.emptySet();
+			exPhases = exPhasesCorridor.size() == 0 ? Collections.emptySet()
+					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, exPhasesCorridor, model);
+			if (usePhases.isEmpty()) {
+				writeInvalid(sacFileName);
+				return;
+			}
+			phaseTime = toTravelTime(usePhases);
+			phaseNames = toPhaseName(usePhasesList);
+			exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+			
+			Timewindow[] windows6 = createTimeWindowsAndSplit(phaseTime, phaseNames, exPhaseTime);
+			//
+			
+			List<Timewindow> windowList = new ArrayList<>();
+			if (windows1 != null) {
+				for (Timewindow tw : windows1)
+					windowList.add(tw);
+			}
+//			if (windows2 != null) {
+//				for (Timewindow tw : windows2)
+//					windowList.add(tw);
+//			}
+//			if (windows3 != null) {
+//				for (Timewindow tw : windows3)
+//					windowList.add(tw);
+//			}
+//			if (windows4 != null) {
+//				for (Timewindow tw : windows4)
+//					windowList.add(tw);
+//			}
+			if (windows5 != null) {
+				for (Timewindow tw : windows5)
+					windowList.add(tw);
+			}
+			if (windows6 != null) {
+				for (Timewindow tw : windows6)
+					windowList.add(tw);
+			}
+//			if (windows7 != null) {
+//				for (Timewindow tw : windows7)
+//					windowList.add(tw);
+//			}
+//			if (windows8 != null) {
+//				for (Timewindow tw : windows8)
+//					windowList.add(tw);
+//			}
+			Timewindow[] windows = windowList.toArray(new Timewindow[windowList.size()]);
+			
+			if (windows == null) {
+				writeInvalid(sacFileName);
+				return;
+			}
+			
+			// System.out.println(sacFile.getValue(SacHeaderEnum.E));
+			// delta (time step) in SacFile
+			double delta = sacFile.getValue(SACHeaderEnum.DELTA);
+			double e = sacFile.getValue(SACHeaderEnum.E);
+			// station of SacFile
+			Station station = sacFile.getStation();
+			// global cmt id of SacFile
+			GlobalCMTID id = sacFileName.getGlobalCMTID();
+			// component of SacFile
+			SACComponent component = sacFileName.getComponent();
+	
+			// window fix
+			Set<Phase> tmpUsePhases = Arrays.stream("s S ScS Sdiff sS sScS sSdiff SS sSS SSS sSSS SSSS sSSSS ScSScS sScSScS ScSScSScS sScSScSScS".split(" "))
+				.map(Phase::create).collect(Collectors.toSet());
+			Set<TauPPhase> usePhases_ = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, tmpUsePhases, model);
+			Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
+					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases_)))
+					.filter(tw -> tw.getPhases().length > 0)
+					.forEach(tw -> {
+						if (tw.endTime - tw.startTime >= 30.) {
+							timewindowSet.add(tw);
+						}
+						else 
+							System.out.println("Ignored length<30s " + tw);
+					});
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void makeTimeWindow(SACFileName sacFileName) throws IOException {
@@ -303,12 +587,85 @@ public class TimewindowMaker implements Operation {
 		exWindows = mergeWindow(exWindows);
 		return considerExPhase(windows, exWindows);
 	}
+	
+	private Timewindow[] createTimeWindowsAndSplit(double[] phaseTime, Phase[] phaseNames, double[] exPhaseTime) {
+//		Timewindow[] windows = Arrays.stream(phaseTime)
+//				.mapToObj(time -> new Timewindow(time - frontShift, time + rearShift)).sorted()
+//				.toArray(Timewindow[]::new);
+		if (phaseTime.length == 0)
+			return null;
+		
+		Map<Phase, Timewindow[]> phaseWindowMap = new HashMap<>();
+		for (int i = 0; i < phaseTime.length; i++) {
+			double time = phaseTime[i];
+			Phase phase = phaseNames[i];
+			if (phaseWindowMap.containsKey(phase)) {
+				Timewindow[] windows = phaseWindowMap.get(phase);
+				Timewindow[] newWindows = Arrays.copyOf(windows, windows.length + 1);
+				newWindows[newWindows.length - 1] = new Timewindow(time - frontShift, time + rearShift);
+				phaseWindowMap.replace(phase, newWindows);
+			}
+			else {
+				Timewindow[] windows = new Timewindow[] { new Timewindow(time - frontShift, time + rearShift) };
+				phaseWindowMap.put(phase, windows);
+			}
+		}
+		
+		List<Timewindow> list = new ArrayList<>();
+		for (Phase phase : phaseWindowMap.keySet()) {
+			Timewindow[] windows = Arrays.stream(phaseWindowMap.get(phase)).sorted().toArray(Timewindow[]::new);
+			windows = mergeWindow(windows);
+			for (Timewindow window : windows)
+				list.add(window);
+		}
+		
+		Timewindow[] windows = list.stream().sorted().toArray(Timewindow[]::new);
+		
+		Timewindow[] exWindows = exPhaseTime == null ? null
+				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - frontShift, time + rearShift))
+						.sorted().toArray(Timewindow[]::new);
+		
+		if (exWindows != null) {
+			exWindows = mergeWindow(exWindows);
+			windows = considerExPhase(windows, exWindows, minLength);
+		}
+		
+		return splitWindow(windows, minLength); 
+	}
+	
+	private Timewindow[] createTimeWindows(double[] phaseTime, double[] exPhaseTime, double exRearShift) {
+		Timewindow[] windows = Arrays.stream(phaseTime)
+				.mapToObj(time -> new Timewindow(time - frontShift, time + rearShift)).sorted()
+				.toArray(Timewindow[]::new);
+		Timewindow[] exWindows = exPhaseTime == null ? null
+				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - frontShift, time + exRearShift))
+						.sorted().toArray(Timewindow[]::new);
+
+		windows = mergeWindow(windows);
+
+		if (exWindows == null)
+			return windows;
+		exWindows = mergeWindow(exWindows);
+		return considerExPhase(windows, exWindows);
+	}
 
 	/**
 	 * @param useTimeWindow
 	 * @param exTimeWindow
 	 * @return useTimeWindowからexTimeWindowの重なっている部分を取り除く 何もなくなってしまったらnullを返す
 	 */
+	private static Timewindow cutWindow(Timewindow useTimeWindow, Timewindow exTimeWindow, double minLength) {
+		// System.out.println(useTimeWindow+" "+exTimeWindow);
+		if (!useTimeWindow.overlap(exTimeWindow))
+			return useTimeWindow;
+		// System.out.println("hi");
+		if (exTimeWindow.startTime <= useTimeWindow.startTime)
+			return useTimeWindow.endTime <= exTimeWindow.endTime ? null
+					: new Timewindow(exTimeWindow.endTime, useTimeWindow.endTime);
+		Timewindow newWindow = new Timewindow(useTimeWindow.startTime, exTimeWindow.startTime);
+		return newWindow.getLength() < minLength ? null : newWindow;
+	}
+	
 	private static Timewindow cutWindow(Timewindow useTimeWindow, Timewindow exTimeWindow) {
 		// System.out.println(useTimeWindow+" "+exTimeWindow);
 		if (!useTimeWindow.overlap(exTimeWindow))
@@ -317,7 +674,8 @@ public class TimewindowMaker implements Operation {
 		if (exTimeWindow.startTime <= useTimeWindow.startTime)
 			return useTimeWindow.endTime <= exTimeWindow.endTime ? null
 					: new Timewindow(exTimeWindow.endTime, useTimeWindow.endTime);
-		return new Timewindow(useTimeWindow.startTime, exTimeWindow.startTime);
+		Timewindow newWindow = new Timewindow(useTimeWindow.startTime, exTimeWindow.startTime);
+		return newWindow;
 	}
 
 	/**
@@ -330,6 +688,21 @@ public class TimewindowMaker implements Operation {
 	 *            must be in order by start time
 	 * @return timewindows to use
 	 */
+	private static Timewindow[] considerExPhase(Timewindow[] useTimeWindows, Timewindow[] exTimeWindows, double minLength) {
+		List<Timewindow> usable = new ArrayList<>();
+		for (Timewindow window : useTimeWindows) {
+			for (Timewindow ex : exTimeWindows) {
+				window = cutWindow(window, ex, minLength);
+				if (window == null)
+					break;
+			}
+			if (window != null)
+				usable.add(window);
+		}
+
+		return usable.size() == 0 ? null : usable.toArray(new Timewindow[0]);
+	}
+	
 	private static Timewindow[] considerExPhase(Timewindow[] useTimeWindows, Timewindow[] exTimeWindows) {
 		List<Timewindow> usable = new ArrayList<>();
 		for (Timewindow window : useTimeWindows) {
@@ -371,6 +744,35 @@ public class TimewindowMaker implements Operation {
 					windowList.add(windows[i]);
 			}
 		}
+		return windowList.toArray(new Timewindow[windowList.size()]);
+	}
+	
+	private static Timewindow[] splitWindow(Timewindow[] windows, double minLength) {
+		boolean mergeIfshort = true;
+		if (windows.length == 1)
+			return windows;
+		List<Timewindow> windowList = new ArrayList<>();
+		Timewindow windowA = windows[0];
+		for (int i = 1; i < windows.length; i++) {
+			Timewindow windowB = windows[i];
+			if (windowA.overlap(windowB)) {
+				Timewindow newA = new Timewindow(windowA.startTime, windowB.startTime);
+				if (newA.getLength() < minLength) {
+					windowA = newA.merge(windowB);
+				} else {
+					windowList.add(newA);
+					windowA = windowB;
+				}
+				if (i == windows.length - 1)
+					windowList.add(windowA);
+			} else {
+				windowList.add(windowA);
+				windowA = windows[i];
+				if (i == windows.length - 1)
+					windowList.add(windows[i]);
+			}
+		}
+		
 		return windowList.toArray(new Timewindow[0]);
 	}
 
@@ -381,6 +783,17 @@ public class TimewindowMaker implements Operation {
 	 */
 	private static double[] toTravelTime(Set<TauPPhase> phases) {
 		return phases.stream().mapToDouble(TauPPhase::getTravelTime).toArray();
+	}
+	
+	private static double[] toTravelTime(List<TauPPhase> phases) {
+		return phases.stream().mapToDouble(TauPPhase::getTravelTime).toArray();
+	}
+	
+	private static Phase[] toPhaseName(List<TauPPhase> phases) {
+		Phase[] names = new Phase[phases.size()];
+		for (int i = 0; i < names.length; i++)
+			names[i] = phases.get(i).getPhaseName();
+		return names;
 	}
 
 	private synchronized void writeInvalid(SACFileName sacFileName) throws IOException {

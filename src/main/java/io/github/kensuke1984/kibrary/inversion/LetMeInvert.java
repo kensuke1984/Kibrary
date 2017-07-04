@@ -234,7 +234,7 @@ public class LetMeInvert implements Operation {
 			pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
 			pw.println("#outPath");
 			pw.println("##Path of a waveID file, must be set");
-			pw.println("#waveIDPath waveID.dat");
+			pw.println("#waveformIDPath waveID.dat");
 			pw.println("##Path of a waveform file, must be set");
 			pw.println("#waveformPath waveform.dat");
 			pw.println("##Path of a partial id file, must be set");
@@ -320,6 +320,15 @@ public class LetMeInvert implements Operation {
 		};
 		if (phases == null)
 			chooser = id -> true;
+			
+		chooser = new Predicate<BasicID>() {
+			public boolean test(BasicID id) {
+//				if (id.getGlobalCMTID().equals(new GlobalCMTID("200707211534A")))
+//					return false;
+//				else
+					return true;
+			}
+		};
 		
 		// set Dvector
 		System.err.println("Creating D vector");

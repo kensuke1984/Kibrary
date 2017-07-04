@@ -46,7 +46,7 @@ public class BreakFastMail {
 	/**
 	 * password of the gmail account.
 	 */
-	private static String password;
+	private static String password = "nvtaldfxlwighvax";
 
 	/**
 	 * @return リクエストメールに書くべきヘッダー部分
@@ -78,7 +78,7 @@ public class BreakFastMail {
 		else if (!GraphicsEnvironment.isHeadless()) {
 			password = PasswordInput.createAndShowGUI().getPassword();
 		} else {
-			password = String.copyValueOf(System.console().readPassword("Password for waveformrequest2015@gmail.com"));
+			password = String.copyValueOf(System.console().readPassword("Password for timeseries.request@gmail.com"));
 		}
 		return password;
 	}
@@ -88,9 +88,9 @@ public class BreakFastMail {
 		email.setHostName("smtp.googlemail.com");
 		email.setSmtpPort(465);
 		getPassword();
-		email.setAuthenticator(new DefaultAuthenticator("waveformrequest2015@gmail.com", password));
+		email.setAuthenticator(new DefaultAuthenticator("timeseries.request@gmail.com", password));
 		email.setSSLOnConnect(true);
-		email.setFrom("waveformrequest2015@gmail.com");
+		email.setFrom("timeseries.request@gmail.com");
 		email.setSubject("Request" + Utilities.getTemporaryString());
 		email.setMsg(String.join("\n", lines));
 		email.addTo(IRIS_EMAIL);

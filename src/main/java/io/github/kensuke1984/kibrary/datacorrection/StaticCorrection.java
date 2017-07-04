@@ -1,7 +1,13 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -85,6 +91,8 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	 * start time of synthetic waveform
 	 */
 	private final double synStartTime;
+	
+	private final Phase[] phases;
 
 	/**
 	 * 
@@ -111,13 +119,14 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	 *            Observed / Synthetic
 	 */
 	public StaticCorrection(Station station, GlobalCMTID eventID, SACComponent component, double synStartTime,
-			double timeShift, double amplitudeRatio) {
+			double timeShift, double amplitudeRatio, Phase[] phases) {
 		this.station = station;
 		this.eventID = eventID;
 		this.component = component;
 		this.synStartTime = Precision.round(synStartTime, 2);
 		this.timeShift = Precision.round(timeShift, 2);
 		this.amplitudeRatio = Precision.round(amplitudeRatio, 2);
+		this.phases = phases;
 	}
 
 	public Station getStation() {
@@ -152,10 +161,16 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	public double getSynStartTime() {
 		return synStartTime;
 	}
+	
+	public Phase[] getPhases() {
+		return phases;
+	}
 
 	@Override
 	public String toString() {
-		return station + " " + eventID + " " + component + " " + synStartTime + " " + timeShift + " " + amplitudeRatio;
+		List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+		return station.getStationName() + " " + station.getNetwork() + " " + station.getPosition() + " " + eventID 
+				+ " " + component + " " + synStartTime + " " + timeShift + " " + amplitudeRatio + " " + String.join(",", phaseStrings);
 	}
 
 }

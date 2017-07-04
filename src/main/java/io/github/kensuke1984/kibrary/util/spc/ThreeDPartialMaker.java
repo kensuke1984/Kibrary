@@ -2,12 +2,18 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
+import org.apache.commons.math3.util.FastMath;
+
+import com.amazonaws.util.CollectionUtils;
 
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
@@ -59,6 +65,8 @@ public class ThreeDPartialMaker {
 	private double angleForVector;
 
 	private int lsmooth;
+	
+	Set<Double> ignoreBodyR;
 
 	/**
 	 * 用いたいspcファイルたちと ヘッダーに加えたい情報
@@ -69,8 +77,10 @@ public class ThreeDPartialMaker {
 	 *            a spc file for back propagation
 	 */
 	public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp) {
-		if (!isGoodPair(fp, bp))
+		ignoreBodyR = new HashSet<>();
+		if (!isGoodPairPermissive(fp, bp)) //isGoodPair
 			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
 		this.fp = fp;
 		this.bp = bp;
 		findLsmooth();
@@ -104,7 +114,7 @@ public class ThreeDPartialMaker {
 					bp.getSpcBodyList().get(ibody), type.getWeightingFactor(), angleForTensor);
 			// tensorcalc.setBP(angleBP);
 			// tensorcalc.setFP(angleFP);
-			// System.out.println("angleForTensor "+angleForTensor);
+			 System.out.println("angleForTensor " + angleForTensor);
 			Complex[] partialZ = tensorcalc.calc(0); // frequency domain Z
 			Complex[] partial1 = tensorcalc.calc(1); // R
 			Complex[] partial2 = tensorcalc.calc(2); // T
@@ -203,6 +213,10 @@ public class ThreeDPartialMaker {
 	 * @return Ui(t) u[t] 時間領域
 	 */
 	public double[] createPartial(SACComponent component, int iBody, PartialType type) {
+		// return array of zero for partials whose radius is too close to the BP or FP source
+		if (ignoreBodyR.contains(fp.getBodyR()[iBody]) || ignoreBodyR.contains(bp.getBodyR()[iBody]))
+			return new double[npts];
+		//
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
 				: computeTensorCulculus(component, iBody, type);
 		if (null != sourceTimeFunction)
@@ -251,7 +265,6 @@ public class ThreeDPartialMaker {
 				bp.getSpcBodyList().get(iBody), type.getWeightingFactor(), angleForTensor);
 		return component == SACComponent.Z ? tensorcalc.calc(0)
 				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
-
 	}
 
 	private SourceTimeFunction sourceTimeFunction;
@@ -274,22 +287,36 @@ public class ThreeDPartialMaker {
 	 */
 	private Complex[] rotatePartial(Complex[] partial1, Complex[] partial2, SACComponent component) {
 		Complex[] partial = new Complex[fp.np() + 1];
+		
+		double cosine = FastMath.cos(angleForVector);
+		double sine = FastMath.sin(angleForVector);
+//		double e = 1e-2;
+//		double absAngle = Math.abs(angleForVector);
+//		if (absAngle < Math.PI/2. + e && absAngle > Math.PI/2. - e) {
+//			System.out.println("Set cosine to 0");
+//			cosine = 0.;
+//		}
+//		else if (absAngle < Math.PI + e && absAngle > Math.PI - e) {
+//			System.out.println("Set sine to 0");
+//			sine = 0.;
+//		}
+		
 		switch (component) {
 		case R:
 			for (int j = 0; j < fp.np() + 1; j++)
 				partial[j] = new Complex(
-						Math.cos(angleForVector) * partial1[j].getReal()
-								+ Math.sin(angleForVector) * partial2[j].getReal(),
-						Math.cos(angleForVector) * partial1[j].getImaginary()
-								+ Math.sin(angleForVector) * partial2[j].getImaginary());
+						cosine * partial1[j].getReal()
+								+ sine * partial2[j].getReal(),
+						cosine * partial1[j].getImaginary()
+								+ sine * partial2[j].getImaginary());
 			return partial;
 		case T:
 			for (int j = 0; j < fp.np() + 1; j++)
 				partial[j] = new Complex(
-						-Math.sin(angleForVector) * partial1[j].getReal()
-								+ Math.cos(angleForVector) * partial2[j].getReal(),
-						-Math.sin(angleForVector) * partial1[j].getImaginary()
-								+ Math.cos(angleForVector) * partial2[j].getImaginary());
+						-sine * partial1[j].getReal()
+								+ cosine * partial2[j].getReal(),
+						-sine * partial1[j].getImaginary()
+								+ cosine * partial2[j].getImaginary());
 			return partial;
 		default:
 			System.out.println(Thread.currentThread().getStackTrace()[1].getMethodName());
@@ -311,6 +338,9 @@ public class ThreeDPartialMaker {
 		angleForTensor = Earth.getAzimuth(point, station) - Earth.getAzimuth(point, event);
 
 		angleForVector = 2 * Math.PI - Earth.getAzimuth(station, event);
+		
+//		System.out.println(event + " " + station + " " + point);
+//		System.out.println(angleForTensor*180/Math.PI + " " + angleForVector*180/Math.PI);
 	}
 
 	/**
@@ -459,4 +489,64 @@ public class ThreeDPartialMaker {
 		return validity;
 	}
 
+	private boolean isGoodPairPermissive(DSMOutput fp, DSMOutput bp) {
+		boolean validity = true;
+		if (Math.abs(fp.nbody() - bp.nbody()) > 2) {
+			System.err.println("nbodies are different by more than 2. fp, bp: " + fp.nbody() + " ," + bp.nbody());
+			validity = false;
+		}
+		if (validity) {
+			double[] fpR = fp.getBodyR();
+			double[] bpR = bp.getBodyR();
+			Set<Double> fpRSet = Arrays.stream(fpR).boxed().collect(Collectors.toSet());
+			Set<Double> bpRSet = Arrays.stream(bpR).boxed().collect(Collectors.toSet());
+			Set<Double> bpRSet_copy = bpRSet;
+			bpRSet.removeAll(fpRSet);
+			fpRSet.removeAll(bpRSet_copy);
+			ignoreBodyR.addAll(bpRSet);
+			ignoreBodyR.addAll(fpRSet);
+			validity = ignoreBodyR.size() <= 2;
+			if (!validity) {
+				System.err.println("the depths are invalid(different) as below  fp : bp");
+				for (int i = 0; i < fpR.length; i++)
+					System.err.println(fpR[i] + " : " + bpR[i]);
+			}
+		}
+		if (fp.omegai() != bp.omegai()) {
+			System.err.println("Omegais are different. fp, bp: " + fp.omegai() + ", " + bp.omegai());
+			validity = false;
+		}
+
+		if (fp.np() != bp.np()) {
+			System.err.println("nps are different. fp, bp: " + fp.np() + ", " + bp.np());
+			validity = false;
+		}
+		// tlen
+		if (fp.tlen() != bp.tlen()) {
+			System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
+			validity = false;
+		}
+		// 摂動点名は同じかどうか
+//		if (!(fp.getObserverID().equals(bp.getObserverID()))) {
+//			System.err.println(
+//					"Perturbation points are different fp, bp: " + fp.getObserverID() + " ," + bp.getObserverID());
+//			validity = false;
+//		}
+		if (!(fp.getObserverName().equals(bp.getObserverName()))) {
+			System.err.println(
+					"Perturbation points are different fp, bp: " + fp.getObserverName() + " ," + bp.getObserverName());
+			validity = false;
+		}
+		// FP and BP have no observation network, thus we do no check it
+
+		// 場所
+		if (!fp.getObserverPosition().equals(bp.getObserverPosition())) {
+			System.err.println("perturbation point Positions are different.");
+			System.err.println("perturbation point of fp, bp are" + "(" + fp.getObserverPosition().getLatitude() + ", "
+					+ fp.getObserverPosition().getLongitude() + "), (" + bp.getObserverPosition().getLatitude() + ", "
+					+ bp.getObserverPosition().getLongitude() + ")");
+			validity = false;
+		}
+		return validity;
+	}
 }

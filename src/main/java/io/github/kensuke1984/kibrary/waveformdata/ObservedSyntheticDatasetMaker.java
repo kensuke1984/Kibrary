@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
@@ -459,8 +460,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-					&& s.getComponent() == t.getComponent();
-
+					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
+			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
 	}

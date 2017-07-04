@@ -199,7 +199,7 @@ public class TakeuchiStaticCorrection implements Operation {
 			double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
 			double amplitudeRatio = obsAmp / synAmp;
 			StaticCorrection sc = new StaticCorrection(station, id, component, timeWindow.getStartTime(), timeShift,
-					amplitudeRatio);
+					amplitudeRatio, timeWindow.getPhases());
 			outStaticCorrectionSet.add(sc);
 		}
 	}

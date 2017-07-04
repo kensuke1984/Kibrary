@@ -165,7 +165,7 @@ public class DataSelection implements Operation {
 			property.setProperty("maxVariance", "2");
 		if (!property.containsKey("ratio"))
 			property.setProperty("ratio", "2");
-		if (!property.contains("minSNratio"))
+		if (!property.containsKey("minSNratio"))
 			property.setProperty("minSNratio", "2");
 		if (!property.containsKey("convolute"))
 			property.setProperty("convolute", "true");
@@ -402,11 +402,11 @@ public class DataSelection implements Operation {
 
 	/**
 	 * ID for static correction and time window information Default is station
-	 * name, global CMT id, component.
+	 * name, global CMT id, component, start time.
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-					&& s.getComponent() == t.getComponent();
+					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
@@ -475,7 +475,7 @@ public class DataSelection implements Operation {
 	}
 	
 	private double noisePerSecond(SACData sac, SACComponent component) {
-		double len = 50;
+		double len = 100;
 		double distance = sac.getValue(SACHeaderEnum.GCARC);
 		double depth = sac.getValue(SACHeaderEnum.EVDP);
 		double firstArrivalTime = 0;
@@ -508,7 +508,7 @@ public class DataSelection implements Operation {
 			e.printStackTrace();
 		}
 	
-		return sac.createTrace().cutWindow(firstArrivalTime - 20 - len, firstArrivalTime - 20).getYVector().getNorm() / len;
+		return sac.createTrace().cutWindow(firstArrivalTime - 40 - len, firstArrivalTime - 40).getYVector().getNorm() / len;
 	}
 
 	/**

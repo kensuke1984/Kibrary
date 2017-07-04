@@ -32,5 +32,7 @@ public interface GlobalCMTData {
 	LocalDateTime getPDETime();
 
 	GlobalCMTID getGlobalCMTID();
+	
+	void setCmt(MomentTensor mt);
 
 }

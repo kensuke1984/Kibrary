@@ -122,7 +122,7 @@ public class ObservationEquation {
 				double vij = .5 * (computeCorrelationLength(ri, correlationScaling)
 						+ computeCorrelationLength(rj, correlationScaling));
 				if (unknown_i.getPartialType().equals(PartialType.PARQ))
-					vij = 200. * correlationScaling;
+					vij = 1.;//200. * correlationScaling;
 				if ((Double) unknown_i.getLocation() >= 6346.6)
 					vij = 1e-3;
 				double rij = ri - rj;
@@ -174,24 +174,25 @@ public class ObservationEquation {
 	
 	// scaling = 1. gives a correlation lenght of 50 km in the uppermost mantle
 	private static double computeCorrelationLength(double r, double scaling) {
+		return scaling * 250;
 //		if (r < 3550.0 && r >= 3480.0)
 //			return scaling * 186.68;
 //		else if (r < 3690.0 && r >= 3550.0)
 //			return scaling * (4.565e-01 * (r-3690.0) + 250.59);
-		if (r < 3690.0 && r >= 3480.0)
-			return scaling * (0.24089 * (r - 3690.0) + 250.588);
+//		if (r < 3690.0 && r >= 3480.0)
+//			return scaling * (0.24089 * (r - 3690.0) + 250.588);
 //			return scaling * 250.;
-		else if (r < 4410.0 && r >= 3690.0)
-			return scaling * (-2.064e-03 * (r-4410.0) + 249.10);
-		else if (r < 5330.0 && r >= 4410.0)
-			return scaling * (-7.354e-02 * (r-5330.0) + 181.45);
-		else if (r < 5670.0 && r >= 5330.0)
-			return scaling * (-1.555e-01 * (r-5670.0) + 128.57);
-		else if (r < 6310.0 && r >= 5670.0)
-			return scaling * (-1.051e-01 * (r-6310.0) + 61.30);
+//		else if (r < 4410.0 && r >= 3690.0)
+//			return scaling * (-2.064e-03 * (r-4410.0) + 249.10);
+//		else if (r < 5330.0 && r >= 4410.0)
+//			return scaling * (-7.354e-02 * (r-5330.0) + 181.45);
+//		else if (r < 5670.0 && r >= 5330.0)
+//			return scaling * (-1.555e-01 * (r-5670.0) + 128.57);
+//		else if (r < 6310.0 && r >= 5670.0)
+//			return scaling * (-1.051e-01 * (r-6310.0) + 61.30);
 //			return scaling * (-0.1384 * (r-6310.0) + 40.);
-		else
-			return scaling * (-1.853e-01 * (r-6371.0) + 50.00);
+//		else
+//			return scaling * (-1.853e-01 * (r-6371.0) + 50.00);
 //			return scaling * (-0.1639 * (r-6371.0) + 30.);
 	}
 	

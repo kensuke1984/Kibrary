@@ -62,7 +62,9 @@ public final class FujiConversion {
 		Location sourceLocation = spectrum.getSourceLocation();
 		String sourceID = spectrum.getSourceID();
 		double[] bodyR = spectrum.getBodyR();
-		double omega0 = spectrum.tlen(); // TODO
+		double domega = 1. / spectrum.tlen() * 2. * Math.PI;
+		double omega0 = 1. * 2. * Math.PI; //Hz
+//		double omega0 = spectrum.tlen(); // TODO
 		for (int i = 0; i < spectrum.nbody(); i++) {
 			double r = bodyR[i];
 			double q = 1 / structure.getQmuAt(r);
@@ -71,7 +73,7 @@ public final class FujiConversion {
 			SpcBody newBody = new SpcBody(3, np);
 			for (int ip = 0; ip < np + 1; ip++) {
 				Complex[] uQ = new Complex[body.getNumberOfComponent()];
-				double omegaOverOmega0 = (ip + 1) / omega0;
+				double omegaOverOmega0 = (ip + 1) * domega / omega0;
 				for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
 					Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
 							.getValueInFrequencyDomain()[ip];

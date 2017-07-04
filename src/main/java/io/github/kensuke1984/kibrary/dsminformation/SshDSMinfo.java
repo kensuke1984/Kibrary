@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -28,11 +30,20 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 public class SshDSMinfo extends SyntheticDSMInfo {
 
 	private final double[] RADII;
-
+	private boolean[] commentPerturbationR;
+	
 	public SshDSMinfo(PolynomialStructure structure, GlobalCMTData event, Set<Station> stations, String outputDir,
 			double[] perturbationR, double tlen, int np) {
 		super(structure, event, stations, outputDir, tlen, np);
 		RADII = perturbationR.clone();
+		
+		commentPerturbationR = new boolean[perturbationR.length];
+		double eventR = event.getCmtLocation().getR();
+		for (int i = 0; i < perturbationR.length; i++) {
+			commentPerturbationR[i] = false;
+			if (Math.abs(eventR - perturbationR[i]) < 10.)
+				commentPerturbationR[i] = true;
+		}
 	}
 
 	/**
@@ -76,8 +87,16 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
+			
+			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
+				.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+			pw.println(RADII.length - nComment + " nr");
+			for (int i = 0; i < RADII.length; i++) {
+				if (commentPerturbationR[i])
+					pw.println("c " + RADII[i]);
+				else
+					pw.println(RADII[i]);
+			}
 			pw.println("end");
 
 		}
@@ -117,8 +136,15 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
+			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
+					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+			pw.println(RADII.length - nComment + " nr");
+			for (int i = 0; i < RADII.length; i++) {
+				if (commentPerturbationR[i])
+					pw.println("c " + RADII[i]);
+				else
+					pw.println(RADII[i]);
+			}
 			pw.println("end");
 
 		}
@@ -161,8 +187,15 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
+			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
+					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+			pw.println(RADII.length - nComment + " nr");
+			for (int i = 0; i < RADII.length; i++) {
+				if (commentPerturbationR[i])
+					pw.println("c " + RADII[i]);
+				else
+					pw.println(RADII[i]);
+			}
 			pw.println("end");
 		}
 
@@ -201,8 +234,15 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
+			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
+					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+			pw.println(RADII.length - nComment + " nr");
+			for (int i = 0; i < RADII.length; i++) {
+				if (commentPerturbationR[i])
+					pw.println("c " + RADII[i]);
+				else
+					pw.println(RADII[i]);
+			}
 			pw.println("end");
 		}
 

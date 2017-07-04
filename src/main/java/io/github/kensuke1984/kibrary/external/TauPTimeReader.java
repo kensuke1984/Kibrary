@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import edu.sc.seis.TauP.TauModel;
 import io.github.kensuke1984.anisotime.Phase;
 
 /**
@@ -76,8 +77,16 @@ public final class TauPTimeReader {
 	 *            set of seismic phase.
 	 * @return {@link Set} of TauPPhases.
 	 */
+	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, Set<Phase> phaseSet, String model) {
+		return toPhase(operateTauPTime(eventR, epicentralDistance, phaseSet, model));
+	}
+	
+	public static List<TauPPhase> getTauPPhaseList(double eventR, double epicentralDistance, Set<Phase> phaseSet, String model) {
+		return toPhaseList(operateTauPTime(eventR, epicentralDistance, phaseSet, model));
+	}
+	
 	public static Set<TauPPhase> getTauPPhase(double eventR, double epicentralDistance, Set<Phase> phaseSet) {
-		return toPhase(operateTauPTime(eventR, epicentralDistance, phaseSet));
+		return toPhase(operateTauPTime(eventR, epicentralDistance, phaseSet, "prem"));
 	}
 
 	/**
@@ -88,8 +97,8 @@ public final class TauPTimeReader {
 	 * @param phase
 	 * @return result lines
 	 */
-	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<Phase> phase) {
-		String[] cmd = makeCMD(eventR, epicentralDistance, phase);
+	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<Phase> phase, String model) {
+		String[] cmd = makeCMD(eventR, epicentralDistance, phase, model);
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.redirectError(ExternalProcess.bitBucket);
 		try {
@@ -108,6 +117,10 @@ public final class TauPTimeReader {
 			return null;
 		}
 	}
+	
+	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<Phase> phase) {
+		return operateTauPTime(eventR, epicentralDistance, phase, "prem");
+	}
 
 	private static Set<TauPPhase> toPhase(List<String> lines) {
 		if (lines == null || lines.size() <= 6) {
@@ -115,6 +128,14 @@ public final class TauPTimeReader {
 		}
 		return IntStream.range(5, lines.size() - 1).mapToObj(lines::get).map(TauPTimeReader::toPhase)
 				.collect(Collectors.toSet());
+	}
+	
+	private static List<TauPPhase> toPhaseList(List<String> lines) {
+		if (lines == null || lines.size() <= 6) {
+			return Collections.emptyList();
+		}
+		return IntStream.range(5, lines.size() - 1).mapToObj(lines::get).map(TauPTimeReader::toPhase)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -156,6 +177,12 @@ public final class TauPTimeReader {
 	private static String[] makeCMD(double eventR, double epicentralDistance, Set<Phase> phases) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model prem -ph " + phase;
+		return cmd.split("\\s+");
+	}
+	
+	private static String[] makeCMD(double eventR, double epicentralDistance, Set<Phase> phases, String model) {
+		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
+		String cmd = path + " -h " + (6371 - eventR) + " -deg " + epicentralDistance + " -model " + model + " -ph " + phase;
 		return cmd.split("\\s+");
 	}
 /*

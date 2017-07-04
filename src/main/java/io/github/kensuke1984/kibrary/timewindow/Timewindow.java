@@ -112,5 +112,9 @@ public class Timewindow implements Comparable<Timewindow> {
 	public double getEndTime() {
 		return endTime;
 	}
+	
+	public double getLength() {
+		return endTime - startTime;
+	}
 
 }

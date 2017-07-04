@@ -11,9 +11,11 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -142,23 +144,36 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 	@Override
 	public void run() throws Exception {
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
-		PolynomialStructure ps = structurePath == null ? PolynomialStructure.PREM
-				: new PolynomialStructure(structurePath);
+		PolynomialStructure ps = PolynomialStructure.PREM;
+		if (structurePath.toString().equals("PREM")) {
+			ps = PolynomialStructure.PREM;
+		}
+		else if (structurePath.toString().trim().equals("AK135")) {
+			ps = PolynomialStructure.AK135;
+		}
+		else
+			ps = new PolynomialStructure(structurePath);
 
 		Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
+		
+		//synthetic station set
+		Set<Station> synStationSet = IntStream.range(1, 111).mapToObj(i -> new Station(String.format("%03d", i), new HorizontalPosition(0, i), "SYN"))
+			.collect(Collectors.toSet());
+		
 		for (EventFolder eventDir : eventDirs) {
 			try {
-				Set<Station> stations = eventDir.sacFileSet().stream()
-						.filter(name -> name.isOBS() && components.contains(name.getComponent())).map(name -> {
-							try {
-								return name.readHeader();
-							} catch (Exception e2) {
-								return null;
-							}
-						}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
-				if (stations.isEmpty())
-					continue;
+//				Set<Station> stations = eventDir.sacFileSet().stream()
+//						.filter(name -> name.isOBS() && components.contains(name.getComponent())).map(name -> {
+//							try {
+//								return name.readHeader();
+//							} catch (Exception e2) {
+//								return null;
+//							}
+//						}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
+//				if (stations.isEmpty())
+//					continue;
+				Set<Station> stations = synStationSet;
 				int numberOfStation = (int) stations.stream().map(Station::toString).count();
 				if (numberOfStation != stations.size())
 					System.err.println("!Caution there are stations with the same name and different positions in "

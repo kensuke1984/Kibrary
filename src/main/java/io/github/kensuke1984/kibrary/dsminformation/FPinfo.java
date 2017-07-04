@@ -7,6 +7,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
@@ -26,6 +27,7 @@ public class FPinfo extends DSMheader {
 	private final double[] RADII;
 	private final PolynomialStructure STRUCTURE;
 	private final String OUTPUT;
+	private boolean[] commentPerturbationR;
 
 	/**
 	 * @param event
@@ -51,6 +53,14 @@ public class FPinfo extends DSMheader {
 		STRUCTURE = structure;
 		POSITIONS = perturbationPoint.clone();
 		RADII = perturbationPointR.clone();
+		
+		commentPerturbationR = new boolean[perturbationPointR.length];
+		double eventR = event.getCmtLocation().getR();
+		for (int i = 0; i < perturbationPointR.length; i++) {
+			commentPerturbationR[i] = false;
+			if (Math.abs(eventR - perturbationPointR[i]) < 10.)
+				commentPerturbationR[i] = true;
+		}
 	}
 
 	/**
@@ -92,8 +102,15 @@ public class FPinfo extends DSMheader {
 			Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
 			// radii for perturbation points
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
+			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
+					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+			pw.println(RADII.length - nComment + " nr");
+			for (int i = 0; i < RADII.length; i++) {
+				if (commentPerturbationR[i])
+					pw.println("c " + RADII[i]);
+				else
+					pw.println(RADII[i]);
+			}
 			pw.println("end");
 		}
 	}
@@ -137,8 +154,15 @@ public class FPinfo extends DSMheader {
 			Arrays.stream(POSITIONS).forEach(pp -> pw.println(pp.getLatitude() + " " + pp.getLongitude()));
 
 			// radii for perturbation points
-			pw.println(RADII.length + " nr");
-			Arrays.stream(RADII).forEach(pw::println);
+			int nComment = (int) IntStream.range(0, commentPerturbationR.length)
+					.mapToObj(i -> commentPerturbationR[i]).filter(c -> c).count();
+			pw.println(RADII.length - nComment + " nr");
+			for (int i = 0; i < RADII.length; i++) {
+				if (commentPerturbationR[i])
+					pw.println("c " + RADII[i]);
+				else
+					pw.println(RADII[i]);
+			}
 			pw.println("end");
 		}
 	}

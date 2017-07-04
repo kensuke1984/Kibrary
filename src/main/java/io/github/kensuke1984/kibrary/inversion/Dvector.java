@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,6 +37,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 
 /**
  * Am=d のdに対する情報 TODO 震源観測点ペア
@@ -51,6 +53,24 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  */
 public class Dvector {
 
+	public static void main(String[] args) throws IOException {
+		Path idPath = Paths.get("waveformID.dat");
+		Path dataPath = Paths.get("waveform.dat");
+		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
+		Predicate<BasicID> chooser = new Predicate<BasicID>() {
+			public boolean test(BasicID id) {
+				return true;
+			}
+		};
+		WeightingType weigthingType = WeightingType.RECIPROCAL;
+		boolean atLeastThreeRecordsPerStation = false;
+		List<DataSelectionInformation> selectionInfo = null;
+		
+		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+		
+		System.out.println("Variance = " + dvector.getVariance());
+	}
+	
 	/**
 	 * @param ids
 	 *            for check
@@ -209,7 +229,7 @@ public class Dvector {
 		case RECIPROCAL:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue())) * weightingEpicentralDistance(obs);
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue())) * weightingEpicentralDistanceDpp(obs);// * weightingEpicentralDistance(obs);
 			};
 			break;
 		case IDENTITY:
@@ -221,6 +241,19 @@ public class Dvector {
 		
 		sort();
 		read();
+	}
+	
+	private static double weightingEpicentralDistanceDpp(BasicID obs) {
+		double weight = 1.;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
+		
+		for (int i = 0; i < histogram.length; i++)
+			if (distance >= histogram[i][0] && distance < histogram[i][0] + 5.)
+				weight = histogram[i][1];
+		
+		return weight;
 	}
 	
 	private static double weightingEpicentralDistance(BasicID obs) {
@@ -237,18 +270,18 @@ public class Dvector {
 			meanAmpli += bin[1];
 		meanAmpli /= histogram.length;
 		
-		double tmpamp = 1.;
+		double tmpamp = 1./1.5;
 		
 		if (phases.equals(new Phases("S,ScS")) || phases.equals(new Phases("sS,sScS")) || phases.equals(new Phases("Sdiff")) || phases.equals(new Phases("sSdiff"))) {
 			for (int i = 0; i < histogram.length - 1; i++) {
 				if (distance >= histogram[i][0] && distance < histogram[i+1][0])
-					weight = histogram[i][1] * 2.;
+					weight = histogram[i][1];// * 2.;
 			}
 			if (distance >= histogram[histogram.length - 1][0])
-				weight = histogram[histogram.length - 1][1] * 2.;
+				weight = histogram[histogram.length - 1][1];// * 2.;
 		}
 		
-		double[][] histogram2 = new double[][] { {25., 1.}, {30., 1.}, {35., 3.}, {40., 3.}, {45., 3.}, {50., 3.}, {55., 1.4} };
+		double[][] histogram2 = new double[][] { {25., 1.}, {30., 1.}, {35., 3.}, {40., 3.}, {45., 3.}, {50., 2.}, {55., 1.4} };
 		
 		
 		if (phases.equals(new Phases("S")))
@@ -634,7 +667,7 @@ public class Dvector {
 				periodLMW.put(T, tmpw);
 			}
 		}
-		periodTotalW.forEach((T, w) -> System.out.println(T + "s " + w));
+		//periodTotalW.forEach((T, w) -> System.out.println(T + "s " + w));
 		double[] maxW = new double[] {Double.MIN_VALUE};
 		periodTotalW.forEach((T, w) -> {
 			if (w > maxW[0])
@@ -701,7 +734,7 @@ public class Dvector {
 				if (info != null)
 					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio() * periodTotalW.get(obsIDs[i].getMinPeriod());
 				else {
-					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * periodWeight.get(obsIDs[i].getMinPeriod());
+					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);// * periodWeight.get(obsIDs[i].getMinPeriod());
 //					if (new Phases(obsIDs[i].getPhases()).isLowerMantle())
 //						weighting[i] *= periodLMWeight.get(obsIDs[i].getMinPeriod());
 //					else if (new Phases(obsIDs[i].getPhases()).isUpperMantle())

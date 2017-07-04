@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
@@ -382,6 +383,18 @@ public class PolynomialStructure implements Serializable {
 	public PolynomialStructure setVsh(int izone, PolynomialFunction polynomialFunction) {
 		PolynomialStructure str = deepCopy();
 		str.vsh[izone] = polynomialFunction;
+		return str;
+	}
+	
+	public PolynomialStructure setVpv(int izone, PolynomialFunction polynomialFunction) {
+		PolynomialStructure str = deepCopy();
+		str.vpv[izone] = polynomialFunction;
+		return str;
+	}
+
+	public PolynomialStructure setVph(int izone, PolynomialFunction polynomialFunction) {
+		PolynomialStructure str = deepCopy();
+		str.vph[izone] = polynomialFunction;
 		return str;
 	}
 
@@ -790,7 +803,20 @@ public class PolynomialStructure implements Serializable {
 	public void writeSH(Path outPath, OpenOption... options) throws IOException {
 		Files.write(outPath, Arrays.asList(toSHlines()), options);
 	}
-
+	
+	public void writeVelocity(Path outPath) throws IOException {
+		Files.deleteIfExists(outPath);
+		Files.createFile(outPath);
+		for (int i = 0; i < 10000; i++) {
+			double r = i * 6371./10000.;
+			double vsh = getVshAt(r);
+			double vsv = getVsvAt(r);
+			double vph = getVphAt(r);
+			double vpv = getVpvAt(r);
+			Files.write(outPath, (r + " " + vpv + " " + vph + " " + vsv + " " + vsh + " " + "\n").getBytes(), StandardOpenOption.APPEND);
+		}
+	}
+	
 	/**
 	 * @param izone
 	 *            index of a zone

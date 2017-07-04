@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -55,6 +56,8 @@ public class InformationFileMaker implements Operation {
 			pw.println("##polynomial structure file (can be blank)");
 			pw.println("##if so or it doesn't exist model is an initial PREM");
 			pw.println("#structureFile ");
+			pw.println("##Boolean compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
+			pw.println("#jointCMT ");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -75,6 +78,8 @@ public class InformationFileMaker implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
+		if (!property.containsKey("jointCMT"))
+			property.setProperty("jointCMT", "false");
 	}
 
 	/**
@@ -108,6 +113,8 @@ public class InformationFileMaker implements Operation {
 	 * work folder
 	 */
 	private Path workPath;
+	
+	private boolean jointCMT;
 
 	private void set() throws IOException {
 		checkAndPutDefaults();
@@ -126,10 +133,20 @@ public class InformationFileMaker implements Operation {
 
 		if (property.containsKey("structureFile")) {
 			Path psPath = getPath("structureFile");
-			ps = psPath == null ? PolynomialStructure.PREM : new PolynomialStructure(psPath);
+			ps = PolynomialStructure.PREM;
+			if (psPath.toString().equals("PREM")) {
+				ps = PolynomialStructure.PREM;
+			}
+			else if (psPath.toString().trim().equals("AK135")) {
+				ps = PolynomialStructure.AK135;
+			}
+			else
+				ps = new PolynomialStructure(psPath);
 		}
 		else
 			ps = PolynomialStructure.PREM;
+		
+		jointCMT = Boolean.parseBoolean(property.getProperty("jointCMT"));
 	}
 
 	private Properties property;
@@ -250,11 +267,35 @@ public class InformationFileMaker implements Operation {
 		System.out.println("making information files for the events(fp)");
 		for (EventFolder ed : eventDirs) {
 			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
-			FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-			Path infPath = fpPath.resolve(ev.toString());
-			Files.createDirectories(infPath.resolve(header));
-			fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
-			fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+			
+			// joint CMT inversion
+			if (jointCMT) {
+				int mtEXP = 25;
+				double mw = 1.;
+				MomentTensor[] mts = new MomentTensor[6];
+				mts[0] = new MomentTensor(1., 0., 0., 0., 0., 0., mtEXP, mw);
+				mts[1] = new MomentTensor(0., 1., 0., 0., 0., 0., mtEXP, mw);
+				mts[2] = new MomentTensor(0., 0., 1., 0., 0., 0., mtEXP, mw);
+				mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
+				mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
+				mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
+				
+				for (int i = 0; i < 6; i++) {
+					ev.setCmt(mts[i]);
+					FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+					Path infPath = fpPath.resolve(ev.toString() + "_mt" + i);
+					Files.createDirectories(infPath.resolve(header));
+					fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
+					fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+				}
+			}
+			else {
+				FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+				Path infPath = fpPath.resolve(ev.toString());
+				Files.createDirectories(infPath.resolve(header));
+				fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
+				fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+			}
 		}
 
 		System.out.println("making information files for the stations(bp)");
