@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
+import io.github.kensuke1984.kibrary.util.Earth;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
@@ -345,6 +347,8 @@ public class PolynomialStructure implements Serializable {
 	
 	public int getiZoneOf(double r) {
 		int iz = 0;
+		if (r == Earth.EARTH_RADIUS)
+			return nzone - 1;
 		for (int i = 0; i < nzone; i++) {
 			if (rmin[i] <= r && rmax[i] > r) {
 				iz = i;

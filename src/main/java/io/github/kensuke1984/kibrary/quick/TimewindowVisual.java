@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.quick;
 
+import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.butterworth.LowPassFilter;
+import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.selection.Bins2D;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
@@ -290,10 +293,28 @@ public class TimewindowVisual {
 						}
 						synFullTrace = synFullTrace.multiply(normalize);
 						
+						// get envelope
+						HilbertTransform H = new HilbertTransform(synFullTrace.getY());
+						double[] envelope = H.getEnvelope();
+						Trace envelopeTrace = new Trace(synFullTrace.getX(), envelope);
+						ButterworthFilter filter100s = new LowPassFilter(0.01 * 2 * Math.PI * 0.05, 4);
+						ButterworthFilter filter50s = new LowPassFilter(0.02 * 2 * Math.PI * 0.05, 4);
+						ButterworthFilter filter75s = new LowPassFilter(0.0134 * 2 * Math.PI * 0.05, 4);
+						double[] filtered100s = filter100s.applyFilter(envelope);
+						double[] filtered75s = filter75s.applyFilter(envelope);
+						double[] filtered50s = filter50s.applyFilter(envelope);
+						Trace filteredEnvelopeTrace100s = new Trace(synFullTrace.getX(), filtered100s).multiply(1. / envelopeTrace.getMaxValue());
+						Trace filteredEnvelopeTrace75s = new Trace(synFullTrace.getX(), filtered75s).multiply(1. / envelopeTrace.getMaxValue());
+						Trace filteredEnvelopeTrace50s = new Trace(synFullTrace.getX(), filtered50s).multiply(1. / envelopeTrace.getMaxValue());
+						
 						String obsString = null;
 						if (isObs)
 							obsString = trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 20);
 						String synString = trace2GMT(synFullTrace, "red", 0, 0, distance_azimuth.distance, slowness, 20);
+						String envelopeString = trace2GMT(envelopeTrace, "magenta", 0, 0, distance_azimuth.distance, slowness, 20);
+						String filteredEnvelopeString100s = trace2GMT(filteredEnvelopeTrace100s, "pink", 0, 0, distance_azimuth.distance, slowness, 20);
+						String filteredEnvelopeString75s = trace2GMT(filteredEnvelopeTrace75s, "purple", 0, 0, distance_azimuth.distance, slowness, 20);
+						String filteredEnvelopeString50s = trace2GMT(filteredEnvelopeTrace50s, "brown", 0, 0, distance_azimuth.distance, slowness, 20);
 						
 						if (!Files.exists(outpathBins)) {
 							createGMTFile(outpathBins);
@@ -306,19 +327,27 @@ public class TimewindowVisual {
 							if (isObs)
 								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (envelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (filteredEnvelopeString100s + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (filteredEnvelopeString75s + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (filteredEnvelopeString50s + "\n").getBytes(), StandardOpenOption.APPEND);							
 						}
 						else {
 							if (isObs)
 								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (envelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (filteredEnvelopeString100s + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (filteredEnvelopeString75s + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (filteredEnvelopeString50s + "\n").getBytes(), StandardOpenOption.APPEND);	
 						}
 					}
 				}
 				for (TimewindowInformation timewindow : timewindows) {
 					if (!usedStations.contains(timewindow.getStation()))
 						continue;
-					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())
-							* 180 / Math.PI;
+//					double distance = timewindow.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(timewindow.getStation().getPosition())
+//							* 180 / Math.PI;
 					DistanceAzimuth distance_azimuth = bins.getBinPosition(timewindow);
 					double t0 = timewindow.getStartTime() - distance_azimuth.distance * slowness;
 					double t1 = timewindow.getEndTime() - distance_azimuth.distance * slowness;

@@ -276,7 +276,7 @@ public class PhaseEnvelope implements Operation {
 									
 									double minLength = Math.min(1.2/maxFrequency, 20.);
 									double[][] timewindows = selectTimewindows(freqIntPE, 0.33/maxFrequency, minLength);
-									if (timewindows != null) {
+//									if (timewindows != null) {
 			//							for (int i = 0; i < timewindows.length; i++)
 			//								System.out.println(timewindows[i][0] + " " + timewindows[i][1]);
 										
@@ -284,11 +284,14 @@ public class PhaseEnvelope implements Operation {
 											* 180 / Math.PI;
 										double eventR = obssac.getEventLocation().getR();
 										
-										timewindows = filterOnTimeserieAmplitude(timewindows, obssac, synsac, threshold);
-										TauPPhase[][] phases = findPhases(timewindows, distance, eventR);
+//										timewindows = filterOnTimeserieAmplitude(timewindows, obssac, synsac, threshold);
+//										TauPPhase[][] phases = findPhases(timewindows, distance, eventR);
+										
+										TauPPhase[][] phases = null;
 										
 										if (show) {
 											try {
+												System.out.println("plotting...");
 												String title = obssac.getStation() + " " + obsEventDir.getGlobalCMTID();
 												showSeriesAndSpectra(obssac.createTrace(), synname.read().createTrace(), freqIntPE, timewindows, phases, title);
 				//								showTimeSeries(obsname.read().createTrace(), synname.read().createTrace(), timewindows);
@@ -303,17 +306,19 @@ public class PhaseEnvelope implements Operation {
 			//							showRatio(phaseEnvelope[1], titleFig, frequencyIncrement);
 										
 										try {
-											for (int i = 0; i < timewindows.length; i++) {
-												Phase[] phasenames = new Phase[phases[i].length];
-												phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
-												TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getStation()
-														, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
-												infoset.add(info);
+											if (timewindows != null) {
+												for (int i = 0; i < timewindows.length; i++) {
+													Phase[] phasenames = new Phase[phases[i].length];
+													phasenames = Stream.of(phases[i]).map(phase -> phase.getPhaseName()).collect(Collectors.toList()).toArray(phasenames);
+													TimewindowInformation info = new TimewindowInformation(timewindows[i][0], timewindows[i][1], obsname.read().getStation()
+															, obsEventDir.getGlobalCMTID(), obsname.getComponent(), phasenames);
+													infoset.add(info);
+												}
 											}
 										} catch (IOException e) {
 											e.printStackTrace();
 										}
-									}
+//									}
 								}
 							}
 					});
@@ -338,7 +343,7 @@ public class PhaseEnvelope implements Operation {
 		phaseEnvelope[1] = new double[n][];
 		phaseEnvelope[2] = new double[n][];
 		double[][] obsSpcmemo = new double[n][];
-//		double[][] synSpcmemo = new double[n][];
+		double[][] synSpcmemo = new double[n][];
 //		double[] freqIntegratedPhaseMisfit = new double[n];
 //		double[] freqIntegratedEnvelope = new double[n];
 		
@@ -392,14 +397,14 @@ public class PhaseEnvelope implements Operation {
 					phaseEnvelope[1][i] = new double[nnp];
 					phaseEnvelope[2][i] = new double[nnp];
 					obsSpcmemo[i] = new double[nnp];
-	//				synSpcmemo[i] = new double[nnp];
+					synSpcmemo[i] = new double[nnp];
 				}
 				
 				double[] obsdata = new double[nnpow2];
 				double[] syndata = new double[nnpow2];
 				double[] gaborWindow = gaborWindow(sigma, 2*nn+1, dt*samplingHz);
 				
-	//			double spcMax = Double.MIN_VALUE;
+				double spcMax = Double.MIN_VALUE;
 				for (int i = 0; i < n; i++) {
 					int nlow = i - nn < 0 ? 0 : i - nn;
 					int nnlow = i - nn < 0 ? nn - i : 0;
@@ -433,6 +438,9 @@ public class PhaseEnvelope implements Operation {
 	//							 sin = -1.;
 	//						 else if (sin > 1.)
 	//							 sin = 1.;
+//							Complex obsunit = obsSpc[j].divide(obsSpc[j].abs());
+//							Complex synunit = synSpc[j].divide(synSpc[j].abs());
+//							Complex misfit = obsunit.divide(synunit).
 							Complex c = obsSpc[j].multiply(synSpc[j].conjugate());
 							Complex deltaPhi = c.divide(c.abs()).log();
 							if (Math.abs(deltaPhi.getReal() / deltaPhi.getImaginary()) > 1e-5)
@@ -452,20 +460,20 @@ public class PhaseEnvelope implements Operation {
 	//						System.out.println(obsSpc[j].abs() + " " + synSpc[j].abs() + " " + obsSpc[j].getArgument() *180/ Math.PI + " " + synSpc[j].getArgument() *180/ Math.PI+ " " + phaseEnvelope[0][i][j]);
 						phaseEnvelope[2][i][j] = j * frequencyIncrement;
 						
-	//					if (synSpc[j].abs() > spcMax)
-	//						spcMax = synSpc[j].abs();
+						if (synSpc[j].abs() > spcMax)
+							spcMax = synSpc[j].abs();
 						obsSpcmemo[i][j] = obsSpc[j].abs();
-	//					synSpcmemo[i][j] = synSpc[j].abs();
+						synSpcmemo[i][j] = synSpc[j].abs();
 					}
 				}
 				
-	//			double wSum = 0;
-	//			for (int i = 0; i < n; i ++) {
-	//				for (int j = 0; j < nnp; j++) {
-	//					double w = Math.log(1. + synSpcmemo[i][j]) / Math.log(1. + spcMax);
-	//					wSum += w;
-	//				}
-	//			}
+				double wSum = 0;
+				for (int i = 0; i < n; i ++) {
+					for (int j = 0; j < nnp; j++) {
+						double w = Math.log(1. + synSpcmemo[i][j]) / Math.log(1. + spcMax);
+						wSum += w;
+					}
+				}
 	//			wSum /= nnp*n;
 	//			System.out.println(wSum);
 				
@@ -484,13 +492,23 @@ public class PhaseEnvelope implements Operation {
 	//						spcFreqMax = obsSpcmemo[i][j];
 	//				}
 					for (int j = 0; j < nnp; j++) {
-	//					double w = Math.log(1. + synSpcmemo[i][j]) / Math.log(1. + spcMax) / wSum; //Eq. (12) of Fichtner et al. (2008) modified using spcFreqMax instead of spcMax
+						double w = Math.log(1. + synSpcmemo[i][j]) / Math.log(1. + spcMax) / wSum; //Eq. (12) of Fichtner et al. (2008) modified using spcFreqMax instead of spcMax
 	//					if (w == 0) {
 	//						phaseEnvelope[0][i][j] = Double.NaN;
 	//						phaseEnvelope[1][i][j] = Double.NaN;
 	//					}
-						phaseEnvelope[1][i][j] = Math.sqrt(phaseEnvelope[1][i][j] / (obsSpcAbsInt * obsSpcAbsInt));
-	//					phaseEnvelope[0][i][j] /=  w;
+						if (w > 0)
+							phaseEnvelope[1][i][j] = Math.sqrt(phaseEnvelope[1][i][j] / (obsSpcAbsInt * obsSpcAbsInt)) / w;
+						else
+							phaseEnvelope[1][i][j] = Double.MAX_VALUE;
+						
+						phaseEnvelope[0][i][j] /=  w;
+						
+						if (phaseEnvelope[1][i][j] > 5e3)
+							phaseEnvelope[1][i][j] = 5e3;
+						if (phaseEnvelope[0][i][j] > 5e3)
+							phaseEnvelope[0][i][j] = 5e3;
+						
 	//					System.out.println(w + " " + phaseEnvelope[0][i][j]);
 						// TO DO: normalize each time points by the frequency-integrated weighting factor !!
 					}
@@ -820,17 +838,19 @@ public class PhaseEnvelope implements Operation {
        final XYPlot subplot1 = new XYPlot(timeseries, null, rangeAxis1, renderer1);
        subplot1.setRangeAxisLocation(AxisLocation.BOTTOM_OR_LEFT);
        
-       double h = subplot1.getRangeAxis().getUpperBound() * .5;
-       for (int i = 0; i < timewindows.length; i++) {
- 	      Rectangle2D.Double rect = new Rectangle2D.Double(timewindows[i][0], -h, timewindows[i][1]-timewindows[i][0], 2*h);
- 	      subplot1.addAnnotation(new XYShapeAnnotation(rect, new BasicStroke(1.0f), Color.BLUE));
- 	      for (int j = 0; j < phases[i].length; j++) {
- 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().getExpandedName(), timewindows[i][0], h*1.05 + j*h/6.);
- 	    	  annotation.setPaint(colors[j % colors.length]);
- 	    	  annotation.setFont(helvetica12);
- 	    	  annotation.setTextAnchor(TextAnchor.BOTTOM_LEFT);
- 	    	  subplot1.addAnnotation(annotation);
- 	      }
+       if (timewindows != null) {
+	       double h = subplot1.getRangeAxis().getUpperBound() * .5;
+	       for (int i = 0; i < timewindows.length; i++) {
+	 	      Rectangle2D.Double rect = new Rectangle2D.Double(timewindows[i][0], -h, timewindows[i][1]-timewindows[i][0], 2*h);
+	 	      subplot1.addAnnotation(new XYShapeAnnotation(rect, new BasicStroke(1.0f), Color.BLUE));
+	 	      for (int j = 0; j < phases[i].length; j++) {
+	 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().getExpandedName(), timewindows[i][0], h*1.05 + j*h/6.);
+	 	    	  annotation.setPaint(colors[j % colors.length]);
+	 	    	  annotation.setFont(helvetica12);
+	 	    	  annotation.setTextAnchor(TextAnchor.BOTTOM_LEFT);
+	 	    	  subplot1.addAnnotation(annotation);
+	 	      }
+	       }
        }
        
        XYSeries ampMisfit = new XYSeries("Amplitude misfit");
@@ -891,14 +911,16 @@ public class PhaseEnvelope implements Operation {
        BasicStroke stroke = new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {2.0f, 6.0f}, 0.0f);
        subplot2.addAnnotation(new XYLineAnnotation(0, spcAmpMisfit, 4000*(1+domainAxis.getUpperMargin()), spcAmpMisfit, stroke, Color.GREEN.darker()));
        
-       for (TauPPhase[] phs : phases) {
-    	   int i = 0;
-    	   for (TauPPhase ph : phs) {
-    		   XYLineAnnotation verticalLine = new XYLineAnnotation(ph.getTravelTime(), upperbound, ph.getTravelTime(), lowerbound
-    				   , new BasicStroke(1.5f), colors[i % colors.length]);
-    		   subplot2.addAnnotation(verticalLine);
-    		   i++;
-    	   }
+       if (phases != null) {
+	       for (TauPPhase[] phs : phases) {
+	    	   int i = 0;
+	    	   for (TauPPhase ph : phs) {
+	    		   XYLineAnnotation verticalLine = new XYLineAnnotation(ph.getTravelTime(), upperbound, ph.getTravelTime(), lowerbound
+	    				   , new BasicStroke(1.5f), colors[i % colors.length]);
+	    		   subplot2.addAnnotation(verticalLine);
+	    		   i++;
+	    	   }
+	       }
        }
        
        // add the subplots...
