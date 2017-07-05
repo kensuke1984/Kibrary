@@ -5,12 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.util.Trace;
 
 public class SurfaceWaveDetector {
 	Trace trace;
 	Trace envelopeTrace;
 	Trace twoBitTrace;
+	Timewindow timewindow;
 	final static double dt = 0.05;
 	
 	public SurfaceWaveDetector(Trace trace) {
@@ -19,19 +21,33 @@ public class SurfaceWaveDetector {
 		HilbertTransform transform = new HilbertTransform(this.trace.getY());
 		transform.computeAnalyticalHtransform();
 		envelopeTrace = new Trace(this.trace.getX(), transform.getEnvelope());
+		
+		int[] points = detect();
+		timewindow = new Timewindow(points[0] * dt, points[1] * dt);
 	}
 	
-	private void detect() {
-		final int nIteration = 10;
+	private int[] detect() {
+		final int nIteration = 0;
 		double threshold = envelopeTrace.getMaxValue() / 2.;
 		double[] y = envelopeTrace.getY();
 		double[] twoBits = computeTwoBitArray(y, threshold);
-		int[] iLongestSequence = detectLongestOneSequence(y);
-		y = Arrays.copyOfRange(y, iLongestSequence[0], iLongestSequence[1] + 1);
+		int[] iLongestSequence = detectLongestOneSequence(twoBits);
+		int length = iLongestSequence[1] - iLongestSequence[0];
+//		int addWidth = (int) (100 / dt);
+//		y = Arrays.copyOfRange(y, iLongestSequence[0] - addWidth, iLongestSequence[1] + 1 + addWidth);
 		for (int i = 0; i < nIteration; i++) {
-			threshold /= 2.;
-			double[] twoBitsNew = computeTwoBitArray(threshold);
+			threshold /= 1.3;
+			double[] twoBitsNew = computeTwoBitArray(y, threshold);
+			int[] iLongestSequenceNew = detectLongestOneSequence(twoBitsNew);
+			int lengthNew = iLongestSequenceNew[1] - iLongestSequenceNew[0];
+			if (lengthNew / length < 1.1)
+				break;
+			else {
+				length = lengthNew;
+				iLongestSequence = iLongestSequenceNew;
+			}
 		}
+		return iLongestSequence;
 	}
 	
 	private static double[] computeTwoBitArray(double[] y, double threshold) {
@@ -58,7 +74,7 @@ public class SurfaceWaveDetector {
 				downs.add(i);
 		}
 		int maxLength = 0;
-		for (int i = 0; i < ups.size(); i++) {
+		for (int i = 0; i < downs.size(); i++) {
 			int length = downs.get(i) - ups.get(i);
 			if (length > maxLength) {
 				maxLength = length;
@@ -66,6 +82,11 @@ public class SurfaceWaveDetector {
 				indexesOfLongest[1] = downs.get(i);
 			}
 		}
+//		System.out.println(ups.size() + " " + downs.size() + " : " + indexesOfLongest[0]*dt + " " + indexesOfLongest[1]*dt);
 		return indexesOfLongest;
+	}
+	
+	public Timewindow getSurfaceWaveWindow() {
+		return timewindow;
 	}
 }
