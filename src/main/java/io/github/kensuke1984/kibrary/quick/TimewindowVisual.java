@@ -243,7 +243,7 @@ public class TimewindowVisual {
 				
 				
 				//bins
-				Bins2D bins = new Bins2D(id, 2., .02, timewindows);
+				Bins2D bins = new Bins2D(id, 5., 1., timewindows);
 				Map<DistanceAzimuth, Integer> usedBinsCount = new HashMap<>();
 				Set<Path> outpathList = new HashSet<>();
 				for (TimewindowInformation timewindow : timewindows) {
@@ -298,30 +298,28 @@ public class TimewindowVisual {
 						// get envelope
 						HilbertTransform H = new HilbertTransform(synFullTrace.getY());
 						double[] envelope = H.getEnvelope();
-						Trace envelopeTrace = new Trace(synFullTrace.getX(), envelope);
-//						ButterworthFilter filter100s = new LowPassFilter(0.01 * 2 * Math.PI * 0.05, 4);
-//						ButterworthFilter filter50s = new LowPassFilter(0.02 * 2 * Math.PI * 0.05, 4);
-//						ButterworthFilter filter75s = new LowPassFilter(0.0134 * 2 * Math.PI * 0.05, 4);
-//						double[] filtered100s = filter100s.applyFilter(envelope);
-//						double[] filtered75s = filter75s.applyFilter(envelope);
-//						double[] filtered50s = filter50s.applyFilter(envelope);
-//						Trace filteredEnvelopeTrace100s = new Trace(synFullTrace.getX(), filtered100s).multiply(1. / envelopeTrace.getMaxValue());
-//						Trace filteredEnvelopeTrace75s = new Trace(synFullTrace.getX(), filtered75s).multiply(1. / envelopeTrace.getMaxValue());
-//						Trace filteredEnvelopeTrace50s = new Trace(synFullTrace.getX(), filtered50s).multiply(1. / envelopeTrace.getMaxValue());
+						Trace synEnvelopeTrace = new Trace(synFullTrace.getX(), envelope);
+						
+						H = new HilbertTransform(obsFullTrace.getY());
+						envelope = H.getEnvelope();
+						Trace obsEnvelopeTrace = new Trace(obsFullTrace.getX(), envelope);
 						
 						// detect surface wave window
-						SurfaceWaveDetector detector = new SurfaceWaveDetector(envelopeTrace);
+						SurfaceWaveDetector detector = new SurfaceWaveDetector(synFullTrace, 20.0);
 						Timewindow tw = detector.getSurfaceWaveWindow();
-						tw = new Timewindow(tw.getStartTime(), tw.getEndTime());
+						if (tw != null)
+							tw = new Timewindow(tw.getStartTime(), tw.getEndTime());
+						Trace twoBitsTrace = detector.getTwoBitsTrace();
 						
 						String obsString = null;
-						if (isObs)
+						String obsEnvelopeString = null;
+						if (isObs) {
 							obsString = trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 20);
+							obsEnvelopeString = trace2GMT(obsEnvelopeTrace, "cyan", 0, 0, distance_azimuth.distance, slowness, 20);
+						}
 						String synString = trace2GMT(synFullTrace, "red", 0, 0, distance_azimuth.distance, slowness, 20);
-						String envelopeString = trace2GMT(envelopeTrace, "magenta", 0, 0, distance_azimuth.distance, slowness, 20);
-//						String filteredEnvelopeString100s = trace2GMT(filteredEnvelopeTrace100s, "pink", 0, 0, distance_azimuth.distance, slowness, 20);
-//						String filteredEnvelopeString75s = trace2GMT(filteredEnvelopeTrace75s, "purple", 0, 0, distance_azimuth.distance, slowness, 20);
-//						String filteredEnvelopeString50s = trace2GMT(filteredEnvelopeTrace50s, "brown", 0, 0, distance_azimuth.distance, slowness, 20);
+						String synEnvelopeString = trace2GMT(synEnvelopeTrace, "magenta", 0, 0, distance_azimuth.distance, slowness, 20);
+						String twoBitsString = trace2GMT(twoBitsTrace, "black", 0, 0, distance_azimuth.distance, slowness, 20);
 						
 						if (!Files.exists(outpathBins)) {
 							createGMTFile(outpathBins);
@@ -331,26 +329,30 @@ public class TimewindowVisual {
 									, gmtSets2
 									, new String[] {"-BSW -Bx1000 -By20"}) + "\n").getBytes()
 								, StandardOpenOption.APPEND);
-							if (isObs)
+							if (isObs) {
 								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
+								Files.write(outpathBins, (obsEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+							}
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (envelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
-//							Files.write(outpathBins, (filteredEnvelopeString100s + "\n").getBytes(), StandardOpenOption.APPEND);
-//							Files.write(outpathBins, (filteredEnvelopeString75s + "\n").getBytes(), StandardOpenOption.APPEND);
-//							Files.write(outpathBins, (filteredEnvelopeString50s + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (verticalLine(tw.getStartTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (verticalLine(tw.getEndTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (synEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (twoBitsString + "\n").getBytes(), StandardOpenOption.APPEND);
+							if (tw != null) {
+								Files.write(outpathBins, (verticalLine(tw.getStartTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+								Files.write(outpathBins, (verticalLine(tw.getEndTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+							}
 						}
 						else {
-							if (isObs)
+							if (isObs) {
 								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
+								Files.write(outpathBins, (obsEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+							}
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (envelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
-//							Files.write(outpathBins, (filteredEnvelopeString100s + "\n").getBytes(), StandardOpenOption.APPEND);
-//							Files.write(outpathBins, (filteredEnvelopeString75s + "\n").getBytes(), StandardOpenOption.APPEND);
-//							Files.write(outpathBins, (filteredEnvelopeString50s + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (verticalLine(tw.getStartTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (verticalLine(tw.getEndTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (synEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+							Files.write(outpathBins, (twoBitsString + "\n").getBytes(), StandardOpenOption.APPEND);
+							if (tw != null) {
+								Files.write(outpathBins, (verticalLine(tw.getStartTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+								Files.write(outpathBins, (verticalLine(tw.getEndTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+							}
 						}
 					}
 				}
@@ -369,8 +371,12 @@ public class TimewindowVisual {
 				for (Path outpathBins : outpathList) {
 					int depth = (int) (Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR());
 					System.out.println(depth);
-					Files.write(outpathBins, curve(StraveltimeCurveAK135(depth), slowness, "blue", 0, 0).getBytes(), StandardOpenOption.APPEND);
-					Files.write(outpathBins, curve(S2traveltimeCurveAK135(depth), slowness, "pink", 0, 0).getBytes(), StandardOpenOption.APPEND);
+					double[][] Scurve = StraveltimeCurveAK135(depth);
+					double[][] S2curve = S2traveltimeCurveAK135(depth);
+					if (Scurve != null) {
+						Files.write(outpathBins, curve(Scurve, slowness, "blue", 0, 0).getBytes(), StandardOpenOption.APPEND);
+						Files.write(outpathBins, curve(S2curve, slowness, "pink", 0, 0).getBytes(), StandardOpenOption.APPEND);
+					}
 					Files.write(outpathBins, endGMT().getBytes(), StandardOpenOption.APPEND);
 				}
 				

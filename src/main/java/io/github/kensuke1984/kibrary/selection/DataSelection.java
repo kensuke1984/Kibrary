@@ -362,12 +362,40 @@ public class DataSelection implements Operation {
 					// noise per second (in obs)
 					double noise = noisePerSecond(obsSac, component);
 					
+					// Traces
+					Trace synTrace = synSac.createTrace();
+					
 					Set<TimewindowInformation> tmpGoodWindows = new HashSet<>();
 					for (TimewindowInformation window : windowInformations) {
-						TimewindowInformation shiftedWindow = shift(window);
-						if (shiftedWindow == null)
-							continue;
+						double shift = 0.;
+						if (!staticCorrectionSet.isEmpty()) {
+							StaticCorrection foundShift = getStaticCorrection(window);
+							shift = foundShift.getTimeshift();
+						}
+						
+						// remove surface wave from window
+						SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);
+						Timewindow surfacewaveWindow = detector.getSurfaceWaveWindow();
+						
+						if (surfacewaveWindow != null) {
+							double endTime = window.getEndTime();
+							double startTime = window.getStartTime();
+							if (startTime >= surfacewaveWindow.getStartTime() && endTime <= surfacewaveWindow.getEndTime())
+								continue;
+							if (endTime > surfacewaveWindow.getStartTime() && startTime < surfacewaveWindow.getStartTime())
+								endTime = surfacewaveWindow.getStartTime();
+							if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
+								startTime = surfacewaveWindow.getEndTime();
 							
+							window = new TimewindowInformation(startTime
+									, endTime, window.getStation(), window.getGlobalCMTID()
+									, window.getComponent(), window.getPhases());
+						}
+						//
+						TimewindowInformation shiftedWindow = new TimewindowInformation(window.getStartTime() - shift
+								, window.getEndTime() - shift, window.getStation()
+								, window.getGlobalCMTID(), window.getComponent(), window.getPhases());
+						
 						RealVector synU = cutSAC(synSac, window);
 						RealVector obsU = cutSAC(obsSac, shiftedWindow);
 						
@@ -445,13 +473,16 @@ public class DataSelection implements Operation {
 		double obsMin = obsU.getMinValue();
 		double obs2 = obsU.dotProduct(obsU);
 		double syn2 = synU.dotProduct(synU);
-		double cor = obsU.dotProduct(synU);
-		double var = obs2 + syn2 - 2 * cor;
+		// change to the definition of cross-correlation. Now I use normalized CC. Amplitude comparison is already done with the amplitude ratio
+		RealVector unitObs = obsU.mapDivide(obsU.getLInfNorm());
+		RealVector unitSyn = synU.mapDivide(synU.getLInfNorm());
+		double cor = unitObs.dotProduct(unitSyn);
+		cor /= Math.sqrt(unitObs.dotProduct(unitObs) * unitSyn.dotProduct(unitSyn));
+		double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
 		double maxRatio = Precision.round(synMax / obsMax, 2);
 		double minRatio = Precision.round(synMin / obsMin, 2);
 		double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
 		var /= obs2;
-		cor /= Math.sqrt(obs2 * syn2);
 
 		absRatio = Precision.round(absRatio, 2);
 		var = Precision.round(var, 2);
