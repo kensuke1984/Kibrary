@@ -63,8 +63,8 @@ public class VelocityField3D {
 			try (BufferedReader br = new BufferedReader(
 					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
 				polynomialStructureString = br.readLine().trim();
-				if (!polynomialStructureString.startsWith("/"))
-					polynomialStructureStringAbsolute = System.getProperty("user.dir") + "/" + polynomialStructureString;
+//				if (!polynomialStructureString.startsWith("/"))
+//					polynomialStructureStringAbsolute = System.getProperty("user.dir") + "/" + polynomialStructureString;
 			} catch (Exception e2) {
 				e2.printStackTrace();
 				throw new RuntimeException();
@@ -84,7 +84,7 @@ public class VelocityField3D {
 					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
 				perturbationLayerString = br.readLine().trim();
 				if (!perturbationLayerString.startsWith("/"))
-					perturbationLayerString = System.getProperty("user.dir") + "/" + polynomialStructureString;
+					perturbationLayerString = System.getProperty("user.dir") + "/" + perturbationLayerString;
 			} catch (Exception e2) {
 				e2.printStackTrace();
 				throw new RuntimeException();

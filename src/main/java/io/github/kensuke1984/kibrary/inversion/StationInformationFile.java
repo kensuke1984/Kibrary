@@ -18,16 +18,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 import javax.swing.JOptionPane;
 
-
 import org.apache.commons.io.input.CloseShieldInputStream;
-
 
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 /**
@@ -126,7 +124,7 @@ public final class StationInformationFile {
 		Path out = workPath.resolve("station" + Utilities.getTemporaryString() + ".inf");
 
 		Set<SACFileName> sacNameSet = Utilities.sacFileNameSet(workPath);
-		Set<Station> stationSet = sacNameSet.stream().map(sacName -> {
+		Set<Station> stationSet = sacNameSet.stream().filter(sacname -> sacname.getComponent().equals(SACComponent.T)).map(sacName -> {
 			try {
 				return sacName.readHeader();
 			} catch (Exception e) {

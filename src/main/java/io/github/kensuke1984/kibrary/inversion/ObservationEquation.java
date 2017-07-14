@@ -283,8 +283,10 @@ public class ObservationEquation {
 				return;
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
 			int k = dVector.whichTimewindow(id);
-			if (k < 0)
+			if (k < 0) {
+				System.err.format("Timewindow not found: %s%n", id.toString());
 				return;
+			}
 			int row = dVector.getStartPoints(k);
 			double weighting = dVector.getWeighting(k) * parameterList.get(column).getWeighting();
 			double[] partial = id.getData();
@@ -297,10 +299,10 @@ public class ObservationEquation {
 			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
 				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
 		});
-		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
+		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * nn )
 			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
-					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + 2)");  
+					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + " + n + ")");  
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
 		// simple partial combination

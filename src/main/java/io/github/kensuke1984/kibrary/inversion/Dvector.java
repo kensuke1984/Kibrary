@@ -54,8 +54,8 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 public class Dvector {
 
 	public static void main(String[] args) throws IOException {
-		Path idPath = Paths.get("waveformID.dat");
-		Path dataPath = Paths.get("waveform.dat");
+		Path idPath = Paths.get(args[0]);
+		Path dataPath = Paths.get(args[1]);
 		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
 		Predicate<BasicID> chooser = new Predicate<BasicID>() {
 			public boolean test(BasicID id) {
@@ -94,7 +94,7 @@ public class Dvector {
 	private static boolean isPair(BasicID id0, BasicID id1) {
 		return id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 				&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
-				&& id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20
+				&& id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
 				&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
 	}
 

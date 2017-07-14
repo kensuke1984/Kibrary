@@ -36,6 +36,7 @@ import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -689,10 +690,21 @@ public class LetMeInvert implements Operation {
 		Path out = outPath.resolve("variance.txt");
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
-		double[] variance = new double[eq.getMlength() + 1];
+//		double[] variance = new double[eq.getMlength() + 1];
+		double[] variance = new double[eq.getMlength() + 2];
 		variance[0] = eq.getDVector().getVariance();
 		for (int i = 0; i < eq.getMlength(); i++)
 			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+		//
+		RealVector m = new ArrayRealVector(eq.getMlength());
+		for (int i = 0; i < eq.getParameterList().size(); i++) {
+			Location loc = (Location) eq.getParameterList().get(i).getLocation();
+			if (loc.getR() == 6343.8) {
+				m.setEntry(i, .5);
+			}
+		}
+		variance[eq.getMlength() + 1] = eq.varianceOf(m);
+		//
 		writeDat(out, variance);
 		if (alpha == null)
 			return;

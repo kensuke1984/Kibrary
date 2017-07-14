@@ -86,7 +86,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * 
  * @author Kensuke Konishi
  */
-public class PartialDatasetMaker implements Operation {
+public class PartialDatasetMaker_v2 implements Operation {
 
 	private Set<SACComponent> components;
 
@@ -506,13 +506,13 @@ private class WorkerTimePartial implements Runnable {
 
 	private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
-	public PartialDatasetMaker(Properties property) throws IOException {
+	public PartialDatasetMaker_v2(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(PartialDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(PartialDatasetMaker_v2.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan PartialDatasetMaker");
 			pw.println("##Path of a working folder (.)");
@@ -629,7 +629,7 @@ private class WorkerTimePartial implements Runnable {
 	}
 
 	private void setLog() throws IOException {
-		synchronized (PartialDatasetMaker.class) {
+		synchronized (PartialDatasetMaker_v2.class) {
 			do {
 				dateString = Utilities.getTemporaryString();
 				logPath = workPath.resolve("pdm" + dateString + ".log");
@@ -778,9 +778,9 @@ private class WorkerTimePartial implements Runnable {
 			
 			int donebp = 0;
 			// bpフォルダ内の各bpファイルに対して
+			// create ThreadPool
+			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 			for (SpcFileName bpname : bpFiles) {
-				// create ThreadPool
-				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
 				// 摂動点の名前
 				DSMOutput bp = bpname.read();
@@ -816,17 +816,17 @@ private class WorkerTimePartial implements Runnable {
 //						execs.execute(pc);
 //					}
 //				}
-				execs.shutdown();
-				while (!execs.isTerminated()) {
-					try {
-						Thread.sleep(100);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-				partialDataWriter.flush();
-				System.out.println();
 			}
+			execs.shutdown();
+			while (!execs.isTerminated()) {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			partialDataWriter.flush();
+			System.out.println();
 			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
 		}
 		terminate();
@@ -897,12 +897,12 @@ private class WorkerTimePartial implements Runnable {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		PartialDatasetMaker pdm = new PartialDatasetMaker(Property.parse(args));
+		PartialDatasetMaker_v2 pdm = new PartialDatasetMaker_v2(Property.parse(args));
 		long startTime = System.nanoTime();
 
-		System.err.println(PartialDatasetMaker.class.getName() + " is going..");
+		System.err.println(PartialDatasetMaker_v2.class.getName() + " is going..");
 		pdm.run();
-		System.err.println(PartialDatasetMaker.class.getName() + " finished in "
+		System.err.println(PartialDatasetMaker_v2.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 

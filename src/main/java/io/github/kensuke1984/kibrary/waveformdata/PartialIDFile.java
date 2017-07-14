@@ -170,8 +170,8 @@ public final class PartialIDFile {
 			for (PartialID id : ids)
 				types.add(id.getPartialType());
 			for (PartialType type : types) {
-				List<StationEvent> tmpList = Arrays.stream(ids).filter(id -> id.getPartialType().equals(type))
-						.map(id -> new StationEvent(id.getStation(), id.getGlobalCMTID()))
+				List<StationEvent> tmpList = Arrays.stream(ids).parallel().filter(id -> id.getPartialType().equals(type))
+						.map(id -> new StationEvent(id.getStation(), id.getGlobalCMTID(), id.getStartTime()))
 						.distinct().collect(Collectors.toList());
 				Collections.sort(tmpList);
 				Path outPath = Paths.get(type + ".inf");
@@ -279,25 +279,29 @@ public final class PartialIDFile {
 	public static class StationEvent implements Comparable<StationEvent> {
 		public Station station;
 		public GlobalCMTID event;
-		public StationEvent(Station station, GlobalCMTID event) {
+		public double startTime;
+		public StationEvent(Station station, GlobalCMTID event, double startTime) {
 			this.station = station;
 			this.event = event;
+			this.startTime = startTime;
 		}
 		@Override
 		public int compareTo(StationEvent o) {
 			int compareStation = station.compareTo(o.station);
 			if (compareStation != 0)
 				return compareStation;
-			else
+			else if (event.compareTo(o.event) != 0)
 				return event.compareTo(o.event);
+			else
+				return Double.compare(this.startTime, o.startTime);
 		}
 		@Override
 		public String toString() {
-			return station.toString() + " " + event.toString();
+			return station.toString() + " " + event.toString() + " " + String.format("%.2f", startTime);
 		}
 		@Override
 		public int hashCode() {
-			return station.hashCode() * event.hashCode() * 31;
+			return station.hashCode() * event.hashCode() * 31 * (int) startTime;
 		}
 		@Override
 		public boolean equals(Object obj) {
@@ -308,9 +312,12 @@ public final class PartialIDFile {
 			if (getClass() != obj.getClass())
 				return false;
 			StationEvent other = (StationEvent) obj;
+			double otherStartTime = other.startTime;
 			if (!station.equals(other.station))
 				return false;
 			if (!event.equals(other.event))
+				return false;
+			if (Math.abs(startTime - otherStartTime) > 0.1)
 				return false;
 			return true;
 		}

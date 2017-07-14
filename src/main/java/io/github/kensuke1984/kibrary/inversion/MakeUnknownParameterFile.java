@@ -43,7 +43,13 @@ public class MakeUnknownParameterFile {
 			int nDigit = (int) Math.log10(perturbations.size()) + 1;
 			for (int i = 0; i < perturbations.size(); i++) {
 				Location perturbation = perturbations.get(i);
-				double dR = layerMap.get(perturbation.getR());
+				double dR = 0;
+				try {
+					 dR = layerMap.get(perturbation.getR());
+				} catch (NullPointerException e) {
+					System.err.format("NullPointerException: %.4f%n", perturbation.getR());
+					return;
+				}
 				double volume = getVolume(perturbation, dR, 5., 5.);
 				Files.write(unknownPath, ("MU " + perturbation + " " + volume + "\n").getBytes(), StandardOpenOption.APPEND);
 			}

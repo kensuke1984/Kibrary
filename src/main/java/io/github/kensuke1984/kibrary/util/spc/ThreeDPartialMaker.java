@@ -214,11 +214,20 @@ public class ThreeDPartialMaker {
 	 */
 	public double[] createPartial(SACComponent component, int iBody, PartialType type) {
 		// return array of zero for partials whose radius is too close to the BP or FP source
-		if (ignoreBodyR.contains(fp.getBodyR()[iBody]) || ignoreBodyR.contains(bp.getBodyR()[iBody]))
+		double bpR = bp.getBodyR()[iBody];
+		int iFp = -1;
+		for (int i = 0; i < fp.getBodyR().length; i++) {
+			if (fp.getBodyR()[i] == bpR) {
+				iFp = i;
+				break;
+			}
+		}
+		if (iFp == -1)
 			return new double[npts];
 		//
+		
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
-				: computeTensorCulculus(component, iBody, type);
+				: computeTensorCulculus(component, iBody, iFp, type);
 		if (null != sourceTimeFunction)
 			partial_frequency = sourceTimeFunction.convolve(partial_frequency);
 		Complex[] partial_time = toTimedomain(partial_frequency);
@@ -248,6 +257,14 @@ public class ThreeDPartialMaker {
 		return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
 
 	}
+	
+	// TODO
+//	private Complex[] computeQpartial(SACComponent component, int iBody) {
+//		if (fujiConversion == null)
+//			fujiConversion = new FujiConversion(PolynomialStructure.PREM);
+//		DSMOutput qspec = fujiConversion.convert(toSpectrum(PartialType.MU));
+//		return qspec.getSpcBodyList().get(iBody).getSpcComponent(component).getValueInFrequencyDomain();
+//	}
 
 	/**
 	 * compute tensor culculus of u Cijkl eta
@@ -263,6 +280,13 @@ public class ThreeDPartialMaker {
 	private Complex[] computeTensorCulculus(SACComponent component, int iBody, PartialType type) {
 		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBody),
 				bp.getSpcBodyList().get(iBody), type.getWeightingFactor(), angleForTensor);
+		return component == SACComponent.Z ? tensorcalc.calc(0)
+				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+	}
+	
+	private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
+		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBodyFp),
+				bp.getSpcBodyList().get(iBodyBp), type.getWeightingFactor(), angleForTensor);
 		return component == SACComponent.Z ? tensorcalc.calc(0)
 				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
 	}
@@ -498,16 +522,31 @@ public class ThreeDPartialMaker {
 		if (validity) {
 			double[] fpR = fp.getBodyR();
 			double[] bpR = bp.getBodyR();
-			Set<Double> fpRSet = Arrays.stream(fpR).boxed().collect(Collectors.toSet());
-			Set<Double> bpRSet = Arrays.stream(bpR).boxed().collect(Collectors.toSet());
-			Set<Double> bpRSet_copy = bpRSet;
-			bpRSet.removeAll(fpRSet);
-			fpRSet.removeAll(bpRSet_copy);
-			ignoreBodyR.addAll(bpRSet);
-			ignoreBodyR.addAll(fpRSet);
+			for (int i = 0; i < fpR.length; i++) {
+				double fpRi = fpR[i];
+				boolean isInBpR = false;
+				for (int j = 0; j < bpR.length; j++) {
+					if (fpRi == bpR[j]) {
+						isInBpR = true;
+						break;
+					}
+				}
+				if (!isInBpR)
+					ignoreBodyR.add(fpRi);
+			}
+			
+//			Set<Double> fpRSet = Arrays.stream(fpR).boxed().collect(Collectors.toSet());
+//			Set<Double> bpRSet = Arrays.stream(bpR).boxed().collect(Collectors.toSet());
+//			Set<Double> bpRSet_copy = new HashSet<>(bpRSet);
+//			bpRSet.removeAll(fpRSet);
+//			fpRSet.removeAll(bpRSet_copy);
+//			ignoreBodyR.addAll(bpRSet);
+//			ignoreBodyR.addAll(fpRSet);
+//			ignoreBodyR.forEach(r -> System.out.println(r));
+			
 			validity = ignoreBodyR.size() <= 2;
 			if (!validity) {
-				System.err.println("the depths are invalid(different) as below  fp : bp");
+				System.err.println("the depths are invalid (different) as below  fp : bp");
 				for (int i = 0; i < fpR.length; i++)
 					System.err.println(fpR[i] + " : " + bpR[i]);
 			}
