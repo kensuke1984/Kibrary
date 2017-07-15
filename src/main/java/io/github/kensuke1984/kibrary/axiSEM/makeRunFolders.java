@@ -77,7 +77,7 @@ public class makeRunFolders {
 					GlobalCMTData idData = id.getEvent();
 					MomentTensor mt = idData.getCmt();
 					double pow = Math.pow(10, mt.getMtExp());
-					String s = String.format("event name: %s%ntime shift: %.4f%nhalf duration: "
+					String s = String.format("PDE...%nevent name: %s%ntime shift: %.4f%nhalf duration: "
 							+ "%.4f%nlatitude: %.4f%nlongitude: %.4f%ndepth: "
 							+ "%.4f%nMrr: %.6e%nMtt: %.6e%nMpp: %.6e%nMrt: %.6e%nMrp: %.6e%nMtp: %.6e"
 								, id.toString()

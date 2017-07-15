@@ -301,8 +301,9 @@ public class SourceTimeFunction {
 	 */
 	public final double[] convolve(double[] data) {
 		if (data.length != nptsInTimeDomain)
-			throw new IllegalArgumentException("Input data is invalid (length).");
+			throw new IllegalArgumentException("Input data is invalid (length): " + data.length + " " + nptsInTimeDomain);
 		Complex[] dataInFrequencyDomain = fft.transform(data, TransformType.FORWARD);
+		dataInFrequencyDomain = Arrays.copyOfRange(dataInFrequencyDomain, 0, np + 1);
 		Complex[] convolvedDataInFrequencyDomain = convolve(dataInFrequencyDomain);
 		return inverseFourierTransform(convolvedDataInFrequencyDomain);
 	}
@@ -317,7 +318,7 @@ public class SourceTimeFunction {
 	 */
 	public final Complex[] convolve(Complex[] data) {
 		if (data.length != np + 1)
-			throw new IllegalArgumentException("Input data length is invalid.");
+			throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np+1));
 		return IntStream.range(0, np + 1).parallel()
 				.mapToObj(i -> i == 0 ? data[i] : data[i].multiply(sourceTimeFunction[i - 1])).toArray(Complex[]::new);
 	}
