@@ -63,7 +63,7 @@ final class GlobalCMTCatalog {
 	private static Set<NDK> readJar() {
 		try {
 			List<String> lines = IOUtils.readLines(
-					GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"), //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A
+					GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("synthetics.catalog"), //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A
 					Charset.defaultCharset());
 			if (lines.size() % 5 != 0)
 				throw new Exception("Global CMT catalog contained in the jar file is broken");

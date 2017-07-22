@@ -4,6 +4,7 @@ import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,12 +16,12 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 public class KernelVisual {
 
 	public static void main(String[] args) throws IOException {
-		Path partialIDPath = Paths.get("partialID.dat");
-		Path partialPath = Paths.get("partial.dat");
+		Path partialIDPath = Paths.get(args[0]);
+		Path partialPath = Paths.get(args[1]);
 		
 		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
-		Path dir0 = Paths.get("partialVisual");
+//		Path dir0 = Paths.get("partialVisual");
 //		Files.createDirectories(dir0);
 //		
 //		for (PartialID partial : partials) {
@@ -45,29 +46,42 @@ public class KernelVisual {
 //			Files.write(filePath, (partial.getPerturbationLocation().toString() + " " + s + "\n").getBytes(), StandardOpenOption.APPEND);
 //		}
 		
-		dir0 = Paths.get("KernelTemporalVisual");
+		Path dir0 = Paths.get("KernelTemporalVisual");
 		Files.createDirectories(dir0);
 		for (PartialID partial : partials) {
 //			if (partial.getStation().getStationName().equals("X060") 
 //					&& new Phases(partial.getPhases()).equals(new Phases("S,SSS,ScS,sSS,sScSScS,sS,SS,ScSScS,sSSS,sScS")) ) {
-				Path dirPath = dir0.resolve(partial.getStation().getStationName());
-				if (!Files.exists(dirPath))
-					Files.createDirectories(dirPath);
-				Path dir1 = dirPath.resolve(new Phases(partial.getPhases()).toString());
+			if (new Phases(partial.getPhases()).equals(new Phases("S,SSS,ScS,sSS,sScSScS,sS,SS,ScSScS,sSSS,sScS"))) {
+				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
-				
+				Path dir2 = dir1.resolve(partial.getStation().getStationName());
+				if (!Files.exists(dir2))
+					Files.createDirectories(dir2);
+				Path dir3 = dir2.resolve(new Phases(partial.getPhases()).toString());
+				if (!Files.exists(dir3))
+					Files.createDirectories(dir3);
 				
 				double[] data = partial.getData();
 				double t0 = partial.getStartTime();
+				Path filePath = dir3.resolve(new Phases(partial.getPhases()).toString() 
+						+ String.format("_kernelTemporal_snapshots_t0%d.txt", t0));
+				if (!Files.exists(filePath))
+					Files.createFile(filePath);
+				BufferedWriter writer = Files.newBufferedWriter(filePath, StandardOpenOption.APPEND);
+				writer.write(String.format("%s ", partial.getPerturbationLocation()));
 				for (int i = 0; i < data.length; i++) {
-					String t = String.format("%04d", (int) (t0 + i));
-					Path filePath = dir1.resolve(new Phases(partial.getPhases()).toString() + "_kernelTemporal_snapshot" + t + ".txt");
-					if (!Files.exists(filePath))
-						Files.createFile(filePath);
-					Files.write(filePath, (partial.getPerturbationLocation().toString() + " " + data[i] + "\n").getBytes(), StandardOpenOption.APPEND);
+					writer.write(String.format("%.3e "
+							, data[i]));
+//					String t = String.format("%04d", (int) (t0 + i));
+//					Path filePath = dir3.resolve(new Phases(partial.getPhases()).toString() + "_kernelTemporal_snapshot" + t + ".txt");
+//					if (!Files.exists(filePath))
+//						Files.createFile(filePath);
+//					Files.write(filePath, (partial.getPerturbationLocation().toString() + " " + data[i] + "\n").getBytes(), StandardOpenOption.APPEND);
 				}
-//			}
+				writer.newLine();
+				writer.close();
+			}
 		}
 	}
 	

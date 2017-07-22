@@ -487,6 +487,10 @@ public class PolynomialStructure implements Serializable {
 	public double getVshAt(double r) {
 		return vsh[zoneOf(r)].value(toX(r));
 	}
+	
+	public double getEtaAt(double r) {
+		return eta[zoneOf(r)].value(toX(r));
+	}
 
 	/**
 	 * @param r

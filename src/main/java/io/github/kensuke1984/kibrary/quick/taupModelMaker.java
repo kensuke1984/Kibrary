@@ -6,7 +6,22 @@ import io.github.kensuke1984.kibrary.util.Earth;
 public class taupModelMaker {
 
 	public static void main(String[] args) {
-		PolynomialStructure model = PolynomialStructure.AK135;
+		PolynomialStructure model = PolynomialStructure.PREM;
+		
+		for (int i = 0; i < 41; i++) {
+			double r = 6346.600 - 5.*i;
+			System.out.printf("            %.0f.  %.2f  %.2f  %.2f    %.1f      %.1f  %.2f  %.2f  %.5f%n"
+					,r * 1e3
+					,model.getRhoAt(r) * 1e3
+					,model.getVpvAt(r) * 1e3
+					,model.getVsvAt(r) * 1e3
+					,model.getQkappaAt(r)
+					,model.getQmuAt(r)
+					,model.getVphAt(r) * 1e3
+					,model.getVshAt(r) * 1e3
+					,model.getEtaAt(r));
+		}
+		System.exit(0);
 		
 		int n = 10000;
 		for (int i = 0; i <= n; i++) {

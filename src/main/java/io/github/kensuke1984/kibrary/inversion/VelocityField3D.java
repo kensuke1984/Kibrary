@@ -177,11 +177,11 @@ public class VelocityField3D {
 					answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
 					Map<UnknownParameter, Double> velocities = null;
 					Map<UnknownParameter, Double> zeroVelocities = null;
-					Map<UnknownParameter, Double> ratios = null;
+					Map<UnknownParameter, Double> perturbations = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					if (trs == null) {
-						ratios = toRatio(answerMap, layerMap, unknowns, structure, 1.);
+						perturbations = toPerturbation(answerMap, layerMap, unknowns, structure, 1.);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
@@ -207,8 +207,8 @@ public class VelocityField3D {
 						if (trs == null) {
 							for (UnknownParameter m : unknowns) {
 								Location loc = (Location) m.getLocation();
-								double ratio = ratios.get(m);
-								pw.println(loc + " " + ratio);
+								double perturbation = perturbations.get(m);
+								pw.println(loc + " " + perturbation);
 							}
 							if (partialTypes.contains(PartialType.PARQ)) {
 								for (int j = 0; j < Qs.length; j++) {
@@ -220,8 +220,8 @@ public class VelocityField3D {
 						else {
 							for (UnknownParameter m : unknowns) {
 								Location loc = (Location) m.getLocation();
-								double ratio = ratios.get(m);
-								pw.println(loc + " " + ratio);
+								double perturbation = perturbations.get(m);
+								pw.println(loc + " " + perturbation);
 							}
 							if (partialTypes.contains(PartialType.PARQ)) {
 								for (int j = 0; j < Qs.length; j++)
@@ -279,22 +279,32 @@ public class VelocityField3D {
 		return velMap;
 	}
 	
-	private static Map<UnknownParameter, Double> toRatio(Map<UnknownParameter, Double> answerMap, Map<Double, Double> layerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
+	private static Map<UnknownParameter, Double> toPerturbation(Map<UnknownParameter
+			, Double> answerMap, Map<Double, Double> layerMap
+			, List<UnknownParameter> parameterOrder, PolynomialStructure structure
 			, double amplifyPerturbation) {
-		Map<UnknownParameter, Double> ratioMap = new HashMap<>();
+		Map<UnknownParameter, Double> perturbationMap = new HashMap<>();
 		for (UnknownParameter m : parameterOrder) {
 			Location loc = (Location) m.getLocation();
 			double r = loc.getR();
 			double dR = layerMap.get(r);
 			double rmin = r - dR / 2.;
 			double rmax = r + dR / 2.;
-			System.out.println(r + " " + rmin + " " + rmax);
-			double v1 = toVelocity(answerMap.get(m), r, rmin, rmax, structure, amplifyPerturbation);
-			double v0 = structure.getVshAt(r);
-			double ratio = 1. - v1 / v0;
-			ratioMap.put(m, ratio);
+			if (structure.equals(PolynomialStructure.AK135)) {
+				if (r == 6343.8) {
+					rmin = 6336.61;
+					rmax = Earth.EARTH_RADIUS;
+				}
+			}
+//			double v1 = toVelocity(answerMap.get(m), r, rmin
+//					, rmax, structure, amplifyPerturbation);
+//			double v0 = structure.getVshAt(r);
+//			double perturbation = (1. - v1 / v0) * 100;
+			double perturbation = toPerturbation(answerMap.get(m)
+					,rmin, rmax, structure) * 100.;
+			perturbationMap.put(m, perturbation);
 		}
-		return ratioMap;
+		return perturbationMap;
 	}
 	
 	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
@@ -340,6 +350,11 @@ public class VelocityField3D {
 	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure,
 			double amplifyPerturbation) {
 		return getSimpsonVsh(rmin, rmax, structure, deltaMu * amplifyPerturbation);
+	}
+	
+	private static double toPerturbation(double deltaMu
+			,double rmin, double rmax, PolynomialStructure structure) {
+		return getSimpsonVsPerturbation(rmin, rmax, structure, deltaMu);
 	}
 	
 	private static double toQ(double dq, double r, double rmin, double rmax, PolynomialStructure structure,
@@ -390,7 +405,32 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
-	public static double getSimpsonVsh (double r1, double r2, PolynomialStructure structure, double dMu) {
+	public static double getSimpsonVsPerturbation(double r1, double r2
+			, PolynomialStructure structure, double dMu) {
+		double res = 0;
+		double dr = (r2 - r1) / 40.;
+		double vol = r2 - r1;
+		for (int i=0; i < 40; i++) {
+			double a = r1 + i * dr;
+			double b = r1 + (i + 1) * dr;
+			double ab = (a + b) / 2.;
+			double v_a = dvs(a, dMu, structure);
+			double v_ab = dvs(ab, dMu, structure);
+			double v_b = dvs(b, dMu, structure);
+			res += (b - a) / 6. * (v_a + 4 * v_ab + v_b);
+		}
+		
+		return res / vol;
+	}
+	
+	private static double dvs(double r, double dMu, PolynomialStructure structure) {
+		double v0 = Math.sqrt(structure.computeMu(r) / structure.getRhoAt(r));
+		double v1 = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
+		return (v1 - v0) / v0;
+	}
+	
+	public static double getSimpsonVsh(double r1, double r2
+			, PolynomialStructure structure, double dMu) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;

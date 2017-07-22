@@ -97,6 +97,8 @@ public class DataSelection implements Operation {
 			pw.println("#minSNratio");
 			pw.println("#boolean SnScSnPair (false). Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset");
 			pw.println("SnScSnPair false");
+			pw.println("##exclude surface wave (false)");
+			pw.println("#excludeSurfaceWave");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -116,6 +118,8 @@ public class DataSelection implements Operation {
 	private boolean convolute;
 	private Path timewindowInformationFilePath;
 	private Path staticCorrectionInformationFilePath;
+	
+	private boolean excludeSurfaceWave;
 
 	/**
 	 * Minimum correlation coefficients
@@ -171,6 +175,8 @@ public class DataSelection implements Operation {
 			property.setProperty("convolute", "true");
 		if (!property.containsKey("SnScSnPair"))
 			property.setProperty("SnScSnPair", "false");
+		if (!property.containsKey("excludeSurfaceWave"))
+			property.setProperty("excludeSurfaceWave", "false");
 	}
 
 	private void set() throws IOException {
@@ -207,6 +213,8 @@ public class DataSelection implements Operation {
 		SnScSnPair = Boolean.parseBoolean(property.getProperty("SnScSnPair"));
 		
 		minSNratio = Double.parseDouble(property.getProperty("minSNratio"));
+		
+		excludeSurfaceWave = Boolean.parseBoolean(property.getProperty("excludeSurfaceWave"));
 		
 		dataSelectionInfo = new ArrayList<>();
 	}
@@ -374,24 +382,26 @@ public class DataSelection implements Operation {
 						}
 						
 						// remove surface wave from window
-						SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);
-						Timewindow surfacewaveWindow = detector.getSurfaceWaveWindow();
-						
-						if (surfacewaveWindow != null) {
-							double endTime = window.getEndTime();
-							double startTime = window.getStartTime();
-							if (startTime >= surfacewaveWindow.getStartTime() && endTime <= surfacewaveWindow.getEndTime())
-								continue;
-							if (endTime > surfacewaveWindow.getStartTime() && startTime < surfacewaveWindow.getStartTime())
-								endTime = surfacewaveWindow.getStartTime();
-							if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
-								startTime = surfacewaveWindow.getEndTime();
+						if (excludeSurfaceWave) {
+							SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);
+							Timewindow surfacewaveWindow = detector.getSurfaceWaveWindow();
 							
-							window = new TimewindowInformation(startTime
-									, endTime, window.getStation(), window.getGlobalCMTID()
-									, window.getComponent(), window.getPhases());
+							if (surfacewaveWindow != null) {
+								double endTime = window.getEndTime();
+								double startTime = window.getStartTime();
+								if (startTime >= surfacewaveWindow.getStartTime() && endTime <= surfacewaveWindow.getEndTime())
+									continue;
+								if (endTime > surfacewaveWindow.getStartTime() && startTime < surfacewaveWindow.getStartTime())
+									endTime = surfacewaveWindow.getStartTime();
+								if (startTime < surfacewaveWindow.getEndTime() && endTime > surfacewaveWindow.getEndTime())
+									startTime = surfacewaveWindow.getEndTime();
+								
+								window = new TimewindowInformation(startTime
+										, endTime, window.getStation(), window.getGlobalCMTID()
+										, window.getComponent(), window.getPhases());
+							}
 						}
-						//
+						
 						TimewindowInformation shiftedWindow = new TimewindowInformation(window.getStartTime() - shift
 								, window.getEndTime() - shift, window.getStation()
 								, window.getGlobalCMTID(), window.getComponent(), window.getPhases());

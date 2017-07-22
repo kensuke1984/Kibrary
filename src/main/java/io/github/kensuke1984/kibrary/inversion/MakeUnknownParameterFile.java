@@ -72,8 +72,8 @@ public class MakeUnknownParameterFile {
 		tmpLoc = tmpLoc.toLocation(r + 0.5 * dr);
 		double endA = Earth.getExtendedShaft(tmpLoc);
 		r = Earth.getExtendedShaft(point);
-		// System.out.println(startA + " " + endA);
-		// System.exit(0);
+//		 System.out.println(startA + " " + endA);
+//		 System.exit(0);
 		double v = Earth.getVolume(startA, endA, latitude - 0.5 * dLatitude, latitude + 0.5 * dLatitude,
 				longitude - 0.5 * dLongitude, longitude + 0.5 * dLongitude);
 

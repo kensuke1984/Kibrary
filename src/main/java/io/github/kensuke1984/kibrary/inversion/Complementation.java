@@ -24,9 +24,9 @@ public class Complementation {
 		Map<Location, Double> valueOfLocation = IntStream.range(0, locations.length)
 				                                         .mapToObj(i -> i)
 				                                         .collect(Collectors.toMap(i -> locations[i], i -> values[i]));
-		Location target = c.toPoint(cmpfilePath);  // 内挿したい点
+//		Location target = c.toPoint(cmpfilePath);  // 内挿したい点
 		Location[] targetList = c.readPoint(cmpfilePath);  //内挿したい点の配列
-		Location[] nears = c.getNearest4(locations, target); //内挿したい点からの近接４点 locationsの中からtargetに近い4点
+//		Location[] nears = c.getNearest4(locations, target); //内挿したい点からの近接４点 locationsの中からtargetに近い4点
 //		double[] nearpointsValue = c.getValue(nears, valueOfLocation);
 //		double[] nearpointsValue = Arrays.stream(nears).mapToDouble(loc -> valueOfLocation.get(loc)).toArray(); // これは順番が同じというところからさがす
 //		double valueForTarget = c.complement(nears, nearpointsValue, target);
@@ -34,7 +34,7 @@ public class Complementation {
 		double tmp = 0;
 //		System.out.println(targetList.length);
 		for(int i=0;i<targetList.length;i++){
-			Location[] near = c.getNearest4(locations, targetList[i]);
+			Location[] near = c.getNearestHorizontal4(locations, targetList[i]);
 //			double[] nearpointValue = Arrays.stream(near).mapToDouble(loc -> valueOfLocation.get(loc)).toArray();
 			double[] nearpointsValue = new double[near.length];
 			  for(int n=0;n<near.length;n++){
@@ -108,6 +108,19 @@ public class Complementation {
 		for(int i=0;i<4;i++){
 			near4[i] = sortLoc[i];
 		}
+	    return near4;
+	}
+	
+	/**
+	 * @param locations
+	 * @param location
+	 * @return nearest location with the same radius as this
+	 */
+	public Location[] getNearestHorizontal4(Location[] locations, Location location){
+		Location[] sortLoc = location.getNearestHorizontalLocation(locations);
+		Location[] near4 = new Location[4];
+		for(int i = 0; i < 4;i++)
+			near4[i] = sortLoc[i];
 	    return near4;
 	}
 	

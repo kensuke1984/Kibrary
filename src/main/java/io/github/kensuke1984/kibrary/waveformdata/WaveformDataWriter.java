@@ -291,7 +291,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
 
 	private int getIndexOfRange(double min, double max) {
 		for (int i = 0; i < periodRanges.length; i++) { // TODO
-			if (Math.abs(periodRanges[i][0] - min) < 0.00001 && Math.abs(periodRanges[i][1] - max) < 0.00001)
+//			System.out.println(periodRanges[i][0] + " " + min + " ; " + periodRanges[i][1] + " " + max);
+			if (Math.abs(periodRanges[i][0] - min) < 1e-3 && Math.abs(periodRanges[i][1] - max) < 1e-3)
 				return i;
 		}
 		throw new RuntimeException("A range is N/A");

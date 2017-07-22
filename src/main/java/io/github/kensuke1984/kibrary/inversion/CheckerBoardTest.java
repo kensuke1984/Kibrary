@@ -24,6 +24,7 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -69,6 +70,8 @@ public class CheckerBoardTest implements Operation {
 			pw.println("#noise");
 			pw.println("##noise power (1000)");
 			pw.println("#noisePower");
+			pw.println("##apply time shift? (false)");
+			pw.println("#timeShift ");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -105,6 +108,9 @@ public class CheckerBoardTest implements Operation {
 			property.setProperty("noize", "false");
 		if (property.getProperty("noize").equals("true") && property.containsKey("noizePower"))
 			throw new RuntimeException("There is no information about 'noizePower'");
+		if (!property.containsKey("timeShift"))
+			property.setProperty("timeShift", "false");
+		
 	}
 
 	private void set() {
@@ -122,9 +128,12 @@ public class CheckerBoardTest implements Operation {
 		if (noise)
 			noisePower = Double.parseDouble(property.getProperty("noisePower"));
 		iterate = Boolean.parseBoolean(property.getProperty("iterate"));
+		timeShift = Boolean.parseBoolean(property.getProperty("timeShift"));
 	}
 
 	private Path workPath;
+	
+	private boolean timeShift;
 
 	/**
 	 * 観測波形、理論波形の入ったファイル (BINARY)
@@ -157,7 +166,7 @@ public class CheckerBoardTest implements Operation {
 	protected double noisePower;
 
 	/**
-	 * psudoMの元になるファイル
+	 * pseudoMの元になるファイル
 	 */
 	protected Path inputDataPath;
 	private Set<Station> stationSet = new HashSet<>();
@@ -221,6 +230,45 @@ public class CheckerBoardTest implements Operation {
 				bdw.addBasicID(synIDs[i].setData(dVector.getSynVec()[i].mapDivide(dVector.getWeighting(i)).toArray()));
 			}
 		}
+	}
+	
+	public void output4ChekeBoardTestTimeshifted(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
+		// bornVec = dVector.getObsVec();
+		Objects.requireNonNull(bornVec);
+
+		Dvector dVector = eq.getDVector();
+		RealVector[] bornPart = dVector.separate(bornVec);
+		System.err.println("outputting " + outIDPath + " " + outDataPath);
+		try (WaveformDataWriter bdw = new WaveformDataWriter(outIDPath, outDataPath, stationSet, idSet, ranges, phases)) {
+			BasicID[] obsIDs = dVector.getObsIDs();
+			BasicID[] synIDs = dVector.getSynIDs();
+			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
+				RealVector synVec_i = dVector.getSynVec()[i];
+				RealVector bornVec_i = new ArrayRealVector(shiftPseudo(bornPart[i].toArray(), synVec_i.toArray()));
+				bdw.addBasicID(obsIDs[i].setData(bornVec_i.mapDivide(dVector.getWeighting(i)).toArray()));
+				bdw.addBasicID(synIDs[i].setData(synVec_i.mapDivide(dVector.getWeighting(i)).toArray()));
+			}
+		}
+	}
+	
+	private double[] shiftPseudo(double[] born, double[] syn) {
+		double[] shifted = new double[born.length];
+		FujiStaticCorrection fsc = new FujiStaticCorrection(1., 0.2, 15.);
+		double shift = fsc.computeTimeshiftForBestCorrelation(born, syn);
+		System.out.println(shift);
+		if (shift < 0) { // born arrives earlier
+			int pointShift = -(int) shift;
+			for (int i = 0; i < born.length - pointShift; i++)
+				shifted[i + pointShift] = born[i];
+		}
+		else if (shift > 0) {
+			int pointShift = (int) shift;
+			for (int i = pointShift; i < born.length; i++)
+				shifted[i - pointShift] = born[i];
+		}
+		else
+			shifted = born;
+		return shifted;
 	}
 
 	/**
@@ -332,8 +380,14 @@ public class CheckerBoardTest implements Operation {
 			bornVec = bornVec.add(computeRandomNoise());
 		if (iterate)
 			output4Iterate(outIDPath, outDataPath, bornVec);
-		else
-			output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
+		else {
+			if (timeShift) {
+				System.out.println("Using time shift");
+				output4ChekeBoardTestTimeshifted(outIDPath, outDataPath, bornVec);
+			}
+			else
+				output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
+		}
 
 	}
 

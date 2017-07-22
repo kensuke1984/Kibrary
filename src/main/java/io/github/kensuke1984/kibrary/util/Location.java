@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -86,7 +87,7 @@ public class Location extends HorizontalPosition {
 	public double getDistance(Location location) {
 		return location.toXYZ().getDistance(toXYZ());
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -118,6 +119,15 @@ public class Location extends HorizontalPosition {
 	 */
 	public Location[] getNearestLocation(Location[] locations) {
 		Location[] newLocations = locations.clone();
+		Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
+		return newLocations;
+	}
+	
+	public Location[] getNearestHorizontalLocation(Location[] locations) {
+		Location[] newLocations = Arrays.stream(locations)
+				.filter(loc -> loc.getR() == this.getR())
+				.collect(Collectors.toList())
+				.toArray(new Location[0]);
 		Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
 		return newLocations;
 	}

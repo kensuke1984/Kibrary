@@ -1,9 +1,11 @@
 package io.github.kensuke1984.kibrary.axiSEM;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
+import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -16,14 +18,18 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -36,12 +42,17 @@ import org.apache.http.annotation.Experimental;
  * @author anpan
  * @version 0.1
  */
-public class Result {
+public class Result implements Operation {
 	private String meshName;
 	private List<BasicID> basicIDs;
+	private double highFreq;
+	private double lowFreq;
+	private Path workPath;
+	private Set<SACComponent> components;
 	
 	public static void main(String[] args) {
-		Result result = new Result("PREM_50s", 50., 200.);
+		String meshName = args[0];
+		Result result = new Result(meshName, 50., 200.);
 		List<BasicID> basicIDs = result.getBasicIDs();
 		for (BasicID id : basicIDs) {
 			System.out.println(id);
@@ -54,21 +65,89 @@ public class Result {
 		}
 	
 //		 test of resampling method
-		/*
-		double[] data = new double[1000];
-		for (int i = 0; i < data.length; i++)
-			data[i] = Math.sin(i * 2 * Math.PI / 500.) + 2 * Math.sin(i * 2 * Math.PI / 200.);
-		double newDelta = 0.05;
-		double oldDelta = 0.047;
-		double[] newData = resampleFFT(data, oldDelta, newDelta);
-		double maxOld = new ArrayRealVector(data).getLInfNorm();
-		for (int i = 0; i < data.length; i++)
-			System.out.format("%.4f %.4f%n", i * oldDelta, data[i]);
-		System.out.println("");
-		double max = new ArrayRealVector(newData).getLInfNorm();
-		for (int i = 0; i < newData.length; i++)
-			System.out.format("%.4f %.4f%n", i * newDelta, newData[i] / max * maxOld);
-		*/
+//		/*
+//		double[] data = new double[1000];
+//		for (int i = 0; i < data.length; i++)
+//			data[i] = Math.sin(i * 2 * Math.PI / 500.);
+//		double newDelta = 0.05 * 2 * Math.PI / 500.;
+//		double oldDelta = 0.047 * 2 * Math.PI / 500.;
+//		double[] newData = resampleFFT(data, oldDelta, newDelta);
+//		double maxOld = new ArrayRealVector(data).getLInfNorm();
+//		for (int i = 0; i < data.length; i++)
+//			System.out.format("%.4f %.4f%n", i * oldDelta, data[i]);
+//		System.out.println("");
+//		double max = new ArrayRealVector(newData).getLInfNorm();
+//		for (int i = 0; i < newData.length; i++)
+//			System.out.format("%.4f %.4f%n", i * newDelta, newData[i]);
+//		
+////		/*
+//		double[] velData = displacementTOvelocityTimeDomain(data, 2 * Math.PI / 500.);
+//		for (int i = 0; i < data.length; i++)
+//			System.out.format("%d %.4f %.4f%n", i, data[i], velData[i]);
+////		*/
+//		*/
+	}
+	
+	private Properties property;
+
+	private void checkAndPutDefaults() {
+		if (!property.containsKey("workPath"))
+			property.setProperty("workPath", "");
+		if (!property.containsKey("components"))
+			property.setProperty("components", "Z R T");
+		if (!property.containsKey("tlen"))
+			property.setProperty("tlen", "3276.8");
+		if (!property.containsKey("np"))
+			property.setProperty("np", "512");
+		if (!property.containsKey("header"))
+			property.setProperty("header", "PREM");
+		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
+			throw new RuntimeException("perturbationR must be defined.");
+	}
+	
+	private void set() {
+		checkAndPutDefaults();
+		workPath = Paths.get(property.getProperty("workPath"));
+
+		if (!Files.exists(workPath))
+			throw new RuntimeException("The workPath: " + workPath + " does not exist");
+		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+				.collect(Collectors.toSet());
+	}
+	
+	public static void writeDefaultPropertiesFile() throws IOException {
+		Path outPath = Paths
+				.get(SshDSMInformationFileMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
+			pw.println("manhattan Result");
+			pw.println("##These are the properties for Result");
+			pw.println("##Path of a work folder (.)");
+			pw.println("#workPath");
+			pw.println("##SacComponents to be used (Z R T)");
+			pw.println("#components");
+			pw.println("##Name of the mesh (model) used for AxiSEM simulation");
+			pw.println("#meshName");
+			pw.println("##Higher frequency for the bandpass filter");
+			pw.println("#highFreq");
+			pw.println("##Lower frequency for the bandpass filter");
+			pw.println("#lowFreq");
+		}
+		System.err.println(outPath + " is created.");
+	}
+	
+	@Override
+	public void run() {
+		
+	}
+	
+	@Override
+	public Properties getProperties() {
+		return (Properties) property.clone();
+	}
+	
+	@Override
+	public Path getWorkPath() {
+		return workPath;
 	}
 	
 	public Result(String meshName, double minPeriod, double maxPeriod) {
@@ -190,17 +269,23 @@ public class Result {
 						data[i] = amps.get(i);
 //					data = resample(data, timeStep, DELTA);
 					
+					
+					// convert synthetics from displacement to velocity
+					data = displacementTOvelocityTimeDomain(data, DELTA);
+					
 					// source time function
-					double halfDuration = eventFolder.getGlobalCMTID().getEvent().getHalfDuration();
-					int npts = (int) (tlen / DELTA);
-					data = Arrays.copyOf(data, npts);
-//					TODO think about a good value for np
-					int np = 512;
-					SourceTimeFunction stf = SourceTimeFunction
-							.triangleSourceTimeFunction(np, tlen, 1. / DELTA, halfDuration);
+					double halfDuration = eventFolder.getGlobalCMTID()
+							.getEvent().getHalfDuration();
+//					int npts = (int) (tlen / DELTA);
+//					data = Arrays.copyOf(data, npts);
+////					TODO think about a good value for np
+//					int np = 128;
+//					SourceTimeFunction stf = SourceTimeFunction
+//							.triangleSourceTimeFunction(np, tlen
+//									, 1. / DELTA, halfDuration);
 					
 					// convolve data
-					stf.convolve(data);
+//					data = convolveTriangleTimeDomain(data, DELTA, halfDuration);
 					
 					// filter data
 					data = filter.applyFilter(data);
@@ -234,7 +319,8 @@ public class Result {
 		return component;
 	}
 	
-	private final static FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
+	private final static FastFourierTransformer fft = 
+			new FastFourierTransformer(DftNormalization.STANDARD);
 	
 	private static double[] applyTaper(double y[]) {
 		double[] taped = y.clone();
@@ -274,12 +360,12 @@ public class Result {
 		double domega = 2 * Math.PI / (npow2 * oldDelta);
 		for (int i = 0; i < newData.length; i++) {
 			Complex z = Complex.ZERO;
-			for (int j = 0; j < 512; j++) {
+			for (int j = 0; j < data.length; j++) {
 				double phase = domega * j * i * newDelta;
 				Complex tmp = new Complex(Math.cos(phase), Math.sin(phase));
 				z = z.add(transformed[j].multiply(tmp));
 			}
-			newData[i] = z.getReal();
+			newData[i] = z.getReal() / newData.length;
 		}
 		
 		return newData;
@@ -287,14 +373,14 @@ public class Result {
 	
 //	TODO 
 	/**
-	 * DO NOT USE: buggy
+	 * DO NOT USE: not completed, does not work yet.
 	 * @param data
 	 * @param oldDelta
 	 * @param newDelta
 	 * @return
 	 */
 	@Experimental 
-	public static double[] resample(double[] data
+	public static double[] resampleTimeDomain(double[] data
 			, double oldDelta, double newDelta) {
 		if (newDelta == oldDelta)
 			return data;
@@ -318,5 +404,79 @@ public class Result {
 					/ ((iOld - previousIOld) * oldDelta);
 		}
 		return newData;
+	}
+	
+	/**
+	 * Experimental
+	 * DO NOT USE: buggy
+	 * @param data
+	 * @param delta
+	 * @return
+	 */
+	@Experimental
+	public static double[] displacementTOvelocityFFT(double[] data, double delta) {
+		int npow2 = Integer.highestOneBit(data.length) 
+				< data.length 
+				? Integer.highestOneBit(data.length) * 2 
+				: Integer.highestOneBit(data.length);
+		double[] dataPadded = Arrays.copyOf(data, npow2);
+		dataPadded = applyTaper(dataPadded);
+		Complex[] transformed = fft.transform(dataPadded
+				, TransformType.FORWARD);
+		double domega = 2 * Math.PI / (transformed.length * delta);
+		for (int i = 0; i < transformed.length; i++) {
+			double omega = i * domega;
+			transformed[i] = transformed[i]
+					.multiply(new Complex(0., -omega));
+			if (i >= data.length)
+				transformed[i] = Complex.ZERO;
+		}
+		double[] velData = new double[data.length];
+		Complex[] complexVelData = fft.transform(transformed, TransformType.INVERSE);
+		for (int i = 0; i < data.length; i++)
+			velData[i] = complexVelData[i].getReal();
+		
+		return velData;
+	}
+	
+	/**
+	 * Using five-point stencil https://en.wikipedia.org/wiki/Five-point_stencil
+	 * @param data
+	 * @return
+	 */
+	public static double[] displacementTOvelocityTimeDomain(double[] data, double delta) {
+		int n = data.length;
+		double[] velData = new double[n];
+//		velData[0] = (-data[2] + 8 * data[1]) / (12. * delta);
+//		velData[1] = (-data[3] + 8 * data[2] - 8 * data[0]) / (12. * delta);
+//		velData[n-1] = (-8 * data[n-2] + data[n-3]) / 12.;
+//		velData[n-2] = (8 * data[n-1] - 8 * data[n-3] + data[n-4]) / (12. * delta);
+		velData[0] = (data[1] - data[0]) / delta;
+		velData[1] = (data[2] - data[0]) / (2 * delta);
+		velData[n-1] = (data[n-1] - data[n-2]) / delta;
+		velData[n-2] = (data[n-1] - data[n-3]) / (2 * delta);
+		for (int i = 2; i < n - 2; i++)
+			velData[i] = (-data[i+2] + 8 * data[i+1] 
+					- 8 * data[i-1] + data[i-2]) / (12. * delta);
+		return velData;
+	}
+	
+	public static double[] convolveTriangleTimeDomain(double[] data, double delta, double halfWidth) {
+		double[] convolvedData = new double[data.length];
+		int periodPoint = (int) (2 * halfWidth / delta);
+		
+		for (int i = 0; i < data.length; i++) {
+			if (i < periodPoint)
+				continue;
+			double value = 0;
+			for (int j = 0; j <= periodPoint; j++) {
+				double triangleValue = j < periodPoint / 2. ?
+						1. / halfWidth * j * 2. / periodPoint * delta
+					:	-1. / halfWidth * (j - periodPoint) * 2. / periodPoint * delta;
+				value += data[i - j] * triangleValue;
+			}
+			convolvedData[i] = value;
+		}
+		return convolvedData;
 	}
 }

@@ -262,6 +262,12 @@ public class FujiStaticCorrection implements Operation {
 		set();
 		outPath = workPath.resolve("staticCorrection" + date + ".dat");
 	}
+	
+	public FujiStaticCorrection(double sacSamplingHz, double threshold, double searchRange) {
+		this.sacSamplingHz = sacSamplingHz;
+		this.threshold = threshold;
+		this.searchRange = searchRange;
+	}
 
 	private Path outPath;
 	private Set<TimewindowInformation> timewindowInformation;
@@ -354,6 +360,38 @@ public class FujiStaticCorrection implements Operation {
 		double timeshift = pointshift * delta;
 		return Precision.round(timeshift, 2);
 
+	}
+	
+	public double computeTimeshiftForBestCorrelation(double[] obs, double[] syn) {
+		double delta = 1. / sacSamplingHz;
+
+		// which point gives the maximum value
+		int maxPoint = getMaxPoint(syn);
+
+		// startpointから、一番早くしきい値（割合が最大振幅のthreshold）を超える点までのポイント数
+		int endPoint = getEndPoint(syn, maxPoint);
+
+		double[] syn_cut = Arrays.copyOfRange(syn, 0, endPoint);
+
+		// create observed timewindow
+		int searchRangePoint = (int) (searchRange / delta);
+		double[] obs_cut = new double[2 * searchRangePoint + endPoint]; 
+		for (int i = searchRangePoint; i <= endPoint + searchRangePoint; i++)
+			obs_cut[i] = obs[i - searchRangePoint];
+		
+		for (int i = 0; i < syn.length; i++)
+			System.out.println(i + " " + syn[i]);
+		System.out.println("");
+		for (int i = 0; i < obs.length; i++)
+			System.out.println(i + " " + obs[i]);
+
+		int pointshift = getBestPoint(obs_cut, syn_cut, delta);
+		double timeshift = pointshift * delta;
+		
+		System.out.println(timeshift);
+		System.exit(0);
+		
+		return Precision.round(timeshift, 2);
 	}
 
 	//
