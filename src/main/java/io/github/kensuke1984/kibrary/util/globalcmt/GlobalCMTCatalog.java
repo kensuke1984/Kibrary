@@ -35,6 +35,8 @@ final class GlobalCMTCatalog {
 	 * 読み込んだNDK
 	 */
 	private final static Set<NDK> NDKs;
+	
+	private final static String catalogID; 
 
 	private static Path selectCatalogFile() {
 		Path catalogFile;
@@ -60,10 +62,10 @@ final class GlobalCMTCatalog {
 		return catalogFile;
 	}
 
-	private static Set<NDK> readJar() {
+	private static Set<NDK> readJar(String catalog) {
 		try {
 			List<String> lines = IOUtils.readLines(
-					GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("synthetics.catalog"), //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A
+					GlobalCMTCatalog.class.getClassLoader().getResourceAsStream(catalog), //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
 					Charset.defaultCharset());
 			if (lines.size() % 5 != 0)
 				throw new Exception("Global CMT catalog contained in the jar file is broken");
@@ -83,10 +85,15 @@ final class GlobalCMTCatalog {
 	}
 
 	static {
-		Set<NDK> readSet = readJar();
-		if (null == readSet)
-			readSet = read(selectCatalogFile());
+		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 NDK_CMT_2step.catalog globalcmt
+		Set<NDK> readSet = readJar(tmpCatalog);
+		if (null == readSet) {
+			Path catalogPath = selectCatalogFile();
+			readSet = read(catalogPath);
+			tmpCatalog = catalogPath.getFileName().toString();
+		}
 		NDKs = Collections.unmodifiableSet(readSet);
+		catalogID = tmpCatalog;
 	}
 
 	/**
@@ -127,5 +134,8 @@ final class GlobalCMTCatalog {
 	static Set<NDK> allNDK() {
 		return NDKs;
 	}
-
+	
+	static String getCatalogID() {
+		return catalogID;
+	}
 }

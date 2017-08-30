@@ -73,6 +73,10 @@ public class SourceTimeFunction {
 		}
 		return sourceTimeFunction;
 	}
+	
+//	public static final SourceTimeFunction gaussianSourceTimeFunction() {
+//		
+//	}
 
 	/**
 	 * Boxcar source time function

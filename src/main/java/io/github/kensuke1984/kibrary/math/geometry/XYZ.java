@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.math.geometry;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.util.Location;
 
 /**
@@ -106,5 +109,8 @@ public class XYZ extends XY {
 	public RThetaPhi toSphericalCoordinate() {
 		return toSphericalCoordinate(x, y, z);
 	}
-
+	
+	public RealVector toRealVector() {
+		return new ArrayRealVector(new double[] {x, y, z});
+	}
 }

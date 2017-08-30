@@ -379,6 +379,9 @@ public class DataSelection implements Operation {
 						if (!staticCorrectionSet.isEmpty()) {
 							StaticCorrection foundShift = getStaticCorrection(window);
 							shift = foundShift.getTimeshift();
+							//remove static shift of 10 s (maximum range of the static correction)
+							if (shift == 10.)
+								continue;
 						}
 						
 						// remove surface wave from window
@@ -483,11 +486,8 @@ public class DataSelection implements Operation {
 		double obsMin = obsU.getMinValue();
 		double obs2 = obsU.dotProduct(obsU);
 		double syn2 = synU.dotProduct(synU);
-		// change to the definition of cross-correlation. Now I use normalized CC. Amplitude comparison is already done with the amplitude ratio
-		RealVector unitObs = obsU.mapDivide(obsU.getLInfNorm());
-		RealVector unitSyn = synU.mapDivide(synU.getLInfNorm());
-		double cor = unitObs.dotProduct(unitSyn);
-		cor /= Math.sqrt(unitObs.dotProduct(unitObs) * unitSyn.dotProduct(unitSyn));
+		double cor = obsU.dotProduct(synU);
+		cor /= Math.sqrt(obs2 * syn2);
 		double var = obs2 + syn2 - 2 * obsU.dotProduct(synU);
 		double maxRatio = Precision.round(synMax / obsMax, 2);
 		double minRatio = Precision.round(synMin / obsMin, 2);
@@ -601,6 +601,7 @@ public class DataSelection implements Operation {
 		Path infoOutpath = workPath.resolve("dataSelection" + Utilities.getTemporaryString() + ".inf");
 		try {
 			DataSelectionInformationFile.write(infoOutpath, dataSelectionInfo);
+			DataSelectionInformationFile.outputHistograms(workPath, dataSelectionInfo);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

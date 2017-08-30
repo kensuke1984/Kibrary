@@ -6,6 +6,7 @@ import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -50,19 +51,23 @@ public class Result implements Operation {
 	private Path workPath;
 	private Set<SACComponent> components;
 	
-	public static void main(String[] args) {
-		String meshName = args[0];
-		Result result = new Result(meshName, 50., 200.);
-		List<BasicID> basicIDs = result.getBasicIDs();
-		for (BasicID id : basicIDs) {
-			System.out.println(id);
-			if (id.getSacComponent().equals(SACComponent.T)) {
-				double[] data = id.getData();
-				for (int i = 0; i < id.getNpts(); i++)
-					System.out.format("%.4f %.4e%n", i / id.getSamplingHz()
-							, data[i]);
-			}
-		}
+	private final double DELTA = 0.05;
+	
+	public static void main(String[] args) throws IOException {
+		Properties property = new Properties();
+		if (args.length == 0)
+			property.load(Files.newBufferedReader(Operation.findPath()));
+		else if (args.length == 1)
+			property.load(Files.newBufferedReader(Paths.get(args[0])));
+		else
+			throw new IllegalArgumentException("too many arguments. It should be 0 or 1 (property file name)");
+
+		Result result = new Result(property);
+		System.err.println(Result.class.getName() + " is going.");
+		long startT = System.nanoTime();
+		result.run();
+		System.err.println(
+				Result.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
 	
 //		 test of resampling method
 //		/*
@@ -95,24 +100,25 @@ public class Result implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
-		if (!property.containsKey("tlen"))
-			property.setProperty("tlen", "3276.8");
-		if (!property.containsKey("np"))
-			property.setProperty("np", "512");
-		if (!property.containsKey("header"))
-			property.setProperty("header", "PREM");
-		if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
-			throw new RuntimeException("perturbationR must be defined.");
+		if (!property.containsKey("meshName"))
+			throw new RuntimeException("meshName must be defined.");
+		if (!property.containsKey("lowFreq"))
+			property.setProperty("lowFreq", "0.005");
+		if (!property.containsKey("highFreq"))
+			property.setProperty("highFreq", "0.02");
 	}
 	
 	private void set() {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
-
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
+		meshName = property.getProperty("meshName").trim();
+		lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
+		highFreq = Double.parseDouble(property.getProperty("highFreq"));
+		basicIDs = new ArrayList<>();
 	}
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
@@ -125,19 +131,27 @@ public class Result implements Operation {
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
-			pw.println("##Name of the mesh (model) used for AxiSEM simulation");
+			pw.println("##Name of the mesh (model) used for AxiSEM simulation (must be set)");
 			pw.println("#meshName");
-			pw.println("##Higher frequency for the bandpass filter");
-			pw.println("#highFreq");
-			pw.println("##Lower frequency for the bandpass filter");
+			pw.println("##Lower frequency for the bandpass filter (0.005)");
 			pw.println("#lowFreq");
+			pw.println("##Higher frequency for the bandpass filter (0.02)");
+			pw.println("#highFreq");
 		}
 		System.err.println(outPath + " is created.");
 	}
 	
 	@Override
 	public void run() {
-		
+		for (BasicID id : basicIDs) {
+			System.out.println(id);
+			if (id.getSacComponent().equals(SACComponent.T)) {
+				double[] data = id.getData();
+				for (int i = 0; i < id.getNpts(); i++)
+					System.out.format("%.4f %.4e%n", i / id.getSamplingHz()
+							, data[i]);
+			}
+		}
 	}
 	
 	@Override
@@ -150,21 +164,19 @@ public class Result implements Operation {
 		return workPath;
 	}
 	
-	public Result(String meshName, double minPeriod, double maxPeriod) {
-		this.meshName = meshName;
-		this.basicIDs = new ArrayList<>();
-		final double DELTA = 0.05;
+	public Result(Properties property) {
+		this.property = (Properties) property.clone();
+		set();
 		
-		Path workingDir = Paths.get(".");
 		try {
-			Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workingDir);
+			Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workPath);
 			for (EventFolder eventFolder : eventFolderSet) {
 				Path resultFolder = eventFolder.toPath()
 						.resolve("SOLVER/" + meshName + "/Data_Postprocessing/SEISMOGRAMS");
 				Path solverFolder = eventFolder.toPath().resolve("SOLVER");
 				
 				// get stations
-				Path stationFile = solverFolder.resolve("STATIONS");
+				Path stationFile = solverFolder.resolve("station.inf");
 				Set<Station> stationSet = new HashSet<>();
 				BufferedReader readerStation = Files.newBufferedReader(stationFile);
 				String line = null;
@@ -178,12 +190,6 @@ public class Result implements Operation {
 							, new HorizontalPosition(latitude, longitude), network);
 					stationSet.add(station);
 				}
-				
-				// filter
-				double omegaH = 1. / minPeriod * 2 * Math.PI * DELTA;
-				double omegaL = 1. / maxPeriod * 2 * Math.PI * DELTA;
-				ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, 4);
-				filter.setBackward(false);
 				
 				// parse mesh header file to get the time step
 				Path param_advancedFile = solverFolder.resolve(meshName + "/inparam_advanced");
@@ -211,10 +217,15 @@ public class Result implements Operation {
 					readerMesh.close();
 				}
 				System.out.format("Time step = %.4f s%n", timeStep);
-				if (timeStep != DELTA)
-					throw new IllegalArgumentException(
-							String.format("Illegal time step (should be 0.05): "
-									, timeStep));
+				if (timeStep / DELTA != (int) (timeStep / DELTA) || DELTA / timeStep != (int) (DELTA / timeStep))
+							String.format("Illegal time step (should be a multiple of 0.05): "
+									, timeStep);
+				
+				// filter
+				double omegaH = highFreq * 2 * Math.PI * timeStep;
+				double omegaL = lowFreq * 2 * Math.PI * timeStep;
+				ButterworthFilter filter = new BandPassFilter(omegaH, omegaL, 4);
+				filter.setBackward(false);
 					
 				// parse inparam_basic to get the simulation length (s)
 				Path inparamFile = solverFolder.resolve("inparam_basic");
@@ -269,10 +280,6 @@ public class Result implements Operation {
 						data[i] = amps.get(i);
 //					data = resample(data, timeStep, DELTA);
 					
-					
-					// convert synthetics from displacement to velocity
-					data = displacementTOvelocityTimeDomain(data, DELTA);
-					
 					// source time function
 					double halfDuration = eventFolder.getGlobalCMTID()
 							.getEvent().getHalfDuration();
@@ -285,14 +292,17 @@ public class Result implements Operation {
 //									, 1. / DELTA, halfDuration);
 					
 					// convolve data
-//					data = convolveTriangleTimeDomain(data, DELTA, halfDuration);
+					data = convolveTriangleTimeDomainNonCausal(data, timeStep, halfDuration);
 					
 					// filter data
 					data = filter.applyFilter(data);
 					
-					BasicID basicID = new BasicID(WaveformType.SYN, 1. / DELTA, 0.0
+					// convert synthetics from displacement to velocity
+					data = displacementTOvelocityTimeDomain(data, timeStep);
+					
+					BasicID basicID = new BasicID(WaveformType.SYN, 1. / timeStep, 0.0
 							, data.length, station, id, component
-							, minPeriod, maxPeriod, phases, 0, true, data);
+							, 1. / highFreq, 1. / lowFreq, phases, 0, true, data);
 					basicIDs.add(basicID);
 				}
 			}
@@ -463,20 +473,51 @@ public class Result implements Operation {
 	
 	public static double[] convolveTriangleTimeDomain(double[] data, double delta, double halfWidth) {
 		double[] convolvedData = new double[data.length];
-		int periodPoint = (int) (2 * halfWidth / delta);
+		int periodPoint = (int) (2 * halfWidth / delta) + 1;
 		
 		for (int i = 0; i < data.length; i++) {
 			if (i < periodPoint)
 				continue;
 			double value = 0;
-			for (int j = 0; j <= periodPoint; j++) {
-				double triangleValue = j < periodPoint / 2. ?
-						1. / halfWidth * j * 2. / periodPoint * delta
-					:	-1. / halfWidth * (j - periodPoint) * 2. / periodPoint * delta;
-				value += data[i - j] * triangleValue;
+			for (int j = 0; j < periodPoint; j++) {
+				value += data[i - j] * triangle(j, periodPoint, delta);
 			}
 			convolvedData[i] = value;
 		}
 		return convolvedData;
 	}
+	
+	private static double triangle(int i, int n, double delta) {
+		int nhalf = n / 2;
+		if (i < nhalf)
+			return 1. / nhalf * (double) i / nhalf / delta;
+		else if (i > nhalf)
+			return -1. / nhalf * (double) (i - n) / nhalf / delta;
+		else
+			return 1. / nhalf / delta;
+	}
+	
+	private static double triangleNonCausal(int i, int n, double delta) {
+		if (i < 0)
+			return 1. / n * (double) (i + n) / n;
+		else if (i > 0)
+			return 1. / n * (double) (n - i) / n;
+		else
+			return 1. / n;
+	}
+	
+	public static double[] convolveTriangleTimeDomainNonCausal(double[] data, double delta, double halfWidth) {
+		double[] convolvedData = new double[data.length];
+		int periodPoint = (int) (halfWidth / delta);
+		
+		for (int i = periodPoint; i < data.length - periodPoint; i++) {
+			double value = 0;
+			for (int j = -periodPoint; j <= periodPoint; j++) {
+				value += data[i - j] * triangleNonCausal(j, periodPoint, delta);
+			}
+			convolvedData[i] = value;
+		}
+		return convolvedData;
+	}
+	
 }

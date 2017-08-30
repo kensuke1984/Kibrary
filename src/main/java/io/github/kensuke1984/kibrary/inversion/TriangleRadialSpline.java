@@ -44,10 +44,10 @@ public class TriangleRadialSpline {
 			List<UnknownParameter> typeUnknowns = unknowns.stream().filter(p -> p.getPartialType().equals(type)).collect(Collectors.toList());
 			
 			// check constant dz
-			double testDz = Math.abs((Double) typeUnknowns.get(typeUnknowns.size() - 1).getLocation()
-					- (Double) typeUnknowns.get(typeUnknowns.size() - 2).getLocation());
+			double testDz = Math.abs(typeUnknowns.get(typeUnknowns.size() - 1).getLocation().getR()
+					- typeUnknowns.get(typeUnknowns.size() - 2).getLocation().getR());
 			for (int i = 0; i < typeUnknowns.size() - 1; i++) {
-				dz = (Double) typeUnknowns.get(i + 1).getLocation() - (Double) typeUnknowns.get(i).getLocation();
+				dz = typeUnknowns.get(i + 1).getLocation().getR() - typeUnknowns.get(i).getLocation().getR();
 				if (dz != testDz)
 					throw new RuntimeException("Variable radial spacing not allowed");
 			}
@@ -55,7 +55,7 @@ public class TriangleRadialSpline {
 			iUM = 0;
 			iLM = 0;
 			for (UnknownParameter p : typeUnknowns) {
-				double r = (Double) p.getLocation();
+				double r = p.getLocation().getR();
 				if (r > 5721.)
 					iUM++;
 				else if (r < 5721.)
@@ -131,7 +131,7 @@ public class TriangleRadialSpline {
 	
 	public Map<UnknownParameter, Double> computeCoefficients(UnknownParameter newParameter) {
 		Map<UnknownParameter, Double> coefficientMap = new HashMap<>();
-		double r = (Double) newParameter.getLocation();
+		double r = newParameter.getLocation().getR();
 		List<UnknownParameter> neighbors = getNeighbors(newParameter);
 		boolean isBoundaryParameter = isBoundaryParameter(newParameter);
 		
@@ -140,19 +140,19 @@ public class TriangleRadialSpline {
 //		System.out.println((Double) newParameter.getLocation());
 		neighbors.stream().forEach(pp -> {
 			if (!isBoundaryParameter) {
-				double dr = Math.abs(r - (Double) pp.getLocation());
+				double dr = Math.abs(r - pp.getLocation().getR());
 				double res = (1 - dr / (n * dz));
 //				System.out.println(pp.getLocation() + " " + res);
 				coefficientMap.put(pp, res);
 			}
 			else if (isDownBoundary(newParameter)) {
-				double dr = - r + (Double) pp.getLocation();
+				double dr = - r + pp.getLocation().getR();
 				double res = 0.5 * (1 - 2 * dr / (n * dz));
 //				System.out.println(pp.getLocation() + " " + res);
 				coefficientMap.put(pp, res);
 			}
 			else { // upBoundary
-				double dr = r - (Double) pp.getLocation();
+				double dr = r - pp.getLocation().getR();
 				double res = 0.5 * (1 - 2 * dr / (n * dz));
 //				System.out.println(pp.getLocation() + " " + res);
 				coefficientMap.put(pp, res);
@@ -164,7 +164,7 @@ public class TriangleRadialSpline {
 	
 	private List<UnknownParameter> getNeighbors(UnknownParameter target) {
 		List<UnknownParameter> neighbors = new ArrayList<>();
-		double targetRadius = (Double) target.getLocation();
+		double targetRadius = target.getLocation().getR();
 		PartialType type = target.getPartialType();
 		boolean isUM = targetRadius > UMLMB ? true : false;
 		
@@ -177,7 +177,7 @@ public class TriangleRadialSpline {
 		int imax = isBoundaryParameter(target) ? order / 2 : order;
 //		System.out.println((double) target.getLocation() + " " + isBoundaryParameter(target));
 		for (UnknownParameter p : parameterForStructure.stream().filter(p -> p.getPartialType().equals(type)).collect(Collectors.toList())) {
-			double r = (Double) p.getLocation();
+			double r = p.getLocation().getR();
 			if (isUM && r < UMLMB)
 				continue;
 			for (int i = 0; i < imax; i++) {
@@ -210,7 +210,7 @@ public class TriangleRadialSpline {
 	}
 	
 	public boolean isUpBoundary(UnknownParameter newParameter) {
-		double r = (Double) newParameter.getLocation();
+		double r = newParameter.getLocation().getR();
 		double halfLength = r > UMLMB ? orders.get(newParameter.getPartialType())[0] / 2 * dz
 				: orders.get(newParameter.getPartialType())[1] / 2 * dz;
 		if (Earth.EARTH_RADIUS - r < halfLength - dz / 4.)
@@ -221,7 +221,7 @@ public class TriangleRadialSpline {
 	}
 	
 	public boolean isDownBoundary(UnknownParameter newParameter) {
-		double r = (Double) newParameter.getLocation();
+		double r = newParameter.getLocation().getR();
 		double halfLength = r > UMLMB ? orders.get(newParameter.getPartialType())[0] / 2 * dz
 				: orders.get(newParameter.getPartialType())[1] / 2 * dz;
 		if (r - UMLMB > 0 && r - UMLMB < halfLength - dz / 4.)
@@ -297,7 +297,7 @@ public class TriangleRadialSpline {
 		Map<PartialType, Integer[]> nNewParameters = new HashMap<>();
 		for (UnknownParameter unknownParameter : newUnknowns.stream().filter(p -> !p.getPartialType().isTimePartial()).collect(Collectors.toList())) {
 			PartialType type = unknownParameter.getPartialType();
-			boolean isUM = (Double) unknownParameter.getLocation() > 5721. ? true : false;
+			boolean isUM = unknownParameter.getLocation().getR() > 5721. ? true : false;
 			
 			Integer[] ints = nNewParameters.get(type);
 			if (ints == null)

@@ -929,6 +929,8 @@ private class WorkerTimePartial implements Runnable {
 		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
 		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, 4);
+//		filter.setBackward(false);
+		filter.setBackward(true);
 		writeLog(filter.toString());
 		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
 	}

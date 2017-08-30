@@ -23,9 +23,9 @@ import java.util.List;
 
 public class Histogram {
 	
-	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, int interval, boolean centered, double minED, double maxED) {
+	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered, double minED, double maxED) {
 		this.interval = interval;
-		this.numberOfRecords = new int[360 / interval];
+		this.numberOfRecords = new int[(int) (360 / interval)];
 		
 		double tmpLat = 0;
 		double tmpLon = 0;
@@ -72,7 +72,7 @@ public class Histogram {
 		this.medianValue = basicIDs.length/2.;
 	}
 	
-	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, int interval, boolean centered) {
+	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered) {
 		this(basicIDs, stationSet, interval, centered, 0, 360);
 	}
 	
@@ -102,7 +102,7 @@ public class Histogram {
 				.collect(Collectors.toList());
 		BasicID[] usedIds = idList.toArray(new BasicID[idList.size()]);
 		
-		Histogram histogram = new Histogram(usedIds, stationSet, 5, false);
+		Histogram histogram = new Histogram(usedIds, stationSet, 2.5, false);
 		
 		histogram.printHistogram(outPath);
 	}
@@ -117,7 +117,7 @@ public class Histogram {
 		for (int i = 0; i < numberOfRecords.length; i++) {
 			try {
 				Files.write(outPath
-						, String.format("%d %d\n", i*interval, numberOfRecords[i]).getBytes()
+						, String.format("%.2f %d\n", i*interval, numberOfRecords[i]).getBytes()
 						, StandardOpenOption.APPEND);
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -181,7 +181,7 @@ public class Histogram {
 		return max;
 	}
 	
-	private int interval;
+	private double interval;
 	private int[] numberOfRecords;
 	private int maxValue;
 	private Location averageLoc;

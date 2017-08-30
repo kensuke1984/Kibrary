@@ -4,10 +4,11 @@ import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
 
 import java.util.Arrays;
+
 import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 import io.github.kensuke1984.kibrary.selection.FilterDivider;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
-
+import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker;
@@ -44,12 +45,13 @@ public enum Manhattan {
 	PartialDatasetMaker(11, PartialDatasetMaker.class), //
 	PhaseEnvelope(12, PhaseEnvelope.class), //
 	RaypathDistribution(13, RaypathDistribution.class), //
-	SecondHandler(14, SecondHandler.class), //
-	SpcSAC(15, SpcSAC.class), //
-	SshDSMInformationFileMaker(16, SshDSMInformationFileMaker.class), //
-	SyntheticDSMInformationFileMaker(17, SyntheticDSMInformationFileMaker.class), //
-	TakeuchiStaticCorrection(18, TakeuchiStaticCorrection.class), //
-	TimewindowMaker(19, TimewindowMaker.class),//
+	Result(14, Result.class), //
+	SecondHandler(15, SecondHandler.class), //
+	SpcSAC(16, SpcSAC.class), //
+	SshDSMInformationFileMaker(17, SshDSMInformationFileMaker.class), //
+	SyntheticDSMInformationFileMaker(18, SyntheticDSMInformationFileMaker.class), //
+	TakeuchiStaticCorrection(19, TakeuchiStaticCorrection.class), //
+	TimewindowMaker(20, TimewindowMaker.class),//
 	;
 
 	public static void printList() {

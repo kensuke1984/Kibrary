@@ -60,7 +60,9 @@ public class BasicID {
 		String basicString = STATION.getStationName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
 				+ COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
 				+ " " + MAX_PERIOD + " ";
-		if (PHASES.length == 1)
+		if (PHASES == null)
+			basicString += "null" + " ";
+		else if (PHASES.length == 1)
 			basicString += PHASES[PHASES.length - 1] + " ";
 		else if (PHASES.length > 1) {
 			for (int i = 0; i < PHASES.length - 1; i++)

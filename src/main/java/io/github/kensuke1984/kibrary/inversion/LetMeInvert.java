@@ -114,6 +114,10 @@ public class LetMeInvert implements Operation {
 	private double lambdaQ, lambdaMU;
 	
 	private double correlationScaling;
+	
+	private double minDistance;
+	
+	private double maxDistance;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -144,6 +148,10 @@ public class LetMeInvert implements Operation {
 			property.setProperty("lambdaMU", "0.03");
 		if (!property.containsKey("correlationScaling"))
 			property.setProperty("correlationScaling", "1.");
+		if (!property.containsKey("minDistance"))
+			property.setProperty("minDistance", "0.");
+		if (!property.containsKey("maxDistance"))
+			property.setProperty("maxDistance", "360.");
 	}
 
 	private void set() {
@@ -216,6 +224,8 @@ public class LetMeInvert implements Operation {
 		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
 		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
+		minDistance = Double.parseDouble(property.getProperty("minDistance"));
+		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
 	}
 
 	/**
@@ -272,6 +282,10 @@ public class LetMeInvert implements Operation {
 			pw.println("#lambdaMU");
 			pw.println("##double correlationScaling (1.)");
 			pw.println("#correlationScaling");
+			pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
+			pw.println("#minDistance ");
+			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
+			pw.println("#maxDistance ");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -305,31 +319,33 @@ public class LetMeInvert implements Operation {
 				System.err.println("setting up unknown parameter set");
 				List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		
-		Predicate<BasicID> chooser = new Predicate<BasicID>() {
-			public boolean test(BasicID id) {
-//				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-//				if (event.getCmtLocation().getR() > 5971.)
-//					return false;
-//				if (event.getCmt().getMw() < 6.3)
-//					return false;
-				for (String phasename : phases) {
-					if (new Phases(id.getPhases()).equals(new Phases(phasename)))
-						return true;
+		Predicate<BasicID> chooser = null;
+		
+		if (phases != null) {
+			chooser = new Predicate<BasicID>() {
+				public boolean test(BasicID id) {
+	//				GlobalCMTData event = id.getGlobalCMTID().getEvent();
+	//				if (event.getCmtLocation().getR() > 5971.)
+	//					return false;
+	//				if (event.getCmt().getMw() < 6.3)
+	//					return false;
+					for (String phasename : phases) {
+						if (new Phases(id.getPhases()).equals(new Phases(phasename)))
+							return true;
+					}
+					return false;
 				}
-				return false;
-			}
-		};
-		if (phases == null)
-			chooser = id -> true;
-			
-		chooser = new Predicate<BasicID>() {
-			public boolean test(BasicID id) {
-//				if (id.getGlobalCMTID().equals(new GlobalCMTID("200707211534A")))
-//					return false;
-//				else
+			};
+		}
+		else
+			chooser = id -> {
+				double distance = id.getGlobalCMTID().getEvent()
+						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+						* 180. / Math.PI;
+				if (distance >= minDistance && distance <= maxDistance)
 					return true;
-			}
-		};
+				return false;
+			};
 		
 		// set Dvector
 		System.err.println("Creating D vector");

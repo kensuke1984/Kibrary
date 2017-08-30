@@ -18,11 +18,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.external.TauPPierceReader;
+import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -145,6 +149,7 @@ public class RaypathDistribution implements Operation {
 	private Path stationPath;
 	private Path eventPath;
 	private Path raypathPath;
+	private Path turningPointPath;
 	private Path psPath;
 	private Path gmtPath;
 
@@ -153,6 +158,7 @@ public class RaypathDistribution implements Operation {
 		stationPath = workPath.resolve("rdStation" + date + ".inf");
 		eventPath = workPath.resolve("rdEvent" + date + ".inf");
 		raypathPath = workPath.resolve("rdRaypath" + date + ".inf");
+		turningPointPath = workPath.resolve("rdTurningPoint" + date + ".inf");
 		psPath = workPath.resolve("rd" + date + ".eps");
 		gmtPath = workPath.resolve("rd" + date + ".sh");
 	}
@@ -182,8 +188,10 @@ public class RaypathDistribution implements Operation {
 		ids = Utilities.globalCMTIDSet(workPath);
 		outputEvent();
 		outputStation();
-		if (drawsPath)
+		if (drawsPath) {
 			outputRaypath();
+			outputTurningPoint();
+		}
 		outputGMT();
 	}
 
@@ -222,7 +230,39 @@ public class RaypathDistribution implements Operation {
 
 		Files.write(raypathPath, lines);
 	}
-
+	
+	private void outputTurningPoint() throws IOException {
+		List<String> lines = new ArrayList<>();
+		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+			try {
+				return eventDir.sacFileSet().stream();
+			} catch (Exception e) {
+				return Stream.empty();
+			}
+		}).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
+				.map(name -> {
+					try {
+						return name.readHeader();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return null;
+					}
+				}).filter(Objects::nonNull)
+				.forEach(headerData -> {
+					Location eventLocation = headerData.getEventLocation();
+					HorizontalPosition stationPosition = headerData.getStation().getPosition();
+					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "ak135", Phase.S)
+						.get(0);
+					Location turningPoint = info.getTurningPoint();
+					lines.add(String.format("%.2f %.2f %.2f"
+							, turningPoint.getLongitude()
+							, turningPoint.getLatitude()
+							, turningPoint.getR()));
+				});
+		
+		Files.write(turningPointPath, lines);
+	}
+	
 	private GMTMap createBaseMap() {
 
 		double minimumEventLatitude = ids.stream().mapToDouble(id -> id.getEvent().getCmtLocation().getLatitude()).min()

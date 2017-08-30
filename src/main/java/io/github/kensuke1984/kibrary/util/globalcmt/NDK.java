@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.util.globalcmt;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.amazonaws.services.s3.model.GetRequestPaymentConfigurationRequest;
+
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Location;
 
@@ -480,6 +482,21 @@ final class NDK implements GlobalCMTData {
 	public LocalDateTime getPDETime() {
 		return referenceDateTime;
 	}
+	
+	@Override
+	public double getTimeDifference() {
+		return timeDifference;
+	}
+	
+	@Override
+	public String getHypocenterReferenceCatalog() {
+		return hypocenterReferenceCatalog;
+	}
+	
+	@Override
+	public String getGeographicalLocationName() {
+		return geographicalLocation;
+	}
 
 	@Override
 	public String toString() {
@@ -490,5 +507,4 @@ final class NDK implements GlobalCMTData {
 	public void setCmt(MomentTensor mt) {
 		momentTensor = mt;
 	}
-
 }

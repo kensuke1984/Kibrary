@@ -2,57 +2,35 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ExcludeTimewindow {
 
 	public static void main(String[] args) {
 		Path timewindowFile = Paths.get(args[0]);
 		Path timewindowASCIIFile = Paths.get(args[1]);
-		
 		Path newTimewindowFile = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
 		
 		try {
 			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowFile);
+//			Set<TimewindowInformation> newTimewindows = excludeStation(timewindows, timewindowASCIIFile);
 			
-			BufferedReader reader = Files.newBufferedReader(timewindowASCIIFile);
-			String line = null;
-			Set<ReducedInfo> excludeTimewindows = new HashSet<>();
-			while ((line = reader.readLine()) != null) {
-				String[] s = line.trim().split(" ");
-				String stationName = s[0].split("_")[0];
-				GlobalCMTID id = new GlobalCMTID(s[1]);
-				SACComponent component = SACComponent.valueOf(s[2]);
-				double startTime = Double.parseDouble(s[3]);
-				ReducedInfo info = new ReducedInfo(stationName, id, component, startTime);
-				excludeTimewindows.add(info);
-			}
-			
-			Set<TimewindowInformation> newTimewindows = new HashSet<>();
-			for (TimewindowInformation tw : timewindows) {
-				boolean exclude = false;
-				for (ReducedInfo info : excludeTimewindows) {
-					if (info.isPair(tw)) {
-						exclude = true;
-						break;
-					}
-				}
-				if (exclude)
-					continue;
-				
-				newTimewindows.add(tw);
-			}
+			Set<Phases> phaseSet = new HashSet<>();
+			phaseSet.add(new Phases("Sdiff"));
+			phaseSet.add(new Phases("S"));
+			Set<TimewindowInformation> newTimewindows = excludePhase(timewindows, phaseSet);
 			
 			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 		} catch (IOException e) {
@@ -60,6 +38,45 @@ public class ExcludeTimewindow {
 		}
 	}
 	
+	private static Set<TimewindowInformation> excludeStation(Set<TimewindowInformation> timewindows
+			, Path timewindowASCIIFile) throws IOException {
+		BufferedReader reader = Files.newBufferedReader(timewindowASCIIFile);
+		String line = null;
+		Set<ReducedInfo> excludeTimewindows = new HashSet<>();
+		while ((line = reader.readLine()) != null) {
+			String[] s = line.trim().split(" ");
+			String stationName = s[0].split("_")[0];
+			GlobalCMTID id = new GlobalCMTID(s[1]);
+			SACComponent component = SACComponent.valueOf(s[2]);
+			double startTime = Double.parseDouble(s[3]);
+			ReducedInfo info = new ReducedInfo(stationName, id, component, startTime);
+			excludeTimewindows.add(info);
+		}
+		
+		Set<TimewindowInformation> newTimewindows = new HashSet<>();
+		for (TimewindowInformation tw : timewindows) {
+			boolean exclude = false;
+			for (ReducedInfo info : excludeTimewindows) {
+				if (info.isPair(tw)) {
+					exclude = true;
+					break;
+				}
+			}
+			if (exclude)
+				continue;
+			
+			newTimewindows.add(tw);
+		}
+		
+		return newTimewindows;
+	}
+	
+	private static Set<TimewindowInformation> excludePhase(Set<TimewindowInformation> timewindows,
+			Set<Phases> phaseSet) throws IOException {
+		return timewindows.stream().filter(tw -> 
+			!phaseSet.contains(new Phases(tw.getPhases()))
+		).collect(Collectors.toSet());
+	}
 	
 	private static class ReducedInfo {
 		public String stationName;

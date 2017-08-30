@@ -117,18 +117,18 @@ public class ObservationEquation {
 				UnknownParameter unknown_j = this.parameterList.get(j);
 				if (!unknown_i.getPartialType().equals(unknown_j.getPartialType()))
 					continue; // cm.setEntry(i, j, 0.);
-				double ri = (Double) unknown_i.getLocation();
-				double rj = (Double) unknown_j.getLocation();
+				double ri = unknown_i.getLocation().getR();
+				double rj = unknown_j.getLocation().getR();
 				double vij = .5 * (computeCorrelationLength(ri, correlationScaling)
 						+ computeCorrelationLength(rj, correlationScaling));
 				if (unknown_i.getPartialType().equals(PartialType.PARQ))
 					vij = 1.;//200. * correlationScaling;
-				if ((Double) unknown_i.getLocation() >= 6346.6)
+				if (unknown_i.getLocation().getR() >= 6346.6)
 					vij = 1e-3;
 				double rij = ri - rj;
 				double cmij = Math.exp(-2 * rij * rij / vij / vij);
-				if ((Double) unknown_i.getLocation() >= 6346.6) {
-					if (unknown_i.getPartialType().equals(PartialType.PAR2))
+				if (unknown_i.getLocation().getR() >= 6346.6) {
+					if (unknown_i.getPartialType().equals(PartialType.PAR2) || unknown_i.getPartialType().equals(PartialType.MU))
 						cmij *= 1. / (lambdaMU * AtANormalizedTrace * 20);
 					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
 						cmij *= 1. / (lambdaQ * AtANormalizedTrace * 20);
@@ -136,7 +136,7 @@ public class ObservationEquation {
 						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
 				}
 				else {
-					if (unknown_i.getPartialType().equals(PartialType.PAR2))
+					if (unknown_i.getPartialType().equals(PartialType.PAR2) || unknown_i.getPartialType().equals(PartialType.MU))
 						cmij *= 1. / (lambdaMU * AtANormalizedTrace);
 					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
 						cmij *= 1. / (lambdaQ * AtANormalizedTrace);
@@ -284,7 +284,7 @@ public class ObservationEquation {
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
 			int k = dVector.whichTimewindow(id);
 			if (k < 0) {
-				System.err.format("Timewindow not found: %s%n", id.toString());
+//				System.err.format("Timewindow not found: %s%n", id.toString());
 				return;
 			}
 			int row = dVector.getStartPoints(k);
@@ -340,9 +340,9 @@ public class ObservationEquation {
 						continue;
 					int j = -1;
 					for (int k = 0; k < layers.length; k++) {
-						double r = (Double) parameterList.get(i).getLocation();
+						double r = parameterList.get(i).getLocation().getR();
 						if (r > layers[k]) {
-							System.out.println(parameterList.get(i).getPartialType() + " " + (Double) parameterList.get(i).getLocation() + " " + layers[k] + " " + k);
+							System.out.println(parameterList.get(i).getPartialType() + " " + parameterList.get(i).getLocation().getR() + " " + layers[k] + " " + k);
 							j = k;
 							break;
 						}
@@ -438,6 +438,29 @@ public class ObservationEquation {
 			a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
 		}
 		System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+		
+		//for Sci. Adv. revisions
+		double sensitivityDpp = 0;
+		double sensitivityUM = 0;
+		int nDpp = 0;
+		int nUM = 0;
+		for (int j = 0; j < a.getColumnDimension(); j++) {
+			if (parameterList.get(j).getLocation().getR() > 5721) {
+				sensitivityUM += a.getColumnVector(j).getNorm();
+				nUM++;
+			}
+			else {
+				sensitivityDpp += a.getColumnVector(j).getNorm();
+				nDpp++;
+			}
+		}
+		sensitivityUM /= nUM;
+		sensitivityDpp /= nDpp;
+		System.out.println("(for Sci. Adv) upper mantle partials amplification factor = " + (sensitivityDpp / sensitivityUM));
+//		for (int j = 0; j < a.getColumnDimension(); j++) {
+//			if (parameterList.get(j).getLocation().getR() > 5721)
+//				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(sensitivityDpp / sensitivityUM));
+//		}
 		
 //		for (int i = numberOfParameterForSturcture; i < parameterList.size(); i++) {
 //			int j = 0;
@@ -604,7 +627,7 @@ public class ObservationEquation {
 			List<UnknownParameter> unknownForStructure = parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 			for (UnknownParameter unknown : unknownForStructure)
-				pw.println(unknown.getPartialType() + " " + (Double) unknown.getLocation() + " " + sMap.get(unknown));
+				pw.println(unknown.getPartialType() + " " + unknown.getLocation().getR() + " " + sMap.get(unknown));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -17,7 +17,8 @@ public class MakeCheckerboard {
 	public static void main(String[] args) {
 		Path parameterPath = Paths.get(args[0]);
 		Path horizontalSignFile = Paths.get(args[1]);
-		double dv = 0.005;
+		int nR = Integer.parseInt(args[2]);
+		double dv = 0.02;
 		PolynomialStructure structure 
 			= PolynomialStructure.AK135;
 		Path outDvFile = Paths.get("dv.inf");
@@ -39,8 +40,8 @@ public class MakeCheckerboard {
 				Location loc = (Location) unknowns.get(i)
 						.getLocation();
 				double dmu = dMU(dv, loc.getR(), structure);
-				double tmp = (i % 23) % 2 == 0 ? 1 : -1;
-				double sign = horizontalSigns.get(i / 23) * tmp;
+				double tmp = (i % nR) % 2 == 0 ? 1 : -1;
+				double sign = horizontalSigns.get(i / nR) * tmp;
 				System.out.format("%.4f%n", sign * dmu);
 				writer.write(String.format("%s %.4f%n", loc.toString(), sign * dv));
 			}

@@ -33,6 +33,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -59,6 +60,11 @@ public class Dvector {
 		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
 		Predicate<BasicID> chooser = new Predicate<BasicID>() {
 			public boolean test(BasicID id) {
+				double distance = id.getGlobalCMTID().getEvent().getCmtLocation()
+						.getEpicentralDistance(id.getStation().getPosition())
+						* 180. / Math.PI;
+				if (distance > 100 || distance < 70)
+					return false;
 				return true;
 			}
 		};
@@ -67,6 +73,9 @@ public class Dvector {
 		List<DataSelectionInformation> selectionInfo = null;
 		
 		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+		
+		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
+		dvector.outWeighting(weightingPath);
 		
 		System.out.println("Variance = " + dvector.getVariance());
 	}
@@ -92,10 +101,18 @@ public class Dvector {
 	 * @return if the ids are same （理論波形と観測波形は違うけど＾＾＠）
 	 */
 	private static boolean isPair(BasicID id0, BasicID id1) {
-		return id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+		boolean res = false;
+		if (id0.getPhases() == null && id1.getPhases() == null) // for compatibility with old format of BasicID
+			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+					&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
+					&& id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20.
+					&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+		else
+			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 				&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
 				&& id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
 				&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+		return res;
 	}
 
 	/**
@@ -229,7 +246,13 @@ public class Dvector {
 		case RECIPROCAL:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue())) * weightingEpicentralDistanceDpp(obs);// * weightingEpicentralDistance(obs);
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
+						* weightingEpicentralDistanceDpp(obs)
+						* weightingAzimuthDpp(obs);// * weightingEpicentralDistance(obs);
 			};
 			break;
 		case IDENTITY:
@@ -247,11 +270,27 @@ public class Dvector {
 		double weight = 1.;
 		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
 		
-		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
+//		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
+		
+		double[][] histogram = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
 		
 		for (int i = 0; i < histogram.length; i++)
 			if (distance >= histogram[i][0] && distance < histogram[i][0] + 5.)
 				weight = histogram[i][1];
+		
+		return weight;
+	}
+	
+	public static double weightingAzimuthDpp(BasicID obs) {
+		double weight = 1.;
+		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+		double[][] histogram = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
+		
+		for (double[] p : histogram) {
+			if (azimuth >= p[0] && azimuth < p[0] + 5.)
+				weight = p[1];
+		}
 		
 		return weight;
 	}
@@ -631,53 +670,53 @@ public class Dvector {
 				.collect(Collectors.toMap(id -> id, id -> 0d));
 		double obs2 = 0;
 		
-		Map<Double, Double> periodLMW = new HashMap<>();
-		Map<Double, Double> periodUMW = new HashMap<>();
-		Map<Double, Double> periodTotalW = new HashMap<>();
-		double minTmin = Double.MAX_VALUE;
-		//same weight for different frequency bands
-		for (int i = 0; i < nTimeWindow; i++) {
-			Double T = obsIDs[i].getMinPeriod();
-			if (T < minTmin)
-				minTmin = T;
-			double w = new ArrayRealVector(obsIDs[i].getData()).getNorm();
-			double totalW = 0;
-			if (periodTotalW.containsKey(T))
-				totalW = periodTotalW.get(T) + w;
-			else
-				totalW = w;
-			periodTotalW.put(T, totalW);
-			
-			Phases phases = new Phases(obsIDs[i].getPhases());
-			// upper mantle
-			if (phases.isUpperMantle()) {
-				double tmpw = 0;
-				if (periodUMW.containsKey(T))
-					tmpw = periodUMW.get(T) + w;
-				else
-					tmpw = w;
-				periodUMW.put(T, tmpw);
-			}
-			else if (phases.isLowerMantle()) {
-				double tmpw = 0;
-				if (periodLMW.containsKey(T))
-					tmpw = periodLMW.get(T) + w;
-				else
-					tmpw = w;
-				periodLMW.put(T, tmpw);
-			}
-		}
-		//periodTotalW.forEach((T, w) -> System.out.println(T + "s " + w));
-		double[] maxW = new double[] {Double.MIN_VALUE};
-		periodTotalW.forEach((T, w) -> {
-			if (w > maxW[0])
-				maxW[0] = w;
-		});
-		for (Double T : periodTotalW.keySet())
-			periodTotalW.replace(T, periodTotalW.get(T) / maxW[0]);
-		Map<Double, Double> periodWeight = new HashMap<>();
-		final double minTmin_ = minTmin;
-		periodTotalW.forEach((T, w) -> periodWeight.put(T, 1. / w));
+//		Map<Double, Double> periodLMW = new HashMap<>();
+//		Map<Double, Double> periodUMW = new HashMap<>();
+//		Map<Double, Double> periodTotalW = new HashMap<>();
+//		double minTmin = Double.MAX_VALUE;
+//		//same weight for different frequency bands
+//		for (int i = 0; i < nTimeWindow; i++) {
+//			Double T = obsIDs[i].getMinPeriod();
+//			if (T < minTmin)
+//				minTmin = T;
+//			double w = new ArrayRealVector(obsIDs[i].getData()).getNorm();
+//			double totalW = 0;
+//			if (periodTotalW.containsKey(T))
+//				totalW = periodTotalW.get(T) + w;
+//			else
+//				totalW = w;
+//			periodTotalW.put(T, totalW);
+//			
+//			Phases phases = new Phases(obsIDs[i].getPhases());
+//			// upper mantle
+//			if (phases.isUpperMantle()) {
+//				double tmpw = 0;
+//				if (periodUMW.containsKey(T))
+//					tmpw = periodUMW.get(T) + w;
+//				else
+//					tmpw = w;
+//				periodUMW.put(T, tmpw);
+//			}
+//			else if (phases.isLowerMantle()) {
+//				double tmpw = 0;
+//				if (periodLMW.containsKey(T))
+//					tmpw = periodLMW.get(T) + w;
+//				else
+//					tmpw = w;
+//				periodLMW.put(T, tmpw);
+//			}
+//		}
+//		//periodTotalW.forEach((T, w) -> System.out.println(T + "s " + w));
+//		double[] maxW = new double[] {Double.MIN_VALUE};
+//		periodTotalW.forEach((T, w) -> {
+//			if (w > maxW[0])
+//				maxW[0] = w;
+//		});
+//		for (Double T : periodTotalW.keySet())
+//			periodTotalW.replace(T, periodTotalW.get(T) / maxW[0]);
+//		Map<Double, Double> periodWeight = new HashMap<>();
+//		final double minTmin_ = minTmin;
+//		periodTotalW.forEach((T, w) -> periodWeight.put(T, 1. / w));
 		
 //		Map<Double, Double> periodUMWeight = new HashMap<>();
 //		Map<Double, Double> periodLMWeight = new HashMap<>();
@@ -731,8 +770,10 @@ public class Dvector {
 						lowerUpperMantleWeighting[0] : lowerUpperMantleWeighting[1];
 				break;
 			case RECIPROCAL:
-				if (info != null)
-					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio() * periodTotalW.get(obsIDs[i].getMinPeriod());
+				if (info != null) {
+					System.err.println("Using Signal-to-Noise ratio from the data selection information file");
+					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
+				}
 				else {
 					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);// * periodWeight.get(obsIDs[i].getMinPeriod());
 //					if (new Phases(obsIDs[i].getPhases()).isLowerMantle())
@@ -761,7 +802,7 @@ public class Dvector {
 
 			// 理論波形の読み込み
 			synVec[i] = new ArrayRealVector(synIDs[i].getData(), false);
-			synVec[i].mapMultiplyToSelf(weighting[i]);
+			synVec[i] = synVec[i].mapMultiply(weighting[i]);
 
 			double denominator = obsVec[i].dotProduct(obsVec[i]);
 			dVec[i] = obsVec[i].subtract(synVec[i]);
@@ -862,6 +903,7 @@ public class Dvector {
 
 		// System.out.println(synList.size() +
 		// " synthetic waveforms are found.");
+		System.out.println("Number of obs IDs before pairing with syn IDs = " + obsList.size());
 		if (obsList.size() != synList.size())
 			System.err.println("The numbers of observed IDs " + obsList.size() + " and " + " synthetic IDs "
 					+ synList.size() + " are different ");

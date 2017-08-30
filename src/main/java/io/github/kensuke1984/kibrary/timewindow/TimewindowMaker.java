@@ -501,7 +501,31 @@ public class TimewindowMaker implements Operation {
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 		
 		try {
-			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
+			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, "ak135");
+			
+			// use only the first arrival in case of triplication
+			Map<Phase, List<TauPPhase>> nameToPhase = new HashMap<>();
+			for (TauPPhase phase : usePhases) {
+				if (!nameToPhase.containsKey(phase.getPhaseName())) {
+					List<TauPPhase> list = new ArrayList<>();
+					list.add(phase);
+					nameToPhase.put(phase.getPhaseName(), list);
+				}
+				else {
+					List<TauPPhase> list = nameToPhase.get(phase.getPhaseName());
+					list.add(phase);
+					nameToPhase.put(phase.getPhaseName(), list);
+				}
+			}
+			usePhases.clear();
+			for (Phase phase : nameToPhase.keySet()) {
+				TauPPhase firstArrival = nameToPhase.get(phase).get(0);
+				for (TauPPhase taupphase : nameToPhase.get(phase)) {
+					if (taupphase.getTravelTime() < firstArrival.getTravelTime())
+						firstArrival = taupphase;
+				}
+				usePhases.add(firstArrival);
+			}
 			
 			usePhases.forEach(phase -> phase.getDistance());
 			
@@ -519,7 +543,8 @@ public class TimewindowMaker implements Operation {
 			double[] phaseTime = toTravelTime(usePhases);
 			double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
 			
-			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime);
+			double exRearShift = 5.;
+			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);
 			// System.exit(0);
 			if (windows == null) {
 				writeInvalid(sacFileName);
@@ -633,12 +658,12 @@ public class TimewindowMaker implements Operation {
 		return splitWindow(windows, minLength); 
 	}
 	
-	private Timewindow[] createTimeWindows(double[] phaseTime, double[] exPhaseTime, double exRearShift) {
+	private Timewindow[] createTimeWindows(double[] phaseTime, double[] exPhaseTime, double exFrontShift) {
 		Timewindow[] windows = Arrays.stream(phaseTime)
 				.mapToObj(time -> new Timewindow(time - frontShift, time + rearShift)).sorted()
 				.toArray(Timewindow[]::new);
 		Timewindow[] exWindows = exPhaseTime == null ? null
-				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - frontShift, time + exRearShift))
+				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - exFrontShift, time + rearShift))
 						.sorted().toArray(Timewindow[]::new);
 
 		windows = mergeWindow(windows);

@@ -4,6 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
@@ -16,6 +17,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
+import javax.rmi.CORBA.Util;
 
 public class DataSelectionInformationFile {
 
@@ -50,9 +53,59 @@ public class DataSelectionInformationFile {
 		PrintWriter writer = new PrintWriter(Files.newBufferedWriter(outpath,
 						StandardOpenOption.CREATE, StandardOpenOption.APPEND));
 		
+		writer.println("#start time, end time, station, lat, lon, network, event, component, phases, max ratio, min ratio, abs ratio, variance, cc, SN ratio");
 		for (DataSelectionInformation info : infoList)
 			writer.println(info);
 		
+		writer.close();
+	}
+	
+	public static void outputHistograms(Path rootpath, List<DataSelectionInformation> infoList) throws IOException {
+		double dVar = 0.1;
+		double dCC = 0.1;
+		double dRatio = 0.1;
+		double maxVar = 5.;
+		double maxCC = 1.;
+		double maxRatio = 5.;
+		int nVar = (int) (maxVar / dVar) + 1;
+		int nCC = (int) (2 * maxCC / dCC) + 1;
+		int nRatio = (int) (maxRatio / dRatio) + 1;
+		int[] vars = new int[nVar];
+		int[] ccs = new int[nCC];
+		int[] ratios = new int[nRatio];
+		Path varPath = rootpath.resolve("histogram_variance" + Utilities.getTemporaryString() + ".dat");
+		Path corPath = rootpath.resolve("histogram_cc" + Utilities.getTemporaryString() + ".dat");
+		Path ratioPath = rootpath.resolve("histogram_ratio" + Utilities.getTemporaryString() + ".dat");
+		
+		for (DataSelectionInformation info : infoList) {
+			if (info.getVariance() > maxVar 
+				 || info.getCC() > maxCC
+				 || info.getAbsRatio() > maxRatio)
+				continue;
+			int iVar = (int) (info.getVariance() / dVar);
+			int iCC = (int) ((info.getCC() + 1.) / dCC);
+			int iRatio = (int) (info.getAbsRatio() / dRatio);
+			vars[iVar] += 1;
+			ccs[iCC] += 1;
+			ratios[iRatio] += 1;
+		}
+		
+		PrintWriter writer = new PrintWriter(Files.newBufferedWriter(varPath,
+				StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+		for (int i = 0; i < nVar; i++)
+			writer.println(i * dVar + " " + vars[i]);
+		writer.close();
+		
+		writer = new PrintWriter(Files.newBufferedWriter(corPath,
+				StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+		for (int i = 0; i < nCC; i++)
+			writer.println((i * dCC - 1) + " " + ccs[i]);
+		writer.close();
+		
+		writer = new PrintWriter(Files.newBufferedWriter(ratioPath,
+				StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+		for (int i = 0; i < nRatio; i++)
+			writer.println(i * dRatio + " " + ratios[i]);
 		writer.close();
 	}
 }

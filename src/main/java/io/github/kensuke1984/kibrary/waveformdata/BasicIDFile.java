@@ -71,7 +71,8 @@ public final class BasicIDFile {
 
 	private static void outputGlobalCMTID(String header, BasicID[] ids) throws IOException {
 		Path outPath = Paths.get(header + ".globalCMTID");
-		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.ID.toString()).distinct().sorted()
+		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.ID).distinct()
+				.map(id -> id.toString() + " " + id.getEvent().getCmtLocation()).sorted()
 				.collect(Collectors.toList());
 		Files.write(outPath, lines, StandardOpenOption.CREATE_NEW);
 		System.err.println(outPath + " is created as a list of global CMT IDs.");
@@ -169,8 +170,15 @@ public final class BasicIDFile {
 			int headerBytes = 2 * 4 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
 					+ 16 * phases.length + 4 * 2 * periodRanges.length;
 			long idParts = fileSize - headerBytes;
-			if (idParts % oneIDByte != 0)
-				throw new RuntimeException(idPath + " is not valid.");
+			if (idParts % oneIDByte != 0) {
+				try {
+					BasicID[] ids = OldToNewFormat_BasicIDFile.readBasicIDFile_old(idPath);
+					System.err.println("WARNING: " + idPath + " format is deprecated. Converting to new format, but loosing phase information");
+					return ids;
+				} catch (Exception e) {
+					throw new RuntimeException(idPath + " is invalid both in the old and current format");
+				}
+			}
 			// name(8),network(8),position(4*2)
 			byte[] stationBytes = new byte[24];
 			for (int i = 0; i < stations.length; i++) {

@@ -178,10 +178,20 @@ public class VelocityField3D {
 					Map<UnknownParameter, Double> velocities = null;
 					Map<UnknownParameter, Double> zeroVelocities = null;
 					Map<UnknownParameter, Double> perturbations = null;
+					Map<Location, Double> extendedPerturbationMap = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					if (trs == null) {
 						perturbations = toPerturbation(answerMap, layerMap, unknowns, structure, 1.);
+						Set<Double> rs = layerMap.keySet();
+						double[] perturbationRs = new double[rs.size()];
+						int count = 0;
+						for (double r : rs)
+							perturbationRs[count++] = r;
+						Map<Location, Double> perturbationMap = new HashMap<>();
+						for (UnknownParameter unknown : perturbations.keySet())
+							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 5., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
@@ -205,9 +215,8 @@ public class VelocityField3D {
 							pwQ.println("#perturbationR final_Q intial_Q");
 						}
 						if (trs == null) {
-							for (UnknownParameter m : unknowns) {
-								Location loc = (Location) m.getLocation();
-								double perturbation = perturbations.get(m);
+							for (Location loc : extendedPerturbationMap.keySet()) {
+								double perturbation = extendedPerturbationMap.get(loc);
 								pw.println(loc + " " + perturbation);
 							}
 							if (partialTypes.contains(PartialType.PARQ)) {
@@ -239,30 +248,6 @@ public class VelocityField3D {
 				}
 			}
 		}
-	}
-	
-	private static double[] toVelocity(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
-		double[] velocities = new double[answerMap.size()];
-		int n = parameterOrder.size();
-		for (int i = 0; i < n; i++) {
-			UnknownParameter m = parameterOrder.get(i);
-			double rmin = 0;
-			double rmax = 0;
-			if (i > 0 && i < n - 1) {
-				rmin = ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2. + (Double) parameterOrder.get(i-1).getLocation();
-				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
-			}
-			else if (i > 0) {
-				rmin = ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2. + (Double) parameterOrder.get(i-1).getLocation();
-				rmax = (Double) m.getLocation() + m.getWeighting() - ((Double) m.getLocation() - (Double) parameterOrder.get(i-1).getLocation()) / 2.;
-			}
-			else {
-				rmin = (Double) m.getLocation() - m.getWeighting() + ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2.;
-				rmax = ((Double) parameterOrder.get(i+1).getLocation() - (Double) m.getLocation()) / 2. + (Double) m.getLocation();
-			}
-			velocities[i] = toVelocity(answerMap.get(m), (Double) m.getLocation(), rmin, rmax, structure);
-		}
-		return velocities;
 	}
 	
 	private static Map<UnknownParameter, Double> toVelocity(Map<UnknownParameter, Double> answerMap, Map<Double, Double> layerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
@@ -319,9 +304,9 @@ public class VelocityField3D {
 			UnknownParameter m = parameterForStructure.get(i);
 			double rmin = 0;
 			double rmax = 0;
-			rmin = (Double) m.getLocation() - m.getWeighting() / 2.;
-			rmax = (Double) m.getLocation() + m.getWeighting() / 2.;
-			velocities[i][0] = toQ(answerMap.get(m), (Double) m.getLocation(), rmin, rmax, structure, amplifyPerturbation);
+			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
+			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
+			velocities[i][0] = toQ(answerMap.get(m), m.getLocation().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
 		}
@@ -471,7 +456,7 @@ public class VelocityField3D {
 		for (UnknownParameter p : newParameters.stream()
 				.filter(unknown -> !unknown.getPartialType().isTimePartial()
 						&& unknown.getPartialType().equals(type)).collect(Collectors.toList())) {
-			double rp = (Double) p.getLocation();
+			double rp = p.getLocation().getR();
 			double w = p.getWeighting();
 			double value = answerMap.get(p);
 			if (rp - w/2. < r && rp + w/2. >= r) {
@@ -491,5 +476,73 @@ public class VelocityField3D {
 		}
 		
 		return res;
+	}
+	
+	public static Map<Location, Double> extendedPerturbationMap(Map<Location, Double> perturbationMap, double dL, double[] perturbationRs) {
+		Map<Location, Double> extended = new HashMap<>();
+		double minLat = 1e3;
+		double maxLat = -1e3;
+		double minLon = 1e3;
+		double maxLon = -1e3;
+		
+		Set<Location> locations = perturbationMap.keySet();
+		for (Location loci : locations) {
+			double dvs = perturbationMap.get(loci);
+			extended.put(loci, dvs);
+			
+			if (loci.getLatitude() < minLat)
+				minLat = loci.getLatitude();
+			if (loci.getLongitude() < minLon)
+				minLon = loci.getLongitude();
+			if (loci.getLatitude() > maxLat)
+				maxLat = loci.getLatitude();
+			if (loci.getLongitude() > maxLon)
+				maxLon = loci.getLongitude();
+			
+			Location[] additionalLocs = new Location[] {new Location(loci.getLatitude(), loci.getLongitude() + dL, loci.getR())
+			, new Location(loci.getLatitude(), loci.getLongitude() - dL, loci.getR())
+			, new Location(loci.getLatitude() + dL, loci.getLongitude(), loci.getR())
+			, new Location(loci.getLatitude() - dL, loci.getLongitude(), loci.getR())
+			, new Location(loci.getLatitude() + dL, loci.getLongitude() + dL, loci.getR())
+			, new Location(loci.getLatitude() + dL, loci.getLongitude() - dL, loci.getR())
+			, new Location(loci.getLatitude() - dL, loci.getLongitude() + dL, loci.getR())
+			, new Location(loci.getLatitude() - dL, loci.getLongitude() - dL, loci.getR())};
+			
+			Set<Location> thisRLocations = locations.stream()
+					.filter(loc -> loc.getR() == loci.getR()).collect(Collectors.toSet());
+			boolean[] isAdds = new boolean[additionalLocs.length];
+			for (int j = 0; j < isAdds.length; j++)
+				isAdds[j] = true;
+			for (Location loc : thisRLocations) {
+				for (int k = 0; k < additionalLocs.length; k++) {
+					if (loc.equals(additionalLocs[k]))
+						isAdds[k] = false;
+				}
+			}
+			
+				for (int j = 0; j < additionalLocs.length; j++) {
+					if (isAdds[j] && !extended.containsKey(additionalLocs[j])) {
+						extended.put(additionalLocs[j], 0.);
+					}
+				}
+		}
+		
+		// fill remaining voxels with NaN
+		int nLon = (int) ((maxLon - minLon) / dL) + 3;
+		int nLat = (int) ((maxLat - minLat) / dL) + 3;
+		for (int k=0; k < perturbationRs.length; k++) {
+			double r = perturbationRs[k];
+			for (int i=0; i < nLon; i++) {
+				for (int j=0; j < nLat; j++) {
+					double lon = minLon + (i - 1) * dL;
+					double lat = minLat + (j - 1) * dL;
+					Location loc = new Location(lat, lon, r);
+					if (!extended.containsKey(loc))
+						extended.put(loc, Double.NaN);
+				}
+			}
+		}
+
+		return extended;
 	}
 }

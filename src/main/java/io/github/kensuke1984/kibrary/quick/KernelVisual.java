@@ -51,7 +51,7 @@ public class KernelVisual {
 		for (PartialID partial : partials) {
 //			if (partial.getStation().getStationName().equals("X060") 
 //					&& new Phases(partial.getPhases()).equals(new Phases("S,SSS,ScS,sSS,sScSScS,sS,SS,ScSScS,sSSS,sScS")) ) {
-			if (new Phases(partial.getPhases()).equals(new Phases("S,SSS,ScS,sSS,sScSScS,sS,SS,ScSScS,sSSS,sScS"))) {
+//			if (new Phases(partial.getPhases()).equals(new Phases("S,SSS,ScS,sSS,sScSScS,sS,SS,ScSScS,sSSS,sScS"))) {
 				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
@@ -65,7 +65,7 @@ public class KernelVisual {
 				double[] data = partial.getData();
 				double t0 = partial.getStartTime();
 				Path filePath = dir3.resolve(new Phases(partial.getPhases()).toString() 
-						+ String.format("_kernelTemporal_snapshots_t0%d.txt", t0));
+						+ String.format("_kernelTemporal_snapshots_t0%d.txt", (int) t0));
 				if (!Files.exists(filePath))
 					Files.createFile(filePath);
 				BufferedWriter writer = Files.newBufferedWriter(filePath, StandardOpenOption.APPEND);
@@ -81,7 +81,7 @@ public class KernelVisual {
 				}
 				writer.newLine();
 				writer.close();
-			}
+//			}
 		}
 	}
 	
