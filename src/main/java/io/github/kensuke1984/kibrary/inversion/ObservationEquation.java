@@ -247,7 +247,7 @@ public class ObservationEquation {
 	 * @param ids
 	 *            source for A
 	 */
-	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, Map<PartialType, Integer[]> nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
+	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns) {
 		if (time_source)
 			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
 		if (time_receiver) {
@@ -305,8 +305,8 @@ public class ObservationEquation {
 					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + " + n + ")");  
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
-		// simple partial combination
-		if (nUnknowns != null) {
+		if (combinationType.equals(CombinationType.CORRIDOR_BOXCAR)) {
+			System.out.println("Combining 1-D pixels into boxcars");
 			int totalUnknown = 0; 
 			for (Integer[] ns : nUnknowns.values())
 				totalUnknown += ns[0] + ns[1];
@@ -383,9 +383,74 @@ public class ObservationEquation {
 			a = aPrime;
 		}
 		
+		if (combinationType.equals(CombinationType.LOWERMANTLE_BOXCAR_3D)) {
+			System.out.println("Combining voxels into boxcar");
+			int totalUnknown = 0;
+			for (Integer[] ns : nUnknowns.values()) {
+				if (ns.length > 1)
+					throw new RuntimeException("Error: the combination type " 
+						+ combinationType + " let you specify only one integer per PartialType");
+				totalUnknown += ns[0];
+			}
+			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() - numberOfParameterForSturcture + totalUnknown);
+			List<UnknownParameter> parameterPrime = new ArrayList<>();
+			
+			// fill new A matrix
+			int jCurrent = 0;
+			for (Map.Entry<PartialType, Integer[]> entry : nUnknowns.entrySet()) {
+				int thisNUnknowns = entry.getValue()[0];
+				
+				double[] layers = new double[thisNUnknowns - 1];
+				
+				List<Double> radii = parameterList.stream().filter(p -> p.getPartialType().equals(entry.getKey()))
+					.map(p -> p.getLocation().getR())
+					.collect(Collectors.toList());
+				Collections.sort(radii);
+				double maxR = radii.get(radii.size() - 1);
+				double minR = radii.get(0);
+				double originalDeltaR = radii.get(1) - radii.get(0);
+				maxR += originalDeltaR / 2.;
+				minR -= originalDeltaR / 2.;
+				int nOriginal = radii.size();
+				if ((double) nOriginal / thisNUnknowns != nOriginal / thisNUnknowns)
+					throw new RuntimeException("Please specify a number of new Unkowns that divides the number of original unknowns");
+				double deltaR = originalDeltaR * nOriginal / thisNUnknowns;
+				
+				for (int i = 0; i < numberOfParameterForSturcture; i++) {
+					if (!parameterList.get(i).getPartialType().equals(entry.getKey()))
+						continue;
+					int j = -1;
+					for (int k = 0; k < layers.length; k++) {
+						double r = parameterList.get(i).getLocation().getR();
+						if (r > layers[k]) {
+							System.out.println(parameterList.get(i).getPartialType() + " " + parameterList.get(i).getLocation().getR() + " " + layers[k] + " " + k);
+							j = k;
+							break;
+						}
+					}
+					if (j == -1)
+						j = thisNUnknowns - 1;
+					j += jCurrent;
+					aPrime.setColumnVector(j, aPrime.getColumnVector(j).add(a.getColumnVector(i)));
+				}
+				
+				// fill new unknownParameter list
+				for (int i = 0; i < layers.length; i++) {
+					double r = 0;
+					double w = 0;
+					if (i < entry.getValue()[0]) {
+						r = layers[i] + deltaR / 2.;
+						w = deltaR;
+					}
+					parameterPrime.add(new Physical3DParameter(entry.getKey(), pointLocation, w));
+				}
+			}
+		}
+		
 		// Triangle splines
-		if (nNewParameter != null) {
-			TriangleRadialSpline trs = new TriangleRadialSpline(nNewParameter, parameterList);
+		if (combinationType.equals(CombinationType.CORRIDOR_TRIANGLE)) {
+			System.out.println("Combining 1-D pixels into triangles");
+			TriangleRadialSpline trs = new TriangleRadialSpline(nUnknowns, parameterList);
 			a = trs.computeNewA(a);
 			parameterList = trs.getNewParameters();
 		}

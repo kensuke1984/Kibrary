@@ -36,7 +36,12 @@ public class MakeRunFolder {
 			int nEvents = eventFolderSet.size();
 			
 			AtomicInteger iatom = new AtomicInteger(1);
+			Path runGroupFolder = null;
 			for (EventFolder eventFolder : eventFolderSet) {
+//				if (iatom.get() == 1)
+//					runGroupFolder 
+//				if (iatom.get() <= nEvents)
+					
 				String runFolder = String.format("run%04d", iatom.get());
 				Path dirPath = specfemRoot.resolve(runFolder);
 				Path dataFolderPath = dirPath.resolve("DATA");

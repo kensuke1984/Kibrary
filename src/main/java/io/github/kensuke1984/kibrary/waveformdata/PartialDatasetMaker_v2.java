@@ -138,6 +138,8 @@ public class PartialDatasetMaker_v2 implements Operation {
 	 */
 	private double maxFreq;
 
+	private int filterNp;
+	
 	private Properties property;
 	
 	private Path workPath;
@@ -540,6 +542,8 @@ private class WorkerTimePartial implements Runnable {
 			pw.println("#minFreq");
 			pw.println("##double maximum value of passband (0.08)");
 			pw.println("#maxFreq");
+			pw.println("##The value of np for the filter (4)");
+			pw.println("#filterNp");
 			pw.println("#double (20)");
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("##double SamplingHz in output dataset (1)");
@@ -579,7 +583,8 @@ private class WorkerTimePartial implements Runnable {
 			property.setProperty("partialSamplingHz", "20");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
-		
+		if (!property.containsKey("filterNp"))
+			property.setProperty("filterNp", "4");
 	}
 
 	/**
@@ -626,6 +631,8 @@ private class WorkerTimePartial implements Runnable {
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
 
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+		
+		filterNp = Integer.parseInt(property.getProperty("filterNp"));
 	}
 
 	private void setLog() throws IOException {
@@ -928,7 +935,7 @@ private class WorkerTimePartial implements Runnable {
 		System.err.println("Designing filter.");
 		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
 		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
-		filter = new BandPassFilter(omegaH, omegaL, 4);
+		filter = new BandPassFilter(omegaH, omegaL, filterNp);
 //		filter.setBackward(false);
 		filter.setBackward(true);
 		writeLog(filter.toString());

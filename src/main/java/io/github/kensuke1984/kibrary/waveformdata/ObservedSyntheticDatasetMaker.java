@@ -435,7 +435,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double correctionRatio = ratio;
 					
 					Phase[] includePhases = window.getPhases();
-
+					
 					obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
 					BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synData);

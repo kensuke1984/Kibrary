@@ -25,8 +25,8 @@ public class Make3DModel {
 
 	public static void main(String[] args) {
 //		List<PerturbationPoint> oneLayerModel = onePerturbationLayer(3480., 3630., 2.);
-		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_100km(3.);
-		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_100km_3per.inf");
+		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_100km(1.);
+		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_100km_1per.inf");
 		try {
 			writeModel(checkerboard, outpath);
 		} catch (IOException e) {

@@ -108,4 +108,8 @@ public class DataSelectionInformationFile {
 			writer.println(i * dRatio + " " + ratios[i]);
 		writer.close();
 	}
+	
+//	public static void outputEventInfo(Path rootpath, List<DataSelectionInformation> infoList) throws IOException {
+//		infoList.
+//	}
 }
