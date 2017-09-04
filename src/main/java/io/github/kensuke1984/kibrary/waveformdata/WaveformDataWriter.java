@@ -251,6 +251,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
 	public synchronized void addBasicID(BasicID basicID) throws IOException {
 		if (mode != 0)
 			throw new RuntimeException("BasicID please, would you.");
+		
+		Integer ista = stationMap.get(basicID.STATION);
+		if (ista == null) {
+			System.out.println("NullPointerException: " + basicID.STATION + " " + basicID.ID);
+			return;
+		}
 
 		switch (basicID.TYPE) {
 		case OBS:
@@ -264,7 +270,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		}
 		long startByte = dataLength;
 		addWaveform(basicID.getData());
-		idStream.writeShort(stationMap.get(basicID.STATION));
+		idStream.writeShort(ista);
 		idStream.writeShort(globalCMTIDMap.get(basicID.ID));
 		idStream.writeByte(basicID.COMPONENT.valueOf());
 		idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
