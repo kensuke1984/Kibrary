@@ -78,6 +78,10 @@ public class Location extends HorizontalPosition {
 	public XYZ toXYZ() {
 		return RThetaPhi.toCartesian(R, getTheta(), getPhi());
 	}
+	
+	public HorizontalPosition toHorizontalPosition() {
+		return new HorizontalPosition(getLatitude(), getLongitude());
+	}
 
 	/**
 	 * @param location

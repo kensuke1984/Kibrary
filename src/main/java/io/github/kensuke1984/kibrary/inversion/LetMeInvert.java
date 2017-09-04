@@ -99,10 +99,10 @@ public class LetMeInvert implements Operation {
 	
 	protected double gamma;
 	
+	private CombinationType combinationType;
+	
 	private Map<PartialType, Integer[]> nUnknowns;
 	
-	private Map<PartialType, Integer[]> nNewParameter;
-
 	private ObservationEquation eq;
 	
 	private String[] phases;
@@ -152,6 +152,8 @@ public class LetMeInvert implements Operation {
 			property.setProperty("minDistance", "0.");
 		if (!property.containsKey("maxDistance"))
 			property.setProperty("maxDistance", "360.");
+		if (!property.containsKey("combinationType"))
+			property.setProperty("combinationType", "null");
 	}
 
 	private void set() {
@@ -186,28 +188,37 @@ public class LetMeInvert implements Operation {
 			phases = null;
 		else
 			phases = Arrays.stream(property.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
+		//
+		combinationType = CombinationType.valueOf(property.getProperty("combinationType"));
+		//
 		if (!property.containsKey("nUnknowns"))
 			nUnknowns = null;
+		else if (combinationType == null) {
+			throw new RuntimeException("Error: a combinationType "
+					+ "must be specified when nUnknowns is specified");
+		}
 		else {
 			nUnknowns = new HashMap<>();
 			String[] args = property.getProperty("nUnknowns").trim().split("\\s+");
-			if (args.length % 3 != 0)
-				throw new RuntimeException("nUnknowns arguments must be in format: PartialType nUM nLM");
-			for (int i = 0; i < args.length / 3; i++) {
-				int j = i * 3;
-				nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1]), Integer.parseInt(args[j + 2])});
+			if (combinationType.equals(CombinationType.CORRIDOR_TRIANGLE)
+					|| combinationType.equals(CombinationType.CORRIDOR_BOXCAR)) {
+				if (args.length % 3 != 0)
+					throw new RuntimeException("Error: nUnknowns arguments must be in format: PartialType nUM nLM");
+				for (int i = 0; i < args.length / 3; i++) {
+					int j = i * 3;
+					nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1]), Integer.parseInt(args[j + 2])});
+				}
 			}
-		}
-		if (!property.containsKey("nNewParameter"))
-			nNewParameter = null;
-		else {
-			nNewParameter = new HashMap<>();
-			String[] args = property.getProperty("nNewParameter").trim().split("\\s+");
-			if (args.length % 3 != 0)
-				throw new RuntimeException("nNewParameter arguments must be in format: PartialType nUM nLM");
-			for (int i = 0; i < args.length / 3; i++) {
-				int j = i * 3;
-				nNewParameter.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1]), Integer.parseInt(args[j + 2])});
+			else if (combinationType.equals(CombinationType.LOWERMANTLE_BOXCAR_3D)) {
+				if (args.length % 2 != 0)
+					throw new IllegalArgumentException("Error: nUnknowns arguments must be in format: PartialType nNewUnknowns");
+				for (int i = 0; i < args.length / 2; i++) {
+					int j = i * 2;
+					nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1])});
+				}
+			}
+			else {
+				throw new IllegalArgumentException("Error: unknown combinationType " + combinationType);
 			}
 		}
 		if (property.containsKey("DataSelectionInformationFile")) {
@@ -270,8 +281,9 @@ public class LetMeInvert implements Operation {
 			pw.println("time_receiver false");
 			pw.println("##Use phases (blank = all phases)");
 			pw.println("#phases");
+			pw.println("##CombinationType to combine 1-D pixels or voxels (null)");
+			pw.println("#combinationType");
 			pw.println("#nUnknowns PAR2 9 9 PARQ 9 9");
-			pw.println("#nNewParameter PAR2 9 6");
 			pw.println("##DataSelectionInformationFile (leave blank if not needed)");
 			pw.println("#DataSelectionInformationFile");
 			pw.println("##boolean modelCovariance (false)");
@@ -392,7 +404,7 @@ public class LetMeInvert implements Operation {
 		if (modelCovariance)
 			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling);
 		else
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, nNewParameter);
+			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns);
 	}
 	
 	/**

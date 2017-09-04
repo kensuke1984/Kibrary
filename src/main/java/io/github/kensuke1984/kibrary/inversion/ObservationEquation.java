@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.awt.PageAttributes;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
@@ -27,6 +28,7 @@ import org.apache.commons.math3.linear.RealVector;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -59,7 +61,7 @@ public class ObservationEquation {
 	 *            for equation
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
-			boolean time_source, boolean time_receiver, Map<PartialType, Integer[]> nUnknowns, Map<PartialType, Integer[]> nNewParameter) {
+			boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns) {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
 		this.originalParameterList = parameterList;
@@ -74,7 +76,7 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
-		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns, nNewParameter);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns);
 		atd = computeAtD(dVector.getD());
 	}
 	
@@ -94,7 +96,7 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
-		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns, null);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, null, nUnknowns);
 		
 		double AtANormalizedTrace = 0;
 		double count = 0;
@@ -385,26 +387,35 @@ public class ObservationEquation {
 		
 		if (combinationType.equals(CombinationType.LOWERMANTLE_BOXCAR_3D)) {
 			System.out.println("Combining voxels into boxcar");
-			int totalUnknown = 0;
+			int totalNR = 0;
 			for (Integer[] ns : nUnknowns.values()) {
 				if (ns.length > 1)
 					throw new RuntimeException("Error: the combination type " 
 						+ combinationType + " let you specify only one integer per PartialType");
-				totalUnknown += ns[0];
+				totalNR += ns[0];
 			}
-			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() - numberOfParameterForSturcture + totalUnknown);
+			
+			List<HorizontalPosition> horizontalPositions = parameterList.stream()
+					.map(p -> p.getLocation().toHorizontalPosition())
+					.distinct()
+					.collect(Collectors.toList());
+			
+			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() 
+					- numberOfParameterForSturcture + totalNR * horizontalPositions.size());
 			List<UnknownParameter> parameterPrime = new ArrayList<>();
 			
 			// fill new A matrix
-			int jCurrent = 0;
+			int iTypeShift = 0;
 			for (Map.Entry<PartialType, Integer[]> entry : nUnknowns.entrySet()) {
-				int thisNUnknowns = entry.getValue()[0];
+				int nNewPerturbationR = entry.getValue()[0];
 				
-				double[] layers = new double[thisNUnknowns - 1];
-				
-				List<Double> radii = parameterList.stream().filter(p -> p.getPartialType().equals(entry.getKey()))
+				//collect radii and horizontal positions of original perturbations
+				List<Double> radii = parameterList.stream().filter(p -> p.getPartialType()
+						.equals(entry.getKey()))
 					.map(p -> p.getLocation().getR())
+					.distinct()
 					.collect(Collectors.toList());
+				
 				Collections.sort(radii);
 				double maxR = radii.get(radii.size() - 1);
 				double minR = radii.get(0);
@@ -412,39 +423,93 @@ public class ObservationEquation {
 				maxR += originalDeltaR / 2.;
 				minR -= originalDeltaR / 2.;
 				int nOriginal = radii.size();
-				if ((double) nOriginal / thisNUnknowns != nOriginal / thisNUnknowns)
-					throw new RuntimeException("Please specify a number of new Unkowns that divides the number of original unknowns");
-				double deltaR = originalDeltaR * nOriginal / thisNUnknowns;
+				if ((double) nOriginal / nNewPerturbationR != nOriginal / nNewPerturbationR)
+					throw new RuntimeException("Please specify a number of new Unkowns "
+							+ "that divides the number of original unknowns");
+				double deltaR = originalDeltaR * nOriginal / nNewPerturbationR;
 				
-				for (int i = 0; i < numberOfParameterForSturcture; i++) {
+				//debug
+				System.out.println("DEBUG1: " + originalDeltaR + " " + maxR + " " + minR + " " + deltaR + " " + nNewPerturbationR);
+				//
+				
+				double[] newPerturbationR = new double[nNewPerturbationR];
+				for (int i = 0; i < nNewPerturbationR; i++)
+					newPerturbationR[i] = minR + i * deltaR + deltaR / 2.;
+				
+				List<Location> newLocations = new ArrayList<>();
+				for (double r : newPerturbationR) {
+					for (HorizontalPosition hp : horizontalPositions) {
+						Location loc = hp.toLocation(r);
+						newLocations.add(loc);
+					}
+				}
+				
+				Map<Location, List<Integer>> combinationIndexMap = new HashMap<>();
+				Map<Location, Double> combinedWeightingMap = new HashMap<>();
+				
+				for (int i = 0; i < originalParameterList.size(); i++) {
 					if (!parameterList.get(i).getPartialType().equals(entry.getKey()))
 						continue;
-					int j = -1;
-					for (int k = 0; k < layers.length; k++) {
-						double r = parameterList.get(i).getLocation().getR();
-						if (r > layers[k]) {
-							System.out.println(parameterList.get(i).getPartialType() + " " + parameterList.get(i).getLocation().getR() + " " + layers[k] + " " + k);
-							j = k;
-							break;
-						}
+					Location loc = parameterList.get(i).getLocation();
+					int iR = (int) ((loc.getR() - minR) / deltaR);
+					Location newLoc = loc.toLocation(newPerturbationR[iR]);
+					//
+					if (!combinationIndexMap.containsKey(newLoc)) {
+						List<Integer> indices = new ArrayList<>();
+						indices.add(i);
+						combinationIndexMap.put(newLoc, indices);
+						Double w = parameterList.get(i).getWeighting();
+						combinedWeightingMap.put(newLoc, w);
 					}
-					if (j == -1)
-						j = thisNUnknowns - 1;
-					j += jCurrent;
-					aPrime.setColumnVector(j, aPrime.getColumnVector(j).add(a.getColumnVector(i)));
+					else {
+						List<Integer> indices = combinationIndexMap.get(newLoc);
+						indices.add(i);
+						combinationIndexMap.replace(newLoc, indices);
+						Double w = combinedWeightingMap.get(newLoc);
+						w += parameterList.get(i).getWeighting();
+						combinedWeightingMap.replace(newLoc, w);
+					}
 				}
 				
-				// fill new unknownParameter list
-				for (int i = 0; i < layers.length; i++) {
-					double r = 0;
-					double w = 0;
-					if (i < entry.getValue()[0]) {
-						r = layers[i] + deltaR / 2.;
-						w = deltaR;
+				//debug
+				for (Location newLoc : newLocations) {
+					List<Integer> indices = combinationIndexMap.get(newLoc);
+					double w = combinedWeightingMap.get(newLoc);
+					String s = "";
+					for (int i : indices) {
+						s += parameterList.get(i).getLocation().toString() 
+								+ " " + parameterList.get(i).getWeighting() + ", ";
 					}
-					parameterPrime.add(new Physical3DParameter(entry.getKey(), pointLocation, w));
+					s += ": " + newLoc + " " + w;
+					System.out.println("DEBUG2: " + s);
 				}
+				//
+				
+				//fill the new A matrix using the index map using the order of newLocations
+				for (int i = 0; i < newLocations.size(); i++) {
+					Location newLoc = newLocations.get(i);
+					List<Integer> indices = combinationIndexMap.get(newLoc);
+					RealVector vector = new ArrayRealVector(a.getRowDimension());
+					for (int index : indices)
+						vector = vector.add(a.getColumnVector(index));
+					aPrime.setColumnVector(i + iTypeShift, vector);
+					//
+					//fill new Unknown parameter list for current PartialType
+					double weighting = combinedWeightingMap.get(newLoc);
+					parameterPrime.add(new Physical3DParameter(entry.getKey(), newLoc, weighting));
+				}
+				
+				iTypeShift += newLocations.size();
 			}
+			
+			//TODO set time partials
+			
+			parameterList = parameterPrime;
+			a = aPrime;
+			
+			//debug
+			System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
+			//
 		}
 		
 		// Triangle splines
@@ -692,7 +757,7 @@ public class ObservationEquation {
 			List<UnknownParameter> unknownForStructure = parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
 			for (UnknownParameter unknown : unknownForStructure)
-				pw.println(unknown.getPartialType() + " " + unknown.getLocation().getR() + " " + sMap.get(unknown));
+				pw.println(unknown.getPartialType() + " " + unknown.getLocation() + " " + sMap.get(unknown));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
