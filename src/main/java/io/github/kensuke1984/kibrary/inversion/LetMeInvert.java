@@ -152,8 +152,6 @@ public class LetMeInvert implements Operation {
 			property.setProperty("minDistance", "0.");
 		if (!property.containsKey("maxDistance"))
 			property.setProperty("maxDistance", "360.");
-		if (!property.containsKey("combinationType"))
-			property.setProperty("combinationType", "null");
 	}
 
 	private void set() {
@@ -189,7 +187,10 @@ public class LetMeInvert implements Operation {
 		else
 			phases = Arrays.stream(property.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
 		//
-		combinationType = CombinationType.valueOf(property.getProperty("combinationType"));
+		if (!property.containsKey("combinationType"))
+			combinationType = null;
+		else
+			combinationType = CombinationType.valueOf(property.getProperty("combinationType"));
 		//
 		if (!property.containsKey("nUnknowns"))
 			nUnknowns = null;
