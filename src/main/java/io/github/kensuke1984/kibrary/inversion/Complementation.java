@@ -75,7 +75,6 @@ public class Complementation {
 		  wzsum += wz;
 		  }
 		return wzsum/wsum;
-//		return value;
 	}
 	
 	/**

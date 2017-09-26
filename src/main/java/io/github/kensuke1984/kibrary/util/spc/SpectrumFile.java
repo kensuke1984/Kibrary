@@ -22,14 +22,26 @@ import io.github.kensuke1984.kibrary.util.Location;
  */
 class SpectrumFile implements DSMOutput {
 
+	private String observerName;
+	private String observerNetwork;
 	private String observerID;
 	private String sourceID;
 
 	@Override
+	@Deprecated
 	public String getObserverID() {
 		return observerID;
 	}
-
+	
+	@Override
+	public String getObserverName() {
+		return observerName;
+	}
+	
+	@Override
+	public String getObserverNetwork() {
+		return observerNetwork;
+	}
 
 	@Override
 	public String getSourceID() {
@@ -67,7 +79,7 @@ class SpectrumFile implements DSMOutput {
 
 	private int nbody;
 
-	SpcFileName getSpcFileName() {
+	public SpcFileName getSpcFileName() {
 		return spcFileName;
 	}
 
@@ -110,7 +122,7 @@ class SpectrumFile implements DSMOutput {
 	 * @throws IOException
 	 *             If the spcFileName does not exist, or an I/O error occurs
 	 */
-	static SpectrumFile getInstance(SpcFileName spcFileName) throws IOException {
+	final static SpectrumFile getInstance(SpcFileName spcFileName) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(new FileInputStream(spcFileName)))) {
 			SpectrumFile specFile = new SpectrumFile(spcFileName);
 			specFile.sourceID = spcFileName.getSourceID();
@@ -144,6 +156,13 @@ class SpectrumFile implements DSMOutput {
 			default:
 				throw new RuntimeException("component can be only 3(synthetic), 9(fp) or 27(bp) right now");
 			}
+			
+			specFile.observerName = spcFileName.getObserverName();
+			if (specFile.spcFileType.equals(SpcFileType.PB) || specFile.spcFileType.equals(SpcFileType.PF))
+				specFile.observerNetwork = null;
+			else
+				specFile.observerNetwork = spcFileName.getObserverNetwork();
+			
 //			 System.out.println(nbody);
 			specFile.nbody = nbody;
 			specFile.np = np;
@@ -180,8 +199,10 @@ class SpectrumFile implements DSMOutput {
 				for (SpcBody body : specFile.spcBody) {
 					Complex[] u = new Complex[specFile.nComponent];
 					int ip = dis.readInt();
-					for (int k = 0; k < specFile.nComponent; k++)
+					for (int k = 0; k < specFile.nComponent; k++) {
 						u[k] = new Complex(dis.readDouble(), dis.readDouble());
+//						System.out.println(u[k]);
+					}
 					body.add(ip, u);
 				}
 			return specFile;

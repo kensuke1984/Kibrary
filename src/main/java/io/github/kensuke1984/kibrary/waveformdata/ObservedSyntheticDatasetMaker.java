@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
@@ -236,14 +237,9 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
 				if (!name.isOBS())
 					continue;
-//				System.out.println(name);
 				SACHeaderData header = name.readHeader();
-//				System.out.println(header.getStation()+" "+header.getGlobalCMTID());
 				double[] range = new double[] { header.getValue(SACHeaderEnum.USER0),
 						header.getValue(SACHeaderEnum.USER1) };
-//				System.out.println(range[0]+" "+range[1]);
-//				double[] range = new double[] { 20,
-//						header.getValue(SACHeaderEnum.USER1) };
 				boolean exists = false;
 				if (ranges.size() == 0)
 					ranges.add(range);
@@ -255,7 +251,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			}
 			periodRanges = ranges.toArray(new double[0][]);
 		} catch (Exception e) {
-			
 			throw new RuntimeException("Error in reading period ranges from SAC files.");
 		}
 	}
@@ -417,7 +412,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				}
 				minPeriod = obsSac.getValue(SACHeaderEnum.USER0) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER0);
 				maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
-
+				
 				Station station = obsSac.getStation();
 
 				for (TimewindowInformation window : windows) {
@@ -440,7 +435,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double correctionRatio = ratio;
 					
 					Phase[] includePhases = window.getPhases();
-
+//					System.out.println(minPeriod+" "+maxPeriod);
 					obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
 					BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synData);
@@ -465,8 +460,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 */
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-					&& s.getComponent() == t.getComponent();
-
+					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
+			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
 	}

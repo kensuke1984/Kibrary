@@ -18,6 +18,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.function.Predicate;
@@ -243,6 +245,8 @@ public class LetMeInvert implements Operation {
 	private Path outPath;
 
 	private void setEquation() throws IOException {
+//		final int N_THREADS = Runtime.getRuntime().availableProcessors();
+//		ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 		// set partial matrix
 		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
@@ -280,6 +284,9 @@ public class LetMeInvert implements Operation {
 			dVector = new Dvector(ids, chooser, weightingType, lowerUpperMantleWeighting, atLeastThreeRecordsPerStation);
 			break;
 		case RECIPROCAL:
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
+			break;
+		case RECIPROCALEACHTRANSVERSE:
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
 			break;
 		case TAKEUCHIKOBAYASHI:
@@ -611,6 +618,41 @@ public class LetMeInvert implements Operation {
 		variance[0] = eq.getDVector().getVariance();
 		for (int i = 0; i < eq.getMlength(); i++)
 			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+		writeDat(out, variance);
+		if (alpha == null)
+			return;
+		for (int i = 0; i < alpha.length; i++) {
+			out = outPath.resolve("aic" + i + ".txt");
+			double[] aic = computeAIC(variance, alpha[i]);
+			writeDat(out, aic);
+		}
+		writeDat(outPath.resolve("aic.inf"), alpha);
+	}
+	
+	/**
+	 * outDirectory下にvarianceを書き込む
+	 * T only, R onlyのvarianceも書き込む
+	 * @param outPath
+	 */
+	private void outVariance2(Path outPath, InverseProblem inverse) throws IOException {
+
+		Path out = outPath.resolve("variance.txt");
+		Path out_Tonly = outPath.resolve("variance_T.txt");
+		Path out_Ronly = outPath.resolve("variance_R.txt");
+		if (Files.exists(out))
+			throw new FileAlreadyExistsException(out.toString());
+		if (Files.exists(out_Tonly))
+			throw new FileAlreadyExistsException(out_Tonly.toString());
+		if (Files.exists(out_Ronly))
+			throw new FileAlreadyExistsException(out_Ronly.toString());
+		double[] variance = new double[eq.getMlength() + 1];
+		double[] variance_T = new double[eq.getMlength() + 1];
+		double[] variance_R = new double[eq.getMlength() + 1];
+		variance[0] = eq.getDVector().getVariance();
+		for (int i = 0; i < eq.getMlength(); i++) {
+			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+//			if (eq.)
+		}	
 		writeDat(out, variance);
 		if (alpha == null)
 			return;

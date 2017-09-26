@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -243,9 +244,50 @@ public final class Utilities {
      * @throws IOException if an I/O error occurs
      */
     public static Set<SpcFileName> collectSpcFileName(Path path) throws IOException {
-        try (Stream<Path> stream = Files.list(path)) {
-            return stream.filter(SpcFileName::isSpcFileName).map(SpcFileName::new).collect(Collectors.toSet());
-        }
+    	Set<SpcFileName> set = new HashSet<SpcFileName>();
+		try (Stream<Path> stream = Files.list(path)) {
+			stream.filter(SpcFileName::isSpcFileName)
+				  .forEach(p -> set.add(new SpcFileName(p)));
+		}
+		return set;
+//		try (Stream<Path> stream = Files.list(path)) {
+//            return stream.filter(SpcFileName::isSpcFileName)
+//            		.map(SpcFileName::new)
+//            		.collect(Collectors.toSet());
+//        }
+	}
+    
+    /**
+     * @param path {@link Path} to look for {@link SpcFileName} in
+     * @return set of {@link SpcFileName} in the dir
+     * @throws IOException if an I/O error occurs
+     */
+    public static Set<SpcFileName> collectSHSpcFileName(Path path) throws IOException {
+    	Set<SpcFileName> set = new HashSet<>();
+		try (Stream<Path> stream = Files.list(path)) {
+			stream.filter(SpcFileName::isSpcFileName)
+				  .filter(p -> p.toString().endsWith("SH.spc"))
+				  .forEach(p -> set.add(new SpcFileName(p)));
+		}
+		return set;
+//		try (Stream<Path> stream = Files.list(path)) {
+//            return stream.filter(SpcFileName::isSpcFileName).map(SpcFileName::new).collect(Collectors.toSet());
+//        }
+    }
+    
+    /**
+     * @param path {@link Path} to look for {@link SpcFileName} in
+     * @return set of {@link SpcFileName} in the dir
+     * @throws IOException if an I/O error occurs
+     */
+    public static Set<SpcFileName> collectPSVSpcFileName(Path path) throws IOException {
+    	Set<SpcFileName> set = new HashSet<>();
+		try (Stream<Path> stream = Files.list(path)) {
+			stream.filter(SpcFileName::isSpcFileName)
+				  .filter(p -> p.toString().endsWith("PSV.spc"))
+				  .forEach(p -> set.add(new SpcFileName(p)));
+		}
+		return set;
     }
 
     /**

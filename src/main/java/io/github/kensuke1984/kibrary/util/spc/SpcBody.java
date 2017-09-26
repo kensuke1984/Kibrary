@@ -35,7 +35,7 @@ public class SpcBody {
 	 * 
 	 * @return DEEP copy of this
 	 */
-	SpcBody copy() {
+	public SpcBody copy() {
 		SpcBody s = new SpcBody(nComponent, np);
 		s.nptsInTimeDomain = nptsInTimeDomain;
 		s.spcComponents = new SpcComponent[nComponent];

@@ -396,7 +396,7 @@ public class SACMaker implements Runnable {
 	private int npts;
 
 	private void setInformation() {
-		station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition(), "DSM");
+		station = new Station(primeSPC.getObserverName(), primeSPC.getObserverPosition(), "DSM");
 		path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
 		if (globalCMTID != null)
 			try {

@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 //import io.github.kensuke1984.kibrary.VelocityField;
@@ -35,13 +36,13 @@ import org.apache.commons.math3.linear.RealVector;
 public class Sensitivity {
 	
 	public static void main(String[] args) throws IOException {
-		if (args.length != 8) {
-			System.err.println("usage: path to \"HOME\" directory, relative path from \"HOME\" directory to outputfile,"
-					+ "relative path from \"HOME\" to ");
-			throw new IllegalArgumentException();
-		}	
-		double minDistance = 65;
-		double maxDistance = 105;
+//		if (args.length != 8) {
+//			System.err.println("usage: path to \"HOME\" directory, relative path from \"HOME\" directory to outputfile,"
+//					+ "relative path from \"HOME\" to ");
+//			throw new IllegalArgumentException();
+//		}	
+		double minDistance = 0;
+		double maxDistance = 100;
 		int[] npts = new int[] {131072, 262144};
 		Path eventPath = Paths.get(args[0]);
 		System.out.println(eventPath);
@@ -63,6 +64,7 @@ public class Sensitivity {
 					(obs, syn) -> {
 						double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(
 								stationInformation.stream().filter(sta -> sta.equals(obs.getStation())).findAny().get().getPosition())*180/Math.PI;
+						
 						if (distance < minDistance || distance > maxDistance) {
 							return 0;
 						}
@@ -120,6 +122,7 @@ public class Sensitivity {
 		return weight;
 	}
 	
+	//phase毎のsensitivityを足しあわせ
 	public static Map<Phases, Double> sensitivityPerWindowType(PartialID[] ids) {
 		Map<Phases, Double> typeSensitivityMap = new HashMap<>();
 		for (PartialID id : ids) {

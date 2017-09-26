@@ -80,6 +80,8 @@ public class ObservationEquation {
 	private List<UnknownParameter> originalParameterList;
 	private List<UnknownParameter> parameterList;
 	private Dvector dVector;
+	private Dvector dVector_T;
+	private Dvector dVector_R;
 
 	public int getDlength() {
 		return dVector.getNpts();
@@ -111,6 +113,14 @@ public class ObservationEquation {
 	 * @return あたえたｍに対してのvarianceを計算する
 	 */
 	public double varianceOf(RealVector m) {
+		Objects.requireNonNull(m);
+		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
+		double variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+				+ m.dotProduct(getAtA().operate(m));
+		return variance / obs2;
+	}
+	
+	public double variance_TOf(RealVector m) {
 		Objects.requireNonNull(m);
 		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
 		double variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
@@ -179,7 +189,7 @@ public class ObservationEquation {
 		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
 			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
-					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + 2)");  
+					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + "+ n +" )");  
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
 		if (nUnknowns != -1) {

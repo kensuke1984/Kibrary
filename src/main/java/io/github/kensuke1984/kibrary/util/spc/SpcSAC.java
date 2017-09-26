@@ -73,6 +73,8 @@ public final class SpcSAC implements Operation {
 			property.setProperty("modelName", "");
 		if (!property.containsKey("partialWaveform"))
 			property.setProperty("partialWaveform", "false");
+		if (!property.containsKey("partialTypes"))
+			property.setProperty("partialTypes", "PAR2");
 	}
 
 	private void set() throws IOException {
@@ -114,6 +116,9 @@ public final class SpcSAC implements Operation {
 		computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
 		
 		partialWaveform = Boolean.parseBoolean(property.getProperty("partialWaveform"));
+		
+		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
+				.collect(Collectors.toSet());
 
 		samplingHz = 20; // TODO
 	}
@@ -158,6 +163,8 @@ public final class SpcSAC implements Operation {
 	 * You should set partial type, if you want to compute 1D partial waveform.
 	 */
 	private PartialType partialType;
+	
+	private Set<PartialType> partialTypes;
 
 
 	/**
@@ -288,9 +295,13 @@ public final class SpcSAC implements Operation {
 			for (SpcFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
 				SpectrumFile one = SpectrumFile.getInstance(spc);
 				Files.createDirectories(outPath.resolve(spc.getSourceID()));
-				if (partialWaveform)
-					Files.createDirectories(outPath.resolve(spc.getSourceID()).resolve("partialWaveform"));
-				execs.execute(createSACMaker(one, null));
+				if (partialWaveform) {
+					for (PartialType partialType : partialTypes) {
+						Files.createDirectories(outPath.resolve(spc.getSourceID()).resolve("partialWaveform_"+partialType));
+						execs.execute(createPartialSACMaker(one, null, partialType));
+					}
+				}
+				
 			}
 
 		// both
@@ -304,7 +315,14 @@ public final class SpcSAC implements Operation {
 				}
 				SpectrumFile two = SpectrumFile.getInstance(pairFile(spc));
 				Files.createDirectories(outPath.resolve(spc.getSourceID()));
-				execs.execute(createSACMaker(one, two));
+				if (partialWaveform) {
+					for (PartialType partialType : partialTypes) {
+						Files.createDirectories(outPath.resolve(spc.getSourceID()).resolve("partialWaveform_"+partialType));
+						execs.execute(createPartialSACMaker(one, two, partialType));
+					}
+				}
+				else if (!partialWaveform)
+					execs.execute(createSACMaker(one, two));
 			}
 
 		execs.shutdown();
@@ -367,6 +385,34 @@ public final class SpcSAC implements Operation {
 		if (partialWaveform){
 			try {
 				sm.outputPAR(outPath.resolve(primeSPC.getSourceID()).resolve("partialWaveform"));
+			} catch (IOException e) {
+				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+			}
+		}
+		return sm;
+	}
+	
+	/**
+	 * 二つのspc(sh, psv)から PartialのSacMakerを作る {@link SACMaker}
+	 * 
+	 * @param primeSPC
+	 * 
+	 * @param secondarySPC
+	 *            null is ok
+	 * @return {@link SACMaker}
+	 */
+	private SACMaker createPartialSACMaker(SpectrumFile primeSPC, SpectrumFile secondarySPC, PartialType partialType) {
+		SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
+				new GlobalCMTID(primeSPC.getSourceID()));
+		SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction);
+		sm.setComponents(components);
+		sm.setTemporalDifferentiation(computesPartial);
+		sm.setOutPath(outPath.resolve(primeSPC.getSourceID()));
+		if (partialWaveform){
+			try {
+				if (primeSPC.getSpcFileType().toString().equals(partialType.toString()))
+					sm.outputPAR(outPath.resolve(primeSPC.getSourceID()).resolve("partialWaveform_"+primeSPC.getSpcFileType()));
 			} catch (IOException e) {
 				// TODO 自動生成された catch ブロック
 				e.printStackTrace();

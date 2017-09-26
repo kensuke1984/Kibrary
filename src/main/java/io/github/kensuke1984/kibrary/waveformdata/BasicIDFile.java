@@ -166,11 +166,11 @@ public final class BasicIDFile {
 			Station[] stations = new Station[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
-			Phase[] phases = new Phase[dis.readShort()];
+			Phase[] phases = new Phase[dis.readShort()];	//TODO
 			System.out.println("station number is " + stations.length);
 			System.out.println("cmtID number is " + cmtIDs.length);
 			System.out.println("period range number is " + periodRanges.length);
-			System.out.println("phase number is " + phases.length);
+			System.out.println("number of phases is " + phases.length);
 			int headerBytes = 2 * 4 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
 					+ 16 * phases.length + 4 * 2 * periodRanges.length;
 			long idParts = fileSize - headerBytes;

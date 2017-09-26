@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.ArrayList;
@@ -44,19 +47,24 @@ public final class FujiConversion {
 		if (spectrum.getSpcFileType() != SpcFileType.PAR2)
 			throw new RuntimeException();
 
-		int nbody = spectrum.nbody();
-		int np = spectrum.np();
-		double tlen = spectrum.tlen();
+		final int nbody = spectrum.nbody();
+		final int np = spectrum.np();
+		final double tlen = spectrum.tlen();
 		List<SpcBody> spcBodyList = new ArrayList<>(nbody);
+		SpcFileName spcFileName = spectrum.getSpcFileName();
 
 		// data part
 		double omegai = spectrum.omegai();
 		HorizontalPosition observerPosition = spectrum.getObserverPosition();
 		String observerID = spectrum.getObserverID();
+		String observerName = spectrum.getObserverName();
+		String observerNetwork = spectrum.getObserverNetwork();
 		Location sourceLocation = spectrum.getSourceLocation();
 		String sourceID = spectrum.getSourceID();
 		double[] bodyR = spectrum.getBodyR();
-		double omega0 = spectrum.tlen(); // TODO
+		double domega = 1. / spectrum.tlen() * 2. * Math.PI;
+		double omega0 = 1. * 2. * Math.PI; //Hz
+//		double omega0 = spectrum.tlen(); // TODO
 		for (int i = 0; i < spectrum.nbody(); i++) {
 			double r = bodyR[i];
 			double q = 1 / structure.getQmuAt(r);
@@ -65,7 +73,7 @@ public final class FujiConversion {
 			SpcBody newBody = new SpcBody(3, np);
 			for (int ip = 0; ip < np + 1; ip++) {
 				Complex[] uQ = new Complex[body.getNumberOfComponent()];
-				double omegaOverOmega0 = (ip + 1) / omega0;
+				double omegaOverOmega0 = (ip + 1) * domega / omega0;
 				for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
 					Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
 							.getValueInFrequencyDomain()[ip];
@@ -73,14 +81,18 @@ public final class FujiConversion {
 					double dmudmu0Real = (1 + q * log);
 					Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
 					Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
-					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
+					
+//					partials with respect to large Q
+//					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
+					
+//					partials with respect to small q
+					uQ[iComponent] = u.multiply(dmudq).divide(dmudmu0);
 				}
 				newBody.add(ip, uQ);
 			}
 			spcBodyList.add(newBody);
 		}
-
-		return new DSMOutput() {
+		DSMOutput dsmoutput = new DSMOutput() {
 
 			@Override
 			public double tlen() {
@@ -131,12 +143,29 @@ public final class FujiConversion {
 			public String getObserverID() {
 				return observerID;
 			}
+			
+			@Override
+			public String getObserverName() {
+				return observerName;
+			}
+			
+			@Override
+			public String getObserverNetwork() {
+				return observerNetwork;
+			}
 
 			@Override
 			public double[] getBodyR() {
 				return bodyR;
 			}
+			
+			@Override
+			public SpcFileName getSpcFileName() {
+				return spcFileName;
+			}
 		};
+
+		return dsmoutput;
 	}
 
 }

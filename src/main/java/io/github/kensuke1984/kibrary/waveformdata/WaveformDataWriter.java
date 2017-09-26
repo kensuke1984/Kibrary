@@ -254,6 +254,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 //        System.out.println(basicID.ID);
         idStream.writeByte(basicID.COMPONENT.valueOf());
 //        System.out.println(basicID.COMPONENT);
+//        System.out.println(basicID.MIN_PERIOD+" "+ basicID.MAX_PERIOD);
         idStream.writeByte(getIndexOfRange(basicID.MIN_PERIOD, basicID.MAX_PERIOD));
 //        System.out.println(basicID.MIN_PERIOD+" "+ basicID.MAX_PERIOD);
         

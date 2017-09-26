@@ -44,7 +44,18 @@ public interface DSMOutput {
 	/**
 	 * @return ID of an observer
 	 */
+	@Deprecated
 	String getObserverID();
+	
+	/**
+	 * @return Station
+	 */
+	String getObserverName();
+	
+	/**
+	 * @return Network
+	 */
+	String getObserverNetwork();
 
 	/**
 	 * @return HorizontalPosition of an observer.
@@ -70,5 +81,7 @@ public interface DSMOutput {
 	 * @return SpcFileType of this
 	 */
 	SpcFileType getSpcFileType();
+	
+	SpcFileName getSpcFileName();
 
 }

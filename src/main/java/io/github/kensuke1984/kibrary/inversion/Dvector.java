@@ -196,6 +196,13 @@ public class Dvector {
 		switch (weigthingType) {
 		case RECIPROCAL:
 			this.weightingFunction = (obs, syn) -> {
+				
+				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
+		case RECIPROCALEACHTRANSVERSE:
+			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
@@ -519,6 +526,9 @@ public class Dvector {
 			case RECIPROCAL:
 				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
 				break;
+			case RECIPROCALEACHTRANSVERSE:
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
 			case IDENTITY:
 				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
 				break;
@@ -615,22 +625,32 @@ public class Dvector {
 		// 観測波形の抽出 list observed IDs
 		List<BasicID> obsList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.OBS)
 				.filter(chooser::test).collect(Collectors.toList());
+		
+		System.out.println("OBS list size is "+obsList.size());
 
 		// 重複チェック 重複が見つかればここから進まない
-		for (int i = 0; i < obsList.size(); i++)
+//		for (int i = 0; i < obsList.size(); i++)
+		for (int i = 0; i < obsList.size() - 1; i++)
 			for (int j = i + 1; j < obsList.size(); j++)
-				if (obsList.get(i).equals(obsList.get(j)))
+				if (obsList.get(i).equals(obsList.get(j))) {
+					System.out.println(obsList.get(i)+" "+obsList.get(j));
 					throw new RuntimeException("Duplicate observed detected");
+				}
 
 		// 理論波形の抽出
 		List<BasicID> synList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.SYN)
 				.filter(chooser::test).collect(Collectors.toList());
+		
+		System.out.println("SYN list size is "+synList.size());
 
 		// 重複チェック
 		for (int i = 0; i < synList.size() - 1; i++)
+//		for (int i = 0; i < synList.size(); i++)
 			for (int j = i + 1; j < synList.size(); j++)
-				if (synList.get(i).equals(synList.get(j)))
+				if (synList.get(i).equals(synList.get(j))) {
+					System.out.println(synList.get(i)+"\n"+synList.get(j));
 					throw new RuntimeException("Duplicate synthetic detected");
+				}
 
 		// System.out.println("There are "+synList.size()+" synthetic IDs");
 

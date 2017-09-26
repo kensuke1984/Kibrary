@@ -72,18 +72,19 @@ public class SpcFileName extends File {
 		return SpcFileType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
 	}
 
+	@Deprecated
 	private static String getObserverID(String fileName) {
 		return fileName.split("\\.")[0];
 	}
 	
 	private static String getObserverName(String fileName) {
- 		return fileName.split("\\.")[0].split("_")[0];
- 	}
- 	
-  	private static String getObserverNetwork(String fileName) {
-  		return fileName.split("\\.")[0].split("_")[1];
-  	}
-
+		return fileName.split("\\.")[0];
+	}
+	
+	private static String getObserverNetwork(String fileName) {
+		return fileName.split("\\.")[0];
+	}
+	
 	private static String getX(String fileName) {
 		String[] parts = fileName.split("\\.");
 		return parts.length != 7 ? null : parts[3];
@@ -93,10 +94,6 @@ public class SpcFileName extends File {
 		String[] parts = fileName.split("\\.");
 		return parts.length != 7 ? null : parts[4];
 	}
-	
-//	public String getObserverString() {
-//		 return observerName + "_" + observerNetwork;
-//	}
 
 	/**
 	 * @param fileName
@@ -108,17 +105,18 @@ public class SpcFileName extends File {
 		return fileName.endsWith("PSV.spc") ? SpcFileComponent.PSV : SpcFileComponent.SH;
 	}
 
+	@Deprecated
 	private String observerID;
 	
 	/**
- 	 * Station name
- 	 */
- 	private String observerName;
- 	
- 	/**
- 	 * Network name
- 	 */
- 	private String observerNetwork;
+	 * Station name
+	 */
+	private String observerName;
+	
+	/**
+	 * Network name
+	 */
+	private String observerNetwork;
 
 	/**
 	 * PB: backward or PF: forward, PAR2: mu
@@ -179,11 +177,14 @@ public class SpcFileName extends File {
 		sourceID = getEventID(fileName);
 		observerID = getObserverID(fileName);
 		fileType = getFileType(fileName);
+		observerName = getObserverName(fileName);
+		if (fileType.equals(SpcFileType.PB) || fileType.equals(SpcFileType.PF))
+			observerNetwork = null;
+		else
+			observerNetwork = getObserverNetwork(fileName);
 		mode = getMode(fileName);
 		x = getX(fileName);
 		y = getY(fileName);
-//		observerNetwork = getObserverNetwork(fileName);
-		
 	}
 
 	public DSMOutput read() throws IOException {
@@ -228,10 +229,22 @@ public class SpcFileName extends File {
 			return false;
 		}
 
-		if (8 < getObserverID(name).length()) {
-			System.err.println("Name of station cannot be over 8 characters.");
-			return false;
+		if (parts.length == 3) {
+			// synthetics have both station name and network name
+			if (8 < getObserverName(name).length()) {
+				System.err.println(getObserverName(name) + "Name of station cannot be over 8 characters");
+			}
+			if (8 < getObserverNetwork(name).length()) {
+				System.err.println(getObserverNetwork(name) + "Name of network cannot be over 8 characters");
+			}
 		}
+		else {
+			// bp and fp waveforms have only a station name
+			if (8 < getObserverName(name).length()) {
+				System.err.println(getObserverName(name) + "Name of station cannot be over 8 characters");
+			}
+		}
+		
 
 		return true;
 	}
@@ -243,7 +256,24 @@ public class SpcFileName extends File {
 	public String getObserverID() {
 		return observerID;
 	}
+	
+	public String getObserverName() {
+		return observerName;
+	}
+	
+	public String getObserverNetwork() {
+		if (fileType.equals(SpcFileType.PB) || fileType.equals(SpcFileType.PF))
+			throw new RuntimeException("PB and PF waveforms have no network");
+		return observerNetwork;
+	}
 
+	public String getObserverString() {
+		if (fileType.equals(SpcFileType.PB) || fileType.equals(SpcFileType.PF))
+			return observerName;
+		else
+			return observerName + "_" + observerNetwork;
+	}
+	
 	public String getX() {
 		return x;
 	}
@@ -251,18 +281,6 @@ public class SpcFileName extends File {
 	public String getY() {
 		return y;
 	}
-	
-	public String getObserverString() {
-		return observerName + "_" + observerNetwork;
-	}
-	
-	public String getObserverName() {
- 		return observerName;
- 	}
- 	
- 	public String getObserverNetwork() {
-  		return observerNetwork;
-  	}
 
 	/**
 	 * @return 理論波形（非偏微分波形）かどうか
