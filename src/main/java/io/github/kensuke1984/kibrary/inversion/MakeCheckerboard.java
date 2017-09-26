@@ -15,6 +15,9 @@ import io.github.kensuke1984.kibrary.util.Location;
 public class MakeCheckerboard {
 
 	public static void main(String[] args) {
+		System.out.println("dV = " + dV(1., 3505., PolynomialStructure.PREM));
+		System.exit(0);
+		
 		Path parameterPath = Paths.get(args[0]);
 		Path horizontalSignFile = Paths.get(args[1]);
 		int nR = Integer.parseInt(args[2]);
@@ -57,5 +60,9 @@ public class MakeCheckerboard {
 		return structure.getRhoAt(r) * v * v 
 				* (1 + dv) * (1 + dv) 
 				- structure.computeMu(r);
+	}
+	
+	private static double dV(double dMU, double r, PolynomialStructure structure) {
+		return Math.sqrt((structure.computeMu(r) + dMU) / structure.getRhoAt(r)) / structure.getVshAt(r) - 1;
 	}
 }

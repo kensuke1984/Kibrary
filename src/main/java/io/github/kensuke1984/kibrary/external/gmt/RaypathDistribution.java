@@ -190,7 +190,8 @@ public class RaypathDistribution implements Operation {
 		outputStation();
 		if (drawsPath) {
 			outputRaypath();
-			outputTurningPoint();
+//			outputTurningPoint();
+			outputRaypathInside_divide();
 		}
 		outputGMT();
 	}
@@ -251,7 +252,7 @@ public class RaypathDistribution implements Operation {
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getStation().getPosition();
-					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "ak135", Phase.S)
+					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "ak135", Phase.ScS)
 						.get(0);
 					Location turningPoint = info.getTurningPoint();
 					lines.add(String.format("%.2f %.2f %.2f"
@@ -261,6 +262,68 @@ public class RaypathDistribution implements Operation {
 				});
 		
 		Files.write(turningPointPath, lines);
+	}
+	
+	private void outputRaypathInside_divide() throws IOException {
+		List<String> lines_western = new ArrayList<>();
+		List<String> lines_central = new ArrayList<>();
+		List<String> lines_eastern = new ArrayList<>();
+		
+		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+			try {
+				return eventDir.sacFileSet().stream();
+			} catch (Exception e) {
+				return Stream.empty();
+			}
+		}).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
+				.map(name -> {
+					try {
+						return name.readHeader();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return null;
+					}
+				}).filter(Objects::nonNull)
+				.forEach(headerData -> {
+					Location eventLocation = headerData.getEventLocation();
+					HorizontalPosition stationPosition = headerData.getStation().getPosition();
+					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS);
+					Info info = null;
+					if (infoList.size() > 0) {
+						info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS)
+						.get(0);
+						Location enterDpp = info.getEnterDppPoint();
+						Location leaveDpp = info.getLeaveDppPoint();
+						if (stationPosition.getLongitude() >= -130 && stationPosition.getLongitude() <= -110)
+							lines_western.add(String.format("%.2f %.2f %.2f %.2f"
+								, enterDpp.getLatitude()
+								, enterDpp.getLongitude()
+								, leaveDpp.getLatitude()
+								, leaveDpp.getLongitude()
+								));
+						else if (stationPosition.getLongitude() > -110 && stationPosition.getLongitude() <= -90)
+							lines_central.add(String.format("%.2f %.2f %.2f %.2f"
+									, enterDpp.getLatitude()
+									, enterDpp.getLongitude()
+									, leaveDpp.getLatitude()
+									, leaveDpp.getLongitude()
+									));
+						else if (stationPosition.getLongitude() > -90 && stationPosition.getLongitude() <= -70)
+							lines_eastern.add(String.format("%.2f %.2f %.2f %.2f"
+									, enterDpp.getLatitude()
+									, enterDpp.getLongitude()
+									, leaveDpp.getLatitude()
+									, leaveDpp.getLongitude()
+									));
+					}
+				});
+		
+		Path path_western = workPath.resolve("raypathInside_western.inf");
+		Path path_central = workPath.resolve("raypathInside_central.inf");
+		Path path_eastern = workPath.resolve("raypathInside_eastern.inf");
+		Files.write(path_western, lines_western);
+		Files.write(path_central, lines_central);
+		Files.write(path_eastern, lines_eastern);
 	}
 	
 	private GMTMap createBaseMap() {

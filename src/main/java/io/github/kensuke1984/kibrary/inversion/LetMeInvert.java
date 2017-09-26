@@ -118,6 +118,14 @@ public class LetMeInvert implements Operation {
 	private double minDistance;
 	
 	private double maxDistance;
+	
+	private double minLongitude;
+	
+	private double maxLongitude;
+	
+	private double minMw;
+	
+	private double maxMw;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -152,6 +160,14 @@ public class LetMeInvert implements Operation {
 			property.setProperty("minDistance", "0.");
 		if (!property.containsKey("maxDistance"))
 			property.setProperty("maxDistance", "360.");
+		if (!property.containsKey("minLongitude"))
+			property.setProperty("minLongitude", "-180.");
+		if (!property.containsKey("maxLongitude"))
+			property.setProperty("maxLongitude", "360.");
+		if (!property.containsKey("minMw"))
+			property.setProperty("minMw", "0.");
+		if (!property.containsKey("maxMw"))
+			property.setProperty("maxMw", "10.");
 	}
 
 	private void set() {
@@ -238,6 +254,10 @@ public class LetMeInvert implements Operation {
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
+		minLongitude = Double.parseDouble(property.getProperty("minLongitude"));
+		maxLongitude = Double.parseDouble(property.getProperty("maxLongitude"));
+		minMw = Double.parseDouble(property.getProperty("minMw"));
+		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 	}
 
 	/**
@@ -299,6 +319,10 @@ public class LetMeInvert implements Operation {
 			pw.println("#minDistance ");
 			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
 			pw.println("#maxDistance ");
+			pw.println("#minLongitude");
+			pw.println("#maxLongitude");
+			pw.println("#minMw");
+			pw.println("#maxMw");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -355,9 +379,16 @@ public class LetMeInvert implements Operation {
 				double distance = id.getGlobalCMTID().getEvent()
 						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 						* 180. / Math.PI;
-				if (distance >= minDistance && distance <= maxDistance)
-					return true;
-				return false;
+				double longitude = id.getStation().getPosition().getLongitude();
+				double mw = id.getGlobalCMTID().getEvent().getCmt().getMw();
+//				System.out.println(longitude + " " + minLongitude + " " + maxLongitude);
+				if (distance < minDistance || distance > maxDistance)
+					return false;
+				if (longitude < minLongitude || longitude > maxLongitude)
+					return false;
+				if (mw < minMw || mw > maxMw)
+					return false;
+				return true;
 			};
 		
 		// set Dvector
@@ -756,6 +787,14 @@ public class LetMeInvert implements Operation {
 	private double[] computeAIC(double[] variance, double alpha) {
 		double[] aic = new double[variance.length];
 		int independentN = (int) (eq.getDlength() / alpha);
+		for (int i = 0; i < aic.length; i++)
+			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
+		return aic;
+	}
+	
+	public static double[] computeAIC(double[] variance, double alpha, double minPeriod, double npts) {
+		double[] aic = new double[variance.length];
+		int independentN = (int) (npts / alpha / minPeriod);
 		for (int i = 0; i < aic.length; i++)
 			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
 		return aic;

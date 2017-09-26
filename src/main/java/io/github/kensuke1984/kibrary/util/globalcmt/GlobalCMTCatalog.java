@@ -29,7 +29,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * @author Kensuke Konishi
  * 
  */
-final class GlobalCMTCatalog {
+final public class GlobalCMTCatalog {
 
 	/**
 	 * 読み込んだNDK
@@ -85,7 +85,7 @@ final class GlobalCMTCatalog {
 	}
 
 	static {
-		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 NDK_CMT_2step.catalog globalcmt
+		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 NDK_CMT_2step globalcmt NDK_no_rm200503211243A NDK_LSTF_rm200503211243A
 		Set<NDK> readSet = readJar(tmpCatalog);
 		if (null == readSet) {
 			Path catalogPath = selectCatalogFile();
@@ -135,7 +135,7 @@ final class GlobalCMTCatalog {
 		return NDKs;
 	}
 	
-	static String getCatalogID() {
+	public static String getCatalogID() {
 		return catalogID;
 	}
 }

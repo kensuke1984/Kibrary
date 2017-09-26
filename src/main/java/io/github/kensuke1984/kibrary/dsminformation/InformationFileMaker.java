@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 
 /**
@@ -261,7 +262,9 @@ public class InformationFileMaker implements Operation {
 
 		// reading station information
 		Set<Station> stationSet = StationInformationFile.read(stationInformationPath);
-
+		
+		System.out.println("CMT catalogue: " + GlobalCMTCatalog.getCatalogID());
+		
 		// System.exit(0);
 		// //////////////////////////////////////
 		System.out.println("making information files for the events(fp)");

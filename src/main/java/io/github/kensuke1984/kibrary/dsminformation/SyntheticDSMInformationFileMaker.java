@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -158,6 +159,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 
 		Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
+		
+		System.out.println("CMT catalogue: " + GlobalCMTCatalog.getCatalogID());
 		
 		//synthetic station set
 //		Set<Station> synStationSet = IntStream.range(1, 111).mapToObj(i -> new Station(String.format("%03d", i), new HorizontalPosition(0, i), "SYN"))

@@ -430,7 +430,7 @@ public class ObservationEquation {
 					double deltaR = originalDeltaR * nOriginal / nNewPerturbationR;
 					
 					//debug
-					System.out.println("DEBUG1: " + originalDeltaR + " " + maxR + " " + minR + " " + deltaR + " " + nNewPerturbationR);
+//					System.out.println("DEBUG1: " + originalDeltaR + " " + maxR + " " + minR + " " + deltaR + " " + nNewPerturbationR);
 					//
 					
 					double[] newPerturbationR = new double[nNewPerturbationR];
@@ -482,7 +482,7 @@ public class ObservationEquation {
 									+ " " + parameterList.get(i).getWeighting() + ", ";
 						}
 						s += ": " + newLoc + " " + w;
-						System.out.println("DEBUG2: " + s);
+//						System.out.println("DEBUG2: " + s);
 					}
 					//
 					
@@ -572,23 +572,23 @@ public class ObservationEquation {
 		System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
 		
 		//for Sci. Adv. revisions
-		double sensitivityDpp = 0;
-		double sensitivityUM = 0;
-		int nDpp = 0;
-		int nUM = 0;
-		for (int j = 0; j < a.getColumnDimension(); j++) {
-			if (parameterList.get(j).getLocation().getR() > 5721) {
-				sensitivityUM += a.getColumnVector(j).getNorm();
-				nUM++;
-			}
-			else {
-				sensitivityDpp += a.getColumnVector(j).getNorm();
-				nDpp++;
-			}
-		}
-		sensitivityUM /= nUM;
-		sensitivityDpp /= nDpp;
-		System.out.println("(for Sci. Adv) upper mantle partials amplification factor = " + (sensitivityDpp / sensitivityUM));
+//		double sensitivityDpp = 0;
+//		double sensitivityUM = 0;
+//		int nDpp = 0;
+//		int nUM = 0;
+//		for (int j = 0; j < a.getColumnDimension(); j++) {
+//			if (parameterList.get(j).getLocation().getR() > 5721) {
+//				sensitivityUM += a.getColumnVector(j).getNorm();
+//				nUM++;
+//			}
+//			else {
+//				sensitivityDpp += a.getColumnVector(j).getNorm();
+//				nDpp++;
+//			}
+//		}
+//		sensitivityUM /= nUM;
+//		sensitivityDpp /= nDpp;
+//		System.out.println("(for Sci. Adv) upper mantle partials amplification factor = " + (sensitivityDpp / sensitivityUM));
 //		for (int j = 0; j < a.getColumnDimension(); j++) {
 //			if (parameterList.get(j).getLocation().getR() > 5721)
 //				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(sensitivityDpp / sensitivityUM));
