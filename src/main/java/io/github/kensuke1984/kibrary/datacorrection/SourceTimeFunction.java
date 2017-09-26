@@ -56,6 +56,30 @@ public class SourceTimeFunction {
 	 * @param halfDuration
 	 *            [s] of the source
 	 */
+	
+	public static void main(String[] args) {
+		int np = 32768;
+		double tlen = 3276.8;
+		double samplingHz = 20.;
+		double halfDuration = 3.;
+		
+		SourceTimeFunction boxcar = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+		SourceTimeFunction triangle = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+		SourceTimeFunction triangleA = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, halfDuration);
+		
+		Complex[] c1 = boxcar.getSourceTimeFunctionInFrequencyDomain();
+		Complex[] c2 = triangle.getSourceTimeFunctionInFrequencyDomain();
+//		for (int i = 0; i < c1.length; i++)
+//			System.out.println(c1[i].getReal() + " " + c2[i].getReal() + " , " + c1[i].getImaginary() + " " + c2[i].getImaginary());
+		
+		Trace trace1 = boxcar.getSourceTimeFunctionInTimeDomain();
+		Trace trace2 = triangle.getSourceTimeFunctionInTimeDomain();
+		Trace trace3 = triangleA.getSourceTimeFunctionInTimeDomain();
+		for (int i = 0; i < trace1.getLength(); i++)
+			if (trace1.getXAt(i) < 30)
+				System.out.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) + " " + trace3.getYAt(i));
+	}
+	
 	public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
 		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
@@ -73,6 +97,42 @@ public class SourceTimeFunction {
 		}
 		return sourceTimeFunction;
 	}
+	
+    /**
+     * ASYMMETRIC Triangle source time function
+     * @author lina
+//     * <p>
+//     * The width is determined by the half duration &tau;. <br>
+//     * f(t) = 1/&tau;<sup>2</sup> t + 1/&tau; (-&tau; &le; t &le; 0), -1/&tau;
+//     * <sup>2</sup> t + 1/&tau; (0 &le; t &le; &tau;), 0 (t &lt; -&tau;, &tau;
+//     * &lt; t) <br>
+//     * Source time function F(&omega;) = (2-2cos(2&pi;&omega;&tau;))
+//     * /(2&pi;&omega;&tau;)<sup>2</sup>
+     *
+     * @param np           the number of steps in frequency domain
+     * @param tlen         [s] time length
+     * @param samplingHz   [Hz]
+     * @param halfDuration [s] of the source
+     */
+    public static SourceTimeFunction asymmetrictriangleSourceTimeFunction(int np, double tlen, double samplingHz,
+                                                                double halfDuration1, double halfDuration2) {
+        SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
+            @Override
+            public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+                return sourceTimeFunction;
+            }
+        };
+        sourceTimeFunction.sourceTimeFunction = new Complex[np];
+        double deltaF = 1.0 / tlen;
+        double h = 2. /(halfDuration1 + halfDuration2);
+        for (int i = 0; i < np; i++) {
+        	 double omega = (i + 1) * 2. * Math.PI * deltaF;
+        	 sourceTimeFunction.sourceTimeFunction[i]
+        			 =new Complex(1.*h/omega/omega*(1./halfDuration1 + 1./halfDuration2 - Math.cos(omega*halfDuration1)/halfDuration1 - Math.cos(omega*halfDuration2)/halfDuration2),
+        					 -1.*h/omega/omega*(Math.sin(omega*halfDuration1)/halfDuration1 - Math.sin(omega*halfDuration2)/halfDuration2));
+        }
+        return sourceTimeFunction;
+    } 
 	
 //	public static final SourceTimeFunction gaussianSourceTimeFunction() {
 //		
@@ -98,7 +158,12 @@ public class SourceTimeFunction {
 	 */
 	public static final SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
-		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz);
+		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
+			@Override
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+				return sourceTimeFunction;
+			}
+		};
 		sourceTimeFunction.sourceTimeFunction = new Complex[np];
 		final double deltaF = 1.0 / tlen; // omega
 		final double constant = 2 * Math.PI * deltaF * halfDuration;
