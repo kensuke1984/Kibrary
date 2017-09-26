@@ -430,7 +430,7 @@ public class ObservationEquation {
 					double deltaR = originalDeltaR * nOriginal / nNewPerturbationR;
 					
 					//debug
-//					System.out.println("DEBUG1: " + originalDeltaR + " " + maxR + " " + minR + " " + deltaR + " " + nNewPerturbationR);
+					System.out.println("DEBUG1: " + originalDeltaR + " " + maxR + " " + minR + " " + deltaR + " " + nNewPerturbationR);
 					//
 					
 					double[] newPerturbationR = new double[nNewPerturbationR];
@@ -482,7 +482,7 @@ public class ObservationEquation {
 									+ " " + parameterList.get(i).getWeighting() + ", ";
 						}
 						s += ": " + newLoc + " " + w;
-//						System.out.println("DEBUG2: " + s);
+						System.out.println("DEBUG2: " + s);
 					}
 					//
 					
@@ -562,14 +562,16 @@ public class ObservationEquation {
 		}
 		meanAColumnNorm /= ntmp;
 		meanAQNorm /= ntmpQ;
-		for (int j = 0; j < a.getColumnDimension(); j++) {
-			if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
-				continue;
-			if (ntmp == 0 || ntmpQ == 0)
-				continue;
-			a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+		if (ntmpQ > 0) {
+			for (int j = 0; j < a.getColumnDimension(); j++) {
+				if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
+					continue;
+				if (ntmp == 0 || ntmpQ == 0)
+					continue;
+				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+			}
+			System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
 		}
-		System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
 		
 		//for Sci. Adv. revisions
 //		double sensitivityDpp = 0;
@@ -738,7 +740,7 @@ public class ObservationEquation {
 		});
 	}
 	
-	void outputSensitivity(Path outPath) throws IOException {
+	public void outputSensitivity(Path outPath) throws IOException {
 		if (a == null) {
 			System.out.println("no more A");
 			return;
@@ -762,6 +764,12 @@ public class ObservationEquation {
 				pw.println(unknown.getPartialType() + " " + unknown.getLocation() + " " + sMap.get(unknown));
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+	
+	public void outputUnkownParameterWeigths(Path outpath) throws IOException {
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+			
 		}
 	}
 

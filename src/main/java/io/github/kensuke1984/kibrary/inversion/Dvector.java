@@ -28,7 +28,6 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
-import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.Phases;
@@ -61,11 +60,11 @@ public class Dvector {
 		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
 		Predicate<BasicID> chooser = new Predicate<BasicID>() {
 			public boolean test(BasicID id) {
-//				double distance = id.getGlobalCMTID().getEvent().getCmtLocation()
-//						.getEpicentralDistance(id.getStation().getPosition())
-//						* 180. / Math.PI;
-//				if (distance > 100 || distance < 70)
-//					return false;
+				double distance = id.getGlobalCMTID().getEvent().getCmtLocation()
+						.getEpicentralDistance(id.getStation().getPosition())
+						* 180. / Math.PI;
+				if (distance > 100 || distance < 70)
+					return false;
 				return true;
 			}
 		};
@@ -79,7 +78,6 @@ public class Dvector {
 		dvector.outWeighting(weightingPath);
 		
 		System.out.println("Variance = " + dvector.getVariance());
-		System.out.println("NPTS = " + dvector.getNpts());
 	}
 	
 	/**
@@ -224,7 +222,7 @@ public class Dvector {
 	 *            must contain waveform data
 	 */
 	public Dvector(BasicID[] basicIDs) {
-		this(basicIDs, id -> true, WeightingType.IDENTITY);
+		this(basicIDs, id -> true, WeightingType.RECIPROCAL);
 	}
 
 	/**
@@ -252,9 +250,9 @@ public class Dvector {
 					System.err.println(obs);
 					return 0.;
 				}
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
-//						* weightingEpicentralDistanceDpp(obs)
-//						* weightingAzimuthDpp(obs);// * weightingEpicentralDistance(obs);
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
+						* weightingEpicentralDistanceDpp(obs)
+						* weightingAzimuthDpp(obs);// * weightingEpicentralDistance(obs);
 			};
 			break;
 		case IDENTITY:

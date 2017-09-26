@@ -122,17 +122,15 @@ public final class TauPPierceReader {
 
 	private static List<Info> toPhase(List<String> lines) {
 		List<Info> infos = new ArrayList<>();
-		if (lines == null || lines.size() == 0) {
+		if (lines == null) {
 			return Collections.emptyList();
 		}
-//		if (lines.size() % 2 != 0)
-//			throw new RuntimeException("Unreadable output of taup_pierce");
-//		for (int i = 0; i < lines.size() / 2; i++) {
-//			String[] tmpLines = new String[] {lines.get(2 * i).trim(), lines.get(2 * i + 1).trim()};
-//			infos.add(new Info(tmpLines));
-//		}
-		String[] tmpLines = new String[] {lines.get(0).trim(), lines.get(1).trim(), lines.get(2).trim(), lines.get(3).trim()};
-		infos.add(new Info(tmpLines));
+		if (lines.size() % 2 != 0)
+			throw new RuntimeException("Unreadable output of taup_pierce");
+		for (int i = 0; i < lines.size() / 2; i++) {
+			String[] tmpLines = new String[] {lines.get(2 * i).trim(), lines.get(2 * i + 1).trim()};
+			infos.add(new Info(tmpLines));
+		}
 		return infos;
 	}
 
@@ -153,16 +151,13 @@ public final class TauPPierceReader {
 	
 	private static String[] makeCMD(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
-//		System.out.println(phase);
-		if (!phase.trim().equals("ScS"))
-			throw new RuntimeException("Error: at the moment only ScS is supported for taup_pierce reader");
 		String cmd = path 
 				+ " -h " + (6371 - eventLocation.getR()) 
 				+ " -evt " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
 				+ " -sta " + stationPosition.getLatitude() + " " + stationPosition.getLongitude()
 				+ " -model " + model
 				+ " -ph " + phase 
-				+ " -pierce 2491,2891 -nodiscon";
+				+ " -turn";
 		return cmd.split("\\s+");
 	}
 	
@@ -171,34 +166,22 @@ public final class TauPPierceReader {
 		private double travelTime;
 		private double distance;
 		private Location turningPoint;
-		private Location leaveDpp;
-		private Location enterDpp;;
 		
 		public Info(String[] lines) {
-//			if (lines.length != 2)
-//				throw new RuntimeException("Input should consit of two lines");
-			if (lines.length != 4)
-				throw new RuntimeException("Input should consit of four lines");
+			if (lines.length != 2)
+				throw new RuntimeException("Input should consit of two lines");
 			parseOutput(lines);
 		}
 		private void parseOutput(String[] lines) {
 //			System.out.println("-->\n" + lines[0] + "\n" + lines[1]);
 			String[] parts0 = lines[0].split("\\s+");
 			String[] parts1 = lines[1].split("\\s+");
-			String[] parts2 = lines[2].split("\\s+");
-			String[] parts3 = lines[3].split("\\s+");
 			phase = Phase.create(parts0[1], false);
 			travelTime = Double.parseDouble(parts0[3]);
 			distance = Double.parseDouble(parts0[6]);
-			turningPoint = new Location(Double.parseDouble(parts2[3])
-					,Double.parseDouble(parts2[4])
-					,6371. - Double.parseDouble(parts2[1]));
-			enterDpp = new Location(Double.parseDouble(parts1[3])
+			turningPoint = new Location(Double.parseDouble(parts1[3])
 					,Double.parseDouble(parts1[4])
 					,6371. - Double.parseDouble(parts1[1]));
-			leaveDpp = new Location(Double.parseDouble(parts3[3])
-					,Double.parseDouble(parts3[4])
-					,6371. - Double.parseDouble(parts3[1]));
 		}
 		public Phase getPhase() {
 			return phase;
@@ -211,12 +194,6 @@ public final class TauPPierceReader {
 		}
 		public Location getTurningPoint() {
 			return turningPoint;
-		}
-		public Location getEnterDppPoint() {
-			return enterDpp;
-		}
-		public Location getLeaveDppPoint() {
-			return leaveDpp;
 		}
 	}
 /*

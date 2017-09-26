@@ -25,8 +25,8 @@ public class Make3DModel {
 
 	public static void main(String[] args) {
 //		List<PerturbationPoint> oneLayerModel = onePerturbationLayer(3480., 3630., 2.);
-		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_50km(3.);
-		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_50km_3per.inf");
+		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_100km(1.);
+		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_100km_1per.inf");
 		try {
 			writeModel(checkerboard, outpath);
 		} catch (IOException e) {
@@ -132,29 +132,6 @@ public class Make3DModel {
 				lonSign *= -1;
 			}
 			if (k < 3)
-				layerSign *= -1;
-		}
-		return perturbations;
-	}
-	
-	public static List<PerturbationPoint> checkerboardDppCACAR_50km(double dvs) {
-		List<PerturbationPoint> perturbations = new ArrayList<>();
-		double layerSign = 1;
-		for (int k = 0; k <= 8;k++) {
-			double r = 3880 - k * 50;
-			double lonSign = 1;
-			for (int i = -180; i <= 175; i+=5) {
-				double latSign = 1;
-				for (int j = -88; j <= 87; j+=5) {
-					Location location = new Location(j+.5, i, r);
-					PerturbationPoint perturbation = new PerturbationPoint(location
-							, layerSign * lonSign * latSign * dvs);
-					perturbations.add(perturbation);
-					latSign *= -1;
-				}
-				lonSign *= -1;
-			}
-			if (k < 7)
 				layerSign *= -1;
 		}
 		return perturbations;

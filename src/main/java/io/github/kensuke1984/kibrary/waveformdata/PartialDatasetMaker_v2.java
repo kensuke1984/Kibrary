@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.waveformdata;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,7 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.complex.Complex;
 import org.jsoup.select.Collector;
 
@@ -45,7 +43,6 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
@@ -54,7 +51,6 @@ import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SpcBody;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 
 /**
@@ -723,9 +719,6 @@ private class WorkerTimePartial implements Runnable {
 		setLog();
 		final int N_THREADS = Runtime.getRuntime().availableProcessors();
 		writeLog("Running " + N_THREADS + " threads");
-		writeLog("CMT catalogue: " + GlobalCMTCatalog.getCatalogID());
-		if (sourceTimeFunction == 3)
-			writeLog("STF catalogue: " + "LSTF1.stfcat");
 		setTimeWindow();
 		// filter設計
 		setBandPassFilter();
@@ -876,8 +869,6 @@ private class WorkerTimePartial implements Runnable {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 
-	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat");
-	
 	private void setSourceTimeFunctions() throws IOException {
 		if (sourceTimeFunction == 0)
 			return;
@@ -888,44 +879,12 @@ private class WorkerTimePartial implements Runnable {
 		userSourceTimeFunctions = new HashMap<>();
 		idSet.forEach(id -> {
 			double halfDuration = id.getEvent().getHalfDuration();
-			SourceTimeFunction stf;
-			switch (sourceTimeFunction) {
-			case 1:
-				stf = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
-				break;
-			case 2:
-				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
-				break;
-			case 3:
-				double halfDuration1 = 0.;
-	        	double halfDuration2 = 0.;
-		      	for (String str : stfcat) {
-		      		String[] stflist = str.split("\\s+");
-		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
-		      	    if(id.equals(eventID)) {
-		      	    	halfDuration1 = Double.valueOf(stflist[1]);
-		      	    	halfDuration2 = Double.valueOf(stflist[2]);
-		      	    	if(Integer.valueOf(stflist[3]) < 5.) {
-		      	    		halfDuration1 = id.getEvent().getHalfDuration();
-		      	    		halfDuration2 = id.getEvent().getHalfDuration();
-		      	    	}
-//		      	    	System.out.println( "DEBUG1: GET STF of " + eventID
-//		      	    		+ " halfDuration 1 is " + halfDuration1 + " halfDuration 2 is " + halfDuration2 );
-		      	    }
-		      	}          	 
-	            stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
-	            break;
-			default:
-				throw new RuntimeException("Error: undefined source time function identifier (0: none, 1: boxcar, 2: triangle).");
-			}
+			SourceTimeFunction stf = sourceTimeFunction == 1
+					? SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration)
+					: SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 			userSourceTimeFunctions.put(id, stf);
 		});
-	}
-	
-	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
-//		System.out.println("STF catalogue: " +  STFcatalogue);
-		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
-					, Charset.defaultCharset());
+
 	}
 
 	private void readSourceTimeFunctions() throws IOException {

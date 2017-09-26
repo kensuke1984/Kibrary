@@ -1,12 +1,8 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -14,15 +10,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
-import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -103,9 +96,9 @@ public final class SpcSAC implements Operation {
 
 		try {
 			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-			if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction != 2 && sourceTimeFunction != 3)
+			if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction != 2)
 				throw new IllegalArgumentException(
-						"The property for Source time function is invalid. It must be 0, 1, 2, 3 or a source time function folder path.");
+						"The property for Source time function is invalid. It must be 0, 1 or a source time function folder path.");
 		} catch (Exception e) {
 			sourceTimeFunction = -1;
 			sourceTimeFunctionPath = workPath.resolve(property.getProperty("sourceTimeFunction"));
@@ -173,9 +166,7 @@ public final class SpcSAC implements Operation {
 	}
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
-	
-	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat");
-	
+
 	private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
 		double halfDuration = id.getEvent().getHalfDuration();
 		switch (sourceTimeFunction) {
@@ -187,33 +178,9 @@ public final class SpcSAC implements Operation {
 			return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		case 2:
 			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-		case 3:
-        	double halfDuration1 = 0.;
-        	double halfDuration2 = 0.;
-	      	for (String str : stfcat) {
-	      		String[] stflist = str.split("\\s+");
-	      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
-	      	    if(id.equals(eventID)) {
-	      	    	halfDuration1 = Double.valueOf(stflist[1]);
-	      	    	halfDuration2 = Double.valueOf(stflist[2]);
-	      	    	if(Integer.valueOf(stflist[3]) < 5.) {
-	      	    		halfDuration1 = id.getEvent().getHalfDuration();
-	      	    		halfDuration2 = id.getEvent().getHalfDuration();
-	      	    	}
-//	      	    	System.out.println( "DEBUG1: GET STF of " + eventID
-//	      	    		+ " halfDuration 1 is " + halfDuration1 + " halfDuration 2 is " + halfDuration2 );
-	      	    }
-	      	}          	 
-            return SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
 		default:
 			throw new RuntimeException("Integer for source time function is invalid.");
 		}
-	}
-	
-	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
-		System.out.println("STF catalogue: " +  STFcatalogue);
-		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
-					, Charset.defaultCharset());
 	}
 
 	private void setModelName() throws IOException {
@@ -335,7 +302,7 @@ public final class SpcSAC implements Operation {
 			pw.println("##if it is unset, then automatically set as the name of a folder in eventDir");
 			pw.println("##but the eventDirs can have only one folder inside.");
 			pw.println("#modelName");
-			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle, 3: asymmetric triangle. (0)");
+			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
 			pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
 			pw.println("#sourceTimeFunction");
 			pw.println("#SamplingHz (20) !You can not change yet!");
