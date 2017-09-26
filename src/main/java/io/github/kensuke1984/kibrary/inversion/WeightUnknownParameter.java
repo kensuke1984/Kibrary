@@ -1,16 +1,17 @@
 package io.github.kensuke1984.kibrary.inversion;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class WeightUnknownParameter {
 	private UnknownParameterWeightType type;
 	private Map<UnknownParameter, Double> weights;
-	private Set<UnknownParameter> unknowns;
+	private List<UnknownParameter> unknowns;
 	
 	public WeightUnknownParameter(UnknownParameterWeightType type,
-			Set<UnknownParameter> unknowns) {
+			List<UnknownParameter> unknowns) {
 		this.type = type;
 		this.unknowns = unknowns;
 		this.weights = new HashMap<>();
@@ -22,7 +23,7 @@ public class WeightUnknownParameter {
 		return weights;
 	}
 	
-	public Set<UnknownParameter> getUnknowns() {
+	public List<UnknownParameter> getUnknowns() {
 		return unknowns;
 	}
 	

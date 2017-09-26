@@ -118,6 +118,8 @@ public class LetMeInvert implements Operation {
 	private double minDistance;
 	
 	private double maxDistance;
+	
+	private UnknownParameterWeightType unknownParameterWeightType;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -238,6 +240,10 @@ public class LetMeInvert implements Operation {
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
+		if (property.getProperty("unknownParameterWeightType") == null)
+			unknownParameterWeightType = null;
+		else
+			unknownParameterWeightType = UnknownParameterWeightType.valueOf(property.getProperty("unknownParameterWeightType"));
 	}
 
 	/**
@@ -299,6 +305,7 @@ public class LetMeInvert implements Operation {
 			pw.println("#minDistance ");
 			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
 			pw.println("#maxDistance ");
+			pw.println("unknownParameterWeightType");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -405,7 +412,8 @@ public class LetMeInvert implements Operation {
 		if (modelCovariance)
 			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling);
 		else
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns);
+			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
+					unknownParameterWeightType);
 	}
 	
 	/**
@@ -426,6 +434,7 @@ public class LetMeInvert implements Operation {
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
 			eq.outputA(outPath.resolve("partial"));
+			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths"));
 			dVector.outWeighting(outPath.resolve("weighting.inf"));
 			return null;
 		};

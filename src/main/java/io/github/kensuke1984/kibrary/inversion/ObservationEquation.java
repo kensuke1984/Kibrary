@@ -51,6 +51,8 @@ public class ObservationEquation {
 	private Matrix a;
 	
 	private Matrix cm;
+	
+	private List<Double> unknownParameterWeigths;
 
 	/**
 	 * @param partialIDs
@@ -61,7 +63,8 @@ public class ObservationEquation {
 	 *            for equation
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
-			boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns) {
+			boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
+			, Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType) {
 		this.dVector = dVector;
 		this.parameterList = parameterList;
 		this.originalParameterList = parameterList;
@@ -76,7 +79,8 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
-		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
+				unknownParameterWeightType);
 		atd = computeAtD(dVector.getD());
 	}
 	
@@ -96,7 +100,7 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
-		readA(partialIDs, time_receiver, time_source, bouncingOrders, null, nUnknowns);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, null, nUnknowns, null);
 		
 		double AtANormalizedTrace = 0;
 		double count = 0;
@@ -249,7 +253,9 @@ public class ObservationEquation {
 	 * @param ids
 	 *            source for A
 	 */
-	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders, CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns) {
+	private void readA(PartialID[] ids, boolean time_receiver, boolean time_source, List<Integer> bouncingOrders
+			, CombinationType combinationType, Map<PartialType, Integer[]> nUnknowns,
+			UnknownParameterWeightType unknownParameterWeightType) {
 		if (time_source)
 			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
 		if (time_receiver) {
@@ -607,6 +613,17 @@ public class ObservationEquation {
 //			}
 //			System.out.println("\n");
 //		}
+		
+		if (unknownParameterWeightType != null) {
+			unknownParameterWeigths = new ArrayList<>();
+			WeightUnknownParameter wup = new WeightUnknownParameter(unknownParameterWeightType, parameterList);
+			Map<UnknownParameter, Double> weights = wup.getWeights();
+			for (int i = 0; i < parameterList.size(); i++) {
+				double weight = weights.get(parameterList.get(i));
+				a.setColumnVector(i, a.getColumnVector(i).mapMultiply(weight));
+				unknownParameterWeigths.add(weight);
+			}
+		}
 	}
 
 	/**
@@ -769,7 +786,8 @@ public class ObservationEquation {
 	
 	public void outputUnkownParameterWeigths(Path outpath) throws IOException {
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-			
+			for (int i = 0; i < unknownParameterWeigths.size(); i++)
+				pw.println(unknownParameterWeigths.get(i));
 		}
 	}
 
