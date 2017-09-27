@@ -785,9 +785,11 @@ public class ObservationEquation {
 	}
 	
 	public void outputUnkownParameterWeigths(Path outpath) throws IOException {
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-			for (int i = 0; i < unknownParameterWeigths.size(); i++)
-				pw.println(unknownParameterWeigths.get(i));
+		if (unknownParameterWeigths != null) {
+			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+				for (int i = 0; i < unknownParameterWeigths.size(); i++)
+					pw.println(unknownParameterWeigths.get(i));
+			}
 		}
 	}
 

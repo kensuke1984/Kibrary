@@ -242,8 +242,10 @@ public class LetMeInvert implements Operation {
 		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
 		if (property.getProperty("unknownParameterWeightType") == null)
 			unknownParameterWeightType = null;
-		else
+		else {
 			unknownParameterWeightType = UnknownParameterWeightType.valueOf(property.getProperty("unknownParameterWeightType"));
+			System.out.println("--->Weighting unkown parameters using type " + unknownParameterWeightType);
+		}
 	}
 
 	/**
