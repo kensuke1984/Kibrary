@@ -29,7 +29,7 @@ import org.apache.commons.io.input.CloseShieldInputStream;
  * @author Kensuke Konishi
  * 
  */
-final class GlobalCMTCatalog {
+public final class GlobalCMTCatalog {
 
 	/**
 	 * 読み込んだNDK
@@ -135,7 +135,7 @@ final class GlobalCMTCatalog {
 		return NDKs;
 	}
 	
-	static String getCatalogID() {
+	static public String getCatalogID() {
 		return catalogID;
 	}
 }

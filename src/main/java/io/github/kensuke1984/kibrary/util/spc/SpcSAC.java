@@ -105,7 +105,7 @@ public final class SpcSAC implements Operation {
 			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
 			if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction != 2 && sourceTimeFunction != 3)
 				throw new IllegalArgumentException(
-						"The property for Source time function is invalid. It must be 0, 1, 2, 3 or a source time function folder path.");
+						"The property for Source time function is invalid. It must be between 0-3 or a source time function folder path.");
 		} catch (Exception e) {
 			sourceTimeFunction = -1;
 			sourceTimeFunctionPath = workPath.resolve(property.getProperty("sourceTimeFunction"));
