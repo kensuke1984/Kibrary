@@ -37,10 +37,10 @@ public class WeightUnknownParameter {
 				double weight = 1.;
 				double r = unknown.getLocation().getR();
 				if (r >= 5700 && r < 5750) {
-					weight = 1.5;
+					weight = 1.7;
 				}
 				else if (r < 5700)
-					weight = 2.5;
+					weight = 2.7;
 				weights.put(unknown, weight);
 			}
 		}

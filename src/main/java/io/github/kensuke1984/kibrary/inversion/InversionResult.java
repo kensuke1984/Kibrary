@@ -638,9 +638,11 @@ public class InversionResult {
 	}
 	
 	public double[] getUnkownParameterWeights() throws IOException {
-		if (!Files.exists(rootPath.resolve("unknownParameterWeightType")))
+		if (!Files.exists(rootPath.resolve("unknownParameterWeigths.inf"))) {
+			System.out.println("Warning: no file unknownParameterWeigths.inf");
 			return null;
-		return Files.readAllLines(rootPath.resolve("unknownParameterWeightType"))
+		}
+		return Files.readAllLines(rootPath.resolve("unknownParameterWeigths.inf"))
 				.stream().mapToDouble(Double::parseDouble).toArray();
 	}
 }

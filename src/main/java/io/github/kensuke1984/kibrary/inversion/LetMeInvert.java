@@ -137,7 +137,7 @@ public class LetMeInvert implements Operation {
 		if (!property.containsKey("inverseMethods"))
 			property.setProperty("inverseMethods", "CG SVD");
 		if (!property.containsKey("weighting"))
-			property.setProperty("weighting", "FINAL");
+			property.setProperty("weighting", "RECIPROCAL");
 		if (!property.containsKey("time_source"))
 			property.setProperty("time_source", "false");
 		if (!property.containsKey("time_receiver"))
@@ -280,8 +280,8 @@ public class LetMeInvert implements Operation {
 			pw.println("#alpha");
 			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
-			pw.println("##int weighting (FINAL); LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
-			pw.println("#weighting FINAL");
+			pw.println("##int weighting (RECIPROCAL); LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
+			pw.println("#weighting RECIPROCAL");
 			pw.println("##double gamma. Must be set only if TAKEUCHIKOBAYASHI weigthing is used");
 			pw.println("#gamma 30.");
 			pw.println("##boolean time_source (false). Time partial for the source");
@@ -307,7 +307,7 @@ public class LetMeInvert implements Operation {
 			pw.println("#minDistance ");
 			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
 			pw.println("#maxDistance ");
-			pw.println("unknownParameterWeightType");
+			pw.println("#unknownParameterWeightType");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -436,7 +436,7 @@ public class LetMeInvert implements Operation {
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
 			eq.outputA(outPath.resolve("partial"));
-			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths"));
+			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
 			dVector.outWeighting(outPath.resolve("weighting.inf"));
 			return null;
 		};
