@@ -593,9 +593,9 @@ public class ObservationEquation {
 					double r = loc.getR();
 					int iR = 0;
 					if (r > 5721)
-						iR = (int) ((loc.getR() - 5721.) / deltaR) + nLowerMantle;
+						iR = (int) ((r - 5721.) / deltaR) + nLowerMantle;
 					else
-						iR = (int) ((loc.getR() - minR) / deltaR_lowerMantle);
+						iR = (int) ((r - minR) / deltaR_lowerMantle);
 					Location newLoc = loc.toLocation(newPerturbationR[iR]);
 					System.out.println("DEBUG1: " + r + " " + newPerturbationR[iR]);
 					//
