@@ -7,24 +7,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 public class MakeCheckerboard {
 
 	public static void main(String[] args) {
-		System.out.println("dV = " + dV(1., 3505., PolynomialStructure.PREM));
-		System.exit(0);
+//		System.out.println("dV = " + dV(1., 3505., PolynomialStructure.PREM));
+//		System.exit(0);
 		
 		Path parameterPath = Paths.get(args[0]);
 		Path horizontalSignFile = Paths.get(args[1]);
-		int nR = Integer.parseInt(args[2]);
+		Path verticalSignFile = Paths.get(args[2]);
+//		int nR = Integer.parseInt(args[2]);
 		double dv = 0.02;
 		PolynomialStructure structure 
 			= PolynomialStructure.AK135;
-		Path outDvFile = Paths.get("dv.inf");
+		Path outDvFile = Paths.get("dv" + Utilities.getTemporaryString() + ".inf");
 		
 		try {
 			BufferedReader reader = Files.newBufferedReader(horizontalSignFile);
@@ -35,6 +39,17 @@ public class MakeCheckerboard {
 			}
 			reader.close();
 			
+			reader = Files.newBufferedReader(verticalSignFile);
+			line = null;
+			int nR = 0;
+			Map<Double, Double> verticalSignMap = new HashMap<>();
+			while ((line = reader.readLine()) != null) {
+				String[] s = line.split("\\s+");
+				verticalSignMap.put(Double.parseDouble(s[0]),
+						Double.parseDouble(s[1]));
+				nR++;
+			}
+			reader.close();
 			
 			List<UnknownParameter> unknowns 
 				= UnknownParameterFile.read(parameterPath);
@@ -43,8 +58,10 @@ public class MakeCheckerboard {
 				Location loc = (Location) unknowns.get(i)
 						.getLocation();
 				double dmu = dMU(dv, loc.getR(), structure);
-				double tmp = (i % nR) % 2 == 0 ? 1 : -1;
-				double sign = horizontalSigns.get(i / nR) * tmp;
+//				double tmp = (i % nR) % 2 == 0 ? 1 : -1;
+//				double sign = horizontalSigns.get(i / nR) * tmp;
+				double sign = horizontalSigns.get(i / nR) * 
+						verticalSignMap.get(loc.getR());
 				System.out.format("%.4f%n", sign * dmu);
 				writer.write(String.format("%s %.4f%n", loc.toString(), sign * dv));
 			}
