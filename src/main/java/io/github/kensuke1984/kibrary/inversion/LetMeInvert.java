@@ -220,6 +220,8 @@ public class LetMeInvert implements Operation {
 					nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1])});
 				}
 			}
+			else if (combinationType.equals(CombinationType.TRANSITION_ZONE_21)) {
+			}
 			else {
 				throw new IllegalArgumentException("Error: unknown combinationType " + combinationType);
 			}

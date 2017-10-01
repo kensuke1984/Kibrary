@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Utilities;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +37,7 @@ public class MakeUnknownParameterFile {
 			});
 			
 			// create unknowns file
-			Path unknownPath = Paths.get("unknowns.inf");
+			Path unknownPath = Paths.get("unknowns" + Utilities.getTemporaryString() + ".inf");
 			Files.deleteIfExists(unknownPath);
 			Files.createFile(unknownPath);
 			
