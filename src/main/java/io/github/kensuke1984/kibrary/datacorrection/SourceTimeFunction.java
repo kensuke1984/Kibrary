@@ -347,17 +347,17 @@ public class SourceTimeFunction {
 		Complex[] data = new Complex[nptsInTimeDomain];
 		System.arraycopy(dataInFrequency, 0, data, 0, np + 1);
 
-		// set blank due to lsmooth
+//		// set blank due to lsmooth
 		Arrays.fill(data, np + 1, nptsInTimeDomain / 2 + 1, Complex.ZERO);
 
-		// set values for imaginary frequency
+//		// set values for imaginary frequency
 		for (int i = 0, nnp = nptsInTimeDomain / 2; i < nnp - 1; i++)
 			data[nnp + 1 + i] = data[nnp - 1 - i].conjugate();
-
+		
 		// fast fourier transformation
 		data = fft.transform(data, TransformType.INVERSE);
 
-		return Arrays.stream(data).mapToDouble(Complex::abs).toArray();
+		return Arrays.stream(data).mapToDouble(Complex::getReal).toArray();
 	}
 
 	/**

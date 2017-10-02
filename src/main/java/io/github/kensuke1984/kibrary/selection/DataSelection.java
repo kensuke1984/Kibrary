@@ -93,7 +93,7 @@ public class DataSelection implements Operation {
 			pw.println("#maxVariance");
 			pw.println("##double ratio (2)");
 			pw.println("#ratio");
-			pw.println("##double minSNratio (2)");
+			pw.println("##double minSNratio (0)");
 			pw.println("#minSNratio");
 			pw.println("#boolean SnScSnPair (false). Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset");
 			pw.println("SnScSnPair false");
@@ -170,7 +170,7 @@ public class DataSelection implements Operation {
 		if (!property.containsKey("ratio"))
 			property.setProperty("ratio", "2");
 		if (!property.containsKey("minSNratio"))
-			property.setProperty("minSNratio", "2");
+			property.setProperty("minSNratio", "0");
 		if (!property.containsKey("convolute"))
 			property.setProperty("convolute", "true");
 		if (!property.containsKey("SnScSnPair"))
