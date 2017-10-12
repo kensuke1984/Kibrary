@@ -676,6 +676,7 @@ public class ObservationEquation {
 			double deltaR_lowerMantle = originalDeltaR * 2.;
 			
 			List<HorizontalPosition> horizontalPositions = parameterList.stream()
+					.filter(p -> !p.getPartialType().isTimePartial())
 					.map(p -> p.getLocation().toHorizontalPosition())
 					.distinct()
 					.collect(Collectors.toList());
@@ -701,32 +702,39 @@ public class ObservationEquation {
 			
 			Map<Location, List<Integer>> combinationIndexMap = new HashMap<>();
 			Map<Location, Double> combinedWeightingMap = new HashMap<>();
+			Map<UnknownParameter, Integer> timeParameterMap = new HashMap<>();
 			
-			for (int i = 0; i < originalParameterList.size(); i++) {
-				Location loc = parameterList.get(i).getLocation();
-				double r = loc.getR();
-				int iR = 0;
-				if (r > 5721)
-					iR = (int) ((r - 5721.) / deltaR) + nLowerMantle;
-				else
-					iR = (int) ((r - minR) / deltaR_lowerMantle);
-				Location newLoc = loc.toLocation(newPerturbationR[iR]);
-				System.out.println("DEBUG1: " + r + " " + newPerturbationR[iR]);
-				//
-				if (!combinationIndexMap.containsKey(newLoc)) {
-					List<Integer> indices = new ArrayList<>();
-					indices.add(i);
-					combinationIndexMap.put(newLoc, indices);
-					Double w = parameterList.get(i).getWeighting();
-					combinedWeightingMap.put(newLoc, w);
+			for (int i = 0; i < parameterList.size(); i++) {
+				UnknownParameter parameter = parameterList.get(i);
+				if (parameter.getPartialType().isTimePartial()) {
+					timeParameterMap.put(parameter, i);
 				}
 				else {
-					List<Integer> indices = combinationIndexMap.get(newLoc);
-					indices.add(i);
-					combinationIndexMap.replace(newLoc, indices);
-					Double w = combinedWeightingMap.get(newLoc);
-					w += parameterList.get(i).getWeighting();
-					combinedWeightingMap.replace(newLoc, w);
+					Location loc = parameter.getLocation();
+					double r = loc.getR();
+					int iR = 0;
+					if (r > 5721)
+						iR = (int) ((r - 5721.) / deltaR) + nLowerMantle;
+					else
+						iR = (int) ((r - minR) / deltaR_lowerMantle);
+					Location newLoc = loc.toLocation(newPerturbationR[iR]);
+					System.out.println("DEBUG1: " + r + " " + newPerturbationR[iR]);
+					//
+					if (!combinationIndexMap.containsKey(newLoc)) {
+						List<Integer> indices = new ArrayList<>();
+						indices.add(i);
+						combinationIndexMap.put(newLoc, indices);
+						Double w = parameterList.get(i).getWeighting();
+						combinedWeightingMap.put(newLoc, w);
+					}
+					else {
+						List<Integer> indices = combinationIndexMap.get(newLoc);
+						indices.add(i);
+						combinationIndexMap.replace(newLoc, indices);
+						Double w = combinedWeightingMap.get(newLoc);
+						w += parameterList.get(i).getWeighting();
+						combinedWeightingMap.replace(newLoc, w);
+					}
 				}
 			}
 			
@@ -745,6 +753,7 @@ public class ObservationEquation {
 			//
 			
 			//fill the new A matrix using the index map using the order of newLocations
+			int iFilled = 0;
 			for (int i = 0; i < newLocations.size(); i++) {
 				Location newLoc = newLocations.get(i);
 				List<Integer> indices = combinationIndexMap.get(newLoc);
@@ -756,16 +765,27 @@ public class ObservationEquation {
 				//fill new Unknown parameter list for current PartialType
 				double weighting = combinedWeightingMap.get(newLoc);
 				parameterPrime.add(new Physical3DParameter(PartialType.MU, newLoc, weighting));
+				iFilled++;
 			}
 		
-		//TODO set time partials
+			if (time_receiver || time_source) {
+				List<UnknownParameter> timeParameters =
+					parameterList.stream().filter(p -> p.getPartialType().isTimePartial())
+						.collect(Collectors.toList());
+				for (int i = 0; i < timeParameters.size(); i++) {
+					UnknownParameter p = timeParameters.get(i);
+					int ia = timeParameterMap.get(p);
+					aPrime.setColumnVector(iFilled + i, a.getColumnVector(ia));
+					parameterPrime.add(p);
+				}
+			}
 		
-		parameterList = parameterPrime;
-		a = aPrime;
+			parameterList = parameterPrime;
+			a = aPrime;
 		
-		//debug
-		System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
-		//
+			//debug
+			System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
+			//
 		}
 		}
 		
@@ -774,6 +794,7 @@ public class ObservationEquation {
 //---------------------------------------------------------------------------------
 		
 		// Normalize time partials
+		Map<UnknownParameter, Double> timeWeightsMap = new HashMap<>();
 		double meanAColumnNorm = 0;
 		int ntmp = 0;
 		for (int j = 0; j < a.getColumnDimension(); j++) {
@@ -788,8 +809,11 @@ public class ObservationEquation {
 			if (!parameterList.get(j).getPartialType().isTimePartial())
 				continue;
 			double tmpNorm = a.getColumnVector(j).getNorm();
-			if (tmpNorm > 0)
-				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(meanAColumnNorm / tmpNorm));
+			if (tmpNorm > 0) {
+				double weight = meanAColumnNorm / tmpNorm;
+//				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(weight));
+				timeWeightsMap.put(parameterList.get(j), weight);
+			}
 			System.out.println(j + " " + meanAColumnNorm / tmpNorm);
 		}
 		
@@ -861,7 +885,13 @@ public class ObservationEquation {
 		
 		if (unknownParameterWeightType != null) {
 			unknownParameterWeigths = new ArrayList<>();
-			WeightUnknownParameter wup = new WeightUnknownParameter(unknownParameterWeightType, parameterList);
+			WeightUnknownParameter wup = null;
+			if (time_receiver || time_source)
+				wup = new WeightUnknownParameter(unknownParameterWeightType
+						, parameterList, timeWeightsMap);
+			else
+				wup = new WeightUnknownParameter(unknownParameterWeightType
+					, parameterList);
 			Map<UnknownParameter, Double> weights = wup.getWeights();
 			for (int i = 0; i < parameterList.size(); i++) {
 				double weight = weights.get(parameterList.get(i));
