@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.List;
 
-public class Histogram {
+public class HistogramAzimuth {
 	
-	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered, double minED, double maxED) {
+	public HistogramAzimuth(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered, double minAz, double maxAz) {
 		this.interval = interval;
 		this.numberOfRecords = new int[(int) (360 / interval)];
 		
@@ -49,18 +49,16 @@ public class Histogram {
 				Station station = stationSet.stream().filter(s->s.equals(id.getStation())).findAny().get();
 				
 				HorizontalPosition staLoc = station.getPosition();
-				double ed = 0;
+				double az = 0;
 				if (centered) {
-					ed = (new Location(this.averageLoc.getLatitude(),
-							id.getGlobalCMTID().getEvent().getCmtLocation().getLongitude(),
-							id.getGlobalCMTID().getEvent().getCmtLocation().getR()))
-							.getEpicentralDistance(staLoc)*180/Math.PI;
+					az = 	this.averageLoc.
+								getAzimuth(staLoc)*180/Math.PI;
 				}
 				else
-					ed = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(staLoc)*180/Math.PI;
+					az = id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(staLoc)*180/Math.PI;
 				
-				this.numberOfRecords[(int) (ed / interval)]++;
-				this.mean += (int) (ed / interval);
+				this.numberOfRecords[(int) (az / interval)]++;
+				this.mean += (int) (az / interval);
 		});
 		
 		} catch (Exception e) {
@@ -72,7 +70,7 @@ public class Histogram {
 		this.medianValue = basicIDs.length/2.;
 	}
 	
-	public Histogram(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered) {
+	public HistogramAzimuth(BasicID[] basicIDs, Set<Station> stationSet, double interval, boolean centered) {
 		this(basicIDs, stationSet, interval, centered, 0, 360);
 	}
 	
@@ -85,8 +83,8 @@ public class Histogram {
 			phases_ = new Phases(args[1]);
 		final Phases phases = phases_;
 		BasicID[] basicIDs = BasicIDFile.readBasicIDFile(srcID);
-		Path outPath = root.resolve("epicentralDistanceHistogram.txt");
-		Path scriptPath = root.resolve("epicentralDistanceHistogram.plt");
+		Path outPath = root.resolve("azimuthHistogram.txt");
+		Path scriptPath = root.resolve("azimuthHistogram.plt");
 		
 		Set<Station> stationSet = new HashSet<>();
 		
@@ -103,7 +101,7 @@ public class Histogram {
 				.collect(Collectors.toList());
 		BasicID[] usedIds = idList.toArray(new BasicID[idList.size()]);
 		
-		Histogram histogram = new Histogram(usedIds, stationSet, 5., false);
+		HistogramAzimuth histogram = new HistogramAzimuth(usedIds, stationSet, 5., false);
 		
 		histogram.printHistogram(outPath);
 		histogram.createScript(scriptPath);
@@ -131,22 +129,22 @@ public class Histogram {
 		Files.deleteIfExists(outpath);
 		Files.createFile(outpath);
 		Files.write(outpath, String.join("\n"
-				, "set term postscript enhanced color font 'Helvetica,36p'"
-				, "set xlabel 'Epicentral distance (deg)'"
+				, "set term postscript enhanced color font 'Helvetica,14'"
+				, "set xlabel 'Azimtuh (deg)'"
 				, "set ylabel 'Number of records'"
-				, "set xrange [0:120]"
+				, "set xrange [0:360]"
 				, "set xtics 20 nomirror"
 				, "set ytics nomirror"
 				, "set style fill pattern 1 border lc 'red'"
 				, "set sample 11"
 				, "#set logscale y 10"
-				, "set output 'epicentralDistanceHistogram.ps'"
-				, "plot 'epicentralDistanceHistogram.txt' u ($1+2.5):2 w boxes lw 2.5 lc 'red' notitle"
+				, "set output 'azimuthHistogram.ps'"
+				, "plot 'azimuthHistogram.txt' u ($1+2.5):2 w boxes lw 2.5 lc 'red' notitle"
 				).getBytes(), StandardOpenOption.APPEND);
 	}
 	
-	public int getValue(double epicentralDistance) {
-		return numberOfRecords[(int) (epicentralDistance / interval)];
+	public int getValue(double azimuth) {
+		return numberOfRecords[(int) (azimuth / interval)];
 	}
 	
 //	public int getValueSmoothed(double epicentralDistance, double maxRatio) {

@@ -541,10 +541,10 @@ public class ObservationEquation {
 			}
 			
 //---------------------------------------------------------------------------------
-//------------------------------ TRANSITION_ZONE_21 -------------------------------
+//------------------------------ TRANSITION_ZONE_23 -------------------------------
 //---------------------------------------------------------------------------------
 			
-			if (combinationType.equals(CombinationType.TRANSITION_ZONE_21)) {
+			if (combinationType.equals(CombinationType.TRANSITION_ZONE_23)) {
 				System.out.println("--> Using " + combinationType);
 				
 				int nUpperMantle = 16;
@@ -653,6 +653,120 @@ public class ObservationEquation {
 			System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
 			//
 			}
+		
+//-------------------------------------------------------------------------------
+//---------------------------------TRANSITION_ZONE_20 ---------------------------
+//-------------------------------------------------------------------------------
+		
+		if (combinationType.equals(CombinationType.TRANSITION_ZONE_20)) {
+			System.out.println("--> Using " + combinationType);
+			
+			int nUpperMantle = 16;
+			int originalNlowerMantle = 8;
+			int nLowerMantle = originalNlowerMantle / 2;
+			
+			double maxR = 6034.507;
+			double minR = 5555.325;
+			double originalDeltaR = 20.834;
+			maxR += originalDeltaR / 2.;
+			minR -= originalDeltaR / 2.;
+			int nOriginal = originalNlowerMantle + nUpperMantle;
+			int nNewPerturbationR = nLowerMantle + nUpperMantle;
+			double deltaR = originalDeltaR;
+			double deltaR_lowerMantle = originalDeltaR * 2.;
+			
+			List<HorizontalPosition> horizontalPositions = parameterList.stream()
+					.map(p -> p.getLocation().toHorizontalPosition())
+					.distinct()
+					.collect(Collectors.toList());
+			
+			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() 
+					- numberOfParameterForSturcture + nNewPerturbationR * horizontalPositions.size());
+			List<UnknownParameter> parameterPrime = new ArrayList<>();
+			
+			double[] newPerturbationR = new double[nNewPerturbationR];
+			for (int i = 0; i < nLowerMantle; i++)
+				newPerturbationR[i] = minR + i * deltaR_lowerMantle + deltaR_lowerMantle / 2.;
+			for (int i = 0; i < nUpperMantle; i++)
+				newPerturbationR[i + nLowerMantle] = newPerturbationR[nLowerMantle - 1] + deltaR_lowerMantle / 2. 
+					+ i * deltaR + deltaR / 2.;
+			
+			List<Location> newLocations = new ArrayList<>();
+			for (double r : newPerturbationR) {
+				for (HorizontalPosition hp : horizontalPositions) {
+					Location loc = hp.toLocation(r);
+					newLocations.add(loc);
+				}
+			}
+			
+			Map<Location, List<Integer>> combinationIndexMap = new HashMap<>();
+			Map<Location, Double> combinedWeightingMap = new HashMap<>();
+			
+			for (int i = 0; i < originalParameterList.size(); i++) {
+				Location loc = parameterList.get(i).getLocation();
+				double r = loc.getR();
+				int iR = 0;
+				if (r > 5721)
+					iR = (int) ((r - 5721.) / deltaR) + nLowerMantle;
+				else
+					iR = (int) ((r - minR) / deltaR_lowerMantle);
+				Location newLoc = loc.toLocation(newPerturbationR[iR]);
+				System.out.println("DEBUG1: " + r + " " + newPerturbationR[iR]);
+				//
+				if (!combinationIndexMap.containsKey(newLoc)) {
+					List<Integer> indices = new ArrayList<>();
+					indices.add(i);
+					combinationIndexMap.put(newLoc, indices);
+					Double w = parameterList.get(i).getWeighting();
+					combinedWeightingMap.put(newLoc, w);
+				}
+				else {
+					List<Integer> indices = combinationIndexMap.get(newLoc);
+					indices.add(i);
+					combinationIndexMap.replace(newLoc, indices);
+					Double w = combinedWeightingMap.get(newLoc);
+					w += parameterList.get(i).getWeighting();
+					combinedWeightingMap.replace(newLoc, w);
+				}
+			}
+			
+			//debug
+			for (Location newLoc : newLocations) {
+				List<Integer> indices = combinationIndexMap.get(newLoc);
+				double w = combinedWeightingMap.get(newLoc);
+				String s = "";
+				for (int i : indices) {
+					s += parameterList.get(i).getLocation().toString() 
+							+ " " + parameterList.get(i).getWeighting() + ", ";
+				}
+				s += ": " + newLoc + " " + w;
+				System.out.println("DEBUG2: " + s);
+			}
+			//
+			
+			//fill the new A matrix using the index map using the order of newLocations
+			for (int i = 0; i < newLocations.size(); i++) {
+				Location newLoc = newLocations.get(i);
+				List<Integer> indices = combinationIndexMap.get(newLoc);
+				RealVector vector = new ArrayRealVector(a.getRowDimension());
+				for (int index : indices)
+					vector = vector.add(a.getColumnVector(index));
+				aPrime.setColumnVector(i, vector);
+				//
+				//fill new Unknown parameter list for current PartialType
+				double weighting = combinedWeightingMap.get(newLoc);
+				parameterPrime.add(new Physical3DParameter(PartialType.MU, newLoc, weighting));
+			}
+		
+		//TODO set time partials
+		
+		parameterList = parameterPrime;
+		a = aPrime;
+		
+		//debug
+		System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
+		//
+		}
 		}
 		
 //---------------------------------------------------------------------------------

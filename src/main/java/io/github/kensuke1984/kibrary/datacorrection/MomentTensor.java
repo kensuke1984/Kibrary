@@ -151,6 +151,10 @@ public class MomentTensor {
 		double mw = (FastMath.log10(m0) - 9.1) / 1.5;
 		return Precision.round(mw, 1);
 	}
+	
+	public static final double toM0(double mw) {
+		return FastMath.pow(10, 1.5 * mw + 9.1);
+	}
 
 	@Override
 	public String toString() {

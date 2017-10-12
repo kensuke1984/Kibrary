@@ -40,6 +40,7 @@ import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -119,6 +120,10 @@ public class LetMeInvert implements Operation {
 	
 	private double maxDistance;
 	
+	private double minMw;
+	
+	private double maxMw;
+	
 	private UnknownParameterWeightType unknownParameterWeightType;
 
 	private void checkAndPutDefaults() {
@@ -154,6 +159,14 @@ public class LetMeInvert implements Operation {
 			property.setProperty("minDistance", "0.");
 		if (!property.containsKey("maxDistance"))
 			property.setProperty("maxDistance", "360.");
+		if (!property.containsKey("minMw"))
+			property.setProperty("minMw", "0.");
+		if (!property.containsKey("maxMw"))
+			property.setProperty("maxMw", "10.");
+		
+		// additional unused info
+		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
+//		property.setProperty("STF catalogue", GlobalCMTCatalog.);
 	}
 
 	private void set() {
@@ -220,7 +233,9 @@ public class LetMeInvert implements Operation {
 					nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1])});
 				}
 			}
-			else if (combinationType.equals(CombinationType.TRANSITION_ZONE_21)) {
+			else if (combinationType.equals(CombinationType.TRANSITION_ZONE_23)) {
+			}
+			else if (combinationType.equals(CombinationType.TRANSITION_ZONE_20)) {
 			}
 			else {
 				throw new IllegalArgumentException("Error: unknown combinationType " + combinationType);
@@ -248,6 +263,8 @@ public class LetMeInvert implements Operation {
 			unknownParameterWeightType = UnknownParameterWeightType.valueOf(property.getProperty("unknownParameterWeightType"));
 			System.out.println("--->Weighting unkown parameters using type " + unknownParameterWeightType);
 		}
+		minMw = Double.parseDouble(property.getProperty("minMw"));
+		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 	}
 
 	/**
@@ -310,6 +327,10 @@ public class LetMeInvert implements Operation {
 			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
 			pw.println("#maxDistance ");
 			pw.println("#unknownParameterWeightType");
+			pw.println("##minimum Mw (0.)");
+			pw.println("#minMw");
+			pw.println("##maximum Mw (10.)");
+			pw.println("#maxMw");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -361,15 +382,23 @@ public class LetMeInvert implements Operation {
 				}
 			};
 		}
-		else
+		else {
+			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
 			chooser = id -> {
 				double distance = id.getGlobalCMTID().getEvent()
 						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 						* 180. / Math.PI;
-				if (distance >= minDistance && distance <= maxDistance)
-					return true;
-				return false;
+				if (distance < minDistance || distance > maxDistance)
+					return false;
+				double mw = id.getGlobalCMTID().getEvent()
+						.getCmt().getMw();
+				if (mw < minMw || mw > maxMw) {
+					System.out.println(mw);
+					return false;
+				}
+				return true;
 			};
+		}
 		
 		// set Dvector
 		System.err.println("Creating D vector");
@@ -386,6 +415,12 @@ public class LetMeInvert implements Operation {
 		case RECIPROCAL:
 //			System.out.println(selectionInfo.size());
 //			System.out.println(selectionInfo.get(0).getTimewindow());
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
+			break;
+		case RECIPROCAL_AZED:
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
+			break;
+		case RECIPROCAL_AZED_DPP:
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
 			break;
 		case TAKEUCHIKOBAYASHI:
@@ -439,7 +474,7 @@ public class LetMeInvert implements Operation {
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
 			eq.outputA(outPath.resolve("partial"));
 			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
-			dVector.outWeighting(outPath.resolve("weighting.inf"));
+			dVector.outWeighting(outPath);
 			return null;
 		};
 		FutureTask<Void> future = new FutureTask<>(output);

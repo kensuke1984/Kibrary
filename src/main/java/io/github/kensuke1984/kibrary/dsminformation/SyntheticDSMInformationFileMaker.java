@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.dsminformation;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -18,6 +19,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 /**
@@ -69,6 +71,9 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
+		
+		// write additional unused info
+		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
 	}
 
 	/**
@@ -155,9 +160,12 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		}
 		else
 			ps = new PolynomialStructure(structurePath);
-
+		
 		Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
+		
+		if (property != null)
+			writeProperties(outPath.resolve("dsmifm.properties"));
 		
 		//synthetic station set
 //		Set<Station> synStationSet = IntStream.range(1, 111).mapToObj(i -> new Station(String.format("%03d", i), new HorizontalPosition(0, i), "SYN"))

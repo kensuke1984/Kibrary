@@ -23,6 +23,7 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 
 /**
@@ -80,6 +81,9 @@ public class InformationFileMaker implements Operation {
 			property.setProperty("header", "PREM");
 		if (!property.containsKey("jointCMT"))
 			property.setProperty("jointCMT", "false");
+		
+		// additional unused info
+		property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogID());
 	}
 
 	/**
@@ -251,11 +255,13 @@ public class InformationFileMaker implements Operation {
 		outputPath = workPath.resolve("threedPartial" + Utilities.getTemporaryString());
 		Files.createDirectories(outputPath);
 
+		if (property != null)
+			writeProperties(outputPath.resolve("ifm.properties"));
+		
 		Path bpPath = outputPath.resolve("BPinfo");
 		Path fpPath = outputPath.resolve("FPinfo");
 		createPointInformationFile();
-		// System.exit(0);
-
+		
 		//
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 

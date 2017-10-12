@@ -85,7 +85,7 @@ public final class GlobalCMTCatalog {
 	}
 
 	static {
-		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 NDK_CMT_2step.catalog globalcmt
+		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 globalcmt NDK_LCMTSTF NDK_no_rm200503211243A NDK_LSTF
 		Set<NDK> readSet = readJar(tmpCatalog);
 		if (null == readSet) {
 			Path catalogPath = selectCatalogFile();

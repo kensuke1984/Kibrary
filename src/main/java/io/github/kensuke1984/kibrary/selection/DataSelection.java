@@ -601,9 +601,9 @@ public class DataSelection implements Operation {
 		Path infoOutpath = workPath.resolve("dataSelection" + Utilities.getTemporaryString() + ".inf");
 		try {
 			DataSelectionInformationFile.write(infoOutpath, dataSelectionInfo);
-			DataSelectionInformationFile.outputHistograms(workPath, dataSelectionInfo);
+//			DataSelectionInformationFile.outputHistograms(workPath, dataSelectionInfo);
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("IOException: " + e.getMessage());
 		}
 		
 		System.err.println();

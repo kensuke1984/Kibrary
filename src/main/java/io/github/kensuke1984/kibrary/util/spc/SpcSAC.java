@@ -22,6 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
@@ -103,10 +105,12 @@ public final class SpcSAC implements Operation {
 
 		try {
 			sourceTimeFunction = Integer.parseInt(property.getProperty("sourceTimeFunction"));
-			if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction != 2 && sourceTimeFunction != 3)
+			if (sourceTimeFunction != 0 && sourceTimeFunction != 1 && sourceTimeFunction != 2 && sourceTimeFunction != 3
+					&& sourceTimeFunction != 4 && sourceTimeFunction != 5)
 				throw new IllegalArgumentException(
 						"The property for Source time function is invalid. It must be between 0-3 or a source time function folder path.");
 		} catch (Exception e) {
+			System.err.println(e);
 			sourceTimeFunction = -1;
 			sourceTimeFunctionPath = workPath.resolve(property.getProperty("sourceTimeFunction"));
 			if (!Files.exists(sourceTimeFunctionPath))
@@ -205,6 +209,15 @@ public final class SpcSAC implements Operation {
 	      	    }
 	      	}          	 
             return SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
+		case 4:
+			throw new RuntimeException("Case 4 not implemented yet");
+		case 5:
+			double mw = id.getEvent().getCmt().getMw();
+//			double duration = 9.60948E-05 * Math.pow(10, 0.6834 * mw);
+			double duration = 0.018084 * Math.pow(10, 0.3623 * mw);
+			halfDuration = duration / 2.;
+//			System.out.println("DEBUG1: id, mw, half-duration = " + id + " " + mw + " " + halfDuration);
+			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		default:
 			throw new RuntimeException("Integer for source time function is invalid.");
 		}
@@ -214,6 +227,17 @@ public final class SpcSAC implements Operation {
 		System.out.println("STF catalogue: " +  STFcatalogue);
 		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
 					, Charset.defaultCharset());
+	}
+	
+	private Map<GlobalCMTID, Double> readCatalogSTFTriangle(String STFcatalog) 
+			throws IOException {
+		System.out.println("STF catalogue: " +  STFcatalog);
+		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalog)
+				, Charset.defaultCharset())
+				.stream().collect(Collectors
+						.toMap(e -> new GlobalCMTID(e.split("\\s+")[0])
+							, e -> Double.parseDouble(e.split("\\s+")[1]))
+						);
 	}
 
 	private void setModelName() throws IOException {

@@ -723,9 +723,10 @@ private class WorkerTimePartial implements Runnable {
 		setLog();
 		final int N_THREADS = Runtime.getRuntime().availableProcessors();
 		writeLog("Running " + N_THREADS + " threads");
-		writeLog("CMT catalogue: " + GlobalCMTCatalog.getCatalogID());
+		writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogID());
+		writeLog("SourceTimeFunction=" + sourceTimeFunction);
 		if (sourceTimeFunction == 3)
-			writeLog("STF catalogue: " + "LSTF1.stfcat");
+			writeLog("STFcatalogue: " + "LSTF1.stfcat");
 		setTimeWindow();
 		// filter設計
 		setBandPassFilter();
@@ -937,7 +938,6 @@ private class WorkerTimePartial implements Runnable {
 				throw new RuntimeException("Source time function file for " + id + " is broken.");
 			}
 		}));
-
 	}
 
 	/**
@@ -977,8 +977,8 @@ private class WorkerTimePartial implements Runnable {
 		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
 		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, filterNp);
-		filter.setBackward(false);
-//		filter.setBackward(true);
+//		filter.setBackward(false);
+		filter.setBackward(true);
 		writeLog(filter.toString());
 		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
 	}

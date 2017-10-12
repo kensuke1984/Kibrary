@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -60,12 +61,21 @@ public class Dvector {
 		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
 		Predicate<BasicID> chooser = new Predicate<BasicID>() {
 			public boolean test(BasicID id) {
-				double distance = id.getGlobalCMTID().getEvent().getCmtLocation()
-						.getEpicentralDistance(id.getStation().getPosition())
-						* 180. / Math.PI;
-				if (distance > 100 || distance < 70)
-					return false;
-				return true;
+//				double distance = id.getGlobalCMTID().getEvent().getCmtLocation()
+//						.getEpicentralDistance(id.getStation().getPosition())
+//						* 180. / Math.PI;
+//				if (distance > 100 || distance < 70)
+//					return false;
+//				if (id.getGlobalCMTID().getEvent().getCmt().getMw() < 6.5)
+//					return false;
+				Set<GlobalCMTID> badIds = Stream.of(new String[] {"200707060109A","200711160312A","200711291900A","201008121154A","201407291046A"})
+						.map(name -> new GlobalCMTID(name)).collect(Collectors.toSet());
+				Set<GlobalCMTID> goodIds = Stream.of(new String[] {"200509260155A","200808262100A","201005241618A","201108241746A","201209301631A","201302091416A","201404112029A","201511260545A"})
+						.map(name -> new GlobalCMTID(name)).collect(Collectors.toSet());
+				
+				if (goodIds.contains(id.getGlobalCMTID()))
+					return true;
+				return false;
 			}
 		};
 		WeightingType weigthingType = WeightingType.RECIPROCAL;
@@ -74,8 +84,8 @@ public class Dvector {
 		
 		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 		
-		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
-		dvector.outWeighting(weightingPath);
+//		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
+		dvector.outWeighting(Paths.get("."));
 		
 		System.out.println("Variance = " + dvector.getVariance());
 	}
@@ -213,6 +223,9 @@ public class Dvector {
 	private double[] lowerUpperMantleWeighting;
 	
 	private WeightingType weightingType;
+	
+	private double[][] histogramDistance;
+	private double[][] histogramAzimuth;
 
 	/**
 	 * Use all waveforms in the IDs Weighting factor is reciprocal of maximum
@@ -250,44 +263,127 @@ public class Dvector {
 					System.err.println(obs);
 					return 0.;
 				}
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
+		case RECIPROCAL_AZED:
+			this.histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
+				, {30, .8}, {35, .8} };
+			this.histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
+				, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
+				, {330, 1.}, {335, 1.2}, {340, 1.2}, {345, 0.8}
+				, {350, 0.7}, {355, 0.9}, {0, 1.05}, {5, 1.2}
+				, {10, 1.2}, {15, 1.2}, {20, 1.2}, {25, 1.2}
+				, {30, 1.2}, {35, 1.2} };
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
+						* weightingEpicentralDistanceTZ(obs)
+						* weightingAzimuthTZ(obs);
+			};
+			break;
+		case RECIPROCAL_AZED_DPP:
+//			this.histogramDistance = new double[][] { {70.0, 1.00}, {75.0, 1.03}, {80.0, 1.39}, {85.0, 2.67}, {90.0, 3.}, {95.0, 3.}, {100.0, 1.} };
+//			this.histogramAzimuth = new double[][] { {310.0, 1.}, {315.0, 1.605}, {320.0, 1.000}, {325.0, 1.156}
+//				, {330.0, 1.640}, {335.0, 2.012}, {340.0, 3.}, {345.0, 3.}, {350.0, 3.}, {355.0, 3.}, {0.0, 1.}, {5.0, 1.} };
+//			this.histogramDistance = new double[][] { {70.0, 1.000}, {75.0, 1.016}, {80.0, 1.179}, {85.0, 1.635}
+//			, {90.0, 2.501}, {95.0, 4.000}, {100.0, 1.000} };
+//			this.histogramAzimuth = new double[][] { {0.0, 1.000}, {5.0, 1.000}, {310.0, 1.000}, {315.0, 1.267}, {320.0, 1.000}
+//				, {325.0, 1.075}, {330.0, 1.281}, {335.0, 1.418}, {340.0, 2.294}, {345.0, 3.795}, {350.0, 4.000}, {355.0, 4.000} };
+//			this.histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
+//			this.histogramAzimuth = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
+//			, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
+			this.histogramDistance = new double[][] { {70.0, 1.000}, {75.0, 1.016}, {80.0, 1.179}, {85.0, 1.635}
+			, {90.0, 2.0}, {95.0, 2.0}, {100.0, 1.000} };
+			this.histogramAzimuth = new double[][] { {0.0, 1.000}, {5.0, 1.000}, {310.0, 1.000}, {315.0, 1.267}, {320.0, 1.000}
+				, {325.0, 1.075}, {330.0, 1.281}, {335.0, 1.418}, {340.0, 2.0}, {345.0, 2.0}, {350.0, 2.0}, {355.0, 2.0} };
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
 				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
 						* weightingEpicentralDistanceDpp(obs)
-						* weightingAzimuthDpp(obs);// * weightingEpicentralDistance(obs);
+						* weightingAzimuthDpp(obs);
 			};
 			break;
 		case IDENTITY:
 			this.weightingFunction = (obs, syn) -> 1.;
 			break;
 		default:
-			throw new RuntimeException("Weighting type for this constructor can only be IDENTITY or RECIPROCAL");
+			throw new RuntimeException("Weighting type for this constructor can only be IDENTITY or RECIPROCAL or RECIPROCAL_AZED or RECIPROCAL_AZED_DPP");
 		}
 		
 		sort();
 		read();
 	}
 	
-	private static double weightingEpicentralDistanceDpp(BasicID obs) {
+	private double weightingEpicentralDistanceDpp(BasicID obs) {
 		double weight = 1.;
 		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
 		
 //		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
 		
-		double[][] histogram = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
+//		histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
+//		histogramDistance = new double[][] { {70.0, 1.00}, {75.0, 1.03}, {80.0, 1.39}, {85.0, 2.67}, {90.0, 3.}, {95.0, 3.}, {100.0, 1.} };
 		
-		for (int i = 0; i < histogram.length; i++)
-			if (distance >= histogram[i][0] && distance < histogram[i][0] + 5.)
-				weight = histogram[i][1];
+		for (int i = 0; i < histogramDistance.length; i++)
+			if (distance >= histogramDistance[i][0] && distance < histogramDistance[i][0] + 5.)
+				weight = histogramDistance[i][1];
 		
 		return weight;
 	}
 	
-	public static double weightingAzimuthDpp(BasicID obs) {
+	public double weightingAzimuthDpp(BasicID obs) {
 		double weight = 1.;
 		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
 		
-		double[][] histogram = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
+//		histogramAzimuth = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
+//			, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
+//		histogramAzimuth = new double[][] { {310.0, 1.}, {315.0, 1.605}, {320.0, 1.000}, {325.0, 1.156}
+//			, {330.0, 1.640}, {335.0, 2.012}, {340.0, 3.}, {345.0, 3.}, {350.0, 3.}, {355.0, 3.}, {0.0, 1.}, {5.0, 1.} };
 		
-		for (double[] p : histogram) {
+		for (double[] p : histogramAzimuth) {
+			if (azimuth >= p[0] && azimuth < p[0] + 5.)
+				weight = p[1];
+		}
+		
+		return weight;
+	}
+	
+	private double weightingEpicentralDistanceTZ(BasicID obs) {
+		double weight = 1.;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+//		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
+		
+//		histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
+//			, {30, .8}, {35, .8} };
+		
+		for (int i = 0; i < histogramDistance.length; i++)
+			if (distance >= histogramDistance[i][0] && distance < histogramDistance[i][0] + 5.)
+				weight = histogramDistance[i][1];
+		
+		return weight;
+	}
+	
+	public double weightingAzimuthTZ(BasicID obs) {
+		double weight = 1.;
+		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+//		histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
+//			, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
+//			, {330, 1.}, {335, 1.2}, {340, 1.2}, {345, 0.8}
+//			, {350, 0.7}, {355, 0.9}, {0, 1.05}, {5, 1.2}
+//			, {10, 1.2}, {15, 1.2}, {20, 1.2}, {25, 1.2}
+//			, {30, 1.2}, {35, 1.2} };
+		
+		for (double[] p : histogramAzimuth) {
 			if (azimuth >= p[0] && azimuth < p[0] + 5.)
 				weight = p[1];
 		}
@@ -782,6 +878,12 @@ public class Dvector {
 //						weighting[i] *= periodUMWeight.get(obsIDs[i].getMinPeriod());
 				}
 				break;
+			case RECIPROCAL_AZED:
+					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
+			case RECIPROCAL_AZED_DPP:
+					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
 			case IDENTITY:
 				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
 				break;
@@ -880,8 +982,10 @@ public class Dvector {
 		// //////
 		
 		// 観測波形の抽出 list observed IDs
+//		System.out.println("DEBUG1: " + ids.length);
 		List<BasicID> obsList = Arrays.stream(ids).filter(id -> id.getWaveformType() == WaveformType.OBS)
 				.filter(chooser::test).collect(Collectors.toList());
+//		System.out.println("DEBUG2: " + obsList.size());
 
 		// 重複チェック 重複が見つかればここから進まない
 		for (int i = 0; i < obsList.size(); i++)
@@ -964,6 +1068,12 @@ public class Dvector {
 		case RECIPROCAL:
 			System.out.println("Using observed reciprocal amplitude as weighting");
 			break;
+		case RECIPROCAL_AZED:
+			System.out.println("Using observed reciprocal amplitude as weighting and applying azimuthal and epicentral distance weighting");
+			break;
+		case RECIPROCAL_AZED_DPP:
+			System.out.println("Using observed reciprocal amplitude as weighting and applying azimuthal and epicentral distance weighting for Dpp");
+			break;
 		case IDENTITY:
 			System.out.println("Using identity weighting");
 			break;
@@ -984,11 +1094,29 @@ public class Dvector {
 //		
 //	}
 	
-	public void outWeighting(Path outPath) {
-		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+	public void outWeighting(Path root) {
+		try {
+			Path outpath = root.resolve("weighting.inf");
+			PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 			for (double wi : weighting) {
 				pw.println(wi);
 			}
+			
+			if (histogramAzimuth != null) {
+				outpath = root.resolve("histogramAzimuth.txt");
+				PrintWriter pwaz = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+				for (double[] p : histogramAzimuth)
+					pwaz.println(p[0] + " " + p[1]);
+				pwaz.close();
+			}
+			if (histogramDistance != null) {
+				outpath = root.resolve("histogramEpicentralDistance.txt");
+				PrintWriter pwed = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+				for (double[] p : histogramDistance)
+					pwed.println(p[0] + " " + p[1]);
+				pwed.close();
+			}
+			pw.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

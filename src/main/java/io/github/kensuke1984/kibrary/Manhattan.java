@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
+import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
@@ -47,11 +48,12 @@ public enum Manhattan {
 	RaypathDistribution(13, RaypathDistribution.class), //
 	Result(14, Result.class), //
 	SecondHandler(15, SecondHandler.class), //
-	SpcSAC(16, SpcSAC.class), //
-	SshDSMInformationFileMaker(17, SshDSMInformationFileMaker.class), //
-	SyntheticDSMInformationFileMaker(18, SyntheticDSMInformationFileMaker.class), //
-	TakeuchiStaticCorrection(19, TakeuchiStaticCorrection.class), //
-	TimewindowMaker(20, TimewindowMaker.class),//
+	SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
+	SpcSAC(17, SpcSAC.class), //
+	SshDSMInformationFileMaker(18, SshDSMInformationFileMaker.class), //
+	SyntheticDSMInformationFileMaker(19, SyntheticDSMInformationFileMaker.class), //
+	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
+	TimewindowMaker(21, TimewindowMaker.class),//
 	;
 
 	public static void printList() {

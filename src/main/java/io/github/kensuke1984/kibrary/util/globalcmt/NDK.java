@@ -343,6 +343,7 @@ final class NDK implements GlobalCMTData {
 
 		// line5
 		parts = lines[4].split("\\s+");
+//		System.out.println("DEBUG1: " + ndk.id);
 		ndk.versionCode = parts[0];
 		ndk.scalarMoment = Double.parseDouble(parts[10]) * Math.pow(10, ndk.momentExponent);
 		double m0 = ndk.scalarMoment / 100000 / 100;
