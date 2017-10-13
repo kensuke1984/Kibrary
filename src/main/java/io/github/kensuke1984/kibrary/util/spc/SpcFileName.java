@@ -43,10 +43,10 @@ public class SpcFileName extends File {
 	 */
 	private static String getEventID(String fileName) {
 		switch (fileName.split("\\.").length) {
-		case 3:
+		case 3:		//理論波形の場合
 			String str = fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
 			return str;
-		case 7:
+		case 7:		//偏微分係数波形の場合
 			return fileName.split("\\.")[1];
 		default:
 			throw new RuntimeException("Unexpected");

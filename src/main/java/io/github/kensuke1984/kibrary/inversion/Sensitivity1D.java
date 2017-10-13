@@ -109,7 +109,7 @@ public class Sensitivity1D {
 		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformDataPath);
 //		PartialID[] idref = PartialIDFile.readPartialIDandDataFile(partialIDRef, partialRef);
 
-		List<Phase> phaseList = Arrays.asList(Phase.SKS);
+		List<Phase> phaseList = Arrays.asList(Phase.S);
 		
 		for (Phase phase : phaseList) {
 			Set<Phases> phaseSet = new HashSet<>();

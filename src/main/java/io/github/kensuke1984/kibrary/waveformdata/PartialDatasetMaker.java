@@ -51,6 +51,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SpcBody;
+import io.github.kensuke1984.kibrary.util.spc.SpcFileComponent;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 
@@ -186,21 +187,41 @@ public class PartialDatasetMaker implements Operation {
 	 */
 	private class PartialComputation implements Runnable {
 
-		private DSMOutput bp;
-		private SpcFileName fpname;
-		private DSMOutput fp;
 		private Station station;
 		private GlobalCMTID id;
+		private DSMOutput primeBP;
+		private DSMOutput secondaryBP;
+		private SpcFileName primeFPname;
+		private SpcFileName secondaryFPname;
+		private DSMOutput primeFP;
+		private DSMOutput secondaryFP;
+		private DSMOutput masterFP;
+		private DSMOutput masterBP;
+		
 
 		/**
 		 * @param fp
 		 * @param bpFile
 		 */
 		private PartialComputation(DSMOutput bp, Station station, SpcFileName fpFile) {
-			this.bp = bp;
+			this(bp, null, station, fpFile, null);
+		}
+		
+		/**
+		 * @param primeBP
+		 * @param secondaryBP
+		 * @param station
+		 * @param primeFPFile
+		 * @param secondaryFPFile
+		 */
+		private PartialComputation(DSMOutput primeBP, DSMOutput secondaryBP, 
+						Station station, SpcFileName primeFPFile, SpcFileName secondaryFPFile) {
+			this.primeBP = primeBP;
+			this.secondaryBP = secondaryBP;
 			this.station = station;
-			fpname = fpFile;
-			id = new GlobalCMTID(fpname.getSourceID());
+			primeFPname = primeFPFile;
+			secondaryFPname = secondaryFPFile;
+			id = new GlobalCMTID(primeFPname.getSourceID());
 		}
 
 		/**
@@ -239,20 +260,15 @@ public class PartialDatasetMaker implements Operation {
 		}
 
 		@Override
-		public void run() {
-//			Location[] perturbationLocations = perturbationLocationSet.stream().toArray(Location[]::new);
-//			double[] perturbationRs = new double[perturbationLocations.length];
-//			for (int i = 0; i < perturbationRs.length; i++)
-//				perturbationRs[i] = perturbationLocations[i].getR();
+		public void run() {			
+			String stationName = primeBP.getSourceID();
 			
-			String stationName = bp.getSourceID();
-			
-			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
+			if (station.getPosition().toLocation(0).getDistance(primeBP.getSourceLocation()) > 0.5)
 				throw new RuntimeException("There may be a station with the same name but other networks.");
 
-			if (bp.tlen() != tlen || bp.np() != np)
+			if (primeBP.tlen() != tlen || primeBP.np() != np)
 				throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
-			GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
+			GlobalCMTID id = new GlobalCMTID(primeFPname.getSourceID());
 
 			touchedSet.add(id);
 
@@ -267,13 +283,24 @@ public class PartialDatasetMaker implements Operation {
 
 			// System.out.println("I am " + Thread.currentThread().getName());
 			try {
-				fp = fpname.read();
+				primeFP = primeFPname.read();
+				secondaryFP = secondaryFPname.read();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return;
 			}
+			
+			//pairSPC(PSV?)のspc bodyを元のSPC(SH?)のbodyに加える	TODO
+			for (int ibody = 0; ibody < primeBP.nbody(); ibody++) {
+				if (secondaryFP != null && secondaryBP != null) {
+					primeFP.getSpcBodyList().get(ibody)
+						.addBody(secondaryFP.getSpcBodyList().get(ibody));
+					primeBP.getSpcBodyList().get(ibody)
+						.addBody(secondaryBP.getSpcBodyList().get(ibody));
+				}
+			}
 
-			ThreeDPartialMaker threedPartialMaker = new ThreeDPartialMaker(fp, bp);
+			ThreeDPartialMaker threedPartialMaker = new ThreeDPartialMaker(primeFP, primeBP);
 			threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
 			if (structure != null)
 				threedPartialMaker.setStructure(structure);
@@ -311,11 +338,11 @@ public class PartialDatasetMaker implements Operation {
 //			}
 			
 			// i番目の深さの偏微分波形を作る
-			for (int ibody = 0, nbody = bp.nbody(); ibody < nbody; ibody++) {
+			for (int ibody = 0, nbody = primeBP.nbody(); ibody < nbody; ibody++) {
 //			for (int ibody = 0, nbody = perturbationRs.length; ibody < nbody; ibody++) {
 				// とりあえずtransverse（２）成分についての名前
 //				Location location = fp.getObserverPosition().toLocation(perturbationRs[ibody]);//fp.getObserverPosition().toLocation(fp.getBodyR()[ibody]);
-				Location location = bp.getObserverPosition().toLocation(bp.getBodyR()[ibody]);
+				Location location = primeBP.getObserverPosition().toLocation(primeBP.getBodyR()[ibody]);
 //				System.out.println(location);
 				
 				if (!perturbationLocationSet.contains(location))
@@ -763,8 +790,8 @@ private class WorkerTimePartial implements Runnable {
 				continue;
 
 			// bpModelFolder内 spectorfile
-			Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
-			System.out.println(bpFiles.size() + " bpfiles are found");
+			Set<SpcFileName> bpSHFiles = Utilities.collectSHSpcFileName(bpModelPath);
+			System.out.println(bpSHFiles.size() + " SH bpfiles are found");
 
 			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
 			Path[] fpEventPaths = null;
@@ -779,7 +806,7 @@ private class WorkerTimePartial implements Runnable {
 			
 			
 //			int donebp = 0;
-			AtomicInteger donebp = new AtomicInteger(0);
+//			AtomicInteger donebp = new AtomicInteger(0);
 			// bpフォルダ内の各bpファイルに対して
 			// create ThreadPool
 			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
@@ -791,31 +818,40 @@ private class WorkerTimePartial implements Runnable {
 				try {
 					bp = bpname.read();
 					String pointName = bp.getObserverName();
-//					fpEventPaths
+					Arrays.stream(fpEventPaths).forEachOrdered(fpp -> {
+						
+					});
 				} catch (IOException e) {
 					// TODO 自動生成された catch ブロック
 					e.printStackTrace();
 				}
-				
 			});
 			**/
-			for (SpcFileName bpname : bpFiles) {
+			
+			//SH modeのBPファイルに対して
+			for (SpcFileName bpSHname : bpSHFiles) {
 //				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
 				// 摂動点の名前
-				DSMOutput bp = bpname.read();
-				String pointName = bp.getObserverName();
-
+				DSMOutput bpSH = bpSHname.read();
+				String pointName = bpSH.getObserverName();
+				
+				SpcFileName bpPSVname = pairBPFile(bpPath, bpSHname);
+				DSMOutput bpPSV = bpPSVname.read();
+				System.out.println(bpSHname+" & "+bpPSVname);
 				// timewindowの存在するfpdirに対して
 				// bpファイルに対する全てのfpファイルを
+				// SH modeを基準にして適切なpair(PSV)があれば用意する
 //				if (!jointCMT)
 //				{ 
 					for (Path fpEventPath : fpEventPaths) {
 						String eventName = fpEventPath.getParent().getFileName().toString();
-						SpcFileName fpfile = new SpcFileName(
-								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-						if (!fpfile.exists())
+						SpcFileName fpSHfile = new SpcFileName(
+								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpSHname.getMode() + ".spc"));
+						SpcFileName fpPSVfile = new SpcFileName(
+								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpPSVname.getMode() + ".spc"));
+						if (!fpSHfile.exists())
 							continue;
-						PartialComputation pc = new PartialComputation(bp, station, fpfile);
+						PartialComputation pc = new PartialComputation(bpSH, bpPSV, station, fpSHfile, fpPSVfile);
 						execs.execute(pc);
 					}
 //				}
@@ -849,6 +885,17 @@ private class WorkerTimePartial implements Runnable {
 			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
 		}
 		terminate();
+	}
+	
+	private SpcFileName pairBPFile(Path spcFolder, SpcFileName spcFileName) {
+		if (spcFileName.getMode() == SpcFileComponent.SH)
+			return new SpcFileName(spcFolder.resolve("0000"+spcFileName.getSourceID() 
+				+ "/" + modelName + "/"
+				+ spcFileName.getName().replace("SH.spc", "PSV.spc")));
+		else
+			return new SpcFileName(spcFolder.resolve("0000"+spcFileName.getSourceID() 
+					+ "/" + modelName + "/"
+					+ spcFileName.getName().replace("PSV.spc", "SH.spc")));
 	}
 	
 	private List<Path[]> collectFP_jointCMT(Set<GlobalCMTID> idSet) {
@@ -970,6 +1017,12 @@ private class WorkerTimePartial implements Runnable {
 		phases = timewindowInformation.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 
+		stationSet.stream().forEach(s -> 
+			System.out.println(s.getName()+" "+s.getNetwork()+" "+s.getPosition()));
+		System.out.println();
+		stationSet.stream().map(Station::toString).distinct().forEach(s -> 
+		System.out.println(s));
+		
 		// TODO
 		if (stationSet.size() != stationSet.stream().map(Station::toString).distinct().count()) {
 			System.err.println("CAUTION!! Stations with same name and network but different positions detected!");
@@ -988,7 +1041,7 @@ private class WorkerTimePartial implements Runnable {
 			});
 			nameToStation.forEach((name, sta) -> {
 				if (sta.size() > 1) {
-					sta.stream().forEach(s -> System.out.println(s));
+					sta.stream().forEach(s -> System.out.println(s+" "+s.getNetwork()+" "+s.getPosition()));
 				}
 			});
 			throw new RuntimeException("Station duplication");

@@ -525,7 +525,7 @@ public class Partial1DDatasetMaker implements Operation {
 				return;
 			}
 			
-			System.out.println(oneSPC+" and "+pairSPC);
+			System.out.println(oneSPC+" && "+pairSPC);
 			DSMOutput primeSPC = oneSPC.read();
 			DSMOutput secondarySPC = pairSPC.read();
 			if (primeSPC.tlen() != tlen || secondarySPC.tlen() != tlen || primeSPC.np() != np || secondarySPC.np() != np) {

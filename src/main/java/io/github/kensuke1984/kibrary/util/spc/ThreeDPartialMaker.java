@@ -571,7 +571,6 @@ public class ThreeDPartialMaker {
 //					"Perturbation points are different fp, bp: " + fp.getObserverID() + " ," + bp.getObserverID());
 //			validity = false;
 //		}
-//		System.out.println("FP: "+ fp.getObserverName()+" BP: "+bp.getObserverName()+" "+bp.getSourceID());
 		if (!(fp.getObserverName().equals(bp.getObserverName()))) {
 			System.err.println(
 					"Perturbation points are different fp, bp: " + fp.getObserverName() + " ," + bp.getObserverName());

@@ -102,6 +102,7 @@ public final class PartialIDFile {
 			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
 					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
 			long idParts = fileSize - headerBytes;
+			System.out.println(idParts);
 			if (idParts % oneIDByte != 0)
 				throw new RuntimeException(idPath + " is not valid..");
 			// name(8),network(8),position(4*2)
