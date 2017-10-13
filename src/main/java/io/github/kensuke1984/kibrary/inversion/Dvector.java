@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -68,26 +69,40 @@ public class Dvector {
 //					return false;
 //				if (id.getGlobalCMTID().getEvent().getCmt().getMw() < 6.5)
 //					return false;
-				Set<GlobalCMTID> badIds = Stream.of(new String[] {"200707060109A","200711160312A","200711291900A","201008121154A","201407291046A"})
-						.map(name -> new GlobalCMTID(name)).collect(Collectors.toSet());
-				Set<GlobalCMTID> goodIds = Stream.of(new String[] {"200509260155A","200808262100A","201005241618A","201108241746A","201209301631A","201302091416A","201404112029A","201511260545A"})
-						.map(name -> new GlobalCMTID(name)).collect(Collectors.toSet());
+//				Set<GlobalCMTID> badIds = Stream.of(new String[] {"200707060109A","200711160312A","200711291900A","201008121154A","201407291046A"})
+//						.map(name -> new GlobalCMTID(name)).collect(Collectors.toSet());
+//				Set<GlobalCMTID> goodIds = Stream.of(new String[] {"200509260155A","200808262100A","201005241618A","201108241746A","201209301631A","201302091416A","201404112029A","201511260545A"})
+//						.map(name -> new GlobalCMTID(name)).collect(Collectors.toSet());
 				
-				if (goodIds.contains(id.getGlobalCMTID()))
-					return true;
-				return false;
+//				if (goodIds.contains(id.getGlobalCMTID()))
+//					return true;
+				return true;
 			}
 		};
 		WeightingType weigthingType = WeightingType.RECIPROCAL;
 		boolean atLeastThreeRecordsPerStation = false;
 		List<DataSelectionInformation> selectionInfo = null;
 		
-		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+		List<BasicID> idList = Stream.of(basicIDs).collect(Collectors.toList());
+		
+		List<GlobalCMTID> events = idList.stream().map(id -> id.getGlobalCMTID())
+				.distinct().collect(Collectors.toList());
+		
+		Files.deleteIfExists(Paths.get("eventVariance.inf"));
+		Files.createFile(Paths.get("eventVariance.inf"));
+		for (GlobalCMTID event : events) {
+			BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
+					.collect(Collectors.toList()).toArray(new BasicID[0]);
+			Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + "\n").getBytes(), StandardOpenOption.APPEND);
+		}
+		
+//		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 		
 //		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
-		dvector.outWeighting(Paths.get("."));
-		
-		System.out.println("Variance = " + dvector.getVariance());
+//		dvector.outWeighting(Paths.get("."));
+//		
+//		System.out.println("Variance = " + dvector.getVariance());
 	}
 	
 	/**
