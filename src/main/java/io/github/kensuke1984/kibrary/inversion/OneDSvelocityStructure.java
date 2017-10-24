@@ -35,12 +35,13 @@ public class OneDSvelocityStructure {
 	private static PolynomialStructure prem = PolynomialStructure.PREM;
 	public static void main(String[] args){
 		try{
-			//解のファイルをフルパスでリストしたファイル。answerListMaker.shで作る。	
-		BufferedReader br = new BufferedReader(new FileReader("/Users/Yuki/Dropbox/SEASIA/syntheticCheck/CBT1D_DSM/graph/answerList2.txt"));  
-		String filepath;
-		int count=1;
-//		Path answerListFile = Paths.get(args[0]);  //解のファイルをフルパスでリストしたファイル
-		while((filepath = br.readLine()) !=null){
+			//解のファイルをフルパスでリストしたファイル。answerListMaker.shで作る。
+			Path homedirPath = Paths.get(args[0]);
+			BufferedReader br = new BufferedReader(new FileReader(homedirPath.resolve(args[1]).toString()));  
+			String filepath;
+			int count=1;
+//			Path answerListFile = Paths.get(args[0]);  //解のファイルをフルパスでリストしたファイル
+			while((filepath = br.readLine()) !=null){
 //			    System.out.println(filepath);
 //			    if (filepath.length() !=1)
 //				    throw new RuntimeException("SacFileName");
@@ -54,7 +55,7 @@ public class OneDSvelocityStructure {
 			double[] rref = new double[100];
 			try{
 				String output = Integer.toString(count);
-				PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("/Users/Yuki/Dropbox/SEASIA/syntheticCheck/CBT1D_DSM/graph/CG" + output + "ans.inf")));//("/Users/Yuki/Desktop/output/" + output + "_S.txt")));
+				PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(homedirPath.resolve( "CG"+ output + "ans.inf").toString())));//("/Users/Yuki/Desktop/output/" + output + "_S.txt")));
 			 for(int i=0;i<deltaMu.length;i++){
 //				 System.err.println(i);
 				r[i] = 3490+i*20;

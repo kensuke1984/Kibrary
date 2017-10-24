@@ -165,7 +165,7 @@ public final class Utilities {
             throws IOException, InterruptedException {
         long startTime = System.nanoTime();
         ExecutorService exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        // Thread[] workers = new Thread[eventDirs.length];
+//         Thread[] workers = new Thread[eventDirs.length];
         for (EventFolder eventDirectory : eventFolderSet(workPath))
             exec.submit(() -> process.accept(eventDirectory));
         exec.shutdown();

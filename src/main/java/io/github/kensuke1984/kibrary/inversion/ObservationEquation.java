@@ -162,7 +162,7 @@ public class ObservationEquation {
 			n++;
 		int numberOfParameterForSturcture = (int) parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial()).count();
 		final int nn = numberOfParameterForSturcture + n;
-		
+		System.out.println("Size of IDs: "+ids.length);
 		Arrays.stream(ids).parallel().forEach(id -> {
 			if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == dVector.getNTimeWindow() * nn)
 				return;
