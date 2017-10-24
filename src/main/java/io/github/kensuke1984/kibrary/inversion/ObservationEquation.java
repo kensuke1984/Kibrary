@@ -260,7 +260,7 @@ public class ObservationEquation {
 			dVector.getUsedGlobalCMTIDset().forEach(id -> parameterList.add(new TimeSourceSideParameter(id)));
 		if (time_receiver) {
 			if (bouncingOrders == null)
-				throw new RuntimeException("Exepct List<Integer> bouncingOrders to be defined");
+				throw new RuntimeException("Expect List<Integer> bouncingOrders to be defined");
 			for (Integer i : bouncingOrders)
 				dVector.getUsedStationSet().forEach(station -> parameterList.add(new TimeReceiverSideParameter(station, i.intValue())));
 		}
@@ -307,10 +307,21 @@ public class ObservationEquation {
 			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
 				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
 		});
-		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * nn )
+		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * nn ) {
+			System.out.println("Printing BasicIDs that are not in the partialID set...");
+			Set<id_station> idStationSet 
+				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getStation()))
+					.distinct().collect(Collectors.toSet());
+			Stream.of(dVector.getObsIDs()).forEach(id -> {
+				id_station idStation = new id_station(id.getGlobalCMTID(), id.getStation());
+				if (!idStationSet.contains(idStation)) {
+					System.out.println(id);
+				}
+			});
 			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
 					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + " + n + ")");  
+		}
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
 		if (combinationType != null) {
@@ -787,8 +798,152 @@ public class ObservationEquation {
 			System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
 			//
 		}
-		}
 		
+//--------------------
+//-------------------- TRANSITION ZONE 14 --------------------------
+//-------------------------------------------------
+		if (combinationType.equals(CombinationType.TRANSITION_ZONE_14)) {
+			System.out.println("--> Using " + combinationType);
+			
+			int nUpperMantle = 4;
+			int originalNTZ = 12;
+			int originalNlowerMantle = 8;
+			int nTZ = originalNTZ / 2;
+			int nLowerMantle = originalNlowerMantle / 2;
+			
+			double maxR = 6034.507;
+			double minR = 5555.325;
+			double originalDeltaR = 20.834;
+			maxR += originalDeltaR / 2.;
+			minR -= originalDeltaR / 2.;
+			int nOriginal = originalNlowerMantle + originalNTZ + nUpperMantle;
+			int nNewPerturbationR = nLowerMantle + nUpperMantle + nTZ;
+			double deltaR = originalDeltaR;
+			double deltaR_TZ = originalDeltaR * 2;
+			double deltaR_lowerMantle = originalDeltaR * 2.;
+			
+			List<HorizontalPosition> horizontalPositions = parameterList.stream()
+					.filter(p -> !p.getPartialType().isTimePartial())
+					.map(p -> p.getLocation().toHorizontalPosition())
+					.distinct()
+					.collect(Collectors.toList());
+			
+			Matrix aPrime = new Matrix(dVector.getNpts(), a.getColumnDimension() 
+					- numberOfParameterForSturcture + nNewPerturbationR * horizontalPositions.size());
+			List<UnknownParameter> parameterPrime = new ArrayList<>();
+			
+			double[] newPerturbationR = new double[nNewPerturbationR];
+			for (int i = 0; i < nLowerMantle; i++)
+				newPerturbationR[i] = minR + i * deltaR_lowerMantle + deltaR_lowerMantle / 2.;
+			for (int i = 0; i < nTZ; i++)
+				newPerturbationR[i + nLowerMantle] = newPerturbationR[nLowerMantle - 1] + deltaR_lowerMantle / 2.
+					+ i * deltaR_TZ + deltaR_TZ / 2.;
+			for (int i = 0; i < nUpperMantle; i++)
+				newPerturbationR[i + nLowerMantle + nTZ] = newPerturbationR[nLowerMantle + nTZ - 1] + deltaR_TZ / 2. 
+					+ i * deltaR + deltaR / 2.;
+			
+			for (int i = 0; i < newPerturbationR.length; i++)
+				System.out.println("DEBUG0: " + newPerturbationR[i]);
+			
+			List<Location> newLocations = new ArrayList<>();
+			for (double r : newPerturbationR) {
+				for (HorizontalPosition hp : horizontalPositions) {
+					Location loc = hp.toLocation(r);
+					newLocations.add(loc);
+				}
+			}
+			
+			Map<Location, List<Integer>> combinationIndexMap = new HashMap<>();
+			Map<Location, Double> combinedWeightingMap = new HashMap<>();
+			Map<UnknownParameter, Integer> timeParameterMap = new HashMap<>();
+			
+			for (int i = 0; i < parameterList.size(); i++) {
+				UnknownParameter parameter = parameterList.get(i);
+				if (parameter.getPartialType().isTimePartial()) {
+					timeParameterMap.put(parameter, i);
+				}
+				else {
+					Location loc = parameter.getLocation();
+					double r = loc.getR();
+					int iR = 0;
+					if (r > 5961.)
+						iR = (int) ((r - 5961.) / deltaR) + nLowerMantle + nTZ;
+					else if (r < 5961. && r > 5721.)
+						iR = (int) ((r - 5721.) / deltaR_TZ) + nLowerMantle;
+					else
+						iR = (int) ((r - minR) / deltaR_lowerMantle);
+					Location newLoc = loc.toLocation(newPerturbationR[iR]);
+					System.out.println("DEBUG1: " + r + " " + newPerturbationR[iR]);
+					//
+					if (!combinationIndexMap.containsKey(newLoc)) {
+						List<Integer> indices = new ArrayList<>();
+						indices.add(i);
+						combinationIndexMap.put(newLoc, indices);
+						Double w = parameterList.get(i).getWeighting();
+						combinedWeightingMap.put(newLoc, w);
+					}
+					else {
+						List<Integer> indices = combinationIndexMap.get(newLoc);
+						indices.add(i);
+						combinationIndexMap.replace(newLoc, indices);
+						Double w = combinedWeightingMap.get(newLoc);
+						w += parameterList.get(i).getWeighting();
+						combinedWeightingMap.replace(newLoc, w);
+					}
+				}
+			}
+			
+			//debug
+			for (Location newLoc : newLocations) {
+				List<Integer> indices = combinationIndexMap.get(newLoc);
+				double w = combinedWeightingMap.get(newLoc);
+				String s = "";
+				for (int i : indices) {
+					s += parameterList.get(i).getLocation().toString() 
+							+ " " + parameterList.get(i).getWeighting() + ", ";
+				}
+				s += ": " + newLoc + " " + w;
+				System.out.println("DEBUG2: " + s);
+			}
+			//
+			
+			//fill the new A matrix using the index map using the order of newLocations
+			int iFilled = 0;
+			for (int i = 0; i < newLocations.size(); i++) {
+				Location newLoc = newLocations.get(i);
+				List<Integer> indices = combinationIndexMap.get(newLoc);
+				RealVector vector = new ArrayRealVector(a.getRowDimension());
+				for (int index : indices)
+					vector = vector.add(a.getColumnVector(index));
+				aPrime.setColumnVector(i, vector);
+				//
+				//fill new Unknown parameter list for current PartialType
+				double weighting = combinedWeightingMap.get(newLoc);
+				parameterPrime.add(new Physical3DParameter(PartialType.MU, newLoc, weighting));
+				iFilled++;
+			}
+		
+			if (time_receiver || time_source) {
+				List<UnknownParameter> timeParameters =
+					parameterList.stream().filter(p -> p.getPartialType().isTimePartial())
+						.collect(Collectors.toList());
+				for (int i = 0; i < timeParameters.size(); i++) {
+					UnknownParameter p = timeParameters.get(i);
+					int ia = timeParameterMap.get(p);
+					aPrime.setColumnVector(iFilled + i, a.getColumnVector(ia));
+					parameterPrime.add(p);
+				}
+			}
+		
+			parameterList = parameterPrime;
+			a = aPrime;
+		
+			//debug
+			System.out.println("Debug 3: norm of A matrix = " + a.getNorm());
+			//
+		}
+//--------------------------------------- END IF COMBINATION_TYPE != NULL
+		}
 //---------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------
@@ -797,6 +952,7 @@ public class ObservationEquation {
 		Map<UnknownParameter, Double> timeWeightsMap = new HashMap<>();
 		double meanAColumnNorm = 0;
 		int ntmp = 0;
+		double amplifyTimePartial = 5.;
 		for (int j = 0; j < a.getColumnDimension(); j++) {
 //			if (!parameterList.get(j).getPartialType().equals(PartialType.PAR2))
 			if (parameterList.get(j).getPartialType().isTimePartial())
@@ -810,11 +966,11 @@ public class ObservationEquation {
 				continue;
 			double tmpNorm = a.getColumnVector(j).getNorm();
 			if (tmpNorm > 0) {
-				double weight = meanAColumnNorm / tmpNorm;
-//				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(weight));
+				double weight = meanAColumnNorm / tmpNorm * amplifyTimePartial;
+				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(weight));
 				timeWeightsMap.put(parameterList.get(j), weight);
+				System.out.println(j + " " + weight);
 			}
-			System.out.println(j + " " + meanAColumnNorm / tmpNorm);
 		}
 		
 		//normalize PARQ
@@ -1118,6 +1274,42 @@ public class ObservationEquation {
 	 */
 	public RealVector operate(RealVector m) {
 		return a.operate(m);
+	}
+	
+	private class id_station {
+		private GlobalCMTID id;
+		private Station station;
+		
+		public id_station(GlobalCMTID id, Station station) {
+			this.id = id;
+			this.station = station;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			   if (obj == null) {
+			        return false;
+			    }
+			    if (!id_station.class.isAssignableFrom(obj.getClass())) {
+			        return false;
+			    }
+			    final id_station other = (id_station) obj;
+			    if ((this.id == null) ? (other.id != null) : !this.id.equals(other.id)) {
+			        return false;
+			    }
+			    if ((this.station == null) ? (other.station != null) : !this.station.equals(other.station)) {
+			        return false;
+			    }
+			    return true;
+		}
+		
+		@Override
+		public int hashCode() {
+		    int hash = 3;
+		    hash = 53 * hash + (this.id != null ? this.id.hashCode() : 0);
+		    hash = 53 * hash + (this.station != null ? this.station.hashCode() : 0);
+		    return hash;
+		}
 	}
 
 }

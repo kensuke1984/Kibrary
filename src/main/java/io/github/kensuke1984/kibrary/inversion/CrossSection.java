@@ -30,6 +30,7 @@ public class CrossSection {
 		Location[] locations = readWavefieldPoints(file);
 		double[] values = readWavefieldValues(file);
 		double[] rs = readRs(fileR);
+		double[] layers = readLayers(fileR);
 		Map<Location, Double> valueOfLocation = IntStream.range(0, locations.length)
                 .mapToObj(i -> i)
                 .collect(Collectors.toMap(i -> locations[i], i -> values[i]));
@@ -40,7 +41,8 @@ public class CrossSection {
 		Location centerLocation = startPos.getMidpoint(endPos)
 				.toLocation(Earth.EARTH_RADIUS);
 		double azimuth = startPos.getAzimuth(endPos);
-		double theta = 20. * Math.PI/180.;//centerLocation.getEpicentralDistance(endPos);
+		double theta = 20. * Math.PI/180.;//
+//		double theta = centerLocation.getEpicentralDistance(endPos);
 		double deltaTheta = 1. * Math.PI / 180.;
 		
 		CrossSectionLine csline 
@@ -78,11 +80,32 @@ public class CrossSection {
 				Location location = position.toLocation(rs[i]);
 				Location[] nearPoints 
 					= comp.getNearest4(locations, location);
-				double[] nearPointsValue = new double[4];
-				for (int j = 0; j < 4; j++)
+				
+//				double dL = 5.;
+//				double dR = layers[i];
+//				Location[] nearPoints 
+//					= comp.get8CellNodes(locations, location, dR, dL);
+				
+				// debug
+//				System.out.print(location + " : ");
+//				for (int j = 0; j < nearPoints.length; j++)
+//					System.out.print(nearPoints[j] + ", ");
+//				System.out.println();
+				//
+				
+				double[] nearPointsValue = new double[nearPoints.length];
+				for (int j = 0; j < nearPoints.length; j++)
 					nearPointsValue[j] = valueOfLocation.get(nearPoints[j]);
 				double value 
 					= comp.complement(nearPoints, nearPointsValue, location);
+				
+				// debug
+//					System.out.print(value + " ; ");
+//					for (int j = 0; j < nearPoints.length; j++)
+//						System.out.print(nearPointsValue[j] + " ");
+//					System.out.println();
+				//
+				
 				crossSectionLocations[k * rs.length + i] = location;
 				crossSectionValues[k * rs.length + i] = value;
 				crossSectionThetaX[k * rs.length + i] = thetaX[k]
@@ -151,6 +174,25 @@ public class CrossSection {
 			while ((line = reader.readLine()) != null) {
 				String[] ss = line.split("\\s+");
 				Double y = Double.parseDouble(ss[0]);
+				ys.add(y);
+			}
+		} catch (IOException e) {
+			System.err.format("IOException: %s%n", e);
+		}
+		double[] y = new double[ys.size()];
+		for (int i = 0; i < y.length; i++)
+			y[i] = ys.get(i);
+		return y;
+	}
+	
+	private static double[] readLayers(Path file) {
+		List<Double> ys = new ArrayList<>();
+		try {
+			BufferedReader reader = Files.newBufferedReader(file);
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				String[] ss = line.split("\\s+");
+				Double y = Double.parseDouble(ss[1]);
 				ys.add(y);
 			}
 		} catch (IOException e) {

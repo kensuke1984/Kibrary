@@ -472,7 +472,7 @@ public class LetMeInvert implements Operation {
 			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
-			eq.outputA(outPath.resolve("partial"));
+//			eq.outputA(outPath.resolve("partial"));
 			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
 			dVector.outWeighting(outPath);
 			return null;

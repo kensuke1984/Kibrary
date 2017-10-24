@@ -43,10 +43,22 @@ public class Histogram {
 		}
 		this.averageLoc = new Location(tmpLat, tmpLon, 0.);
 		
+		Set<String> networkSet = Stream.of(new String[] {"CU", "IU", "II"})
+				.collect(Collectors.toSet());
+		
 		try (Stream<BasicID> idStream = Stream.of(basicIDs);) {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 			.forEach(id -> {
 				Station station = stationSet.stream().filter(s->s.equals(id.getStation())).findAny().get();
+				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
+				
+				// do not consider the following ids
+				if (cmtLocation.getLongitude() > -80)
+					return;
+				if (networkSet.contains(id.getStation().getNetwork())) {
+					return;
+				}
+				//
 				
 				HorizontalPosition staLoc = station.getPosition();
 				double ed = 0;
@@ -57,7 +69,7 @@ public class Histogram {
 							.getEpicentralDistance(staLoc)*180/Math.PI;
 				}
 				else
-					ed = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(staLoc)*180/Math.PI;
+					ed = cmtLocation.getEpicentralDistance(staLoc)*180/Math.PI;
 				
 				this.numberOfRecords[(int) (ed / interval)]++;
 				this.mean += (int) (ed / interval);

@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -31,7 +32,7 @@ import org.apache.commons.math3.linear.RealVector;
 public class Profile {
 	public static void main(String[] args) {
 		int methodOrder = Integer.parseInt(args[0]);
-		InverseMethodEnum method = InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
+		InverseMethodEnum method = InverseMethodEnum.CONJUGATE_GRADIENT;
 		String inversionResultString = null;
 		Path inversionResultPath = null;
 		try {
@@ -103,41 +104,45 @@ public class Profile {
 					pw.println("set size .5,1");
 					pw.print("p ");
 					int n = tmpObs.size();
-					int i = 0;
-					double synVariance = 0;
-					double bornVariance = 0;
-					double obsNorm = 0;
-					for (BasicID id : tmpObs) {
-						i++;
-						RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
-						double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
-						String name = ir.getTxtName(id);
-						double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
-								* 180. / Math.PI;
-						pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"black\",\\");
-						pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"red\",\\");
-						if (i == n)
-							pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\"");
-						else
-							pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\",\\");
-						
-						// output variance
-						RealVector synVector = ir.syntheticOf(id).getYVector();
-						RealVector obsVector = ir.observedOf(id).getYVector();
-						double tmpSynVariance = synVector.subtract(obsVector).dotProduct(synVector.subtract(obsVector));
-						double tmpBornVariance = bornVector.subtract(obsVector).dotProduct(bornVector.subtract(obsVector));
-						double tmpObsNorm = obsVector.dotProduct(obsVector);
-						
-						double tmpSyn = Math.sqrt(tmpSynVariance / tmpObsNorm);
-						double tmpBorn =  Math.sqrt(tmpBornVariance / tmpObsNorm);
-						pw2.println(id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
-						
-						synVariance += tmpSynVariance;
-						bornVariance += tmpBornVariance;
-						obsNorm += tmpObsNorm;
-					}
-					double tmpSyn = Math.sqrt(synVariance / obsNorm);
-					double tmpBorn =  Math.sqrt(bornVariance / obsNorm);
+					AtomicInteger i = new AtomicInteger();
+					double[] synVariance = new double[1];
+					double[] bornVariance = new double[1];
+					double[] obsNorm = new double[1];
+					tmpObs.parallelStream().forEach(id -> {
+						i.incrementAndGet();
+						try {
+							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
+							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
+							String name = ir.getTxtName(id);
+							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+									* 180. / Math.PI;
+							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"black\",\\");
+							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"red\",\\");
+							if (i.get() == n)
+								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\"");
+							else
+								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\",\\");
+							
+							// output variance
+							RealVector synVector = ir.syntheticOf(id).getYVector();
+							RealVector obsVector = ir.observedOf(id).getYVector();
+							double tmpSynVariance = synVector.subtract(obsVector).dotProduct(synVector.subtract(obsVector));
+							double tmpBornVariance = bornVector.subtract(obsVector).dotProduct(bornVector.subtract(obsVector));
+							double tmpObsNorm = obsVector.dotProduct(obsVector);
+							
+							double tmpSyn = Math.sqrt(tmpSynVariance / tmpObsNorm);
+							double tmpBorn =  Math.sqrt(tmpBornVariance / tmpObsNorm);
+							pw2.println(id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
+							
+							synVariance[0] += tmpSynVariance;
+							bornVariance[0] += tmpBornVariance;
+							obsNorm[0] += tmpObsNorm;
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					});
+					double tmpSyn = Math.sqrt(synVariance[0] / obsNorm[0]);
+					double tmpBorn =  Math.sqrt(bornVariance[0] / obsNorm[0]);
 					pw1.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
 					
 				} catch (IOException e) {

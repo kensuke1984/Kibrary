@@ -94,15 +94,15 @@ public class Dvector {
 			BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
 					.collect(Collectors.toList()).toArray(new BasicID[0]);
 			Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
-			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + "\n").getBytes(), StandardOpenOption.APPEND);
+			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 		
-//		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 		
 //		Path weightingPath = Paths.get("weighting" + Utilities.getTemporaryString() + ".inf");
 //		dvector.outWeighting(Paths.get("."));
 //		
-//		System.out.println("Variance = " + dvector.getVariance());
+		System.out.println("Total variance = " + dvector.getVariance());
 	}
 	
 	/**
@@ -282,23 +282,35 @@ public class Dvector {
 			};
 			break;
 		case RECIPROCAL_AZED:
-			this.histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
-				, {30, .8}, {35, .8} };
-			this.histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
-				, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
-				, {330, 1.}, {335, 1.2}, {340, 1.2}, {345, 0.8}
-				, {350, 0.7}, {355, 0.9}, {0, 1.05}, {5, 1.2}
-				, {10, 1.2}, {15, 1.2}, {20, 1.2}, {25, 1.2}
-				, {30, 1.2}, {35, 1.2} };
+//			this.histogramDistance = new double[][] { {10, 2.5}, {15, 2.}, {20, 1.}, {25, 0.8}
+//				, {30, .8}, {35, .8} };
+//			this.histogramAzimuth = new double[][] { {295, 2.5}, {300, 2.5}, {305, 2.5}
+//				, {310, 1.000}, {315, 0.8}, {320, 1.05}, {325, 0.8}
+//				, {330, 1.}, {335, 1.2}, {340, 1.2}, {345, 0.8}
+//				, {350, 0.7}, {355, 0.9}, {0, 1.05}, {5, 1.2}
+//				, {10, 1.2}, {15, 1.2}, {20, 1.2}, {25, 1.2}
+//				, {30, 1.2}, {35, 1.2} };
+			this.histogramDistance = new double[][] { {10.0, 1.417}, {15.0, 1.306}, {20.0, 0.852}
+				, {25.0, 0.708}, {30.0, 0.716} };
+			this.histogramAzimuth = new double[][] { {0.0, 0.909}, {5.0, 0.938}, {10.0, 1.007}
+			, {15.0, 0.912}, {20.0, 0.940}, {25.0, 0.787}, {30.0, 0.998}, {35.0, 1.759}
+			, {40.0, 1.929}, {45.0, 0.772}, {50.0, 0.772}, {305.0, 0.772}, {310.0, 0.899}
+			, {315.0, 0.772}, {320.0, 1.009}, {325.0, 0.873}, {330.0, 1.025}, {335.0, 1.025}
+			, {340.0, 1.152}, {345.0, 1.007}, {350.0, 0.899}, {355.0, 0.845} };
+			Set<String> networkSet = Stream.of(new String[] {"CU", "IU", "II"})
+					.collect(Collectors.toSet());
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
 					System.err.println(obs);
 					return 0.;
 				}
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
-						* weightingEpicentralDistanceTZ(obs)
-						* weightingAzimuthTZ(obs);
+				double weight = 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+				if (obs.getStation().getPosition().getLongitude() <= -80)
+					weight *= weightingEpicentralDistanceTZ(obs) * weightingAzimuthTZ(obs);
+				if (networkSet.contains(obs.getStation().getNetwork()))
+					weight *= 2;
+				return weight;
 			};
 			break;
 		case RECIPROCAL_AZED_DPP:
@@ -984,7 +996,7 @@ public class Dvector {
 		for (Station station : stations) {
 			List<BasicID> tmps = ids.stream().filter(id -> id.getStation().equals(station)).collect(Collectors.toList());
 			int numberOfGCMTId = (int) tmps.stream().map(id -> id.getGlobalCMTID()).distinct().count();
-			if (numberOfGCMTId >= 3)
+			if (numberOfGCMTId >= 2)
 				tmps.forEach(tmp -> filteredIds.add(tmp));
 		}
 		return filteredIds;
@@ -1024,31 +1036,36 @@ public class Dvector {
 		// " synthetic waveforms are found.");
 		System.out.println("Number of obs IDs before pairing with syn IDs = " + obsList.size());
 		if (obsList.size() != synList.size())
-			System.err.println("The numbers of observed IDs " + obsList.size() + " and " + " synthetic IDs "
+			System.out.println("The numbers of observed IDs " + obsList.size() + " and " + " synthetic IDs "
 					+ synList.size() + " are different ");
 		int size = obsList.size() < synList.size() ? synList.size() : obsList.size();
 
 		List<BasicID> useObsList = new ArrayList<>(size);
 		List<BasicID> useSynList = new ArrayList<>(size);
 
-		for (int i = 0; i < synList.size(); i++)
-			for (int j = 0; j < obsList.size(); j++)
+		for (int i = 0; i < synList.size(); i++) {
+			boolean foundPair = false;
+			for (int j = 0; j < obsList.size(); j++) {
 				if (isPair(synList.get(i), obsList.get(j))) {
 					useObsList.add(obsList.get(j));
 					useSynList.add(synList.get(i));
+					foundPair = true;
 					break;
 				}
+			}
+			if (!foundPair)
+				System.out.println("Didn't find OBS for " + synList.get(i));
+		}
 
 		if (useObsList.size() != useSynList.size())
 			throw new RuntimeException("unanticipated");
-		// System.out.println(useObsList.size() + " observed and synthetic pairs
-		// are used.");
+//		 System.out.println(useObsList.size() + " observed and synthetic pairs are used.");
 		
 		// filter so that there is at least three records per stations (for time partials stability)
-		if (atLeastThreeRecordsPerStation) {
-			useObsList = moreThanThreeEventsPerStation(useObsList);
-			useSynList = moreThanThreeEventsPerStation(useSynList);
-		}
+//		if (atLeastThreeRecordsPerStation) {
+//			useObsList = moreThanThreeEventsPerStation(useObsList);
+//			useSynList = moreThanThreeEventsPerStation(useSynList);
+//		}
 
 		nTimeWindow = useSynList.size();
 		obsIDs = useObsList.toArray(new BasicID[0]);

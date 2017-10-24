@@ -98,6 +98,25 @@ public class SourceTimeFunction {
 		return sourceTimeFunction;
 	}
 	
+	public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
+			double halfDuration, double amplitudeCorrection) {
+		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
+			@Override
+			public Complex[] getSourceTimeFunctionInFrequencyDomain() {
+				return sourceTimeFunction;
+			}
+		};
+		sourceTimeFunction.sourceTimeFunction = new Complex[np];
+		final double deltaF = 1.0 / tlen;
+		final double constant = 2 * Math.PI * deltaF * halfDuration;
+		for (int i = 0; i < np; i++) {
+			double omegaTau = (i + 1) * constant;
+			sourceTimeFunction.sourceTimeFunction[i] = new Complex((2 - 2 * Math.cos(omegaTau)) / omegaTau / omegaTau)
+				.multiply(amplitudeCorrection);
+		}
+		return sourceTimeFunction;
+	}
+	
     /**
      * ASYMMETRIC Triangle source time function
      * @author lina

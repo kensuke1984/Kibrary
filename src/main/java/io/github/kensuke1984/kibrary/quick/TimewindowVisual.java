@@ -243,7 +243,7 @@ public class TimewindowVisual {
 				
 				
 				//bins
-				Bins2D bins = new Bins2D(id, 5., 1., timewindows);
+				Bins2D bins = new Bins2D(id, 5., .33, timewindows);
 				Map<DistanceAzimuth, Integer> usedBinsCount = new HashMap<>();
 				Set<Path> outpathList = new HashSet<>();
 				for (TimewindowInformation timewindow : timewindows) {
@@ -344,14 +344,14 @@ public class TimewindowVisual {
 						else {
 							if (isObs) {
 								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
-								Files.write(outpathBins, (obsEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+//								Files.write(outpathBins, (obsEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
 							}
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (synEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
-							Files.write(outpathBins, (twoBitsString + "\n").getBytes(), StandardOpenOption.APPEND);
+//							Files.write(outpathBins, (synEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
+//							Files.write(outpathBins, (twoBitsString + "\n").getBytes(), StandardOpenOption.APPEND);
 							if (tw != null) {
-								Files.write(outpathBins, (verticalLine(tw.getStartTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
-								Files.write(outpathBins, (verticalLine(tw.getEndTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+//								Files.write(outpathBins, (verticalLine(tw.getStartTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+//								Files.write(outpathBins, (verticalLine(tw.getEndTime(), distance_azimuth.distance, .6, .7, "magenta", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
 							}
 						}
 					}
@@ -365,8 +365,8 @@ public class TimewindowVisual {
 					double t0 = timewindow.getStartTime() - distance_azimuth.distance * slowness;
 					double t1 = timewindow.getEndTime() - distance_azimuth.distance * slowness;
 					Path outpathBins = dir1.resolve(String.format("twv_bins_az%.1f.gmt", distance_azimuth.azimuth));
-					Files.write(outpathBins, (verticalLine(t0, distance_azimuth.distance, .6, .3, "purple", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
-					Files.write(outpathBins, (verticalLine(t1, distance_azimuth.distance, .6, .2, "green", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+//					Files.write(outpathBins, (verticalLine(t0, distance_azimuth.distance, .6, .3, "purple", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
+//					Files.write(outpathBins, (verticalLine(t1, distance_azimuth.distance, .6, .2, "green", 0, 0) + "\n").getBytes(), StandardOpenOption.APPEND);
 				}
 				for (Path outpathBins : outpathList) {
 					int depth = (int) (Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR());
@@ -375,7 +375,7 @@ public class TimewindowVisual {
 					double[][] S2curve = S2traveltimeCurveAK135(depth);
 					if (Scurve != null) {
 						Files.write(outpathBins, curve(Scurve, slowness, "blue", 0, 0).getBytes(), StandardOpenOption.APPEND);
-						Files.write(outpathBins, curve(S2curve, slowness, "pink", 0, 0).getBytes(), StandardOpenOption.APPEND);
+//						Files.write(outpathBins, curve(S2curve, slowness, "pink", 0, 0).getBytes(), StandardOpenOption.APPEND);
 					}
 					Files.write(outpathBins, endGMT().getBytes(), StandardOpenOption.APPEND);
 				}

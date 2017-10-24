@@ -7,9 +7,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.util.Location;
 
 public class Complementation {
@@ -78,6 +85,21 @@ public class Complementation {
 //		return value;
 	}
 	
+	// TODO
+	public double trilinearInterpolation(double[][] xyz, double[] cellValues, Location target) {
+		double v = 0;
+		double xd = (target.getLatitude() - xyz[0][0]) / (xyz[0][1] - xyz[0][0]);
+		double yd = (target.getLongitude() - xyz[1][0]) / (xyz[1][1] - xyz[1][0]);
+		double zd = (target.getR() - xyz[2][0]) / (xyz[2][1] - xyz[2][0]);
+		
+		double c00 = xyz[0][0] * (1 - xd) + xyz[0][1];
+		double c01 = xyz[2][0] * (1 - xd) + xyz[0][1];
+		double c10 = xyz[0][0] * (1 - xd) + xyz[0][1];
+		double c11 = xyz[0][0] * (1 - xd) + xyz[0][1];
+		
+		return v;
+	}
+	
 	/**
 	 * 重み関数を計算
 	 * @param kichi
@@ -109,6 +131,81 @@ public class Complementation {
 			near4[i] = sortLoc[i];
 		}
 	    return near4;
+	}
+	
+	public Location[] get8CellNodes(Location[] locations, Location location, double dR, double dL) {
+		Location[] nodes = new Location[8];
+		Location[] sortLoc = location.getNearestLocation(locations);
+		Location nearest = sortLoc[0];
+		double lat = nearest.getLatitude();
+		double lon = nearest.getLongitude();
+		double r = nearest.getR();
+		
+//		RealVector diffVector = nearest.toXYZ().toRealVector().subtract(location.toXYZ().toRealVector());
+//		double x = diffVector.getEntry(0);
+//		double y = diffVector.getEntry(1);
+//		double z = diffVector.getEntry(2);
+		double x = nearest.getLatitude() - location.getLatitude();
+		double y = nearest.getLongitude() - location.getLongitude();
+		double z = nearest.getR() - location.getR();
+//		System.out.println("DEBUG0: "  + x + " " + y + " " + z);
+		double dLon = 0;
+		double dLat = 0;
+		double dRad = 0;
+		dLat = x == 0 ? 0. : (x > 0 ? dL : -dL);
+		dLon = y == 0 ? 0. : (y > 0 ? dL : -dL);
+		dRad = z == 0 ? 0. : (z > 0 ? -dR : dR);
+		
+		
+		nodes[0] = nearest;
+		nodes[1] = new Location(lat + dLat, lon, r);
+		nodes[2] = new Location(lat, lon + dLon, r);
+		nodes[3] = new Location(lat + dLat, lon + dLon, r);
+		nodes[4] = new Location(lat, lon, r - dRad);
+		nodes[5] = new Location(lat + dLat, lon, r - dRad);
+		nodes[6] = new Location(lat, lon + dLon, r - dRad);
+		nodes[7] = new Location(lat + dLat, lon + dLon, r - dRad);
+		
+		Set<Location> fixedNodes = new HashSet<>();
+		fixedNodes.add(nodes[0]);
+		for (int i = 1; i < 8; i++) {
+			Location[] nearests = nodes[i].getNearestLocation(locations);
+			if (nearests.length > 0)
+				fixedNodes.add(nodes[i].getNearestLocation(locations)[0]);
+		}
+		
+		return fixedNodes.toArray(new Location[0]);
+	}
+	
+	public double[][] getLocationsForTrilinear(Location[] locations, Location location, double dR, double dL) {
+		double[][] nodes = new double[3][];
+		for (int i = 0; i < 3; i++)
+			nodes[i] = new double[2];
+		Location[] sortLoc = location.getNearestLocation(locations);
+		Location nearest = sortLoc[0];
+		double lat = nearest.getLatitude();
+		double lon = nearest.getLongitude();
+		double r = nearest.getR();
+		
+		RealVector diffVector = nearest.toXYZ().toRealVector().subtract(location.toXYZ().toRealVector());
+		double x = diffVector.getEntry(0);
+		double y = diffVector.getEntry(1);
+		double z = diffVector.getEntry(2);
+		double dLon = 0;
+		double dLat = 0;
+		double dRad = 0;
+		dLon = x >= 0 ? dL : -dL;
+		dLat = y >= 0 ? dL : -dL;
+		dRad = z >= 0 ? -dR : dR;
+		
+		nodes[0][0] = nearest.getLatitude();
+		nodes[0][1] = nodes[0][0] + dLat;
+		nodes[1][0] = nearest.getLongitude();
+		nodes[1][1] = nodes[1][0] + dLon;
+		nodes[2][0] = nearest.getR();
+		nodes[2][1] = nodes[2][0] + dRad;
+		
+		return nodes;
 	}
 	
 	/**

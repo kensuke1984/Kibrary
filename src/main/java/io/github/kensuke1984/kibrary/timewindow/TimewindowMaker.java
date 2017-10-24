@@ -188,7 +188,7 @@ public class TimewindowMaker implements Operation {
 	
 	private double minLength;
 	
-	String model;
+	private String model;
 
 	/**
 	 * Run must finish within 10 hours.
@@ -501,7 +501,7 @@ public class TimewindowMaker implements Operation {
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 		
 		try {
-			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, "ak135");
+			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, model);
 			
 			// use only the first arrival in case of triplication
 			Map<Phase, List<TauPPhase>> nameToPhase = new HashMap<>();
@@ -534,7 +534,7 @@ public class TimewindowMaker implements Operation {
 			}
 			
 			Set<TauPPhase> exPhases = this.exPhases.size() == 0 ? Collections.emptySet()
-					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
+					: TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases, model);
 			
 			if (usePhases.isEmpty()) {
 				writeInvalid(sacFileName);
@@ -542,6 +542,24 @@ public class TimewindowMaker implements Operation {
 			}
 			double[] phaseTime = toTravelTime(usePhases);
 			double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
+			
+			// Extrapolate travel time for sS phase at small epicentral distances, where TauP cannot compute travel time
+			// Used for inversion in the transition zone
+			// TODO find a smart solution, i.e. a way to compute precise travel time for small epicentral distances
+			Set<Phase> exPhaseNames = exPhases.stream().map(p -> p.getPhaseName())
+					.collect(Collectors.toSet());
+			if (this.exPhases.contains(Phase.create("sS"))
+					&& !exPhaseNames.contains(Phase.create("sS"))) {
+				double sStraveltime = TauPTimeReader.extrapolate_sS(eventR, epicentralDistance, model);
+				if (sStraveltime > 0) {
+					double[] tmp = exPhaseTime == null ? new double[1] : new double[exPhaseTime.length + 1];
+					tmp[0] = sStraveltime;
+					for (int i = 1; i < tmp.length; i++)
+						tmp[i] = exPhaseTime[i-1];
+					exPhaseTime = tmp;
+					System.out.println("DEBUG0: " + eventR + " " + epicentralDistance + " " + sStraveltime);
+				}
+			}
 			
 			double exRearShift = 5.;
 			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);

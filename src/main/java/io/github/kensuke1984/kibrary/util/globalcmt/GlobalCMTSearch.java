@@ -1,7 +1,12 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +19,8 @@ import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 
 /**
@@ -25,6 +32,67 @@ import io.github.kensuke1984.kibrary.util.Location;
  * TODO thread safe
  */
 public class GlobalCMTSearch {
+	
+	public static void main(String[] args) {
+		LocalDate startDate = LocalDate.of(2003, 1, 1);
+		LocalDate endDate = LocalDate.now();
+		GlobalCMTSearch sea = new GlobalCMTSearch(startDate, endDate);
+		sea.setDepthRange(100., 700.);
+//		sea.setLatitudeRange(50., 70.);
+//		sea.setLongitudeRange(160., 220.);
+		sea.setLatitudeRange(-12, 30);
+		sea.setLongitudeRange(-120, -60);
+		sea.setMwRange(5.5, 7.5);
+		
+		Set<GlobalCMTID> ids = sea.search();
+		System.out.println(ids.size() + " event founds");
+		
+		try {
+			PrintWriter pw = new PrintWriter(
+					new BufferedWriter(
+							new FileWriter("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/GlobalCMTIDs_UMstudy_CA_info_v3.txt")));
+			pw.println(">id, lon, lat, depth (km), Mw, ref. distance US (deg), ref. distance Alaska (deg)");
+			for (GlobalCMTID id : ids) {
+//				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(30, -100))
+//						* 180 / Math.PI;
+//				double distance2 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(50, -100))
+//						* 180 / Math.PI;
+				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(48, -124))
+						* 180 / Math.PI;
+				double distance2 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(65, -150))
+						* 180 / Math.PI;
+//				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(28, -100))
+//						* 180 / Math.PI;
+				pw.printf("%15s   %.1f   %.1f  %.1f %.1f %.1f %1f%n"
+						, id.toString()
+//						, id.getEvent().getCMTTime().format(formatter)
+						, id.getEvent().getCmtLocation().getLongitude()
+						, id.getEvent().getCmtLocation().getLatitude()
+						, Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR()
+//						, distance
+//						, id.getEvent().getCMTTime().format(formatter)
+						, id.getEvent().getCmt().getMw()
+						, distance1
+						, distance2);
+				System.out.printf("%15s,   %.1f,   %.1f,  %.1f, %.1f, %.1f, %1f%n"
+						, id.toString()
+//						, id.getEvent().getCMTTime().format(formatter)
+						, id.getEvent().getCmtLocation().getLongitude()
+						, id.getEvent().getCmtLocation().getLatitude()
+						, Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR()
+//						, distance
+//						, id.getEvent().getCMTTime().format(formatter)
+						, id.getEvent().getCmt().getMw()
+						, distance1
+						, distance2);
+			}
+			pw.close();
+		} catch (FileNotFoundException error) {
+			System.out.println("ファイルを開けません");
+		} catch (IOException error) {
+			System.out.println("データを読み出せません");
+		}
+	}
 
 	private static DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 

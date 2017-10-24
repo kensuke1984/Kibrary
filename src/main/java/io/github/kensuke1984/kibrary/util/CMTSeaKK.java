@@ -68,13 +68,13 @@ class CMTSeaKK {
 //				System.out.println(new GlobalCMTID("200506021056A").getEvent().getHalfDuration());
 //				System.exit(0);
 			
-				GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(1990, 1, 1), LocalDate.of(2017, 5, 21));
+				GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(2003, 1, 1), LocalDate.of(2005, 12, 30));
 
 //				sea.setLongitudeRange(-120, -30);
-//				sea.setLatitudeRange(0, 30);
-//				sea.setDepthRange(80, 750);
-				sea.setLongitudeRange(170, 220);
-				sea.setLatitudeRange(50, 70);
+				sea.setLatitudeRange(-10, 30);
+				sea.setDepthRange(80, 750);
+//				sea.setLongitudeRange(170, 220);
+//				sea.setLatitudeRange(50, 70);
 				sea.setDepthRange(80, 750);
 				sea.setMwRange(5.5, 7.5);
 				Set<GlobalCMTID> id = sea.search();

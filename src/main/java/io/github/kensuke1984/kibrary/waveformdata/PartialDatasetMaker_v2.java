@@ -325,7 +325,9 @@ public class PartialDatasetMaker_v2 implements Operation {
 				if (!perturbationLocationSet.contains(location))
 					continue;
 				
-				for (PartialType type : partialTypes)
+				for (PartialType type : partialTypes) {
+					if (type.isTimePartial())
+						continue;
 					for (SACComponent component : components) {
 						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
 							continue;
@@ -347,7 +349,7 @@ public class PartialDatasetMaker_v2 implements Operation {
 							}
 						});
 					}
-
+				}
 			}
 		}
 	}
@@ -483,8 +485,10 @@ private class WorkerTimePartial implements Runnable {
 					cutU);
 			
 			try {
-				partialDataWriter.addPartialID(PIDReceiverSide);
-				partialDataWriter.addPartialID(PIDSourceSide);
+				if (partialTypes.contains(PartialType.TIME_RECEIVER))
+					partialDataWriter.addPartialID(PIDReceiverSide);
+				if (partialTypes.contains(PartialType.TIME_SOURCE))
+					partialDataWriter.addPartialID(PIDSourceSide);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -589,6 +593,9 @@ private class WorkerTimePartial implements Runnable {
 			property.setProperty("finalSamplingHz", "1");
 		if (!property.containsKey("filterNp"))
 			property.setProperty("filterNp", "4");
+		
+		// additional unused info
+		property.setProperty("STFcatalog", stfcatName);
 	}
 
 	/**
@@ -725,8 +732,8 @@ private class WorkerTimePartial implements Runnable {
 		writeLog("Running " + N_THREADS + " threads");
 		writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogID());
 		writeLog("SourceTimeFunction=" + sourceTimeFunction);
-		if (sourceTimeFunction == 3)
-			writeLog("STFcatalogue: " + "LSTF1.stfcat");
+		if (sourceTimeFunction == 3 || sourceTimeFunction == 5)
+			writeLog("STFcatalogue: " + stfcatName);
 		setTimeWindow();
 		// filter設計
 		setBandPassFilter();
@@ -876,8 +883,9 @@ private class WorkerTimePartial implements Runnable {
 //	}
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
-
-	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat");
+	
+	private final String stfcatName = "ASTF2.stfcat"; //LSTF1 ASTF1 ASTF2
+	private final List<String> stfcat = readSTFCatalogue(stfcatName); 
 	
 	private void setSourceTimeFunctions() throws IOException {
 		if (sourceTimeFunction == 0)
@@ -916,6 +924,32 @@ private class WorkerTimePartial implements Runnable {
 		      	}          	 
 	            stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
 	            break;
+			case 4:
+				throw new RuntimeException("Case 4 not implemented yet");
+			case 5:
+//				double mw = id.getEvent().getCmt().getMw();
+////				double duration = 9.60948E-05 * Math.pow(10, 0.6834 * mw);
+//				double duration = 0.018084 * Math.pow(10, 0.3623 * mw);
+//				halfDuration = duration / 2.;
+////				System.out.println("DEBUG1: id, mw, half-duration = " + id + " " + mw + " " + halfDuration);
+//				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+				halfDuration = 0.;
+				double amplitudeCorrection = 1.;
+				boolean found = false;
+		      	for (String str : stfcat) {
+		      		String[] stflist = str.split("\\s+");
+		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());
+		      	    if(id.equals(eventID)) {
+		      	    	halfDuration = Double.valueOf(stflist[1].trim());
+		      	    	amplitudeCorrection = Double.valueOf(stflist[2].trim());
+		      	    	found = true;
+		      	    }
+		      	}
+		      	if (found)
+		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, 1. / amplitudeCorrection);
+		      	else
+		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+		      	break;
 			default:
 				throw new RuntimeException("Error: undefined source time function identifier (0: none, 1: boxcar, 2: triangle).");
 			}
@@ -977,8 +1011,8 @@ private class WorkerTimePartial implements Runnable {
 		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
 		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, filterNp);
-//		filter.setBackward(false);
-		filter.setBackward(true);
+		filter.setBackward(false);
+//		filter.setBackward(true);
 		writeLog(filter.toString());
 		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
 	}

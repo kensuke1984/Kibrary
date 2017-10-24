@@ -92,14 +92,18 @@ public class RaypathDistribution implements Operation {
 				.collect(Collectors.toSet());
 
 		drawsPath = Boolean.parseBoolean(property.getProperty("raypath"));
-		Path stationPath = getPath("stationInformationPath");
-		stationSet = StationInformationFile.read(stationPath);
 		// drawsPoint = Boolean.parseBoolean(reader.getString("partial"));
 		if (property.containsKey("timeWindowInformationPath")) {
 			Path f = getPath("timeWindowInformationPath");
 			if (Files.exists(f))
 				timeWindowInformationFile = TimewindowInformationFile.read(f);
 		}
+		Path stationPath = getPath("stationInformationPath");
+		if (timeWindowInformationFile == null)
+			stationSet = StationInformationFile.read(stationPath);
+		else
+			stationSet = timeWindowInformationFile.stream().map(tw -> tw.getStation())
+				.collect(Collectors.toSet());
 	}
 
 	private Properties property;
@@ -185,13 +189,17 @@ public class RaypathDistribution implements Operation {
 	@Override
 	public void run() throws IOException {
 		setName();
-		ids = Utilities.globalCMTIDSet(workPath);
+		if (timeWindowInformationFile == null)
+			ids = Utilities.globalCMTIDSet(workPath);
+		else
+			ids = timeWindowInformationFile.stream().map(tw -> tw.getGlobalCMTID())
+				.collect(Collectors.toSet());
 		outputEvent();
 		outputStation();
 		if (drawsPath) {
 			outputRaypath();
 //			outputTurningPoint();
-			outputRaypathInside_divide();
+//			outputRaypathInside_divide();
 		}
 		outputGMT();
 	}

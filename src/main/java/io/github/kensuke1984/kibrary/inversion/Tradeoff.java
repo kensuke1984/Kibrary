@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.exception.OutOfRangeException;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -58,26 +59,61 @@ public class Tradeoff {
 			
 			List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownPath);
 			
-			List<Double> perturbationRs = parameterList.stream().map(p -> p.getLocation().getR()).collect(Collectors.toList());
+			List<Double> perturbationRs = parameterList.stream().map(p -> p.getLocation().getR())
+					.distinct().collect(Collectors.toList());
 			Collections.sort(perturbationRs);
 			Collections.reverse(perturbationRs);
 			
-			Dvector dVector = new Dvector(waveforms);
-			ObservationEquation eq = new ObservationEquation(partials, parameterList, dVector, false, false, null, null, null);
+			List<UnknownParameter> orderedParameterList = new ArrayList<>();
+			perturbationRs.stream().forEach(pR -> {
+				parameterList.stream().filter(p -> p.getLocation().getR() == pR)
+					.forEach(p -> orderedParameterList.add(p));
+			});
 			
-			Location[] paramOrederedLocs = readPartialLocation(unknownPath);
-			Tradeoff trade = new Tradeoff(eq.getAtA(), paramOrederedLocs);
+//			System.out.println("DEBUG0: " + orderedParameterList.size() + " " + parameterList.size());
 			
-			double layer1R = 6300.;
+			//for test on a small dataset
+			GlobalCMTID oneID = Stream.of(waveforms)
+					.map(id -> id.getGlobalCMTID()).collect(Collectors.toList()).get(0);
+			BasicID[] oneIDwaveforms = Stream.of(waveforms).filter(id -> id.getGlobalCMTID().equals(oneID))
+				.collect(Collectors.toList()).toArray(new BasicID[0]);
+			Dvector dVector = new Dvector(oneIDwaveforms);
+			
+//			Dvector dVector = new Dvector(waveforms);
+			ObservationEquation eq = new ObservationEquation(partials
+					, orderedParameterList, dVector, false, false, null, null, null);
+			
+			Tradeoff trade = new Tradeoff(eq.getAtA(), orderedParameterList);
+			
+//			System.out.println("DEBUG1: " + eq.getParameterList().size());
+			
+			double layer1R = 6138;
+			double minDeltaR = Double.MAX_VALUE;
+			double tmpLayerR = 0.;
+			for (Double perturbationR : perturbationRs) {
+				if (Math.abs(perturbationR - layer1R) < minDeltaR) {
+					tmpLayerR = perturbationR;
+					minDeltaR = Math.abs(perturbationR - layer1R);
+				}
+			}
+			layer1R = tmpLayerR;
 			double layer2Rmin = Earth.EARTH_RADIUS - 900;
 			double layer2Rmax = Earth.EARTH_RADIUS - 300.;
+			
+			System.out.println("Computing correlation between voxels in layer " + layer1R
+					+ " and voxels between radii " + layer2Rmin + "~" + layer2Rmax);
 			double[][] correlations = trade.computeForLayer(layer1R, layer2Rmin, layer2Rmax, perturbationRs);
+			UnknownParameter[][] unknownGrid = trade.unknownsForLayer(layer1R, layer2Rmin, layer2Rmax, perturbationRs);
 			
 			Path correlationFile = root.resolve(String.format("correlation_%.0f.txt", layer1R));
 			try (BufferedWriter writer = Files.newBufferedWriter(correlationFile)) {
-				for (int i = 0; i < correlations[0].length; i++) {
-					for (int j = 0; j < correlations.length; j++) {
-						writer.write(String.valueOf(correlations[j][i]) + " ");
+				for (int i = 0; i < unknownGrid[0].length; i++)
+					writer.write(unknownGrid[0][i].getLocation().toString() + " ");
+				writer.write("\n");
+				for (int j = 0; j < correlations[0].length; j++) {
+					writer.write(unknownGrid[1][j].getLocation().toString() + " ");
+					for (int i = 0; i < correlations.length; i++) {
+						writer.write(String.valueOf(correlations[i][j]) + " ");
 					}
 					writer.write("\n");
 				}
@@ -90,9 +126,11 @@ public class Tradeoff {
 		}
 	}
 	
-	public Tradeoff(RealMatrix AtA, Location[] paramOrderedLocs) {
+	public Tradeoff(RealMatrix AtA, List<UnknownParameter> parameterList) {
 		this.ata = AtA;
-		this.paramOrderedLocs = paramOrderedLocs;
+		this.parameters = parameterList;
+		this.paramOrderedLocs = parameterList.stream().map(p -> p.getLocation())
+				.collect(Collectors.toList()).toArray(new Location[0]);
 	}
 	
 	public double[] verticalToLateralCorrelation(Location[] voxelLocs) {
@@ -298,15 +336,42 @@ public class Tradeoff {
 				return false;
 		}).boxed().collect(Collectors.toList());
 		
+//		System.out.println("DEBUG2 : " + ata.getColumnDimension());
+		
 		double[][] correlations = new double[indexLayer1.size()][];
-		for (int i : indexLayer1) {
+		for (int i = 0; i < indexLayer1.size(); i++) {
 			correlations[i] = new double[indexLayer2.size()];
-			for (int j : indexLayer2) {
-				correlations[i][j] = ata.getEntry(i, j);
+			for (int j = 0; j < indexLayer2.size(); j++) {
+				int ia = indexLayer1.get(i);
+				int ja = indexLayer2.get(j);
+				correlations[i][j] = ata.getEntry(ia, ja)
+						/ Math.sqrt(ata.getEntry(ia, ia) * ata.getEntry(ja, ja));
 			}
 		}
 		
 		return correlations;
+	}
+	
+	private UnknownParameter[][] unknownsForLayer(double layer1R, double layer2Rmin, double layer2Rmax, List<Double> orderedR) {
+		List<Integer> indexLayer1 = IntStream.range(0, parameters.size()).filter(i -> parameters.get(i).getLocation().getR() == layer1R)
+				.boxed().collect(Collectors.toList());
+		List<Integer> indexLayer2 = IntStream.range(0, parameters.size()).filter(i -> {
+			double pR = parameters.get(i).getLocation().getR();
+			if (pR >= layer2Rmin && pR <= layer2Rmax)
+				return true;
+			else
+				return false;
+		}).boxed().collect(Collectors.toList());
+		
+		UnknownParameter[][] unknowns = new UnknownParameter[2][];
+		unknowns[0] = new UnknownParameter[indexLayer1.size()];
+		unknowns[1] = new UnknownParameter[indexLayer2.size()];
+		for (int i = 0; i < indexLayer1.size(); i++)
+			unknowns[0][i] = parameters.get(indexLayer1.get(i));
+		for (int i = 0; i < indexLayer2.size(); i++)
+			unknowns[1][i] = parameters.get(indexLayer2.get(i));
+		
+		return unknowns;
 	}
 	
 	private Location[] paramOrderedLocs;

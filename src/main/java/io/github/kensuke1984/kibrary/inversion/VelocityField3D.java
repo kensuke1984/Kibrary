@@ -179,6 +179,8 @@ public class VelocityField3D {
 					Map<UnknownParameter, Double> zeroVelocities = null;
 					Map<UnknownParameter, Double> perturbations = null;
 					Map<Location, Double> extendedPerturbationMap = null;
+					Map<Location, Double> zeroMeanPerturbationMap = null;
+					Map<Location, Double> extendedZeroMeanPerturbationMap = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					if (trs == null) {
@@ -191,7 +193,9 @@ public class VelocityField3D {
 						Map<Location, Double> perturbationMap = new HashMap<>();
 						for (UnknownParameter unknown : perturbations.keySet())
 							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
 						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 5., perturbationRs);
+						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 5., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
@@ -217,7 +221,8 @@ public class VelocityField3D {
 						if (trs == null) {
 							for (Location loc : extendedPerturbationMap.keySet()) {
 								double perturbation = extendedPerturbationMap.get(loc);
-								pw.println(loc + " " + perturbation);
+								double zeroMeanPerturbation = extendedZeroMeanPerturbationMap.get(loc);
+								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);
 							}
 							if (partialTypes.contains(PartialType.PARQ)) {
 								for (int j = 0; j < Qs.length; j++) {
@@ -254,6 +259,8 @@ public class VelocityField3D {
 			, double amplifyPerturbation) {
 		Map<UnknownParameter, Double> velMap = new HashMap<>();
 		for (UnknownParameter m : answerMap.keySet()) {
+			if (m.getPartialType().isTimePartial())
+				continue;
 			Location loc = (Location) m.getLocation();
 			double r = loc.getR();
 			double dR = layerMap.get(r);
@@ -270,9 +277,17 @@ public class VelocityField3D {
 			, double amplifyPerturbation) {
 		Map<UnknownParameter, Double> perturbationMap = new HashMap<>();
 		for (UnknownParameter m : parameterOrder) {
+			if (m.getPartialType().isTimePartial())
+				continue;
 			Location loc = (Location) m.getLocation();
 			double r = loc.getR();
-			double dR = layerMap.get(r);
+			double dR = 0;
+			try {
+				dR = layerMap.get(r);
+			} catch (NullPointerException e) {
+				System.out.println("NullPointerException: didn't find layer for radius " + r);
+				e.printStackTrace();
+			}
 			double rmin = r - dR / 2.;
 			double rmax = r + dR / 2.;
 			if (structure.equals(PolynomialStructure.AK135)) {
@@ -476,6 +491,26 @@ public class VelocityField3D {
 		}
 		
 		return res;
+	}
+	
+	public static Map<Location, Double> zeroMeanMap(Map<Location, Double> perturbationMap, double[] perturbationRs) {
+		Map<Location, Double> map = new HashMap<>();
+		Set<Location> locations = perturbationMap.keySet();
+		for (double r : perturbationRs) {
+			Set<Location> tmpLocations = locations.stream().filter(loc -> loc.getR() == r)
+				.collect(Collectors.toSet());
+			double average = 0.;
+			for (Location tmploc : tmpLocations)
+				average += perturbationMap.get(tmploc);
+			average /= tmpLocations.size();
+			
+			for (Location tmploc : tmpLocations) {
+				double tmpPerturbation = perturbationMap.get(tmploc)
+						- average;
+				map.put(tmploc, tmpPerturbation);
+			}
+		}
+		return map;
 	}
 	
 	public static Map<Location, Double> extendedPerturbationMap(Map<Location, Double> perturbationMap, double dL, double[] perturbationRs) {

@@ -81,6 +81,8 @@ public class DataSelection implements Operation {
 			pw.println("##Path of a static correction file");
 			pw.println("##If you do not want to consider static correction, then comment out the next line");
 			pw.println("#staticCorrectionInformationFilePath staticCorrection.dat");
+			pw.println("##Reject data with static correction greater than maxStaticShift (10.)");
+			pw.println("#maxStaticShift");
 			pw.println("##double sacSamplingHz (20)");
 			pw.println("#sacSamplingHz cant change now");
 			pw.println("##double minCorrelation (0)");
@@ -146,6 +148,8 @@ public class DataSelection implements Operation {
 	 */
 	private double ratio;
 	
+	private double maxStaticShift;
+	
 	private double minSNratio;
 	
 	private boolean SnScSnPair;
@@ -177,6 +181,8 @@ public class DataSelection implements Operation {
 			property.setProperty("SnScSnPair", "false");
 		if (!property.containsKey("excludeSurfaceWave"))
 			property.setProperty("excludeSurfaceWave", "false");
+		if (!property.containsKey("maxStaticShift"))
+			property.setProperty("maxStaticShift", "10.");
 	}
 
 	private void set() throws IOException {
@@ -217,6 +223,8 @@ public class DataSelection implements Operation {
 		excludeSurfaceWave = Boolean.parseBoolean(property.getProperty("excludeSurfaceWave"));
 		
 		dataSelectionInfo = new ArrayList<>();
+		
+		maxStaticShift = Double.parseDouble(property.getProperty("maxStaticShift"));
 	}
 
 	private Set<TimewindowInformation> sourceTimewindowInformationSet;
@@ -380,10 +388,9 @@ public class DataSelection implements Operation {
 							StaticCorrection foundShift = getStaticCorrection(window);
 							shift = foundShift.getTimeshift();
 							//remove static shift of 10 s (maximum range of the static correction)
-							if (shift == 10.)
-								continue;
 						}
-						
+						if (Math.abs(shift) > maxStaticShift)
+							continue;
 						// remove surface wave from window
 						if (excludeSurfaceWave) {
 							SurfaceWaveDetector detector = new SurfaceWaveDetector(synTrace, 20.);

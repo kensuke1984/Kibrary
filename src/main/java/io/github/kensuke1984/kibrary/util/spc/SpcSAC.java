@@ -178,7 +178,7 @@ public final class SpcSAC implements Operation {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat");
+	private final List<String> stfcat = readSTFCatalogue("ASTF2.stfcat"); //LSTF1 ASTF1 ASTF2
 	
 	private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
 		double halfDuration = id.getEvent().getHalfDuration();
@@ -204,20 +204,36 @@ public final class SpcSAC implements Operation {
 	      	    		halfDuration1 = id.getEvent().getHalfDuration();
 	      	    		halfDuration2 = id.getEvent().getHalfDuration();
 	      	    	}
-//	      	    	System.out.println( "DEBUG1: GET STF of " + eventID
-//	      	    		+ " halfDuration 1 is " + halfDuration1 + " halfDuration 2 is " + halfDuration2 );
 	      	    }
-	      	}          	 
+	      	}
             return SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
 		case 4:
 			throw new RuntimeException("Case 4 not implemented yet");
 		case 5:
-			double mw = id.getEvent().getCmt().getMw();
-//			double duration = 9.60948E-05 * Math.pow(10, 0.6834 * mw);
-			double duration = 0.018084 * Math.pow(10, 0.3623 * mw);
-			halfDuration = duration / 2.;
-//			System.out.println("DEBUG1: id, mw, half-duration = " + id + " " + mw + " " + halfDuration);
-			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+//			double mw = id.getEvent().getCmt().getMw();
+////			double duration = 9.60948E-05 * Math.pow(10, 0.6834 * mw);
+//			double duration = 0.018084 * Math.pow(10, 0.3623 * mw);
+//			halfDuration = duration / 2.;
+////			System.out.println("DEBUG1: id, mw, half-duration = " + id + " " + mw + " " + halfDuration);
+//			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+			halfDuration = 0.;
+			double amplitudeCorrection = 1.;
+			boolean found = false;
+	      	for (String str : stfcat) {
+	      		String[] stflist = str.split("\\s+");
+	      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());
+	      	    if(id.equals(eventID)) {
+	      	    	halfDuration = Double.valueOf(stflist[1].trim());
+	      	    	amplitudeCorrection = Double.valueOf(stflist[2].trim());
+	      	    	found = true;
+	      	    }
+	      	}
+	      	SourceTimeFunction stf = null;
+	      	if (found)
+	      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, 1. / amplitudeCorrection);
+	      	else
+	      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+	      	return stf;
 		default:
 			throw new RuntimeException("Integer for source time function is invalid.");
 		}

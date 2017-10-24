@@ -13,6 +13,7 @@ import java.util.stream.IntStream;
 
 import edu.sc.seis.TauP.TauModel;
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.util.Earth;
 
 /**
  * <p>
@@ -116,6 +117,45 @@ public final class TauPTimeReader {
 			e.printStackTrace();
 			return null;
 		}
+	}
+	
+	public static double extrapolate_sS(double eventR, double epicentralDistance, String model) {
+		double[] depths = new double[] {50., 60., 75., 200., 260., 310., 350.};
+		double[] distances = new double[] {14., 16., 17., 18., 19., 20.};
+		double traveltime = -1;
+		
+		double depth = Earth.EARTH_RADIUS - eventR;
+		int iDepth = -1;
+		for (int i = 0; i < depths.length - 1; i++) {
+			if (depth < depths[i+1] && depth >= depths[i])
+				iDepth = i;
+		}
+		if (iDepth != -1) {
+			double distance1 = distances[iDepth];
+			double distance2 = distance1 + .5;
+			Set<Phase> phases = new HashSet<>();
+			phases.add(Phase.create("sS"));
+			
+			List<Double> traveltimes1 = toPhase(operateTauPTime(eventR, distance1, phases, model))
+				.stream().mapToDouble(p -> p.getTravelTime()).boxed()
+				.collect(Collectors.toList());
+			List<Double> traveltimes2 = toPhase(operateTauPTime(eventR, distance2, phases, model))
+					.stream().mapToDouble(p -> p.getTravelTime()).boxed()
+					.collect(Collectors.toList());
+			Collections.sort(traveltimes1);
+			Collections.sort(traveltimes2);
+			
+			try {
+				double firstArrival1 = traveltimes1.get(0);
+				double firstArrival2 = traveltimes2.get(0);
+				traveltime = (firstArrival2 - firstArrival1) / (distance2 - distance1) 
+					* (epicentralDistance - distance1) + firstArrival1;
+			} catch (IndexOutOfBoundsException e) {
+				System.err.println("Error: " + eventR + " " + epicentralDistance + " " + depths[iDepth] + " " + distances[iDepth]);
+				e.printStackTrace();
+			}
+		}
+		return traveltime;
 	}
 	
 	private static List<String> operateTauPTime(double eventR, double epicentralDistance, Set<Phase> phase) {

@@ -60,8 +60,8 @@ public class Channel {
 	/**
 	 * 指定するチャンネル数（ワイルドカードは一つとして数える）
 	 */
-	private int channelNumber = 1;
-	private String[] channel = { "BH?" };
+	private int channelNumber = 2;
+	private String[] channel = { "BH?", "HH?" };
 
 	public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
 		super();
