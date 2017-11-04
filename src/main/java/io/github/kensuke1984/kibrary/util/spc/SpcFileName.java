@@ -10,13 +10,10 @@ import java.nio.file.Path;
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * <p>
- * <p>
  * Synthetic: station.GlobalCMTID(PSV, SV).spc
- * <p>
  * <p>
  * Partial derivatives: station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV,
  * SH).spc
- * <p>
  * <p>
  * 'PSV', 'SH' must be upper case. 'station' must be 8 or less letters.
  *

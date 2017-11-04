@@ -77,7 +77,8 @@ public interface Operation {
     /**
      * This method creates a file for the properties as the path.
      *
-     * @param path a path for the file (should be *.properties)
+     * @param path    a path for the file (should be *.properties)
+     * @param options if any
      * @throws IOException if any
      */
     default void writeProperties(Path path, OpenOption... options) throws IOException {

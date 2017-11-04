@@ -8,7 +8,6 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * 弾性定数の偏微分情報 ３次元的な摂動点の位置、 摂動の種類(PartialType) Unknown parameter for 3D. location
  * type
  * <p>
- * <p>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi

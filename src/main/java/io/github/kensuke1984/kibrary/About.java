@@ -22,8 +22,8 @@ import java.util.logging.Logger;
  */
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
-    public static final String CODENAME = "Sahagin";
-    public static final String VERSION = "0.4.2.5";
+    public static final String CODENAME = "Pixie";
+    public static final String VERSION = "0.4.3";
     private static final long serialVersionUID = -2485772755944862822L;
     private static final String line;
 
@@ -57,8 +57,6 @@ public final class About extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | javax.swing.UnsupportedLookAndFeelException ex) {
             Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
         }
-        // </editor-fold>
-        /* Create and display the form */
         if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
         else System.out.println(line);
     }

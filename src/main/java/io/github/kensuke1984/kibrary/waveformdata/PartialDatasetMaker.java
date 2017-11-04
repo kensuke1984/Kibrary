@@ -49,7 +49,6 @@ import java.util.stream.Stream;
  * <p>
  * バンドパスをかけて保存する
  * <p>
- * <p>
  * TODO station とかの書き出し
  * <p>
  * 例： directory/19841006/*spc directory/0000KKK/*spc
@@ -211,6 +210,7 @@ public class PartialDatasetMaker implements Operation {
 
     /**
      * @param args [parameter file name]
+     * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         PartialDatasetMaker pdm = new PartialDatasetMaker(Property.parse(args));
@@ -249,7 +249,7 @@ public class PartialDatasetMaker implements Operation {
     }
 
     /**
-     * parameterのセット
+     * set parameter
      */
     private void set() throws IOException {
         checkAndPutDefaults();
@@ -329,8 +329,6 @@ public class PartialDatasetMaker implements Operation {
     }
 
     private void setOutput() throws IOException {
-
-        // 書き込み準備
         Path idPath = workPath.resolve("partialID" + dateString + ".dat");
         Path datasetPath = workPath.resolve("partial" + dateString + ".dat");
 
@@ -382,7 +380,7 @@ public class PartialDatasetMaker implements Operation {
 
             if (idSet.isEmpty()) continue;
 
-            // bpModelFolder内 spectorfile
+            // spectral files in bpModelFolder
             Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
             System.out.println(bpFiles.size() + " bpfiles are found");
 
@@ -391,12 +389,12 @@ public class PartialDatasetMaker implements Operation {
                     .toArray(Path[]::new);
 
             int donebp = 0;
-            // bpフォルダ内の各bpファイルに対して
+            // foreach bpfile in bpfolder
             for (SpcFileName bpname : bpFiles) {
                 // create ThreadPool
                 ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
                 System.err.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
-                // 摂動点の名前
+
                 DSMOutput bp = bpname.read();
                 String pointName = bp.getObserverID();
 
@@ -512,8 +510,6 @@ public class PartialDatasetMaker implements Operation {
 
     /**
      * 一つのBackPropagationに対して、あるFPを与えた時の計算をさせるスレッドを作る
-     *
-     * @author Kensuke
      */
     private class PartialComputation implements Runnable {
 

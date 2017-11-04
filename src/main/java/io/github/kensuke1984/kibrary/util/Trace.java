@@ -18,10 +18,8 @@ import java.util.stream.IntStream;
 /**
  * Utility for a function y = f(x)
  * <p>
- * <p>
  * This class is <b>IMMUTABLE</b>
  * </p>
- * <p>
  * TODO sorted
  *
  * @author Kensuke Konishi
@@ -167,8 +165,8 @@ public class Trace {
     /**
      * f(x) &rarr; f(x-shift) Shifts "shift" in the direction of x axis. If you
      * want to change like below: <br>
-     * x:(3, 4, 5) -> (0, 1, 2) <br>
-     * f(3) -> f'(0)
+     * x:(3, 4, 5) &rarr; (0, 1, 2) <br>
+     * f(3) &rarr; f'(0)
      * then the value 'shift' should be -3
      *
      * @param shift value of shift

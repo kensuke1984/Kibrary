@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 /**
  * Information file for SSHPSV and SSHSH
  * <p>
- * <p>
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi

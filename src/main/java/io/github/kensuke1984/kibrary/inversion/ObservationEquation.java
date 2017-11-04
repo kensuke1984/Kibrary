@@ -26,7 +26,6 @@ import java.util.stream.IntStream;
 /**
  * A&delta;m=&delta;d
  * <p>
- * <p>
  * This class is <b>immutable</b>.
  * <p>
  *

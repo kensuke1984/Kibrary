@@ -178,7 +178,7 @@ public class LetMeInvert implements Operation {
      * @throws IOException if any
      */
     private void setEquation() throws IOException {
-        BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
+        BasicID[] ids = BasicIDFile.read(waveIDPath, waveformPath);
 
         // set Dvector
         System.err.println("Creating D vector.");
@@ -189,7 +189,7 @@ public class LetMeInvert implements Operation {
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 
         // set partial matrix
-        PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+        PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         eq = new ObservationEquation(partialIDs, parameterList, dVector);
     }
 

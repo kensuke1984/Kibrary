@@ -16,12 +16,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * BasicDatasetやPartialDatasetの書き込み
+ * Writer of BasicDataset and PartialDataset
  * <p>
  * This class create a new set of dataset files.
  *
  * @author Kensuke Konishi
- * @version 0.4.0.3
+ * @version 0.4.0.4
  */
 public class WaveformDataWriter implements Closeable, Flushable {
     /**
@@ -29,7 +29,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     private final Path IDPATH;
     /**
-     * 波形情報ファイル
+     * wavedata file
      */
     private final Path DATAPATH;
     /**
@@ -38,11 +38,11 @@ public class WaveformDataWriter implements Closeable, Flushable {
      */
     private final int MODE;
     /**
-     * id情報の書き出し
+     * stream for id
      */
     private DataOutputStream idStream;
     /**
-     * 波形情報の書き出し
+     * stream for wavedata
      */
     private DataOutputStream dataStream;
     /**
@@ -220,9 +220,9 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeFloat((float) basicID.getSamplingHz()); // sampling Hz
 
 
-        // convolutionされているか 観測波形なら true
+        // if its convolute  true for obs
         idStream.writeBoolean(basicID.getWaveformType() == WaveformType.OBS || basicID.CONVOLUTE); // 1Byte
-        idStream.writeLong(startByte); // データの格納場所 8 Byte
+        idStream.writeLong(startByte); // data address 8 Byte
 
     }
 
@@ -249,11 +249,11 @@ public class WaveformDataWriter implements Closeable, Flushable {
         idStream.writeByte(partialID.COMPONENT.valueOf());
         idStream.writeByte(getIndexOfRange(partialID.MIN_PERIOD, partialID.MAX_PERIOD));
         idStream.writeFloat((float) partialID.START_TIME); // start time 4 Byte
-        idStream.writeInt(partialID.NPTS); // データポイント数 4 Byte
+        idStream.writeInt(partialID.NPTS); // npts 4 Byte
         idStream.writeFloat((float) partialID.SAMPLINGHZ); // sampling Hz 4 Byte
-        // convolutionされているか
+        // if its convolute
         idStream.writeBoolean(partialID.CONVOLUTE); // 1Byte
-        idStream.writeLong(startByte); // データの格納場所 8 Byte
+        idStream.writeLong(startByte); // data address 8 Byte
         // partial type 1 Byte
         idStream.writeByte(partialID.getPartialType().getValue());
         idStream.writeShort(perturbationLocationMap.get(partialID.POINT_LOCATION));

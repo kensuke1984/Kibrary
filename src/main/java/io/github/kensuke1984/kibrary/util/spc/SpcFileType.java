@@ -1,7 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 /**
- * SpcFileの中身 par? (?:0 - 5, A, C, F, L, N, Q(Q<sup>-1</sup></sup>)), PB, PF, SYNTHETIC
+ * SpcFileの中身 par? (?:0 - 5, A, C, F, L, N, Q(Q<sup>-1</sup>)), PB, PF, SYNTHETIC
  *
  * @author Kensuke Konishi
  * @version 0.0.3.0.1

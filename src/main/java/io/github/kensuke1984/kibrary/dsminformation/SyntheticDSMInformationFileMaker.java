@@ -19,10 +19,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
+ * Make DSM information files for event folders under a work folder.
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1
+ * @version 0.2.2.2
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 
@@ -71,7 +71,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
             pw.println("##header for names of information files, header_[psv, sh].inf, (PREM)");
             pw.println("#header");
             pw.println("##Path of a structure file you want to use. ()");
-            pw.println("#structureFile");
+            pw.println("#structurePath");
             pw.println("##tlen must be a power of 2 over 10 (3276.8)");
             pw.println("#tlen");
             pw.println("##np must be a power of 2 (1024)");
@@ -114,7 +114,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         np = Integer.parseInt(property.getProperty("np"));
         tlen = Double.parseDouble(property.getProperty("tlen"));
         header = property.getProperty("header");
-        if (property.containsKey("structureFile")) structurePath = Paths.get(property.getProperty("structureFile"));
+        if (property.containsKey("structurePath"))
+            structurePath = workPath.resolve(property.getProperty("structurePath"));
     }
 
     @Override

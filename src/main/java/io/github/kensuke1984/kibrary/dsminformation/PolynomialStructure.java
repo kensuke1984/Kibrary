@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
  * This class is <b>IMMUTABLE</b> <br>
  * <p>
  * When you try to get values on radius of boundaries, you will get one in the
- * shallower layer, i.e., the layer which has the radius as rmin.
+ * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi
  * @version 0.2.5
@@ -314,22 +314,19 @@ public class PolynomialStructure implements Serializable {
 
     /**
      * 半径boundariesのところに境界を作る（層を一つ増やす）
-     * <p>
-     * Add boundaries at the radiuses.
-     * <p>
-     * <p>
+     * Add boundaries at the input radii.
      * if there is already a boundary at r then nothing will be done.
      *
-     * @param boundaries radii for boundaries. Values smaller than 0 or bigger than
+     * @param radii radii for boundaries. Values smaller than 0 or bigger than
      *                   earth radius will be ignored
      * @return a new structure which have additional layers at the input
      * boundaries or this if there all the radiuses already exist in
      * this
      */
-    public PolynomialStructure addBoundaries(double... boundaries) {
+    public PolynomialStructure addBoundaries(double... radii) {
         PolynomialStructure ps = new PolynomialStructure();
         double[] addBoundaries =
-                Arrays.stream(boundaries).filter(d -> 0 < d && d < rmax[nzone - 1] && Arrays.binarySearch(rmin, d) < 0)
+                Arrays.stream(radii).filter(d -> 0 < d && d < rmax[nzone - 1] && Arrays.binarySearch(rmin, d) < 0)
                         .distinct().sorted().toArray();
         if (addBoundaries.length == 0) return this;
         ps.nzone = nzone + addBoundaries.length;
@@ -342,7 +339,7 @@ public class PolynomialStructure implements Serializable {
             double rmin = ps.rmin[iZone];
             // izone in this for rmin
             int oldIZone = zoneOf(rmin);
-            // // 値のコピー
+            // copy
             ps.qMu[iZone] = qMu[oldIZone];
             ps.qKappa[iZone] = qKappa[oldIZone];
             ps.rho[iZone] = rho[oldIZone];

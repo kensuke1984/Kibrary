@@ -21,14 +21,11 @@ import java.util.stream.Stream;
  * This extracts {@link SEEDFile}s under a
  * working golder
  * <p>
- * <p>
- * <p>
  * 解凍後の.seed ファイルをまとめる rdseed -fRd rtrend seed解凍後 channelが[BH]H[ENZ]のものだけから読み込む
  * <p>
  * <a href=http://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>rdseed</a> and <a
  * href=http://ds.iris.edu/ds/nodes/dmc/manuals/evalresp/>evalresp</a> must be
  * in PATH. </p> If you want to remove intermediate files.
- * <p>
  * <p>
  * TODO NPTSで合わないものを捨てる？
  * <p>
@@ -83,6 +80,7 @@ public class FirstHandler implements Operation {
 
     /**
      * @param args [parameter file name]
+     * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         FirstHandler fh = new FirstHandler(Property.parse(args));

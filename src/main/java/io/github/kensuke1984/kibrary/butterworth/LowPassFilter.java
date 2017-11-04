@@ -11,7 +11,6 @@ import org.apache.commons.math3.util.FastMath;
  * バンドパス実装を目指す 透過域の振幅は1/(1+ap**2)以上<br>
  * 遮断域の振幅は1/(1+as**2)以下<br>
  * <p>
- * <p>
  * ω=2&pi;f&Delta;t <br>
  * f: frequency [Hz] &Delta;t: sampling interval [s]
  *

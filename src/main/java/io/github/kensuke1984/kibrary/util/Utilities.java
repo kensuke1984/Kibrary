@@ -90,6 +90,7 @@ public final class Utilities {
     }
 
     /**
+     * @param <T> The result type.
      * @param task to put in another thread
      * @return Future of the task
      */
@@ -245,7 +246,7 @@ public final class Utilities {
     }
 
     /**
-     * print all input objects using {@link System#out#println(Object...)}
+     * print all input objects using {@link java.io.PrintStream#println()}
      *
      * @param objs to be printed
      */

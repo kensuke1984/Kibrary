@@ -125,7 +125,7 @@ public final class GMTMap {
      * @param width             of scale
      * @param cptPath           Path of pallet
      * @param additionalOptions if any
-     * @return psxy -V -K -O -P -Bname -Dxpos/ypos/length/width(h) -CcptPath >>
+     * @return psxy -V -K -O -P -Bname -Dxpos/ypos/length/width(h) -CcptPath &gt;&gt;
      * $psname
      */
     public static String psscale(String name, double interval, double xpos, double ypos, double length, double width,

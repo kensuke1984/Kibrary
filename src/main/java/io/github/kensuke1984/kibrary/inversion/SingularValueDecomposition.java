@@ -32,6 +32,7 @@ public class SingularValueDecomposition extends InverseProblem {
      * Output Vt
      *
      * @param outDir must not exist
+     * @throws IOException if any
      */
     public void ouputVt(Path outDir) throws IOException {
         if (Files.exists(outDir)) return;

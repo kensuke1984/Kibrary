@@ -9,7 +9,6 @@ import java.util.List;
  * Within each layer Bullen law v(r) = Ar<sup>B</sup> is used.
  * {@link #computeBullenLaw(int, double[])}
  * <p>
- * <p>
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi

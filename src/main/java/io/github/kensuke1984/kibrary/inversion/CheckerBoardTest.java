@@ -159,9 +159,9 @@ public class CheckerBoardTest implements Operation {
     }
 
     private void read() throws IOException {
-        BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
+        BasicID[] ids = BasicIDFile.read(waveIDPath, waveformPath);
         Dvector dVector = new Dvector(ids);
-        PartialID[] pids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
+        PartialID[] pids = PartialIDFile.read(partialIDPath, partialWaveformPath);
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
         eq = new ObservationEquation(pids, parameterList, dVector);
     }
@@ -172,8 +172,9 @@ public class CheckerBoardTest implements Operation {
      * @param outIDPath   for write
      * @param outDataPath for write
      * @param bornVec     for write
+     * @throws IOException if any
      */
-    public void output4ChekeBoardTest(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
+    public void output4CheckerBoardTest(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
         // bornVec = dVector.getObsVectors();
         Objects.requireNonNull(bornVec);
 
@@ -197,6 +198,7 @@ public class CheckerBoardTest implements Operation {
      * @param outIDPath   {@link File} for write ID file
      * @param outDataPath {@link File} for write data file
      * @param bornVec     {@link RealVector} of born
+     * @throws IOException if any
      */
     public void output4Iterate(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
         if (bornVec == null) {
@@ -277,7 +279,7 @@ public class CheckerBoardTest implements Operation {
 
         if (noise) bornVec = bornVec.add(computeRandomNoise());
         if (iterate) output4Iterate(outIDPath, outDataPath, bornVec);
-        else output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
+        else output4CheckerBoardTest(outIDPath, outDataPath, bornVec);
 
     }
 
