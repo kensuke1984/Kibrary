@@ -5,27 +5,27 @@ import java.awt.event.ComponentEvent;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.0.2
+ * @version 0.1.1
  */
 class RaypathWindow extends javax.swing.JFrame {
-
 
     /**
      * 2016/8/30
      */
-    private static final long serialVersionUID = -5519489181399651337L;
-    private RaypathPanel raypathPanel;
-    private ANISOtimeGUI gui;
+    private static final long serialVersionUID = -1629297386309740844L;
+
+    private final RaypathPanel PANEL;
+    private ANISOtimeGUI GUI;
 
     RaypathWindow(ANISOtimeGUI gui, RaypathPanel raypathPanel) {
         super("Raypath");
-        this.raypathPanel = raypathPanel;
-        this.gui = gui;
+        PANEL = raypathPanel;
+        GUI = gui;
         initComponents();
     }
 
     void addPath(double[] x, double[] y) {
-        raypathPanel.addPath(x, y);
+        PANEL.addPath(x, y);
     }
 
     /**
@@ -42,10 +42,10 @@ class RaypathWindow extends javax.swing.JFrame {
         // getContentPane().setLayout(layout);
         layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
-                        layout.createSequentialGroup().addContainerGap().addComponent(raypathPanel).addContainerGap()));
+                        layout.createSequentialGroup().addContainerGap().addComponent(PANEL).addContainerGap()));
         layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(javax.swing.GroupLayout.Alignment.TRAILING,
-                        layout.createSequentialGroup().addContainerGap().addComponent(raypathPanel).addContainerGap()));
+                        layout.createSequentialGroup().addContainerGap().addComponent(PANEL).addContainerGap()));
 
         addComponentListener(new ComponentAdapter() {
             @Override
@@ -56,12 +56,12 @@ class RaypathWindow extends javax.swing.JFrame {
         });
 //		pack();
         setSize(700, 700);
-        setLocation(gui.getX() - 700, gui.getY());
+        setLocation(GUI.getX() - 700, GUI.getY());
 
     }// </editor-fold>
 
     void selectPath(int i) {
-        raypathPanel.setFeatured(i);
+        PANEL.setFeatured(i);
     }
 
 }

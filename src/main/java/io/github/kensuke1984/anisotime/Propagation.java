@@ -9,5 +9,5 @@ package io.github.kensuke1984.anisotime;
  * @version 0.0.2
  */
 enum Propagation {
-    PENETRATING, BOUNCING, NOEXIST, DIFFRACTION
+    PENETRATING, BOUNCING, NOEXIST, DIFFRACTION,;
 }

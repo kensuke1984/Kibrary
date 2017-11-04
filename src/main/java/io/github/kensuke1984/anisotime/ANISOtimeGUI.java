@@ -21,14 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute
  *
  * @author Kensuke Konishi
- * @version 0.5.2.2.1
+ * @version 0.5.3
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
-
     /**
-     * 2016/12/3
+     * 2017/11/4
      */
-    private static final long serialVersionUID = -4546171746998586620L;
+    private static final long serialVersionUID = -55046918053196163L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -257,7 +256,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                         double dDelta = Math.toDegrees(epicentralDistance - delta);
                         phaseList.set(i, Phase.create(phase.toString() + dDelta));
                     }
-
                     break;
                 case RAY_PARAMETER:
                     raypathList = new ArrayList<>();
@@ -296,7 +294,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     /**
      * when the button "Compute" is clicked.
      */
-    private void buttonComputeActionPerformed(ActionEvent evt) {// GEN-FIRST:event_buttonComputeActionPerformed
+    private void buttonComputeActionPerformed(ActionEvent e) {
         createNewRaypathTabs();
         switch (mode) {
             case EPICENTRAL_DISTANCE:
@@ -306,9 +304,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 new Thread(this::runRayParameterMode).start();
                 break;
         }
-    }// GEN-LAST:event_buttonComputeActionPerformed
+    }
 
-    public void runRayParameterMode() {
+    private void runRayParameterMode() {
         Raypath raypath = new Raypath(mostImportant, structure);
         raypath.compute();
         List<Raypath> raypaths = new ArrayList<>();
@@ -324,7 +322,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
     }
 
-    public void runEpicentralDistanceMode() {
+    private void runEpicentralDistanceMode() {
         RaypathCatalog catalog = getCatalog();
         List<Raypath> raypathList = new ArrayList<>();
         List<Phase> phaseList = new ArrayList<>();
@@ -358,7 +356,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
      * @param raypathList List of {@link Raypath}
      * @param phaseList   List of {@link Phase}
      */
-    public synchronized void showResult(double[] delta, List<Raypath> raypathList, List<Phase> phaseList) {
+    private synchronized void showResult(double[] delta, List<Raypath> raypathList, List<Phase> phaseList) {
         Objects.requireNonNull(raypathList);
         Objects.requireNonNull(phaseList);
         if (raypathList.size() != phaseList.size()) throw new RuntimeException("UNEXPECTED");

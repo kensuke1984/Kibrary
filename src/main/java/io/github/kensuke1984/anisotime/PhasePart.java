@@ -3,6 +3,8 @@ package io.github.kensuke1984.anisotime;
 /**
  * P, SV, SH, K, I, JV and JH
  *
+ * Each phase means half path, not including reflection nor bouncing.
+ *
  * @author Kensuke Konishi
  * @version 0.0.1.1
  */

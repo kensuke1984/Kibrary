@@ -18,7 +18,7 @@ enum Partition {
 
     /**
      * @param partition to check
-     * @return If this is shallower or same as partition
+     * @return If this is isShallower or same as partition
      */
     boolean isShallowerOrIn(Partition partition) {
         return value <= partition.value;

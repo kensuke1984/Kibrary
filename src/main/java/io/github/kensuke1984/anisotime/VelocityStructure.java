@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Structure information for computing traveltime.
  *
  * @author Kensuke Konishi
- * @version 0.0.8.2
+ * @version 0.0.8.4
  * @see <a href=
  * http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -14,21 +14,21 @@ import java.io.Serializable;
 public interface VelocityStructure extends Serializable {
 
     /**
-     * @return Transversely isotropic (TI) PREM by Dziewonski & Anderson 1981
+     * @return Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
      */
     static VelocityStructure prem() {
         return PolynomialStructure.PREM;
     }
 
     /**
-     * @return isotropic PREM by Dziewonski & Anderson 1981
+     * @return isotropic PREM by Dziewonski &amp; Anderson 1981
      */
     static VelocityStructure iprem() {
         return PolynomialStructure.ISO_PREM;
     }
 
     /**
-     * @return AK135 by Kennett, Engdahl & Buland (1995)
+     * @return AK135 by Kennett, Engdahl &amp; Buland (1995)
      */
     static VelocityStructure ak135() {
         return PolynomialStructure.AK135;
@@ -56,8 +56,8 @@ public interface VelocityStructure extends Serializable {
     }
 
     /**
-     * @param r radius [km]
-     * @return density rho(r) [g/cm**3]
+     * @param r [km] radius
+     * @return [g/cm**3] density &rho;(r)
      */
     double getRho(double r);
 
@@ -148,46 +148,46 @@ public interface VelocityStructure extends Serializable {
 
     /**
      * @param r [km] radius
-     * @return A(r) [GPa] A at r
+     * @return [GPa] A(r) A at r
      */
     double getA(double r);
 
     /**
      * @param r [km] radius
-     * @return C(r) [GPa] C at r
+     * @return [GPa] C(r) C at r
      */
     double getC(double r);
 
     /**
      * @param r [km] radius
-     * @return F(r) F at r
+     * @return F [GPa] at r
      */
     double getF(double r);
 
     /**
      * @param r [km] radius
-     * @return L(r) [GPa] L at r
+     * @return L [GPa] at r
      */
     double getL(double r);
 
     /**
      * @param r [km] radius
-     * @return N(r) [GPa] N at r
+     * @return N [GPa] at r
      */
     double getN(double r);
 
     /**
-     * @return radius[km] of CMB
+     * @return radius [km] of CMB
      */
     double coreMantleBoundary();
 
     /**
-     * @return radius[km] of ICB
+     * @return radius [km] of ICB
      */
     double innerCoreBoundary();
 
     /**
-     * @return radius[km] of Earth
+     * @return radius [km] of Earth
      */
     double earthRadius();
 
@@ -203,7 +203,6 @@ public interface VelocityStructure extends Serializable {
         if (Math.abs(r - innerCoreBoundary()) <= ComputationalMesh.eps) return Partition.INNER_CORE_BOUNDARY;
         if (Math.abs(r - coreMantleBoundary()) <= ComputationalMesh.eps) return Partition.CORE_MANTLE_BOUNDARY;
         if (earthRadius() < r || r < 0) throw new RuntimeException("Input radius " + r + "is out of the Earth.");
-
         if (coreMantleBoundary() < r) return Partition.MANTLE;
         else if (innerCoreBoundary() < r) return Partition.OUTERCORE;
         else return Partition.INNERCORE;
@@ -235,7 +234,7 @@ public interface VelocityStructure extends Serializable {
      *
      * @param pp       target phase part
      * @param topside  true: topside(v), false: underside(^) reflection.
-     * @param turningR radius[km] you want to set.
+     * @param turningR [km] radius you want to set.
      * @return null if the gap exceeds permissibleRGap
      */
     default Raypath raypathByTurningR(PhasePart pp, boolean topside, double turningR) {
@@ -262,5 +261,25 @@ public interface VelocityStructure extends Serializable {
         double residual = turningR - raypath.getTurningR(pp);
         return Math.abs(residual) < Raypath.permissibleGapForDiff ? raypath : null;
     }
+
+    /**
+     * Input point must be one of the boundaries in the structure.
+     *
+     * @param point for the radius
+     * @return radius [km] for the point.
+     */
+    default double getROf(PassPoint point) {
+        switch (point) {
+            case EARTH_SURFACE:
+                return earthRadius();
+            case CMB:
+                return coreMantleBoundary();
+            case ICB:
+                return innerCoreBoundary();
+            default:
+                throw new RuntimeException(point + " is not a boundary.");
+        }
+    }
+
 
 }

@@ -13,8 +13,7 @@ import java.util.stream.DoubleStream;
 /**
  * Radius interval for integration. TODO
  * <p>
- * This class is <b>IMMUTABLE<b>.
- * <p>
+ * This class is <b>IMMUTABLE</b>.
  * <p>
  * TODO Automesh by QDelta ?
  *
