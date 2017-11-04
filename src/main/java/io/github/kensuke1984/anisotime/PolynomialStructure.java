@@ -19,7 +19,6 @@ import java.util.stream.IntStream;
  */
 public class PolynomialStructure implements VelocityStructure {
 
-
     /**
      * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
      */
@@ -39,7 +38,7 @@ public class PolynomialStructure implements VelocityStructure {
      * Serialization identifier 2016/8/23
      */
     private static final long serialVersionUID = -5415364557337661053L;
-    final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
+    private final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
     /*
      * -radius x this is only for computations for bouncing points.
      */
