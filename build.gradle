@@ -8,9 +8,9 @@ targetCompatibility = 1.8
 def defaultEncoding = 'UTF-8'
 [compileJava, compileTestJava]*.options*.encoding = defaultEncoding
 
-def codename = 'sahagin'
+//def codename = 'sahagin'
 jar.baseName = 'kibrary'
-version = '0.4.2.5'
+version = '0.4.3'
 
 def kibraryhome = "$System.env.HOME/.Kibrary"
 
@@ -54,7 +54,7 @@ task downloadAndUnzip {
     }
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '3.4' }
+task wrapper(type: Wrapper) { gradleVersion = '4.3' }
 
 task setupSourceCodes {
     doLast {
@@ -72,4 +72,4 @@ compileJava {
     dependsOn setupSourceCodes
 }
 
-clean { delete file(kibraryhome + '/src') }
+clean { delete "${kibraryhome}/src" }
