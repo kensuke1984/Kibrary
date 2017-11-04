@@ -338,6 +338,7 @@ public class Dvector {
     }
 
     /**
+     * @param i index for the weighting
      * @return weighting for the i th timewindow.
      */
     public double getWeighting(int i) {

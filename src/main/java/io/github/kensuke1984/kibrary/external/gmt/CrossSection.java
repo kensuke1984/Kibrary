@@ -25,7 +25,7 @@ public class CrossSection extends CrossSectionLine {
 
 
     /**
-     * @param centerLocation {@link Position} of center
+     * @param centerLocation {@link HorizontalPosition} center
      * @param theta          [rad]  theta width
      * @param azimuth        [rad] azimuth of cross section
      * @param deltaTheta     [rad] delta theta

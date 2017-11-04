@@ -19,7 +19,6 @@ import java.util.List;
  * Create a partial derivative from one forward propagation and one
  * backward propagation
  * <p>
- * <p>
  * U<sub>j,q</sub> C<sub>jqrs</sub> &eta;<sub>ri,s</sub>
  *
  * @author Kensuke Konishi

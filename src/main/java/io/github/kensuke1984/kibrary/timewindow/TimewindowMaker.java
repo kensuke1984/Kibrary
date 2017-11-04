@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
  * in event folders under the working directory. For all the waveforms,
  * timewindows are computed by TauP.
  * <p>
- * <p>
  * It creates a window for each given phase and exphase with front and rear
  * parts. Overlapped part between those are abandoned. Start and end time of the
  * window is set to integer multiple of DELTA in SAC files.

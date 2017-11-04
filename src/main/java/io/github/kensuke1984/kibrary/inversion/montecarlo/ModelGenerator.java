@@ -30,6 +30,7 @@ public interface ModelGenerator<M> {
      * @param path    file name of the write
      * @param model   to write in the path
      * @param options options for writing
+     * @throws IOException if any
      */
     default void write(Path path, M model, OpenOption... options) throws IOException {
         Files.write(path, toString(model).getBytes(), options);

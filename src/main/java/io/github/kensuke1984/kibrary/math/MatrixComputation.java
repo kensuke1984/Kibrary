@@ -30,7 +30,7 @@ class MatrixComputation {
                 ata.setEntry(j, i, value);
             });
         });
-        System.err.println(",  it took " + Utilities.toTimeString(System.nanoTime() - start));
+        System.err.println(", it took " + Utilities.toTimeString(System.nanoTime() - start));
         return ata;
     }
 
@@ -69,11 +69,9 @@ class MatrixComputation {
         int m = former.getRowDimension();
         int n = latter.getColumnDimension();
         Matrix ab = new Matrix(m, n);
-        IntStream.range(0, m).parallel().forEach(i -> {
-            IntStream.range(0, n).parallel()
-                    .forEach(j -> ab.setEntry(i, j, computeMultiplication(i, j, former, latter)));
-        });
-        System.err.println(",  it took " + Utilities.toTimeString(System.nanoTime() - start));
+        IntStream.range(0, m).parallel().forEach(i -> IntStream.range(0, n).parallel()
+                .forEach(j -> ab.setEntry(i, j, computeMultiplication(i, j, former, latter))));
+        System.err.println(", it took " + Utilities.toTimeString(System.nanoTime() - start));
         return ab;
     }
 

@@ -22,7 +22,7 @@ public final class Integrand {
      * @return &int;f(x)dx
      * @see <a href=
      * http://ja.wikipedia.org/wiki/%E3%82%B7%E3%83%B3%E3%83%97%E3%82%BD%E3%83%B3%E3%81%AE%E5%85%AC%E5%BC%8F>Japanese</a>
-     * or <a href= https://en.wikipedia.org/wiki/Simpson's_rule>English</a>
+     * or <a href= https://en.wikipedia.org/wiki/Simpson%27s_rule>English</a>
      */
     public static double bySimpsonRule(double f0, double f1, double f2, double h) {
         return (f0 + 4 * f1 + f2) * h / 6;

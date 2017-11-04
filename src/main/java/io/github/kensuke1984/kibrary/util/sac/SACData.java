@@ -208,7 +208,7 @@ public interface SACData extends SACHeaderData {
      * DELTA will be rounded off to 4 decimal values
      * <p>
      * This creation considers about the value B. If B is not integer multiple
-     * of DELTA. Then B1 (DELTA*N) &lt; B &lt B2 (DELTA*(N+1)) B1 is used
+     * of DELTA. Then B1 (DELTA*N) &lt; B &lt; B2 (DELTA*(N+1)) B1 is used
      * instead. (int)(B/delta)*delta
      *
      * @return {@link Trace} of time and waveform

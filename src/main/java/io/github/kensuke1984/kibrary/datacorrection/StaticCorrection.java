@@ -8,13 +8,11 @@ import org.apache.commons.math3.util.Precision;
 /**
  * Static correction data for a raypath.<br>
  * <p>
- * This class is <b>IMMUTABlE.</b>
- * </p>
+ * This class is <b>IMMUTABlE</b>
  * <p>
  * When a time window for a synthetic is [t1, t2], then <br>
  * use a window of [t1-timeshift, t2-timeshift] in a observed one.<br>
  * and amplitude observed dataset is divided by the AMPLITUDE.
- * <p>
  * <p>
  * In short, time correction value is relative pick time in synthetic - the one
  * in observed.

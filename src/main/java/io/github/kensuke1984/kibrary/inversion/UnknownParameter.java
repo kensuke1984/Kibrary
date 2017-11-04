@@ -7,7 +7,6 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  * <p>
  * location (radius), type of parameter, weighting (width or volume or...)
  * <p>
- * <p>
  * The class implementing this must be <b>IMMUTABLE</b>.
  *
  * @author Kensuke Konishi

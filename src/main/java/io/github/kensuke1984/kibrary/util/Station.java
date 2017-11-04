@@ -12,8 +12,7 @@ import java.nio.ByteBuffer;
  * consisting of <br>
  * Station name, {@link HorizontalPosition}, Station NETWORK <br>
  * <p>
- * <p>
- * This class is <b>IMMUTABLE.</b>
+ * This class is <b>IMMUTABLE</b>
  * </p>
  * <p>
  * Station name and NETWORK name must be 8 or less letters.

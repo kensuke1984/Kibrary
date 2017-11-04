@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Am=d における m の情報
@@ -24,11 +25,10 @@ import java.util.List;
  * <p>
  * 重みが違っても同じ種類、同じ場所の未知数があれば例外
  * <p>
- * <p>
  * Duplication is NOT allowed.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.3
+ * @version 0.0.6
  */
 public class UnknownParameterFile {
 
@@ -37,7 +37,7 @@ public class UnknownParameterFile {
 
     /**
      * @param path of an unknown parameter file.
-     * @return (<b>unmodifiable</b>) List of unknown parameters in the path
+     * @return <b>unmodifiable</b> List of unknown parameters in the path
      * @throws IOException if an I/O error occurs.
      */
     public static List<UnknownParameter> read(Path path) throws IOException {
@@ -78,9 +78,10 @@ public class UnknownParameterFile {
                 }
             }
         }
-        for (int i = 0; i < pars.size() - 1; i++)
+        IntStream.range(0, pars.size() - 1).parallel().forEach(i -> {
             for (int j = i + 1; j < pars.size(); j++)
                 if (pars.get(i).equals(pars.get(j))) System.err.println("!Caution there is duplication in " + path);
+        });
         return Collections.unmodifiableList(pars);
     }
 
