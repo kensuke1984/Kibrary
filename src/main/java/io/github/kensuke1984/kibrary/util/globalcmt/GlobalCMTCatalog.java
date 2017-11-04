@@ -62,7 +62,7 @@ public final class GlobalCMTCatalog {
 		return catalogFile;
 	}
 
-	private static Set<NDK> readJar(String catalog) {
+	public static Set<NDK> readJar(String catalog) {
 		try {
 			List<String> lines = IOUtils.readLines(
 					GlobalCMTCatalog.class.getClassLoader().getResourceAsStream(catalog), //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
@@ -85,7 +85,7 @@ public final class GlobalCMTCatalog {
 	}
 
 	static {
-		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 globalcmt NDK_LCMTSTF NDK_no_rm200503211243A NDK_LSTF gcmt_c-10 gcmt_c10 synthetics
+		String tmpCatalog = "NDK_CMT_20170807.catalog"; //NDK_CMT_20170807 globalcmt NDK_LCMTSTF NDK_no_rm200503211243A NDK_LSTF gcmt_c-10 gcmt_c10 synthetics NDK_LMT_35
 		Set<NDK> readSet = readJar(tmpCatalog);
 		if (null == readSet) {
 			Path catalogPath = selectCatalogFile();

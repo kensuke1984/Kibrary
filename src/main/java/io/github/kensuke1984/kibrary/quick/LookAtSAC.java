@@ -6,7 +6,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
-public class lookToSAC {
+public class LookAtSAC {
 
 	public static void main(String[] args) {
 		SACFileName sacname = new SACFileName(args[0]);

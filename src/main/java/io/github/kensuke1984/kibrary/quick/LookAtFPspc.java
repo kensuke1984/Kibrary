@@ -12,7 +12,7 @@ import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
 
-public class looktoBPspc {
+public class LookAtFPspc {
 
 	public static void main(String[] args) throws IOException {
 		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
@@ -25,16 +25,23 @@ public class looktoBPspc {
 		
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 		
-		SpcTensorComponent three = SpcTensorComponent.valueOfBP(3, 3, 3);
-		SpcTensorComponent two = SpcTensorComponent.valueOfBP(2, 2, 2);
-		SpcTensorComponent one = SpcTensorComponent.valueOfBP(1, 1, 1);
-		Complex[] spcT0 = dsmOutput.getSpcBodyList().get(0).getSpcComponent(three).getValueInFrequencyDomain(); 
-		Complex[] spcR0 = dsmOutput.getSpcBodyList().get(0).getSpcComponent(two).getValueInFrequencyDomain();
-		Complex[] spcZ0 = dsmOutput.getSpcBodyList().get(0).getSpcComponent(one).getValueInFrequencyDomain();
-		double[] rs = dsmOutput.getBodyR();
-		System.out.println("#perturbation radius= " + rs[0]);
-		for (int i = 0; i < spcT0.length; i++) {
-			System.out.printf("%d %.5e %.5e %.5e\n", i, spcT0[i].abs(), spcR0[i].abs(), spcZ0[i].abs());
+		double r = dsmOutput.getBodyR()[0];
+		System.out.println("perturbation radius=" + r);
+		String s = "";
+		for(int i = 1; i <= 3; i++) {
+			for(int j = 1; j <= 3; j++) {
+				SpcTensorComponent comp = SpcTensorComponent.valueOfFP(i, j);
+				Complex[] spc = dsmOutput.getSpcBodyList().get(0).getSpcComponent(comp).getValueInFrequencyDomain();
+				double[] spcAbs = new double[spc.length];
+				double maxAbs = Double.MIN_VALUE;
+				for (int k = 0; k < spc.length; k++) {
+					spcAbs[k] = spc[k].abs();
+					if (spcAbs[k] > maxAbs)
+						maxAbs = spcAbs[k];
+				}
+				s += String.format("%.5e ", maxAbs);
+			}
 		}
+		System.out.println(s);
 	}
 }

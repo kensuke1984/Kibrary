@@ -962,6 +962,17 @@ public class Dvector {
 	public double getVariance() {
 		return variance;
 	}
+	
+	public RealVector getMask(GlobalCMTID id) {
+		RealVector mask = new ArrayRealVector(npts);
+		for (int i = 0; i < nTimeWindow-1; i++) {
+			if (obsIDs[i].getGlobalCMTID().equals(id)) {
+				for (int j = startPoints[i]; j < startPoints[i+1]; j++)
+					mask.setEntry(j, 1.);
+			}
+		}
+		return mask;
+	}
 
 	/**
 	 * @return |obs|

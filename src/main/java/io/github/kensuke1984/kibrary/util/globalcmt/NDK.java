@@ -70,7 +70,7 @@ import io.github.kensuke1984.kibrary.util.Location;
  *      http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
  *      guide</a>
  */
-final class NDK implements GlobalCMTData {
+final public class NDK implements GlobalCMTData {
 
 	@Override
 	public int hashCode() {

@@ -24,6 +24,7 @@ import java.util.concurrent.FutureTask;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
@@ -43,6 +44,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
@@ -125,6 +127,8 @@ public class LetMeInvert implements Operation {
 	private double maxMw;
 	
 	private UnknownParameterWeightType unknownParameterWeightType;
+	
+	private boolean linaInversion;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -163,6 +167,8 @@ public class LetMeInvert implements Operation {
 			property.setProperty("minMw", "0.");
 		if (!property.containsKey("maxMw"))
 			property.setProperty("maxMw", "10.");
+		if (!property.containsKey("linaInversion"))
+			property.setProperty("linaInversion", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -265,6 +271,8 @@ public class LetMeInvert implements Operation {
 		}
 		minMw = Double.parseDouble(property.getProperty("minMw"));
 		maxMw = Double.parseDouble(property.getProperty("maxMw"));
+		
+		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
 	}
 
 	/**
@@ -331,6 +339,8 @@ public class LetMeInvert implements Operation {
 			pw.println("#minMw");
 			pw.println("##maximum Mw (10.)");
 			pw.println("#maxMw");
+			pw.println("##Set parameters for inversion for Yamaya et al. CMT paper (false)");
+			pw.println("#linaInversion");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -380,6 +390,36 @@ public class LetMeInvert implements Operation {
 					}
 					return false;
 				}
+			};
+		}
+		else if (linaInversion) {
+			System.out.println("Setting chooser for Yamaya et al. CMT paper");
+			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
+			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
+					,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
+					,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
+					,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
+					,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
+					,"201208020938A","201203050746A","200512232147A"})
+					.map(GlobalCMTID::new)
+					.collect(Collectors.toSet());
+			System.out.println("Using " + wellDefinedEvent.size() + " well defined events");
+			chooser = id -> {
+				if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
+					return false;
+				double distance = id.getGlobalCMTID().getEvent()
+						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+						* 180. / Math.PI;
+				if (distance < minDistance || distance > maxDistance)
+					return false;
+				double mw = id.getGlobalCMTID().getEvent()
+						.getCmt().getMw();
+				if (mw < minMw || mw > maxMw) {
+					System.out.println(mw);
+					return false;
+				}
+				
+				return true;
 			};
 		}
 		else {
@@ -735,6 +775,7 @@ public class LetMeInvert implements Operation {
 		inverseProblem.compute();
 		inverseProblem.outputAns(outPath);
 		outVariance(outPath, inverseProblem);
+		outVariancePerEvents(outPath, inverseProblem);
 
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
 		RealMatrix p = inverseProblem.getBaseVectors();
@@ -767,21 +808,10 @@ public class LetMeInvert implements Operation {
 		Path out = outPath.resolve("variance.txt");
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
-//		double[] variance = new double[eq.getMlength() + 1];
-		double[] variance = new double[eq.getMlength() + 2];
+		double[] variance = new double[eq.getMlength() + 1];
 		variance[0] = eq.getDVector().getVariance();
 		for (int i = 0; i < eq.getMlength(); i++)
 			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
-		//
-		RealVector m = new ArrayRealVector(eq.getMlength());
-		for (int i = 0; i < eq.getParameterList().size(); i++) {
-			Location loc = (Location) eq.getParameterList().get(i).getLocation();
-			if (loc.getR() == 6343.8) {
-				m.setEntry(i, .5);
-			}
-		}
-		variance[eq.getMlength() + 1] = eq.varianceOf(m);
-		//
 		writeDat(out, variance);
 		if (alpha == null)
 			return;
@@ -791,6 +821,54 @@ public class LetMeInvert implements Operation {
 			writeDat(out, aic);
 		}
 		writeDat(outPath.resolve("aic.inf"), alpha);
+	}
+	
+	private void outVariancePerEvents(Path outPath, InverseProblem inverse) throws IOException {
+		Set<NDK> gcmtCat = GlobalCMTCatalog.readJar("globalcmt.catalog");
+		
+		Set<GlobalCMTID> eventSet = eq.getDVector().getUsedGlobalCMTIDset();
+		Path out = outPath.resolve("eventVariance.txt");
+		int n = 31 > eq.getMlength() ? eq.getMlength() : 31;
+		Map<GlobalCMTID, double[]> varianceMap = new HashMap<>();
+		for (GlobalCMTID id : eventSet) {
+			if (Files.exists(out))
+				throw new FileAlreadyExistsException(out.toString());
+			double[] variance = new double[n];
+			variance[0] = eq.getDVector().getEventVariance().get(id);
+			RealVector residual = eq.getDVector().getD();
+			RealVector obsVec = eq.getDVector().getObs();
+			RealVector mask = eq.getDVector().getMask(id);
+			
+			for (int i = 0; i < residual.getDimension(); i++) {
+				residual.setEntry(i, residual.getEntry(i) * mask.getEntry(i));
+				obsVec.setEntry(i, obsVec.getEntry(i) * mask.getEntry(i));
+			}
+			
+			for (int i = 0; i < n-1; i++) {
+				RealVector adm = eq.getA().operate(inverse.getANS().getColumnVector(i));
+				for (int j = 0; j < adm.getDimension(); j++)
+					adm.setEntry(j, adm.getEntry(j) * mask.getEntry(j));
+				variance[i + 1] = variance[0] - (2 * adm.dotProduct(residual)
+						+ adm.dotProduct(adm)) / obsVec.dotProduct(obsVec);
+			}
+			varianceMap.put(id, variance);
+		}
+		
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out, StandardOpenOption.CREATE_NEW))) {
+			for (GlobalCMTID id : eventSet) {
+				NDK idGCMTndk = gcmtCat.stream().filter(ndk -> ndk.getGlobalCMTID().equals(id))
+						.findFirst().get();
+				double GCMTMw = idGCMTndk.getCmt().getMw();
+				
+				String s = id.toString() + " " + String.format("%.2f", GCMTMw);
+				double[] variance = varianceMap.get(id);
+				for (int i = 0; i < n; i++)
+					s += " " + String.format("%.5f", variance[i]);
+				pw.println(s);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
