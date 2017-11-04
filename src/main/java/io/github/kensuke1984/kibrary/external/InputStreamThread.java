@@ -9,9 +9,7 @@ import java.util.List;
 
 /**
  * This class is after <a
- * href=http://www.ne.jp/asahi/hishidama/home/tech/java/process.html#
- * ProcessBuilder>here</a>
- * <p>
+ * href=http://www.ne.jp/asahi/hishidama/home/tech/java/process.html#ProcessBuilder>here</a>
  * <p>
  * 外部プログラムを実行時の標準出力 標準エラーの読み込みスレッド You may have to {@link #join()} after the
  * external program finishes(). {@link ExternalProcess#waitFor()}

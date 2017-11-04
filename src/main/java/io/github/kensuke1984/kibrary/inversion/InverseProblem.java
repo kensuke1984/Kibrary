@@ -12,13 +12,13 @@ import java.util.Arrays;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @version 0.0.4
  */
 public abstract class InverseProblem {
 
-    protected RealMatrix ans;
-    protected RealMatrix ata;
-    protected RealVector atd;
+    RealMatrix ans;
+    RealMatrix ata;
+    RealVector atd;
 
     private static void writeDat(Path out, double[] dat) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out))) {
@@ -37,6 +37,7 @@ public abstract class InverseProblem {
      * @return i th answer
      */
     public RealVector getAns(int i) {
+        if (i <= 0) throw new IllegalArgumentException("i must be a natural number.");
         return ans.getColumnVector(i - 1);
     }
 

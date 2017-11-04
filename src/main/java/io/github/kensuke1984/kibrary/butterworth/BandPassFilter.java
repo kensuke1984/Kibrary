@@ -28,6 +28,7 @@ public class BandPassFilter extends ButterworthFilter {
 
     /**
      * @param args [np] [low limiter (Hz)] [higher limit (Hz)] [SAC file]
+     * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         if (args.length != 4)

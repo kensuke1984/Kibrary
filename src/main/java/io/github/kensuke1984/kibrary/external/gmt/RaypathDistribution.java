@@ -87,6 +87,7 @@ public class RaypathDistribution implements Operation {
 
     /**
      * @param args [parameter file name]
+     * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         Properties property = Property.parse(args);

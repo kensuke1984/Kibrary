@@ -13,7 +13,6 @@ import java.util.Comparator;
  * </p>
  * Latitude (-180, 180) Longitude（-90, 90）Radius [0,&infin;)
  * <p>
- * <p>
  * <b>This class is IMMUTABLE</b>.
  * </p>
  * <p>

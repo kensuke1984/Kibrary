@@ -106,6 +106,7 @@ public class InversionResult {
     }
 
     /**
+     * @param answer map of the answer
      * @param nPoints  number of points
      * @param nPower   距離の何乗で補間するか
      * @param location location for complement

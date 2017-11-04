@@ -27,7 +27,6 @@ import java.util.stream.IntStream;
  * Utilities for a pair of an ID file and a waveform file. <br>
  * The files are for partial waveforms.
  * <p>
- * <p>
  * The file contains<br>
  * Numbers of stations, events, period ranges and perturbation points<br>
  * Each station information <br>
@@ -38,13 +37,13 @@ import java.util.stream.IntStream;
  * - min period, max period<br>
  * Each perturbation points<br>
  * - latitude, longitude, radius Each PartialID information<br>
- * - see in {@link #readPartialIDFile(Path)}<br>
+ * - see in {@link #read(Path)}<br>
  * <p>
- * TODO short->char
+ * TODO short to char
  * READing has problem. TODO
  *
  * @author Kensuke Konishi
- * @version 0.3.1
+ * @version 0.3.1.1
  */
 public final class PartialIDFile {
 
@@ -56,9 +55,9 @@ public final class PartialIDFile {
     private PartialIDFile() {
     }
 
-    public static PartialID[] readPartialIDandDataFile(Path idPath, Path dataPath, Predicate<PartialID> chooser)
+    public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
             throws IOException {
-        PartialID[] ids = readPartialIDFile(idPath);
+        PartialID[] ids = read(idPath);
         long t = System.nanoTime();
         long dataSize = Files.size(dataPath);
         PartialID lastID = ids[ids.length - 1];
@@ -90,7 +89,7 @@ public final class PartialIDFile {
      * @return Array of {@link PartialID} without waveform data
      * @throws IOException if an I/O error occurs
      */
-    public static PartialID[] readPartialIDFile(Path idPath) throws IOException {
+    public static PartialID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
             long fileSize = Files.size(idPath);
             Station[] stations = new Station[dis.readShort()];
@@ -144,13 +143,13 @@ public final class PartialIDFile {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 1) {
-            PartialID[] ids = readPartialIDFile(Paths.get(args[0]));
+            PartialID[] ids = read(Paths.get(args[0]));
             String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
             outputStations(header, ids);
             outputGlobalCMTID(header, ids);
             outputPerturbationPoints(header, ids);
         } else if (args.length == 2 && args[0].equals("-a")) {
-            PartialID[] ids = readPartialIDFile(Paths.get(args[1]));
+            PartialID[] ids = read(Paths.get(args[1]));
             Arrays.stream(ids).forEach(System.out::println);
         } else {
             System.out.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
@@ -211,8 +210,8 @@ public final class PartialIDFile {
                 isConvolved, perturbationLocation, partialType);
     }
 
-    public static PartialID[] readPartialIDandDataFile(Path idPath, Path dataPath) throws IOException {
-        return readPartialIDandDataFile(idPath, dataPath, id -> true);
+    public static PartialID[] read(Path idPath, Path dataPath) throws IOException {
+        return read(idPath, dataPath, id -> true);
     }
 
     private static void outputGlobalCMTID(String header, PartialID[] ids) throws IOException {

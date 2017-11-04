@@ -164,6 +164,7 @@ public class Partial1DDatasetMaker implements Operation {
 
     /**
      * @param args [parameter file name]
+     * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         Partial1DDatasetMaker pdm = new Partial1DDatasetMaker(Property.parse(args));
@@ -500,12 +501,13 @@ public class Partial1DDatasetMaker implements Operation {
         // to time domain
         private void process(DSMOutput spectrum) {
             for (SACComponent component : components)
-                spectrum.getSpcBodyList().stream().map(body -> body.getSpcComponent(component)).forEach(spcComponent -> {
-                    if (sourceTimeFunction != null) spcComponent.applySourceTimeFunction(sourceTimeFunction);
-                    spcComponent.toTimeDomain(lsmooth);
-                    spcComponent.applyGrowingExponential(spectrum.omegai(), tlen);
-                    spcComponent.amplitudeCorrection(tlen);
-                });
+                spectrum.getSpcBodyList().stream().map(body -> body.getSpcComponent(component))
+                        .forEach(spcComponent -> {
+                            if (sourceTimeFunction != null) spcComponent.applySourceTimeFunction(sourceTimeFunction);
+                            spcComponent.toTimeDomain(lsmooth);
+                            spcComponent.applyGrowingExponential(spectrum.omegai(), tlen);
+                            spcComponent.amplitudeCorrection(tlen);
+                        });
         }
 
         private void outputProcess(Station station, PartialType partialType, DSMOutput spectrum,

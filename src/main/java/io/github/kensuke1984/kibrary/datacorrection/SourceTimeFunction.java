@@ -75,6 +75,7 @@ public class SourceTimeFunction {
      * @param tlen         [s] time length
      * @param samplingHz   [Hz]
      * @param halfDuration [s] of the source
+     * @return SourceTimeFunction
      */
     public static SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
                                                                 double halfDuration) {
@@ -107,6 +108,7 @@ public class SourceTimeFunction {
      * @param tlen         [s] time length
      * @param samplingHz   [Hz]
      * @param halfDuration [s] of the source
+     *                     @return SourceTimeFunction
      */
     public static SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
                                                               double halfDuration) {
@@ -134,6 +136,7 @@ public class SourceTimeFunction {
      * @param tlen         [s] time length
      * @param samplingHz   [Hz]
      * @param halfDuration [s] of the source
+     * @return SourceTimeFunction
      */
     public static SourceTimeFunction smoothedRampSourceTimeFunction(int np, double tlen, double samplingHz,
                                                                     double halfDuration) {

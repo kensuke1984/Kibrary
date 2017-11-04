@@ -1,10 +1,7 @@
 package io.github.kensuke1984.kibrary.math;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.linear.*;
 
 /**
  * 行列計算 parallelized Matrix
@@ -64,5 +61,19 @@ public class Matrix extends Array2DRowRealMatrix {
         if (arg0.getDimension() != getColumnDimension())
             throw new DimensionMismatchException(arg0.getDimension(), getColumnDimension());
         return MatrixComputation.operate(this, arg0);
+    }
+
+    @Override
+    public RealMatrix transpose() {
+        RealMatrix out = new Matrix(getColumnDimension(), getRowDimension());
+        walkInOptimizedOrder(new DefaultRealMatrixPreservingVisitor() {
+            /** {@inheritDoc} */
+            @Override
+            public void visit(int row, int column, double value) {
+                out.setEntry(column, row, value);
+            }
+
+        });
+        return out;
     }
 }

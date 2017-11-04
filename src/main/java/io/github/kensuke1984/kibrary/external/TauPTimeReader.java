@@ -20,10 +20,7 @@ import java.util.stream.IntStream;
  *
  * @author Kensuke Konishi
  * @version 0.3.2.2
- * @see <a href=http://www.seis.sc.edu/taup/>TauP</a>
- * <p>
- * <p>
- * TODO phase
+ * @see <a href='https://www.seis.sc.edu/taup/'>TauP</a>
  */
 public final class TauPTimeReader {
 

@@ -25,32 +25,27 @@ import java.util.stream.IntStream;
  * observed and synthetic waveforms (NOT partial)<br>
  * <p>
  * The file contains
- * <p>
- * (File information)
- * <dd>Numbers of stations, events and period ranges</dd>
- * <p>
- * (All waveforms information)
- * <dd>
- * <ul>
- * <li>Each station information <br>
- * <ul><li>name, network, position</li></ul></li>
- * <li>Each event<br>
- * <ul><li>Global CMT ID</li></ul></li>
- * <li>Each period range<br>
- * <ul><li>min period, max period</li></ul></li> </ul>
- * </dd>
- * <p>
- * (Each waveform information)
- * <ul>
- * <li>Each BasicID information<br>
- * <ul><li>see in {@link #readBasicIDFile(Path)}</li></ul></li><br> </ul>
- * </dd>
- * <p>
- * TODO sampling Hz
+ * <p>(File information)</p>
+ * <dl><dd>Numbers of stations, events and period ranges</dd>
+ * </dl>
+ * <p>(All waveforms information)</p>
+ * <dl>
+ * <dt>Each station information</dt>
+ * <dd>name, network, position</dd>
+ * <dt>Each event</dt>
+ * <dd>Global CMT ID</dd>
+ * <dt>Each period range</dt>
+ * <dd>min period, max period</dd>
+ * </dl>
+ * <p>(Each waveform information)</p>
+ * <dl>
+ * <dt>Each BasicID information</dt>
+ * <dt>See in {@link #read(Path)}</dt>
+ * </dl>
  *
  * @author Kensuke Konishi
- * @version 0.3.0.4
- * @see {@link BasicID}
+ * @version 0.3.0.5
+ * @see BasicID
  */
 public final class BasicIDFile {
 
@@ -86,7 +81,7 @@ public final class BasicIDFile {
      */
     public static void main(String[] args) throws IOException {
         if (args.length == 1) {
-            BasicID[] ids = readBasicIDFile(Paths.get(args[0]));
+            BasicID[] ids = read(Paths.get(args[0]));
             // print(Paths.get(args[0]));
             String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
             try {
@@ -97,7 +92,7 @@ public final class BasicIDFile {
                 System.err.println("If you want to see all IDs inside, then use a '-a' option.");
             }
         } else if (args.length == 2 && args[0].equals("-a")) {
-            BasicID[] ids = readBasicIDFile(Paths.get(args[1]));
+            BasicID[] ids = read(Paths.get(args[1]));
             Arrays.stream(ids).forEach(System.out::println);
         } else {
             System.err.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
@@ -112,8 +107,8 @@ public final class BasicIDFile {
      * @return Array of {@link BasicID} containing waveform data
      * @throws IOException if an I/O error happens,
      */
-    public static BasicID[] readBasicIDandDataFile(Path idPath, Path dataPath) throws IOException {
-        BasicID[] ids = readBasicIDFile(idPath);
+    public static BasicID[] read(Path idPath, Path dataPath) throws IOException {
+        BasicID[] ids = read(idPath);
         long dataSize = Files.size(dataPath);
         long t = System.nanoTime();
         BasicID lastID = ids[ids.length - 1];
@@ -142,7 +137,7 @@ public final class BasicIDFile {
      * @return Array of {@link BasicID} without waveform data
      * @throws IOException if an I/O error occurs
      */
-    public static BasicID[] readBasicIDFile(Path idPath) throws IOException {
+    public static BasicID[] read(Path idPath) throws IOException {
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(idPath)))) {
             long t = System.nanoTime();
             long fileSize = Files.size(idPath);

@@ -15,7 +15,6 @@ import java.nio.file.Path;
  * This class is a sub class of {@link File} {@link #equals(Object)} and
  * {@link #hashCode()} is under the {@link File}
  * <p>
- * <p>
  * station.{@link GlobalCMTID}.{@link PartialType}.x.y.z.{@link SACExtension}
  * <br>
  * <p>
