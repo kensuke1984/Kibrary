@@ -12,15 +12,14 @@ import java.util.HashSet;
  * Window for choosing phases.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.2
  */
 class PhaseWindow extends javax.swing.JFrame {
 
     /**
-     * 2016/12/3
+     * 2017/11/2
      */
     private static final long serialVersionUID = -8346038785047175817L;
-
     private final ANISOtimeGUI gui;
     private DefaultListModel<String> phaseLists;
     private JList<String> jList1;
@@ -42,7 +41,7 @@ class PhaseWindow extends javax.swing.JFrame {
         ListCellRenderer<? super String> r = jList1.getCellRenderer();
         jList1.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
             Phase p = Phase.create(jList1.getModel().getElementAt(index));
-            boolean sh = p.pReaches() == null;
+            boolean sh = !p.isPSV();
             Component c;
             if (i == 2 && !sh) {
                 c = r.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);

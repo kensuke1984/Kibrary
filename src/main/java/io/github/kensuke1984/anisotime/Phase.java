@@ -1,8 +1,10 @@
 package io.github.kensuke1984.anisotime;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 
 /**
  * <p>
@@ -17,50 +19,55 @@ import java.util.stream.IntStream;
  * ???PdiffXX and ???SdiffXX can be used. XX is positive double XX is
  * diffractionAngle diff must be the last part.
  * <p>
- * Diffraction can only happen at the final part.
- * <p>
+ * Diffraction can only happen at the final part.  TODO
  * <p>
  * Numbers in a name.
- * <ul>
- * <li>redundancy</li> A number in parentheses indicates repetition of
+ * </p>
+ *
+ * <dl>
+ * <dt>redundancy</dt>
+ * <dd>A number in parentheses indicates repetition of
  * arguments. S(2K)S &rarr; SKKS; P(2S)P &rarr; PSSP;<br>
  * Multiple parentheses are accepted. (2ScS)(2SKS) &rarr; ScSScSSKSSKS<br>
- * Nesting is not allowed. (2S(2K)S) &rarr; IllegalArgumentException
- * <li>underside reflection</li> TODO
- * <li>topside reflection</li> TODO
- * <li>topside diffraction</li> TODO
- * </ul>
+ * Nesting is not allowed. (2S(2K)S) &rarr; IllegalArgumentException</dd>
+ * <dt>underside reflection</dt>
+ * <dd> ^???  for the reflection at a depth of ??? km.</dd>
+ * <dt>topside reflection</dt>
+ * <dd>v???  for the reflection at a depth of ??? km.</dd>
+ * <dt>topside diffraction</dt>
+ * </dl>
  *
  * @author Kensuke Konishi
- * @version 0.1.6.2
- *          <p>
- *          TODO TauP のように 任意の深さの反射 ADDEDBOUNDARY
+ * @version 0.1.7
+ * <p>
+ * TODO P2PPcP no exist but exist
  */
 public class Phase {
 
     // no use letters
-    private static final Pattern others = Pattern.compile("[abeghj-oqrt-zA-HL-OQ-RT-Z]");
+    private static final Pattern others = Pattern.compile("[a-zA-Z&&[^cdfipsvIJKPS]]|[\\W&&[^.^]]");
 
     // Pattern for repetition
     private static final Pattern repetition = Pattern.compile("\\((\\d*)([^\\d]+?)\\)");
+
     // first letter is sSpP
     private static final Pattern firstLetter = Pattern.compile("^[^psSP]");
     // static final letter is psSP
     private static final Pattern finalLetter = Pattern.compile("[^psSP]$");
-    // p s must be the first letter
-    private static final Pattern ps = Pattern.compile(".[ps]");
+
+    // p s must be the first letter or follow a number (depth of reflection or interaction).
+    private static final Pattern ps = Pattern.compile("\\D[ps]");
     // c must be next to PS
-    private static final Pattern nextC = Pattern.compile("[^PS]c|c[^PS]|[^PSps][PS]c|c[PS][^PS]");
-    private static final Pattern nextK = Pattern.compile("[^PSKiIJ]K[^PSKiIJ]|[^psPS][PS]K|K[PS][^PS]");
-    private static final Pattern nextJ = Pattern.compile("[^IJK]J|J[^IJK]");
+    private static final Pattern nextC = Pattern.compile("[^PS]c|c[^PS]|[^PSps\\d][PS]c|c[PS][^\\^\\dPS]");
+    private static final Pattern nextK = Pattern.compile("[^PSKiIJ]K[^PSKiIJ]|[^\\dpsPS][PS]K|K[PS][^\\^\\dPS]");
+    private static final Pattern nextJ = Pattern.compile("[^\\dIJK][IJ]|[IJ][^\\^\\dvIJK]");
     private static final Pattern smallI = Pattern.compile("[^Kd]i|i[^fK]|[^PSK]Ki|iK[^KPS]");
-    private static final Pattern largeI = Pattern.compile("[^IJK]I|I[^IJK]");
     // phase turning R is above the CMB
     private static final Pattern mantleP = Pattern.compile("^P$|^P[PS]|[psPS]P$|[psPS]P[PS]");
     private static final Pattern mantleS = Pattern.compile("^S$|^S[PS]|[psPS]S$|[psPS]S[PS]");
     // diffraction phase
     private static final Pattern pDiff = Pattern.compile("Pdiff\\d*(\\.\\d+)?$");
-    private static final Pattern sDiff = Pattern.compile("Sdiff\\d*(\\.?\\d+)?$");
+    private static final Pattern sDiff = Pattern.compile("Sdiff\\d*(\\.\\d+)?$");
     private static final Pattern diffRule = Pattern.compile("diff.+diff|P.*Pdiff|S.*Sdiff|diff.*[^\\d]$");
     // phase reflected at the cmb
     private static final Pattern cmbP = Pattern.compile("Pc|cP");
@@ -68,10 +75,23 @@ public class Phase {
     // phase turning R r <cmb
     private static final Pattern outercoreP = Pattern.compile("PK|KP");
     private static final Pattern outercoreS = Pattern.compile("SK|KS");
+
     // phase turning R icb < r < cmb, i.e., the phase does not go to inner core.
-    private static final Pattern outercore = Pattern.compile("[PSK]K[PSK]");
+    // if a phase name contains "K(depth)K", the phase does not go to inner core.
+    private static final Pattern outercore = Pattern.compile("K\\d|[PSK]K[\\^PSK]");
+
     // nesting of parenthesis is prohibited
     private static Pattern nestParentheses = Pattern.compile("\\([^\\)]*\\(|\\)[^\\(]*\\)");
+    //Number rules as TauP rule 4-6
+    //*KxxxK* K wave must go deeper than xxx. xxx is a depth (distance from the Earth surface).
+    private static Pattern outercoreSpecification = Pattern.compile("K[\\d\\.]++[^K]");
+    private static Pattern mantleSpecification = Pattern.compile("[pPsS]\\d++(\\.\\d++)?[^pPsS]");
+    //interactions without reflection
+    //Number rule as TauP rule 7
+    private static Pattern bottomSide = Pattern.compile("[pPsS]\\^\\d++(\\.\\d++)?[^PS]");
+    private static Pattern topSide = Pattern.compile("[ps]v|[PS]v\\d++(\\.\\d++)?[^pPsS]|[PS]v\\d++(\\.\\d++)?[pPsS]c");
+    private static Pattern bothSide = Pattern.compile("K[\\^|v]\\d++(\\.\\d++)?[^K]|[IJ][\\^|v]\\d++(\\.\\d++)?[^IJ]");
+
     // frequently use
     public static final Phase p = create("p");
     public static final Phase P = create("P");
@@ -81,69 +101,28 @@ public class Phase {
     public static final Phase PKIKP = create("PKIKP");
     public static final Phase s = create("s");
     public static final Phase S = create("S");
-    static final Phase SV = create("S", true);
+    public static final Phase SV = create("S", true);
     public static final Phase ScS = create("ScS");
-    static final Phase SVcS = create("ScS", true);
+    public static final Phase SVcS = create("ScS", true);
     public static final Phase SKS = create("SKS");
     public static final Phase SKiKS = create("SKiKS");
     public static final Phase SKIKS = create("SKIKS");
+
     /**
      * If this is P-SV(true) or SH(false).
      */
-    private final boolean psv;
+    private final boolean PSV;
     /**
      * (input) phase name e.g. S(mK)S
      */
-    private final String phaseName;
+    private final String PHASENAME;
     /**
      * name for parsing e.g. SKKKKKS
      */
-    private final String expandedName;
-    /**
-     * the number of Parts part is for each layer and each direction. if there
-     * is a turning point in one layer the number of parts will increase for
-     * example S wave has 2 parts. Sdiff has 3 parts.
-     */
-    private int nPart;
-    /**
-     * If each part waveforms go deeper(true) or shallower(false). When the part
-     * is diffraction, it is false,
-     */
-    private boolean[] isDownGoing;
-    /**
-     * Which phase is at each part
-     */
-    private Partition[] partition;
-    private PhasePart[] phaseParts;
-    /**
-     * Angle of Diffraction
-     */
-    private double diffractionAngle;
-    private Propagation mantlePPropagation;
-    private Propagation innerCorePPropagation;
-    private Propagation kPropagation;
-    private Propagation mantleSPropagation;
-    private Propagation innerCoreSPropagation;
-    /**
-     * Number of P wave parts in the path. Each down or upgoing is 0.5
-     */
-    private double mantlePTravel;
-    /**
-     * @see #mantlePTravel
-     */
-    private double mantleSTravel;
-    /**
-     * @see #mantlePTravel
-     */
-    private double outerCoreTravel;
-    /**
-     * @see #mantlePTravel
-     */
-    private double innerCorePTravel;
-    /**
-     * @see #mantlePTravel
-     */
-    private double innerCoreSTravel;
+    private final String EXPANDED_NAME;
+
+
+    private PathPart[] passParts;
 
     /**
      * @param phaseName    of the phase (e.g. SKKS)
@@ -151,15 +130,18 @@ public class Phase {
      * @param psv          true:P-SV, false:SH
      */
     private Phase(String phaseName, String expandedName, boolean psv) {
-        this.phaseName = phaseName;
-        this.expandedName = expandedName;
-        this.psv = psv;
+        PHASENAME = phaseName;
+        EXPANDED_NAME = expandedName;
+        PSV = psv;
         countParts();
-        digitalize();
-        setPropagation();
     }
 
+
     /**
+     * Input names must follow some rules.
+     * If you want to express a repeating phase like KK, you have to write (2K), note that
+     * KK is also accepted.
+     *
      * @param name phase name
      * @param sv   true:P-SV, false:SH. If the phase contains "P" or "K", it is
      *             ignored and always is true.
@@ -171,7 +153,7 @@ public class Phase {
         String expandedName = expandParentheses(name);
         if (isValid(expandedName))
             return new Phase(name, expandedName, name.contains("P") || name.contains("K") || (sv.length != 0 && sv[0]));
-        throw new IllegalArgumentException("Invalid phase name " + name);
+        else throw new IllegalArgumentException("Invalid phase name " + name);
     }
 
     /**
@@ -198,11 +180,398 @@ public class Phase {
         }
     }
 
-    public static void main(String[] args) {
-        Phase p = create("P(2K)P");
-        System.out.println(p.phaseName + " " + p.expandedName);
-        System.out.println(p.isDownGoing[1]);
-        p.printInformation();
+    /**
+     * @param dStart index of diff's d
+     * @return angle after 'diff'
+     */
+    private String readAngle(int dStart) {
+        int index = dStart + 4;
+        if (!EXPANDED_NAME.substring(dStart, index).equals("diff")) throw new RuntimeException("Problem around diff??");
+        while (index < EXPANDED_NAME.length() &&
+                (Character.isDigit(EXPANDED_NAME.charAt(index)) || EXPANDED_NAME.charAt(index) == '.')) index++;
+        return EXPANDED_NAME.substring(dStart + 4, index);
+    }
+
+    /**
+     * consider adding next
+     * counts the number of parts in the phase.
+     * P,S,PcP,P410P,Pv410S: 2, pP,P410s: 3, PP,P^410P: 4
+     * <p>
+     * <p>
+     * PcP, ?c?, K
+     */
+    private void countParts() {
+        List<PathPart> partList = new ArrayList<>();
+        partList.add(Located.EMISSION);
+        for (int i = 0; i < EXPANDED_NAME.length(); i++) {
+            PathPart beforePart = partList.get(partList.size() - 1);
+            GeneralPart secondLast = null;
+            if (1 < partList.size() && partList.get(partList.size() - 2) instanceof GeneralPart)
+                secondLast = (GeneralPart) partList.get(partList.size() - 2);
+            char nextChar = i + 1 == EXPANDED_NAME.length() ? 10 : EXPANDED_NAME.charAt(i + 1);
+            boolean hatFlag = nextChar == '^';
+            boolean vFlag = nextChar == 'v';
+            char beforeChar = i == 0 ? 10 : EXPANDED_NAME.charAt(i - 1);
+            char currentChar = EXPANDED_NAME.charAt(i);
+            int start = hatFlag || vFlag ? i + 2 : i + 1;
+            while (Character.isDigit(nextChar) || nextChar == 'v' || nextChar == '^' || nextChar == '.') {
+                i++;
+                nextChar = i + 1 == EXPANDED_NAME.length() ? 10 : EXPANDED_NAME.charAt(i + 1);
+            }
+            int end = i + 1;
+            double nextDepth = start == end ? Double.NaN : Double.parseDouble(EXPANDED_NAME.substring(start, end));
+            PassPoint innerPoint;
+            PassPoint outerPoint;
+            switch (currentChar) {
+                case 'c':
+                case 'i':
+                    break;
+                case 'p':
+                case 's':
+                    PhasePart ps = currentChar == 'p' ? PhasePart.P : (PSV ? PhasePart.SV : PhasePart.SH);
+                    if (beforePart.isEmission() || beforePart.isTransmission() || beforePart.isTopsideReflection()) {
+                        double innerDepth = 0;
+                        innerPoint = beforePart.isEmission() ? PassPoint.SEISMIC_SOURCE : PassPoint.OTHER;
+                        if (!beforePart.isEmission()) innerDepth =
+                                beforePart.isTransmission() ? secondLast.getOuterDepth() : secondLast.getInnerDepth();
+                        if (vFlag) throw new RuntimeException("Problem around " + currentChar);
+                        else if (hatFlag || !Double.isNaN(nextDepth)) {
+                            partList.add(
+                                    new GeneralPart(ps, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
+                            if (hatFlag) partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            else partList.add(Arbitrary.createTransmission(nextDepth));
+                            continue;
+                        }
+                        //under here, no interactions.
+                        switch (nextChar) {
+                            case 10:
+                            case 'P':
+                            case 'S':
+                                partList.add(
+                                        new GeneralPart(ps, false, innerDepth, 0, innerPoint, PassPoint.EARTH_SURFACE));
+                                if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around p");
+                        }
+                    } else throw new RuntimeException("Problem around \"p\"");
+//switching current char
+                case 'S':
+                case 'P':
+                    PhasePart PS = currentChar == 'P' ? PhasePart.P : (PSV ? PhasePart.SV : PhasePart.SH);
+                    if (beforePart.isEmission() || beforePart.isTransmission() || beforePart.isBottomsideReflection()) {
+                        outerPoint = beforePart.isEmission() ? PassPoint.SEISMIC_SOURCE :
+                                ((Located) beforePart).getPassPoint();
+                        double outerDepth = 0;
+
+                        if (!beforePart.isEmission()) outerDepth =
+                                beforePart.isTransmission() ? secondLast.getInnerDepth() : secondLast.getOuterDepth();
+                        if (vFlag) {
+                            partList.add(new GeneralPart(PS, true, nextDepth, outerDepth, PassPoint.OTHER, outerPoint));
+                            partList.add(Arbitrary.createTopsideReflection(nextDepth));
+                            continue;
+                        } else if (hatFlag) {
+                            partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
+                            partList.add(Located.BOUNCE);
+                            partList.add(
+                                    new GeneralPart(PS, false, 0, nextDepth, PassPoint.BOUNCE_POINT, PassPoint.OTHER));
+                            partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            continue;
+                        } else if (!Double.isNaN(nextDepth)) {
+                            switch (nextChar) {
+                                case 'p':
+                                case 's':
+                                    partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT,
+                                            outerPoint));
+                                    partList.add(Located.BOUNCE);
+                                    partList.add(new GeneralPart(PS, false, 0, nextDepth, PassPoint.BOUNCE_POINT,
+                                            PassPoint.OTHER));
+                                    partList.add(Arbitrary.createTransmission(nextDepth));
+                                    continue;
+                                case 'P':
+                                case 'S':
+                                    partList.add(new GeneralPart(PS, true, nextDepth, outerDepth, PassPoint.OTHER,
+                                            outerPoint));
+                                    partList.add(Arbitrary.createTransmission(nextDepth));
+                                    continue;
+                                default:
+                                    throw new RuntimeException("Problem around P");
+                            }
+                        }
+                        //under here, no interactions
+                        switch (nextChar) {
+                            case 10:
+                            case 'P':
+                            case 'S':
+                                partList.add(
+                                        new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
+                                partList.add(Located.BOUNCE);
+                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                        PassPoint.EARTH_SURFACE));
+                                if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
+                                continue;
+                            case 'c':
+                            case 'K':
+                                partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.CMB, outerPoint));
+                                partList.add(nextChar == 'c' ? Located.REFLECTION_C : Located.CMB_PENETRATION);
+                                continue;
+                            case 'd'://TODO
+                                partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.CMB, outerPoint));
+                                String angle = readAngle(i + 1);
+                                i += 4 + angle.length();
+                                partList.add(LocatedDiffracted.createCMBDiffraction(true, PS,
+                                        Math.toRadians(angle.isEmpty() ? 0 : Double.parseDouble(angle))));
+                                if (i + 1 < EXPANDED_NAME.length()) throw new IllegalArgumentException(
+                                        "ANISOtime now cannot handle complex diffraction wave");
+                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.CMB, PassPoint.EARTH_SURFACE));
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around P");
+                        }
+                    } else if (beforePart.isTopsideReflection() || beforePart.isPenetration()) {
+                        innerPoint = ((Located) beforePart).getPassPoint();
+                        double innerDepth = secondLast.getInnerDepth();
+                        if (vFlag) {
+                            throw new RuntimeException("Problem around Pv");
+                        } else if (hatFlag) {
+                            partList.add(
+                                    new GeneralPart(PS, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
+                            partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            continue;
+                        } else if (!Double.isNaN(nextDepth)) {
+                            partList.add(
+                                    new GeneralPart(PS, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
+                            partList.add(Arbitrary.createTransmission(nextDepth));
+                            continue;
+                        }
+                        switch (nextChar) {
+                            case 'P':
+                            case 'S':
+                            case 10:
+                                partList.add(
+                                        new GeneralPart(PS, false, innerDepth, 0, innerPoint, PassPoint.EARTH_SURFACE));
+                                if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around P");
+                        }
+                    } else throw new RuntimeException("unexpected");
+//switching current char
+                case 'J':
+                case 'I':
+                    PhasePart ij = currentChar == 'I' ? PhasePart.I : PhasePart.JV;
+                    if (beforePart.isPenetration() || beforePart.isBottomsideReflection()) {
+                        outerPoint = ((Located) beforePart).getPassPoint();
+                        double outerDepth = 0;
+                        if (beforePart.isBottomsideReflection()) outerDepth = secondLast.getOuterDepth();
+                        if (vFlag) {
+                            partList.add(new GeneralPart(ij, true, nextDepth, outerDepth, PassPoint.OTHER, outerPoint));
+                            partList.add(Arbitrary.createTopsideReflection(nextDepth));
+                            continue;
+                        } else if (hatFlag) {
+                            partList.add(new GeneralPart(ij, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
+                            partList.add(Located.BOUNCE);
+                            partList.add(
+                                    new GeneralPart(ij, false, 0, nextDepth, PassPoint.BOUNCE_POINT, PassPoint.OTHER));
+                            partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            continue;
+                        } else if (!Double.isNaN(nextDepth))
+                            throw new RuntimeException("Transmission of I is prohibited.");
+                        switch (nextChar) {
+                            case 'K':
+                                partList.add(
+                                        new GeneralPart(ij, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
+                                partList.add(Located.BOUNCE);
+                                partList.add(new GeneralPart(ij, false, 0, nextDepth, PassPoint.BOUNCE_POINT,
+                                        PassPoint.ICB));
+                                partList.add(Located.ICB_PENETRATION);
+                                continue;
+                            case 'I':
+                            case 'J':
+                                partList.add(
+                                        new GeneralPart(ij, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
+                                partList.add(Located.BOUNCE);
+                                partList.add(new GeneralPart(ij, false, 0, nextDepth, PassPoint.BOUNCE_POINT,
+                                        PassPoint.ICB));
+                                partList.add(Located.INNERCORE_SIDE_REFLECTION);
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around I");
+                        }
+                    } else if (beforePart.isTopsideReflection()) {
+                        innerPoint = ((Located) beforePart).getPassPoint();
+                        double innerDepth = secondLast.getInnerDepth();
+                        if (vFlag) throw new RuntimeException("Problem around I");
+                        else if (hatFlag) {
+                            partList.add(
+                                    new GeneralPart(ij, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
+                            partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            continue;
+                        } else if (!Double.isNaN(nextDepth))
+                            throw new RuntimeException("Transmission of I is prohibited.");
+                        switch (nextChar) {
+                            case 'I':
+                            case 'J':
+                            case 'K':
+                                partList.add(new GeneralPart(ij, false, innerDepth, 0, innerPoint, PassPoint.ICB));
+                                partList.add(
+                                        nextChar == 'K' ? Located.ICB_PENETRATION : Located.INNERCORE_SIDE_REFLECTION);
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around I");
+                        }
+                    } else throw new RuntimeException("Problem around I");
+// switching current char
+                case 'K':
+                    if (beforePart.isPenetration()) {
+                        switch (beforeChar) {
+                            case 'P':
+                            case 'S':
+                                if (vFlag) {
+                                    partList.add(new GeneralPart(PhasePart.K, true, nextDepth, 0, PassPoint.OTHER,
+                                            PassPoint.CMB));
+                                    partList.add(Arbitrary.createTopsideReflection(nextDepth));
+                                    continue;
+                                } else if (hatFlag) {
+                                    partList.add(new GeneralPart(PhasePart.K, true, 0, 0, PassPoint.BOUNCE_POINT,
+                                            PassPoint.CMB));
+                                    partList.add(Located.BOUNCE);
+                                    partList.add(
+                                            new GeneralPart(PhasePart.K, false, 0, nextDepth, PassPoint.BOUNCE_POINT,
+                                                    PassPoint.OTHER));
+                                    partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                                    continue;
+                                } else if (!Double.isNaN(nextDepth))
+                                    throw new RuntimeException("Transmission of K is prohibited.");
+                                //under here, no interactions. in other words, penetrating or bouncing.
+                                switch (nextChar) {
+                                    case 'K':
+                                    case 'P':
+                                    case 'S':
+                                        partList.add(new GeneralPart(PhasePart.K, true, 0, 0, PassPoint.BOUNCE_POINT,
+                                                PassPoint.CMB));
+                                        partList.add(Located.BOUNCE);
+                                        partList.add(new GeneralPart(PhasePart.K, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                                PassPoint.CMB));
+                                        partList.add(nextChar == 'K' ? Located.REFLECTION_K : Located.CMB_PENETRATION);
+                                        continue;
+                                    case 'i':
+                                    case 'I':
+                                    case 'J':
+                                        partList.add(
+                                                new GeneralPart(PhasePart.K, true, 0, 0, PassPoint.ICB, PassPoint.CMB));
+                                        partList.add(nextChar == 'i' ? Located.OUTERCORE_SIDE_REFLECTION :
+                                                Located.ICB_PENETRATION);
+                                        continue;
+                                    default:
+                                        throw new RuntimeException("Problem around K");
+                                }
+                                //switching before char
+                            case 'I':
+                            case 'J':
+                                if (vFlag) {
+                                    throw new RuntimeException("Problem around K");
+                                } else if (hatFlag) {
+                                    partList.add(new GeneralPart(PhasePart.K, false, 0, nextDepth, PassPoint.ICB,
+                                            PassPoint.OTHER));
+                                    partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                                    continue;
+                                } else if (!Double.isNaN(nextDepth))
+                                    throw new RuntimeException("Transmission of K is prohibited.");
+                                //under here, no interactions. in other words, penetrating or bouncing.
+                                switch (nextChar) {
+                                    case 'K':
+                                    case 'P':
+                                    case 'S':
+                                        partList.add(new GeneralPart(PhasePart.K, false, 0, 0, PassPoint.ICB,
+                                                PassPoint.CMB));
+                                        partList.add(nextChar == 'K' ? Located.REFLECTION_K : Located.CMB_PENETRATION);
+                                        continue;
+                                    default:
+                                        throw new RuntimeException("Problem around K");
+                                }
+                            default:
+                                throw new RuntimeException("Problem around K");
+                        }
+                    } else if (beforePart.isBottomsideReflection()) {
+                        outerPoint = ((Located) beforePart).getPassPoint();
+                        double outerDepth =
+                                beforePart.isTransmission() ? secondLast.getInnerDepth() : secondLast.getOuterDepth();
+                        if (vFlag) {
+                            partList.add(new GeneralPart(PhasePart.K, true, nextDepth, 0, PassPoint.OTHER, outerPoint));
+                            partList.add(Arbitrary.createTopsideReflection(nextDepth));
+                            continue;
+                        } else if (hatFlag) {
+                            partList.add(new GeneralPart(PhasePart.K, true, 0, outerDepth, PassPoint.BOUNCE_POINT,
+                                    PassPoint.OTHER));
+                            partList.add(Located.BOUNCE);
+                            partList.add(new GeneralPart(PhasePart.K, false, 0, nextDepth, PassPoint.BOUNCE_POINT,
+                                    PassPoint.OTHER));
+                            partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            continue;
+                        } else if (!Double.isNaN(nextDepth))
+                            throw new RuntimeException("Transmission of K is prohibited.");
+                        //under here, no interactions. in other words, penetrating or bouncing.
+                        switch (nextChar) {
+                            case 'K':
+                            case 'P':
+                            case 'S':
+                                partList.add(new GeneralPart(PhasePart.K, true, 0, outerDepth, PassPoint.BOUNCE_POINT,
+                                        outerPoint));
+                                partList.add(Located.BOUNCE);
+                                partList.add(new GeneralPart(PhasePart.K, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                        PassPoint.CMB));
+                                partList.add(nextChar == 'K' ? Located.REFLECTION_K : Located.CMB_PENETRATION);
+                                continue;
+                            case 'I':
+                            case 'J':
+                            case 'i':
+                                partList.add(
+                                        new GeneralPart(PhasePart.K, true, 0, outerDepth, PassPoint.ICB, outerPoint));
+                                partList.add(
+                                        nextChar == 'i' ? Located.OUTERCORE_SIDE_REFLECTION : Located.ICB_PENETRATION);
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around K");
+                        }
+                    } else if (beforePart.isTopsideReflection()) {
+                        innerPoint = ((Located) beforePart).getPassPoint();
+                        double innerDepth = secondLast.getInnerDepth();
+                        if (vFlag) {
+                            throw new RuntimeException("Problem around K");
+                        } else if (hatFlag) {
+                            partList.add(new GeneralPart(PhasePart.K, false, innerDepth, nextDepth, innerPoint,
+                                    PassPoint.OTHER));
+                            partList.add(Arbitrary.createBottomsideReflection(nextDepth));
+                            continue;
+                        } else if (!Double.isNaN(nextDepth))
+                            throw new RuntimeException("Transmission of K is prohibited.");
+                        switch (nextChar) {
+                            case 'P':
+                            case 'S':
+                                partList.add(
+                                        new GeneralPart(PhasePart.K, false, innerDepth, 0, innerPoint, PassPoint.CMB));
+                                partList.add(Located.CMB_PENETRATION);
+                                continue;
+                            case 'K':
+                                partList.add(
+                                        new GeneralPart(PhasePart.K, false, innerDepth, 0, innerPoint, PassPoint.CMB));
+                                partList.add(Located.REFLECTION_K);
+                                continue;
+                            default:
+                                throw new RuntimeException("Problem around K");
+                        }
+                        //when the letter means whole path of P.
+                    } else throw new RuntimeException("Problem around K");
+                default:
+                    throw new RuntimeException("unexpected character " + currentChar);
+            }
+        }
+        passParts = partList.toArray(new PathPart[partList.size()]);
+    }
+
+    PathPart[] getPassParts() {
+        return passParts.clone();
     }
 
     /**
@@ -231,7 +600,12 @@ public class Phase {
 
         if (smallI.matcher(phase).find()) return false;
 
-        if (largeI.matcher(phase).find()) return false;
+        //check digits
+        if (outercoreSpecification.matcher(phase).find()) return false;
+        if (mantleSpecification.matcher(phase).find()) return false;
+        if (bottomSide.matcher(phase).find()) return false;
+        if (topSide.matcher(phase).find()) return false;
+        if (bothSide.matcher(phase).find()) return false;
 
         // phase reflected at the icb
         boolean icb = phase.contains("Ki") || phase.contains("iK");
@@ -252,8 +626,8 @@ public class Phase {
     public int hashCode() {
         int prime = 31;
         int result = 1;
-        result = prime * result + ((expandedName == null) ? 0 : expandedName.hashCode());
-        result = prime * result + (psv ? 1231 : 1237);
+        result = prime * result + ((EXPANDED_NAME == null) ? 0 : EXPANDED_NAME.hashCode());
+        result = prime * result + (PSV ? 1231 : 1237);
         return result;
     }
 
@@ -267,346 +641,32 @@ public class Phase {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Phase other = (Phase) obj;
-        if (expandedName == null) {
-            if (other.expandedName != null) return false;
-        } else if (!expandedName.equals(other.expandedName)) return false;
-        return psv == other.psv;
+        if (EXPANDED_NAME == null) {
+            if (other.EXPANDED_NAME != null) return false;
+        } else if (!EXPANDED_NAME.equals(other.EXPANDED_NAME)) return false;
+        return PSV == other.PSV;
     }
 
     /**
      * @return P-SV (true), SH (false)
      */
     public boolean isPSV() {
-        return psv;
+        return PSV;
     }
 
-    /**
-     * @return angle of diffraction [rad] TODO
-     */
-    double getDiffractionAngle() {
-        return diffractionAngle;
-    }
-
-    private void countParts() {
-        int reflection = 0;
-        // waveform goes to a deeper part.
-        int zoneMove = 0;
-        for (int i = 0; i < expandedName.length(); i++)
-            if (expandedName.charAt(i) == 'd') break;
-            else if (expandedName.charAt(i) == 'c' || expandedName.charAt(i) == 'i') reflection++;
-            else if (expandedName.charAt(i) == 'K' &&
-                    (expandedName.charAt(i - 1) == 'P' || expandedName.charAt(i - 1) == 'S')) zoneMove++;
-            else if ((expandedName.charAt(i) == 'I' || expandedName.charAt(i) == 'J') &&
-                    expandedName.charAt(i - 1) == 'K') zoneMove++;
-        // reflection++;
-        int dPos = expandedName.indexOf('d');
-        nPart = ((0 < dPos ? dPos : expandedName.length()) - reflection * 2 - zoneMove) * 2;
-        if (expandedName.charAt(0) == 'p' || expandedName.charAt(0) == 's') nPart--;
-
-        // diffraction
-        if (0 < dPos) {
-            nPart++;
-            if (dPos + 4 < expandedName.length())
-                diffractionAngle = Math.toRadians(Double.parseDouble(expandedName.substring(dPos + 4)));
-        }
-        isDownGoing = new boolean[nPart];
-        partition = new Partition[nPart];
-        phaseParts = new PhasePart[nPart];
-    }
 
     boolean isDiffracted() {
-        return expandedName.contains("diff");
+        return EXPANDED_NAME.contains("diff");
     }
 
-    private void digitalize() {
-        // P
-        int iCurrentPart = 0;
-        for (int i = 0; i < expandedName.length(); i++) {
-            char nextChar = i + 1 == expandedName.length() ? 0 : expandedName.charAt(i + 1);
-            char beforeChar = i == 0 ? 0 : expandedName.charAt(i - 1);
-            switch (expandedName.charAt(i)) {
-                case 'd':
-                    break;
-                case 'c':
-                    continue;
-                case 'i':
-                    continue;
-                case 'p':
-                    isDownGoing[iCurrentPart] = false;
-                    partition[iCurrentPart] = Partition.MANTLE;
-                    phaseParts[iCurrentPart] = PhasePart.P;
-                    iCurrentPart++;
-                    break;
-                case 's':
-                    isDownGoing[iCurrentPart] = false;
-                    partition[iCurrentPart] = Partition.MANTLE;
-                    phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
-                    iCurrentPart++;
-                    break;
-                case 'P':
-                    partition[iCurrentPart] = Partition.MANTLE;
-                    phaseParts[iCurrentPart] = PhasePart.P;
-                    isDownGoing[iCurrentPart] = i == 0 || (beforeChar != 'K' && beforeChar != 'c');
-                    if (isDownGoing[iCurrentPart])
-                        // ^P$ [psPS]P[PS]...
-                        if (i + 1 == expandedName.length() || (nextChar != 'c' && nextChar != 'K')) {
-                            iCurrentPart++;
-                            isDownGoing[iCurrentPart] = false;
-                            phaseParts[iCurrentPart] = PhasePart.P;
-                            if (nextChar != 'd') partition[iCurrentPart] = Partition.MANTLE;
-                            else {
-                                partition[iCurrentPart] = Partition.CORE_MANTLE_BOUNDARY;
-                                iCurrentPart++;
-                                isDownGoing[iCurrentPart] = false;
-                                partition[iCurrentPart] = Partition.MANTLE;
-                                phaseParts[iCurrentPart] = PhasePart.P;
-                            }
-                        }
-                    iCurrentPart++;
-                    break;
-                case 'S':
-                    isDownGoing[iCurrentPart] = i == 0 || (beforeChar != 'K' && beforeChar != 'c');
-                    partition[iCurrentPart] = Partition.MANTLE;
-                    phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
-                    if (isDownGoing[iCurrentPart])
-                        if (i + 1 == expandedName.length() || (nextChar != 'c' && nextChar != 'K')) {
-                            iCurrentPart++;
-                            partition[iCurrentPart] = Partition.MANTLE;
-                            isDownGoing[iCurrentPart] = false;
-                            phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
-                            if (nextChar != 'd') partition[iCurrentPart] = Partition.MANTLE;
-                            else {
-                                partition[iCurrentPart] = Partition.CORE_MANTLE_BOUNDARY;
-                                iCurrentPart++;
-                                isDownGoing[iCurrentPart] = false;
-                                partition[iCurrentPart] = Partition.MANTLE;
-                                phaseParts[iCurrentPart] = psv ? PhasePart.SV : PhasePart.SH;
-                            }
-                        }
-                    iCurrentPart++;
-                    break;
-                case 'I':
-                    isDownGoing[iCurrentPart] = true;
-                    partition[iCurrentPart] = Partition.INNERCORE;
-                    phaseParts[iCurrentPart] = PhasePart.I;
-                    iCurrentPart++;
-                    isDownGoing[iCurrentPart] = false;
-                    partition[iCurrentPart] = Partition.INNERCORE;
-                    phaseParts[iCurrentPart] = PhasePart.I;
-                    iCurrentPart++;
-                    break;
-                case 'J':
-                    isDownGoing[iCurrentPart] = true;
-                    partition[iCurrentPart] = Partition.INNERCORE;
-                    phaseParts[iCurrentPart] = psv ? PhasePart.JV : PhasePart.JH;
-                    iCurrentPart++;
-                    isDownGoing[iCurrentPart] = false;
-                    partition[iCurrentPart] = Partition.INNERCORE;
-                    phaseParts[iCurrentPart] = psv ? PhasePart.JV : PhasePart.JH;
-                    iCurrentPart++;
-                    break;
-                case 'K':
-                    isDownGoing[iCurrentPart] =
-                            expandedName.charAt(i - 1) != 'i' && expandedName.charAt(i - 1) != 'I' &&
-                                    expandedName.charAt(i - 1) != 'J';
-                    partition[iCurrentPart] = Partition.OUTERCORE;
-                    phaseParts[iCurrentPart] = PhasePart.K;
-                    if (expandedName.charAt(i - 1) != 'i' && expandedName.charAt(i - 1) != 'I' &&
-                            expandedName.charAt(i - 1) != 'J')
-                        if (expandedName.charAt(i + 1) != 'i' && expandedName.charAt(i + 1) != 'I' &&
-                                expandedName.charAt(i + 1) != 'J') {
-                            iCurrentPart++;
-                            isDownGoing[iCurrentPart] = false;
-                            partition[iCurrentPart] = Partition.OUTERCORE;
-                            phaseParts[iCurrentPart] = PhasePart.K;
-                        }
-                    iCurrentPart++;
-                    break;
-            }
-        }
-    }
-
-    private void setPropagation() {
-        if (expandedName.contains("Pdiff")) mantlePPropagation = Propagation.DIFFRACTION;
-        else if (expandedName.contains("PK") || expandedName.contains("Pc") || expandedName.contains("KP") ||
-                expandedName.contains("cP")) mantlePPropagation = Propagation.PENETRATING;
-        else mantlePPropagation = expandedName.contains("P") ? Propagation.BOUNCING : Propagation.NOEXIST;
-
-        if (expandedName.contains("Sdiff")) mantleSPropagation = Propagation.DIFFRACTION;
-        else if (expandedName.contains("SK") || expandedName.contains("Sc") || expandedName.contains("KS") ||
-                expandedName.contains("cS")) mantleSPropagation = Propagation.PENETRATING;
-        else mantleSPropagation = expandedName.contains("S") ? Propagation.BOUNCING : Propagation.NOEXIST;
-
-        if (expandedName.contains("I") || expandedName.contains("J") || expandedName.contains("i"))
-            kPropagation = Propagation.PENETRATING;
-        else kPropagation = expandedName.contains("K") ? Propagation.BOUNCING : Propagation.NOEXIST;
-
-        innerCorePPropagation = expandedName.contains("I") ? Propagation.BOUNCING : Propagation.NOEXIST;
-
-        innerCoreSPropagation = expandedName.contains("J") ? Propagation.BOUNCING : Propagation.NOEXIST;
-
-        if (expandedName.charAt(0) == 'p') mantlePTravel = -0.5;
-        if (expandedName.charAt(0) == 's') mantleSTravel = -0.5;
-
-        for (int i = 0; i < nPart; i++) {
-            if (partition[i].isBoundary()) continue;
-            switch (phaseParts[i]) {
-                case I:
-                    innerCorePTravel += 0.5;
-                    break;
-                case JH:
-                case JV:
-                    innerCoreSTravel += 0.5;
-                    break;
-                case K:
-                    outerCoreTravel += 0.5;
-                    break;
-                case P:
-                    mantlePTravel += 0.5;
-                    break;
-                case SH:
-                case SV:
-                    mantleSTravel += 0.5;
-                    break;
-                default:
-                    throw new RuntimeException("UnexpectEd");
-            }
-        }
-
-    }
 
     void printInformation() {
-        IntStream.range(0, nPart).forEach(
-                i -> System.out.println(phaseParts[i] + " " + (isDownGoing[i] ? "down" : "up") + " " + partition[i]));
+        Arrays.stream(passParts).forEach(System.out::println);
     }
 
-    Propagation getMantlePPropagation() {
-        return mantlePPropagation;
-    }
-
-    Propagation getInnerCorePPropagation() {
-        return innerCorePPropagation;
-    }
-
-    Propagation getkPropagation() {
-        return kPropagation;
-    }
-
-    Propagation getMantleSPropagation() {
-        return mantleSPropagation;
-    }
-
-    Propagation getInnerCoreSPropagation() {
-        return innerCoreSPropagation;
-    }
-
-    /**
-     * @param ray to be checked
-     * @return if the ray exists
-     */
-    boolean exists(Raypath ray) {
-        if (mantlePPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.P) != mantlePPropagation)
-            return false;
-        if (mantleSPropagation != Propagation.NOEXIST &&
-                ray.getPropagation(psv ? PhasePart.SV : PhasePart.SH) != mantleSPropagation) return false;
-        if (kPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.K) != kPropagation) return false;
-        if (innerCorePPropagation != Propagation.NOEXIST && ray.getPropagation(PhasePart.I) == Propagation.NOEXIST)
-            return false;
-        return !(innerCoreSPropagation != Propagation.NOEXIST &&
-                ray.getPropagation(psv ? PhasePart.JV : PhasePart.JH) == Propagation.NOEXIST);
-    }
-
-    /**
-     * deepest part of P phase
-     *
-     * @return null if P phase does not exist.
-     */
-    Partition pReaches() {
-        if (expandedName.contains("Sdiff")) return null;
-        if (expandedName.contains("I")) return Partition.INNERCORE;
-        if (expandedName.contains("i") || expandedName.contains("J")) return Partition.INNER_CORE_BOUNDARY;
-        if (expandedName.contains("K")) return Partition.OUTERCORE;
-        if (!expandedName.contains("P") && !expandedName.contains("p")) return null;
-        if (expandedName.contains("Pc") || expandedName.contains("cP") || expandedName.contains("diff"))
-            return Partition.CORE_MANTLE_BOUNDARY;
-        return Partition.MANTLE;
-    }
-
-    /**
-     * deepest part of s Phase
-     *
-     * @return null if S phase does not exist.
-     */
-    Partition sReaches() {
-        if (expandedName.contains("J")) return Partition.INNERCORE;
-        if (!expandedName.contains("S")) return null;
-        if (expandedName.contains("Sc") || expandedName.contains("cS") || expandedName.contains("KS") ||
-                expandedName.contains("SK") || expandedName.contains("diff")) return Partition.CORE_MANTLE_BOUNDARY;
-        return Partition.MANTLE;
-    }
-
-    /**
-     * how many times P wave travels in the inner core. Each down or upgoing is
-     * considered as 0.5
-     *
-     * @param pp to be count
-     * @return the times P wave travels in the inner core
-     */
-    double getCountOf(PhasePart pp) {
-        switch (pp) {
-            case I:
-                return innerCorePTravel;
-            case JH:
-            case JV:
-                return innerCoreSTravel;
-            case K:
-                return outerCoreTravel;
-            case P:
-                return mantlePTravel;
-            case SH:
-            case SV:
-                return mantleSTravel;
-            default:
-                throw new RuntimeException("unikspected");
-        }
-
-    }
-
-    /**
-     * {@link #nPart}
-     *
-     * @return the number of part
-     */
-    int getNPart() {
-        return nPart;
-    }
-
-    /**
-     * @param i index of the phase 0 for the first phase part
-     * @return phase part for the index
-     */
-    PhasePart phasePartOf(int i) {
-        return phaseParts[i];
-    }
-
-    /**
-     * @param i index of the target
-     * @return if it is down going in i th part.
-     */
-    boolean partIsDownGoing(int i) {
-        return isDownGoing[i];
-    }
-
-    /**
-     * @param i index of the target
-     * @return the partition where the i th part travels
-     */
-    Partition partitionOf(int i) {
-        return partition[i];
-    }
 
     @Override
     public String toString() {
-        return phaseName;
+        return PHASENAME;
     }
 }

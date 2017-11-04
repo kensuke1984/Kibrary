@@ -13,21 +13,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * Menubar for GUI
+ * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.5.2
+ * @version 0.1.5.3
  */
 final class MenuBar extends JMenuBar {
 
     /**
-     * 2016/12/20
+     * 2017/11/4
      */
-    private static final long serialVersionUID = -1528882471062596159L;
+    private static final long serialVersionUID = -523430659401469839L;
     private final ANISOtimeGUI GUI;
-    private ButtonGroup buttonGroupModes = new ButtonGroup();
-    private ButtonGroup buttonGroupPolarization = new ButtonGroup();
-    private JMenuItem jMenuItemExit;
+
     private JMenuItem jMenuItemRayparameterMode;
     private JMenuItem jMenuItemEpicentralDistanceMode;
     private JMenuItem jMenuItemParameterDescription;
@@ -45,27 +43,31 @@ final class MenuBar extends JMenuBar {
 
     private void initComponents() {
         JMenu jMenuFile = new JMenu("File");
-        JMenu jMenuHelp = new JMenu("Help");
+        JMenuItem jMenuItemExit = new JMenuItem("Exit");
 
         JMenu jMenuSettings = new JMenu("Settings");
         JMenu jMenuModes = new JMenu("Switch Mode");
-        JMenu jMenuPolarization = new JMenu("Switch Polarization");
-        jMenuItemExit = new JMenuItem("Exit");
-        jMenuItemParameterDescription = new JMenuItem("Parameter description");
-        jMenuItemRayparameterMode = new JRadioButtonMenuItem("Ray parameter Mode");
         jMenuItemEpicentralDistanceMode = new JRadioButtonMenuItem("Epicentral Distance Mode");
-        jMenuItemPreferences = new JMenuItem("Preferences");
+        jMenuItemRayparameterMode = new JRadioButtonMenuItem("Ray parameter Mode");
 
-        jMenuItemAbout = new JMenuItem("About");
-        jMenuItemMail = new JMenuItem("Feedback");
-
+        JMenu jMenuPolarization = new JMenu("Switch Polarization");
         jMenuItemPSVSH = new JRadioButtonMenuItem("All");
         jMenuItemPSV = new JRadioButtonMenuItem("P-SV");
         jMenuItemSH = new JRadioButtonMenuItem("SH");
+
+        ButtonGroup buttonGroupPolarization = new ButtonGroup();
         buttonGroupPolarization.add(jMenuItemPSVSH);
         buttonGroupPolarization.add(jMenuItemPSV);
         buttonGroupPolarization.add(jMenuItemSH);
 
+        jMenuItemPreferences = new JMenuItem("Preferences");
+
+        JMenu jMenuHelp = new JMenu("Help");
+        jMenuItemParameterDescription = new JMenuItem("Parameter description");
+        jMenuItemAbout = new JMenuItem("About");
+        jMenuItemMail = new JMenuItem("Feedback");
+
+        ButtonGroup buttonGroupModes = new ButtonGroup();
         buttonGroupModes.add(jMenuItemEpicentralDistanceMode);
         buttonGroupModes.add(jMenuItemRayparameterMode);
 
@@ -84,6 +86,7 @@ final class MenuBar extends JMenuBar {
         jMenuModes.add(jMenuItemEpicentralDistanceMode);
         jMenuModes.add(jMenuItemRayparameterMode);
         jMenuFile.add(jMenuItemExit);
+        jMenuItemExit.addActionListener(e -> System.exit(0));
         add(jMenuFile);
         add(jMenuSettings);
         add(jMenuHelp);
@@ -99,7 +102,6 @@ final class MenuBar extends JMenuBar {
         jMenuItemEpicentralDistanceMode.addActionListener(e -> GUI.setMode(ComputationMode.EPICENTRAL_DISTANCE));
         jMenuItemPreferences.addActionListener(e -> GUI.changePropertiesVisible());
 
-        jMenuItemExit.addActionListener(evt -> System.exit(0));
 
         jMenuItemParameterDescription.addActionListener(e -> {
             URL descriptionPdf = getClass().getClassLoader().getResource("description.pdf");

@@ -17,7 +17,6 @@ import java.util.function.BiFunction;
 /**
  * Raypath catalogue for one model
  * <p>
- * <p>
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
  * <p>
@@ -27,6 +26,11 @@ import java.util.function.BiFunction;
  * @version 0.0.13b
  */
 public class RaypathCatalog implements Serializable {
+    private static void debug() {
+        Phase targetPhase = Phase.create("Sv2002S");
+        System.out.println(ISO_PREM.searchPath(targetPhase, 6371, Math.toRadians(65), false).length);
+        System.exit(0);
+    }
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -35,10 +39,12 @@ public class RaypathCatalog implements Serializable {
      * Computation mesh in each part is (inner-core, outer-core and mantle), respectively.
      * (Integral threshold) controls the range for Jeffreys and Jeffreys.
      *
-     * @param args [model file (prem, iprem, ak135 or a polynomial file only now)] [&delta&Delta (deg)] [inner-core]
-     *             [outer-core] [mantle] intervals [integral threshold (0,1)]
+     * @param args [model file (prem, iprem, ak135 or a polynomial file only now)] [&delta;&Delta; (deg)] [inner-core]
+     *             [outer-core] [mantle] intervals [integral threshold (0, 1)]
+     * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
+        debug();
         if (args.length != 6) throw new IllegalArgumentException(
                 "Usage: [model name, polynomial file] [\u03b4\u0394 (deg)] [inner-core] [outer-core] [mantle] [integral threshold (0,1)]");
         VelocityStructure structure;
@@ -224,6 +230,7 @@ public class RaypathCatalog implements Serializable {
      * @param structure for computation of raypaths
      * @param mesh      for computation of raypaths.
      * @param dDelta    &delta;&Delta; [rad] for creation of a catalog.
+     * @return Catalogue for the input structure
      */
     public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
         try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
@@ -605,7 +612,8 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param path the path to the write file
+     * @param path    the path to the write file
+     * @param options if any
      * @throws IOException If an I/O error happens. it throws error.
      */
     public void write(Path path, OpenOption... options) throws IOException {
@@ -631,7 +639,6 @@ public class RaypathCatalog implements Serializable {
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
-
         List<Raypath> pathList = new ArrayList<>();
         for (int i = 0; i < raypaths.length - 1; i++) {
             Raypath rayI = raypaths[i];
@@ -639,6 +646,7 @@ public class RaypathCatalog implements Serializable {
 
             double deltaI = rayI.computeDelta(eventR, targetPhase);
             double deltaP = rayP.computeDelta(eventR, targetPhase);
+
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
             if (relativeAngle) {
                 deltaI = toRelativeAngle(deltaI);

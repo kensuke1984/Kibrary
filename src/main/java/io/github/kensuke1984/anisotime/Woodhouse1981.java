@@ -16,7 +16,6 @@ import java.util.*;
  */
 class Woodhouse1981 implements Serializable {
 
-
     /**
      * 2016/8/30
      */

@@ -16,17 +16,16 @@ import java.util.function.Consumer;
  * Panel for inputting parameters
  *
  * @author Kensuke Konishi
- * @version 0.3.0.1
+ * @version 0.3.0.2
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 
     /**
-     * 2016/12/3
+     * 2017/11/4
      */
-    private static final long serialVersionUID = 6718030883815139117L;
+    private static final long serialVersionUID = 7159470149874798859L;
+    private final ANISOtimeGUI GUI;
 
-    private final ANISOtimeGUI gui;
-    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> jComboBoxModel;
     private javax.swing.JLabel jLabelDepth;
     private javax.swing.JLabel jLabelModel;
@@ -37,8 +36,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
     /**
      * Creates new form ParameterInputPanel
      */
-    public ParameterInputPanel(ANISOtimeGUI gui) {
-        this.gui = gui;
+    ParameterInputPanel(ANISOtimeGUI gui) {
+        GUI = gui;
         initComponents();
     }
 
@@ -86,10 +85,12 @@ class ParameterInputPanel extends javax.swing.JPanel {
             case EPICENTRAL_DISTANCE:
                 jLabelMostImportant.setText("Epicentral distance \u0394 [deg]:");
                 jTextFieldMostImportant.setText("60.0");
+                jTextFieldMostImportant.grabFocus();
                 break;
             case RAY_PARAMETER:
                 jLabelMostImportant.setText("Ray parameter p:");
                 jTextFieldMostImportant.setText("680.0");
+                jTextFieldMostImportant.grabFocus();
                 break;
         }
     }
@@ -141,8 +142,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
                                 .addComponent(jTextFieldDepth).addComponent(jLabelDepth))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE))));
 //		createStructure();
-        gui.setStructure(VelocityStructure.prem());
-        gui.setEventDepth(100);
+        GUI.setStructure(VelocityStructure.prem());
+        GUI.setEventDepth(100);
     }
 
     private void addMouseListners() {
@@ -156,8 +157,9 @@ class ParameterInputPanel extends javax.swing.JPanel {
         addMouseListners();
 
         // Function
-        jTextFieldDepth.addFocusListener(createAdapter(gui::setEventDepth));
-        jTextFieldMostImportant.addFocusListener(createAdapter(gui::setMostImportant));
+        jTextFieldDepth.addFocusListener(createAdapter(GUI::setEventDepth));
+        jTextFieldMostImportant.addFocusListener(createAdapter(GUI::setMostImportant));
+
         jComboBoxModel.addPopupMenuListener(new PopupMenuListener() {
 
             @Override
@@ -166,8 +168,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
             @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                gui.setStructure(createStructure());
-                gui.setEventDepth(Double.parseDouble(jTextFieldDepth.getText()));
+                GUI.setStructure(createStructure());
+                GUI.setEventDepth(Double.parseDouble(jTextFieldDepth.getText()));
             }
 
             @Override
@@ -214,5 +216,4 @@ class ParameterInputPanel extends javax.swing.JPanel {
                 throw new RuntimeException("unexpected");
         }
     }
-    // End of variables declaration//GEN-END:variables
 }
