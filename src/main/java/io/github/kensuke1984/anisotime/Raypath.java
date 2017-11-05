@@ -48,7 +48,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO reflection
  *
  * @author Kensuke Konishi
- * @version 0.4.4b
+ * @version 0.4.4.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -402,7 +402,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      *
      * @param startR [km] start value of integration
      * @param endR   [km] end value of integration
-     * @return [s] T for startR &le; r &le; endR
+     * @return T [s] for startR &le; r &le; endR
      */
     private double computeT(PhasePart pp, double startR, double endR) {
         if (Double.isNaN(startR + endR))
@@ -451,9 +451,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return time + simpsonT(pp, startR, radii.getEntry(beginIndex));
 
-//        int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
-//        time += simpsonT(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
-
         double jeffreys = jeffreysT - jeffreysT(pp, startR);
         if (Double.isNaN(jeffreys)) throw new RuntimeException("youcheckya");
         return time + jeffreys;
@@ -463,7 +460,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param depth [km] distance from the Earth surface
      * @return [km] radius of the depth
      */
-    double toRadius(double depth) {
+    private double toRadius(double depth) {
         return WOODHOUSE.getStructure().earthRadius() - depth;
     }
 
@@ -476,7 +473,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         PhasePart phase = part.getPhase();
         PassPoint inner = part.getInnerPoint();
         PassPoint outer = part.getOuterPoint();
-//        System.out.println("inner " + inner + " outer " + outer);
         boolean innerIsBoundary = inner != PassPoint.OTHER && inner != PassPoint.SEISMIC_SOURCE;
         boolean outerIsBoundary = outer != PassPoint.OTHER && outer != PassPoint.SEISMIC_SOURCE;
         double delta = deltaMap.get(phase);
@@ -500,7 +496,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         PhasePart phase = part.getPhase();
         PassPoint inner = part.getInnerPoint();
         PassPoint outer = part.getOuterPoint();
-//        System.out.println("inner " + inner + " outer " + outer);
         boolean innerIsBoundary = inner != PassPoint.OTHER && inner != PassPoint.SEISMIC_SOURCE;
         boolean outerIsBoundary = outer != PassPoint.OTHER && outer != PassPoint.SEISMIC_SOURCE;
         double time = timeMap.get(phase);
@@ -612,21 +607,21 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return Radius of the core mantle boundary[km]
      */
     double coreMantleBoundary() {
-        return WOODHOUSE.getStructure().coreMantleBoundary();
+        return getStructure().coreMantleBoundary();
     }
 
     /**
      * @return Earth radius [km]
      */
     double earthRadius() {
-        return WOODHOUSE.getStructure().earthRadius();
+        return getStructure().earthRadius();
     }
 
     /**
      * TODO
      *
-     * @param eventR   [km] radius of event
-     * @param phase Seismic {@link Phase}
+     * @param eventR [km] radius of event
+     * @param phase  Seismic {@link Phase}
      * @return if name exists for the ray parameter
      */
     public boolean exists(double eventR, Phase phase) {
@@ -639,8 +634,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                     if (p.getInnerPoint() == PassPoint.BOUNCE_POINT) return false;
                     break;
                 case BOUNCING:
-                    if (p.getInnerPoint() != PassPoint.BOUNCE_POINT && p.getInnerPoint() != PassPoint.OTHER)
-                        return false;
+                    if (p.getInnerPoint() != PassPoint.BOUNCE_POINT && p.getInnerPoint() != PassPoint.OTHER &&
+                            p.getInnerPoint() != PassPoint.SEISMIC_SOURCE) return false;
                 case DIFFRACTION:
                     break;
                 case NOEXIST:
@@ -812,123 +807,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         }
         return points;
     }
-//    /**
-//    public double[][] getRoute(double eventR, Phase phase) {
-//
-//
-//        // First phase because we must take care of the eventR
-//        // [eventR, bottomR (turningR or CMB)]
-//        rList.add(eventR);
-//        thetaList.add(0d);
-//        travelTimeList.add(0d);
-//        if (phase.partIsDownGoing(0)) {
-//            int indexEventR = MESH.getNextIndexOf(eventR, Partition.MANTLE);
-//            if (eventR - mantleMesh.getEntry(indexEventR) < ComputationalMesh.eps) indexEventR--;
-//            PhasePart pp = phase.phasePartOf(0);
-//            if (getPropagation(pp) == Propagation.PENETRATING) for (int iR = indexEventR; 0 <= iR; iR--)
-//                addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//            else {
-//                double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
-//                int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.MANTLE);
-//                for (int iR = indexEventR; bottomIndex < iR; iR--)
-//                    addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-//                addRThetaTime(turningRMap.get(pp), pp, rList, thetaList, travelTimeList);
-//            }
-//        } else for (int iR = MESH.getNextIndexOf(eventR, Partition.MANTLE) + 1, n = mantleMesh.getDimension(); iR < n;
-//                    iR++)
-//            addRThetaTime(mantleMesh.getEntry(iR), phase.phasePartOf(0), rList, thetaList, travelTimeList);
-//
-//        for (int i = 1; i < phase.getNPart(); i++) {
-//            boolean isDownGoing = phase.partIsDownGoing(i);
-//            PhasePart pp = phase.phasePartOf(i);
-//            switch (phase.partitionOf(i)) {
-//                case CORE_MANTLE_BOUNDARY:
-//                    double angle = phase.getDiffractionAngle();
-//                    double finalAngle = thetaList.getLast() + phase.getDiffractionAngle();
-//                    double finalTime =
-//                            computeTAlongBoundary(pp, coreMantleBoundary(), phase.getDiffractionAngle(), true) +
-//                                    travelTimeList.getLast();
-//                    for (double tic = Math.toRadians(1); tic < angle; tic += Math.toRadians(1)) {
-//                        rList.add(coreMantleBoundary() + permissibleGapForDiff);
-//                        thetaList.add(thetaList.getLast() + Math.toRadians(1));
-//                        travelTimeList.add(computeTAlongBoundary(pp, coreMantleBoundary(), Math.toRadians(1), true) +
-//                                travelTimeList.getLast());
-//                    }
-//                    rList.add(coreMantleBoundary() + permissibleGapForDiff);
-//                    thetaList.add(finalAngle);
-//                    travelTimeList.add(finalTime);
-//                    break;
-//                case MANTLE:
-//                    if (getPropagation(pp) == Propagation.PENETRATING)
-//                        if (isDownGoing) for (int iR = mantleMesh.getDimension() - 2; 0 <= iR; iR--)
-//                            addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        else for (int iR = 1, n = mantleMesh.getDimension(); iR < n; iR++)
-//                            addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                    else {
-//                        double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
-//                        int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.MANTLE);
-//                        if (isDownGoing) {
-//                            for (int iR = mantleMesh.getDimension() - 2; bottomIndex < iR; iR--)
-//                                addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                            addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-//                            addRThetaTime(turningRMap.get(pp), pp, rList, thetaList, travelTimeList);
-//                        } else {
-//                            addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-//                            for (int iR = bottomIndex + 1, n = mantleMesh.getDimension(); iR < n; iR++)
-//                                addRThetaTime(mantleMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        }
-//                    }
-//                    break;
-//                case OUTERCORE:
-//                    RealVector outerCoreMesh = MESH.getMesh(Partition.OUTERCORE);
-//                    if (propagationMap.get(PhasePart.K) == Propagation.PENETRATING) {
-//                        if (isDownGoing) for (int iR = outerCoreMesh.getDimension() - 2; 0 <= iR; iR--)
-//                            addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        else for (int iR = 1, n = outerCoreMesh.getDimension(); iR < n; iR++)
-//                            addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                    } else {
-//                        double kBoundary = jeffreysBoundaryMap.get(PhasePart.K);
-//                        int bottomIndex = MESH.getNextIndexOf(kBoundary, Partition.OUTERCORE);
-//                        if (isDownGoing) {
-//                            for (int iR = outerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
-//                                addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                            addRThetaTime(kBoundary, pp, rList, thetaList, travelTimeList);
-//                            addRThetaTime(turningRMap.get(PhasePart.K), pp, rList, thetaList, travelTimeList);
-//                        } else {
-//                            addRThetaTime(kBoundary, pp, rList, thetaList, travelTimeList);
-//                            for (int iR = bottomIndex + 1, n = outerCoreMesh.getDimension(); iR < n; iR++)
-//                                addRThetaTime(outerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        }
-//                    }
-//                    break;
-//                case INNERCORE:
-//                    RealVector innerCoreMesh = MESH.getMesh(Partition.INNERCORE);
-//                    if (RAY_PARAMETER == 0) {
-//                        if (isDownGoing) for (int iR = innerCoreMesh.getDimension() - 2; 0 <= iR; iR--)
-//                            addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        else for (int iR = 1, n = innerCoreMesh.getDimension(); iR < n; iR++)
-//                            addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        continue;
-//                    }
-//                    double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
-//                    int bottomIndex = MESH.getNextIndexOf(jeffreysBoundary, Partition.INNERCORE);
-//                    if (isDownGoing) {
-//                        for (int iR = innerCoreMesh.getDimension() - 2; bottomIndex < iR; iR--)
-//                            addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                        addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-//                        addRThetaTime(turningRMap.get(pp), pp, rList, thetaList, travelTimeList);
-//                    } else {
-//                        addRThetaTime(jeffreysBoundary, pp, rList, thetaList, travelTimeList);
-//                        for (int iR = bottomIndex + 1, n = innerCoreMesh.getDimension(); iR < n; iR++)
-//                            addRThetaTime(innerCoreMesh.getEntry(iR), pp, rList, thetaList, travelTimeList);
-//                    }
-//                    break;
-//                default:
-//                    throw new RuntimeException("souteigai");
-//            }
-//        }
-//    }
 
     /**
      * @param inner  inner(true) or outer (false)
@@ -966,8 +844,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * The center of the Earth is (0, 0) Starting point is (0, eventR)
      *
-     * @param eventR   [km] radius of event
-     * @param phase Seismic {@link Phase}
+     * @param eventR [km] radius of event
+     * @param phase  Seismic {@link Phase}
      * @return [point]{x, y} coordinates of the path
      */
     public double[][] getRouteXY(double eventR, Phase phase) {
@@ -982,7 +860,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             points[i][0] = rTheta[i][0] * Math.sin(rTheta[i][1]);
             points[i][1] = rTheta[i][0] * Math.cos(rTheta[i][1]);
         }
-
         return points;
     }
 
@@ -990,7 +867,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return Radius of the inner core boundary [km]
      */
     double innerCoreBoundary() {
-        return WOODHOUSE.getStructure().innerCoreBoundary();
+        return getStructure().innerCoreBoundary();
     }
 
     /**
@@ -1071,7 +948,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
         if (getPropagation(pp) == Propagation.NOEXIST) return Double.NaN;
 
-
         startR = Math.max(startR, minR);
         endR = Math.min(endR, maxR);
         double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
@@ -1105,8 +981,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         }
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return delta + simpsonDelta(pp, startR, radii.getEntry(firstIndexForMemory));
-//        int indexJeffreyNext = MESH.getNextIndexOf(jeffreysBoundary, partition) + 1;
-//        delta += simpsonDelta(pp, jeffreysBoundary, radii.getEntry(indexJeffreyNext));
         double jeffreys = jeffreysDelta - jeffreysDelta(pp, startR);
         if (Double.isNaN(jeffreys)) throw new RuntimeException("youtcheckya");
         return delta + jeffreys;

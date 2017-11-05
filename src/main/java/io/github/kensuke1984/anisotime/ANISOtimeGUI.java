@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 /**
  * GUI for ANISOtime
  * <p>
- * TODO relative absolute
+ * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
  * @version 0.5.3

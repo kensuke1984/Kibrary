@@ -29,7 +29,6 @@ final class About extends javax.swing.JFrame {
             "Unless required by applicable law or agreed to in writing, " +
             "software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n" +
             "See the License for the specific language governing permissions and limitations under the License.";
-    // Variables declaration - do not modify
     private JScrollPane jScrollPane1;
 
     private About() {
@@ -50,8 +49,6 @@ final class About extends javax.swing.JFrame {
         } catch (ClassNotFoundException | UnsupportedLookAndFeelException | InstantiationException | IllegalAccessException ex) {
             Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
         }
-        // </editor-fold>
-        /* Create and display the form */
         if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
         else System.out.println(line);
     }
@@ -75,5 +72,4 @@ final class About extends javax.swing.JFrame {
         pack();
         SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
     }
-    // End of variables declaration
 }
