@@ -59,8 +59,8 @@ public class RecordSectionSac {
 			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(Paths.get(args[args.length - 1]));
 //			System.out.println(timewindows.size());
 			double reducedVelocity = 8.4;
-			double freqL = 0.001;
-			double freqH = 1.0;
+			double freqL = 0.008;
+			double freqH = 0.125;
 			boolean isFilter = false;
 			double deltaAZ = 3;
 			double AZref = 336;
@@ -80,8 +80,8 @@ public class RecordSectionSac {
 //				System.out.println(dir.getName());
 				Set<TimewindowInformation> thisEventTimewindows = new HashSet<>();
 				timewindows.stream()
-						.filter(tw -> tw.getGlobalCMTID().toString().equals(dir.toString()));
-//						.forEach(tw -> thisEventTimewindows.add(tw));
+						.filter(tw -> tw.getGlobalCMTID().toString().equals(dir.toString()))
+						.forEach(tw -> thisEventTimewindows.add(tw));
 //				System.out.println(thisEventTimewindows.size());
 				GMTMap gmtmap = new GMTMap(String.valueOf(AZref - deltaAZ) + "˚ < AZ < " + String.valueOf(AZref + deltaAZ) + "˚", 120, -30, 30, 85);
 				String[] gmtString = {String.format("#!/bin/sh\npsname=\"map%.1f.ps\"\n", AZref) + gmtmap.psStart() + "\n"};
@@ -106,7 +106,7 @@ public class RecordSectionSac {
 					e.printStackTrace();
 				}
 				
-				SACExtension[] components = new SACExtension[] {SACExtension.T, SACExtension.R};
+				SACExtension[] components = new SACExtension[] {SACExtension.Tsc, SACExtension.Rsc};
 //				components.
 				List<SACFileName> sacfilenames = readDir(dir, components);
 				sacfilenames.stream()
@@ -122,13 +122,13 @@ public class RecordSectionSac {
 						if (isFilter)
 							sacdata.applyButterworthFilter(filter);
 						double distance = sacfilename.readHeader().getValue(SACHeaderEnum.GCARC);
-//						System.out.println(distance);
 						List<Timewindow> tmptimewindow = new ArrayList<Timewindow>();
 						
 						thisEventTimewindows.stream()
 								.filter(tw -> {
 									boolean sameStation = false;
 									try {
+										System.out.println(tw.getStation()+" "+sacfilename.readHeader().getStation());
 										sameStation = tw.getStation().equals((sacfilename.readHeader().getStation()));
 									} catch (IOException e) {
 										e.printStackTrace();
@@ -137,11 +137,11 @@ public class RecordSectionSac {
 								})
 								.filter(tw -> tw.getComponent().equals(SACComponent.T))
 								.forEachOrdered(tw -> tmptimewindow.add(tw));
-								
+								System.out.println("timewindow is empty? "+tmptimewindow.isEmpty());
 								if (!tmptimewindow.isEmpty()) {
 									tmptimewindow.stream().forEachOrdered(timewindow -> {
 										Trace trace = sacdata.createTrace().cutWindow(timewindow);
-//										System.out.println(trace.getMaxValue());
+										System.out.println("maxvalue is "+trace.getMaxValue());
 										double max = Math.max(trace.getMaxValue(), Math.abs(trace.getMinValue()));
 										
 										try {
