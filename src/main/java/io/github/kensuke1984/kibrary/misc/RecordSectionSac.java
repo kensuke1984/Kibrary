@@ -128,7 +128,7 @@ public class RecordSectionSac {
 								.filter(tw -> {
 									boolean sameStation = false;
 									try {
-										System.out.println(tw.getStation()+" "+sacfilename.readHeader().getStation());
+//										System.out.println(tw.getStation()+" "+sacfilename.readHeader().getStation());
 										sameStation = tw.getStation().equals((sacfilename.readHeader().getStation()));
 									} catch (IOException e) {
 										e.printStackTrace();
@@ -137,11 +137,11 @@ public class RecordSectionSac {
 								})
 								.filter(tw -> tw.getComponent().equals(SACComponent.T))
 								.forEachOrdered(tw -> tmptimewindow.add(tw));
-								System.out.println("timewindow is empty? "+tmptimewindow.isEmpty());
+//								System.out.println("timewindow is empty? "+tmptimewindow.isEmpty());
 								if (!tmptimewindow.isEmpty()) {
 									tmptimewindow.stream().forEachOrdered(timewindow -> {
 										Trace trace = sacdata.createTrace().cutWindow(timewindow);
-										System.out.println("maxvalue is "+trace.getMaxValue());
+//										System.out.println("maxvalue is "+trace.getMaxValue());
 										double max = Math.max(trace.getMaxValue(), Math.abs(trace.getMinValue()));
 										
 										try {
