@@ -5,7 +5,7 @@ package io.github.kensuke1984.anisotime;
  * This class describes a part of seismic phases.
  *
  * @author Kensuke Konishi
- * @version 0.0.1b
+ * @version 0.0.1.1b
  */
 class GeneralPart implements PathPart {
 
@@ -86,7 +86,7 @@ class GeneralPart implements PathPart {
             inner = INNER_POINT == PassPoint.OTHER ? String.valueOf(INNER_DEPTH) : INNER_POINT.toString();
         if (OUTER_POINT != null)
             outer = OUTER_POINT == PassPoint.OTHER ? String.valueOf(OUTER_DEPTH) : OUTER_POINT.toString();
-        String interval = isDownward() ? outer + " ->v " + inner : inner + " ->^ " + outer;
+        String interval = isDownward() ? outer + " \u2198 " + inner : inner + " \u2197 " + outer;
         return PHASE + (isDownward() ? " down " : " up ") + interval;
     }
 
