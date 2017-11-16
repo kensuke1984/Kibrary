@@ -23,14 +23,9 @@ import java.util.function.BiFunction;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.13b
+ * @version 0.0.13.1b
  */
 public class RaypathCatalog implements Serializable {
-    private static void debug() {
-        Phase targetPhase = Phase.create("Sv2002S");
-        System.out.println(ISO_PREM.searchPath(targetPhase, 6371, Math.toRadians(65), false).length);
-        System.exit(0);
-    }
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -44,7 +39,6 @@ public class RaypathCatalog implements Serializable {
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        debug();
         if (args.length != 6) throw new IllegalArgumentException(
                 "Usage: [model name, polynomial file] [\u03b4\u0394 (deg)] [inner-core] [outer-core] [mantle] [integral threshold (0,1)]");
         VelocityStructure structure;
@@ -632,7 +626,6 @@ public class RaypathCatalog implements Serializable {
     public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
-
         Raypath[] raypaths = getRaypaths();
         System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" +
                 Precision.round(Math.toDegrees(targetDelta), 4));
@@ -643,10 +636,8 @@ public class RaypathCatalog implements Serializable {
         for (int i = 0; i < raypaths.length - 1; i++) {
             Raypath rayI = raypaths[i];
             Raypath rayP = raypaths[i + 1];
-
             double deltaI = rayI.computeDelta(eventR, targetPhase);
             double deltaP = rayP.computeDelta(eventR, targetPhase);
-
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
             if (relativeAngle) {
                 deltaI = toRelativeAngle(deltaI);

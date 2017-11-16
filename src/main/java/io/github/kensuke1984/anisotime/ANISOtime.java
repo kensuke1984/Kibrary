@@ -19,7 +19,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Tavnazia";
 
-    static final String VERSION = "1.1.4.1b";
+    static final String VERSION = "1.1.4.2b";
 
     private ANISOtime() {
     }

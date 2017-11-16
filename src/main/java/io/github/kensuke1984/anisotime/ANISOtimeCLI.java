@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
  * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
-
+ * TODO -mod prem -h 571.3 -deg 10 -ph s^220P
  * @author Kensuke Konishi
  * @version 0.3.12b
  */
@@ -108,7 +108,7 @@ final class ANISOtimeCLI {
             }
 
         for (String o : args)
-            if (o.equals("-v") || o.equals("--VERSION") || o.equals("-VERSION")) {
+            if (o.equals("-v") || o.equals("--version") || o.equals("-version")) {
                 About.main(null);
                 return;
             }
@@ -391,7 +391,7 @@ final class ANISOtimeCLI {
             if (cmd.hasOption("s")) try {
                 Utilities.sendMail(io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS, "ANISOtime problem",
                         "Input: " + INPUT, "If you use your original structure, please attach it.\n",
-                        "OS: " + System.getProperty("os.name"), "Java VERSION: " + System.getProperty("java.VERSION"));
+                        "OS: " + System.getProperty("os.name"), "Java VERSION: " + System.getProperty("java.version"));
             } catch (Exception e2) {
                 System.err.println("Sorry could not send an Email. Please inform me of your situation.");
                 System.err.println("Email address: " + io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS);

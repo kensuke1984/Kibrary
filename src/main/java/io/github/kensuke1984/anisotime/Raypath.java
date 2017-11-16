@@ -45,24 +45,23 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * I: P(I) wave in the inner-core<br>
  * JV,JH: SV, SH(J) wave in the inner-core<br>
  * <p>
- * TODO reflection
+ * TODO when the path partially exists. I have to change drastically the structure of dealing with layers each layer has a phase or not
  *
  * @author Kensuke Konishi
- * @version 0.4.4.1b
+ * @version 0.4.4.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
-
     /**
      * If the gap between the CMB and the turning r is under this value, then
      * diffracted phase can be computed.
      */
     static final double permissibleGapForDiff = 1e-5;
-
     /**
-     * 2017/11/3
+     * 2017/11/16
      */
-    private static final long serialVersionUID = 7991523398480447035L;
+    private static final long serialVersionUID = -3433174784206586104L;
+
 
     private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
     private final Woodhouse1981 WOODHOUSE;
@@ -475,12 +474,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         PassPoint outer = part.getOuterPoint();
         boolean innerIsBoundary = inner != PassPoint.OTHER && inner != PassPoint.SEISMIC_SOURCE;
         boolean outerIsBoundary = outer != PassPoint.OTHER && outer != PassPoint.SEISMIC_SOURCE;
+
         double delta = deltaMap.get(phase);
         RealVector radii = MESH.getMesh(phase.whichPartition());
         double minR = getPropagation(phase) != Propagation.PENETRATING ? getTurningR(phase) : radii.getEntry(0);
         double maxR = radii.getEntry(radii.getDimension() - 1);
         double innerR = inner == PassPoint.SEISMIC_SOURCE ? eventR : toRadius(part.getInnerDepth());
         double outerR = outer == PassPoint.SEISMIC_SOURCE ? eventR : toRadius(part.getOuterDepth());
+
         if (innerIsBoundary && outerIsBoundary) return delta;
         else if (innerIsBoundary) return delta - computeDelta(phase, outerR, maxR);
         else if (outerIsBoundary) return delta - computeDelta(phase, minR, innerR);
