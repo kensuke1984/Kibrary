@@ -23,7 +23,7 @@ import java.util.function.BiFunction;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.13.1b
+ * @version 0.0.13.2b
  */
 public class RaypathCatalog implements Serializable {
 
@@ -245,7 +245,7 @@ public class RaypathCatalog implements Serializable {
                             c = read(p);
                     }
                     if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.D_DELTA == dDelta) {
-                        System.err.println("Catalog is found. " + p);
+//                        System.err.println("Catalog is found. " + p);
                         return c;
                     }
                 } catch (InvalidClassException ice) {
@@ -627,8 +627,8 @@ public class RaypathCatalog implements Serializable {
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
         Raypath[] raypaths = getRaypaths();
-        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" +
-                Precision.round(Math.toDegrees(targetDelta), 4));
+//        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" +
+//                Precision.round(Math.toDegrees(targetDelta), 4));
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
