@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  * <p>
  * Numbers in a name.
  * </p>
- *
+ * <p>
  * <dl>
  * <dt>redundancy</dt>
  * <dd>A number in parentheses indicates repetition of
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * </dl>
  *
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.8
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -135,7 +135,6 @@ public class Phase {
         PSV = psv;
         countParts();
     }
-
 
     /**
      * Input names must follow some rules.
@@ -265,7 +264,7 @@ public class Phase {
                         double outerDepth = 0;
 
                         if (!beforePart.isEmission()) outerDepth =
-                                beforePart.isTransmission() ? secondLast.getInnerDepth() : secondLast.getOuterDepth();
+                                secondLast.isDownward() ? secondLast.getInnerDepth() : secondLast.getOuterDepth();
                         if (vFlag) {
                             partList.add(new GeneralPart(PS, true, nextDepth, outerDepth, PassPoint.OTHER, outerPoint));
                             partList.add(Arbitrary.createTopsideReflection(nextDepth));
@@ -303,11 +302,16 @@ public class Phase {
                             case 10:
                             case 'P':
                             case 'S':
-                                partList.add(
-                                        new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
-                                partList.add(Located.BOUNCE);
-                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
-                                        PassPoint.EARTH_SURFACE));
+                                if (beforePart.isTransmission() && !secondLast.isDownward()) partList.add(
+                                        new GeneralPart(PS, false, secondLast.getOuterDepth(), 0, PassPoint.OTHER,
+                                                PassPoint.EARTH_SURFACE));
+                                else {
+                                    partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT,
+                                            outerPoint));
+                                    partList.add(Located.BOUNCE);
+                                    partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                            PassPoint.EARTH_SURFACE));
+                                }
                                 if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
                                 continue;
                             case 'c':
@@ -661,6 +665,7 @@ public class Phase {
 
 
     void printInformation() {
+        System.out.println(PHASENAME);
         Arrays.stream(passParts).forEach(System.out::println);
     }
 
