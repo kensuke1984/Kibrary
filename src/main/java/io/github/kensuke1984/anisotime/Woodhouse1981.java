@@ -9,9 +9,9 @@ import java.util.*;
  * The class is calculator of the formulation in Woodhouse (1981).
  *
  * @author Kensuke Konishi
- * @version 0.0.3.2.1
+ * @version 0.0.3.3
  * @see <a href=
- * http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
+ * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
  */
 class Woodhouse1981 implements Serializable {
@@ -38,7 +38,7 @@ class Woodhouse1981 implements Serializable {
     /**
      * @param structure for Woodhouse computation
      */
-    public Woodhouse1981(VelocityStructure structure) {
+    Woodhouse1981(VelocityStructure structure) {
         STRUCTURE = structure;
         copyOrCreate();
     }
@@ -72,11 +72,12 @@ class Woodhouse1981 implements Serializable {
     }
 
     /**
+     * @param pp           target phase
      * @param rayParameter to compute for
      * @param r            [km]
-     * @return q<sub>&Delta;</sub> for P
+     * @return q<sub>&Delta;</sub> for pp
      * @see <a href=
-     * http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
+     * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
      * 1981</a>
      */
     double computeQDelta(PhasePart pp, double rayParameter, double r) {
@@ -104,9 +105,13 @@ class Woodhouse1981 implements Serializable {
     }
 
     /**
+     * @param pp           target phase
      * @param rayParameter to compute for
      * @param r            [km]
-     * @return Q<sub>T</sub> for P
+     * @return Q<sub>T</sub> for pp
+     * @see <a href=
+     * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
+     * 1981</a>
      */
     double computeQT(PhasePart pp, double rayParameter, double r) {
         switch (pp) {
@@ -141,13 +146,15 @@ class Woodhouse1981 implements Serializable {
      * <sup>2</sup>-R)<sup>1/2</sup> for P, (s<sub>1</sub>-s<sub>3</sub>p
      * <sup>2</sup>/r <sup>2</sup>+R)<sup>1/2</sup> for SV<br>
      * <p>
-     * <p>
      * (&rho;/L-N/L&middot;P<sup>2</sup>/r<sup>2</sup>)<sup>1/2</sup> for SH.
      *
      * @param pp           target phase
      * @param rayParameter to compute for
      * @param r            [km]
      * @return q<sub>&tau;</sub> for pp
+     * @see <a href=
+     * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
+     * 1981</a>
      */
     double computeQTau(PhasePart pp, double rayParameter, double r) {
         double r2 = r * r;
@@ -174,6 +181,9 @@ class Woodhouse1981 implements Serializable {
      * @param rayParameter to compute for
      * @param r            [km]
      * @return R
+     * @see <a href=
+     * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
+     * 1981</a>
      */
     private double computeR(double rayParameter, double r) {
         double s2 = computeS2(r);
@@ -184,7 +194,6 @@ class Woodhouse1981 implements Serializable {
 
     /**
      * Copies cash for s1-s5
-     *
      * @param woodhouse source map
      */
     private void copyCache(Woodhouse1981 woodhouse) {
