@@ -48,7 +48,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO when the path partially exists. I have to change drastically the structure of dealing with layers each layer has a phase or not
  *
  * @author Kensuke Konishi
- * @version 0.4.4.2b
+ * @version 0.4.4.3b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -513,8 +513,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
 
     /**
-     * TODO
-     *
      * @param eventR [km] radius at the event
      * @param part   to compute for
      * @return [rad] delta for the part
@@ -531,7 +529,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * TODO
      *
      * @param eventR [km] radius at the event
      * @param part   to compute for
@@ -603,23 +600,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         return time;
     }
 
-
     /**
-     * @return Radius of the core mantle boundary[km]
-     */
-    double coreMantleBoundary() {
-        return getStructure().coreMantleBoundary();
-    }
-
-    /**
-     * @return Earth radius [km]
-     */
-    double earthRadius() {
-        return getStructure().earthRadius();
-    }
-
-    /**
-     * TODO
      *
      * @param eventR [km] radius of event
      * @param phase  Seismic {@link Phase}
@@ -696,21 +677,22 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private void addRThetaTime(double nextR, PhasePart pp, LinkedList<Double> rList, LinkedList<Double> thetaList,
                                LinkedList<Double> travelTimeList) {
         double beforeR = rList.getLast();
+        double cmbR = getStructure().coreMantleBoundary();
+        double earthR = getStructure().earthRadius();
         if (Math.abs(nextR - turningRMap.get(pp)) < ComputationalMesh.eps)
             nextR = turningRMap.get(pp) + ComputationalMesh.eps;
         else if (Math.abs(nextR - innerCoreBoundary()) < permissibleGapForDiff)
             nextR = innerCoreBoundary() + ComputationalMesh.eps * (nextR < innerCoreBoundary() ? -1 : 1);
-        else if (Math.abs(nextR - coreMantleBoundary()) < permissibleGapForDiff)
-            nextR = coreMantleBoundary() + ComputationalMesh.eps * (nextR < coreMantleBoundary() ? -1 : 1);
-        else if (Math.abs(nextR - earthRadius()) < permissibleGapForDiff) nextR = earthRadius() - ComputationalMesh.eps;
+        else if (Math.abs(nextR - cmbR) < permissibleGapForDiff)
+            nextR = cmbR + ComputationalMesh.eps * (nextR < cmbR ? -1 : 1);
+        else if (Math.abs(nextR - earthR) < permissibleGapForDiff) nextR = earthR - ComputationalMesh.eps;
         else if (nextR < permissibleGapForDiff) nextR = ComputationalMesh.eps;
 
         if (Math.abs(beforeR - innerCoreBoundary()) < permissibleGapForDiff)
             beforeR = innerCoreBoundary() + permissibleGapForDiff * (nextR < innerCoreBoundary() ? -1 : 1);
-        else if (Math.abs(beforeR - coreMantleBoundary()) < permissibleGapForDiff)
-            beforeR = coreMantleBoundary() + permissibleGapForDiff * (nextR < coreMantleBoundary() ? -1 : 1);
-        else if (Math.abs(beforeR - earthRadius()) < permissibleGapForDiff)
-            beforeR = earthRadius() - ComputationalMesh.eps;
+        else if (Math.abs(beforeR - cmbR) < permissibleGapForDiff)
+            beforeR = cmbR + permissibleGapForDiff * (nextR < cmbR ? -1 : 1);
+        else if (Math.abs(beforeR - earthR) < permissibleGapForDiff) beforeR = earthR - ComputationalMesh.eps;
 
         double smallerR = Math.min(beforeR, nextR);
         double biggerR = Math.max(beforeR, nextR);
@@ -734,7 +716,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return route[point][]{r, theta, T}
      */
     public double[][] getRoute(double eventR, Phase phase) {
-        if (earthRadius() < eventR || eventR <= coreMantleBoundary())
+        if (getStructure().earthRadius() < eventR || eventR <= getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Input eventR:" + eventR + " is out of the mantle.");
         if (!exists(eventR, phase)) throw new RuntimeException(phase + " does not exist.");
         // radius [km]
@@ -1072,12 +1054,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 Propagation.NOEXIST : Propagation.PENETRATING);
 
         Stream.of(PhasePart.P, PhasePart.SV, PhasePart.SH).forEach(pp -> {
+            double cmbR = getStructure().coreMantleBoundary();
             Propagation propagation =
-                    Double.isNaN(WOODHOUSE.computeQT(pp, RAY_PARAMETER, coreMantleBoundary() + ComputationalMesh.eps)) ?
+                    Double.isNaN(WOODHOUSE.computeQT(pp, RAY_PARAMETER, cmbR + ComputationalMesh.eps)) ?
                             Propagation.NOEXIST : Propagation.PENETRATING;
             double turningR = turningRMap.get(pp);
-            if (coreMantleBoundary() + permissibleGapForDiff < turningR) propagation = Propagation.BOUNCING;
-            else if (coreMantleBoundary() <= turningR) propagation = Propagation.DIFFRACTION;
+            if (cmbR + permissibleGapForDiff < turningR) propagation = Propagation.BOUNCING;
+            else if (cmbR <= turningR) propagation = Propagation.DIFFRACTION;
             if (propagation == Propagation.BOUNCING &&
                     Double.isNaN(WOODHOUSE.computeQT(pp, RAY_PARAMETER, turningR + ComputationalMesh.eps)))
                 propagation = Propagation.NOEXIST;
@@ -1164,7 +1147,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @throws RuntimeException If the structure has no boundary at the input boundaryR.
      */
     private double computeTAlongBoundary(PhasePart pp, double boundaryR, double deltaOnBoundary, boolean shallower) {
-        if (ComputationalMesh.eps < Math.abs(coreMantleBoundary() - boundaryR) &&
+        if (ComputationalMesh.eps < Math.abs(getStructure().coreMantleBoundary() - boundaryR) &&
                 ComputationalMesh.eps < Math.abs(innerCoreBoundary() - boundaryR) &&
                 Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())
                         .allMatch(b -> ComputationalMesh.eps < Math.abs(b - boundaryR)))
