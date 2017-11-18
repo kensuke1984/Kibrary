@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3
+ * @version 0.5.3.1
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2017/11/4
+     * 2017/11/18
      */
-    private static final long serialVersionUID = -55046918053196163L;
+    private static final long serialVersionUID = -2138740611342857870L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -184,7 +184,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         phaseWindow.setVisible(true);
         setPolarity(0);
         setMode(ComputationMode.EPICENTRAL_DISTANCE);
-    }// </editor-fold>//GEN-END:initComponents
+    }
 
     /**
      * phases selected at the time considering polarity. When S is
@@ -368,7 +368,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
             double travelTime = raypath.computeT(eventR, phase);
             String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
-            double depth = raypath.earthRadius() - eventR;
+            double depth = raypath.getStructure().earthRadius() - eventR;
             if (delta == null) {
                 added = true;
                 resultWindow.addRow(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
