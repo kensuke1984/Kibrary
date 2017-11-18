@@ -3,10 +3,10 @@ package io.github.kensuke1984.anisotime;
 import java.io.Serializable;
 
 /**
- * Structure information for computing traveltime.
+ * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.8.4
+ * @version 0.0.9
  * @see <a href=
  * http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -177,89 +177,25 @@ public interface VelocityStructure extends Serializable {
     double getN(double r);
 
     /**
-     * @return radius [km] of CMB
+     * @return [km] radius of CMB
      */
     double coreMantleBoundary();
 
     /**
-     * @return radius [km] of ICB
+     * @return [km] radius of ICB
      */
     double innerCoreBoundary();
 
     /**
-     * @return radius [km] of Earth
+     * @return [km] radius of Earth
      */
     double earthRadius();
-
-    /**
-     * If the distance between the radius r and a radius of a major boundary is
-     * within {@link ComputationalMesh#eps}, the boundary returns.
-     *
-     * @param r [km] must be inside the earth [0, surface+eps]
-     * @return Partition where r belong to
-     */
-    default Partition whichPartition(double r) {
-        if (Math.abs(r - earthRadius()) <= ComputationalMesh.eps) return Partition.SURFACE;
-        if (Math.abs(r - innerCoreBoundary()) <= ComputationalMesh.eps) return Partition.INNER_CORE_BOUNDARY;
-        if (Math.abs(r - coreMantleBoundary()) <= ComputationalMesh.eps) return Partition.CORE_MANTLE_BOUNDARY;
-        if (earthRadius() < r || r < 0) throw new RuntimeException("Input radius " + r + "is out of the Earth.");
-        if (coreMantleBoundary() < r) return Partition.MANTLE;
-        else if (innerCoreBoundary() < r) return Partition.OUTERCORE;
-        else return Partition.INNERCORE;
-    }
 
     /**
      * @return Array of radii [km] for additional boundaries.
      */
     default double[] additionalBoundaries() {
         return new double[]{earthRadius() - 660, earthRadius() - 410};
-    }
-
-    /**
-     * x&equiv;&rho;/L - N/L p<sup>2</sup>/r<sup>2</sup>
-     *
-     * @param x target value (q<sub>&tau;</sub><sup>2</sup>)
-     * @return radius where q<sub>&tau;</sub> = x<sup>2</sup>
-     */
-    default double getRofSHfor(double x) {
-        if (x < 0) throw new IllegalArgumentException("x must be positive.");
-
-        throw new RuntimeException("could not find a radius.");
-    }
-
-    /**
-     * Create a {@link Raypath} where 'pp' wave turns at eventR. PermissibleRGap
-     * is from {@value Raypath#permissibleGapForDiff}; gap between turningR of
-     * obtained Raypath and input R
-     *
-     * @param pp       target phase part
-     * @param topside  true: topside(v), false: underside(^) reflection.
-     * @param turningR [km] radius you want to set.
-     * @return null if the gap exceeds permissibleRGap
-     */
-    default Raypath raypathByTurningR(PhasePart pp, boolean topside, double turningR) {
-        double p;
-        double r = turningR + (topside ? Raypath.permissibleGapForDiff / 100 : -Raypath.permissibleGapForDiff / 100);
-        switch (pp) {
-            case P:
-            case K:
-            case I:
-                p = Math.sqrt(getRho(r) / getA(r)) * r;
-                break;
-            case SV:
-            case JV:
-                p = Math.sqrt(getRho(r) / getL(r)) * r;
-                break;
-            case SH:
-            case JH:
-                p = Math.sqrt(getRho(r) / getN(r)) * r;
-                break;
-            default:
-                throw new RuntimeException("UNEKSPECTED");
-        }
-        Raypath raypath = new Raypath(p, this);
-        double residual = turningR - raypath.getTurningR(pp);
-        return Math.abs(residual) < Raypath.permissibleGapForDiff ? raypath : null;
     }
 
     /**
