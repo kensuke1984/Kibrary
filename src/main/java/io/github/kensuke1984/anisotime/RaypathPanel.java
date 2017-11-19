@@ -17,9 +17,8 @@ import java.util.List;
  * @version 0.0.3.4.1
  */
 final class RaypathPanel extends JPanel {
-
     /**
-     * 2016/12/3
+     * 2017/11/19
      */
     private static final long serialVersionUID = 8957975255367012982L;
     private final List<List<QuadCurve2D.Double>> quadCurves = new ArrayList<>();
@@ -63,7 +62,7 @@ final class RaypathPanel extends JPanel {
      * @param rayparameter p
      * @param delta        [rad] to be shown.
      * @param time         [s] to be printed
-     * @param eventR       radius of the event [km]
+     * @param eventR       [km] radius of the event
      * @throws IOException if any
      */
     void toEPS(OutputStream outputStream, Phase phase, double rayparameter, double delta, double time, double eventR)

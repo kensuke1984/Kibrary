@@ -6,7 +6,7 @@ package io.github.kensuke1984.anisotime;
  * Each phase means half path, not including reflection nor bouncing.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.1.2
  */
 public enum PhasePart {
     P, // P in the mantle
@@ -36,6 +36,9 @@ public enum PhasePart {
         }
     }
 
+    /**
+     * @return flag for the phase
+     */
     int getFlag() {
         switch (this) {
             case P:

@@ -29,9 +29,8 @@ import java.util.stream.IntStream;
  * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
  * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
- * TODO -mod prem -h 571.3 -deg 10 -ph s^220P
  * @author Kensuke Konishi
- * @version 0.3.12.1b
+ * @version 0.3.13b
  */
 final class ANISOtimeCLI {
 
@@ -333,14 +332,16 @@ final class ANISOtimeCLI {
                 Raypath raypath = new Raypath(rayParameter, structure);
                 raypath.compute();
                 for (Phase targetPhase : targetPhases) {
-                    if (!raypath.exists(eventR, targetPhase)) {
+                    double delta = Math.toDegrees(raypath.computeDelta(eventR, targetPhase));
+                    double time = raypath.computeT(eventR, targetPhase);
+                    if (Double.isNaN(delta)) {
                         System.err.println(targetPhase + " does not exist.");
                         continue;
                     }
-                    double[] results = printResults(-1, raypath, targetPhase, System.out);
+                    printLine(targetPhase, System.out, decimalPlaces, rayParameter, delta, time);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
-                            outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameter, results[0],
-                            results[1], eventR);
+                            outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameter, delta, time,
+                            eventR);
                 }
                 return;
             }
@@ -399,6 +400,14 @@ final class ANISOtimeCLI {
         }
     }
 
+    /**
+     * TODO
+     *
+     * @param phase        target phase
+     * @param out          target out
+     * @param decimalPlace the numer of decimal places with which the values are shown
+     * @param values       according to {@link #showFlag}, the values are shown. ray parameter, delta, time
+     */
     private void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
         out.println(phase + " " + IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
                 .mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i])).collect(Collectors.joining(" ")));
@@ -409,7 +418,7 @@ final class ANISOtimeCLI {
      * @param raypath     Raypath
      * @param targetPhase phase to be printed
      * @param out         resource to print in
-     * @return delta [deg] time [s]
+     * @return [deg] delta, [s] time
      */
     private double[] printResults(double targetDelta, Raypath raypath, Phase targetPhase, PrintStream out) {
         double p0 = raypath.getRayParameter();

@@ -76,27 +76,27 @@ public class PolynomialStructure implements VelocityStructure {
     /**
      * @param i  zone number for the search
      * @param eq equation to solve
-     * @return turningR in the i-th zone or -1 if no valid R in the i-th zone
+     * @return [km] turningR in the i-th zone or -1 if no valid R in the i-th zone
      */
     private double findTurningR(int i, LinearEquation eq) {
-        double rmin = STRUCTURE.getRMinOf(i);
-        double rmax = STRUCTURE.getRMaxOf(i);
-        int anstype = eq.Discriminant();
+        double minR = STRUCTURE.getRMinOf(i);
+        double maxR = STRUCTURE.getRMaxOf(i);
+        int ansType = eq.Discriminant();
         Complex[] answer = eq.compute();
-        if (anstype == 1) {
+        if (ansType == 1) {
             double radius = answer[0].getReal() * earthRadius();
-            return rmin <= radius && radius < rmax ? radius : -1;
+            return minR <= radius && radius < maxR ? radius : -1;
         }
 
-        if (anstype < 19) return -1;
+        if (ansType < 19) return -1;
 
-        if (anstype == 20 || anstype == 28 || anstype == 29 || anstype == 30) {
+        if (ansType == 20 || ansType == 28 || ansType == 29 || ansType == 30) {
             double radius = answer[0].getReal() * earthRadius();
-            return rmin <= radius && radius < rmax ? radius : -1;
+            return minR <= radius && radius < maxR ? radius : -1;
         }
 
         return Arrays.stream(answer).map(a -> a.getReal() * earthRadius()).sorted(Comparator.reverseOrder())
-                .filter(x -> rmin <= x && x < rmax).findFirst().orElse(-1d);
+                .filter(x -> minR <= x && x < maxR).findFirst().orElse(-1d);
     }
 
     @Override

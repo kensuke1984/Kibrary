@@ -27,10 +27,10 @@ public class ComputationalMesh implements Serializable {
      * the boundaries by eps. The value is 1e-7
      */
     static final double eps = 1e-7;
-    /**
-     * 2017/4/17
-     */
-    private static final long serialVersionUID = 6288675010169012591L;
+//    /**
+//     * 2017/4/17 TODO
+//     */
+//    private static final long serialVersionUID = 6288675010169012591L;
     /**
      * Threshold for the integration. This value (ratio) must be positive and
      * less than 1. If it is a, the difference between two Q<sub>T</sub> at
@@ -119,16 +119,13 @@ public class ComputationalMesh implements Serializable {
         }
     }
 
+    @Deprecated
     private void createSimpleMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                                   double mantleInterval) {
-        double[] mantleBoundaries = DoubleStream
-                .concat(DoubleStream.of(structure.coreMantleBoundary(), structure.earthRadius()),
-                        Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.coreMantleBoundary() < b))
-                .sorted().toArray();
-        double[] outerCoreBoundaries = DoubleStream
-                .concat(DoubleStream.of(structure.coreMantleBoundary(), structure.innerCoreBoundary()),
-                        Arrays.stream(structure.additionalBoundaries())
-                                .filter(b -> structure.innerCoreBoundary() < b && b < structure.coreMantleBoundary()))
+        double[] mantleBoundaries = DoubleStream.concat(DoubleStream.of(structure.coreMantleBoundary(), structure.earthRadius()),
+                Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.coreMantleBoundary() < b)).sorted().toArray();
+        double[] outerCoreBoundaries = DoubleStream.concat(DoubleStream.of(structure.coreMantleBoundary(), structure.innerCoreBoundary()),
+                Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.innerCoreBoundary() < b && b < structure.coreMantleBoundary()))
                 .sorted().toArray();
         double[] innerCoreBoundaries = DoubleStream.concat(DoubleStream.of(0, structure.innerCoreBoundary()),
                 Arrays.stream(structure.additionalBoundaries()).filter(b -> b < structure.innerCoreBoundary())).sorted()
