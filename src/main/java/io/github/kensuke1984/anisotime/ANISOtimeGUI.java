@@ -21,11 +21,11 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.1
+ * @version 0.5.3.2
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2017/11/18
+     * 2017/11/19
      */
     private static final long serialVersionUID = -2138740611342857870L;
     private RaypathWindow raypathWindow;
@@ -67,9 +67,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
             Logger.getLogger(ANISOtimeGUI.class.getName()).log(Level.SEVERE, null, ex);
         }
-        // </editor-fold>
-
-		/* Create and display the form */
         SwingUtilities.invokeLater(() -> new ANISOtimeGUI().setVisible(true));
     }
 
@@ -364,9 +361,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
             Phase phase = phaseList.get(i);
-            if (!raypath.exists(eventR, phase)) continue;
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
             double travelTime = raypath.computeT(eventR, phase);
+            if (Double.isNaN(epicentralDistance)) continue;
             String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
             double depth = raypath.getStructure().earthRadius() - eventR;
             if (delta == null) {
@@ -397,7 +394,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private void showRayPath(Raypath raypath, Phase phase) {
-        if (!raypath.exists(eventR, phase)) return;
         double[][] points = raypath.getRouteXY(eventR, phase);
         if (points != null) {
             double[] x = new double[points.length];

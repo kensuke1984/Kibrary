@@ -23,9 +23,13 @@ import java.util.function.BiFunction;
  * TODO sorting by dDelta/dp
  *
  * @author Kensuke Konishi
- * @version 0.0.13.2b
+ * @version 0.1.0b
  */
 public class RaypathCatalog implements Serializable {
+    /**
+     * 2017/11/19
+     */
+    private static final long serialVersionUID = -2244177691546936887L;
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -77,11 +81,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * Catalog for AK135. &delta;&Delta; = 1. Mesh is simple.
      */
-    public final static RaypathCatalog AK135;
-    /**
-     * 2017/1/20
-     */
-    private static final long serialVersionUID = 6217165062016323038L;
+    final static RaypathCatalog AK135;
     private static final Path share = Environment.KIBRARY_HOME.resolve("share");
 
     static {
@@ -95,7 +95,7 @@ public class RaypathCatalog implements Serializable {
                         cat = read(p);
                     } catch (ClassNotFoundException | IOException ice) {
                         System.err.println("Creating a catalog for " + model +
-                                " (due to out of date).  This computation is done only once.");
+                                " (due to out of date). This computation is done only once.");
                         (cat = new RaypathCatalog(v, simple, Math.toRadians(1))).create();
                         try {
                             cat.write(p);
@@ -189,25 +189,6 @@ public class RaypathCatalog implements Serializable {
         if (dDelta <= 0) throw new IllegalArgumentException("Input dDelta must be positive.");
         D_DELTA = dDelta;
         MESH = mesh;
-    }
-
-    /**
-     * check which phases exist.
-     * if P and SV exist, then 0b101000 returns.
-     *
-     * @param raypath to check
-     * @return binary of P PcP SV SvcS SH SHcS (NaN:0 or 1)
-     */
-    private static int checkRaypath(Raypath raypath) {
-        int flag = 0;
-        double earthRadius = raypath.getStructure().earthRadius();
-        if (raypath.exists(earthRadius, Phase.P)) flag |= 32;
-        else if (raypath.exists(earthRadius, Phase.PcP)) flag |= 16;
-        if (raypath.exists(earthRadius, Phase.SV)) flag |= 8;
-        else if (raypath.exists(earthRadius, Phase.SVcS)) flag |= 4;
-        if (raypath.exists(earthRadius, Phase.S)) flag |= 2;
-        else if (raypath.exists(earthRadius, Phase.ScS)) flag |= 1;
-        return flag;
     }
 
     /**
@@ -391,12 +372,29 @@ public class RaypathCatalog implements Serializable {
     private Raypath lookForNextExistingRaypath(double min, double max) {
         for (double p = min; p < max; p += MINIMUM_DELTA_P) {
             Raypath raypath = new Raypath(p, WOODHOUSE, MESH);
-            if (raypath.exists()) return raypath;
+            if (exists(raypath)) return raypath;
         }
         return new Raypath(max, WOODHOUSE, MESH);
     }
 
+    private boolean exists(Raypath path) {
+        double earthSurface = path.getStructure().earthRadius();
+        System.out.println(
+                "P:" + path.computeDelta(earthSurface, Phase.P) + " S" + path.computeDelta(earthSurface, Phase.S) +
+                        " PcP" + path.computeDelta(earthSurface, Phase.PcP) + " ScS" +
+                        path.computeDelta(earthSurface, Phase.ScS));
+        System.out.println("P:" + path.computeDelta(earthSurface - 1, Phase.p) + " S" +
+                path.computeDelta(earthSurface - 1, Phase.s));
+        return !(Double.isNaN(path.computeDelta(earthSurface, Phase.P)) &&
+                Double.isNaN(path.computeDelta(earthSurface, Phase.SV)) &&
+                Double.isNaN(path.computeDelta(earthSurface, Phase.S)) &&
+                Double.isNaN(path.computeDelta(earthSurface, Phase.PcP)) &&
+                Double.isNaN(path.computeDelta(earthSurface, Phase.SVcS)) &&
+                Double.isNaN(path.computeDelta(earthSurface, Phase.ScS)));
+    }
+
     /**
+     * TODO
      * Creates a catalogue.
      * when running into a ray path with all NaN. what should we do.
      */
@@ -405,48 +403,28 @@ public class RaypathCatalog implements Serializable {
         // Compute raparameters for diffration phases.
         computeDiffraction();
         long time = System.nanoTime();
-        System.err.println("Computing a catalogue. (If you use the same model, the catalog is not computed anymore.)");
+        System.err.println("Computing a catalogue. If you use the same model, the catalog is not computed anymore.");
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         firstPath.compute();
         raypathList.add(firstPath);
         double p_Pdiff = pDiff.getRayParameter();
         double p_SVdiff = svDiff.getRayParameter();
         double p_SHdiff = shDiff.getRayParameter();
-        for (double p = firstPath.getRayParameter() + DELTA_P, nextP; p < pMax; p = nextP) {
+        for (double p = DELTA_P; p < pMax; p += DELTA_P) {
             Raypath candidatePath = new Raypath(p, WOODHOUSE, MESH);
-            if (!candidatePath.exists()) {
-                p = raypathList.last().getRayParameter() + MINIMUM_DELTA_P;
-                candidatePath = new Raypath(p, WOODHOUSE, MESH);
-                if (!candidatePath.exists()) candidatePath = lookForNextExistingRaypath(p, pMax);
-                candidatePath.compute();
-                raypathList.add(candidatePath);
-                nextP = raypathList.last().getRayParameter() + DELTA_P;
-                continue;
-            }
             candidatePath.compute();
-            if (closeEnough(raypathList.last(), candidatePath)) {
-                raypathList.add(candidatePath);
-                nextP = p + DELTA_P;
-            } else {
-                raypathPool.add(candidatePath);
-                nextP = (p + raypathList.last().getRayParameter()) / 2;
-            }
+            raypathList.add(candidatePath);
 
-            if (lookIntoPool()) {
-                p = raypathList.last().getRayParameter();
-                nextP = p + DELTA_P;
-            }
-
-            if (p < p_Pdiff && p_Pdiff < nextP) {
-                closeDiff(pDiff);
-                nextP = raypathList.last().getRayParameter() + DELTA_P;
-            } else if (p < p_SVdiff && p_SVdiff < nextP) {
-                closeDiff(svDiff);
-                nextP = raypathList.last().getRayParameter() + DELTA_P;
-            } else if (p < p_SHdiff && p_SHdiff < nextP) {
-                closeDiff(shDiff);
-                nextP = raypathList.last().getRayParameter() + DELTA_P;
-            }
+//            if (p < p_Pdiff && p_Pdiff < nextP) {
+//                closeDiff(pDiff);
+//                nextP = raypathList.last().getRayParameter() + DELTA_P;
+//            } else if (p < p_SVdiff && p_SVdiff < nextP) {
+//                closeDiff(svDiff);
+//                nextP = raypathList.last().getRayParameter() + DELTA_P;
+//            } else if (p < p_SHdiff && p_SHdiff < nextP) {
+//                closeDiff(shDiff);
+//                nextP = raypathList.last().getRayParameter() + DELTA_P;
+//            }
         }
         raypathList.add(pDiff);
         raypathList.add(svDiff);
@@ -627,7 +605,7 @@ public class RaypathCatalog implements Serializable {
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
         Raypath[] raypaths = getRaypaths();
-//        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" +
+//        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" + TODO
 //                Precision.round(Math.toDegrees(targetDelta), 4));
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(

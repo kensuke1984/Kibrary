@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.9
+ * @version 0.0.9.1
  * @see <a href=
- * http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
+ * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
  */
 public interface VelocityStructure extends Serializable {
@@ -34,6 +34,11 @@ public interface VelocityStructure extends Serializable {
         return PolynomialStructure.AK135;
     }
 
+    /**
+     * @param pp           target phase
+     * @param rayParameter target ray parameter
+     * @return [km] the <b>largest</b> radius of bounce point
+     */
     default double getTurningR(PhasePart pp, double rayParameter) {
         switch (pp) {
             case I:
@@ -57,7 +62,7 @@ public interface VelocityStructure extends Serializable {
 
     /**
      * @param r [km] radius
-     * @return [g/cm**3] density &rho;(r)
+     * @return [g/cm<sup>3</sup>] density &rho;(r)
      */
     double getRho(double r);
 
@@ -67,7 +72,7 @@ public interface VelocityStructure extends Serializable {
      * r = p(N/&rho;)<sup>1/2</sup>* r = p(N/&rho;)<sup>1/2</sup>
      *
      * @param rayParameter ray parameter
-     * @return the K turning radius [km] for the raypath or {@link Double#NaN}
+     * @return [km] the K turning radius for the raypath or {@link Double#NaN}
      * if there is no valid R. The radius must be in the outercore.
      * @see "Woodhouse (1981)"
      */
@@ -79,7 +84,7 @@ public interface VelocityStructure extends Serializable {
      * r = p(N/&rho;)<sup>1/2</sup>
      *
      * @param rayParameter ray parameter
-     * @return the SH turning radius [km] for the raypath or {@link Double#NaN}
+     * @return [km] the SH turning radius for the raypath or {@link Double#NaN}
      * if there is no valid R The radius must be in the mantle.
      * @see "Woodhouse (1981)"
      */
@@ -91,7 +96,7 @@ public interface VelocityStructure extends Serializable {
      * r = p(L/&rho;)<sup>1/2</sup>
      *
      * @param rayParameter ray parameter
-     * @return the SV turning radius [km] for the raypath or {@link Double#NaN}
+     * @return [km] the SV turning radius for the raypath or {@link Double#NaN}
      * if there is no valid R. The radius must be in the mantle.
      * @see "Woodhouse (1981)"
      */
@@ -103,7 +108,7 @@ public interface VelocityStructure extends Serializable {
      * r = p(A/&rho;)<sup>1/2</sup>
      *
      * @param rayParameter ray parameter
-     * @return the P turning radius [km] for the raypath or {@link Double#NaN}
+     * @return [km] the P turning radius for the raypath or {@link Double#NaN}
      * if there is no valid radius. The radius must be in the mantle.
      * @see "Woodhouse (1981)"
      */
@@ -160,19 +165,19 @@ public interface VelocityStructure extends Serializable {
 
     /**
      * @param r [km] radius
-     * @return F [GPa] at r
+     * @return [GPa] F at r
      */
     double getF(double r);
 
     /**
      * @param r [km] radius
-     * @return L [GPa] at r
+     * @return [GPa] L at r
      */
     double getL(double r);
 
     /**
      * @param r [km] radius
-     * @return N [GPa] at r
+     * @return [GPa] N at r
      */
     double getN(double r);
 
@@ -202,7 +207,7 @@ public interface VelocityStructure extends Serializable {
      * Input point must be one of the boundaries in the structure.
      *
      * @param point for the radius
-     * @return radius [km] for the point.
+     * @return [km] radius for the point.
      */
     default double getROf(PassPoint point) {
         switch (point) {
@@ -216,6 +221,5 @@ public interface VelocityStructure extends Serializable {
                 throw new RuntimeException(point + " is not a boundary.");
         }
     }
-
 
 }
