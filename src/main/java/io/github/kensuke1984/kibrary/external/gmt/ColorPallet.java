@@ -99,6 +99,7 @@ public interface ColorPallet {
 						String rgbPart = " " + rgb[i][0] + " " + rgb[i][1] + "  " + rgb[i][2] + " ";
 						pw.println(start + rgbPart + end + rgbPart);
 					}
+					pw.println("B\t 255\t 255\t 255\nF\t 255\t 255\t 255\nN\t 255\t 255\t 255");
 				}
 
 			}

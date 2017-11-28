@@ -122,7 +122,7 @@ public class DataRequestor implements Operation {
 		if (!property.containsKey("lowerMw"))
 			property.setProperty("lowerMw", "5.5");
 		if (!property.containsKey("upperMw"))
-			property.setProperty("upperMw", "6.5");
+			property.setProperty("upperMw", "7.3");
 		if (!property.containsKey("startDate"))
 			throw new RuntimeException("No information about the start date");
 		if (!property.containsKey("endDate"))
@@ -133,9 +133,12 @@ public class DataRequestor implements Operation {
 			throw new RuntimeException("No information about the head adjustment");
 		if (!property.containsKey("send"))
 			property.setProperty("send", "false");
+		if (!property.containsKey("IRIS"))
+			property.setProperty("IRIS", "true");
 	}
 
 	private boolean send;
+	private boolean IRIS;
 
 	private void set() {
 		checkAndPutDefaults();
@@ -161,6 +164,7 @@ public class DataRequestor implements Operation {
 		headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
 		footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
 		send = Boolean.parseBoolean(property.getProperty("send"));
+		IRIS = Boolean.parseBoolean(property.getProperty("IRIS"));
 	}
 
 	private Properties property;
@@ -209,12 +213,12 @@ public class DataRequestor implements Operation {
 				pw.println("##Mail of your institute, must be defined");
 				pw.println("#mail 7-3-1 Hongo, Bunkyo, Tokyo, Japan");
 				pw.println("##Phone number, must be defined");
-				pw.println("#phone 03-5841-4290");
+				pw.println("#phone 03-5841-8832");
 				pw.println("##Fax number, must be defined");
-				pw.println("#fax 03-5841-8791");
+				pw.println("#fax 03-5841-8832");
 			}
 			pw.println("##Email address, must be defined");
-			pw.println("#email waveformrequest2015@gmail.com");
+			pw.println("#email datarequest.yuki@gmail.com");
 			pw.println("##media(FTP)");
 			pw.println("#media");
 			pw.println("##Network names for request, must be defined");
@@ -226,7 +230,7 @@ public class DataRequestor implements Operation {
 			pw.println("#endDate 2014-12-31");
 			pw.println("##Lower limit of Mw (5.5)");
 			pw.println("#lowerMw");
-			pw.println("##Upper limit of Mw (6.5)");
+			pw.println("##Upper limit of Mw (7.3)");
 			pw.println("#upperMw");
 			pw.println("#All geometrical filter is for seismic events. (-90)");
 			pw.println("#Lower limit of latitude [deg] [-90:upperLatitude)");
@@ -247,6 +251,8 @@ public class DataRequestor implements Operation {
 			pw.println("#footAdjustment 120");
 			pw.println("##If you just want to create emails, then set it true (false)");
 			pw.println("#send");
+			pw.println("##If you just want to send mail to IRIS data center (or OHP). (true)");
+			pw.println("#IRIS");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -278,7 +284,10 @@ public class DataRequestor implements Operation {
 				if (!send)
 					return;
 				System.err.println("Sending a request for " + id);
-				m.sendIris();
+				if (!IRIS)
+					m.sendOHP();
+				else
+					m.sendIris();
 				Thread.sleep(300 * 1000);
 			} catch (Exception e) {
 				System.err.println(m.getLabel() + " was not sent");

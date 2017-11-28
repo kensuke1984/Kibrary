@@ -80,7 +80,7 @@ public class RecordSectionSac {
 //				System.out.println(dir.getName());
 				Set<TimewindowInformation> thisEventTimewindows = new HashSet<>();
 				timewindows.stream()
-						.filter(tw -> tw.getGlobalCMTID().toString().equals(dir.toString()))
+						.filter(tw -> tw.getGlobalCMTID().toString().equals(dir.getName()))
 						.forEach(tw -> thisEventTimewindows.add(tw));
 //				System.out.println(thisEventTimewindows.size());
 				GMTMap gmtmap = new GMTMap(String.valueOf(AZref - deltaAZ) + "˚ < AZ < " + String.valueOf(AZref + deltaAZ) + "˚", 120, -30, 30, 85);
@@ -140,6 +140,7 @@ public class RecordSectionSac {
 //								System.out.println("timewindow is empty? "+tmptimewindow.isEmpty());
 								if (!tmptimewindow.isEmpty()) {
 									tmptimewindow.stream().forEachOrdered(timewindow -> {
+										System.out.println(sacdata.getGlobalCMTID()+" "+sacdata.getStation()+" "+ timewindow);
 										Trace trace = sacdata.createTrace().cutWindow(timewindow);
 //										System.out.println("maxvalue is "+trace.getMaxValue());
 										double max = Math.max(trace.getMaxValue(), Math.abs(trace.getMinValue()));
@@ -275,16 +276,16 @@ public class RecordSectionSac {
 											+ "\n").getBytes()
 									, StandardOpenOption.APPEND);
 						
-//						outpathstack = Paths.get(dir.getAbsolutePath(), "stack" + String.format("%.1f", i * distanceIncrement) + ".R.txt");
-//						Files.deleteIfExists(outpathstack);
-//						Files.createFile(outpathstack);
-//						for (int j=0; j < stacksR[i].getDimension(); j++)
-//							Files.write(outpathstack
-//									, (String.valueOf(j * dt)
-//											+ " "
-//											+ String.valueOf(stacksR[i].getEntry(j) / numberOfStack[i])
-//											+ "\n").getBytes()
-//									, StandardOpenOption.APPEND);
+						outpathstack = Paths.get(dir.getAbsolutePath(), "stack" + String.format("%.1f", i * distanceIncrement) + ".R.txt");
+						Files.deleteIfExists(outpathstack);
+						Files.createFile(outpathstack);
+						for (int j=0; j < stacksR[i].getDimension(); j++)
+							Files.write(outpathstack
+									, (String.valueOf(j * dt)
+											+ " "
+											+ String.valueOf(stacksR[i].getEntry(j) / numberOfStack[i])
+											+ "\n").getBytes()
+									, StandardOpenOption.APPEND);
 						
 						Files.write(outpathscriptstack, ("\'"
 								+ "stack" + i * distanceIncrement + ".T.txt"

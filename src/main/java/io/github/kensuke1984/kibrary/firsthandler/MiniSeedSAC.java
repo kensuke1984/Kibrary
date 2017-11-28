@@ -30,10 +30,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
  * @author Kensuke Konishi
  * 
  */
-class SeedSAC implements Runnable {
+class MiniSeedSAC implements Runnable {
 
 	Path getSeedPath() {
-		return seedFile.getSeedPath();
+		return miniSeedFile.getSeedPath();
 	}
 
 	/**
@@ -75,7 +75,7 @@ class SeedSAC implements Runnable {
 	/**
 	 * 処理するseedファイル
 	 */
-	private SEEDFile seedFile;
+	private MiniSEEDFile miniSeedFile;
 
 	/**
 	 * 梱包するイベントの id
@@ -117,7 +117,7 @@ class SeedSAC implements Runnable {
 	 *             if the outputDirectoryPath already has events which also
 	 *             exists in the seed file or an error occurs
 	 */
-	SeedSAC(Path seedPath, Path outputDirectoryPath) throws IOException {
+	MiniSeedSAC(Path seedPath, Path outputDirectoryPath) throws IOException {
 		this(seedPath, outputDirectoryPath, null);
 	}
 
@@ -125,7 +125,7 @@ class SeedSAC implements Runnable {
 	 * 解凍するseed file
 	 * 
 	 * @param seedPath
-	 *            解凍するseedファイル
+	 *            解凍するminiSeedファイル
 	 * @param outputDirectoryPath
 	 *            inside this folder, the seed file is extracted. If the folder
 	 *            does not exist, it will be created.
@@ -136,8 +136,8 @@ class SeedSAC implements Runnable {
 	 *             If the folder already has event folders which also exists in
 	 *             the seed file.
 	 */
-	SeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
-		seedFile = new SEEDFile(seedPath);
+	MiniSeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
+		miniSeedFile = new MiniSEEDFile(seedPath);
 		if (id != null)
 			this.id = id;
 		else
@@ -156,7 +156,7 @@ class SeedSAC implements Runnable {
 		else
 			eventDirAlreadyExists = true;
 
-		seedFile.toDirectory(eventDir.toPath());
+		miniSeedFile.toDirectory(eventDir.toPath());
 	}
 
 	/**
@@ -167,12 +167,12 @@ class SeedSAC implements Runnable {
 		id = findIDinFilename();
 		if (id != null)
 			return;
-		if (GlobalCMTID.isGlobalCMTID(seedFile.getVolumeLabel())) {
-			id = new GlobalCMTID(seedFile.getVolumeLabel());
+		if (GlobalCMTID.isGlobalCMTID(miniSeedFile.getVolumeLabel())) {
+			id = new GlobalCMTID(miniSeedFile.getVolumeLabel());
 			return;
 		}
-		System.err.println("Dataset in this seed file starts " + seedFile.getStartingDate());
-		GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
+		System.err.println("Dataset in this seed file starts " + miniSeedFile.getStartingDate());
+		GlobalCMTSearch sc = new GlobalCMTSearch(miniSeedFile.getStartingDate(), miniSeedFile.getEndingDate());
 		id = sc.select();
 		Objects.requireNonNull(id, "There is no event in the global CMT catalogue");
 	}
@@ -184,7 +184,7 @@ class SeedSAC implements Runnable {
 	 *         returns null
 	 */
 	private GlobalCMTID findIDinFilename() {
-		String fileName = seedFile.getSeedPath().getFileName().toString();
+		String fileName = miniSeedFile.getSeedPath().getFileName().toString();
 		// System.out.println(fileName);
 		Matcher m1 = GlobalCMTID.RECENT_GLOBALCMTID_PATTERN.matcher(fileName);
 		if (m1.find())
@@ -199,8 +199,8 @@ class SeedSAC implements Runnable {
 	 */
 	private boolean idValidity() {
 		event = id.getEvent();
-		return event != null && id != null && seedFile.getStartingDate().isBefore(event.getPDETime())
-				&& seedFile.getEndingDate().isAfter(event.getCMTTime());
+		return event != null && id != null && miniSeedFile.getStartingDate().isBefore(event.getPDETime())
+				&& miniSeedFile.getEndingDate().isAfter(event.getCMTTime());
 	}
 
 	/**
@@ -491,10 +491,10 @@ class SeedSAC implements Runnable {
 	public void run() {
 		if (!eventDirAlreadyExists)
 			throw new RuntimeException("The condition is no good.");
-		System.err.println("Opening " + seedFile + " in " + eventDir);
-		// run rdseed -q output -fRd
+		System.err.println("Opening " + miniSeedFile + " in " + eventDir);
+		// run ms2sac mseedfilename
 		try {
-			seedFile.extract(seedFile.getSeedPath().getParent());
+			miniSeedFile.extract(miniSeedFile.getSeedPath().getParent(), id);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 			return;

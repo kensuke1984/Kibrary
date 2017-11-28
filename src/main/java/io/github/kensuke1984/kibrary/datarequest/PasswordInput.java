@@ -44,7 +44,7 @@ class PasswordInput extends JPanel implements ActionListener {
         passwordField.setActionCommand(OK);
         passwordField.addActionListener(this);
 
-        JLabel label = new JLabel("waveformrequest2015@gmail.com: ");
+        JLabel label = new JLabel("datarequest.yuki@gmail.com: ");
         label.setLabelFor(passwordField);
 
         JComponent buttonPane = createButtonPanel();

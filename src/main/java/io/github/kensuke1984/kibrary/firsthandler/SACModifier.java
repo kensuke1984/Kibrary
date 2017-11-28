@@ -71,7 +71,7 @@ class SACModifier {
 
         // check "khole" value
         String khole = headerMap.get(SACHeaderEnum.KHOLE);
-        return khole.isEmpty() || khole.equals("00") || khole.equals("01");
+        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02");
     }
 
     /**

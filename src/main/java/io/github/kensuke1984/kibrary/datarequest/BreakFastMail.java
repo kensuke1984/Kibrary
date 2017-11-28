@@ -21,8 +21,9 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 public class BreakFastMail {
 
     private static final String IRIS_EMAIL = "breq_fast@iris.washington.edu";
-    private static final String OHP_EMAIL = "breq-fast@ocean.eri.u-tokyo.ac.jp";
-
+//    private static final String OHP_EMAIL = "breq-fast@ocean.eri.u-tokyo.ac.jp";
+    private static final String OHP_EMAIL = "breq-fast-vietnet@ohpdmc.eri.u-tokyo.ac.jp";
+    
     private String name;
     private String institute;
     private String mail;
@@ -68,13 +69,17 @@ public class BreakFastMail {
     void sendIris() throws Exception {
         sendIris(getLines());
     }
+    
+    void sendOHP() throws Exception {
+        sendOHP(getLines());
+    }
 
     private static String getPassword() throws InterruptedException {
         if (password != null) return password;
         else if (!GraphicsEnvironment.isHeadless()) {
             password = PasswordInput.createAndShowGUI().getPassword();
         } else {
-            password = String.copyValueOf(System.console().readPassword("Password for waveformrequest2015@gmail.com"));
+            password = String.copyValueOf(System.console().readPassword("Password for datarequest.yuki@gmail.com"));
         }
         return password;
     }
@@ -84,12 +89,25 @@ public class BreakFastMail {
         email.setHostName("smtp.googlemail.com");
         email.setSmtpPort(465);
         getPassword();
-        email.setAuthenticator(new DefaultAuthenticator("waveformrequest2015@gmail.com", password));
+        email.setAuthenticator(new DefaultAuthenticator("datarequest.yuki@gmail.com", password));
         email.setSSLOnConnect(true);
-        email.setFrom("waveformrequest2015@gmail.com");
+        email.setFrom("datarequest.yuki@gmail.com");
         email.setSubject("Request" + Utilities.getTemporaryString());
         email.setMsg(String.join("\n", lines));
-//        email.addTo(IRIS_EMAIL);
+        email.addTo(IRIS_EMAIL);
+        email.send();
+    }
+    
+    private static void sendOHP(String[] lines) throws Exception {
+        Email email = new SimpleEmail();
+        email.setHostName("smtp.googlemail.com");
+        email.setSmtpPort(465);
+        getPassword();
+        email.setAuthenticator(new DefaultAuthenticator("datarequest.yuki@gmail.com", password));
+        email.setSSLOnConnect(true);
+        email.setFrom("datarequest.yuki@gmail.com");
+        email.setSubject("Request" + Utilities.getTemporaryString());
+        email.setMsg(String.join("\n", lines));
         email.addTo(OHP_EMAIL);
         email.send();
     }
