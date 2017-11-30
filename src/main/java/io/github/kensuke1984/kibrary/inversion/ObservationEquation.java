@@ -185,7 +185,8 @@ public class ObservationEquation {
 				count_TIMEPARTIAL_SOURCE.incrementAndGet();
 			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
 				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
-			System.out.println(count.get()+" " + id.getPartialType().name()+" "+id.getPartialType().isTimePartial());
+			//count errorが出た時はcount.get()してみる
+//			System.out.println(count.get()+" " + id.getPartialType().name()+" "+id.getPartialType().isTimePartial());
 		});
 		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
 			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +

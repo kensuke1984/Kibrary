@@ -47,20 +47,6 @@ class PartialIDMerge {
 		PartialID[] src0 = PartialIDFile.readPartialIDandDataFile(src0ID, src0Data);
 		PartialID[] src1 = PartialIDFile.readPartialIDandDataFile(src1ID, src1Data);
 		readPartialLoc(ppfile);
-//		Set<TimewindowInformation> timewindowInformation;
-//		timewindowInformation = TimewindowInformationFile.read(twPath);
-		
-//		Path src0ID = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/cnsnPREM/partialID_S_ScS_12.5s_RT_MULN.dat");
-//		Path src1ID = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/canoePREM/partialID_S_ScS_12.5s_RT_MULN.dat");
-//		Path src2ID = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/canoePREM/threedPartial4orthogonality/partialID.dat");
-//		Path src0Data = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/cnsnPREM/partial_S_ScS_12.5s_RT_MULN.dat");
-//		Path src1Data = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/canoePREM/partial_S_ScS_12.5s_RT_MULN.dat");
-//		Path src2Data = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/canoePREM/threedPartial4orthogonality/partial.dat");
-		
-//		PartialID[] src2 = PartialIDFile.readPartialIDandDataFile(src2ID, src2Data);
-//		Path idPath = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/partialID_S_ScS_12.5s_RT_MULN_cc.dat");
-//		Path dataPath = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/partial_S_ScS_12.5s_RT_MULN_cc.dat");
-//		Path ppfile = Paths.get("/mnt/doremi/suzuki/Anisotropy/analysis/PREM_old_150km/threeDPartial150km/perturbationPoint.inf");
 		
 		
 		Set<Station> stationSet = new HashSet<>();
@@ -92,8 +78,10 @@ class PartialIDMerge {
 			idStream.forEach(id -> {
 				partials.add(id);
 			});
+			System.out.println("adding the partial data!");
 			partials.forEach(partial -> {
 				try {
+//					System.out.println("adding the partial data!");
 					wdw.addPartialID(partial);
 				} catch (Exception e) {
 					e.printStackTrace();

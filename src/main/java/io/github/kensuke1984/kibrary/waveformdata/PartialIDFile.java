@@ -10,10 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -102,7 +100,7 @@ public final class PartialIDFile {
 			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
 					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
 			long idParts = fileSize - headerBytes;
-			System.out.println(idParts);
+			System.out.println("header, body size; "+headerBytes+" "+idParts);
 			if (idParts % oneIDByte != 0)
 				throw new RuntimeException(idPath + " is not valid..");
 			// name(8),network(8),position(4*2)
@@ -159,6 +157,7 @@ public final class PartialIDFile {
 			PartialID[] ids = readPartialIDFile(Paths.get(args[0]));
 			// print(Paths.get(args[0]));
 			String header = FilenameUtils.getBaseName(Paths.get(args[0]).getFileName().toString());
+			System.out.println("Header; "+header);
 			outputStations(header, ids);
 			outputGlobalCMTID(header, ids);
 			outputPerturbationPoints(header, ids);
@@ -171,8 +170,8 @@ public final class PartialIDFile {
 			for (PartialID id : ids)
 				types.add(id.getPartialType());
 			for (PartialType type : types) {
-				List<StationEvent> tmpList = Arrays.stream(ids).filter(id -> id.getPartialType().equals(type))
-						.map(id -> new StationEvent(id.getStation(), id.getGlobalCMTID()))
+				List<StationEvent> tmpList = Arrays.stream(ids).parallel().filter(id -> id.getPartialType().equals(type))
+						.map(id -> new StationEvent(id.getStation(), id.getGlobalCMTID(), id.getStartTime()))
 						.distinct().collect(Collectors.toList());
 				Collections.sort(tmpList);
 				Path outPath = Paths.get(type + ".inf");
@@ -192,7 +191,7 @@ public final class PartialIDFile {
 		if (Files.exists(outPath))
 			return;
 		List<String> lines = Arrays.stream(pids).parallel()
-				.map(id -> new Physical3DParameter(id.getPartialType(), id.pointLocation, 1)).distinct()
+				.map(id -> new Physical3DParameter(id.partialType, id.pointLocation, 1)).distinct()
 				.map(ep -> ep.toString()).sorted().collect(Collectors.toList());
 		Files.write(outPath, lines);
 		System.out.println(outPath + " is created as a list of perturbation. (weighting values are just set 1)");
@@ -280,25 +279,29 @@ public final class PartialIDFile {
 	public static class StationEvent implements Comparable<StationEvent> {
 		public Station station;
 		public GlobalCMTID event;
-		public StationEvent(Station station, GlobalCMTID event) {
+		public double startTime;
+		public StationEvent(Station station, GlobalCMTID event, double startTime) {
 			this.station = station;
 			this.event = event;
+			this.startTime = startTime;
 		}
 		@Override
 		public int compareTo(StationEvent o) {
 			int compareStation = station.compareTo(o.station);
 			if (compareStation != 0)
 				return compareStation;
-			else
+			else if (event.compareTo(o.event) != 0)
 				return event.compareTo(o.event);
+			else
+				return Double.compare(this.startTime, o.startTime);
 		}
 		@Override
 		public String toString() {
-			return station.toString() + " " + event.toString();
+			return station.toString() + " " + event.toString() + " " + String.format("%.2f", startTime);
 		}
 		@Override
 		public int hashCode() {
-			return station.hashCode() * event.hashCode() * 31;
+			return station.hashCode() * event.hashCode() * 31 * (int) startTime;
 		}
 		@Override
 		public boolean equals(Object obj) {
@@ -309,9 +312,12 @@ public final class PartialIDFile {
 			if (getClass() != obj.getClass())
 				return false;
 			StationEvent other = (StationEvent) obj;
+			double otherStartTime = other.startTime;
 			if (!station.equals(other.station))
 				return false;
 			if (!event.equals(other.event))
+				return false;
+			if (Math.abs(startTime - otherStartTime) > 0.1)
 				return false;
 			return true;
 		}
