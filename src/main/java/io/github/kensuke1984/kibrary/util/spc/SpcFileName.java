@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
+import io.github.kensuke1984.kibrary.util.Location;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -189,6 +191,10 @@ public class SpcFileName extends File {
 
 	public DSMOutput read() throws IOException {
 		return SpectrumFile.getInstance(this);
+	}
+	
+	public DSMOutput read(double phi) throws IOException {
+		return SpectrumFile.getInstance(this, phi);
 	}
 
 	/**

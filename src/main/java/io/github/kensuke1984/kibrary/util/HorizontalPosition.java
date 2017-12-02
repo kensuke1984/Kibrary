@@ -138,6 +138,10 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 	public double getEpicentralDistance(HorizontalPosition horizontalPosition) {
 		return Earth.getEpicentralDistance(horizontalPosition, this);
 	}
+	
+	public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
+		return Earth.getGeographicalDistance(horizontalPosition, this);
+	}
 
 	/**
 	 * 元点loc0と入力locとの大円上の中点を求める 半径は考慮しない locとloc0のなす震央距離を⊿

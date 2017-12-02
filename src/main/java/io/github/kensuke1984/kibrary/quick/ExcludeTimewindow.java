@@ -1,8 +1,12 @@
 package io.github.kensuke1984.kibrary.quick;
 
+import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Phases;
+import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -34,31 +38,48 @@ public class ExcludeTimewindow {
 //			phaseSet.add(new Phases("S"));
 //			Set<TimewindowInformation> newTimewindows = excludePhase(timewindows, phaseSet);
 			
-
 			
-			Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
-					.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI <= 35.)
-					.filter(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201102251307A")))
-//					.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI >= 18.)
-					.collect(Collectors.toSet());
-			
-			
-			Map<GlobalCMTID, Integer> nWindowEventMap = new HashMap<>();
-			for (TimewindowInformation timewindow : newTimewindows) {
-				GlobalCMTID id = timewindow.getGlobalCMTID();
-				if (nWindowEventMap.containsKey(id)) {
-					int n = nWindowEventMap.get(id) + 1;
-					nWindowEventMap.replace(id, n);
-				}
-				else
-					nWindowEventMap.put(id, 1);
+			if (args.length == 2) {
+				Set<Station> stations = StationInformationFile.read(Paths.get(args[1]));
+				
+				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
+						.filter(tw -> stations.contains(tw.getStation()))
+						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI <= 35.)
+						.collect(Collectors.toSet());
+				
+				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 			}
 			
-			Set<TimewindowInformation> newTimewindows2 = newTimewindows.parallelStream().filter(tw -> nWindowEventMap.get(tw.getGlobalCMTID()) >= 15)
-				.collect(Collectors.toSet());
-			TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
-			
-//			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+			else {
+				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
+						.filter(tw ->  {
+							double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI;
+							if (distance > 35. || distance < 5.)
+								return false;
+							else 
+								return true;
+						}).filter(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201102251307A")))
+	//					.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI >= 18.)
+						.collect(Collectors.toSet());
+				
+				
+				Map<GlobalCMTID, Integer> nWindowEventMap = new HashMap<>();
+				for (TimewindowInformation timewindow : newTimewindows) {
+					GlobalCMTID id = timewindow.getGlobalCMTID();
+					if (nWindowEventMap.containsKey(id)) {
+						int n = nWindowEventMap.get(id) + 1;
+						nWindowEventMap.replace(id, n);
+					}
+					else
+						nWindowEventMap.put(id, 1);
+				}
+				
+				Set<TimewindowInformation> newTimewindows2 = newTimewindows.parallelStream().filter(tw -> nWindowEventMap.get(tw.getGlobalCMTID()) >= 15)
+					.collect(Collectors.toSet());
+				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
+				
+	//			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+			}
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);
 		}
@@ -130,4 +151,6 @@ public class ExcludeTimewindow {
 				return true;
 		}
 	}
+	
+
 }

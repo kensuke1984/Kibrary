@@ -76,12 +76,11 @@ public interface DSMOutput {
 	 * @return omegai
 	 */
 	double omegai();
-
+	
 	/**
 	 * @return SpcFileType of this
 	 */
 	SpcFileType getSpcFileType();
 	
 	SpcFileName getSpcFileName();
-
 }

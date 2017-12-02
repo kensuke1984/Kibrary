@@ -97,4 +97,10 @@ public class TimeReceiverSideParameter implements UnknownParameter {
 	public Location getLocation() {
 		return pointLocation;
 	}
+	
+	@Override
+	public byte[] getBytes() {
+		return new byte[0];
+		// TODO
+	}
 }

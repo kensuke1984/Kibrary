@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
@@ -32,8 +33,17 @@ public class PartialVisual {
 		
 		for (PartialID partial : partials) {
 			Location loc = partial.getPerturbationLocation();
-			Path outpath = Paths.get(String.format("%.1f-%.1f/%s.%s.%s.%.0f.%d.txt", partial.getMinPeriod(), partial.getMaxPeriod()
-					, partial.getStation().toString(), partial.getGlobalCMTID().toString(), partial.getSacComponent().toString(), loc.getR(), (int) partial.getStartTime()));
+//			Path outpath = Paths.get(String.format("%.1f-%.1f/%s.%s.%s.%.0f.%d.txt", partial.getMinPeriod(), partial.getMaxPeriod()
+//					, partial.getStation().toString(), partial.getGlobalCMTID().toString(), partial.getSacComponent().toString(), loc.getR(), (int) partial.getStartTime()));
+			
+			Phases phases = new Phases(partial.getPhases());
+			
+			Path dir = Paths.get(String.format("%.1f-%.1f", partial.getMinPeriod(), partial.getMaxPeriod()));
+			Path outpath =  dir.resolve(partial.getStation().getStationName() + "." 
+					+ partial.getGlobalCMTID() + "." + partial.getSacComponent() + "."
+					+ (int) loc.getLatitude() + "."
+					+ (int) loc.getLongitude() + "." + (int) loc.getR() + "." + partial.getPartialType() + "."
+					+ phases + ".txt");
 			
 			double t0 = partial.getStartTime();
 			double dt = 1. / partial.getSamplingHz();
@@ -41,7 +51,7 @@ public class PartialVisual {
 			Files.deleteIfExists(outpath);
 			Files.createFile(outpath);
 			for (double p : partial.getData()) {
-				Files.write(outpath, ((t0 + i*dt) + " " + p + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpath, String.format("%.6f %.16e\n", (t0 + i*dt), p).getBytes(), StandardOpenOption.APPEND);
 				i++;
 			}
 		}

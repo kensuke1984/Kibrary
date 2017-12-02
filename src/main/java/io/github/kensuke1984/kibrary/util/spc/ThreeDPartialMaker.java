@@ -45,6 +45,13 @@ public class ThreeDPartialMaker {
 	 * back propagation
 	 */
 	private DSMOutput bp;
+	private DSMOutput bp2;
+	private DSMOutput bp3;
+	
+	/**
+	 * distances for interpolation
+	 */
+	double[] dh;
 
 	/**
 	 * SACファイルにするときのサンプリング値 デフォルト20Hz
@@ -76,6 +83,24 @@ public class ThreeDPartialMaker {
 	 * @param bp
 	 *            a spc file for back propagation
 	 */
+	public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp1, DSMOutput bp2, DSMOutput bp3, double[] dh) {
+		ignoreBodyR = new HashSet<>();
+		if (!isGoodPairPermissive(fp, bp1)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPairPermissive(fp, bp2)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPairPermissive(fp, bp3)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
+		this.fp = fp;
+		this.bp = bp1;
+		this.bp2 = bp2;
+		this.bp3 = bp3;
+		this.dh = dh;
+		findLsmooth();
+		setAngles();
+	}
+	
 	public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp) {
 		ignoreBodyR = new HashSet<>();
 		if (!isGoodPairPermissive(fp, bp)) //isGoodPair
@@ -83,6 +108,9 @@ public class ThreeDPartialMaker {
 		ignoreBodyR.forEach(System.out::println);
 		this.fp = fp;
 		this.bp = bp;
+		this.bp2 = null;
+		this.bp3 = null;
+		this.dh = null;
 		findLsmooth();
 		setAngles();
 	}
@@ -285,10 +313,20 @@ public class ThreeDPartialMaker {
 	}
 	
 	private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
+		SpcBody bpBody = null;
+		if (bp2 == null)
+			bpBody = bp.getSpcBodyList().get(iBodyBp);
+		else
+			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
+					, bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
 		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBodyFp),
-				bp.getSpcBodyList().get(iBodyBp), type.getWeightingFactor(), angleForTensor);
+				bpBody, type.getWeightingFactor(), angleForTensor);
 		return component == SACComponent.Z ? tensorcalc.calc(0)
 				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
+	}
+	
+	private SpcBody interpolate(SpcBody bpBody1, SpcBody bpBody2, double unitDistance) {
+		return bpBody1.interpolate(bpBody2, unitDistance);
 	}
 
 	private SourceTimeFunction sourceTimeFunction;
@@ -314,16 +352,6 @@ public class ThreeDPartialMaker {
 		
 		double cosine = FastMath.cos(angleForVector);
 		double sine = FastMath.sin(angleForVector);
-//		double e = 1e-2;
-//		double absAngle = Math.abs(angleForVector);
-//		if (absAngle < Math.PI/2. + e && absAngle > Math.PI/2. - e) {
-//			System.out.println("Set cosine to 0");
-//			cosine = 0.;
-//		}
-//		else if (absAngle < Math.PI + e && absAngle > Math.PI - e) {
-//			System.out.println("Set sine to 0");
-//			sine = 0.;
-//		}
 		
 		switch (component) {
 		case R:

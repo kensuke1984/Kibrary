@@ -1,6 +1,9 @@
 package io.github.kensuke1984.kibrary.util.spc;
 
 import java.util.Arrays;
+import java.util.Set;
+
+import javax.management.RuntimeErrorException;
 
 /**
  * Tensor components of a spc file
@@ -32,6 +35,23 @@ public enum SpcTensorComponent {
 
 	public int valueOf() {
 		return value;
+	}
+	
+	public static boolean isBPSHCATzero(int n) {
+		if (n < 1 || n > 27)
+			throw new IndexOutOfBoundsException("Error: index of component for BP should be between 1-27");
+		if (n >= 10 && n <= 27)
+			return false;
+		else
+			return true;
+	}
+	
+	public static boolean isFPSHzero(int n) {
+		if (n < 1 || n > 9)
+			throw new IndexOutOfBoundsException("Error: index of component for FP should be between 1-9");
+		if (n == 1)
+			return true;
+		else return false;
 	}
 
 	private SpcTensorComponent(int n) {

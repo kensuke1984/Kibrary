@@ -89,6 +89,11 @@ public class SpcComponent {
 			uFreq[i] = uFreq[i].add(another[i]);
 
 	}
+	
+	public void mapMultiply(double factor) {
+		for (int i = 0; i < np + 1; i++)
+			uFreq[i] = uFreq[i].multiply(factor);
+	}
 
 	/**
 	 * after toTimeDomain
@@ -189,5 +194,5 @@ public class SpcComponent {
 		// put values in time domain into collections
 		uTime = data;
 	}
-
+	
 }

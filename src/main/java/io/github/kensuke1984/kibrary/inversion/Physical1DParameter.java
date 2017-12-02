@@ -84,5 +84,10 @@ public class Physical1DParameter implements UnknownParameter {
 	public Location getLocation() {
 		return new Location(0., 0., perturbationR);
 	}
-
+	
+	@Override
+	public byte[] getBytes() {
+		return new byte[0];
+		// TODO
+	}
 }

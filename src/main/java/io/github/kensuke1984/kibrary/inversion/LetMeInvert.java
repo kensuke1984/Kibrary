@@ -848,7 +848,7 @@ public class LetMeInvert implements Operation {
 				RealVector adm = eq.getA().operate(inverse.getANS().getColumnVector(i));
 				for (int j = 0; j < adm.getDimension(); j++)
 					adm.setEntry(j, adm.getEntry(j) * mask.getEntry(j));
-				variance[i + 1] = variance[0] - (2 * adm.dotProduct(residual)
+				variance[i + 1] = variance[0] + (-2 * adm.dotProduct(residual)
 						+ adm.dotProduct(adm)) / obsVec.dotProduct(obsVec);
 			}
 			varianceMap.put(id, variance);

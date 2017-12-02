@@ -17,6 +17,10 @@ public class LookAtFPspc {
 	public static void main(String[] args) throws IOException {
 		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
 		DSMOutput dsmOutput = spcName.read();
+		print(dsmOutput);
+	}
+	
+	public static void print(DSMOutput dsmOutput) {
 		String obsName = dsmOutput.getObserverName();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
@@ -27,21 +31,33 @@ public class LookAtFPspc {
 		
 		double r = dsmOutput.getBodyR()[0];
 		System.out.println("perturbation radius=" + r);
-		String s = "";
+		Complex[][] spcs = new Complex[9][];
 		for(int i = 1; i <= 3; i++) {
 			for(int j = 1; j <= 3; j++) {
 				SpcTensorComponent comp = SpcTensorComponent.valueOfFP(i, j);
-				Complex[] spc = dsmOutput.getSpcBodyList().get(0).getSpcComponent(comp).getValueInFrequencyDomain();
-				double[] spcAbs = new double[spc.length];
-				double maxAbs = Double.MIN_VALUE;
-				for (int k = 0; k < spc.length; k++) {
-					spcAbs[k] = spc[k].abs();
-					if (spcAbs[k] > maxAbs)
-						maxAbs = spcAbs[k];
-				}
-				s += String.format("%.5e ", maxAbs);
+				spcs[3*(i-1)+j-1] = dsmOutput.getSpcBodyList().get(0).getSpcComponent(comp).getValueInFrequencyDomain();
 			}
 		}
-		System.out.println(s);
+		
+		for (int k = 0; k < spcs[0].length; k++) {
+			String real = "";
+			String imag = "";
+			for (int i = 0; i < 9; i++) {
+				real += String.format(" %.16e", spcs[i][k].getReal());
+				imag += String.format(" %.16e", spcs[i][k].getImaginary());
+			}
+			System.out.println("(Real) " + k + real);
+			System.out.println("(Imag) " + k + imag);
+		}
+	}
+	
+	public static void printHeader(DSMOutput dsmOutput) {
+		String obsName = dsmOutput.getObserverName();
+		String netwkName = dsmOutput.getObserverNetwork();
+		String sourceID = dsmOutput.getSourceID();
+		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
+		Location sourceLocation = dsmOutput.getSourceLocation();
+		
+		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 	}
 }

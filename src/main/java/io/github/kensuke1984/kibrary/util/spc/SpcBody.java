@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.util.spc;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
@@ -42,7 +44,51 @@ public class SpcBody {
 		Arrays.setAll(s.spcComponents, i -> spcComponents[i].copy());
 		return s;
 	}
+	
+	public SpcBody interpolate(SpcBody anotherBody, double unitDistance) {
+		if (unitDistance < 0 || unitDistance > 1) 
+			throw new RuntimeException("Error: unit distance should be between 0-1 " + unitDistance);
+		SpcBody s = this.copy();
+		if (this.np != anotherBody.getNp())
+			throw new RuntimeException("Error: Size of body is not equal!");
+		else if (this.nComponent != anotherBody.getNumberOfComponent())
+			throw new RuntimeException("Error: The numbers of each component are different.");
 
+		for (int j = 0; j < nComponent; j++) {
+			SpcComponent comp1 = s.spcComponents[j];
+			SpcComponent comp2 = anotherBody.spcComponents[j];
+			comp1.mapMultiply(1. - unitDistance);
+			comp2.mapMultiply(unitDistance);
+			comp1.addComponent(comp2);
+			s.spcComponents[j] = comp1;
+		}
+		
+		return s;
+	}
+	
+	public static SpcBody interpolate(SpcBody body1, SpcBody body2, SpcBody body3, double[] dh) {
+		SpcBody s = body1.copy();
+		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
+		double c2 = dh[0] - dh[0]*dh[1];
+		double c3 = dh[0]*dh[1]/2.;
+		
+		for (int j = 0; j < body1.nComponent; j++) {
+			SpcComponent comp1 = body1.spcComponents[j];
+			SpcComponent comp2 = body2.spcComponents[j];
+			SpcComponent comp3 = body3.spcComponents[j];
+			
+			comp1.mapMultiply(c1);
+			comp2.mapMultiply(c2);
+			comp3.mapMultiply(c3);
+			comp1.addComponent(comp2);
+			comp1.addComponent(comp3);
+			
+			s.spcComponents[j] = comp1;
+		}
+		
+		return s;
+	}
+	
 	/**
 	 * @param nComponent
 	 *            the number of components
@@ -188,5 +234,22 @@ public class SpcBody {
 	public void toTimeDomain(int lsmooth) {
 		Arrays.stream(spcComponents).forEach(component -> component.toTimeDomain(lsmooth));
 	}
+	
+	/**
+	 * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
+	 * 
+	 */
+	public int findLsmooth(double tlen, double samplingFrequency) {
+		int tmpNp = Integer.highestOneBit(np);
+		if (tmpNp < np)
+			tmpNp *= 2;
 
+		int lsmooth = (int) (0.5 * tlen * samplingFrequency / np);
+		int i = Integer.highestOneBit(lsmooth);
+		if (i < lsmooth)
+			i *= 2;
+		lsmooth = i;
+		
+		return lsmooth;
+	}
 }

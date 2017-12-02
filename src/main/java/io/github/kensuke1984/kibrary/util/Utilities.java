@@ -289,6 +289,45 @@ public final class Utilities {
 		}
 		return set;
 	}
+	
+	public static List<SpcFileName> collectOrderedSpcFileName(Path path) throws IOException {
+		List<SpcFileName> list = new ArrayList<>();
+		List<Path> paths = Files.list(path).filter(p -> p.getFileName().toString().endsWith(".spc")).collect(Collectors.toList());
+		int n = paths.size();
+		int ndigits = 1;
+		String formatter = null;
+		if (n < 10) {
+			ndigits = 1;
+			formatter = "XY%d";
+		}
+		else if (n < 1e2) {
+			ndigits = 2;
+			formatter = "XY%02d";
+		}
+		else if (n < 1e3) {
+			ndigits = 3;
+			formatter = "XY%03d";
+		}
+		else if (n < 1e4) {
+			ndigits = 4;
+			formatter = "XY%04d";
+		}
+		else if (n < 1e5) {
+			ndigits = 5;
+			formatter = "XY%05d";
+		}
+		else
+			throw new RuntimeException("Error: case for 1e6 or more perturbation points not implemented");
+		
+		String template = paths.get(0).getFileName().toString().substring(ndigits + 2);
+		Path root = paths.get(0).getParent();
+		
+		for (int i = 1; i <= n; i++) {
+			String filename = String.format(formatter + template, i);
+			list.add(new SpcFileName(root.resolve(filename)));
+		}
+		return list;
+	}
 
 	/**
 	 * @param srcPath
@@ -330,6 +369,15 @@ public final class Utilities {
 	}
 	
 	public static boolean equalWithinEpsilon(float v1, float v2, float eps) {
+		if (v1 > v2 && v1 - v2 > eps)
+			return false;
+		else if (v1 < v2 && v2 - v1 > eps)
+			return false;
+		else
+			return true;
+	}
+	
+	public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
 		if (v1 > v2 && v1 - v2 > eps)
 			return false;
 		else if (v1 < v2 && v2 - v1 > eps)

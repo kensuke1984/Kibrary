@@ -187,6 +187,21 @@ public final class Earth {
 
 		return FastMath.acos(cosAlpha);
 	}
+	
+	public static double getGeographicalDistance(HorizontalPosition loc1, HorizontalPosition loc2) {
+		double theta1 = (90. - loc1.getLatitude()) * Math.PI / 180.;
+		double theta2 = (90. - loc2.getLatitude()) * Math.PI / 180.;
+		double phi1 = loc1.getPhi();
+		double phi2 = loc2.getPhi();
+
+		/*
+		 * cos a = a*b/|a|/|b|
+		 */
+		double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2)
+				+ FastMath.cos(theta1) * FastMath.cos(theta2);
+
+		return FastMath.acos(cosAlpha);
+	}
 
 	/**
 	 * @param eq
@@ -196,6 +211,25 @@ public final class Earth {
 	 * @return eqからstationをみたazimuth(rad)
 	 */
 	public static double getAzimuth(HorizontalPosition eq, HorizontalPosition station) {
+		double e = eq.getTheta();
+		double s = station.getTheta();
+		// System.out.println("eq:"+e+" station: "+s);
+		double deltaPhi = -eq.getPhi() + station.getPhi();
+		double delta = getEpicentralDistance(eq, station);
+		double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi))
+				/ FastMath.sin(delta);
+		if (1 < cos)
+			cos = 1;
+		else if (cos < -1)
+			cos = -1;
+		double sin = FastMath.sin(s) * FastMath.sin(deltaPhi) / FastMath.sin(delta);
+		double az = FastMath.acos(cos);
+		// System.out.println(cos+" "+az);
+		// System.out.println(az*180/Math.PI);
+		return 0 <= sin ? az : -az + 2 * Math.PI;
+	}
+	
+	public static double getGeographicalAzimuth(HorizontalPosition eq, HorizontalPosition station) {
 		double e = eq.getTheta();
 		double s = station.getTheta();
 		// System.out.println("eq:"+e+" station: "+s);
@@ -247,6 +281,9 @@ public final class Earth {
 		if (0.5 * Math.PI < Math.abs(geographical))
 			throw new IllegalArgumentException("geographical latitude: " + geographical + " must be [-pi/2, pi/2]");
 		double ratio = POLAR_RADIUS / EQUATORIAL_RADIUS;
+		// 1. - FLATTENING is consistent with DSM
+		ratio = 1. - FLATTENING;
+//		ratio = 1.; //TODO CHANGE IT BACK
 		return FastMath.atan(ratio * ratio * FastMath.tan(geographical));
 	}
 
@@ -259,6 +296,8 @@ public final class Earth {
 	 */
 	static double toGeographical(double geocentric) {
 		double ratio = EQUATORIAL_RADIUS / POLAR_RADIUS;
+		// 1. - FLATTENING is consistent with DSM
+		ratio = 1. - FLATTENING;
 		return FastMath.atan(ratio * ratio * FastMath.tan(geocentric));
 	}
 

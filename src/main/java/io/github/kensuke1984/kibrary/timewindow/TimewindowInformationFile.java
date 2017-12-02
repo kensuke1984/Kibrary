@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -95,6 +96,18 @@ public final class TimewindowInformationFile {
 		}
 		
 		set.stream().sorted().forEach(System.out::println);
+		
+		Set<Station> stations = set.stream().map(tw -> tw.getStation()).collect(Collectors.toSet());
+		Path stationFile = Paths.get("timewindow.station");
+		Files.deleteIfExists(stationFile);
+		Files.createFile(stationFile);
+		try {
+			for (Station s : stations)
+				Files.write(stationFile, (s.getStationName() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
+						, StandardOpenOption.APPEND);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
