@@ -305,8 +305,8 @@ public class SACMaker implements Runnable {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException, ParseException {
-        args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",
-                "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc"};
+   ////     args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",
+           //     "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc"};
         if (args == null || args.length == 0)
             throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
 
