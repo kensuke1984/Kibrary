@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.stream.IntStream;
 
 /**
- * the object means a body in {@link SpectrumFile} the body means the spcdata of
+ * the object means a body in {@link Spectrum} the body means the spcdata of
  * each perturbation point...
  * <p>
  * スペクトルファイル（spcsac） の中のあるボディ

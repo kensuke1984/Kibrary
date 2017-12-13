@@ -14,8 +14,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -32,7 +33,7 @@ import java.util.stream.Stream;
  * Computes DSM(tish) write will be in outdir.
  *
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.2
  */
 class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
 
@@ -150,8 +151,8 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
                 eventDir.getGlobalCMTID().getEvent().getHalfDuration());
         try (Stream<Path> stream = Files.list(spcPath)) {
             stream.filter(path -> path.toString().endsWith("SH.spc")).forEach(shPath -> {
-                SpcFileName shName = new SpcFileName(shPath);
-                SpcFileName psvName = toPSVname(shName);
+                SPCFile shName = new FormattedSpcFileName(shPath);
+                SPCFile psvName = toPSVname(shName);
                 try {
                     DSMOutput shSPC = shName.read();
                     DSMOutput psvSPC = psvName.read();
@@ -166,9 +167,9 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
         }
     }
 
-    private SpcFileName toPSVname(SpcFileName shName) {
+    private SPCFile toPSVname(SPCFile shName) {
         String psvname = shName.getName().replace("SH.spc", "PSV.spc");
         GlobalCMTID id = new GlobalCMTID(shName.getSourceID());
-        return new SpcFileName(PSVPATH.resolve(id + "/" + psvname));
+        return new FormattedSpcFileName(PSVPATH.resolve(id + "/" + psvname));
     }
 }
