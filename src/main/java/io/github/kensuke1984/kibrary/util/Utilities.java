@@ -2,7 +2,8 @@ package io.github.kensuke1984.kibrary.util;
 
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSpcFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.FastMath;
 
@@ -33,7 +34,7 @@ import java.util.stream.Stream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1
+ * @version 0.1.2.2
  */
 public final class Utilities {
 
@@ -90,7 +91,7 @@ public final class Utilities {
     }
 
     /**
-     * @param <T> The result type.
+     * @param <T>  The result type.
      * @param task to put in another thread
      * @return Future of the task
      */
@@ -235,13 +236,14 @@ public final class Utilities {
     }
 
     /**
-     * @param path {@link Path} to look for {@link SpcFileName} in
-     * @return set of {@link SpcFileName} in the dir
+     * @param path {@link Path} to look for {@link FormattedSpcFileName} in
+     * @return set of {@link SPCFile} in the dir
      * @throws IOException if an I/O error occurs
      */
-    public static Set<SpcFileName> collectSpcFileName(Path path) throws IOException {
+    public static Set<SPCFile> collectSpcFileName(Path path) throws IOException {
         try (Stream<Path> stream = Files.list(path)) {
-            return stream.filter(SpcFileName::isSpcFileName).map(SpcFileName::new).collect(Collectors.toSet());
+            return stream.filter(FormattedSpcFileName::isSpcFileName).map(FormattedSpcFileName::new)
+                    .collect(Collectors.toSet());
         }
     }
 

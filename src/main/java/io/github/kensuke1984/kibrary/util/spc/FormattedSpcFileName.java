@@ -6,7 +6,7 @@ import java.net.URI;
 import java.nio.file.Path;
 
 /**
- * A name of a spectrum file made by DSM<br>
+ * A <b>formatted</b> name of a spectrum file made by DSM<br>
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * <p>
@@ -18,9 +18,9 @@ import java.nio.file.Path;
  * 'PSV', 'SH' must be upper case. 'station' must be 8 or less letters.
  *
  * @author Kensuke Konishi
- * @version 0.1.0.4
+ * @version 0.0.1
  */
-public class SpcFileName extends File {
+public class FormattedSpcFileName extends SPCFile {
 
     private static final long serialVersionUID = -6340811322023603513L;
 
@@ -28,19 +28,19 @@ public class SpcFileName extends File {
      * spheroidal mode PSV, toroidal mode SH
      */
     private SpcFileComponent mode;
-    private String observerID;
     /**
      * PB: backward or PF: forward, PAR2: mu
      */
     private SpcFileType fileType;
     private String x, y;
+    private String observerID;
     private String sourceID;
 
     /**
      * @param parent {@link File} of a parent folder of the spectrum file
      * @param child  a name of spectrum file
      */
-    public SpcFileName(File parent, String child) {
+    public FormattedSpcFileName(File parent, String child) {
         super(parent, child);
         readName(getName());
     }
@@ -49,7 +49,7 @@ public class SpcFileName extends File {
      * @param parent of a parent folder of the spectrum file
      * @param child  a name of spectrum file
      */
-    public SpcFileName(String parent, String child) {
+    public FormattedSpcFileName(String parent, String child) {
         super(parent, child);
         readName(getName());
     }
@@ -57,7 +57,7 @@ public class SpcFileName extends File {
     /**
      * @param pathname path of a spectrum file
      */
-    public SpcFileName(String pathname) {
+    public FormattedSpcFileName(String pathname) {
         super(pathname);
         readName(getName());
     }
@@ -65,11 +65,11 @@ public class SpcFileName extends File {
     /**
      * @param path {@link Path} of a spectrum file
      */
-    public SpcFileName(Path path) {
+    public FormattedSpcFileName(Path path) {
         this(path.toString());
     }
 
-    public SpcFileName(URI uri) {
+    public FormattedSpcFileName(URI uri) {
         super(uri);
         readName(getName());
     }
@@ -126,7 +126,7 @@ public class SpcFileName extends File {
 
     /**
      * @param path for check
-     * @return if the filePath is a valid {@link SpcFileName}
+     * @return if the filePath is formatted.
      */
     public static boolean isSpcFileName(Path path) {
         return isSpcFileName(path.getFileName().toString());
@@ -134,7 +134,7 @@ public class SpcFileName extends File {
 
     /**
      * @param file {@link File} for check
-     * @return if the file is a valid {@link SpcFileName}
+     * @return if the file is formatted.
      */
     public static boolean isSpcFileName(File file) {
         return isSpcFileName(file.getName());
@@ -169,38 +169,37 @@ public class SpcFileName extends File {
         return fileName.split("\\.").length == 3;
     }
 
-    /**
-     * @return ID of source
-     */
+    @Override
     public String getSourceID() {
         return sourceID;
     }
 
     private void readName(String fileName) {
         if (!isSpcFileName(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
-        sourceID = getEventID(fileName);
         observerID = getObserverID(fileName);
+        sourceID = getEventID(fileName);
         fileType = getFileType(fileName);
         mode = getMode(fileName);
         x = getX(fileName);
         y = getY(fileName);
     }
 
+    @Override
     public DSMOutput read() throws IOException {
-        return SpectrumFile.getInstance(this);
+        return Spectrum.getInstance(this);
     }
 
-    /**
-     * @return psv or sh
-     */
+    @Override
     public SpcFileComponent getMode() {
         return mode;
     }
 
+    @Override
     public SpcFileType getFileType() {
         return fileType;
     }
 
+    @Override
     public String getObserverID() {
         return observerID;
     }
@@ -213,9 +212,7 @@ public class SpcFileName extends File {
         return y;
     }
 
-    /**
-     * @return 理論波形（非偏微分波形）かどうか
-     */
+    @Override
     public boolean isSynthetic() {
         return isSynthetic(getName());
     }

@@ -14,10 +14,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
+import io.github.kensuke1984.kibrary.util.spc.*;
 import org.apache.commons.math3.complex.Complex;
 
 import java.io.File;
@@ -61,7 +58,7 @@ import java.util.stream.Stream;
  * Because of DSM condition, stations can not have the same name...
  *
  * @author Kensuke Konishi
- * @version 2.3.1.1
+ * @version 2.3.1.2
  */
 public class PartialDatasetMaker implements Operation {
 
@@ -381,7 +378,7 @@ public class PartialDatasetMaker implements Operation {
             if (idSet.isEmpty()) continue;
 
             // spectral files in bpModelFolder
-            Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
+            Set<SPCFile> bpFiles = Utilities.collectSpcFileName(bpModelPath);
             System.out.println(bpFiles.size() + " bpfiles are found");
 
             // stationに対するタイムウインドウが存在するfp内のmodelフォルダ
@@ -390,7 +387,7 @@ public class PartialDatasetMaker implements Operation {
 
             int donebp = 0;
             // foreach bpfile in bpfolder
-            for (SpcFileName bpname : bpFiles) {
+            for (SPCFile bpname : bpFiles) {
                 // create ThreadPool
                 ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
                 System.err.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
@@ -402,7 +399,7 @@ public class PartialDatasetMaker implements Operation {
                 // bpファイルに対する全てのfpファイルを
                 for (Path fpEventPath : fpEventPaths) {
                     String eventName = fpEventPath.getParent().getFileName().toString();
-                    SpcFileName fpfile = new SpcFileName(
+                    SPCFile fpfile = new FormattedSpcFileName(
                             fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
                     if (!fpfile.exists()) continue;
                     PartialComputation pc = new PartialComputation(bp, station, fpfile);
@@ -514,7 +511,7 @@ public class PartialDatasetMaker implements Operation {
     private class PartialComputation implements Runnable {
 
         private DSMOutput bp;
-        private SpcFileName fpname;
+        private SPCFile fpname;
         private DSMOutput fp;
         private Station station;
         private GlobalCMTID id;
@@ -523,7 +520,7 @@ public class PartialDatasetMaker implements Operation {
          * @param bp     back propagate
          * @param fpFile forward propagate
          */
-        private PartialComputation(DSMOutput bp, Station station, SpcFileName fpFile) {
+        private PartialComputation(DSMOutput bp, Station station, SPCFile fpFile) {
             this.bp = bp;
             this.station = station;
             fpname = fpFile;
