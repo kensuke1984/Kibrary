@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.*;
+import org.apache.commons.cli.*;
 import org.apache.commons.math3.util.FastMath;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 
 /**
  * This class create SAC files from one or two spector files(
- * {@link SpectrumFile})
+ * {@link Spectrum})
  * <p>
  * SPC file name must be station.eventID(PSV, SH).spc If the eventID is included
  * in Global CMT catalogue, the information for the event is written in SAC.
@@ -33,6 +34,25 @@ import java.util.function.Predicate;
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
+
+    /**
+     * Options
+     */
+    private final static Options options = new Options();
+    /**
+     * Help Formatter
+     */
+    private final static HelpFormatter helpFormatter = new HelpFormatter();
+
+    private static void setOptions() {
+        options.addOption("u", "unformatted", false, "When names of spectrum files are NOT formatted.");
+        options.addOption("help", "Shows this message. This option has the highest priority.");
+        options.addOption(null, "scardec", true, "use the source parameter by SCARDEC. (--scardec yyyyMMdd_HHmmss)");
+    }
+
+    static void printHelp() {
+        helpFormatter.printHelp("SACMaker", options);
+    }
 
     private final static Map<SACHeaderEnum, String> initialMap = new EnumMap<>(SACHeaderEnum.class);
 
@@ -155,6 +175,7 @@ public class SACMaker implements Runnable {
         initialMap.put(SACHeaderEnum.num97, "-12345");
         initialMap.put(SACHeaderEnum.num98, "-12345");
         initialMap.put(SACHeaderEnum.num99, "-12345");
+        setOptions();
     }
 
     private DSMOutput secondarySPC;
@@ -192,7 +213,7 @@ public class SACMaker implements Runnable {
      * @param oneSPC  one spc
      * @param pairSPC pair spc
      */
-    public SACMaker(DSMOutput oneSPC, DSMOutput pairSPC) {
+    SACMaker(DSMOutput oneSPC, DSMOutput pairSPC) {
         this(oneSPC, pairSPC, null);
     }
 
@@ -212,8 +233,9 @@ public class SACMaker implements Runnable {
         }
         this.sourceTimeFunction = sourceTimeFunction;
     }
+
     /**
-     * @param oneSPC Spector for SAC
+     * @param oneSPC Spectrum for SAC
      */
     public SACMaker(DSMOutput oneSPC) {
         this(oneSPC, null, null);
@@ -275,41 +297,64 @@ public class SACMaker implements Runnable {
         return isOK;
     }
 
+
     /**
      * Creates and outputs synthetic SAC files of Z R T from input spectra
      *
-     * @param args [onespc] [pairspc]
+     * @param args (option) [onespc] [pairspc]
      * @throws IOException if an I/O error occurs
      */
-    public static void main(String[] args) throws IOException {
-        if (args == null || args.length == 0) {
-            System.err.println("Usage: spcfile1 (spcfile2)");
-            return;
-        }
+    public static void main(String[] args) throws IOException, ParseException {
+        args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",
+                "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc"};
+        if (args == null || args.length == 0)
+            throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
 
-        SpcFileName oneName = new SpcFileName(args[0]);
-        DSMOutput oneSPC = SpectrumFile.getInstance(oneName);
+        for (String o : args)
+            if (o.equals("-help") || o.equals("--help")) {
+                printHelp();
+                return;
+            }
+        CommandLine cli = new DefaultParser().parse(options, args);
+
+        if (cli.getArgs().length < 1 || 2 < cli.getArgs().length)
+            throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
+
+        SCARDEC scardec = null;
+        if (cli.hasOption("scardec")) {
+            String dateStr = cli.getOptionValue("scardec");
+            try {
+                DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss").parse(dateStr);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("SCARDEC id must be yyyyMMdd_HHmmss");
+            }
+            Predicate<SCARDEC.SCARDEC_ID> predicate =
+                    id -> id.getOriginTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
+                            .equals(cli.getOptionValue("scardec"));
+            SCARDEC_ID id = SCARDEC.pick(predicate);
+            scardec = id.toSCARDEC();
+        }
+        String[] spcfiles = cli.getArgs();
+
+
+        SPCFile oneName = new SyntheticSPCFile(spcfiles[0]);
+        DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
         DSMOutput pairSPC = null;
-        if (1 < args.length) {
-            SpcFileName pairName = new SpcFileName(args[1]);
-            pairSPC = SpectrumFile.getInstance(pairName);
+        if (1 < spcfiles.length) {
+            SPCFile pairName = new SyntheticSPCFile(spcfiles[1]);
+            pairSPC = Spectrum.getInstance(pairName);
         }
 
         SACMaker sm = new SACMaker(oneSPC, pairSPC);
-        if (2 < args.length && args[2].equals("-scardec")) {
-            if (args.length < 4)
-                throw new IllegalArgumentException("please use as spcfile1 spcfile2 -scardec yyyyMMdd_HHmmss");
-            System.err.println("OUTPUTTING with SCARDEC");
-            Predicate<SCARDEC_ID> predicate =
-                    id -> id.getOriginTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")).equals(args[3]);
-            SCARDEC_ID id = SCARDEC.pick(predicate);
-            SCARDEC sc = id.toSCARDEC();
-            sm.beginDateTime = id.getOriginTime();
-            sm.setSourceTimeFunction(sc.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
+        if (scardec != null) {
+            sm.beginDateTime = scardec.getOriginTime();
+            sm.setSourceTimeFunction(scardec.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
         }
         sm.setOutPath(Paths.get(System.getProperty("user.dir")));
         sm.run();
+
+
     }
 
     /**
@@ -465,7 +510,7 @@ public class SACMaker implements Runnable {
     }
 
     /**
-     * @param outPath {@link Path} of a foldew which will conatin write sac files.
+     * @param outPath {@link Path} of a folder which will contain sac files.
      */
     public void setOutPath(Path outPath) {
         outDirectoryPath = outPath;

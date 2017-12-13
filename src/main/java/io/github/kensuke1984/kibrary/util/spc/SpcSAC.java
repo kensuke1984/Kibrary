@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * SpcSAC Converter from {@link SpectrumFile} to {@link SACData} file. According
+ * SpcSAC Converter from {@link Spectrum} to {@link SACData} file. According
  * to an information file, it creates SAC files.
  * <p>
  * It converts all the SPC files in event folders/model under the workDir set by
@@ -66,8 +66,8 @@ public final class SpcSAC implements Operation {
      */
     private boolean computesPartial;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
-    private Set<SpcFileName> psvSPCs;
-    private Set<SpcFileName> shSPCs;
+    private Set<SPCFile> psvSPCs;
+    private Set<SPCFile> shSPCs;
     private Path outPath;
 
     public SpcSAC(Properties properties) throws IOException {
@@ -208,8 +208,8 @@ public final class SpcSAC implements Operation {
         else throw new RuntimeException("There are some events without model folder " + modelName);
     }
 
-    private Set<SpcFileName> collectSHSPCs() throws IOException {
-        Set<SpcFileName> shSet = new HashSet<>();
+    private Set<SPCFile> collectSHSPCs() throws IOException {
+        Set<SPCFile> shSet = new HashSet<>();
         Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(shPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
@@ -219,8 +219,8 @@ public final class SpcSAC implements Operation {
         return shSet;
     }
 
-    private Set<SpcFileName> collectPSVSPCs() throws IOException {
-        Set<SpcFileName> psvSet = new HashSet<>();
+    private Set<SPCFile> collectPSVSPCs() throws IOException {
+        Set<SPCFile> psvSet = new HashSet<>();
         Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(psvPath);
         for (EventFolder eventFolder : eventFolderSet) {
             Path modelFolder = eventFolder.toPath().resolve(modelName);
@@ -230,9 +230,9 @@ public final class SpcSAC implements Operation {
         return psvSet;
     }
 
-    private SpcFileName pairFile(SpcFileName psvFileName) {
+    private SyntheticSPCFile pairFile(SPCFile psvFileName) {
         if (psvFileName.getMode() == SpcFileComponent.SH) return null;
-        return new SpcFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
+        return new SyntheticSPCFile(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
                 psvFileName.getName().replace("PSV.spc", "SH.spc")));
     }
 
@@ -255,22 +255,22 @@ public final class SpcSAC implements Operation {
         ExecutorService execs = Executors.newFixedThreadPool(nThread);
         // single
         int nSAC = 0;
-        if (psvPath == null || shPath == null) for (SpcFileName spc : psvSPCs != null ? psvSPCs : shSPCs) {
-            SpectrumFile one = SpectrumFile.getInstance(spc);
+        if (psvPath == null || shPath == null) for (SPCFile spc : psvSPCs != null ? psvSPCs : shSPCs) {
+            Spectrum one = Spectrum.getInstance(spc);
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             execs.execute(createSACMaker(one, null));
             nSAC++;
             if (nSAC % 5 == 0) System.err.print("\rReading SPC files ... " + nSAC);
         }
             // both
-        else for (SpcFileName spc : psvSPCs) {
-            SpectrumFile one = SpectrumFile.getInstance(spc);
-            SpcFileName pair = pairFile(spc);
+        else for (SPCFile spc : psvSPCs) {
+            Spectrum one = Spectrum.getInstance(spc);
+            SPCFile pair = pairFile(spc);
             if (pair == null || !pair.exists()) {
                 System.err.println(pair + " does not exist");
                 continue;
             }
-            SpectrumFile two = SpectrumFile.getInstance(pairFile(spc));
+            Spectrum two = Spectrum.getInstance(pairFile(spc));
             Files.createDirectories(outPath.resolve(spc.getSourceID()));
             execs.execute(createSACMaker(one, two));
             nSAC++;
@@ -296,7 +296,7 @@ public final class SpcSAC implements Operation {
      * @param secondarySPC null is ok
      * @return {@link SACMaker}
      */
-    private SACMaker createSACMaker(SpectrumFile primeSPC, SpectrumFile secondarySPC) {
+    private SACMaker createSACMaker(Spectrum primeSPC, Spectrum secondarySPC) {
         SourceTimeFunction sourceTimeFunction = getSourceTimeFunction(primeSPC.np(), primeSPC.tlen(), samplingHz,
                 new GlobalCMTID(primeSPC.getSourceID()));
         SACMaker sm = new SACMaker(primeSPC, secondarySPC, sourceTimeFunction) {

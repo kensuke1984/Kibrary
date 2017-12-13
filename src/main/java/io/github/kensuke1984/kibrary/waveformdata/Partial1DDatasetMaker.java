@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * same events</b> TODO
  *
  * @author Kensuke Konishi
- * @version 0.2.1
+ * @version 0.2.1.1
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
@@ -408,7 +408,7 @@ public class Partial1DDatasetMaker implements Operation {
             }
             processMap.put(id, 0);
 
-            Set<SpcFileName> spcFileNameSet;
+            Set<SPCFile> spcFileNameSet;
             try {
                 spcFileNameSet = Utilities.collectSpcFileName(spcFolder);
             } catch (IOException e1) {
@@ -421,7 +421,7 @@ public class Partial1DDatasetMaker implements Operation {
 
             int finished = 0;
             // process for all SPC files
-            for (SpcFileName spcFileName : spcFileNameSet) {
+            for (SPCFile spcFileName : spcFileNameSet) {
                 // ignore syn.
                 if (spcFileName.isSynthetic()) continue;
 
@@ -532,7 +532,7 @@ public class Partial1DDatasetMaker implements Operation {
         }
 
 
-        private void addPartialSpectrum(SpcFileName spcname) throws IOException {
+        private void addPartialSpectrum(SPCFile spcname) throws IOException {
             DSMOutput spectrum = spcname.read();
             if (spectrum.tlen() != tlen || spectrum.np() != np) {
                 System.err.println(spcname + " has different np or tlen.");

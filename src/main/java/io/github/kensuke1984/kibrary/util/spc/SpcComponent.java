@@ -10,7 +10,7 @@ import org.apache.commons.math3.util.FastMath;
 import java.util.Arrays;
 
 /**
- * Data for one element in one {@link SpcBody} in a {@link SpectrumFile}
+ * Data for one element in one {@link SpcBody} in a {@link Spectrum}
  *
  * @author Kensuke Konishi
  * @version 0.1.6
