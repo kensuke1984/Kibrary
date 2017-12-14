@@ -303,6 +303,7 @@ public class SACMaker implements Runnable {
      *
      * @param args (option) [onespc] [pairspc]
      * @throws IOException if an I/O error occurs
+     * @throws ParseException if any
      */
     public static void main(String[] args) throws IOException, ParseException {
         args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",

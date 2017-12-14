@@ -46,7 +46,6 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * <p>
  * TODO when the path partially exists. I have to change drastically the structure of dealing with layers each layer has a phase or not
  * <p>
- * <p>
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi
@@ -283,7 +282,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param stream to be read
      * @throws ClassNotFoundException if happens
      * @throws IOException            if any
-     * @serialData
+     * @serialData &Delta; and T
      */
     private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
         stream.defaultReadObject();
@@ -1025,9 +1024,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private void setTurningRs() {
         turningRMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
         if (RAY_PARAMETER == 0) {
-            Arrays.stream(PhasePart.values()).forEach(pp -> {
-                turningRMap.put(pp, Double.NaN);
-            });
+            Arrays.stream(PhasePart.values()).forEach(pp -> turningRMap.put(pp, Double.NaN));
             return;
         }
         Arrays.stream(PhasePart.values())
@@ -1048,7 +1045,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                         Precision.round(timeMap.get(pp), 3)));
     }
 
-    public double getTurningR(PhasePart pp) {
+    private double getTurningR(PhasePart pp) {
         return turningRMap.get(pp);
     }
 
