@@ -405,6 +405,7 @@ public class SourceTimeFunction {
 	 * @return convolute data in <b>frequency</b> domain
 	 */
 	public final Complex[] convolve(Complex[] data) {
+		System.out.println("stf is not null? " + (sourceTimeFunction!=null));
 		if (data.length != np + 1)
 			throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np+1));
 		return IntStream.range(0, np + 1).parallel()

@@ -155,6 +155,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 								return null;
 							}
 						}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
+				System.out.println(stations.isEmpty());
 				if (stations.isEmpty())
 					continue;
 				int numberOfStation = (int) stations.stream().map(Station::getName).count();

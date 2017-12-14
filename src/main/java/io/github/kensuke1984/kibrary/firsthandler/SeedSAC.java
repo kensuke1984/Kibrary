@@ -90,12 +90,12 @@ class SeedSAC implements Runnable {
 	/**
 	 * Minimum epicentral distance of output sac files 震央距離の最小値
 	 */
-	private double epicentralDistanceMin = 0;
+	private double epicentralDistanceMin = 60;
 
 	/**
 	 * Maximum epicentral distance of output sac files 震央距離の最大値
 	 */
-	private double epicentralDistanceMax = 180;
+	private double epicentralDistanceMax = 110;
 
 	/**
 	 * 解凍できるかどうか
@@ -199,6 +199,8 @@ class SeedSAC implements Runnable {
 	 */
 	private boolean idValidity() {
 		event = id.getEvent();
+//		System.out.println(seedFile.getStartingDate()+" "+event.getPDETime()+" "+seedFile.getEndingDate()+" "+event.getCMTTime());
+//		System.out.println((event != null)+" "+(id != null)+" "+seedFile.getStartingDate().isBefore(event.getPDETime())+" "+seedFile.getEndingDate().isAfter(event.getCMTTime()));
 		return event != null && id != null && seedFile.getStartingDate().isBefore(event.getPDETime())
 				&& seedFile.getEndingDate().isAfter(event.getCMTTime());
 	}
@@ -378,6 +380,7 @@ class SeedSAC implements Runnable {
 
 				// 震央距離check
 				if (!sm.checkEpicentralDistance(epicentralDistanceMin, epicentralDistanceMax)) {
+					System.out.println("SAC file trashed.");
 					Utilities.moveToDirectory(sacPath, trashBoxPath, true);
 					continue;
 				}
