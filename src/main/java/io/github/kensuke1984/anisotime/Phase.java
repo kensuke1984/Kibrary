@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
  * <p>
  * Numbers in a name.
  * </p>
- * <p>
  * <dl>
  * <dt>redundancy</dt>
  * <dd>A number in parentheses indicates repetition of
