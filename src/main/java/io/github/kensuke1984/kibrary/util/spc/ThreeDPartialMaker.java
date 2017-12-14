@@ -104,7 +104,7 @@ public class ThreeDPartialMaker {
             System.err.println("nps are different. fp, bp: " + fp.np() + ", " + bp.np());
             validity = false;
         }
-        // tlen
+        // TLEN
         if (fp.tlen() != bp.tlen()) {
             System.err.println("tlens are different. fp, bp: " + fp.tlen() + " ," + bp.tlen());
             validity = false;
@@ -145,7 +145,7 @@ public class ThreeDPartialMaker {
         Location sourceLocation = fp.getSourceLocation();
         String sourceID = fp.getSourceID();
         double[] bodyR = bp.getBodyR();
-        List<SpcBody> spcBodyList = new ArrayList<>(nbody);
+        List<SPCBody> spcBodyList = new ArrayList<>(nbody);
         for (int ibody = 0; ibody < nbody; ibody++) {
             TensorCalculationUCE tensorcalc =
                     new TensorCalculationUCE(fp.getSpcBodyList().get(ibody), bp.getSpcBodyList().get(ibody),
@@ -159,7 +159,7 @@ public class ThreeDPartialMaker {
 
             Complex[] partialR = rotatePartial(partial1, partial2, SACComponent.R);
             Complex[] partialT = rotatePartial(partial1, partial2, SACComponent.T);
-            SpcBody body = new SpcBody(3, np);
+            SPCBody body = new SPCBody(3, np);
             for (int ip = 0; ip < bp.np() + 1; ip++)
                 body.add(ip, partialZ[ip], partialR[ip], partialT[ip]);
             spcBodyList.add(body);
@@ -187,12 +187,12 @@ public class ThreeDPartialMaker {
             }
 
             @Override
-            public SpcFileType getSpcFileType() {
+            public SPCType getSpcFileType() {
                 return type.toSpcFileType();
             }
 
             @Override
-            public List<SpcBody> getSpcBodyList() {
+            public List<SPCBody> getSpcBodyList() {
                 return spcBodyList;
             }
 
@@ -391,7 +391,7 @@ public class ThreeDPartialMaker {
     }
 
     /**
-     * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
+     * frequency domain をsamplingFrequencyでtime-domain TLEN(s)にもってくるスムージング値を探す
      */
     private void findLsmooth() {
         int np = Integer.highestOneBit(fp.np());

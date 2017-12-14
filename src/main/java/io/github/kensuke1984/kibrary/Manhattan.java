@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.FilterDivider;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
@@ -41,7 +41,7 @@ public enum Manhattan {
     PartialDatasetMaker(11, PartialDatasetMaker.class), //
     RaypathDistribution(12, RaypathDistribution.class), //
     SecondHandler(13, SecondHandler.class), //
-    SpcSAC(14, SpcSAC.class), //
+    SpcSAC(14, SPC_SAC.class), //
     SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
     SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
     TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //

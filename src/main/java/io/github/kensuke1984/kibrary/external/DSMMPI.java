@@ -39,7 +39,7 @@ public final class DSMMPI {
     }
 
     /**
-     * Executes: mpirun -np `np` mpi-tipsv &lt; `information` Before the
+     * Executes: mpirun -NP `NP` mpi-tipsv &lt; `information` Before the
      * execution, current directory will be the same as the `information` Note
      * that 'mpi-tipsv' must be in $HOME/bin
      *
@@ -49,13 +49,13 @@ public final class DSMMPI {
      */
     public static Callable<Integer> tipsv(int np, Path information) {
         if (!psvExists) throw new RuntimeException("mpi-psv does not exist in PATH");
-        if (np <= 0) throw new IllegalArgumentException("np must be positive...");
+        if (np <= 0) throw new IllegalArgumentException("NP must be positive...");
         if (!Files.exists(information)) throw new RuntimeException(information + " does not exist");
 
         return () -> {
             System.err.println("mpi-tipsv is going on " + information);
             Path absPath = information.toAbsolutePath();
-            int exit = new ProcessBuilder("mpirun", "-np", String.valueOf(np), "mpi-tipsv")
+            int exit = new ProcessBuilder("mpirun", "-NP", String.valueOf(np), "mpi-tipsv")
                     .directory(absPath.getParent().toFile()).redirectInput(absPath.toFile())
                     .redirectError(ExternalProcess.bitBucket).redirectOutput(ExternalProcess.bitBucket).start()
                     .waitFor();
@@ -66,7 +66,7 @@ public final class DSMMPI {
     }
 
     /**
-     * Executes: mpirun -np `np` mpi-tish &lt; `information` Before the
+     * Executes: mpirun -NP `NP` mpi-tish &lt; `information` Before the
      * execution, current directory will be the same as the `information` Note
      * that 'mpi-tish' must be in PATH (checked by which).
      *
@@ -76,12 +76,12 @@ public final class DSMMPI {
      */
     public static Callable<Integer> tish(int np, Path information) {
         if (!shExists) throw new RuntimeException("mpi-sh does not exist in PATH");
-        if (np <= 0) throw new IllegalArgumentException("np must be positive...");
+        if (np <= 0) throw new IllegalArgumentException("NP must be positive...");
         if (!Files.exists(information)) throw new RuntimeException(information + " does not exist");
         return () -> {
             System.err.println("mpi-tish is going on " + information);
             Path absPath = information.toAbsolutePath();
-            int exit = new ProcessBuilder("mpirun", "-np", String.valueOf(np), "mpi-tish")
+            int exit = new ProcessBuilder("mpirun", "-NP", String.valueOf(np), "mpi-tish")
                     .directory(absPath.getParent().toFile()).redirectInput(absPath.toFile())
                     .redirectError(ExternalProcess.bitBucket).redirectOutput(ExternalProcess.bitBucket).start()
                     .waitFor();
@@ -93,26 +93,26 @@ public final class DSMMPI {
 
     /**
      * Example:
-     * -np 8 -psv hogePSV.inf fooPSV.inf -sh hogeSH.inf fooSH.inf
-     * -np is optional. Default is the number of threads in user's environment.
+     * -NP 8 -psv hogePSV.inf fooPSV.inf -sh hogeSH.inf fooSH.inf
+     * -NP is optional. Default is the number of threads in user's environment.
      *
      * @param args arguments for DSMMPI
      * @throws NoSuchFileException if any
      */
     public static void main(String[] args) throws NoSuchFileException {
-        if (args.length == 0 || (!args[0].equals("-np") && !args[0].equals("-sh") && !args[0].equals("-psv")))
+        if (args.length == 0 || (!args[0].equals("-NP") && !args[0].equals("-sh") && !args[0].equals("-psv")))
             throw new IllegalArgumentException(
-                    "Usage: (-np threads) -psv (PSV information files...) -sh (SH information files...)");
+                    "Usage: (-NP threads) -psv (PSV information files...) -sh (SH information files...)");
         List<Callable<Integer>> callList = new ArrayList<>();
         boolean isPSV = false;
-        int np = args[0].equals("-np") ? Integer.parseInt(args[1]) : Runtime.getRuntime().availableProcessors();
+        int np = args[0].equals("-NP") ? Integer.parseInt(args[1]) : Runtime.getRuntime().availableProcessors();
 
-        if (1 < Arrays.stream(args).filter(s -> s.equals("-np")).count())
-            throw new IllegalArgumentException("Option -np (number of threads) appears many times.");
+        if (1 < Arrays.stream(args).filter(s -> s.equals("-NP")).count())
+            throw new IllegalArgumentException("Option -NP (number of threads) appears many times.");
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
-                case "-np":
+                case "-NP":
                     i++;
                     continue;
                 case "-sh":

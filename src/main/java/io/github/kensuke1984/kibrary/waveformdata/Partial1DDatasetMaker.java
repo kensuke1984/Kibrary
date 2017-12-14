@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * <p>
  * TODO shとpsvの曖昧さ 両方ある場合ない場合等 現状では combineして対処している
  * <p>
- * Time length (tlen) and the number of step in frequency domain (np) in DSM
+ * Time length (TLEN) and the number of step in frequency domain (NP) in DSM
  * software must be same. Those values are set in a parameter file.
  * <p>
  * Only partials for radius written in a parameter file are computed.
@@ -144,10 +144,10 @@ public class Partial1DDatasetMaker implements Operation {
             pw.println("#partialTypes");
             pw.println("##Filter if backward filtering is applied (true)");
             pw.println("#backward");
-            pw.println("##double time length:DSM parameter tlen, must be set");
-            pw.println("#tlen 3276.8");
-            pw.println("##int step of frequency domain DSM parameter np, must be set");
-            pw.println("#np 512");
+            pw.println("##double time length:DSM parameter TLEN, must be set");
+            pw.println("#TLEN 3276.8");
+            pw.println("##int step of frequency domain DSM parameter NP, must be set");
+            pw.println("#NP 512");
             pw.println("##double minimum value of passband (0.005)");
             pw.println("#minFreq");
             pw.println("##double maximum value of passband (0.08)");
@@ -236,8 +236,8 @@ public class Partial1DDatasetMaker implements Operation {
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
 
-        tlen = Double.parseDouble(property.getProperty("tlen"));
-        np = Integer.parseInt(property.getProperty("np"));
+        tlen = Double.parseDouble(property.getProperty("TLEN"));
+        np = Integer.parseInt(property.getProperty("NP"));
         minFreq = Double.parseDouble(property.getProperty("minFreq"));
         maxFreq = Double.parseDouble(property.getProperty("maxFreq"));
         bodyR = Arrays.stream(property.getProperty("bodyR").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
@@ -434,16 +434,16 @@ public class Partial1DDatasetMaker implements Operation {
                     }
                 }
 
-                SpcFileType spcFileType = spcFileName.getFileType();
+                SPCType spcFileType = spcFileName.getFileType();
 
                 // eliminate SPC for 3D
-                if (spcFileType == SpcFileType.PB || spcFileType == SpcFileType.PF) continue;
+                if (spcFileType == SPCType.PB || spcFileType == SPCType.PF) continue;
 
                 // check if the partialType is included in the computing list.
                 PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
                 if (!(partialTypes.contains(partialType) ||
-                        (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2))) continue;
+                        (partialTypes.contains(PartialType.PARQ) && spcFileType == SPCType.PAR2))) continue;
                 try {
                     addPartialSpectrum(spcFileName);
                 } catch (ClassCastException e) {
@@ -535,20 +535,20 @@ public class Partial1DDatasetMaker implements Operation {
         private void addPartialSpectrum(SPCFile spcname) throws IOException {
             DSMOutput spectrum = spcname.read();
             if (spectrum.tlen() != tlen || spectrum.np() != np) {
-                System.err.println(spcname + " has different np or tlen.");
-                writeLog(spcname + " has different np or tlen.");
+                System.err.println(spcname + " has different NP or TLEN.");
+                writeLog(spcname + " has different NP or TLEN.");
                 return;
             }
             String stationName = spcname.getObserverID();
             Station station = new Station(stationName, spectrum.getObserverPosition(), "DSM");
             PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
-            if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+            if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
                 DSMOutput qSpectrum = fujiConversion.convert(spectrum);
                 process(qSpectrum);
                 for (SACComponent component : components)
                     outputProcess(station, PartialType.PARQ, qSpectrum, component);
             }
-            if (spcname.getFileType() == SpcFileType.PAR2 && !partialTypes.contains(PartialType.PAR2)) return;
+            if (spcname.getFileType() == SPCType.PAR2 && !partialTypes.contains(PartialType.PAR2)) return;
             else process(spectrum);
 
             for (SACComponent component : components)

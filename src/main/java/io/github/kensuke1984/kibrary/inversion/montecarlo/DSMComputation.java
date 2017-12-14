@@ -14,7 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSpcFileName;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 
@@ -151,7 +151,7 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
                 eventDir.getGlobalCMTID().getEvent().getHalfDuration());
         try (Stream<Path> stream = Files.list(spcPath)) {
             stream.filter(path -> path.toString().endsWith("SH.spc")).forEach(shPath -> {
-                SPCFile shName = new FormattedSpcFileName(shPath);
+                SPCFile shName = new FormattedSPCFile(shPath);
                 SPCFile psvName = toPSVname(shName);
                 try {
                     DSMOutput shSPC = shName.read();
@@ -170,6 +170,6 @@ class DSMComputation implements DataGenerator<PolynomialStructure, SACData[]> {
     private SPCFile toPSVname(SPCFile shName) {
         String psvname = shName.getName().replace("SH.spc", "PSV.spc");
         GlobalCMTID id = new GlobalCMTID(shName.getSourceID());
-        return new FormattedSpcFileName(PSVPATH.resolve(id + "/" + psvname));
+        return new FormattedSPCFile(PSVPATH.resolve(id + "/" + psvname));
     }
 }

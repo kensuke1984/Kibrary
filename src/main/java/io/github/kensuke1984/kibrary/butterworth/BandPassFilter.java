@@ -27,12 +27,12 @@ import java.nio.file.Paths;
 public class BandPassFilter extends ButterworthFilter {
 
     /**
-     * @param args [np] [low limiter (Hz)] [higher limit (Hz)] [SAC file]
+     * @param args [NP] [low limiter (Hz)] [higher limit (Hz)] [SAC file]
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
         if (args.length != 4)
-            throw new IllegalArgumentException("Usage:[np] [lower limit (Hz)] [higher limit (Hz)] [SAC file]");
+            throw new IllegalArgumentException("Usage:[NP] [lower limit (Hz)] [higher limit (Hz)] [SAC file]");
         int n = Integer.parseInt(args[0]);
         Path path = Paths.get(args[3]);
         SACData sac = new SACFileName(path).read();

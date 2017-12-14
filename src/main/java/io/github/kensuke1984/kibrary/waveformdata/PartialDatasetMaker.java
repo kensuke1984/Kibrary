@@ -185,10 +185,10 @@ public class PartialDatasetMaker implements Operation {
             pw.println("#timewindowPath timewindow.dat");
             pw.println("##PartialType[] compute types (MU)");
             pw.println("#partialTypes");
-            pw.println("##double time length DSM parameter tlen, must be set");
-            pw.println("#tlen 3276.8");
-            pw.println("##int step of frequency domain DSM parameter np, must be set");
-            pw.println("#np 512");
+            pw.println("##double time length DSM parameter TLEN, must be set");
+            pw.println("#TLEN 3276.8");
+            pw.println("##int step of frequency domain DSM parameter NP, must be set");
+            pw.println("#NP 512");
             pw.println("##double minimum value of passband (0.005)");
             pw.println("#minFreq");
             pw.println("##double maximum value of passband (0.08)");
@@ -270,8 +270,8 @@ public class PartialDatasetMaker implements Operation {
 
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
-        tlen = Double.parseDouble(property.getProperty("tlen"));
-        np = Integer.parseInt(property.getProperty("np"));
+        tlen = Double.parseDouble(property.getProperty("TLEN"));
+        np = Integer.parseInt(property.getProperty("NP"));
         minFreq = Double.parseDouble(property.getProperty("minFreq"));
         maxFreq = Double.parseDouble(property.getProperty("maxFreq"));
         perturbationPath = getPath("perturbationPath");
@@ -399,7 +399,7 @@ public class PartialDatasetMaker implements Operation {
                 // bpファイルに対する全てのfpファイルを
                 for (Path fpEventPath : fpEventPaths) {
                     String eventName = fpEventPath.getParent().getFileName().toString();
-                    SPCFile fpfile = new FormattedSpcFileName(
+                    SPCFile fpfile = new FormattedSPCFile(
                             fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
                     if (!fpfile.exists()) continue;
                     PartialComputation pc = new PartialComputation(bp, station, fpfile);
@@ -567,7 +567,7 @@ public class PartialDatasetMaker implements Operation {
                 throw new RuntimeException("There may be a station with the same name but other networks.");
 
             if (bp.tlen() != tlen || bp.np() != np)
-                throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
+                throw new RuntimeException("BP for " + station + " has invalid TLEN or NP.");
             GlobalCMTID id = new GlobalCMTID(fpname.getSourceID());
 
             touchedSet.add(id);

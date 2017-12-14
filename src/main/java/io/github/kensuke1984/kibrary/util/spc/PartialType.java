@@ -63,33 +63,33 @@ public enum PartialType {
     }
 
     // TODO hmm...
-    public SpcFileType toSpcFileType() {
+    public SPCType toSpcFileType() {
         switch (this) {
             case A:
             case PARA:
-                return SpcFileType.PARA;
+                return SPCType.PARA;
             case LAMBDA:
             case PAR1:
-                return SpcFileType.PAR1;
+                return SPCType.PAR1;
             case C:
             case PARC:
-                return SpcFileType.PARC;
+                return SPCType.PARC;
             case MU:
             case PAR2:
-                return SpcFileType.PAR2;
+                return SPCType.PAR2;
             case F:
-                return SpcFileType.PARF;
+                return SPCType.PARF;
             case PARF:
-                return SpcFileType.PAR3;
+                return SPCType.PAR3;
             case L:
             case PARL:
-                return SpcFileType.PAR4;
+                return SPCType.PAR4;
             case N:
             case PARN:
-                return SpcFileType.PAR5;
+                return SPCType.PAR5;
             case PARQ:
             case Q:
-                return SpcFileType.PARQ;
+                return SPCType.PARQ;
             default:
                 throw new RuntimeException("unexpected");
 

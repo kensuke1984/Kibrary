@@ -20,6 +20,35 @@ import java.nio.file.Path;
  */
 public abstract class SPCFile extends File {
 
+    static boolean isFormatted(String name) {
+        if (!name.endsWith(".spc")) return false;
+        if (!name.endsWith("PSV.spc") && !name.endsWith("SH.spc")) {
+            System.err.println("SPC file name must end with [PSV, SH].spc (psv, sh not allowed anymore).");
+            return false;
+        }
+        String[] parts = name.split("\\.");
+        if (parts.length != 3 && parts.length != 7) {
+            System.err.println("SPC file name must be station.GlobalCMTID(PSV, SV).spc or " +
+                    "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
+            return false;
+        }
+
+        if (8 < name.split("\\.")[0].length()) {
+            System.err.println("Name of station cannot be over 8 characters.");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param fileName file name for chack
+     * @return if the fileName is synthetic (not partial)
+     */
+    static boolean isSynthetic(String fileName) {
+        return fileName.split("\\.").length == 3;
+    }
+
     SPCFile(String pathname) {
         super(pathname);
     }
@@ -48,12 +77,12 @@ public abstract class SPCFile extends File {
     /**
      * @return psv or sh
      */
-    public abstract SpcFileComponent getMode();
+    public abstract SPCMode getMode();
 
     /**
      * @return type (PAR0, .., PARQ, synthetic) of the file.
      */
-    public abstract SpcFileType getFileType();
+    public abstract SPCType getFileType();
 
     /**
      * @return ID for the observer (station)

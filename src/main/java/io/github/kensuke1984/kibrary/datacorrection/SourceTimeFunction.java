@@ -22,9 +22,9 @@ import java.util.stream.IntStream;
  * Source time function. <br>
  * <p>
  * You have to multiply<br>
- * Source time function: stf[0], .. stf[np-1] <br>
+ * Source time function: stf[0], .. stf[NP-1] <br>
  * on <br>
- * Waveform in frequency domain: U[1].. U[np], respectively. See
+ * Waveform in frequency domain: U[1].. U[NP], respectively. See
  * {@link #convolve(Complex[])}
  *
  * @author Kensuke Konishi
@@ -43,7 +43,7 @@ public class SourceTimeFunction {
     protected final double tlen;
     protected final double samplingHz;
     /**
-     * The length is np
+     * The length is NP
      */
     protected Complex[] sourceTimeFunction;
     private int nptsInTimeDomain;
@@ -163,12 +163,12 @@ public class SourceTimeFunction {
             bool = false;
         }
         if (!ArithmeticUtils.isPowerOfTwo(np)) {
-            System.err.println("np must be a power of 2");
+            System.err.println("NP must be a power of 2");
             bool = false;
         }
         long tlen10 = Math.round(10 * tlen);
         if (!ArithmeticUtils.isPowerOfTwo(tlen10)) {
-            System.err.println("tlen must be a tenth of a power of 2");
+            System.err.println("TLEN must be a tenth of a power of 2");
             bool = false;
         }
         return bool;
@@ -267,7 +267,7 @@ public class SourceTimeFunction {
         Objects.requireNonNull(sourceTimeFunction, "Source time function is not computed yet.");
 
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
-            pw.println("#np tlen samplingHz");
+            pw.println("#NP TLEN samplingHz");
             pw.println(np + " " + tlen + " " + samplingHz);
             for (Complex aSourceTimeFunction : sourceTimeFunction)
                 pw.println(aSourceTimeFunction.getReal() + " " + aSourceTimeFunction.getImaginary());
