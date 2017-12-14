@@ -35,11 +35,11 @@ class Spectrum implements DSMOutput {
      */
     private HorizontalPosition observerPosition;
     private double omegai;
-    private List<SpcBody> spcBody;
+    private List<SPCBody> spcBody;
     private int nbody;
     private int nComponent;
     private double[] bodyR;
-    private SpcFileType spcFileType;
+    private SPCType spcFileType;
 
     private Spectrum(SPCFile spcFileName) {
         this.spcFileName = spcFileName; // TODO
@@ -60,11 +60,11 @@ class Spectrum implements DSMOutput {
             specFile.sourceID = spcFileName.getSourceID();
             specFile.observerID = spcFileName.getObserverID();
             // read header PF
-            // tlen
+            // TLEN
             double tlen = dis.readDouble();
-            // np
+            // NP
             int np = dis.readInt();
-            // nbody
+            // NBODY
             int nbody = dis.readInt();
 
             // ncomponents
@@ -75,27 +75,27 @@ class Spectrum implements DSMOutput {
                     break;
                 case 3: // normal synthetic
                     specFile.nComponent = 3;
-                    specFile.spcFileType = SpcFileType.SYNTHETIC;
+                    specFile.spcFileType = SPCType.SYNTHETIC;
                     break;
                 case 9: // forward propagation
                     specFile.nComponent = 9;
-                    specFile.spcFileType = SpcFileType.PF;
+                    specFile.spcFileType = SPCType.PF;
                     break;
                 case 27: // back propagation
                     specFile.nComponent = 27;
-                    specFile.spcFileType = SpcFileType.PB;
+                    specFile.spcFileType = SPCType.PB;
                     break;
                 default:
                     throw new RuntimeException("component can be only 3(synthetic), 9(fp) or 27(bp) right now");
             }
-//			 System.out.println(nbody);
+//			 System.out.println(NBODY);
             specFile.nbody = nbody;
             specFile.np = np;
             specFile.tlen = tlen;
 
             specFile.spcBody = new ArrayList<>(nbody);
             for (int i = 0; i < nbody; i++)
-                specFile.spcBody.add(new SpcBody(specFile.nComponent, np));
+                specFile.spcBody.add(new SPCBody(specFile.nComponent, np));
 
             // data part
             specFile.omegai = dis.readDouble();
@@ -115,12 +115,12 @@ class Spectrum implements DSMOutput {
             }
 
             specFile.bodyR = new double[nbody];
-            if (specFile.spcFileType != SpcFileType.SYNTHETIC) for (int i = 0; i < nbody; i++)
+            if (specFile.spcFileType != SPCType.SYNTHETIC) for (int i = 0; i < nbody; i++)
                 specFile.bodyR[i] = dis.readDouble();
 
             // read body
             for (int i = 0; i < np + 1; i++)
-                for (SpcBody body : specFile.spcBody) {
+                for (SPCBody body : specFile.spcBody) {
                     Complex[] u = new Complex[specFile.nComponent];
                     int ip = dis.readInt();
                     for (int k = 0; k < specFile.nComponent; k++)
@@ -171,7 +171,7 @@ class Spectrum implements DSMOutput {
     }
 
     @Override
-    public List<SpcBody> getSpcBodyList() {
+    public List<SPCBody> getSpcBodyList() {
         return Collections.unmodifiableList(spcBody);
     }
 
@@ -181,7 +181,7 @@ class Spectrum implements DSMOutput {
     }
 
     @Override
-    public SpcFileType getSpcFileType() {
+    public SPCType getSpcFileType() {
         return spcFileType;
     }
 

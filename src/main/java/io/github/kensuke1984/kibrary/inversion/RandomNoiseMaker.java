@@ -66,7 +66,7 @@ public final class RandomNoiseMaker {
     }
 
     /**
-     * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
+     * frequency domain をsamplingFrequencyでtime-domain TLEN(s)にもってくるスムージング値を探す
      */
     private static int findLsmooth(double samplingHz, double tlen, int np) {
 

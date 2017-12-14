@@ -40,8 +40,8 @@ public class SyntheticDSMInfo extends DSMheader {
      * @param event     {@link GlobalCMTID}
      * @param stations  ステーション情報
      * @param outputDir name of outputDir (relative PATH)
-     * @param tlen      tlen[s]
-     * @param np        np
+     * @param tlen      TLEN[s]
+     * @param np        NP
      */
     public SyntheticDSMInfo(PolynomialStructure structure, GlobalCMTData event, Set<Station> stations, String outputDir,
                             double tlen, int np) {

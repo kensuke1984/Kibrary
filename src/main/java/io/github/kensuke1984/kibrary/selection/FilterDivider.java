@@ -98,8 +98,8 @@ public class FilterDivider implements Operation {
             pw.println("##Filter type to be applied (bandpass)");
             pw.println("##The filter can be 'lowpass', 'highpass', 'bandpass', 'bandstop'");
             pw.println("#filter");
-            pw.println("##The value of np (4)");
-            pw.println("#np");
+            pw.println("##The value of NP (4)");
+            pw.println("#NP");
             pw.println("##If backward computation is performed. true: zero phase, false: causal  (true)");
             pw.println("#backward");
         }
@@ -132,7 +132,7 @@ public class FilterDivider implements Operation {
         if (!property.containsKey("highFreq")) property.setProperty("highFreq", "0.08");
         if (!property.containsKey("lowFreq")) property.setProperty("lowFreq", "0.005");
         if (!property.containsKey("backward")) property.setProperty("backward", "true");
-        if (!property.containsKey("np")) property.setProperty("np", "4");
+        if (!property.containsKey("NP")) property.setProperty("NP", "4");
         if (!property.containsKey("filter")) property.setProperty("filter", "bandpass");
 
     }
@@ -152,7 +152,7 @@ public class FilterDivider implements Operation {
         highFreq = Double.parseDouble(property.getProperty("highFreq"));
         lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
         backward = Boolean.parseBoolean(property.getProperty("backward"));
-        np = Integer.parseInt(property.getProperty("np"));
+        np = Integer.parseInt(property.getProperty("NP"));
     }
 
     private AtomicInteger processedFolders = new AtomicInteger(); // already processed

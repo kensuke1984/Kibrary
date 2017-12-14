@@ -24,7 +24,7 @@ public interface DSMOutput {
     /**
      * @return list of spc bodies
      */
-    List<SpcBody> getSpcBodyList();
+    List<SPCBody> getSpcBodyList();
 
     /**
      * @return array of body Rs
@@ -62,13 +62,13 @@ public interface DSMOutput {
     int np();
 
     /**
-     * @return omegai
+     * @return OMEGAI
      */
     double omegai();
 
     /**
-     * @return SpcFileType of this
+     * @return SPCType of this
      */
-    SpcFileType getSpcFileType();
+    SPCType getSpcFileType();
 
 }

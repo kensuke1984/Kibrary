@@ -18,20 +18,20 @@ import java.nio.file.Path;
  * 'PSV', 'SH' must be upper case. 'station' must be 8 or less letters.
  *
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
-public class FormattedSpcFileName extends SPCFile {
+public class FormattedSPCFile extends SPCFile {
 
     private static final long serialVersionUID = -6340811322023603513L;
 
     /**
      * spheroidal mode PSV, toroidal mode SH
      */
-    private SpcFileComponent mode;
+    private SPCMode mode;
     /**
      * PB: backward or PF: forward, PAR2: mu
      */
-    private SpcFileType fileType;
+    private SPCType fileType;
     private String x, y;
     private String observerID;
     private String sourceID;
@@ -40,7 +40,7 @@ public class FormattedSpcFileName extends SPCFile {
      * @param parent {@link File} of a parent folder of the spectrum file
      * @param child  a name of spectrum file
      */
-    public FormattedSpcFileName(File parent, String child) {
+    public FormattedSPCFile(File parent, String child) {
         super(parent, child);
         readName(getName());
     }
@@ -49,7 +49,7 @@ public class FormattedSpcFileName extends SPCFile {
      * @param parent of a parent folder of the spectrum file
      * @param child  a name of spectrum file
      */
-    public FormattedSpcFileName(String parent, String child) {
+    public FormattedSPCFile(String parent, String child) {
         super(parent, child);
         readName(getName());
     }
@@ -57,7 +57,7 @@ public class FormattedSpcFileName extends SPCFile {
     /**
      * @param pathname path of a spectrum file
      */
-    public FormattedSpcFileName(String pathname) {
+    public FormattedSPCFile(String pathname) {
         super(pathname);
         readName(getName());
     }
@@ -65,24 +65,23 @@ public class FormattedSpcFileName extends SPCFile {
     /**
      * @param path {@link Path} of a spectrum file
      */
-    public FormattedSpcFileName(Path path) {
+    public FormattedSPCFile(Path path) {
         this(path.toString());
     }
 
-    public FormattedSpcFileName(URI uri) {
+    public FormattedSPCFile(URI uri) {
         super(uri);
         readName(getName());
     }
 
     /**
      * @param fileName name of spc file
-     * @return event id
+     * @return event ID
      */
     private static String getEventID(String fileName) {
         switch (fileName.split("\\.").length) {
             case 3:
-                String str = fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
-                return str;
+                return fileName.split("\\.")[1].replace("PSV", "").replace("SH", "");
             case 7:
                 return fileName.split("\\.")[1];
             default:
@@ -96,14 +95,11 @@ public class FormattedSpcFileName extends SPCFile {
      * @param fileName name of SPC file
      * @return which par or syn...なんのスペクトルファイルか
      */
-    private static SpcFileType getFileType(String fileName) {
-        if (fileName.split("\\.").length != 7) return SpcFileType.SYNTHETIC;
-        return SpcFileType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
+    private static SPCType getFileType(String fileName) {
+        if (fileName.split("\\.").length != 7) return SPCType.SYNTHETIC;
+        return SPCType.valueOf(fileName.split("\\.")[2].replace("par", "PAR"));
     }
 
-    private static String getObserverID(String fileName) {
-        return fileName.split("\\.")[0];
-    }
 
     private static String getX(String fileName) {
         String[] parts = fileName.split("\\.");
@@ -120,53 +116,16 @@ public class FormattedSpcFileName extends SPCFile {
      * @return PSV or SH
      * @throws RuntimeException if spc file has no indication of its mode.
      */
-    private static SpcFileComponent getMode(String fileName) {
-        return fileName.endsWith("PSV.spc") ? SpcFileComponent.PSV : SpcFileComponent.SH;
+    private static SPCMode getMode(String fileName) {
+        return fileName.endsWith("PSV.spc") ? SPCMode.PSV : SPCMode.SH;
     }
 
     /**
      * @param path for check
      * @return if the filePath is formatted.
      */
-    public static boolean isSpcFileName(Path path) {
-        return isSpcFileName(path.getFileName().toString());
-    }
-
-    /**
-     * @param file {@link File} for check
-     * @return if the file is formatted.
-     */
-    public static boolean isSpcFileName(File file) {
-        return isSpcFileName(file.getName());
-    }
-
-    private static boolean isSpcFileName(String name) {
-        if (!name.endsWith(".spc")) return false;
-        if (!name.endsWith("PSV.spc") && !name.endsWith("SH.spc")) {
-            System.err.println("SPC file name must end with [PSV, SH].spc (psv, sh not allowed anymore).");
-            return false;
-        }
-        String[] parts = name.split("\\.");
-        if (parts.length != 3 && parts.length != 7) {
-            System.err.println("SPC file name must be station.GlobalCMTID(PSV, SV).spc or " +
-                    "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
-            return false;
-        }
-
-        if (8 < getObserverID(name).length()) {
-            System.err.println("Name of station cannot be over 8 characters.");
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * @param fileName file name for chack
-     * @return 理論波形（非偏微分波形）かどうか
-     */
-    public static boolean isSynthetic(String fileName) {
-        return fileName.split("\\.").length == 3;
+    public static boolean isFormatted(Path path) {
+        return isFormatted(path.getFileName().toString());
     }
 
     @Override
@@ -175,8 +134,8 @@ public class FormattedSpcFileName extends SPCFile {
     }
 
     private void readName(String fileName) {
-        if (!isSpcFileName(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
-        observerID = getObserverID(fileName);
+        if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
+        observerID = fileName.split("\\.")[0];
         sourceID = getEventID(fileName);
         fileType = getFileType(fileName);
         mode = getMode(fileName);
@@ -190,12 +149,12 @@ public class FormattedSpcFileName extends SPCFile {
     }
 
     @Override
-    public SpcFileComponent getMode() {
+    public SPCMode getMode() {
         return mode;
     }
 
     @Override
-    public SpcFileType getFileType() {
+    public SPCType getFileType() {
         return fileType;
     }
 

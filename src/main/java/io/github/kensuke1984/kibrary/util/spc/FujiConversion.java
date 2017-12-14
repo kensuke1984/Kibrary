@@ -30,12 +30,12 @@ public final class FujiConversion {
     }
 
     public DSMOutput convert(DSMOutput spectrum) {
-        if (spectrum.getSpcFileType() != SpcFileType.PAR2) throw new RuntimeException();
+        if (spectrum.getSpcFileType() != SPCType.PAR2) throw new RuntimeException();
 
         int nbody = spectrum.nbody();
         int np = spectrum.np();
         double tlen = spectrum.tlen();
-        List<SpcBody> spcBodyList = new ArrayList<>(nbody);
+        List<SPCBody> spcBodyList = new ArrayList<>(nbody);
 
         // data part
         double omegai = spectrum.omegai();
@@ -49,8 +49,8 @@ public final class FujiConversion {
             double r = bodyR[i];
             double q = 1 / STRUCTURE.getQmuAt(r);
             double mu0 = STRUCTURE.computeMu(r);
-            SpcBody body = spectrum.getSpcBodyList().get(i);
-            SpcBody newBody = new SpcBody(3, np);
+            SPCBody body = spectrum.getSpcBodyList().get(i);
+            SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {
                 Complex[] dudq = new Complex[body.getNumberOfComponent()];
                 double omegaOverOmega0 = (ip + 1) / omega0;
@@ -92,12 +92,12 @@ public final class FujiConversion {
             }
 
             @Override
-            public SpcFileType getSpcFileType() {
-                return SpcFileType.PARQ;
+            public SPCType getSpcFileType() {
+                return SPCType.PARQ;
             }
 
             @Override
-            public List<SpcBody> getSpcBodyList() {
+            public List<SPCBody> getSpcBodyList() {
                 return spcBodyList;
             }
 
