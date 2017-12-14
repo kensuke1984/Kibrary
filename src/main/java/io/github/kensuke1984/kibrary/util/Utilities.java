@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.spc.FormattedSpcFileName;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.FastMath;
@@ -236,13 +236,13 @@ public final class Utilities {
     }
 
     /**
-     * @param path {@link Path} to look for {@link FormattedSpcFileName} in
+     * @param path {@link Path} to look for {@link FormattedSPCFile} in
      * @return set of {@link SPCFile} in the dir
      * @throws IOException if an I/O error occurs
      */
     public static Set<SPCFile> collectSpcFileName(Path path) throws IOException {
         try (Stream<Path> stream = Files.list(path)) {
-            return stream.filter(FormattedSpcFileName::isSpcFileName).map(FormattedSpcFileName::new)
+            return stream.filter(FormattedSPCFile::isFormatted).map(FormattedSPCFile::new)
                     .collect(Collectors.toSet());
         }
     }

@@ -86,10 +86,10 @@ public class SshDSMInformationFileMaker implements Operation {
             pw.println("#header");
             pw.println("##Path of a structure file you want to use. ()");
             pw.println("#structureFile");
-            pw.println("##tlen must be a power of 2 over 10 (3276.8)");
-            pw.println("#tlen");
-            pw.println("##np must be a power of 2 (512)");
-            pw.println("#np");
+            pw.println("##TLEN must be a power of 2 over 10 (3276.8)");
+            pw.println("#TLEN");
+            pw.println("##NP must be a power of 2 (512)");
+            pw.println("#NP");
             pw.println("##Depths for computations, must be defined");
             pw.println("#perturbationR 3500 3600");
         }
@@ -99,8 +99,8 @@ public class SshDSMInformationFileMaker implements Operation {
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("tlen")) property.setProperty("tlen", "3276.8");
-        if (!property.containsKey("np")) property.setProperty("np", "512");
+        if (!property.containsKey("TLEN")) property.setProperty("TLEN", "3276.8");
+        if (!property.containsKey("NP")) property.setProperty("NP", "512");
         if (!property.containsKey("header")) property.setProperty("header", "PREM");
         if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
             throw new RuntimeException("perturbationR must be defined.");
@@ -113,8 +113,8 @@ public class SshDSMInformationFileMaker implements Operation {
         if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-        np = Integer.parseInt(property.getProperty("np"));
-        tlen = Double.parseDouble(property.getProperty("tlen"));
+        np = Integer.parseInt(property.getProperty("NP"));
+        tlen = Double.parseDouble(property.getProperty("TLEN"));
         header = property.getProperty("header");
 
         if (property.containsKey("structureFile")) structurePath = Paths.get(property.getProperty("structureFile"));

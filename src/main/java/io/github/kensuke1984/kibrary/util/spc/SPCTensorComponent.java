@@ -20,7 +20,7 @@ import java.util.Arrays;
  * @author Kensuke Konishi
  * @version 0.1.1.1 TODO
  */
-enum SpcTensorComponent {
+enum SPCTensorComponent {
     RR(1), RT(2), RP(3), TR(4), TT(5), TP(6), PR(7), PT(8), PP(9), //
     RRR(1), RRT(2), RRP(3), RTR(4), RTT(5), rtp(6), rpr(7), RPT(8), RPP(9), //
     TRR(10), TRT(11), TRP(12), TTR(13), TTT(14), TTP(15), TPR(16), TPT(17), TPP(18), //
@@ -28,7 +28,7 @@ enum SpcTensorComponent {
 
     private int value;
 
-    SpcTensorComponent(int n) {
+    SPCTensorComponent(int n) {
         value = n;
     }
 
@@ -38,9 +38,11 @@ enum SpcTensorComponent {
      * @param i 1, 2, 3
      * @param r 1, 2, 3
      * @param s 1, 2, 3
-     * @return SpcTensorComponent for the input i r s
+     * @return SPCTensorComponent for the input i r s
      */
-    public static SpcTensorComponent valueOfBP(int i, int r, int s) {
+    public static SPCTensorComponent valueOfBP(int i, int r, int s) {
+        if (i < 1 || 3 < i || r < 1 || 3 < r || s < 1 || 3 < s) throw new IllegalArgumentException(
+                "Input (i, r, s) = (" + i + ", " + r + ", " + s + ") must be 1, 2 or 3.");
         return Arrays.stream(values())
                 .filter(stc -> stc.value == (i - 1) * 9 + 3 * (r - 1) + s && stc.name().length() == 3).findAny()
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -52,9 +54,11 @@ enum SpcTensorComponent {
      *
      * @param p 1, 2, 3
      * @param q 1, 2, 3
-     * @return SpcTensorComponent for the input p q
+     * @return SPCTensorComponent for the input p q
      */
-    public static SpcTensorComponent valueOfFP(int p, int q) {
+    public static SPCTensorComponent valueOfFP(int p, int q) {
+        if (p < 1 || 3 < p || q < 1 || 3 < q)
+            throw new IllegalArgumentException("Input (p, q) = (" + p + ", " + q + ") must be 1, 2 or 3.");
         return Arrays.stream(values()).filter(stc -> stc.value == (p - 1) * 3 + q && stc.name().length() == 2).findAny()
                 .orElseThrow(() -> new IllegalArgumentException("input p, q: " + p + " " + q + " are invalid."));
     }

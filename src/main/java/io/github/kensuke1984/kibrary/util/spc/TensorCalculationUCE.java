@@ -15,19 +15,19 @@ import java.util.Arrays;
 class TensorCalculationUCE {
 
     /**
-     * Uj,q = u[j][q][(np)]
+     * Uj,q = u[j][q][(NP)]
      */
     private Complex[][][] u = new Complex[3][3][];
 
     /**
-     * i に対して都度計算するので iは引数に取らない Eta ri,s = eta （[i]）[r][s][(np)]
+     * i に対して都度計算するので iは引数に取らない Eta ri,s = eta （[i]）[r][s][(NP)]
      */
     private Complex[][][] eta = new Complex[3][3][];
 
     private WeightingFactor factor;
 
-    private SpcBody fp;
-    private SpcBody bp;
+    private SPCBody fp;
+    private SPCBody bp;
 
     private int np;
 
@@ -44,7 +44,7 @@ class TensorCalculationUCE {
      * @param factor どう重み付けするか
      * @param angle
      */
-    TensorCalculationUCE(SpcBody fp, SpcBody bp, WeightingFactor factor, double angle) {
+    TensorCalculationUCE(SPCBody fp, SPCBody bp, WeightingFactor factor, double angle) {
         this.fp = fp;
         this.bp = bp;
         np = fp.getNp();
@@ -76,7 +76,7 @@ class TensorCalculationUCE {
      * Uj,q Cjqrs Eri,sのi成分の計算
      *
      * @param i (0: Z 1:R 2:T)
-     * @return {@link Complex}[np] i成分を返す
+     * @return {@link Complex}[NP] i成分を返す
      */
     public Complex[] calc(int i) {
         Complex[] partial = new Complex[np + 1];
@@ -84,7 +84,7 @@ class TensorCalculationUCE {
 
         for (int r = 0; r < 3; r++)
             for (int s = 0; s < 3; s++) {
-                SpcTensorComponent irs = SpcTensorComponent.valueOfBP(i + 1, r + 1, s + 1);
+                SPCTensorComponent irs = SPCTensorComponent.valueOfBP(i + 1, r + 1, s + 1);
                 eta[r][s] = bp.getSpcComponent(irs).getValueInFrequencyDomain();
             }
 
@@ -92,7 +92,7 @@ class TensorCalculationUCE {
 
         for (int p = 0; p < 3; p++)
             for (int q = 0; q < 3; q++) {
-                SpcTensorComponent pq = SpcTensorComponent.valueOfFP(p + 1, q + 1);
+                SPCTensorComponent pq = SPCTensorComponent.valueOfFP(p + 1, q + 1);
                 u[p][q] = fp.getSpcComponent(pq).getValueInFrequencyDomain();
                 // u = rotate(u,anglefp);
                 for (int r = 0; r < 3; r++)
@@ -123,7 +123,7 @@ class TensorCalculationUCE {
     /**
      * back propagateのローカル座標をforwardのものにあわせる
      *
-     * @param eta eta[3][3][np+1]
+     * @param eta eta[3][3][NP+1]
      * @param r
      * @return ETAir, s（back propagation） をテンソルのZ軸中心に {@link #angle} 回す
      */

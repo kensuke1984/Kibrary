@@ -16,34 +16,34 @@ import java.util.stream.IntStream;
  * ista に対応する
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1
+ * @version 0.1.2.2
  */
-public class SpcBody {
+public class SPCBody {
 
-    private final int nComponent; // datarealsize
-    private final int np;
+    private final int N_COMPONENT; // datarealsize
+    private final int NP;
 
     private int nptsInTimeDomain;
 
-    private SpcComponent[] spcComponents;
+    private SPCComponent[] spcComponents;
 
     /**
      * @param nComponent the number of components
      * @param np         the number of steps in frequency domain
      */
-    SpcBody(int nComponent, int np) {
-        this.nComponent = nComponent;
-        this.np = np;
+    SPCBody(int nComponent, int np) {
+        N_COMPONENT = nComponent;
+        NP = np;
         allocateComponents();
     }
 
     /**
      * @return DEEP copy of this
      */
-    SpcBody copy() {
-        SpcBody s = new SpcBody(nComponent, np);
+    SPCBody copy() {
+        SPCBody s = new SPCBody(N_COMPONENT, NP);
         s.nptsInTimeDomain = nptsInTimeDomain;
-        s.spcComponents = new SpcComponent[nComponent];
+        s.spcComponents = new SPCComponent[N_COMPONENT];
         Arrays.setAll(s.spcComponents, i -> spcComponents[i].copy());
         return s;
     }
@@ -55,49 +55,50 @@ public class SpcBody {
      * @param u  u[i] ith component
      */
     void add(int ip, Complex... u) {
-        if (u.length != nComponent) throw new RuntimeException("The number of components is wrong");
-        for (int i = 0; i < nComponent; i++)
+        if (u.length != N_COMPONENT) throw new RuntimeException("The number of components is wrong");
+        for (int i = 0; i < N_COMPONENT; i++)
             spcComponents[i].set(ip, u[i]);
     }
 
     /**
-     * @return SpcComponent[] all the {@link SpcComponent} in this
+     * @return SPCComponent[] all the {@link SPCComponent} in this
      */
-    public SpcComponent[] getSpcComponents() {
+    public SPCComponent[] getSpcComponents() {
         return spcComponents;
     }
 
     /**
      * 引数で指定されたテンソル成分に対するコンポーネントを返す
      *
-     * @param tensor SpcTensorComponent
-     * @return SpcComponent for the tensor
+     * @param tensor SPCTensorComponent
+     * @return SPCComponent for the tensor
      */
-    public SpcComponent getSpcComponent(SpcTensorComponent tensor) {
+    public SPCComponent getSpcComponent(SPCTensorComponent tensor) {
         return spcComponents[tensor.valueOf() - 1];
     }
 
-    public SpcComponent getSpcComponent(SACComponent sacComponent) {
+    public SPCComponent getSpcComponent(SACComponent sacComponent) {
         return spcComponents[sacComponent.valueOf() - 1];
     }
 
     /**
      * TODO 別を出すようにする anotherBodyを足し合わせる
      *
-     * @param anotherBody {@link SpcBody} for addition
+     * @param anotherBody {@link SPCBody} for addition
      */
-    public void addBody(SpcBody anotherBody) {
-        if (np != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
-        else if (nComponent != anotherBody.getNumberOfComponent())
+    public void addBody(SPCBody anotherBody) {
+        if (NP != anotherBody.getNp()) throw new RuntimeException("Error: Size of body is not equal!");
+        else if (N_COMPONENT != anotherBody.getNumberOfComponent())
             throw new RuntimeException("Error: The numbers of each component are different.");
 
-        for (int j = 0; j < nComponent; j++)
+        for (int j = 0; j < N_COMPONENT; j++)
             spcComponents[j].addComponent(anotherBody.spcComponents[j]);
 
     }
 
     private void allocateComponents() {
-        spcComponents = IntStream.range(0, nComponent).mapToObj(i -> new SpcComponent(np)).toArray(SpcComponent[]::new);
+        spcComponents =
+                IntStream.range(0, N_COMPONENT).mapToObj(i -> new SPCComponent(NP)).toArray(SPCComponent[]::new);
     }
 
     /**
@@ -112,11 +113,11 @@ public class SpcBody {
     /**
      * after toTime
      *
-     * @param omegai &omega;<sub>i</sub>
+     * @param omegaI &omega;<sub>i</sub>
      * @param tlen   time length
      */
-    public void applyGrowingExponential(double omegai, double tlen) {
-        Arrays.stream(spcComponents).forEach(component -> component.applyGrowingExponential(omegai, tlen));
+    public void applyGrowingExponential(double omegaI, double tlen) {
+        Arrays.stream(spcComponents).forEach(component -> component.applyGrowingExponential(omegaI, tlen));
     }
 
     /**
@@ -138,11 +139,11 @@ public class SpcBody {
     }
 
     public int getNumberOfComponent() {
-        return nComponent;
+        return N_COMPONENT;
     }
 
     public int getNp() {
-        return np;
+        return NP;
     }
 
     public int getNPTSinTimeDomain() {
@@ -158,7 +159,7 @@ public class SpcBody {
     }
 
     /**
-     * すべてのコンポーネントを時間領域へ
+     * Converts all the components to time domain.
      *
      * @param lsmooth lsmooth
      */

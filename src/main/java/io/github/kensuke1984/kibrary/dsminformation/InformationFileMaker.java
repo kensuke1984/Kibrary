@@ -26,11 +26,11 @@ import java.util.*;
  */
 public class InformationFileMaker implements Operation {
     /**
-     * np default: 1024
+     * NP default: 1024
      */
     protected int np;
     /**
-     * tlen default:3276.8
+     * TLEN default:3276.8
      */
     protected double tlen;
     /**
@@ -79,10 +79,10 @@ public class InformationFileMaker implements Operation {
             pw.println("#stationInformationPath station.inf");
             pw.println("##header for names of information files 'header'_[PSV, SH].inf (PREM)");
             pw.println("#header");
-            pw.println("##int np must be a power of 2, must be set");
-            pw.println("#np 1024");
-            pw.println("##double tlen must be a power of 2/10, must be set");
-            pw.println("#tlen 3276.8");
+            pw.println("##int NP must be a power of 2, must be set");
+            pw.println("#NP 1024");
+            pw.println("##double TLEN must be a power of 2/10, must be set");
+            pw.println("#TLEN 3276.8");
             pw.println("##polynomial structure file (can be blank)");
             pw.println("##if so or it doesn't exist model is an initial PREM");
             pw.println("#structureFile ");
@@ -109,8 +109,8 @@ public class InformationFileMaker implements Operation {
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("tlen")) property.setProperty("tlen", "3276.8");
-        if (!property.containsKey("np")) property.setProperty("np", "1024");
+        if (!property.containsKey("TLEN")) property.setProperty("TLEN", "3276.8");
+        if (!property.containsKey("NP")) property.setProperty("NP", "1024");
         if (!property.containsKey("header")) property.setProperty("header", "PREM");
     }
 
@@ -124,8 +124,8 @@ public class InformationFileMaker implements Operation {
 
         stationInformationPath = getPath("stationInformationPath");
         // str = reader.getValues("partialTypes");
-        np = Integer.parseInt(property.getProperty("np"));
-        tlen = Double.parseDouble(property.getProperty("tlen"));
+        np = Integer.parseInt(property.getProperty("NP"));
+        tlen = Double.parseDouble(property.getProperty("TLEN"));
         header = property.getProperty("header");
 
         if (property.containsKey("structureFile")) {

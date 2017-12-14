@@ -250,7 +250,7 @@ public class SACMaker implements Runnable {
         boolean isOK = true;
         if (spc1.nbody() != spc2.nbody()) {
             System.err
-                    .println("Numbers of bodies (nbody) are different. fp, bp: " + spc1.nbody() + " ," + spc2.nbody());
+                    .println("Numbers of bodies (NBODY) are different. fp, bp: " + spc1.nbody() + " ," + spc2.nbody());
             isOK = false;
         }
 
@@ -278,7 +278,7 @@ public class SACMaker implements Runnable {
             isOK = false;
         }
 
-        // double tlen
+        // double TLEN
         if (spc1.tlen() != spc2.tlen()) {
             System.err.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
             isOK = false;
@@ -305,8 +305,8 @@ public class SACMaker implements Runnable {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException, ParseException {
-   ////     args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",
-           //     "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc"};
+        args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",
+                "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc"};
         if (args == null || args.length == 0)
             throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
 
@@ -336,13 +336,12 @@ public class SACMaker implements Runnable {
         }
         String[] spcfiles = cli.getArgs();
 
-
-        SPCFile oneName = new SyntheticSPCFile(spcfiles[0]);
+        SPCFile oneName = new FormattedSPCFile(spcfiles[0]);
         DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
         DSMOutput pairSPC = null;
         if (1 < spcfiles.length) {
-            SPCFile pairName = new SyntheticSPCFile(spcfiles[1]);
+            SPCFile pairName = new FormattedSPCFile(spcfiles[1]);
             pairSPC = Spectrum.getInstance(pairName);
         }
 
@@ -353,7 +352,6 @@ public class SACMaker implements Runnable {
         }
         sm.setOutPath(Paths.get(System.getProperty("user.dir")));
         sm.run();
-
 
     }
 
@@ -403,7 +401,7 @@ public class SACMaker implements Runnable {
         SAC sac = new SAC();
         setHeaderOn(sac);
         for (int i = 0; i < primeSPC.nbody(); i++) {
-            SpcBody body = primeSPC.getSpcBodyList().get(i).copy();
+            SPCBody body = primeSPC.getSpcBodyList().get(i).copy();
             if (secondarySPC != null) body.addBody(secondarySPC.getSpcBodyList().get(i));
             compute(body);
             String bodyR = Utilities.toStringWithD(2, primeSPC.getBodyR()[i]);
@@ -429,7 +427,7 @@ public class SACMaker implements Runnable {
         setInformation();
         SAC sac = new SAC();
         setHeaderOn(sac);
-        SpcBody body = primeSPC.getSpcBodyList().get(0).copy();
+        SPCBody body = primeSPC.getSpcBodyList().get(0).copy();
         if (secondarySPC != null) body.addBody(secondarySPC.getSpcBodyList().get(0));
 
         compute(body);
@@ -446,7 +444,7 @@ public class SACMaker implements Runnable {
         }
 
         if (temporalDifferentiation) {
-            SpcBody bodyT = body.copy();
+            SPCBody bodyT = body.copy();
             bodyT.differentiate(primeSPC.tlen());
             compute(bodyT);
             for (SACComponent component : components) {
@@ -486,11 +484,11 @@ public class SACMaker implements Runnable {
     }
 
     /**
-     * compute {@link SpcBody} for write.
+     * compute {@link SPCBody} for write.
      *
      * @param body to compute
      */
-    private void compute(SpcBody body) {
+    private void compute(SPCBody body) {
         if (sourceTimeFunction != null) body.applySourceTimeFunction(sourceTimeFunction);
         body.toTimeDomain(lsmooth);
         body.applyGrowingExponential(primeSPC.omegai(), primeSPC.tlen());

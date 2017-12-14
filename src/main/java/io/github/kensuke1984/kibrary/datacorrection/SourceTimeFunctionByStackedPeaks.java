@@ -121,7 +121,7 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         }
         // System.exit(0);
         int npts = 2 * np * findLsmooth();
-        // System.out.println(tlen * 20);
+        // System.out.println(TLEN * 20);
         double[] obsUt = new double[npts];
         double[] synUt = new double[npts];
         for (int i = 0; i < n; i++) {

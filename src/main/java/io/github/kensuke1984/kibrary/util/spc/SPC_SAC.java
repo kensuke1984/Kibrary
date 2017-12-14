@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * SpcSAC Converter from {@link Spectrum} to {@link SACData} file. According
+ * SPC_SAC Converter from {@link Spectrum} to {@link SACData} file. According
  * to an information file, it creates SAC files.
  * <p>
  * It converts all the SPC files in event folders/model under the workDir set by
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * @version 0.2.4.5
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-public final class SpcSAC implements Operation {
+public final class SPC_SAC implements Operation {
 
     private Properties property;
     /**
@@ -70,7 +70,7 @@ public final class SpcSAC implements Operation {
     private Set<SPCFile> shSPCs;
     private Path outPath;
 
-    public SpcSAC(Properties properties) throws IOException {
+    public SPC_SAC(Properties properties) throws IOException {
         property = (Properties) properties.clone();
         set();
     }
@@ -81,18 +81,18 @@ public final class SpcSAC implements Operation {
      */
     public static void main(String[] args) throws IOException {
         Properties property = Property.parse(args);
-        SpcSAC ss = new SpcSAC(property);
+        SPC_SAC ss = new SPC_SAC(property);
         long start = System.nanoTime();
-        System.err.println(SpcSAC.class.getName() + " is going.");
+        System.err.println(SPC_SAC.class.getName() + " is going.");
         ss.run();
         System.err
-                .println(SpcSAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
+                .println(SPC_SAC.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - start));
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(SpcSAC.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(SPC_SAC.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            pw.println("manhattan SpcSAC");
+            pw.println("manhattan SPC_SAC");
             pw.println("##Path of a working folder (.)");
             pw.println("#workPath");
             pw.println("##SACComponents for write (Z R T)");
@@ -230,9 +230,9 @@ public final class SpcSAC implements Operation {
         return psvSet;
     }
 
-    private SyntheticSPCFile pairFile(SPCFile psvFileName) {
-        if (psvFileName.getMode() == SpcFileComponent.SH) return null;
-        return new SyntheticSPCFile(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
+    private FormattedSPCFile pairFile(SPCFile psvFileName) {
+        if (psvFileName.getMode() == SPCMode.SH) return null;
+        return new FormattedSPCFile(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/" +
                 psvFileName.getName().replace("PSV.spc", "SH.spc")));
     }
 

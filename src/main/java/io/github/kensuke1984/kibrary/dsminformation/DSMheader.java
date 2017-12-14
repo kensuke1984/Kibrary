@@ -52,7 +52,7 @@ class DSMheader {
     private final double RATL;
 
     /**
-     * The default value is 1.e-2 wrap-around attenuation for omegai
+     * The default value is 1.e-2 wrap-around attenuation for OMEGAI
      */
     private final double ARTIFICIAL_DAMPING;
 
@@ -63,7 +63,7 @@ class DSMheader {
     /**
      * DSMヘッダー <br>
      * re = 1.e-2; ratc = 1.e-10; ratl = 1.e-5; artificialDampl = 1.e-2 imin =
-     * 0, imax = np
+     * 0, imax = NP
      *
      * @param tlen 2<sup>n</sup>/10でないといけない nは整数
      * @param np   2<sup>n</sup>でないといけない nは整数
@@ -75,7 +75,7 @@ class DSMheader {
     DSMheader(double tlen, int np, int imin, int imax, double relativeError, double ratc, double ratl,
               double artificialDampl) {
         if (!ArithmeticUtils.isPowerOfTwo(np) || !validTlen(tlen))
-            throw new IllegalArgumentException("Input tlen:" + tlen + " or np:" + np + " is invalid");
+            throw new IllegalArgumentException("Input TLEN:" + tlen + " or NP:" + np + " is invalid");
         TLEN = tlen;
         NP = np;
         IMIN = imin;
@@ -88,7 +88,7 @@ class DSMheader {
 
     /**
      * @param tlen to be checked
-     * @return if tlen is 2<sup>n</sup>/10
+     * @return if TLEN is 2<sup>n</sup>/10
      */
     private static boolean validTlen(double tlen) {
         long tlen10 = Math.round(10 * tlen);
@@ -135,7 +135,7 @@ class DSMheader {
 
     protected String[] outputDSMHeader() {
         List<String> outputLines = new ArrayList<>();
-        outputLines.add("c tlen npts");
+        outputLines.add("c TLEN npts");
         outputLines.add(TLEN + " " + NP);
         outputLines.add("c relative error (see GT95 eq. 6.2)");
         outputLines.add(RELATIVE_ERROR + " re");

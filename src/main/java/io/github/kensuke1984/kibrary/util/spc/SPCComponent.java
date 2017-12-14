@@ -10,12 +10,12 @@ import org.apache.commons.math3.util.FastMath;
 import java.util.Arrays;
 
 /**
- * Data for one element in one {@link SpcBody} in a {@link Spectrum}
+ * Data for one element in one {@link SPCBody} in a {@link Spectrum}
  *
  * @author Kensuke Konishi
  * @version 0.1.6
  */
-public class SpcComponent {
+public class SPCComponent {
 
     /**
      * number of step in frequency domain
@@ -34,7 +34,7 @@ public class SpcComponent {
      */
     private Complex[] uTime;
 
-    SpcComponent(int np) {
+    SPCComponent(int np) {
         NP = np;
         uFreq = new Complex[np + 1];
     }
@@ -42,8 +42,8 @@ public class SpcComponent {
     /**
      * @return DEEP copy of this
      */
-    public SpcComponent copy() {
-        SpcComponent s = new SpcComponent(NP);
+    public SPCComponent copy() {
+        SPCComponent s = new SPCComponent(NP);
         s.nptsInTimeDomain = nptsInTimeDomain;
         System.arraycopy(uFreq, 0, s.uFreq, 0, uFreq.length);
         if (uTime != null) s.uTime = uTime.clone();
@@ -65,9 +65,9 @@ public class SpcComponent {
     /**
      * body componentを足し合わせる
      *
-     * @param anotherComponent additional {@link SpcComponent}
+     * @param anotherComponent additional {@link SPCComponent}
      */
-    public void addComponent(SpcComponent anotherComponent) {
+    public void addComponent(SPCComponent anotherComponent) {
         if (NP != anotherComponent.getNP()) throw new RuntimeException("Error: Size of body is not equal!");
 
         Complex[] another = anotherComponent.getValueInFrequencyDomain();
@@ -89,7 +89,7 @@ public class SpcComponent {
     }
 
     /**
-     * after toTime tlen * (double) (i) / (double) nptsInTimeDomain;
+     * after toTime TLEN * (double) (i) / (double) nptsInTimeDomain;
      *
      * @param omegai &omega;<sub>i</sub>
      * @param tlen   time length
@@ -112,7 +112,7 @@ public class SpcComponent {
     /**
      * before toTime
      * <p>
-     * -ufreq[i] * 2 i &pi; (ip /tlen)
+     * -ufreq[i] * 2 i &pi; (ip /TLEN)
      * <p>
      *
      * @param tlen time length
