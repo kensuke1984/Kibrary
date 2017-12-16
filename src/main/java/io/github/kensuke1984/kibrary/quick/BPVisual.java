@@ -15,6 +15,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcComponent;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,11 +93,13 @@ public class BPVisual {
 						Phases phases = new Phases(info.getPhases());
 						Path outpath = workingDir.resolve(station.getStationName() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
-								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + ".txt");
-						Files.deleteIfExists(outpath);
-						Files.createFile(outpath);
-						for (double y : cutU)
-							Files.write(outpath, String.format("%.16e\n", y).getBytes(), StandardOpenOption.APPEND);
+								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".txt");
+//						Files.deleteIfExists(outpath);
+//						Files.createFile(outpath);
+						try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE_NEW))) {
+							for (double y : cutU)
+								pw.println(String.format("%.16e", y));
+						}
 					}
 				}
 			}
@@ -107,7 +110,7 @@ public class BPVisual {
 		Path timewindowPath = Paths.get(args[0]);
 		Path workingDir = Paths.get(".");
 		double partialSamplingHz = 20.;
-		double finalSamplingHz = 1.;
+		double finalSamplingHz = 8.;
 		double minFreq = 0.005;
 		double maxFreq = 0.05;
 		int filterNp = 4;

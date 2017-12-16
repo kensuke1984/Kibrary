@@ -34,13 +34,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
+
+import com.amazonaws.transform.SimpleTypeStaxUnmarshallers.IntegerStaxUnmarshaller;
 
 public final class AtAFile {
 	
@@ -276,12 +281,15 @@ public final class AtAFile {
 		}
 	}
 
+
 	/**
-	 * @param infoPath
-	 *            of the information file to read
-	 * @return (<b>unmodifiable</b>) Set of timewindow information
+	 * @param ataPath
+	 * @return AtAEntry[n0][n1][n2][n3]
+	 * n0 = (number of unknowns) * (number of unknowns + 1) / 2
+	 * n1 = number of weighting types
+	 * n2 = number of frequency ranges
+	 * n3 = number of phases
 	 * @throws IOException
-	 *             if an I/O error occurs
 	 */
 	public static AtAEntry[][][][] read(Path ataPath) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(ataPath)));) {
@@ -335,6 +343,42 @@ public final class AtAFile {
 					bytes.length + " AtA elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
 			return ataEntries;
 		}
+	}
+	
+	public RealMatrix getAtARealMatrix(Path ataPath, int iweight, int ifreq, int iphase) throws IOException {
+		AtAEntry[][][][] ataEntries = read(ataPath);
+		int nUnknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * ataEntries.length) - 1));
+		RealMatrix ata = new Array2DRowRealMatrix(nUnknown, nUnknown);
+		
+		for (int i = 0; i < ataEntries.length; i++) {
+			int iunknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * i) - 1));
+			int junknown = i - iunknown * (iunknown + 1) / 2;
+			
+			double ataij = ataEntries[i][iweight][ifreq][iphase].getValue();
+			ata.setEntry(iunknown, junknown, ataij);
+			if (junknown != iunknown)
+				ata.setEntry(junknown, iunknown, ataij);
+		}
+		
+		return ata;
+	}
+	
+	public RealMatrix getAtARealMatrixParallel(Path ataPath, int iweight, int ifreq, int iphase) throws IOException {
+		AtAEntry[][][][] ataEntries = read(ataPath);
+		int nUnknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * ataEntries.length) - 1));
+		RealMatrix ata = new Array2DRowRealMatrix(nUnknown, nUnknown);
+		
+		IntStream.range(0, ataEntries.length).parallel().forEach(i -> {
+			int iunknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * i) - 1));
+			int junknown = i - iunknown * (iunknown + 1) / 2;
+			
+			double ataij = ataEntries[i][iweight][ifreq][iphase].getValue();
+			ata.setEntry(iunknown, junknown, ataij);
+			if (junknown != iunknown)
+				ata.setEntry(junknown, iunknown, ataij);
+		});
+		
+		return ata;
 	}
 
 	/**

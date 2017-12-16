@@ -243,26 +243,29 @@ public class ThreeDPartialMaker {
 	public double[] createPartial(SACComponent component, int iBody, PartialType type) {
 		// return array of zero for partials whose radius is too close to the BP or FP source
 		double bpR = bp.getBodyR()[iBody];
-		int iFp = -1;
-		for (int i = 0; i < fp.getBodyR().length; i++) {
-			if (fp.getBodyR()[i] == bpR) {
-				iFp = i;
-				break;
-			}
-		}
-		if (iFp == -1)
-			return new double[npts];
+		double fpR = fp.getBodyR()[iBody];
+		if (fpR != bpR)
+			throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
+//		int iFp = -1;
+//		for (int i = 0; i < fp.getBodyR().length; i++) {
+//			if (fp.getBodyR()[i] == bpR) {
+//				iFp = i;
+//				break;
+//			}
+//		}
+//		if (iFp == -1)
+//			return new double[npts];
 		//
 		
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
-				: computeTensorCulculus(component, iBody, iFp, type);
+				: computeTensorCulculus(component, iBody, iBody, type);
 		if (null != sourceTimeFunction)
 			partial_frequency = sourceTimeFunction.convolve(partial_frequency);
 		Complex[] partial_time = toTimedomain(partial_frequency);
 		double[] partialdouble = new double[npts];
 		for (int j = 0; j < npts; j++)
 			partialdouble[j] = partial_time[j].getReal();
-		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
+//		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
 		return partialdouble;
 	}
 
@@ -314,11 +317,14 @@ public class ThreeDPartialMaker {
 	
 	private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
 		SpcBody bpBody = null;
-		if (bp2 == null)
+		if (bp2 == null) {
 			bpBody = bp.getSpcBodyList().get(iBodyBp);
-		else
+			System.err.println("No interpolation performed");
+		}
+		else {
 			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
 					, bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+		}
 		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBodyFp),
 				bpBody, type.getWeightingFactor(), angleForTensor);
 		return component == SACComponent.Z ? tensorcalc.calc(0)

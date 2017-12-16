@@ -6,6 +6,7 @@ import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -16,6 +17,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 
+import java.awt.GraphicsDevice.WindowTranslucency;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -25,6 +27,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -33,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -56,10 +60,14 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	private Set<TimewindowInformation> timewindows;
 	private Set<SACComponent> components;
 	double[] amplitudeCorrections;
+	double[][] misfitNumerator;
+	double[][] misfitDenominator;
 	double[][] misfits;
 	double[] halfDurations;
 	RealVector[] obsStacks;
 	RealVector[] synStacks;
+	private Path staticCorrectionFile;
+	double[][] obsData; // for visual control of individual traces
 	
 	private Properties property;
 	
@@ -78,6 +86,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 //			pw.println("#synPath");
 			pw.println("##Path of a time window information file, must be defined");
 			pw.println("#timewindowInformationFilePath timewindow.dat");
+			pw.println("#staticCorrectionFile fujiStaticCorrection.dat");
 			pw.println("##double minimum half duration for grid search (0.5)");
 			pw.println("#minHalfDuration");
 			pw.println("##double maximum half duration for grid search (16.)");
@@ -167,8 +176,10 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		
 		halfDurations = new double[npts];
 		
-		double maxAmpcorr = 3.;
-		double deltaAmpcorr = .1;
+		// amplitude correction of 1.4 corresponds to a difference in moment magnitude (Mw) of ~0.1,
+		// which is typical of the maximum difference to GCMT in previous studies (e.g. Yamaya et al. 2018)
+		double maxAmpcorr = 1.4;
+		double deltaAmpcorr = .05;
 		int nampcorr = 2 * (int) ((maxAmpcorr - 1) / deltaAmpcorr) + 1;
 		amplitudeCorrections = new double[nampcorr];
 		for (int k = 0; k < nampcorr / 2; k++)
@@ -178,6 +189,11 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			amplitudeCorrections[k + nampcorr / 2 + 1] = 1. + (k + 1) * deltaAmpcorr;
 		
 		misfits = new double[npts][nampcorr];
+		misfitNumerator = new double[npts][nampcorr];
+		misfitDenominator = new double[npts][nampcorr];
+		
+		staticCorrectionFile = property.getProperty("staticCorrectionFile") == null ? null :
+			Paths.get(property.getProperty("staticCorrectionFile"));
 	}
 	
 	@Override
@@ -233,20 +249,29 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			Set<EventFolder> eventFolders 
 				= Utilities.eventFolderSet(workPath);
 			
+			Set<StaticCorrection> staticCorrections = new HashSet<>();
+			if (staticCorrectionFile != null)
+				staticCorrections = StaticCorrectionFile.read(staticCorrectionFile);
+			
 			Map<GlobalCMTID, double[]> outputMap = new HashMap<>();
 			Map<GlobalCMTID, Integer> nTraceMap = new HashMap<>();
+			String tmpString = Utilities.getTemporaryString();
 			Path outputinfoPath = workPath.resolve("outputInfo" 
-					+ Utilities.getTemporaryString() + ".astf.inf");
+					+ tmpString + ".astf.inf");
 			
 			Path catalogueFile = workPath.resolve("astf" 
-					+ Utilities.getTemporaryString() + ".catalogue");
+					+ tmpString + ".catalog");
 			Files.deleteIfExists(catalogueFile);
 			Files.createFile(catalogueFile);
+			Path detailedCatalogFile = workPath.resolve("astf_detailed" 
+					+ tmpString + ".inf");
+			Files.deleteIfExists(detailedCatalogFile);
+			Files.createFile(detailedCatalogFile);
 			Path gcmtFile = workPath.resolve("gcmtstf" 
-					+ Utilities.getTemporaryString() + ".catalogue");
+					+ tmpString + ".catalog");
 			Files.createFile(gcmtFile);
 			
-			Path stackDir = workPath.resolve("qcStack" + Utilities.getTemporaryString());
+			Path stackDir = workPath.resolve("qcStack" + tmpString);
 			Files.createDirectories(stackDir);
 			
 			Files.write(catalogueFile, ">id, Mw, half-duration, amp. corr., num. traces, misfit, gcmt misfit\n".getBytes()
@@ -275,10 +300,33 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					= reader.getOrderedTimewindows();
 				int excludedObsLength = reader.getExcludedObsLength();
 				
-				System.out.println("Used: " + orderedTimewindows.size()
+				if (orderedTimewindows.size() != obsTraces.size() 
+						|| orderedTimewindows.size() != synTraces.size())
+					throw new RuntimeException("Error: #windows, #syn, #obs differ: " + orderedTimewindows.size()
 						+ " " + obsTraces.size()
 						+ " " + synTraces.size());
-				System.out.println("Excluded: " + excludedObsLength);
+				
+				obsData = new double[orderedTimewindows.size()][];
+				
+				List<StaticCorrection> orderedStaticCorrection = null;
+				if (staticCorrectionFile != null) {
+					orderedStaticCorrection = new ArrayList<>();
+					for (TimewindowInformation window : orderedTimewindows) {
+						boolean found = false;
+						for (StaticCorrection corr : staticCorrections) {
+							if (isPair.test(corr, window)) {
+								orderedStaticCorrection.add(corr);
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+							throw new RuntimeException("Error: static correction not found for " + window);
+					}
+				}
+				
+				System.out.println("Used (#obs): " + obsTraces.size());
+				System.out.println("Excluded (#obs): " + excludedObsLength);
 				
 				double gcmtHalfDuration = eventFolder.getGlobalCMTID().getEvent().getHalfDuration();
 				
@@ -296,13 +344,16 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 				
 				
 				for (int i = 0; i < npts; i++)
-					for (int j = 0; j < amplitudeCorrections.length; j++)
+					for (int j = 0; j < amplitudeCorrections.length; j++) {
 						misfits[i][j] = 0.;
+						misfitNumerator[i][j] = 0.;
+						misfitDenominator[i][j] = 0.;
+					}
 				try {
 					for (int i = 0; i < npts; i++) {
 //						System.out.println(i + "/" + (npts-1));
 						Worker worker = new Worker(halfDurations[i], amplitudeCorrections, orderedTimewindows, i
-								, obsTraces, synTraces);
+								, obsTraces, synTraces, orderedStaticCorrection, gcmtHalfDuration);
 						es.execute(worker);
 					}
 					
@@ -312,13 +363,21 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					e.printStackTrace();
 				}
 				
+				for (int i = 0; i < npts; i++) {
+					for (int j = 0; j < amplitudeCorrections.length; j++) {
+						misfits[i][j] = misfitNumerator[i][j] / misfitDenominator[i][j];
+					}
+				}
+				
 				double halfDurationMinMisfit;
 				double ampCorrMinMisfit;
 				double minMisfit = Double.MAX_VALUE;
 				double gcmtMisfit = 0.;
+				int iDurationMin = 0;
+				int iAmpcorrMin = 0;
 				if (obsTraces.size() > 0) {
-					int iDurationMin = 0;
-					int iAmpcorrMin = 0;
+					iDurationMin = 0;
+					iAmpcorrMin = 0;
 					for (int i = 0; i < npts; i++) {
 						for (int j = 0; j < amplitudeCorrections.length; j++) {
 							if (misfits[i][j] < minMisfit) {
@@ -331,7 +390,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 							gcmtMisfit = misfits[i][amplitudeCorrections.length / 2];
 					}
 					
-					System.out.println(minMisfit);
+					System.out.println("Final variance = " + minMisfit);
 					
 					double[] misfitMinAmpcorr = new double[npts];
 					for (int i = 0; i < npts; i++)
@@ -346,36 +405,44 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					halfDurationMinMisfit = Double.NaN;
 					ampCorrMinMisfit = Double.NaN;
 					minMisfit = Double.NaN;
+					iDurationMin = -1;
+					iAmpcorrMin = -1;
 					double[] misfits = new double[npts];
 					for (int i = 0; i < misfits.length; i++)
 						misfits[i] = Double.NaN;
 					outputMap.put(eventFolder.getGlobalCMTID(), misfits);
 				}
 				
-				// stack for visual quality control
-				double[] obsStack;
-				double[] bestSynStack;
-				double[] gcmtSynStack;
-				
-				SourceTimeFunction stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDurationMinMisfit);
-				RealVector[] obsSynStacks = stack(stf, orderedTimewindows, synTraces, obsTraces);
-				obsStack = obsSynStacks[0].toArray();
-				bestSynStack = obsSynStacks[1].toArray();
-				
-				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, gcmtHalfDuration);
-				gcmtSynStack = stack(stf, orderedTimewindows, synTraces, obsTraces)[1].toArray();
-						
 					
 //					System.out.println("GCMT half duration = " 
 //							+ eventFolder.getGlobalCMTID().getEvent().getHalfDuration());
 //					for (int i = 0; i < misfits.length; i++)
 //						System.out.println(misfits[i] + " " + halfDurations[i]);
-					
-				Files.write(catalogueFile, String.format("%s %.1f %f %f %d %.4e %.4e\n"
+				
+				double Mw = eventFolder.getGlobalCMTID().getEvent().getCmt().getMw();
+				double correctedMw = Mw + Math.log10(ampCorrMinMisfit) / 1.5;
+				
+				double misfitMinDurationPlusOneSec = misfits[iDurationMin + (int) (1. / deltaHalfDuration)][iAmpcorrMin];
+				
+				Files.write(detailedCatalogFile, String.format("%s %.2f %.2f %.4e %.4e %.4e %.4e %.4e %d %.2f %.2f %.2f %.2f\n"
 						, eventFolder.getGlobalCMTID()
+						, halfDurationMinMisfit
+						, eventFolder.getGlobalCMTID().getEvent().getHalfDuration()
+						, minMisfit
+						, misfitMinDurationPlusOneSec
+						, gcmtMisfit
+						, misfitMinDurationPlusOneSec - minMisfit
+						, gcmtMisfit - minMisfit
+						, obsTraces.size()
 						, eventFolder.getGlobalCMTID().getEvent().getCmt().getMw()
-						, halfDurationMinMisfit, ampCorrMinMisfit
-						, obsTraces.size(), minMisfit, gcmtMisfit).getBytes()
+						, correctedMw
+						, ampCorrMinMisfit
+						, Earth.EARTH_RADIUS - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR()).getBytes()
+					, StandardOpenOption.APPEND);
+				
+				Files.write(catalogueFile, String.format("%s %f\n"
+						, eventFolder.getGlobalCMTID()
+						, halfDurationMinMisfit).getBytes()
 					, StandardOpenOption.APPEND);
 				
 				Files.write(gcmtFile, String.format("%s %f\n"
@@ -385,8 +452,27 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					, StandardOpenOption.APPEND);
 					
 					
-					// Write quality control stack (qcStack) to files.
-					Path stackPath = stackDir.resolve(eventFolder.getGlobalCMTID() + ".qcStack");
+				// stack for visual quality control
+//				double[] obsStack;
+//				double[] bestSynStack;
+//				double[] gcmtSynStack;
+				
+				SourceTimeFunction stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDurationMinMisfit);
+				Map<SACComponent, RealVector[]> obsSynStacks = stack(stf, orderedTimewindows, synTraces, obsTraces, orderedStaticCorrection
+						, halfDurationMinMisfit, gcmtHalfDuration, ampCorrMinMisfit);
+//				obsStack = obsSynStacks[0].toArray();
+//				bestSynStack = obsSynStacks[1].toArray();
+				
+				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, gcmtHalfDuration);
+				Map<SACComponent, RealVector[]> gcmtObsSynStack = stack(stf, orderedTimewindows, synTraces, obsTraces, orderedStaticCorrection
+						, halfDurationMinMisfit, gcmtHalfDuration, ampCorrMinMisfit);
+				
+				// Write quality control stack (qcStack) to files.
+				for (SACComponent component : components) {
+					Path stackPath = stackDir.resolve(eventFolder.getGlobalCMTID() + "." + component + ".qcStack");
+					double[] obsStack = obsSynStacks.get(component)[0].toArray();
+					double[] bestSynStack = obsSynStacks.get(component)[1].toArray();
+					double[] gcmtSynStack = gcmtObsSynStack.get(component)[1].toArray();
 					int lendata = Integer.min(bestSynStack.length, Integer.min(obsStack.length, gcmtSynStack.length));
 					if (lendata != obsStack.length)
 						System.out.println("Warning: lenght of obs, gcmtsyn, bestsyn stacked vector differ: " 
@@ -405,11 +491,12 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					}
 					
 					// Write Gnuplot scripts for qcStack
-					Path scriptPath = stackDir.resolve(eventFolder.getGlobalCMTID() + ".plt");
-					String psfileName = eventFolder.getGlobalCMTID() + ".qcStack.ps";
+					Path scriptPath = stackDir.resolve(eventFolder.getGlobalCMTID() + "." + component + ".plt");
+					String psfileName = eventFolder.getGlobalCMTID() + "." + component + ".qcStack.ps";
 					String datafileName = stackPath.getFileName().toString();
 					writeForGnuplot(scriptPath, psfileName, datafileName);
 				}
+			}
 			
 			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outputinfoPath
 					, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
@@ -434,18 +521,22 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	
 	private class Worker implements Runnable {
 	private double halfDuration;
+	private double gcmtHalfDuration;
 	private List<TimewindowInformation> orderedTimewindows;
 	private int i;
 	private List<Trace> obsTraceList;
 	private List<Trace> synTraceList;
+	private List<StaticCorrection> staticCorrections;
 	
 	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowInformation> orderedTimewindows, int i
-			, List<Trace> obsTraceList, List<Trace> synTraceList) {
+			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrection> staticCorrections, double gcmtHalfDuration) {
 		this.halfDuration = halfDuration;
 		this.orderedTimewindows = orderedTimewindows;
 		this.i = i;
 		this.obsTraceList = obsTraceList;
 		this.synTraceList = synTraceList;
+		this.staticCorrections = staticCorrections;
+		this.gcmtHalfDuration = gcmtHalfDuration;
 	}
 	
 	@Override
@@ -463,19 +554,41 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 				Trace obsTrace = obsTraceList.get(j);
 				Trace synTraceConvolved = new Trace(synTraceList.get(j).getX()
 						, synConvolved);
-				
-				Trace tmpObsTrace = obsTrace.cutWindow(timewindow.getStartTime() - 10., timewindow.getEndTime() + 10.);
 				synTraceConvolved = synTraceConvolved.cutWindow(timewindow);
-				Trace tmpSynTrace = synTraceConvolved;
-				
-				double shift = tmpObsTrace.findBestShift(tmpSynTrace);
-//				System.out.println("DEBUG2 : half-duration = " + halfDuration + "; best shift = " + shift);
-				
-				obsTrace = obsTrace.shiftX(-shift).cutWindow(timewindow);
-//				obsTrace = obsTrace.cutWindow(timewindow);
-				
 				RealVector synVector = synTraceConvolved.getYVector();
-				RealVector obsVector = obsTrace.getYVector();
+				
+				double shift = 0;
+				if (staticCorrections == null) {
+					Trace tmpObsTrace = obsTrace.cutWindow(timewindow.getStartTime() - 10., timewindow.getEndTime() + 10.);
+//					synTraceConvolved = synTraceConvolved.cutWindow(timewindow);
+					Trace tmpSynTrace = synTraceConvolved;
+					
+					//TODO check it
+					shift = -tmpObsTrace.findBestShift(tmpSynTrace);
+	//				System.out.println("DEBUG2 : half-duration = " + halfDuration + "; best shift = " + shift);
+					
+	//				obsTrace = obsTrace.cutWindow(timewindow);
+				}
+				else {
+					StaticCorrection correction = staticCorrections.get(j);
+					double shiftStatic = correction.getTimeshift(); //to add to obs
+					double shiftConvolution = gcmtHalfDuration - halfDuration; //to add to obs
+					shift = shiftConvolution + shiftStatic;
+					
+				}
+				
+				double correctedStartTime = timewindow.getStartTime() - shift;
+				int iStart = (int) (correctedStartTime * samplingHz);
+				RealVector obsVector = obsTrace.getYVector().getSubVector(iStart, synVector.getDimension());
+				
+//				obsTrace = obsTrace.shiftX(shift).cutWindow(timewindow);
+				
+//				RealVector obsVector = obsTrace.getYVector();
+				
+				double weight = 1. / obsVector.getLInfNorm();
+				
+				synVector = synVector.mapMultiply(weight);
+				obsVector = obsVector.mapMultiply(weight);
 				
 //				synVector = synVector.mapMultiply(obsVector.getLInfNorm() 
 //						/ synVector.getLInfNorm());
@@ -491,12 +604,15 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 				if (synVector.getDimension() == obsVector.getDimension() - 1)
 					obsVector = obsVector.getSubVector(0, synVector.getDimension());
 				
-				// variance
+				// variance as misfit
 				for (int k = 0; k < amplitudeCorrections.length; k++) {
 					RealVector correctedObs = obsVector.mapMultiply(amplitudeCorrections[k]);
-					double tmpMisfit = synVector.subtract(correctedObs)
-							.getNorm() / correctedObs.getNorm();
-					misfits[i][k] += tmpMisfit;
+					RealVector residual = synVector.subtract(correctedObs);
+					double numerator = residual.dotProduct(residual);
+					double denominator = correctedObs.dotProduct(correctedObs);
+					misfitNumerator[i][k] += numerator;
+					misfitDenominator[i][k] += denominator;
+//					misfits[i][k] += tmpMisfit;
 				}
 				
 				// normalized variance
@@ -526,8 +642,8 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 //				}
 			}
 			
-			for (int k = 0; k < amplitudeCorrections.length; k++)
-				misfits[i][k] = misfits[i][k] / orderedTimewindows.size();
+//			for (int k = 0; k < amplitudeCorrections.length; k++)
+//				misfits[i][k] = misfits[i][k] / orderedTimewindows.size();
 		}
 	}
 	
@@ -647,62 +763,111 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		pw.close();
 	}
 	
-	private RealVector[] stack(SourceTimeFunction stf, List<TimewindowInformation> orderedTimewindows
-			, List<Trace> synTraces, List<Trace> obsTraces) {
-		RealVector[] obsSynStacks = new RealVector[2];
-		obsSynStacks[0] = new ArrayRealVector((int) (100 * samplingHz));
-		obsSynStacks[1] = new ArrayRealVector((int) (100 * samplingHz));
-		RealVector obsStack = new ArrayRealVector((int) (100 * samplingHz));
-		RealVector synStack = new ArrayRealVector((int) (100 * samplingHz));
+	private Map<SACComponent, RealVector[]> stack(SourceTimeFunction stf, List<TimewindowInformation> orderedTimewindows
+			, List<Trace> synTraces, List<Trace> obsTraces, List<StaticCorrection> staticCorrections, double halfDuration, double gcmtHalfDuration, double ampCorr) {
+		Map<SACComponent, RealVector[]> obsSynStacksMap = new HashMap<>();
+		Map<SACComponent, RealVector> obsStackMap = new HashMap<>();
+		Map<SACComponent, RealVector> synStackMap = new HashMap<>();
+		for (SACComponent component : components) {
+			RealVector[] tmps = new ArrayRealVector[2];
+			tmps[0] = new ArrayRealVector((int) (100 * samplingHz));
+			tmps[1] = new ArrayRealVector((int) (100 * samplingHz));
+			obsSynStacksMap.put(component, tmps);
+			
+			obsStackMap.put(component, new ArrayRealVector((int) (100 * samplingHz)));
+			synStackMap.put(component, new ArrayRealVector((int) (100 * samplingHz)));
+		}
+//		obsSynStacks[0] = new ArrayRealVector((int) (100 * samplingHz));
+//		obsSynStacks[1] = new ArrayRealVector((int) (100 * samplingHz));
+//		RealVector obsStack = new ArrayRealVector((int) (100 * samplingHz));
+//		RealVector synStack = new ArrayRealVector((int) (100 * samplingHz));
 		for (int i = 0; i < orderedTimewindows.size(); i++) {
 			double[] synConvolved = stf.convolve(synTraces.get(i).getY());
 			
 			TimewindowInformation timewindow = orderedTimewindows.get(i);
+			SACComponent component = timewindow.getComponent();
 			
 			Trace obsTrace = obsTraces.get(i);
 			Trace synTraceConvolved = new Trace(synTraces.get(i).getX()
 					, synConvolved);
-			
-			Trace tmpObsTrace = obsTrace.cutWindow(timewindow.getStartTime() - 10., timewindow.getEndTime() + 10.);
 			synTraceConvolved = synTraceConvolved.cutWindow(timewindow);
-			Trace tmpSynTrace = synTraceConvolved;
-			
-			double shift = tmpObsTrace.findBestShift(tmpSynTrace);
-			
-			obsTrace = obsTrace.shiftX(-shift).cutWindow(timewindow);
-			
 			RealVector synVector = synTraceConvolved.getYVector();
-			RealVector obsVector = obsTrace.getYVector();
 			
+			double shift = 0;
+			if (staticCorrections == null) {
+				Trace tmpObsTrace = obsTrace.cutWindow(timewindow.getStartTime() - 10., timewindow.getEndTime() + 10.);
+				
+				Trace tmpSynTrace = synTraceConvolved;
+				
+				//TODO check it
+				shift = -tmpObsTrace.findBestShift(tmpSynTrace);
+//				System.out.println("DEBUG2 : half-duration = " + halfDuration + "; best shift = " + shift);
+				
+//				obsTrace = obsTrace.cutWindow(timewindow);
+			}
+			else {
+				StaticCorrection correction = staticCorrections.get(i);
+				double shiftStatic = correction.getTimeshift(); //to add to obs
+				double shiftConvolution = gcmtHalfDuration - halfDuration; //to add to obs
+				shift = shiftConvolution + shiftStatic;
+			}
+			
+//			obsTrace = obsTrace.shiftX(shift).cutWindow(timewindow);
+			
+			double correctedStartTime = timewindow.getStartTime() - shift;
+			int iStart = (int) (correctedStartTime * samplingHz);
+			RealVector obsVector = obsTrace.getYVector().getSubVector(iStart, synVector.getDimension());
 			
 			if (synVector.getDimension() == obsVector.getDimension() + 1)
 				synVector = synVector.getSubVector(0, obsVector.getDimension());
 			if (synVector.getDimension() == obsVector.getDimension() - 1)
 				obsVector = obsVector.getSubVector(0, synVector.getDimension());
 			
-			double linfinv = 1. / obsVector.getLInfNorm();
-			obsVector = obsVector.mapMultiply(linfinv);
-			synVector = synVector.mapMultiply(linfinv);
+			double weight = 1. / obsVector.getLInfNorm();
+			obsVector = obsVector.mapMultiply(weight * ampCorr);
+			synVector = synVector.mapMultiply(weight);
+			
+			RealVector obsStack = obsStackMap.get(component);
+			RealVector synStack = synStackMap.get(component);
+			
 			if (obsStack.getDimension() < obsVector.getDimension()) {
-				obsStack = obsStack.add(obsVector.getSubVector(0, obsStack.getDimension()));
+				RealVector tmpObs = obsVector.getSubVector(0, obsStack.getDimension());
+				obsStack = obsStack.add(tmpObs);
 				synStack = synStack.add(synVector.getSubVector(0, synStack.getDimension()));
+				
+				obsData[i] = tmpObs.toArray();
 			}
 			else if (obsStack.getDimension() > obsVector.getDimension()) {
 				obsStack = obsStack.getSubVector(0, obsVector.getDimension())
 						.add(obsVector);
 				synStack = synStack.getSubVector(0, obsVector.getDimension())
 						.add(synVector);
+				
+				obsData[i] = obsVector.toArray();
 			}
 			else {
 				obsStack = obsStack.add(obsVector);
 				synStack = synStack.add(synVector);
+				
+				obsData[i] = obsVector.toArray();
 			}
+			
+			obsStackMap.replace(component, obsStack);
+			synStackMap.replace(component, synStack);
 		}
 		
-		obsSynStacks[0] = obsStack;
-		obsSynStacks[1] = synStack;
+		for (SACComponent component : components) {
+			RealVector[] obsSynStacks = new ArrayRealVector[2]; 
+			obsSynStacks[0] = obsStackMap.get(component);
+			obsSynStacks[1] = synStackMap.get(component);
+			obsSynStacksMap.put(component, obsSynStacks);
+		}
 		
-		return obsSynStacks;
+		return obsSynStacksMap;
 	}
+	
+	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+					&& s.getComponent() == t.getComponent();
 	
 }

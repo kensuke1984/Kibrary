@@ -64,6 +64,9 @@ public class FirstHandler implements Operation {
 			pw.println("#epicentralDistanceMax");
 			pw.println("##boolean if it is true, remove intermediate files (true)");
 			pw.println("#removeIntermediateFile");
+			pw.println("##Number of cores to run (2)");
+			pw.println("##More than 2 cores can generate a memory error in SAC (should find a better fix later)");
+			pw.println("#nCores");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -82,6 +85,8 @@ public class FirstHandler implements Operation {
 			property.setProperty("samplingHz", "20"); // TODO
 		if (!property.containsKey("removeIntermediateFile"))
 			property.setProperty("removeIntermediateFile", "true");
+		if (!property.containsKey("nCores"))
+			property.setProperty("nCores", "2");
 	}
 
 	/**
@@ -105,6 +110,8 @@ public class FirstHandler implements Operation {
 			throw new RuntimeException("Invalid catalog name.");
 		}
 		removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
+		
+		nCores = Integer.parseInt(property.getProperty("nCores"));
 	}
 
 	private double samplingHz;
@@ -123,6 +130,8 @@ public class FirstHandler implements Operation {
 	 * output directory
 	 */
 	private Path outPath;
+	
+	private int nCores;
 
 	/**
 	 * @param args
@@ -175,7 +184,11 @@ public class FirstHandler implements Operation {
 		seedSacs.forEach(ss -> ss.setRemoveIntermediateFiles(removeIntermediateFile));
 
 		int threadNum = Runtime.getRuntime().availableProcessors();
-		ExecutorService es = Executors.newFixedThreadPool(threadNum);
+		if (nCores > threadNum)
+			throw new RuntimeException("Insuficcient number of avilable cores: " + threadNum + " " + nCores);
+		int N_THREADS = nCores;
+		System.err.println("Running on " + N_THREADS + " cores");
+		ExecutorService es = Executors.newFixedThreadPool(N_THREADS);
 
 		seedSacs.forEach(ss -> es.submit(ss::run));
 

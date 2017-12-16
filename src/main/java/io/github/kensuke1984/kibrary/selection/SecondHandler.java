@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
@@ -61,6 +62,8 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 			pw.println("#maxEventLatitude");
 			pw.println("#minEventLongitude");
 			pw.println("#maxEventLongitude");
+			pw.println("#minEventDepth");
+			pw.println("#maxEventDepth");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -128,6 +131,12 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 				? Double.parseDouble(property.getProperty("minEventLongitude")) : 0;
 		double maxEventLongitude = property.containsKey("maxEventLongitude")
 				? Double.parseDouble(property.getProperty("maxEventLongitude")) : 360;
+				
+		double maxEventDepth = property.containsKey("maxEventDepth") ?
+				Double.parseDouble(property.getProperty("maxEventDepth")) : 800;
+		double minEventDepth = property.containsKey("minEventDepth") ?
+				Double.parseDouble(property.getProperty("minEventDepth")) : 0;
+	
 		Predicate<SACData> p = new Predicate<SACData>() {
 
 			@Override
@@ -182,6 +191,11 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 				if (eventLongitude < 0)
 					eventLongitude += 360;
 				if (eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude)
+					return false;
+				
+				// Event Depth
+				double eventDepth = obsSac.getValue(SACHeaderEnum.EVDP);
+				if (eventDepth > maxEventDepth || eventDepth < minEventDepth)
 					return false;
 
 				return true;

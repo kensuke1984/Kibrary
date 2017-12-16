@@ -59,13 +59,15 @@ public class RaypathDistribution implements Operation {
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
-			pw.println("##boolean true if you want to draw raypath (false)");
+			pw.println("##Integer if you want to draw raypath (0: don't draw, 1: quick draw, 2: detailed draw)");
 			pw.println("#raypath");
 			pw.println("##StationInformationFile a file containing station information must be set!!");
 			pw.println("#stationInformationPath station.inf");
 			pw.println("##Path of a time window information file.");
 			pw.println("##If it exists, draw raypaths in the file");
 			pw.println("#timeWindowInformationPath");
+			pw.println("#model");
+			pw.println("#pierceDepth");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -91,7 +93,7 @@ public class RaypathDistribution implements Operation {
 		components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
 
-		drawsPath = Boolean.parseBoolean(property.getProperty("raypath"));
+		drawsPathInt = Integer.parseInt(property.getProperty("raypath"));
 		// drawsPoint = Boolean.parseBoolean(reader.getString("partial"));
 		if (property.containsKey("timeWindowInformationPath")) {
 			Path f = getPath("timeWindowInformationPath");
@@ -104,6 +106,10 @@ public class RaypathDistribution implements Operation {
 		else
 			stationSet = timeWindowInformationFile.stream().map(tw -> tw.getStation())
 				.collect(Collectors.toSet());
+		
+		pierceDepth = Double.parseDouble(property.getProperty("pierceDepth"));
+		
+		model = property.getProperty("model");
 	}
 
 	private Properties property;
@@ -116,7 +122,11 @@ public class RaypathDistribution implements Operation {
 	/**
 	 * draw path
 	 */
-	protected boolean drawsPath;
+	protected int drawsPathInt;
+	
+	private String model;
+	
+	private double pierceDepth;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -125,6 +135,12 @@ public class RaypathDistribution implements Operation {
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("stationInformationPath"))
 			throw new RuntimeException("There is no information of a station information file.");
+		if (!property.containsKey("pierceDepth"))
+			property.setProperty("pierceDepth", "300");
+		if (!property.containsKey("model"))
+			property.setProperty("model", "prem");
+		if (!property.containsKey("drawsPathInt"))
+			property.setProperty("drawsPathInt", "0");
 	}
 
 	/**
@@ -196,11 +212,17 @@ public class RaypathDistribution implements Operation {
 				.collect(Collectors.toSet());
 		outputEvent();
 		outputStation();
-		if (drawsPath) {
+		switch (drawsPathInt) {
+		case 1:
 			outputRaypath();
-//			outputTurningPoint();
-//			outputRaypathInside_divide();
+			break;
+		case 2:
+			outputRaypathInside(pierceDepth);
+			break;
+		default:
+			break;
 		}
+//			outputTurningPoint();
 		outputGMT();
 	}
 
@@ -260,7 +282,7 @@ public class RaypathDistribution implements Operation {
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getStation().getPosition();
-					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "ak135", Phase.ScS)
+					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, Phase.ScS)
 						.get(0);
 					Location turningPoint = info.getTurningPoint();
 					lines.add(String.format("%.2f %.2f %.2f"
@@ -270,6 +292,46 @@ public class RaypathDistribution implements Operation {
 				});
 		
 		Files.write(turningPointPath, lines);
+	}
+	
+	private void outputRaypathInside(double pierceDepth) throws IOException {
+		List<String> lines = new ArrayList<>();
+		
+		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
+			try {
+				return eventDir.sacFileSet().stream();
+			} catch (Exception e) {
+				return Stream.empty();
+			}
+		}).filter(name -> name.isOBS() && components.contains(name.getComponent())).filter(this::inTimeWindow)
+				.map(name -> {
+					try {
+						return name.readHeader();
+					} catch (Exception e) {
+						e.printStackTrace();
+						return null;
+					}
+				}).filter(Objects::nonNull)
+				.forEach(headerData -> {
+					Location eventLocation = headerData.getEventLocation();
+					HorizontalPosition stationPosition = headerData.getStation().getPosition();
+					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, Phase.ScS);
+					Info info = null;
+					if (infoList.size() > 0) {
+						info = infoList.get(0);
+						Location enterPoint = info.getEnterPoint();
+						Location leavePoint = info.getLeavePoint();
+						lines.add(String.format("%.2f %.2f %.2f %.2f"
+							, enterPoint.getLatitude()
+							, enterPoint.getLongitude()
+							, leavePoint.getLatitude()
+							, leavePoint.getLongitude()
+							));
+					}
+				});
+		
+		Path outpath = workPath.resolve("raypathInside.inf");
+		Files.write(outpath, lines);
 	}
 	
 	private void outputRaypathInside_divide() throws IOException {
@@ -300,8 +362,8 @@ public class RaypathDistribution implements Operation {
 					if (infoList.size() > 0) {
 						info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, "prem", Phase.ScS)
 						.get(0);
-						Location enterDpp = info.getEnterDppPoint();
-						Location leaveDpp = info.getLeaveDppPoint();
+						Location enterDpp = info.getEnterPoint();
+						Location leaveDpp = info.getLeavePoint();
 						if (stationPosition.getLongitude() >= -130 && stationPosition.getLongitude() <= -110)
 							lines_western.add(String.format("%.2f %.2f %.2f %.2f"
 								, enterDpp.getLatitude()
@@ -381,7 +443,7 @@ public class RaypathDistribution implements Operation {
 		gmtCMD.add("#!/bin/sh");
 		gmtCMD.add("psname=\"" + psPath + "\"");
 		gmtCMD.add(gmtmap.psStart());
-		if (drawsPath) {
+		if (drawsPathInt == 1) {
 			gmtCMD.add("while  read line");
 			gmtCMD.add("do");
 			gmtCMD.add("echo $line |awk '{print $3, $4, \"\\n\", $6, $7}' | \\");

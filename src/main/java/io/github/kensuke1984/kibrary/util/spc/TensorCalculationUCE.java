@@ -75,11 +75,20 @@ class TensorCalculationUCE {
 			}
 
 		eta = rotateEta(eta);
+		
+//		for (int r = 0; r < 3; r++) {
+//			for (int s = 0; s < 3; s++) {
+//				System.out.println(r + " " + s + " " + eta[r][s][i]);
+//			}
+//		}
 
 		for (int p = 0; p < 3; p++)
 			for (int q = 0; q < 3; q++) {
 				SpcTensorComponent pq = SpcTensorComponent.valueOfFP(p + 1, q + 1);
 				u[p][q] = fp.getSpcComponent(pq).getValueInFrequencyDomain();
+				
+//				System.out.println(p + " " + u[p][q][i]);
+				
 				// u = rotate(u,anglefp);
 				for (int r = 0; r < 3; r++)
 					for (int s = 0; s < 3; s++) {

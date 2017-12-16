@@ -67,10 +67,39 @@ public class SpcBody {
 	}
 	
 	public static SpcBody interpolate(SpcBody body1, SpcBody body2, SpcBody body3, double[] dh) {
+		SpcBody s = body1;
+//		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
+//		double c2 = dh[0] - dh[0]*dh[1];
+//		double c3 = dh[0]*dh[1]/2.;
+		double c1 = dh[1]*dh[2] / 2.;
+		double c2 = -dh[0]*dh[2];
+		double c3 = dh[0]*dh[1] / 2.;
+		
+		for (int j = 0; j < body1.nComponent; j++) {
+			SpcComponent comp1 = body1.spcComponents[j];
+			SpcComponent comp2 = body2.spcComponents[j];
+			SpcComponent comp3 = body3.spcComponents[j];
+			
+			comp1.mapMultiply(c1);
+			comp2.mapMultiply(c2);
+			comp3.mapMultiply(c3);
+			comp1.addComponent(comp2);
+			comp1.addComponent(comp3);
+			
+			s.spcComponents[j] = comp1;
+		}
+		
+		return s;
+	}
+	
+	public static SpcBody interpolate_backward(SpcBody body1, SpcBody body2, SpcBody body3, double[] dh) {
 		SpcBody s = body1.copy();
-		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
-		double c2 = dh[0] - dh[0]*dh[1];
-		double c3 = dh[0]*dh[1]/2.;
+//		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
+//		double c2 = dh[0] - dh[0]*dh[1];
+//		double c3 = dh[0]*dh[1]/2.;
+		double c1 = -dh[1]*dh[2];
+		double c2 = dh[0]*dh[2] / 2.;
+		double c3 = dh[0]*dh[1] / 2.;
 		
 		for (int j = 0; j < body1.nComponent; j++) {
 			SpcComponent comp1 = body1.spcComponents[j];

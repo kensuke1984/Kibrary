@@ -6,6 +6,7 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,11 +49,13 @@ public class PartialVisual {
 			double t0 = partial.getStartTime();
 			double dt = 1. / partial.getSamplingHz();
 			int i = 0;
-			Files.deleteIfExists(outpath);
-			Files.createFile(outpath);
-			for (double p : partial.getData()) {
-				Files.write(outpath, String.format("%.6f %.16e\n", (t0 + i*dt), p).getBytes(), StandardOpenOption.APPEND);
-				i++;
+//			Files.deleteIfExists(outpath);
+//			Files.createFile(outpath);
+			try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE_NEW))) {
+				for (double p : partial.getData()) {
+					pw.println(String.format("%.6f %.16e", (t0 + i*dt), p));
+					i++;
+				}
 			}
 		}
 		

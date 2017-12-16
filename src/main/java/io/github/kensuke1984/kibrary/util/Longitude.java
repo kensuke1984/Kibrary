@@ -8,7 +8,6 @@ import org.apache.commons.math3.util.Precision;
  * 
  * If you input 200, then the value is considered -160.
  * <p>
- * The value is rounded off to the 4th decimal position.
  * 
  * <p>
  * This class is <b>IMMUTABLE</b>
@@ -28,7 +27,7 @@ class Longitude implements Comparable<Longitude> {
 	/**
 	 * (-180, 180] the geographic longitude. 計算等に使う値
 	 */
-	private float longitude;
+	private double longitude;
 
 	/**
 	 * [0, 2*pi) φ in spherical coordinates.
@@ -38,13 +37,12 @@ class Longitude implements Comparable<Longitude> {
 	/**
 	 * epsilon to test equality within a range for this.longitude 
 	 */
-	private final float eps = 0.02f;
+	private final double eps = 1e-4;
 
 	/**
 	 * 
 	 * @param longitude
 	 *            [deg] [-180, 360)
-	 *            The longitude is rounded to 2 decimal places
 	 */
 	Longitude(double longitude) {
 		if (!checkLongitude(longitude))
@@ -53,10 +51,10 @@ class Longitude implements Comparable<Longitude> {
 		inLongitude = longitude;
 		if (180 < longitude) {
 			phi = FastMath.toRadians(longitude - 360);
-			this.longitude = -360f + (float) longitude;
+			this.longitude = -360f + longitude;
 		} else {
 			phi = FastMath.toRadians(longitude);
-			this.longitude = (float) longitude;
+			this.longitude = longitude;
 		}
 	}
 
@@ -99,7 +97,7 @@ class Longitude implements Comparable<Longitude> {
 	 * 
 	 * @return 緯度（度）
 	 */
-	public float getLongitude() {
+	public double getLongitude() {
 		return longitude;
 	}
 

@@ -282,7 +282,6 @@ public class PartialDatasetMaker_v2 implements Operation {
 			if (structure != null)
 				threedPartialMaker.setStructure(structure);
 			
-			
 //			if (bp.getSourceLocation().getLongitude() == fp.getObserverPosition().getLongitude()) {
 //				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + bp.getSourceLocation().getLongitude() 
 //						+ "." + fp.getSourceID() + ".txt");
@@ -331,7 +330,11 @@ public class PartialDatasetMaker_v2 implements Operation {
 					for (SACComponent component : components) {
 						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
 							continue;
+//						System.out.println(bp.getBodyR()[ibody] + " " + fpname);
 						double[] partial = threedPartialMaker.createPartial(component, ibody, type);
+//						for (int i = 0; i < 600; i++) {
+//							System.out.println(partial[i*(int)partialSamplingHz]);
+//						}
 						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
 							Complex[] u = cutPartial(partial, info);
 
@@ -520,6 +523,8 @@ private class WorkerTimePartial implements Runnable {
 		this.property = (Properties) property.clone();
 		set();
 	}
+	
+	private boolean backward;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(PartialDatasetMaker_v2.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -552,6 +557,8 @@ private class WorkerTimePartial implements Runnable {
 			pw.println("#maxFreq");
 			pw.println("##The value of np for the filter (4)");
 			pw.println("#filterNp");
+			pw.println("##Filter if backward filtering is applied (false)");
+			pw.println("#backward");
 			pw.println("#double (20)");
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("##double SamplingHz in output dataset (1)");
@@ -593,6 +600,8 @@ private class WorkerTimePartial implements Runnable {
 			property.setProperty("finalSamplingHz", "1");
 		if (!property.containsKey("filterNp"))
 			property.setProperty("filterNp", "4");
+		if (!property.containsKey("backward"))
+			property.setProperty("v", "false");
 		
 		// additional unused info
 		property.setProperty("STFcatalog", stfcatName);
@@ -644,6 +653,8 @@ private class WorkerTimePartial implements Runnable {
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
 		
 		filterNp = Integer.parseInt(property.getProperty("filterNp"));
+		
+		backward = Boolean.parseBoolean(property.getProperty("backward"));
 	}
 
 	private void setLog() throws IOException {
@@ -728,7 +739,8 @@ private class WorkerTimePartial implements Runnable {
 	@Override
 	public void run() throws IOException {
 		setLog();
-		final int N_THREADS = Runtime.getRuntime().availableProcessors();
+//		final int N_THREADS = Runtime.getRuntime().availableProcessors();
+		final int N_THREADS = 1;
 		writeLog("Running " + N_THREADS + " threads");
 		writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogID());
 		writeLog("SourceTimeFunction=" + sourceTimeFunction);
@@ -1011,7 +1023,7 @@ private class WorkerTimePartial implements Runnable {
 		double omegaH = maxFreq * 2 * Math.PI / partialSamplingHz;
 		double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
 		filter = new BandPassFilter(omegaH, omegaL, filterNp);
-		filter.setBackward(false);
+		filter.setBackward(backward);
 //		filter.setBackward(true);
 		writeLog(filter.toString());
 		periodRanges = new double[][] { { 1 / maxFreq, 1 / minFreq } };
