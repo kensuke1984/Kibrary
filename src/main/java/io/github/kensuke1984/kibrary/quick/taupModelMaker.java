@@ -1,7 +1,11 @@
 package io.github.kensuke1984.kibrary.quick;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Earth;
@@ -12,8 +16,39 @@ public class taupModelMaker {
 //		PolynomialStructure model = PolynomialStructure.PREM;
 		PolynomialStructure model = new PolynomialStructure(
 				Paths.get("/Users/Anselme/Dropbox/Kenji/FWICarib/specfem/Dpp+2per/model/model.poly"));
+		Path root = Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES");
 //		int nR = Integer.parseInt(args[0]);
-		int nR = 10000;
+		int nR = 5000;
+		
+//		Path outpath = root.resolve("PREM.vel");
+//		outputSTD(PolynomialStructure.PREM, nR, outpath);
+//		
+//		outpath = root.resolve("IPREM.vel");
+//		outputSTD(PolynomialStructure.ISO_PREM, nR, outpath);
+//		
+//		outpath = root.resolve("AK135.vel");
+//		outputSTD(PolynomialStructure.AK135, nR, outpath);
+		
+//		Path outpath = root.resolve("MIASP91.vel");
+		PolynomialStructure miasp91 = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/miasp91.poly"));
+//		outputSTD(miasp91, nR, outpath);
+		
+		Path outpath = root.resolve("TBL100_rho.vel");
+		PolynomialStructure tbl = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/TBL100_3800_05_08_rho.poly"));
+		outputSTD(tbl, nR, outpath);
+		
+		double r = 6371.-2000.000000000001;
+		double dvs = miasp91.getVshAt(r) - tbl.getVshAt(r);
+		double dvp = miasp91.getVphAt(r) - tbl.getVphAt(r);
+		double drho = miasp91.getRhoAt(r) - tbl.getRhoAt(r);
+		System.out.println(dvp + " " + dvs + " " + drho);
+		
+		
+//		System.out.println(miasp91.getRhoAt(6030.9));
+//		System.out.println(miasp91.getRhoAt(5781.0));
+//		System.out.println(-(6030.9*miasp91.getRhoAt(5781.0)-5781.*miasp91.getRhoAt(6030.9))/(5781-6030.9) + " " + (miasp91.getRhoAt(6030.9)-miasp91.getRhoAt(5781.0))/(6030.9-5781.0)*6371. );
+		
+		
 		
 //		for (int i = 0; i < 41; i++) {
 //			double r = 6371 - 20.*i;
@@ -31,7 +66,7 @@ public class taupModelMaker {
 //		}
 //		System.exit(0);
 		
-		outputTauP(model, nR);
+//		outputTauP(model, nR);
 //		outputAxiSEM(model, nR);
 //		System.out.println(isDiscontinous(model, 6356.000, 6345.516) + " " + (Earth.EARTH_RADIUS -  6356) + " " + (Earth.EARTH_RADIUS - 6345) + " " + (Earth.EARTH_RADIUS - model.getRMinOf(model.getiZoneOf(6356))));
 	}
@@ -39,6 +74,19 @@ public class taupModelMaker {
 	private static String TauPline(PolynomialStructure model, double r) {
 		double depth = Earth.EARTH_RADIUS - r;
 		return String.format("%.4f %.4f %.4f %.4f\n", depth, model.getVphAt(r), model.getVshAt(r), model.getRhoAt(r));
+	}
+	
+	private static String stdline(PolynomialStructure model, double r) {
+		double Qmu = model.getQmuAt(r) == Double.POSITIVE_INFINITY ? Double.POSITIVE_INFINITY : model.getQmuAt(r);
+		return String.format("%.3f %.5f %.5f %.5f %.5f %.5f %.1f %.1f%n"
+				,Earth.EARTH_RADIUS - r
+				,model.getVphAt(r)
+				,model.getVphAt(r)
+				,model.getVshAt(r)
+				,model.getVsvAt(r)
+				,model.getRhoAt(r)
+				,Qmu
+				,model.getQkappaAt(r));
 	}
 	
 	private static String AxiSEMline(PolynomialStructure model, double r) {
@@ -77,6 +125,34 @@ public class taupModelMaker {
 			}
 			else
 				System.out.print(TauPline(model, r));
+		}
+	}
+	
+	public static void outputSTD(PolynomialStructure model, int nR, Path outpath) throws IOException {
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+			for (int i = 0; i <= nR; i++) {
+				double dr = Earth.EARTH_RADIUS / nR;
+				double r = Earth.EARTH_RADIUS - i * dr;
+				double depth = Earth.EARTH_RADIUS - r;
+				int izone = model.getiZoneOf(r);
+				if (r > 0) {
+					if (izone != model.getiZoneOf(r - dr)) {
+						if (Math.abs(model.getVshAt(r) - model.getVshAt(r - dr)) > 0.05) {
+							double rZone = model.getRMinOf(izone);
+							pw.print(stdline(model, r));
+							pw.print(stdline(model, rZone));
+							pw.println("#DISCONTINUITY AT " + rZone + " km");
+							pw.print(stdline(model, rZone - .00001));
+						}
+						else
+							pw.print(stdline(model, r));
+					}
+					else 
+						pw.print(stdline(model, r));
+				}
+				else
+					pw.print(stdline(model, r));
+			}
 		}
 	}
 	

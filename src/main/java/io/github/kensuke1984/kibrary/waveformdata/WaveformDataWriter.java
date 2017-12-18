@@ -254,8 +254,7 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		
 		Integer ista = stationMap.get(basicID.STATION);
 		if (ista == null) {
-			System.out.println("NullPointerException: " + basicID.STATION + " " + basicID.ID);
-			return;
+			throw new RuntimeException("No such station: " + basicID.STATION + " " + basicID);
 		}
 
 		switch (basicID.TYPE) {

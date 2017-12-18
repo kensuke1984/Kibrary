@@ -54,7 +54,8 @@ public class Location extends HorizontalPosition {
 	 */
 	public Location(double latitude, double longitude, double r) {
 		super(latitude, longitude);
-		R = Precision.round(r, 3);
+//		R = Precision.round(r, 3);
+		R = r;
 	}
 
 	/**
@@ -111,7 +112,8 @@ public class Location extends HorizontalPosition {
 		if (getClass() != obj.getClass())
 			return false;
 		Location other = (Location) obj;
-		if (Double.doubleToLongBits(R) != Double.doubleToLongBits(other.R))
+//		if (Double.doubleToLongBits(R) != Double.doubleToLongBits(other.R))
+		if (!Utilities.equalWithinEpsilon(R, other.R, eps))
 			return false;
 		return true;
 	}
@@ -144,4 +146,6 @@ public class Location extends HorizontalPosition {
 	public String toString() {
 		return super.toString() + ' ' + R;
 	}
+	
+	double eps = 1e-6;
 }

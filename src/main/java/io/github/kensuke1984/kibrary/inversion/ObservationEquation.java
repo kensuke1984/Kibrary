@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.AtdEntry;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 
@@ -53,7 +54,7 @@ public class ObservationEquation {
 	private Matrix cm;
 	
 	private List<Double> unknownParameterWeigths;
-
+	
 	/**
 	 * @param partialIDs
 	 *            for equation must contain waveform
@@ -1186,6 +1187,45 @@ public class ObservationEquation {
 				e2.printStackTrace();
 			}
 		});
+	}
+	
+	public void outputAtA(Path AtAPath) {
+		if (a == null) {
+			System.out.println("no more A");
+			return;
+		}
+		if (ata == null) {
+			System.err.println(" No more ata. Computing again");
+			ata = a.computeAtA();
+		}
+		
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtAPath))) {
+			for (int i = 0; i < parameterList.size(); i++) {
+				for (int j = 0; j <= i; j++) {
+					pw.println(parameterList.get(i) + " " + parameterList.get(j) + " " + ata.getEntry(i, j));
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void outputAtd(Path AtdPath) {
+		if (a == null) {
+			System.out.println("no more A");
+			return;
+		}
+		if (atd == null) {
+			System.err.println(" No more atd. Computing again");
+			atd = computeAtD(dVector.getD());
+		}
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtdPath))) {
+			for (int i = 0; i < parameterList.size(); i++) {
+				pw.println(parameterList.get(i) + " " + atd.getEntry(i));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public void outputSensitivity(Path outPath) throws IOException {

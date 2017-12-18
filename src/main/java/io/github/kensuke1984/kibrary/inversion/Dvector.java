@@ -273,12 +273,13 @@ public class Dvector {
 		switch (weigthingType) {
 		case RECIPROCAL:
 			this.weightingFunction = (obs, syn) -> {
-				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				RealVector obsVec = new ArrayRealVector(obs.getData());
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
 					System.err.println(obs);
 					return 0.;
 				}
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+				return 1. / obsVec.getLInfNorm(); 
+//						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 			break;
 		case RECIPROCAL_AZED:

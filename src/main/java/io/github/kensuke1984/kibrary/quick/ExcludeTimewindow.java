@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -51,34 +52,50 @@ public class ExcludeTimewindow {
 			}
 			
 			else {
-				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
-						.filter(tw ->  {
-							double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI;
-							if (distance > 35. || distance < 5.)
-								return false;
-							else 
-								return true;
-						}).filter(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201102251307A")))
-	//					.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI >= 18.)
-						.collect(Collectors.toSet());
-				
-				
-				Map<GlobalCMTID, Integer> nWindowEventMap = new HashMap<>();
-				for (TimewindowInformation timewindow : newTimewindows) {
-					GlobalCMTID id = timewindow.getGlobalCMTID();
-					if (nWindowEventMap.containsKey(id)) {
-						int n = nWindowEventMap.get(id) + 1;
-						nWindowEventMap.replace(id, n);
+//				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
+//						.filter(tw ->  {
+//							double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI;
+//							if (distance > 35. || distance < 5.)
+//								return false;
+//							else 
+//								return true;
+//						}).filter(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201102251307A")))
+//	//					.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI >= 18.)
+//						.collect(Collectors.toSet());
+//				
+//				
+//				Map<GlobalCMTID, Integer> nWindowEventMap = new HashMap<>();
+//				for (TimewindowInformation timewindow : newTimewindows) {
+//					GlobalCMTID id = timewindow.getGlobalCMTID();
+//					if (nWindowEventMap.containsKey(id)) {
+//						int n = nWindowEventMap.get(id) + 1;
+//						nWindowEventMap.replace(id, n);
+//					}
+//					else
+//						nWindowEventMap.put(id, 1);
+//				}
+//				
+//				Set<TimewindowInformation> newTimewindows2 = newTimewindows.parallelStream().filter(tw -> nWindowEventMap.get(tw.getGlobalCMTID()) >= 15)
+//					.collect(Collectors.toSet());
+//				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
+//				
+//	//			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+//				
+				Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
+				for (TimewindowInformation timewindow : timewindows) {
+					GlobalCMTID event = timewindow.getGlobalCMTID();
+					Integer itmp = new Integer(1);
+					if (nTransverseMap.containsKey(event)) {
+						itmp = nTransverseMap.get(event) + 1;
 					}
-					else
-						nWindowEventMap.put(id, 1);
+					nTransverseMap.put(event, itmp);
 				}
 				
-				Set<TimewindowInformation> newTimewindows2 = newTimewindows.parallelStream().filter(tw -> nWindowEventMap.get(tw.getGlobalCMTID()) >= 15)
-					.collect(Collectors.toSet());
-				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
+				Set<TimewindowInformation> newTimewindows = timewindows.stream().filter(tw -> nTransverseMap.get(tw.getGlobalCMTID()) >= 20)
+						.collect(Collectors.toSet());
+				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 				
-	//			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+				
 			}
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);

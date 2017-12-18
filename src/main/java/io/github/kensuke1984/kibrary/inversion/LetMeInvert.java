@@ -493,6 +493,12 @@ public class LetMeInvert implements Operation {
 		else
 			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
 					unknownParameterWeightType);
+		
+		Path AtAPath = workPath.resolve("ata_stable_" + weightingType + ".dat");
+		Path AtdPath = workPath.resolve("atd_stable_" + weightingType + ".dat");
+		eq.outputAtA(AtAPath);
+		eq.outputAtd(AtdPath);
+		System.exit(0);
 	}
 	
 	/**

@@ -462,9 +462,9 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 	
-					private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
-							t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
-									&& s.getComponent() == t.getComponent();
+	private BiPredicate<StaticCorrection, TimewindowInformation> isPair2 = (s,
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+					&& s.getComponent() == t.getComponent();
 			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		return staticCorrectionSet.stream().filter(s -> isPair2.test(s, window)).findAny().get();
