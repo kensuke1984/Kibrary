@@ -6,6 +6,7 @@ import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.inversion.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
@@ -103,7 +104,8 @@ public class AtAMaker implements Operation {
 	private int np;
 	
 	private Path unknownParameterPath;
-	private UnknownParameter[] unknownParameters;
+	private UnknownParameter[] originalUnknownParameters;
+	private UnknownParameter[] newUnknownParameters;
 	
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
@@ -125,7 +127,9 @@ public class AtAMaker implements Operation {
 	
 	private int[] bufferStartIndex;
 	
-	private int nUnknown;
+	private int nOriginalUnknown;
+	
+	private int nNewUnknown;
 	
 	private int nWeight;
 	
@@ -145,6 +149,12 @@ public class AtAMaker implements Operation {
 	private int nproc;
 	
 	private Path outpartialDir;
+	
+	private int computationFlag;
+	
+	Path unknownMappingFile;
+	
+	ParameterMapping mapping;
 	
 	/* (non-Javadoc)
 	 * @see io.github.kensuke1984.kibrary.Operation#getWorkPath()
@@ -217,6 +227,8 @@ public class AtAMaker implements Operation {
 			pw.println("#thetaInfo");
 			pw.println("##Path of a forward propagate spc folder (FPinfo)");
 			pw.println("#fpPath");
+			pw.println("##Compute AtA and Atd (1), or Atd only (2). (1)");
+			pw.println("#computationFlag");
 			pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
 			pw.println("#modelName");
 			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
@@ -228,6 +240,8 @@ public class AtAMaker implements Operation {
 			pw.println("#partialTypes");
 			pw.println("##Path of unknown parameter file, must be set");
 			pw.println("#unknownParameterPath");
+			pw.println("##Path of a file with the mapping to compine unknown parameters, ignored if not set");
+			pw.println("#unknownMappingFile");
 			pw.println("## Weighting scheme for data weighting (RECIPROCAL)");
 			pw.println("#weightingTypes");
 			pw.println("##double time length DSM parameter tlen, must be set");
@@ -308,6 +322,8 @@ public class AtAMaker implements Operation {
 			property.setProperty("nwindowBuffer", "100");
 		if(!property.containsKey("backward"))
 			property.setProperty("backward", "false");
+		if(!property.containsKey("computationFlag"))
+			property.setProperty("computationFlag", "1");
 	}
 
 
@@ -362,12 +378,6 @@ public class AtAMaker implements Operation {
 		
 		outPartial = Boolean.parseBoolean(property.getProperty("outPartial"));
 		
-		unknownParameterPath = getPath("unknownParameterPath");
-		unknownParameters = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
-		
-		partialLocations = Arrays.stream(unknownParameters).map(p -> p.getLocation())
-				.distinct().collect(Collectors.toList()).toArray(new Location[0]);
-		
 		weightingTypes = Stream.of(property.getProperty("weightingTypes").trim().split("\\s+")).map(type -> WeightingType.valueOf(type))
 		 	.collect(Collectors.toList()).toArray(new WeightingType[0]);
 		if (weightingTypes.length < 0)
@@ -393,14 +403,6 @@ public class AtAMaker implements Operation {
 			bufferFiles[i] = path;
 		}
 		
-		nUnknown = unknownParameters.length;
-		n0AtA = nUnknown * (nUnknown + 1) / 2;
-		int ntmp = n0AtA / numberOfBuffers;
-		n0AtABuffer = n0AtA - ntmp * (numberOfBuffers - 1);
-		bufferStartIndex = new int[numberOfBuffers];
-		for (int i = 0; i < numberOfBuffers; i++)
-			bufferStartIndex[i] = i * ntmp;
-		
 		nWeight = weightingTypes.length;
 		
 		nFreq = frequencyRanges.length;
@@ -412,6 +414,15 @@ public class AtAMaker implements Operation {
 		outpartialDir = workPath.resolve("partials");
 		
 		backward = Boolean.parseBoolean(property.getProperty("backward"));
+		
+		computationFlag = Integer.parseInt(property.getProperty("computationFlag"));
+
+		unknownParameterPath = getPath("unknownParameterPath");
+		
+		if (property.getProperty("unknownMappingFile") != null)
+			unknownMappingFile = Paths.get(property.getProperty("unknownMappingFile"));
+		else
+			unknownMappingFile = null;
 	}
 	
 	
@@ -428,6 +439,7 @@ public class AtAMaker implements Operation {
 	public void run() throws IOException {
 		setTimewindows();
 		setBandPassFilter();
+		setUnknownParameters();
 		
 		// redifine nwindowBuffer so that it divides timewindowInformation.size()
 		int integerratio = timewindowInformation.size() / nwindowBuffer;
@@ -451,8 +463,8 @@ public class AtAMaker implements Operation {
 		
 //		readPerturbationPoints();
 		
-		atdEntries = new AtdEntry[nUnknown][][][];
-		for (int i = 0; i < nUnknown; i++) {
+		atdEntries = new AtdEntry[nNewUnknown][][][];
+		for (int i = 0; i < nNewUnknown; i++) {
 			atdEntries[i] = new AtdEntry[nWeight][][];
 			for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 				atdEntries[i][iweight] = new AtdEntry[nFreq][];
@@ -460,7 +472,7 @@ public class AtAMaker implements Operation {
 					atdEntries[i][iweight][ifreq] = new AtdEntry[usedPhases.length];
 					for (int iphase = 0; iphase < usedPhases.length; iphase++) {
 						atdEntries[i][iweight][ifreq][iphase] = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-								, usedPhases[iphase], unknownParameters[i].getPartialType(), unknownParameters[i].getLocation(), 0.);
+								, usedPhases[iphase], newUnknownParameters[i].getPartialType(), newUnknownParameters[i].getLocation(), 0.);
 					}
 				}
 			}
@@ -516,9 +528,9 @@ public class AtAMaker implements Operation {
 				}
 				
 				if (windowCounter.get() == 0) {
-					partials = new double[nUnknown][][][][][];
+					partials = new double[nNewUnknown][][][][][];
 					
-					for (int i = 0; i < nUnknown; i++) {
+					for (int i = 0; i < nNewUnknown; i++) {
 						partials[i] = new double[nWeight][][][][];
 						for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 							partials[i][iweight] = new double[nFreq][][][];
@@ -557,6 +569,7 @@ public class AtAMaker implements Operation {
 				
 //------------------------- make AtA for current event/station pair ---------------------------------------
 				
+				if (computationFlag == 1) {
 				if (!testBP) {
 				if (windowCounter.get() == nwindowBuffer) {
 					windowCounter.set(0);
@@ -584,7 +597,7 @@ public class AtAMaker implements Operation {
 									ataBuffer[itmp][iweight][ifreq] = new AtAEntry[usedPhases.length];
 									for (int iphase = 0; iphase < usedPhases.length; iphase++) {
 										ataBuffer[itmp][iweight][ifreq][iphase] = new AtAEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-												, usedPhases[iphase], unknownParameters[iunknown], unknownParameters[junknown]);
+												, usedPhases[iphase], newUnknownParameters[iunknown], newUnknownParameters[junknown]);
 									}
 								}
 							}
@@ -618,10 +631,11 @@ public class AtAMaker implements Operation {
 					
 					System.out.println("Writing AtA...");
 					Files.deleteIfExists(bufferFiles[ibuff]);
-					AtAFile.write(ataBuffer, weightingTypes, frequencyRanges, unknownParameters, usedPhases, bufferFiles[ibuff]);
+					AtAFile.write(ataBuffer, weightingTypes, frequencyRanges, newUnknownParameters, usedPhases, bufferFiles[ibuff]);
 				}
 				}
 				}
+			}
 			}
 		}
 				
@@ -634,7 +648,7 @@ public class AtAMaker implements Operation {
 			Path outputPath = workPath.resolve("atd" + Utilities.getTemporaryString() + ".dat");
 			
 			List<AtdEntry> atdEntryList = new ArrayList<>();
-			for (int i = 0; i < nUnknown; i++) {
+			for (int i = 0; i < nNewUnknown; i++) {
 				for (int iweight = 0; iweight < nWeight; iweight++) {
 					for (int ifreq = 0; ifreq < nFreq; ifreq++) {
 						for (int iphase = 0; iphase < usedPhases.length; iphase++) {
@@ -799,10 +813,36 @@ public class AtAMaker implements Operation {
 //			idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
 //		}
 //	}
+	
+	private void setUnknownParameters() throws IOException {
+		originalUnknownParameters = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
+		
+		partialLocations = Arrays.stream(originalUnknownParameters).map(p -> p.getLocation())
+				.distinct().collect(Collectors.toList()).toArray(new Location[0]);
+		
+		if (unknownMappingFile != null) {
+			mapping = new ParameterMapping(originalUnknownParameters, unknownMappingFile); 
+			newUnknownParameters = mapping.getUnknowns();
+		}
+		else {
+			mapping = new ParameterMapping(originalUnknownParameters);
+			newUnknownParameters = mapping.getUnknowns();
+		}
+		
+		nOriginalUnknown = originalUnknownParameters.length;
+		nNewUnknown = newUnknownParameters.length;
+		
+		n0AtA = nNewUnknown * (nNewUnknown + 1) / 2;
+		int ntmp = n0AtA / numberOfBuffers;
+		n0AtABuffer = n0AtA - ntmp * (numberOfBuffers - 1);
+		bufferStartIndex = new int[numberOfBuffers];
+		for (int i = 0; i < numberOfBuffers; i++)
+			bufferStartIndex[i] = i * ntmp;
+	}
 
 	private int getParameterIndex(Location loc, PartialType type) {
 		AtomicInteger i = new AtomicInteger(0);
-		for (UnknownParameter p : unknownParameters) {
+		for (UnknownParameter p : originalUnknownParameters) {
 //			System.out.println(loc + " " + type + ":" + p.getLocation() + " " + p.getPartialType());
 			if (p.getLocation().equals(loc) && p.getPartialType().equals(type))
 				return i.get();
@@ -963,7 +1003,9 @@ public class AtAMaker implements Operation {
 						continue;
 					}
 					
-					double weightUnknown = unknownParameters[iunknown].getWeighting();
+					int iNewUnknown = mapping.getiOriginalToNew(iunknown);
+					
+					double weightUnknown = originalUnknownParameters[iunknown].getWeighting();
 					
 					for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 						
@@ -1062,16 +1104,20 @@ public class AtAMaker implements Operation {
 										}
 										
 										int iphase = phaseMap.get(phases);
-										partials[iunknown][iweight][ifreq][iphase][windowCounter.get()] = cutU;
+										double[] tmpPartial = partials[iNewUnknown][iweight][ifreq][iphase][windowCounter.get()];
+										for (int k = 0; k < cutU.length; k++)
+											tmpPartial[k] += cutU[k];
+										partials[iNewUnknown][iweight][ifreq][iphase][windowCounter.get()] = tmpPartial;
 										if (cutU.length == 0) {
 											throw new RuntimeException(Thread.currentThread().getName() + " Unexpected: cutU (partial) has length 0 "
-													+ unknownParameters[iunknown] + " " + weightingTypes[iweight] + " " + frequencyRanges[ifreq]
+													+ originalUnknownParameters[iunknown] + " " + weightingTypes[iweight] + " " + frequencyRanges[ifreq]
 													+ " " + orderedRecordTimewindows.get(iwindow.get()));
 										}
 										 
+										parameterLoc = newUnknownParameters[iNewUnknown].getLocation();
 										// add entry to Atd
 										AtdEntry entry = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-												, phases, type, parameterLoc, tmpatd);
+												, phases, type, parameterLoc, tmpatd); //TODO parameterLoc
 										
 //										AtdEntry[] tmpEntries = atdEntries[iunknown][iweight][ifreq];
 //										boolean acted = false;
@@ -1094,9 +1140,9 @@ public class AtAMaker implements Operation {
 //										if (!acted)
 //											throw new RuntimeException("Unexpected: window buffer too small");
 										
-										AtdEntry tmp = atdEntries[iunknown][iweight][ifreq][iphase];
+										AtdEntry tmp = atdEntries[iNewUnknown][iweight][ifreq][iphase];
 										tmp.add(entry);
-										atdEntries[iunknown][iweight][ifreq][iphase] = tmp;
+										atdEntries[iNewUnknown][iweight][ifreq][iphase] = tmp;
 										// END add entry to Atd
 									
 								} // END timewindow
@@ -1188,8 +1234,8 @@ public class AtAMaker implements Operation {
 						}
 						
 						AtAEntry entry = new AtAEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-								, phases, unknownParameters[iunknown]
-								, unknownParameters[junknown], ataij);
+								, phases, newUnknownParameters[iunknown]
+								, newUnknownParameters[junknown], ataij);
 						
 //						if (unknownParameters[iunknown].getLocation().getR() == 6201.179 
 //								|| unknownParameters[iunknown].getLocation().getR() == 5430.321
