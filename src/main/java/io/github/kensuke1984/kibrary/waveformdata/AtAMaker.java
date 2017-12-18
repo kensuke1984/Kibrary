@@ -54,8 +54,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import net.sourceforge.sizeof.SizeOf;
-
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.util.FastMath;

@@ -32,6 +32,5 @@
 	<classpathentry kind="lib" path="lib/jfreechart-1.0.19.jar"/>
 	<classpathentry kind="lib" path="lib/netcdfAll-4.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/TauP-2.1.2.jar"/>
-	<classpathentry kind="lib" path="/Users/Anselme/git/Kibrary/lib/SizeOf_0_2_2/SizeOf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
