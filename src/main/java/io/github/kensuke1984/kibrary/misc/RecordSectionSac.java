@@ -106,7 +106,7 @@ public class RecordSectionSac {
 					e.printStackTrace();
 				}
 				
-				SACExtension[] components = new SACExtension[] {SACExtension.Tsc, SACExtension.Rsc};
+				SACExtension[] components = new SACExtension[] {SACExtension.Tsc, SACExtension.Rsc, SACExtension.Zsc};
 //				components.
 				List<SACFileName> sacfilenames = readDir(dir, components);
 				sacfilenames.stream()
