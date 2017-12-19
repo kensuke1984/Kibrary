@@ -140,11 +140,11 @@ public class RecordSectionSac {
 //								System.out.println("timewindow is empty? "+tmptimewindow.isEmpty());
 								if (!tmptimewindow.isEmpty()) {
 									tmptimewindow.stream().forEachOrdered(timewindow -> {
-										System.out.println(sacdata.getGlobalCMTID()+" "+sacdata.getStation()+" "+ timewindow);
+//										System.out.println(sacdata.getGlobalCMTID()+" "+sacdata.getStation()+" "+ timewindow);
 										Trace trace = sacdata.createTrace().cutWindow(timewindow);
 //										System.out.println("maxvalue is "+trace.getMaxValue());
 										double max = Math.max(trace.getMaxValue(), Math.abs(trace.getMinValue()));
-										
+										System.out.println("maxvalue is "+max);
 										try {
 											for (int i=0; i < (int) trace.getLength()/4.; i++) {
 												Files.write(outpath, (String.valueOf(trace.getX()[4*i])
