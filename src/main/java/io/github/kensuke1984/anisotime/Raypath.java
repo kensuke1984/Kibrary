@@ -676,7 +676,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param phase  Seismic {@link Phase}
      * @return route[point][]{r, theta, T}
      */
-    private double[][] getRoute(double eventR, Phase phase) {
+    public double[][] getRoute(double eventR, Phase phase) {
         if (getStructure().earthRadius() < eventR || eventR <= getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Input eventR:" + eventR + " is out of the mantle.");
         if (Double.isNaN(computeDelta(eventR, phase))) throw new RuntimeException(phase + " does not exist.");
@@ -1045,7 +1045,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                         Precision.round(timeMap.get(pp), 3)));
     }
 
-    private double getTurningR(PhasePart pp) {
+    public double getTurningR(PhasePart pp) {
         return turningRMap.get(pp);
     }
 
