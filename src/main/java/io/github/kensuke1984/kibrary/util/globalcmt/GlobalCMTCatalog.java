@@ -19,13 +19,17 @@ import java.util.stream.IntStream;
 /**
  * Catalog of global CMT solutions.
  * <p>
- * The catalog contains event list from <b>1976 January</b> to <b>2016
- * November</b>.
+ * The catalog contains list of events
+ * from <b>1976 January - 2017 August</b>.
  *
  * @author Kensuke Konishi
- * @version 0.1.3.1
+ * @version 0.1.4
  */
 final class GlobalCMTCatalog {
+
+    public static void main(String[] args) {
+        System.out.println("The catalog contains events from Jan 1976 - Aug 2017.");
+    }
 
     private final static Set<NDK> NDKs;
 
@@ -63,8 +67,9 @@ final class GlobalCMTCatalog {
 
     private static Set<NDK> readJar() {
         try {
-            List<String> lines = IOUtils.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
-                    Charset.defaultCharset());
+            List<String> lines =
+                    IOUtils.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
+                            Charset.defaultCharset());
             if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog contained in the jar file is broken");
             return IntStream.range(0, lines.size() / 5).mapToObj(
                     i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
@@ -79,6 +84,7 @@ final class GlobalCMTCatalog {
 
     /**
      * read catalogFile and returns NDKs inside.
+     *
      * @param catalogPath path of a catalog
      * @return NDKs in catalogFile
      */
@@ -95,7 +101,6 @@ final class GlobalCMTCatalog {
     }
 
     /**
-     *
      * @param id for the NDK
      * @return NDK of the input id
      */
