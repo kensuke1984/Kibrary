@@ -96,7 +96,7 @@ public class TestOfCorrelationOfBornAndObs {
 					System.out.println("Computing average correlation of "+j+"th basis vector.");
 					for(double cor : corEachBasis){
 						ave = ave + cor;
-						counter = counter + 1;
+						counter++;
 					}
 					ave = ave / counter ;
 					pw.println(ave +" "+ j);
