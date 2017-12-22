@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,21 +43,17 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 public class TestOfCorrelationOfBornAndObs {
 	
 	public static void main(String[] args) {
-		Path outPath = Paths.get("/mnt/melonpan/suzuki/ALASKA/DIVIDE/newPREM/threeDPartial_5deg/Inv_noSC/CorCheck");
+		Path outPath = Paths.get(args[4]);
 		File outDir = new File(outPath.toString());
 		outDir.mkdirs();
 		InverseMethodEnum CG = InverseMethodEnum.CONJUGATE_GRADIENT;
-//		InverseMethodEnum SVD = InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
+		InverseMethodEnum SVD = InverseMethodEnum.SINGURAR_VALUE_DECOMPOSITION;
 		TestOfCorrelationOfBornAndObs computeCor = new TestOfCorrelationOfBornAndObs();
-		Path timewindowPath = Paths.get("/mnt/melonpan/suzuki/ALASKA/DIVIDE/newPREM/newSTW.dat");
 		
 		try {
-			BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(Paths.get("/mnt/melonpan/suzuki/ALASKA/DIVIDE/newPREM/newWaveformID.dat")
-					, Paths.get("/mnt/melonpan/suzuki/ALASKA/DIVIDE/newPREM/newWaveform.dat"));
-			InversionResult ir = new InversionResult(Paths.get("/mnt/melonpan/suzuki/ALASKA/DIVIDE/newPREM/threeDPartial_5deg/Inv_noSC"));
-			List<UnknownParameter> unknownp = UnknownParameterFile.read(Paths.get("/mnt/melonpan/suzuki/ALASKA/DIVIDE/newPREM/threeDPartial_5deg/unknown.inf"));
-//			Set<GlobalCMTID> obsIDList = ir.idSet();
-//			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
+			BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(Paths.get(args[0]), Paths.get(args[1]));
+			InversionResult ir = new InversionResult(Paths.get(args[2]));
+			List<UnknownParameter> unknownp = UnknownParameterFile.read(Paths.get(args[3]));
 
 			File corFile = new File(outDir, "Correlation_"+CG.toString()+".inf");
 			File parDir = new File(outDir, CG.toString());
@@ -70,28 +67,25 @@ public class TestOfCorrelationOfBornAndObs {
 				
 				
 				for (int i=0; i<basicIDs.length;i++){
-					GlobalCMTID obsID = basicIDs[i].getGlobalCMTID();
+					if (!basicIDs[i].getWaveformType().equals(WaveformType.OBS))
+						continue;
+					GlobalCMTID gcmtID = basicIDs[i].getGlobalCMTID();
 					String station = basicIDs[i].getStation().toString();
 					double[] born = ir.bornOf(basicIDs[i], CG, j).getY();
-					Stream.of(basicIDs).filter(id -> id.getGlobalCMTID().toString().equals(obsID)).filter(id -> id.getWaveformType().equals(WaveformType.SYN))
+					Stream.of(basicIDs).filter(id -> id.getGlobalCMTID().toString().equals(gcmtID)).filter(id -> id.getWaveformType().equals(WaveformType.SYN))
 					.forEach(idSYN -> {
 						BasicID idOBS = Stream.of(basicIDs).filter(id -> id.getGlobalCMTID().equals(idSYN.getGlobalCMTID()))
 								.filter(id -> id.getStation().equals(idSYN.getStation()))
 								.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 								.findFirst()
 								.get();
-//					double[] obs = ir.observedOf(basicIDs[i]).getY();
-					double[] obs = idOBS.getData();				
+					
 					RealVector bornWave = new ArrayRealVector(born);
 //					RealVector synWave = new ArrayRealVector(idSYN.getData());
-					RealVector obsWave = new ArrayRealVector(obs);
-//					timewindows.stream().forEachOrdered(tw -> {				
-//					});
-//					RealVector bornWave = ir.bornOf(basicIDs[i], CG, j).getYVector();
-//					RealVector obsWave = ir.observedOf(basicIDs[i]).getYVector();
+					RealVector obsWave = new ArrayRealVector(idOBS.getData());
 					//ここで各震源観測点ペアのOBSとBORNのCorrelationを書き出す。
 					System.out.println("Computing each waveform correlation.");
-					computeCor.computeCorrelation(aveEachPar, obsWave, bornWave, obsID, station);
+					computeCor.computeCorrelation(aveEachPar, obsWave, bornWave, gcmtID, station);
 					double correlation = computeCor.computeCorrelation(obsWave, bornWave);
 					corEachBasis.add(correlation);
 					});

@@ -383,6 +383,8 @@ public class InversionResult {
 	 *         its partial "partial/(txt file name)" is fine.
 	 */
 	protected String getTxtName(BasicID id) {
+//		System.out.println("BasicIDList size is "+basicIDList.size());
+//		System.out.println(basicIDList.indexOf(id));
 		return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "." + basicIDList.indexOf(id) + ".txt";
 	}
