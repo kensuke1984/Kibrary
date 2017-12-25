@@ -97,6 +97,10 @@ public class DataSelection implements Operation {
 			pw.println("#minSNratio");
 			pw.println("#boolean SnScSnPair (false). Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset");
 			pw.println("SnScSnPair false");
+			pw.println("##double minEpicentralDistance (70)");
+            pw.println("#minDistance");
+            pw.println("##double maxEpicentralDistance (100)");
+            pw.println("#maxDistance");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -136,6 +140,16 @@ public class DataSelection implements Operation {
 	 * Maximum variance
 	 */
 	private double maxVariance;
+	
+	/**
+     * Minimum Epicentral distance
+     */
+    private double minDistance;
+
+    /**
+     * Maximum Epicentral distance
+     */
+    private double maxDistance;
 
 	/**
 	 * amplitude のしきい値
@@ -375,7 +389,7 @@ public class DataSelection implements Operation {
 						double signal = obsU.getNorm() / (window.getEndTime() - window.getStartTime());
 						double SNratio = signal / noise;
 						
-						if (check(lpw, stationName, id, component, window, obsU, synU, SNratio)) {
+						if (check(lpw, stationName, id, component, window, obsU, synU, SNratio, synSac)) {
 							if (Stream.of(window.getPhases()).filter(p -> p == null).count() > 0) {
 								System.out.println(window);
 							}
@@ -432,7 +446,7 @@ public class DataSelection implements Operation {
 	}
 
 	private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
-			TimewindowInformation window, RealVector obsU, RealVector synU, double SNratio) throws IOException {
+			TimewindowInformation window, RealVector obsU, RealVector synU, double SNratio, SACData synSAC) throws IOException {
 		if (obsU.getDimension() < synU.getDimension())
 			synU = synU.getSubVector(0, obsU.getDimension() - 1);
 		else if (synU.getDimension() < obsU.getDimension())
@@ -450,6 +464,9 @@ public class DataSelection implements Operation {
 		double maxRatio = Precision.round(synMax / obsMax, 2);
 		double minRatio = Precision.round(synMin / obsMin, 2);
 		double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
+		double epiDistance = id.getEvent().getCmtLocation()
+				.getEpicentralDistance(synSAC.getStation().getPosition())*180/Math.PI; 
+		epiDistance = Math.round(epiDistance * 100) / 100.0;
 		var /= obs2;
 		cor /= Math.sqrt(obs2 * syn2);
 
@@ -462,6 +479,7 @@ public class DataSelection implements Operation {
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
 				|| var < minVariance || maxVariance < var
+				|| epiDistance > maxDistance || epiDistance < minDistance
 				|| SNratio < minSNratio
 				|| Double.isNaN(absRatio) || Double.isNaN(maxRatio) 
 				|| Double.isNaN(minRatio) || Double.isNaN(var) 
