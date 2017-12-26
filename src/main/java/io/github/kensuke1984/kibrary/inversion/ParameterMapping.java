@@ -13,6 +13,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.sleepycat.bind.tuple.IntegerBinding;
+
+import java.util.stream.Collectors;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class ParameterMapping {
 	private UnknownParameter[] originalUnknowns;
 	private UnknownParameter[] unknowns;
@@ -25,8 +33,8 @@ public class ParameterMapping {
 		Path unknownParameterPath = Paths.get("unknowns.inf");
 		Path parameterMappingPath = Paths.get("unknownMapping.inf");
 		
-		UnknownParameter[] unknowns = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
-		ParameterMapping mapping = new ParameterMapping(unknowns, parameterMappingPath);
+		UnknownParameter[] originalUnknowns = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
+		ParameterMapping mapping = new ParameterMapping(originalUnknowns, parameterMappingPath);
 		
 		for (UnknownParameter unknown: mapping.getUnknowns()) {
 			System.out.println(unknown);
@@ -60,21 +68,16 @@ public class ParameterMapping {
 	
 	public void read(Path input) throws IOException {
 		iOriginalToNew = new int[originalUnknowns.length];
-//		List<List<Integer>> tmpiNewToOriginal = new ArrayList<>();
-//		for(int i = 0; i < originalUnknowns.length; i++) {
-//			tmpiNewToOriginal.add(new ArrayList<>());
-//		}
 		
 		List<UnknownParameter> originalUnknownList = new ArrayList<>();
 		for (UnknownParameter p : originalUnknowns)
 			originalUnknownList.add(p);
 		
-		List<Integer> tmpiOriginalToNewList = new ArrayList<>();
+		List<Integer> radiiOriginalToNewIndex = new ArrayList<>();
 		List<Double> radii = new ArrayList<>();
 		
 		BufferedReader br = Files.newBufferedReader(input);
 		String line;
-		int iline = 0;
 		int iNewUnknown = -1;
 		while((line=br.readLine()) != null) {
 			String[] s = line.trim().split("\\s+");
@@ -84,53 +87,60 @@ public class ParameterMapping {
 				if (itmp != iNewUnknown + 1)
 					throw new RuntimeException("Unexpected");
 				iNewUnknown++;
-				
-//				List<Integer> tmplist = new ArrayList<>();
-//				tmplist.add(iline);
-//				tmpiNewToOriginal.add(tmplist);
 			}
-//			else {
-//				List<Integer> tmplist = tmpiNewToOriginal.get(iNewUnknown);
-//				tmplist.add(iline);
-//				tmpiNewToOriginal.set(iline, tmplist);
-//			}
 			
-			tmpiOriginalToNewList.add(iNewUnknown);
+			radiiOriginalToNewIndex.add(iNewUnknown);
 			radii.add(r);
-//			iOriginalToNew[iline] = iNewUnknown;
-			iline++;
-		}
-		int[] tmpiOriginalToNew = new int[tmpiOriginalToNewList.size()];
-		for (int i = 0; i < tmpiOriginalToNew.length; i++)
-			tmpiOriginalToNew[i] = tmpiOriginalToNewList.get(i);
-		
-		for (int i = 0; i < iNewToOriginal.length; i++) {
-			
 		}
 		
-		
-		for (int i = 0; i < radii.size(); i++) {
-			double r = radii.get(i);
-			originalUnknownList.stream().filter(p -> Utilities.equalWithinEpsilon(p.getLocation().getR(), r, eps))
-				.collect(Collectors.toList());
+		List<List<Integer>> radiiNewToOriginalIndex = new ArrayList<>();
+		for (int i = 0; i < iNewUnknown; i++) {
+			final int finali = iNewUnknown;
+			List<Integer> tmplist = radiiOriginalToNewIndex.stream()
+					.filter(j -> j == finali).collect(Collectors.toList());
+			radiiNewToOriginalIndex.add(tmplist);
 		}
 		
-//		iNewToOriginal = new int[tmpiNewToOriginal.size()][];
-//		for (int i = 0; i < iNewToOriginal.length; i++) {
-//			List<Integer> tmplist = tmpiNewToOriginal.get(i);
-//			iNewToOriginal[i] = new int[tmplist.size()];
-//			for (int j = 0; j < tmplist.size(); j++) {
-//				iNewToOriginal[i][j] = tmplist.get(j);
-//				System.out.print(iNewToOriginal[i][j] + " ");
-//			}
-//			System.out.println();
-//		}
+		int countNew = 0;
+		for (int i = 0; i < iNewUnknown; i++) {
+			List<Integer> tmplist = radiiNewToOriginalIndex.get(i);
+			for (int j = 0; j < tmplist.size(); j++) {
+				int jj = tmplist.get(j);
+				double r = radii.get(jj);
+				for (int k = 0; k < originalUnknowns.length; k++) {
+					if (originalUnknowns[k].getLocation().getR() == r) {
+						iOriginalToNew[k] = countNew;
+						if (j == 0)
+							countNew++;
+					}
+				}
+			}
+		}
+		
+		Map<Integer, List<Integer>> iNewToOriginalMap = new HashMap<>();
+		for (int i = 0; i < iOriginalToNew.length; i++) {
+			Integer key = iOriginalToNew[i];
+			List<Integer> tmplist;
+			if (iNewToOriginalMap.containsKey(key))
+				tmplist = iNewToOriginalMap.get(key);
+			else
+				tmplist = new ArrayList<>();
+			tmplist.add(i);
+			iNewToOriginalMap.put(key, tmplist);
+		}
+		
+		iNewToOriginal = new int[iNewUnknown][];
+		for (int i = 0; i < iNewUnknown; i++) {
+			List<Integer> tmplist = iNewToOriginalMap.get(i);
+			iNewToOriginal[i] = new int[tmplist.size()];
+			for (int j = 0; j < tmplist.size(); j++)
+				iNewToOriginal[i][j] = tmplist.get(j);
+		}
+		
+		unknowns = new UnknownParameter[iNewUnknown];
 	}
 	
 	public void make() {
-		
-		
-		
 		for (int i = 0; i < unknowns.length; i++) {
 			double rmean = 0;
 			double weight = 0;

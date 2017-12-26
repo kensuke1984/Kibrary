@@ -33,8 +33,8 @@ public class taupModelMaker {
 		PolynomialStructure miasp91 = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/miasp91.poly"));
 //		outputSTD(miasp91, nR, outpath);
 		
-		Path outpath = root.resolve("TBL100_rho.vel");
-		PolynomialStructure tbl = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/TBL100_3800_05_08_rho.poly"));
+		Path outpath = root.resolve("TBL400_vs-Q.vel");
+		PolynomialStructure tbl = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/TBL400_3800_05_08_vs-Q.poly"));
 		outputSTD(tbl, nR, outpath);
 		
 		double r = 6371.-2000.000000000001;
