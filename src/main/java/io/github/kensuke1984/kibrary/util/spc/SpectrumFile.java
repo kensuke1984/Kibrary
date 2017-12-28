@@ -250,6 +250,11 @@ public class SpectrumFile implements DSMOutput {
 			if (specFile.spcFileType != SpcFileType.SYNTHETIC)
 				for (int i = 0; i < nbody; i++)
 					specFile.bodyR[i] = dis.readDouble();
+			
+			double cosphi = FastMath.cos(phi);
+			double sinphi = FastMath.sin(phi);
+			double cos2phi = FastMath.cos(2 * phi);
+			double sin2phi = FastMath.sin(2 * phi);
 
 			// read body
 			for (int i = 0; i < np + 1; i++)
@@ -268,8 +273,8 @@ public class SpectrumFile implements DSMOutput {
 								
 //								System.out.println(k + " " + tmpReal_m1 + " " + tmpReal_p1 + " " + tmpImag_m1 + " " + tmpImag_p1);
 								
-								double cosphi = FastMath.cos(phi);
-								double sinphi = FastMath.sin(phi);
+//								double cosphi = FastMath.cos(phi);
+//								double sinphi = FastMath.sin(phi);
 								
 								double tmpReal = tmpReal_m1*cosphi + tmpImag_m1*sinphi
 										+ tmpReal_p1*cosphi - tmpImag_p1*sinphi;
@@ -284,6 +289,7 @@ public class SpectrumFile implements DSMOutput {
 						//TODO
 					}
 					else if (specFile.spcFileType.equals(SpcFileType.PFSHCAT)) {
+						
 						for (int k = 0; k < specFile.nComponent; k++) {
 							double tmpReal_m2 = dis.readDouble();
 							double tmpImag_m2 = dis.readDouble();
@@ -293,11 +299,6 @@ public class SpectrumFile implements DSMOutput {
 							double tmpImag_p1 = dis.readDouble();
 							double tmpReal_p2 = dis.readDouble();
 							double tmpImag_p2 = dis.readDouble();
-							
-							double cosphi = FastMath.cos(phi);
-							double sinphi = FastMath.sin(phi);
-							double cos2phi = FastMath.cos(2 * phi);
-							double sin2phi = FastMath.sin(2 * phi);
 							
 							double tmpReal = tmpReal_m2*cos2phi + tmpImag_m2*sin2phi
 									+ tmpReal_m1*cosphi + tmpImag_m1*sinphi
@@ -335,6 +336,16 @@ public class SpectrumFile implements DSMOutput {
 	
 	public final static SpectrumFile getInstance(SpcFileName spcFileName) throws IOException {
 		return getInstance(spcFileName, 0., null, null, null);
+	}
+	
+	public static SpectrumFile interpolate(SpectrumFile bp1, SpectrumFile bp2, SpectrumFile bp3, double[] dh) {
+		SpectrumFile bp = bp1;
+		for (int ibody = 0; ibody < bp1.nbody; ibody++) {
+			SpcBody body = SpcBody.interpolate(bp1.spcBody.get(ibody), bp2.spcBody.get(ibody), bp3.spcBody.get(ibody), dh);
+			bp.spcBody.set(ibody, body);
+		}
+		
+		return bp;
 	}
 	
 	@Override

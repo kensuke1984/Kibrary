@@ -268,6 +268,35 @@ public class ThreeDPartialMaker {
 //		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
 		return partialdouble;
 	}
+	
+	public double[] createPartialSerial(SACComponent component, int iBody, PartialType type) {
+		// return array of zero for partials whose radius is too close to the BP or FP source
+		double bpR = bp.getBodyR()[iBody];
+		double fpR = fp.getBodyR()[iBody];
+		if (fpR != bpR)
+			throw new RuntimeException("Unexpected: fp and bp rBody differ " + fpR + " " + bpR);
+//		int iFp = -1;
+//		for (int i = 0; i < fp.getBodyR().length; i++) {
+//			if (fp.getBodyR()[i] == bpR) {
+//				iFp = i;
+//				break;
+//			}
+//		}
+//		if (iFp == -1)
+//			return new double[npts];
+		//
+		
+		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
+				: computeTensorCulculus(component, iBody, iBody, type);
+		if (null != sourceTimeFunction)
+			partial_frequency = sourceTimeFunction.convolveSerial(partial_frequency);
+		Complex[] partial_time = toTimedomain(partial_frequency);
+		double[] partialdouble = new double[npts];
+		for (int j = 0; j < npts; j++)
+			partialdouble[j] = partial_time[j].getReal();
+//		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
+		return partialdouble;
+	}
 
 	private FujiConversion fujiConversion;
 

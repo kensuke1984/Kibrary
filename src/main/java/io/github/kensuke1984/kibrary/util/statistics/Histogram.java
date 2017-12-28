@@ -53,11 +53,11 @@ public class Histogram {
 				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
 				
 				// do not consider the following ids
-				if (cmtLocation.getLongitude() > -80)
-					return;
-				if (networkSet.contains(id.getStation().getNetwork())) {
-					return;
-				}
+//				if (cmtLocation.getLongitude() > -80)
+//					return;
+//				if (networkSet.contains(id.getStation().getNetwork())) {
+//					return;
+//				}
 				//
 				
 				HorizontalPosition staLoc = station.getPosition();

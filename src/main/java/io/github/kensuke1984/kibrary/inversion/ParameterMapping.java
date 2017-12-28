@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -12,11 +13,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.sleepycat.bind.tuple.IntegerBinding;
 
 import java.util.stream.Collectors;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,17 @@ public class ParameterMapping {
 		UnknownParameter[] originalUnknowns = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
 		ParameterMapping mapping = new ParameterMapping(originalUnknowns, parameterMappingPath);
 		
-		for (UnknownParameter unknown: mapping.getUnknowns()) {
-			System.out.println(unknown);
-		}
+		UnknownParameter[] newUnknowns = mapping.getUnknowns();
+		
+//		for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
+//			System.out.println(newUnknowns[iNew]);
+//			for (int iOriginal : mapping.getiNewToOriginal(iNew))
+//				System.out.println("--> " + originalUnknowns[iOriginal]);
+//		}
+		
+//		for (UnknownParameter unknown: mapping.getUnknowns()) {
+//			System.out.println(unknown);
+//		}
 	}
 	
 	public ParameterMapping(UnknownParameter[] originalUnknowns, Path input) {
@@ -92,52 +101,106 @@ public class ParameterMapping {
 			radiiOriginalToNewIndex.add(iNewUnknown);
 			radii.add(r);
 		}
+		iNewUnknown++;
 		
 		List<List<Integer>> radiiNewToOriginalIndex = new ArrayList<>();
 		for (int i = 0; i < iNewUnknown; i++) {
-			final int finali = iNewUnknown;
-			List<Integer> tmplist = radiiOriginalToNewIndex.stream()
-					.filter(j -> j == finali).collect(Collectors.toList());
+			List<Integer> tmplist = new ArrayList<>();
+			for (int j = 0; j < radiiOriginalToNewIndex.size(); j++) {
+				if (radiiOriginalToNewIndex.get(j) == i)
+					tmplist.add(j);
+			}
 			radiiNewToOriginalIndex.add(tmplist);
 		}
 		
-		int countNew = 0;
-		for (int i = 0; i < iNewUnknown; i++) {
-			List<Integer> tmplist = radiiNewToOriginalIndex.get(i);
-			for (int j = 0; j < tmplist.size(); j++) {
-				int jj = tmplist.get(j);
-				double r = radii.get(jj);
-				for (int k = 0; k < originalUnknowns.length; k++) {
-					if (originalUnknowns[k].getLocation().getR() == r) {
-						iOriginalToNew[k] = countNew;
-						if (j == 0)
-							countNew++;
+		//---- For debug
+//		for (int i = 0; i < radiiOriginalToNewIndex.size(); i++)
+//			System.out.println(i + " " + radiiOriginalToNewIndex.get(i));
+//		for (int i = 0; i < radiiNewToOriginalIndex.size(); i++) {
+//			System.out.println(i);
+//			for (int j = 0; j < radiiNewToOriginalIndex.get(i).size(); j++)
+//				System.out.println("---> " + radiiNewToOriginalIndex.get(i).get(j));
+//		}
+		//----
+		
+		List<HorizontalPosition> horizontalPoints = originalUnknownList.stream().map(p -> p.getLocation().toHorizontalPosition())
+			.distinct().collect(Collectors.toList());
+		
+		for (int i = 0; i < horizontalPoints.size(); i++) {
+			HorizontalPosition horizontalPoint = horizontalPoints.get(i);
+			for (int k = 0; k < originalUnknowns.length; k++) {
+				if (originalUnknowns[k].getLocation().toHorizontalPosition().equals(horizontalPoint)) {
+					for (int l = 0; l < radiiOriginalToNewIndex.size(); l++) {
+						double r = radii.get(l);
+						if (Utilities.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
+							iOriginalToNew[k] = radiiOriginalToNewIndex.get(l) * horizontalPoints.size() + i;
+						}
 					}
 				}
 			}
 		}
 		
+//		int countNew = -1;
+//		for (int i = 0; i < iNewUnknown; i++) {
+//			List<Integer> tmplist = radiiNewToOriginalIndex.get(i);
+//			for (int j = 0; j < tmplist.size(); j++) {
+//				int jj = tmplist.get(j);
+//				double r = radii.get(jj);
+//				for (int k = 0; k < originalUnknowns.length; k++) {
+//					if (Utilities.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
+//						if (j == 0)
+//							countNew++;
+//						iOriginalToNew[k] = countNew;
+//					}
+//				}
+//			}
+//		}
+//		countNew++;
+		
+		int nNewUnknown = horizontalPoints.size() * iNewUnknown;
+//		System.out.println("nNewUnknown = " + nNewUnknown);
+		
 		Map<Integer, List<Integer>> iNewToOriginalMap = new HashMap<>();
 		for (int i = 0; i < iOriginalToNew.length; i++) {
 			Integer key = iOriginalToNew[i];
+			
+//			System.out.println(i + " " + key);
+			
 			List<Integer> tmplist;
-			if (iNewToOriginalMap.containsKey(key))
+			if (iNewToOriginalMap.containsKey(key)) {
 				tmplist = iNewToOriginalMap.get(key);
-			else
+				tmplist.add(i);
+				iNewToOriginalMap.replace(key, tmplist);
+			}
+			else {
 				tmplist = new ArrayList<>();
-			tmplist.add(i);
-			iNewToOriginalMap.put(key, tmplist);
+				tmplist.add(i);
+				iNewToOriginalMap.put(key, tmplist);
+			}
 		}
 		
-		iNewToOriginal = new int[iNewUnknown][];
-		for (int i = 0; i < iNewUnknown; i++) {
+//		System.out.println(iNewToOriginalMap.size());
+		
+		iNewToOriginal = new int[nNewUnknown][];
+		for (int i = 0; i < nNewUnknown; i++) {
 			List<Integer> tmplist = iNewToOriginalMap.get(i);
 			iNewToOriginal[i] = new int[tmplist.size()];
 			for (int j = 0; j < tmplist.size(); j++)
 				iNewToOriginal[i][j] = tmplist.get(j);
 		}
 		
-		unknowns = new UnknownParameter[iNewUnknown];
+		//--- For debug
+//		for (int i = 0; i < originalUnknowns.length; i++) {
+//			System.out.println(i + " " + iOriginalToNew[i]);
+//		}
+//		for (int i = 0; i < nNewUnknown; i++) {
+//			System.out.println(i);
+//			for (int j = 0; j < iNewToOriginal[i].length; j++)
+//				System.out.println("---> " + iNewToOriginal[i][j]);
+//		}
+		//---
+		
+		unknowns = new UnknownParameter[nNewUnknown];
 	}
 	
 	public void make() {

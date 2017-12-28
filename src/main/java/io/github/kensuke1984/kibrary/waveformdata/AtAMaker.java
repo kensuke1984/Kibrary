@@ -154,6 +154,9 @@ public class AtAMaker implements Operation {
 	
 	ParameterMapping mapping;
 	
+	private int workProgressCounter;
+	private int progressStep;
+	
 	/* (non-Javadoc)
 	 * @see io.github.kensuke1984.kibrary.Operation#getWorkPath()
 	 */
@@ -418,7 +421,7 @@ public class AtAMaker implements Operation {
 		unknownParameterPath = getPath("unknownParameterPath");
 		
 		if (property.getProperty("unknownMappingFile") != null)
-			unknownMappingFile = Paths.get(property.getProperty("unknownMappingFile"));
+			unknownMappingFile = Paths.get(property.getProperty("unknownMappingFile").trim());
 		else
 			unknownMappingFile = null;
 	}
@@ -427,6 +430,7 @@ public class AtAMaker implements Operation {
 	Map<Phases, Integer> phaseMap;
 	
 	AtomicInteger windowCounter;
+//	int windowCounter;
 	
 	Phases[] usedPhases;
 	
@@ -461,8 +465,8 @@ public class AtAMaker implements Operation {
 		
 //		readPerturbationPoints();
 		
-		atdEntries = new AtdEntry[nNewUnknown][][][];
-		for (int i = 0; i < nNewUnknown; i++) {
+		atdEntries = new AtdEntry[nOriginalUnknown][][][];
+		for (int i = 0; i < nOriginalUnknown; i++) {
 			atdEntries[i] = new AtdEntry[nWeight][][];
 			for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 				atdEntries[i][iweight] = new AtdEntry[nFreq][];
@@ -470,7 +474,7 @@ public class AtAMaker implements Operation {
 					atdEntries[i][iweight][ifreq] = new AtdEntry[usedPhases.length];
 					for (int iphase = 0; iphase < usedPhases.length; iphase++) {
 						atdEntries[i][iweight][ifreq][iphase] = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-								, usedPhases[iphase], newUnknownParameters[i].getPartialType(), newUnknownParameters[i].getLocation(), 0.);
+								, usedPhases[iphase], originalUnknownParameters[i].getPartialType(), originalUnknownParameters[i].getLocation(), 0.);
 					}
 				}
 			}
@@ -526,9 +530,9 @@ public class AtAMaker implements Operation {
 				}
 				
 				if (windowCounter.get() == 0) {
-					partials = new double[nNewUnknown][][][][][];
+					partials = new double[nOriginalUnknown][][][][][];
 					
-					for (int i = 0; i < nNewUnknown; i++) {
+					for (int i = 0; i < nOriginalUnknown; i++) {
 						partials[i] = new double[nWeight][][][][];
 						for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 							partials[i][iweight] = new double[nFreq][][][];
@@ -545,13 +549,56 @@ public class AtAMaker implements Operation {
 					}
 				}
 				
+//				Set<HorizontalPosition> horizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition())
+//					.collect(Collectors.toSet());
+//				Map<HorizontalPosition, DSMOutput> bpMap = new HashMap<>();
+//				
+//				Location bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
+//				for (HorizontalPosition obsPos : horizontalPositions) {
+//					double distance = bpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
+//					double phi = Math.PI - bpSourceLoc.getAzimuth(obsPos);
+//					
+//					if (distance < thetamin || distance > thetamax)
+//						throw new RuntimeException("Error: cannot interpolate BP at epicentral distance " + distance + "(deg)");
+//					int ipointBP = (int) ((distance - thetamin) / dtheta);
+//					
+//					SpcFileName bpname1 = bpnames.get(ipointBP);
+//					SpcFileName bpname2 = bpnames.get(ipointBP + 1);
+//					SpcFileName bpname3 = bpnames.get(ipointBP + 2);
+//					
+//					double theta1 = thetamin + ipointBP * dtheta;
+//					double theta2 = theta1 + dtheta;
+//					double theta3 = theta2 + dtheta;
+//					double[] dh = new double[3];
+//					dh[0] = (distance - theta1) / dtheta;
+//					dh[1] = (distance - theta2) / dtheta;
+//					dh[2] = (distance - theta3) / dtheta;
+//					
+//					String tmpObserverName = "";
+//					
+//					SpectrumFile bpSpc1 = SpectrumFile.getInstance(bpname1, phi, obsPos, bpSourceLoc, tmpObserverName);
+//					SpectrumFile bpSpc2 = SpectrumFile.getInstance(bpname2, phi, obsPos, bpSourceLoc, tmpObserverName);
+//					SpectrumFile bpSpc3 = SpectrumFile.getInstance(bpname3, phi, obsPos, bpSourceLoc, tmpObserverName);
+//					
+//					SpectrumFile bp = SpectrumFile.interpolate(bpSpc1, bpSpc2, bpSpc3, dh);
+//					
+//					bpMap.put(obsPos, bp);
+//				}
+				
 				int availabelProc = Runtime.getRuntime().availableProcessors();
 				if (availabelProc < nproc)
 					throw new RuntimeException("Insuficcient number of available processors " + nproc + " " + availabelProc);
 				int N_THREADS = nproc;
 				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+				workProgressCounter = 0;
+				progressStep = originalUnknownParameters.length / 100;
+				int currentWindowCounter = windowCounter.get();
 				for (SpcFileName fpname : fpnames) {
-					execs.execute(new FPWorker(fpname, station, event, recordBasicID));
+					execs.execute(new FPWorker(fpname, station, event, recordBasicID, currentWindowCounter));
+					
+					//test
+//					execs.execute(new IntegrateWorker());
+					
 //					System.out.println("Working for " + fpname);
 				} // END FP loop (horizontal points)
 				execs.shutdown();
@@ -564,6 +611,7 @@ public class AtAMaker implements Operation {
 				}
 				
 				windowCounter.incrementAndGet();
+//				windowCounter++;
 				
 //------------------------- make AtA for current event/station pair ---------------------------------------
 				
@@ -868,18 +916,24 @@ public class AtAMaker implements Operation {
 		Station station;
 		GlobalCMTID event;
 		List<BasicID> recordBasicID;
+		int windowCounter;
 		
 		public FPWorker(SpcFileName fpname, Station station, GlobalCMTID event,
-				List<BasicID> recordBasicID) {
+				List<BasicID> recordBasicID, int windowCounter) {
 			this.fpname = fpname;
 			this.station = station;
 			this.event = event;
 			this.recordBasicID = recordBasicID;
+			this.windowCounter = windowCounter;
 		}
 		
 		@Override
 		public void run() {
+			long t1i = 0;
+			long t1f = 0;
 			try {
+			t1i = System.currentTimeMillis();
+			
 			DSMOutput fpSpc = fpname.read();
 			
 			HorizontalPosition obsPos = fpSpc.getObserverPosition();
@@ -903,20 +957,6 @@ public class AtAMaker implements Operation {
 			SpcFileName bpname2 = bpnames.get(ipointBP + 1);
 			SpcFileName bpname3 = bpnames.get(ipointBP + 2);
 			
-//			double theta1 = thetamin + ipointBP * dtheta;
-//			double theta2 = theta1 + dtheta;
-//			double[] dh = new double[2];
-//			dh[0] = (distance - theta1) / dtheta;
-//			dh[1] = (distance - theta2) / dtheta;
-			
-//			double theta1 = thetamin + ipointBP * dtheta;
-//			double theta2 = theta1 + dtheta;
-//			double theta3 = theta1 - dtheta;
-//			double[] dh = new double[3];
-//			dh[0] = (distance - theta1) / dtheta;
-//			dh[1] = (distance - theta2) / dtheta;
-//			dh[2] = (distance - theta3) / dtheta;
-			
 			double theta1 = thetamin + ipointBP * dtheta;
 			double theta2 = theta1 + dtheta;
 			double theta3 = theta2 + dtheta;
@@ -933,6 +973,9 @@ public class AtAMaker implements Operation {
 			DSMOutput bpSpc1 = SpectrumFile.getInstance(bpname1, phi, obsPos, bpSourceLoc, fpname.getObserverName());
 			DSMOutput bpSpc2 = SpectrumFile.getInstance(bpname2, phi, obsPos, bpSourceLoc, fpname.getObserverName());
 			DSMOutput bpSpc3 = SpectrumFile.getInstance(bpname3, phi, obsPos, bpSourceLoc, fpname.getObserverName());
+			
+			t1f = System.currentTimeMillis();
+//			System.out.println(Thread.currentThread().getName() + " Initialization took " + (t1f-t1i)*1e-3 + " s");
 			
 //			LookAtBPspc.printHeader(bpSpc);
 //			LookAtFPspc.printHeader(fpSpc);
@@ -983,13 +1026,18 @@ public class AtAMaker implements Operation {
 //----------------------------------------- END testBP ------------------------------------------------------------------------
 
 //------------------------------------- compute partials ----------------------------------------------------------------
+			t1i = System.currentTimeMillis();
+			
 			ThreeDPartialMaker threedPartialMaker = new ThreeDPartialMaker(fpSpc, bpSpc1, bpSpc2, bpSpc3, dh);
 			double halfDuration = event.getEvent().getHalfDuration();
 			SourceTimeFunction stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 			threedPartialMaker.setSourceTimeFunction(stf);
 			
+			t1f = System.currentTimeMillis();
+//			System.out.println(Thread.currentThread().getName() + " Initialization2 (3DParMaker) took " + (t1f-t1i)*1e-3 + " s");
+			
 //			System.out.println(Thread.currentThread().getName() + " starts body loop...");
-			long t1i = System.currentTimeMillis();
+			t1i = System.currentTimeMillis();
 			
 			for (int ibody = 0; ibody < fpSpc.nbody(); ibody++) {
 				Location parameterLoc = obsPos.toLocation(bodyR[ibody]);
@@ -997,28 +1045,23 @@ public class AtAMaker implements Operation {
 				for (PartialType type : partialTypes) {
 					int iunknown = getParameterIndex(parameterLoc, type);
 					if (iunknown < 0) {
-						System.err.println("Warning: unkown in FP not found in the unknown parameter file");
+//						System.err.println("Warning: unkown in FP not found in the unknown parameter file");
 						continue;
 					}
 					
-					int iNewUnknown = mapping.getiOriginalToNew(iunknown);
+//					int iNewUnknown = mapping.getiOriginalToNew(iunknown);
 					
 					double weightUnknown = originalUnknownParameters[iunknown].getWeighting();
 					
 					for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 						
 						for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-//							int i0 = iunknown * weightingTypes.length * frequencyRanges.length
-//									+ iweight * frequencyRanges.length
-//									+ ifreq;
 							
-//							partials[i0] = new double[n1][];
-							
-							AtomicInteger iwindow = new AtomicInteger(0);
+//							AtomicInteger iwindow = new AtomicInteger(0);
 							
 							Map<SACComponent, double[]> partialmap = new HashMap<>();
 							for (SACComponent component : components) {
-								double[] partial = threedPartialMaker.createPartial(component, ibody, type);
+								double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type);
 								partialmap.put(component, partial);
 							}
 							
@@ -1037,10 +1080,14 @@ public class AtAMaker implements Operation {
 										// find syn and obs
 										double minFreq = frequencyRanges[ifreq].getMinFreq();
 										double maxFreq = frequencyRanges[ifreq].getMaxFreq();
+										
+										Phases phases = new Phases(info.getPhases());
+										
 										List<BasicID> obsSynIDs = recordBasicID.stream().filter(id -> id.getSacComponent().equals(info.getComponent())
-												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
+//												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
 												&& equalToEpsilon(id.getMinPeriod(), 1. / maxFreq)
-												&& equalToEpsilon(id.getMaxPeriod(), 1. / minFreq))
+												&& equalToEpsilon(id.getMaxPeriod(), 1. / minFreq)
+												&& new Phases(id.getPhases()).equals(phases))
 												.collect(Collectors.toList());
 										if (obsSynIDs.size() != 2) {
 											obsSynIDs.forEach(System.out::println);
@@ -1053,7 +1100,6 @@ public class AtAMaker implements Operation {
 										double[] obsData = obsID.getData();
 										double[] synData = synID.getData();
 										double[] residual = new double[obsData.length];
-										
 										
 										double weight = 1.;
 										if (weightingTypes[iweight].equals(WeightingType.RECIPROCAL)) {
@@ -1071,7 +1117,6 @@ public class AtAMaker implements Operation {
 										u = filter[ifreq].applyFilter(u);
 										double[] cutU = sampleOutput(u, info, ifreq);
 										
-										Phases phases = new Phases(info.getPhases());
 										
 										// ---------- out partials to file -----------------------------------------------
 										// partials are written before being weighted by volume of voxel or data weighting
@@ -1095,6 +1140,7 @@ public class AtAMaker implements Operation {
 										}
 										// -------------------------------------------------------------------------------
 										
+										
 										double tmpatd = 0;
 										for (int k = 0; k < cutU.length; k++) {
 											cutU[k] *= weight * weightUnknown;
@@ -1102,45 +1148,30 @@ public class AtAMaker implements Operation {
 										}
 										
 										int iphase = phaseMap.get(phases);
-										double[] tmpPartial = partials[iNewUnknown][iweight][ifreq][iphase][windowCounter.get()];
-										for (int k = 0; k < cutU.length; k++)
-											tmpPartial[k] += cutU[k];
-										partials[iNewUnknown][iweight][ifreq][iphase][windowCounter.get()] = tmpPartial;
+										
+										if (partials[iunknown][iweight][ifreq][iphase][windowCounter].length == 0)
+											partials[iunknown][iweight][ifreq][iphase][windowCounter] = cutU;
+										else {
+											double[] tmpPartial = partials[iunknown][iweight][ifreq][iphase][windowCounter];
+											for (int k = 0; k < cutU.length; k++)
+												tmpPartial[k] += cutU[k];
+											partials[iunknown][iweight][ifreq][iphase][windowCounter] = tmpPartial;
+										}
+										
 										if (cutU.length == 0) {
 											throw new RuntimeException(Thread.currentThread().getName() + " Unexpected: cutU (partial) has length 0 "
 													+ originalUnknownParameters[iunknown] + " " + weightingTypes[iweight] + " " + frequencyRanges[ifreq]
-													+ " " + orderedRecordTimewindows.get(iwindow.get()));
+													+ " " + info);
 										}
 										 
-										parameterLoc = newUnknownParameters[iNewUnknown].getLocation();
+										parameterLoc = originalUnknownParameters[iunknown].getLocation();
 										// add entry to Atd
 										AtdEntry entry = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
 												, phases, type, parameterLoc, tmpatd); //TODO parameterLoc
 										
-//										AtdEntry[] tmpEntries = atdEntries[iunknown][iweight][ifreq];
-//										boolean acted = false;
-//										for (int iwin = 0; iwin < nwindowBuffer; iwin++) {
-//											if (tmpEntries[iwin] != null) {
-//												if (tmpEntries[iwin].getPhases().equals(phases)) {
-//													AtdEntry tmp = atdEntries[iunknown][iweight][ifreq][iwin];
-//													tmp.add(entry);
-//													atdEntries[iunknown][iweight][ifreq][iwin] = tmp;
-//													acted = true;
-//													break;
-//												}
-//											}
-//											else {
-//												atdEntries[iunknown][iweight][ifreq][iwin] = entry;
-//												acted = true;
-//												break;
-//											}
-//										}
-//										if (!acted)
-//											throw new RuntimeException("Unexpected: window buffer too small");
-										
-										AtdEntry tmp = atdEntries[iNewUnknown][iweight][ifreq][iphase];
+										AtdEntry tmp = atdEntries[iunknown][iweight][ifreq][iphase];
 										tmp.add(entry);
-										atdEntries[iNewUnknown][iweight][ifreq][iphase] = tmp;
+										atdEntries[iunknown][iweight][ifreq][iphase] = tmp;
 										// END add entry to Atd
 									
 								} // END timewindow
@@ -1149,9 +1180,14 @@ public class AtAMaker implements Operation {
 					} // END weighting type
 					
 				} // partial[ipar] made
+				
+				t1f = System.currentTimeMillis();
+				if ((workProgressCounter++) % progressStep == 0)
+					System.out.print(".");
 			} // END bodyR loop 
 			
-			long t1f = System.currentTimeMillis();
+			
+//			System.out.println(Thread.currentThread().getName() + " All loops took " + (t1f-t1i)*1e-3 + " s");
 //			System.out.println(Thread.currentThread().getName() + " finished body loop in " + (t1f-t1i)*1e-3 + " s");
 			
 		} catch (IOException e) {
@@ -1162,6 +1198,35 @@ public class AtAMaker implements Operation {
 		}
 		}
 		
+	}
+	
+	public class IntegrateWorker implements Runnable {
+		public IntegrateWorker() {
+		}
+		
+		@Override
+		public void run() {
+			
+//			for (int iunknown = 0; iunknown < nOriginalUnknown; iunknown++) {
+//				for (int iweight = 0; iweight < 0; iweight++) {
+//					for (int ifreq = 0; ifreq < 0; ifreq++) {
+//						for (int iphase = 0; iphase < 0; iphase++) {
+//							int iNewUnknown = mapping.getiOriginalToNew(iunknown);
+//							
+//							// TODO
+//						}
+//					}
+//				}
+//			}
+			
+			long ti = System.currentTimeMillis();
+			int count=0;
+			for (int i = 0;i<1000000;i++) {
+				count+=Math.cos(i);
+			}
+			long tf = System.currentTimeMillis();
+			System.out.printf(Thread.currentThread().getName() + " took %.5e s\n", (tf-ti)*1e-3);
+		}
 	}
 	
 	public class AtAWorker implements Runnable {
