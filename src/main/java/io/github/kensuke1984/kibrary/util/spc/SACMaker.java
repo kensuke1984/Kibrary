@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * in Global CMT catalogue, the information for the event is written in SAC.
  *
  * @author Kensuke Konishi
- * @version 0.1.
+ * @version 0.1.8
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
