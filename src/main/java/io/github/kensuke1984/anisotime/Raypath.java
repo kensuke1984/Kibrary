@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi
- * @version 0.5.0b
+ * @version 0.5.0.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2017/11/19
+     * 2018/1/11
      */
-    private static final long serialVersionUID = 3501567256448143684L;
+    private static final long serialVersionUID = -2975226939956748423L;
 
 
     private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
@@ -465,6 +465,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             default:
                 throw new RuntimeException("soteigai");
         }
+        if (outerR < innerR) return Double.NaN;
         return computeDelta(phase, innerR, outerR);
     }
 
@@ -531,6 +532,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             default:
                 throw new RuntimeException("soteigai");
         }
+        if (outerR < innerR) return Double.NaN;
         return computeT(phase, innerR, outerR);
     }
 
@@ -718,7 +720,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 thetaList.add(lastAngle);
                 tList.add(lastTime);
             } else if (part.isPropagation()) {
-                GeneralPart g = ((GeneralPart) part);
+                GeneralPart g = (GeneralPart) part;
                 PhasePart pp = g.getPhase();
                 Partition partition = g.getPhase().whichPartition();
                 double startR = getROf(!g.isDownward(), eventR, g) + (g.isDownward() ? -1 : 1) * ComputationalMesh.eps;
@@ -726,7 +728,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 int startIndex = MESH.getNextIndexOf(startR, partition);
                 int endIndex = MESH.getNextIndexOf(endR, partition);
                 if (!g.isDownward()) startIndex++;
-
                 RealVector mesh = MESH.getMesh(partition);
                 for (int j = startIndex; j != endIndex; ) {
                     double r = mesh.getEntry(j);
@@ -735,10 +736,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                     else j++;
                 }
                 addRThetaTime(endR, pp, rList, thetaList, tList);
-            } else if (part.isBottomsideReflection() || part.isTransmission() || part.isPenetration() ||
-                    part.isBounce() || part.isTopsideReflection()) {
-            } else throw new RuntimeException("an unexpected part");
-
+            }
+//            else if (part.isBottomsideReflection() || part.isTransmission() || part.isPenetration() ||
+//                    part.isBounce() || part.isTopsideReflection()) {
+//            } else throw new RuntimeException("an unexpected part");
         }
 
         double[][] points = new double[rList.size()][3];
@@ -861,7 +862,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private double computeDelta(PhasePart pp, double startR, double endR) {
         if (Double.isNaN(startR + endR) || startR < 0 || endR < 0)
             throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
-        if (endR - startR < ComputationalMesh.eps) return 0;
+        if (Math.abs(endR - startR) < ComputationalMesh.eps) return 0;
         Partition partition = pp.whichPartition();
         RealVector radii = MESH.getMesh(partition);
         double minR = radii.getEntry(0);
