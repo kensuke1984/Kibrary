@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * in Global CMT catalogue, the information for the event is written in SAC.
  *
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
@@ -45,8 +45,9 @@ public class SACMaker implements Runnable {
     private final static HelpFormatter helpFormatter = new HelpFormatter();
 
     private static void setOptions() {
-        options.addOption("u", "unformatted", false, "When names of spectrum files are NOT formatted.");
+//        options.addOption("u", "unformatted", false, "When names of spectrum files are NOT formatted.");
         options.addOption("o", true, "Folder to output SAC files. (Default:current directory)");
+        options.addOption("c", true, "Output components. Default is all(ZRT). (e.g. -c ZR)");
         options.addOption("help", "Shows this message. This option has the highest priority.");
         options.addOption(null, "scardec", true, "use the source parameter by SCARDEC. (--scardec yyyyMMdd_HHmmss)");
     }
@@ -186,16 +187,16 @@ public class SACMaker implements Runnable {
      */
     private double samplingHz = 20;
     /**
-     * 書き出す成分 デフォルトでは R, T, Z （すべて）
+     * Output component (Z, R, T) (Default: all)
      */
     private Set<SACComponent> components = EnumSet.allOf(SACComponent.class);
     /**
-     * SACを書き出すディレクトリ
+     * Output path
      */
-    private Path outDirectoryPath;
+    private Path outPath;
     private GlobalCMTID globalCMTID;
     /**
-     * 時間微分させるか
+     * if required, true.
      */
     private boolean temporalDifferentiation;
     private SourceTimeFunction sourceTimeFunction;
@@ -230,7 +231,7 @@ public class SACMaker implements Runnable {
         try {
             globalCMTID = new GlobalCMTID(oneSPC.getSourceID());
         } catch (Exception e) {
-            System.err.println(oneSPC.getSourceID() + " is not in Global CMT catalogue.");
+            System.err.println(oneSPC.getSourceID() + " is not in the Global CMT catalogue.");
         }
         this.sourceTimeFunction = sourceTimeFunction;
     }
@@ -298,7 +299,6 @@ public class SACMaker implements Runnable {
         return isOK;
     }
 
-
     /**
      * Creates and outputs synthetic SAC files of Z R T from input spectra
      *
@@ -322,6 +322,8 @@ public class SACMaker implements Runnable {
 
         Path outPath = Paths.get(cli.getOptionValue("o", "."));
         if (!Files.exists(outPath)) throw new RuntimeException(outPath + " does not exist.");
+
+        Set<SACComponent> components = SACComponent.componentSetOf(cli.getOptionValue('c', "ZRT"));
 
         SCARDEC scardec = null;
         if (cli.hasOption("scardec")) {
@@ -353,8 +355,8 @@ public class SACMaker implements Runnable {
             sm.setSourceTimeFunction(scardec.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
         }
         sm.setOutPath(outPath);
+        sm.components = components;
         sm.run();
-
     }
 
     /**
@@ -375,11 +377,8 @@ public class SACMaker implements Runnable {
     private void setInformation() {
         station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition(), "DSM");
         path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
-        if (globalCMTID != null) try {
+        if (globalCMTID != null)
             beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();
-        } catch (Exception e) {
-            System.err.println("Information for " + globalCMTID + " is not found.");
-        }
         npts = findNPTS();
         lsmooth = findLsmooth();
         delta = primeSPC.tlen() / npts;
@@ -438,8 +437,8 @@ public class SACMaker implements Runnable {
             SACExtension ext = sourceTimeFunction != null ? SACExtension.valueOfConvolutedSynthetic(component) :
                     SACExtension.valueOfSynthetic(component);
             try {
-                sac.of(component).setSACData(body.getTimeseries(component)).writeSAC(
-                        outDirectoryPath.resolve(station.getName() + "." + primeSPC.getSourceID() + "." + ext));
+                sac.of(component).setSACData(body.getTimeseries(component))
+                        .writeSAC(outPath.resolve(station.getName() + "." + primeSPC.getSourceID() + "." + ext));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -455,7 +454,7 @@ public class SACMaker implements Runnable {
                                 SACExtension.valueOfTemporalPartial(component);
                 try {
                     sac.of(component).setSACData(bodyT.getTimeseries(component))
-                            .writeSAC(outDirectoryPath.resolve(station.getName() + "." + globalCMTID + "." + extT));
+                            .writeSAC(outPath.resolve(station.getName() + "." + globalCMTID + "." + extT));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -513,7 +512,7 @@ public class SACMaker implements Runnable {
      * @param outPath {@link Path} of a folder which will contain sac files.
      */
     public void setOutPath(Path outPath) {
-        outDirectoryPath = outPath;
+        this.outPath = outPath;
     }
 
     private class SAC implements SACData, Cloneable {

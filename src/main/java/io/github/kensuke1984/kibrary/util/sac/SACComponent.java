@@ -1,12 +1,15 @@
 package io.github.kensuke1984.kibrary.util.sac;
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Components of SAC<br>
  * Z(1), R(2), T(3)
  *
  * @author Kensuke Konishi
- * @version 0.0.3.3
+ * @version 0.0.4
  */
 public enum SACComponent {
     Z(1), R(2), T(3);
@@ -48,6 +51,19 @@ public enum SACComponent {
      */
     public int valueOf() {
         return value;
+    }
+
+    /**
+     * @param components string for components (Z, R, T)
+     * @return set of the components in the string
+     */
+    public static Set<SACComponent> componentSetOf(String components) {
+        if (components.matches(".*[^ZRT].*")) throw new IllegalArgumentException("Option -c can only have Z, R and T.");
+        Set<SACComponent> set = new HashSet<>();
+        if (components.contains("Z")) set.add(Z);
+        if (components.contains("R")) set.add(R);
+        if (components.contains("T")) set.add(T);
+        return set;
     }
 
 }
