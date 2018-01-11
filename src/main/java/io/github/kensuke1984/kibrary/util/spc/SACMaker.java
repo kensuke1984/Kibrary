@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * in Global CMT catalogue, the information for the event is written in SAC.
  *
  * @author Kensuke Konishi
- * @version 0.1.6.2
+ * @version 0.1.7
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
@@ -46,6 +46,7 @@ public class SACMaker implements Runnable {
 
     private static void setOptions() {
         options.addOption("u", "unformatted", false, "When names of spectrum files are NOT formatted.");
+        options.addOption("o", true, "Folder to output SAC files. (Default:current directory)");
         options.addOption("help", "Shows this message. This option has the highest priority.");
         options.addOption(null, "scardec", true, "use the source parameter by SCARDEC. (--scardec yyyyMMdd_HHmmss)");
     }
@@ -302,12 +303,10 @@ public class SACMaker implements Runnable {
      * Creates and outputs synthetic SAC files of Z R T from input spectra
      *
      * @param args (option) [onespc] [pairspc]
-     * @throws IOException if an I/O error occurs
+     * @throws IOException    if an I/O error occurs
      * @throws ParseException if any
      */
     public static void main(String[] args) throws IOException, ParseException {
-        args = new String[]{"-u", "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc",
-                "/home/kensuke/secondDisk/Fuji/mars/ColdRQRQ.0050kmPSV.spc"};
         if (args == null || args.length == 0)
             throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
 
@@ -320,6 +319,9 @@ public class SACMaker implements Runnable {
 
         if (cli.getArgs().length < 1 || 2 < cli.getArgs().length)
             throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
+
+        Path outPath = Paths.get(cli.getOptionValue("o", "."));
+        if (!Files.exists(outPath)) throw new RuntimeException(outPath + " does not exist.");
 
         SCARDEC scardec = null;
         if (cli.hasOption("scardec")) {
@@ -336,7 +338,9 @@ public class SACMaker implements Runnable {
             scardec = id.toSCARDEC();
         }
         String[] spcfiles = cli.getArgs();
-
+        for (String spcfile : spcfiles) {
+            System.out.println(spcfile);
+        }
         SPCFile oneName = new FormattedSPCFile(spcfiles[0]);
         DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
@@ -351,7 +355,7 @@ public class SACMaker implements Runnable {
             sm.beginDateTime = scardec.getOriginTime();
             sm.setSourceTimeFunction(scardec.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
         }
-        sm.setOutPath(Paths.get(System.getProperty("user.dir")));
+        sm.setOutPath(outPath);
         sm.run();
 
     }
