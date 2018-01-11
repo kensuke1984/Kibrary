@@ -338,9 +338,6 @@ public class SACMaker implements Runnable {
             scardec = id.toSCARDEC();
         }
         String[] spcfiles = cli.getArgs();
-        for (String spcfile : spcfiles) {
-            System.out.println(spcfile);
-        }
         SPCFile oneName = new FormattedSPCFile(spcfiles[0]);
         DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
