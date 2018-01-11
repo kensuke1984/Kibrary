@@ -97,9 +97,12 @@ public class Location extends HorizontalPosition {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		long temp;
-		temp = Double.doubleToLongBits(R);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		long temp;
+//		temp = Double.doubleToLongBits(R);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		int temp = (int) (R / eps / 10);
+		int temp = (int) R;
+		result = prime * result + temp; 
 		return result;
 	}
 
@@ -147,5 +150,5 @@ public class Location extends HorizontalPosition {
 		return super.toString() + ' ' + R;
 	}
 	
-	double eps = 1e-6;
+	double eps = 1e-4;
 }

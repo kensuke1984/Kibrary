@@ -345,7 +345,24 @@ public final class AtAFile {
 		}
 	}
 	
-	public RealMatrix getAtARealMatrix(Path ataPath, int iweight, int ifreq, int iphase) throws IOException {
+	public static RealMatrix getAtARealMatrix(AtAEntry[][][][] ataEntries, int iweight, int ifreq, int iphase) throws IOException {
+		int nUnknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * ataEntries.length) - 1));
+		RealMatrix ata = new Array2DRowRealMatrix(nUnknown, nUnknown);
+		
+		for (int i = 0; i < ataEntries.length; i++) {
+			int iunknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * i) - 1));
+			int junknown = i - iunknown * (iunknown + 1) / 2;
+			
+			double ataij = ataEntries[i][iweight][ifreq][iphase].getValue();
+			ata.setEntry(iunknown, junknown, ataij);
+			if (junknown != iunknown)
+				ata.setEntry(junknown, iunknown, ataij);
+		}
+		
+		return ata;
+	}
+	
+	public static RealMatrix getAtARealMatrix(Path ataPath, int iweight, int ifreq, int iphase) throws IOException {
 		AtAEntry[][][][] ataEntries = read(ataPath);
 		int nUnknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * ataEntries.length) - 1));
 		RealMatrix ata = new Array2DRowRealMatrix(nUnknown, nUnknown);
@@ -363,7 +380,7 @@ public final class AtAFile {
 		return ata;
 	}
 	
-	public RealMatrix getAtARealMatrixParallel(Path ataPath, int iweight, int ifreq, int iphase) throws IOException {
+	public static RealMatrix getAtARealMatrixParallel(Path ataPath, int iweight, int ifreq, int iphase) throws IOException {
 		AtAEntry[][][][] ataEntries = read(ataPath);
 		int nUnknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * ataEntries.length) - 1));
 		RealMatrix ata = new Array2DRowRealMatrix(nUnknown, nUnknown);

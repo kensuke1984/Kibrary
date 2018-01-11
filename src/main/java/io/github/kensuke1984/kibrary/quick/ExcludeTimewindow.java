@@ -45,7 +45,7 @@ public class ExcludeTimewindow {
 				
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
 						.filter(tw -> stations.contains(tw.getStation()))
-						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI <= 35.)
+//						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI <= 35.)
 						.collect(Collectors.toSet());
 				
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);

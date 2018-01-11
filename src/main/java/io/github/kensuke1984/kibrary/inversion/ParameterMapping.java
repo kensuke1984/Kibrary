@@ -39,11 +39,11 @@ public class ParameterMapping {
 		
 		UnknownParameter[] newUnknowns = mapping.getUnknowns();
 		
-//		for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
-//			System.out.println(newUnknowns[iNew]);
-//			for (int iOriginal : mapping.getiNewToOriginal(iNew))
-//				System.out.println("--> " + originalUnknowns[iOriginal]);
-//		}
+		for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
+			System.out.println(newUnknowns[iNew]);
+			for (int iOriginal : mapping.getiNewToOriginal(iNew))
+				System.out.println("--> " + originalUnknowns[iOriginal]);
+		}
 		
 //		for (UnknownParameter unknown: mapping.getUnknowns()) {
 //			System.out.println(unknown);

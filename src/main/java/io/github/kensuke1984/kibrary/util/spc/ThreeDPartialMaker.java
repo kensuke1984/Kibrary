@@ -348,7 +348,7 @@ public class ThreeDPartialMaker {
 		SpcBody bpBody = null;
 		if (bp2 == null) {
 			bpBody = bp.getSpcBodyList().get(iBodyBp);
-			System.err.println("No interpolation performed");
+//			System.err.println("No interpolation performed");
 		}
 		else {
 			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)

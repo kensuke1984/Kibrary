@@ -26,9 +26,11 @@ class Latitude implements Comparable<Latitude> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		long temp;
-		temp = Double.doubleToLongBits(geographicLatitude);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		long temp;
+//		temp = Double.doubleToLongBits(geographicLatitude);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+		int temp = (int) (geographicLatitude);
+		result = prime * result + temp;
 		return result;
 	}
 

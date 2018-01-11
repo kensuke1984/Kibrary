@@ -72,9 +72,11 @@ class Longitude implements Comparable<Longitude> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		long temp;
-		temp = Double.doubleToLongBits(longitude);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		long temp;
+//		temp = Double.doubleToLongBits(longitude);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+		int temp = (int) longitude;
+		result = prime * result + temp;
 		return result;
 	}
 

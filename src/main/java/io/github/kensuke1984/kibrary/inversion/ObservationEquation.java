@@ -33,7 +33,9 @@ import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.AtAEntry;
 import io.github.kensuke1984.kibrary.waveformdata.AtdEntry;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -54,6 +56,14 @@ public class ObservationEquation {
 	private Matrix cm;
 	
 	private List<Double> unknownParameterWeigths;
+	
+	public ObservationEquation(RealMatrix ataMatrix, List<UnknownParameter> unknownParameterList, RealVector atdVector) {
+		this.ata = ataMatrix;
+		this.atd = atdVector;
+		this.originalParameterList = unknownParameterList;
+		this.parameterList = unknownParameterList;
+		this.cm = null;
+	}
 	
 	/**
 	 * @param partialIDs
@@ -288,12 +298,18 @@ public class ObservationEquation {
 				return;
 			int column = whatNumer(id.getPartialType(), id.getPerturbationLocation(),
 					id.getStation(), id.getGlobalCMTID(), id.getPhases());
-			if (column < 0)
+			if (column < 0) {
+//				System.out.println("Unknown not found in file for " + id.getPerturbationLocation());
 				return;
+			}
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
 			int k = dVector.whichTimewindow(id);
 			if (k < 0) {
-//				System.err.format("Timewindow not found: %s%n", id.toString());
+//				synchronized(ObservationEquation.class) {
+//					System.out.format("Timewindow not found: %s " + id.getStation().getPosition() + "\n", id.toString());
+//					BasicID[] tmpids = id.getWaveformType() == WaveformType.OBS ? dVector.getObsIDs() : dVector.getSynIDs();
+//					IntStream.range(0, tmpids.length).forEach(i -> System.out.println(dVector.isPair(id, tmpids[i]) + " " + id + "\n" + tmpids[i]));
+//				}
 				return;
 			}
 			int row = dVector.getStartPoints(k);

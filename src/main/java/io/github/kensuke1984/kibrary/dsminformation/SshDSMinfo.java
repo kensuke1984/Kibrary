@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
  * Information file for SSHPSV and SSHSH
@@ -78,6 +79,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println("PSV.spc");
 			pw.println(STATIONS.size() + " nsta");
 			STATIONS.stream().sorted().map(Station::toString).forEach(n -> {
+				pw.println(n + "." + EVENT + ".PAR0");
 				pw.println(n + "." + EVENT + ".PARA");
 				pw.println(n + "." + EVENT + ".PARC");
 				pw.println(n + "." + EVENT + ".PARF");
@@ -132,7 +134,11 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println("PSV.spc");
 
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::toString).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
+			STATIONS.stream().sorted().map(Station::toString).forEach(n -> {
+				pw.println(n + "." + EVENT + ".PAR0");
+				pw.println(n + "." + EVENT + ".PAR1");
+				pw.println(n + "." + EVENT + ".PAR2");
+			});
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 
@@ -181,6 +187,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 
 			pw.println(STATIONS.size() + " nsta");
 			STATIONS.stream().sorted().map(Station::toString).forEach(n -> {
+				pw.println(n + "." + EVENT + ".PAR0");
 				pw.println(n + "." + EVENT + ".PARL");
 				pw.println(n + "." + EVENT + ".PARN");
 			});
@@ -230,7 +237,10 @@ public class SshDSMinfo extends SyntheticDSMInfo {
 			pw.println(OUTPUT + "/");
 			pw.println("SH.spc");
 			pw.println(STATIONS.size() + " nsta");
-			STATIONS.stream().sorted().map(Station::toString).forEach(n -> pw.println(n + "." + EVENT + ".PAR2"));
+			STATIONS.stream().sorted().map(Station::toString).forEach(n -> {
+				pw.println(n + "." + EVENT + ".PAR0");
+				pw.println(n + "." + EVENT + ".PAR2");
+			});
 			STATIONS.stream().sorted().map(Station::getPosition)
 					.forEach(p -> pw.println(p.getLatitude() + " " + p.getLongitude()));
 

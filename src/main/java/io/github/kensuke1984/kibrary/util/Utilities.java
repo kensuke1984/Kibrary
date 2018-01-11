@@ -369,18 +369,14 @@ public final class Utilities {
 	}
 	
 	public static boolean equalWithinEpsilon(float v1, float v2, float eps) {
-		if (v1 > v2 && v1 - v2 > eps)
-			return false;
-		else if (v1 < v2 && v2 - v1 > eps)
+		if (Math.abs(v1 - v2) > eps)
 			return false;
 		else
 			return true;
 	}
 	
 	public static boolean equalWithinEpsilon(double v1, double v2, double eps) {
-		if (v1 > v2 && v1 - v2 > eps)
-			return false;
-		else if (v1 < v2 && v2 - v1 > eps)
+		if (Math.abs(v1 - v2) > eps)
 			return false;
 		else
 			return true;

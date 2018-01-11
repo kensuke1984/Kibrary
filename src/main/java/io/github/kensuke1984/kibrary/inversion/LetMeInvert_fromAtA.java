@@ -34,6 +34,7 @@ import org.apache.commons.math3.util.Precision;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
@@ -46,6 +47,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.AtAEntry;
+import io.github.kensuke1984.kibrary.waveformdata.AtAFile;
+import io.github.kensuke1984.kibrary.waveformdata.AtdEntry;
+import io.github.kensuke1984.kibrary.waveformdata.AtdFile;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -60,11 +65,11 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * @author Kensuke Konishi
  * 
  */
-public class LetMeInvert implements Operation {
+public class LetMeInvert_fromAtA implements Operation {
 	/**
 	 * 観測波形、理論波形の入ったファイル (BINARY)
 	 */
-	protected Path waveformPath;
+	protected Path atdPath;
 
 	/**
 	 * 求めたい未知数を羅列したファイル (ASCII)
@@ -74,17 +79,7 @@ public class LetMeInvert implements Operation {
 	/**
 	 * partialIDの入ったファイル
 	 */
-	protected Path partialIDPath;
-
-	/**
-	 * partial波形の入ったファイル
-	 */
-	protected Path partialPath;
-
-	/**
-	 * 観測、理論波形のID情報
-	 */
-	protected Path waveformIDPath;
+	protected Path ataPath;
 
 	/**
 	 * ステーション位置情報のファイル
@@ -96,27 +91,11 @@ public class LetMeInvert implements Operation {
 	 */
 	protected Set<InverseMethodEnum> inverseMethods;
 	
-	protected WeightingType weightingType;
-	
 	protected boolean time_source, time_receiver;
 	
-	protected double gamma;
-	
-	private CombinationType combinationType;
-	
-	private Map<PartialType, Integer[]> nUnknowns;
-	
-	private ObservationEquation eq;
-	
-	private String[] phases;
+	private ObservationEquation[][][] eq;
 	
 	private List<DataSelectionInformation> selectionInfo;
-	
-	private boolean modelCovariance;
-	
-	private double lambdaQ, lambdaMU;
-	
-	private double correlationScaling;
 	
 	private double minDistance;
 	
@@ -126,8 +105,6 @@ public class LetMeInvert implements Operation {
 	
 	private double maxMw;
 	
-	private UnknownParameterWeightType unknownParameterWeightType;
-	
 	private boolean linaInversion;
 
 	private void checkAndPutDefaults() {
@@ -135,30 +112,16 @@ public class LetMeInvert implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
-		if (!property.containsKey("waveformIDPath"))
-			throw new IllegalArgumentException("There is no information about 'waveformIDPath'.");
-		if (!property.containsKey("waveformPath"))
-			throw new IllegalArgumentException("There is no information about 'waveformPath'.");
-		if (!property.containsKey("partialIDPath"))
-			throw new IllegalArgumentException("There is no information about 'partialIDPath'.");
-		if (!property.containsKey("partialPath"))
-			throw new IllegalArgumentException("There is no information about 'partialPath'.");
+		if (!property.containsKey("ataPath"))
+			throw new IllegalArgumentException("There is no information about 'ataPath'.");
+		if (!property.containsKey("atdPath"))
+			throw new IllegalArgumentException("There is no information about 'atdPath'.");
 		if (!property.containsKey("inverseMethods"))
 			property.setProperty("inverseMethods", "CG SVD");
-		if (!property.containsKey("weighting"))
-			property.setProperty("weighting", "RECIPROCAL");
 		if (!property.containsKey("time_source"))
 			property.setProperty("time_source", "false");
 		if (!property.containsKey("time_receiver"))
 			property.setProperty("time_receiver", "false");
-		if (!property.containsKey("modelCovariance"))
-			property.setProperty("modelCovariance", "false");
-		if (!property.containsKey("lambdaQ"))
-			property.setProperty("lambdaQ", "0.3");
-		if (!property.containsKey("lambdaMU"))
-			property.setProperty("lambdaMU", "0.03");
-		if (!property.containsKey("correlationScaling"))
-			property.setProperty("correlationScaling", "1.");
 		if (!property.containsKey("minDistance"))
 			property.setProperty("minDistance", "0.");
 		if (!property.containsKey("maxDistance"))
@@ -180,73 +143,18 @@ public class LetMeInvert implements Operation {
 		workPath = Paths.get(property.getProperty("workPath"));
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-		if (property.containsKey("outPath"))
-			outPath = getPath("outPath");
-		else
-			outPath = workPath.resolve(Paths.get("lmi" + Utilities.getTemporaryString()));
 		stationInformationPath = getPath("stationInformationPath");
-		waveformIDPath = getPath("waveformIDPath");
-		waveformPath = getPath("waveformPath");
-		partialPath = getPath("partialPath");
-		partialIDPath = getPath("partialIDPath");
+		ataPath = getPath("ataPath");
+		atdPath = getPath("atdPath");
 		unknownParameterListPath = getPath("unknownParameterListPath");
 		if (property.containsKey("alpha"))
 			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
 					.toArray();
 		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
 				.collect(Collectors.toSet());
-		weightingType = WeightingType.valueOf(property.getProperty("weighting"));
 		time_source = Boolean.parseBoolean(property.getProperty("time_source"));
 		time_receiver = Boolean.parseBoolean(property.getProperty("time_receiver"));
-		if (weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI) || weightingType.equals(WeightingType.FINAL)) {
-			if (!property.containsKey("gamma"))
-				throw new RuntimeException("gamma must be set in oreder to use TAKEUCHIKOBAYASHI or FINAL weighting scheme");
-			gamma = Double.parseDouble(property.getProperty("gamma"));
-		}
-		if (!property.containsKey("phases"))
-			phases = null;
-		else
-			phases = Arrays.stream(property.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
-		//
-		if (!property.containsKey("combinationType"))
-			combinationType = null;
-		else
-			combinationType = CombinationType.valueOf(property.getProperty("combinationType"));
-		//
-		if (!property.containsKey("nUnknowns"))
-			nUnknowns = null;
-		else if (combinationType == null) {
-			throw new RuntimeException("Error: a combinationType "
-					+ "must be specified when nUnknowns is specified");
-		}
-		else {
-			nUnknowns = new HashMap<>();
-			String[] args = property.getProperty("nUnknowns").trim().split("\\s+");
-			if (combinationType.equals(CombinationType.CORRIDOR_TRIANGLE)
-					|| combinationType.equals(CombinationType.CORRIDOR_BOXCAR)) {
-				if (args.length % 3 != 0)
-					throw new RuntimeException("Error: nUnknowns arguments must be in format: PartialType nUM nLM");
-				for (int i = 0; i < args.length / 3; i++) {
-					int j = i * 3;
-					nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1]), Integer.parseInt(args[j + 2])});
-				}
-			}
-			else if (combinationType.equals(CombinationType.LOWERMANTLE_BOXCAR_3D)) {
-				if (args.length % 2 != 0)
-					throw new IllegalArgumentException("Error: nUnknowns arguments must be in format: PartialType nNewUnknowns");
-				for (int i = 0; i < args.length / 2; i++) {
-					int j = i * 2;
-					nUnknowns.put(PartialType.valueOf(args[j]), new Integer[] {Integer.parseInt(args[j + 1])});
-				}
-			}
-			else if (combinationType.equals(CombinationType.TRANSITION_ZONE_23)) {
-			}
-			else if (combinationType.equals(CombinationType.TRANSITION_ZONE_20)) {
-			}
-			else {
-				throw new IllegalArgumentException("Error: unknown combinationType " + combinationType);
-			}
-		}
+
 		if (property.containsKey("DataSelectionInformationFile")) {
 			System.out.println("Using dataSelectionInformationFile " + property.getProperty("DataSelectionInformationFile"));
 			try {
@@ -257,22 +165,25 @@ public class LetMeInvert implements Operation {
 		}
 		else
 			selectionInfo = null;
-		modelCovariance = Boolean.valueOf(property.getProperty("modelCovariance"));
-		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
-		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
-		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
+		
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
-		if (property.getProperty("unknownParameterWeightType") == null)
-			unknownParameterWeightType = null;
-		else {
-			unknownParameterWeightType = UnknownParameterWeightType.valueOf(property.getProperty("unknownParameterWeightType"));
-			System.out.println("--->Weighting unkown parameters using type " + unknownParameterWeightType);
-		}
 		minMw = Double.parseDouble(property.getProperty("minMw"));
 		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 		
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
+		
+		outPaths = new Path[weights.length][][];
+		for (int iweight = 0; iweight < weights.length; iweight++) {
+			outPaths[iweight] = new Path[frequencyRanges.length][];
+			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+				outPaths[iweight][ifreq] = new Path[phases.length];
+				for (int iphase = 0; iphase < phases.length; iphase++) {
+					String freqString = String.format("%.1f-%.1f", 1./frequencyRanges[ifreq][1], 1./frequencyRanges[ifreq][0]);
+					outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
+				}
+			}
+		}
 	}
 
 	/**
@@ -283,7 +194,7 @@ public class LetMeInvert implements Operation {
 	private Properties property;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan LetMeInvert");
 			pw.println("##These properties for LetMeInvert");
@@ -291,14 +202,10 @@ public class LetMeInvert implements Operation {
 			pw.println("#workPath");
 			pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
 			pw.println("#outPath");
-			pw.println("##Path of a waveID file, must be set");
-			pw.println("#waveformIDPath waveID.dat");
-			pw.println("##Path of a waveform file, must be set");
-			pw.println("#waveformPath waveform.dat");
-			pw.println("##Path of a partial id file, must be set");
-			pw.println("#partialIDPath partialID.dat");
-			pw.println("##Path of a partial waveform file must be set");
-			pw.println("#partialPath partial.dat");
+			pw.println("##Path of the Atd vector file");
+			pw.println("#atdPath atd.dat");
+			pw.println("##Path of the AtA matrix file");
+			pw.println("#ataPath ata.dat");
 			pw.println("##Path of a unknown parameter list file, must be set");
 			pw.println("#unknownParameterListPath unknowns.inf");
 			pw.println("##Path of a station information file, must be set");
@@ -307,34 +214,16 @@ public class LetMeInvert implements Operation {
 			pw.println("#alpha");
 			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
-			pw.println("##int weighting (RECIPROCAL); LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
-			pw.println("#weighting RECIPROCAL");
-			pw.println("##double gamma. Must be set only if TAKEUCHIKOBAYASHI weigthing is used");
-			pw.println("#gamma 30.");
 			pw.println("##boolean time_source (false). Time partial for the source");
 			pw.println("time_source false");
 			pw.println("##boolean time_receiver (false). Time partial for the receiver");
 			pw.println("time_receiver false");
-			pw.println("##Use phases (blank = all phases)");
-			pw.println("#phases");
-			pw.println("##CombinationType to combine 1-D pixels or voxels (null)");
-			pw.println("#combinationType");
-			pw.println("#nUnknowns PAR2 9 9 PARQ 9 9");
 			pw.println("##DataSelectionInformationFile (leave blank if not needed)");
 			pw.println("#DataSelectionInformationFile");
-			pw.println("##boolean modelCovariance (false)");
-			pw.println("#modelCovariance");
-			pw.println("##double lambdaQ (0.3)");
-			pw.println("#lambdaQ");
-			pw.println("##double lambdaMU (0.03)");
-			pw.println("#lambdaMU");
-			pw.println("##double correlationScaling (1.)");
-			pw.println("#correlationScaling");
 			pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
 			pw.println("#minDistance ");
 			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
 			pw.println("#maxDistance ");
-			pw.println("#unknownParameterWeightType");
 			pw.println("##minimum Mw (0.)");
 			pw.println("#minMw");
 			pw.println("##maximum Mw (10.)");
@@ -347,7 +236,7 @@ public class LetMeInvert implements Operation {
 
 	private Path workPath;
 
-	public LetMeInvert(Properties property) throws IOException {
+	public LetMeInvert_fromAtA(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 		if (!canGO())
@@ -355,150 +244,45 @@ public class LetMeInvert implements Operation {
 		setEquation();
 	}
 
-	public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
-		eq = equation;
-		this.stationSet = stationSet;
-		workPath.resolve("lmi" + Utilities.getTemporaryString());
-		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
-	}
+//	public LetMeInvert_fromAtA(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
+//		eq = equation;
+//		this.stationSet = stationSet;
+//		workPath.resolve("lmi" + Utilities.getTemporaryString());
+//		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
+//	}
 
-	private Path outPath;
+	private Path[][][] outPaths;
+	
+	private double[] weights;
+	
+	private double[][] frequencyRanges;
+	
+	private Phases[] phases;
 
 	private void setEquation() throws IOException {
-		// set partial matrix
-		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
-		
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		// set AtA matrix and Atd vector
+		AtAEntry[][][][] ataEntries = AtAFile.read(ataPath);
+		AtdEntry[][][][] atdEntries = AtdFile.readArray(atdPath);
 		
 		// set unknown parameter
-				System.err.println("setting up unknown parameter set");
-				List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
+		System.err.println("setting up unknown parameter set");
+		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		
-		Predicate<BasicID> chooser = null;
+		//set equations
+		eq = new ObservationEquation[weights.length][][];
 		
-		if (phases != null) {
-			chooser = new Predicate<BasicID>() {
-				public boolean test(BasicID id) {
-	//				GlobalCMTData event = id.getGlobalCMTID().getEvent();
-	//				if (event.getCmtLocation().getR() > 5971.)
-	//					return false;
-	//				if (event.getCmt().getMw() < 6.3)
-	//					return false;
-					for (String phasename : phases) {
-						if (new Phases(id.getPhases()).equals(new Phases(phasename)))
-							return true;
-					}
-					return false;
+		for (int iweight = 0; iweight < weights.length; iweight++) {
+			eq[iweight] = new ObservationEquation[frequencyRanges.length][];
+			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+				eq[iweight][ifreq] = new ObservationEquation[phases.length];
+				for (int iphase = 0; iphase < phases.length; iphase++) {
+					RealMatrix ata = AtAFile.getAtARealMatrix(ataEntries, iweight, ifreq, iphase);
+					RealVector atd = AtdFile.getAtdVector(atdEntries, iweight, ifreq, iphase);
+					eq[iweight][ifreq][iphase] = new ObservationEquation(ata, parameterList, atd);
 				}
-			};
-		}
-		else if (linaInversion) {
-			System.out.println("Setting chooser for Yamaya et al. CMT paper");
-			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
-			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
-					,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
-					,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
-					,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
-					,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
-					,"201208020938A","201203050746A","200512232147A"})
-					.map(GlobalCMTID::new)
-					.collect(Collectors.toSet());
-			System.out.println("Using " + wellDefinedEvent.size() + " well defined events");
-			chooser = id -> {
-				if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
-					return false;
-				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
-						* 180. / Math.PI;
-				if (distance < minDistance || distance > maxDistance)
-					return false;
-				double mw = id.getGlobalCMTID().getEvent()
-						.getCmt().getMw();
-				if (mw < minMw || mw > maxMw) {
-					System.out.println(mw);
-					return false;
-				}
-				
-				return true;
-			};
-		}
-		else {
-			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
-			chooser = id -> {
-				double distance = id.getGlobalCMTID().getEvent()
-						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
-						* 180. / Math.PI;
-				if (distance < minDistance || distance > maxDistance)
-					return false;
-				double mw = id.getGlobalCMTID().getEvent()
-						.getCmt().getMw();
-				if (mw < minMw || mw > maxMw) {
-					System.out.println(mw);
-					return false;
-				}
-				return true;
-			};
+			}
 		}
 		
-		// set Dvector
-		System.err.println("Creating D vector");
-		System.err.println("Going with weghting " + weightingType);
-		Dvector dVector =  null;
-		boolean atLeastThreeRecordsPerStation = time_receiver || time_source;
-		double[] weighting = null;
-		List<UnknownParameter> parameterForStructure = new ArrayList<>();
-		switch (weightingType) {
-		case LOWERUPPERMANTLE:
-			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
-			dVector = new Dvector(ids, chooser, weightingType, lowerUpperMantleWeighting, atLeastThreeRecordsPerStation);
-			break;
-		case RECIPROCAL:
-//			System.out.println(selectionInfo.size());
-//			System.out.println(selectionInfo.get(0).getTimewindow());
-			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
-			break;
-		case RECIPROCAL_AZED:
-			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
-			break;
-		case RECIPROCAL_AZED_DPP:
-			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
-			break;
-		case TAKEUCHIKOBAYASHI:
-			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
-//			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
-			parameterForStructure = parameterList.stream()
-					.filter(unknonw -> unknonw.getPartialType().equals(PartialType.PAR2))
-					.collect(Collectors.toList());
-//			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
-			weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
-			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
-			break;
-		case FINAL:
-			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
-			parameterForStructure = parameterList.stream()
-					.filter(unknonw -> unknonw.getPartialType().equals(PartialType.PAR2))
-					.collect(Collectors.toList());
-			weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
-			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
-			break;
-		case IDENTITY:
-			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
-			break;
-		default:
-			throw new RuntimeException("Error: Weighting should be LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
-		}
-		
-		if (modelCovariance)
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling);
-		else
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
-					unknownParameterWeightType);
-		
-//		Path AtAPath = workPath.resolve("ata_stable_" + weightingType + ".dat");
-//		Path AtdPath = workPath.resolve("atd_stable_" + weightingType + ".dat");
-//		eq.outputAtA(AtAPath);
-//		eq.outputAtd(AtdPath);
-//		System.exit(0);
 	}
 	
 	/**
@@ -513,15 +297,15 @@ public class LetMeInvert implements Operation {
 		Dvector dVector = eq.getDVector();
 		Callable<Void> output = () -> {
 			outputDistribution(outPath.resolve("stationEventDistribution.inf"));
-			dVector.outOrder(outPath);
-			dVector.outPhases(outPath);
-			outEachTrace(outPath.resolve("trace"));
+//			dVector.outOrder(outPath);
+//			dVector.outPhases(outPath);
+//			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
 //			eq.outputA(outPath.resolve("partial"));
-			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
-			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
-			dVector.outWeighting(outPath);
+//			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
+//			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
+//			dVector.outWeighting(outPath);
 			return null;
 		};
 		FutureTask<Void> future = new FutureTask<>(output);
@@ -797,12 +581,12 @@ public class LetMeInvert implements Operation {
 	 *             if an I/O error occurs
 	 */
 	public static void main(String[] args) throws IOException {
-		LetMeInvert lmi = new LetMeInvert(Property.parse(args));
-		System.err.println(LetMeInvert.class.getName() + " is running.");
+		LetMeInvert_fromAtA lmi = new LetMeInvert_fromAtA(Property.parse(args));
+		System.err.println(LetMeInvert_fromAtA.class.getName() + " is running.");
 		long startT = System.nanoTime();
 		lmi.run();
 		System.err.println(
-				LetMeInvert.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+				LetMeInvert_fromAtA.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
 	}
 
 	/**
@@ -910,13 +694,13 @@ public class LetMeInvert implements Operation {
 			new FileAlreadyExistsException(outPath.toString()).printStackTrace();
 			cango = false;
 		}
-		if (!Files.exists(partialIDPath)) {
-			new NoSuchFileException(partialIDPath.toString()).printStackTrace();
+		if (!Files.exists(ataPath)) {
+			new NoSuchFileException(ataPath.toString()).printStackTrace();
 			cango = false;
 		}
-		if (!Files.exists(partialPath)) {
+		if (!Files.exists(atdPath)) {
 			cango = false;
-			new NoSuchFileException(partialPath.toString()).printStackTrace();
+			new NoSuchFileException(atdPath.toString()).printStackTrace();
 		}
 		if (!Files.exists(stationInformationPath)) {
 			new NoSuchFileException(stationInformationPath.toString()).printStackTrace();
@@ -924,14 +708,6 @@ public class LetMeInvert implements Operation {
 		}
 		if (!Files.exists(unknownParameterListPath)) {
 			new NoSuchFileException(unknownParameterListPath.toString()).printStackTrace();
-			cango = false;
-		}
-		if (!Files.exists(waveformPath)) {
-			new NoSuchFileException(waveformPath.toString()).printStackTrace();
-			cango = false;
-		}
-		if (!Files.exists(waveformIDPath)) {
-			new NoSuchFileException(waveformIDPath.toString()).printStackTrace();
 			cango = false;
 		}
 		if (!Files.exists(workPath)) {

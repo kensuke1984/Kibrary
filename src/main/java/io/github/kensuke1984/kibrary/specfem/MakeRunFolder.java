@@ -16,8 +16,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
 
@@ -32,18 +34,29 @@ public class MakeRunFolder {
 			if (!Files.isDirectory(specfemRoot))
 				throw new FileNotFoundException(specfemRoot.toString());
 			
-			Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(eventFolderPath);
-			int nEvents = eventFolderSet.size();
+			List<EventFolder> eventFolderSet = Utilities.eventFolderSet(eventFolderPath)
+					.stream().collect(Collectors.toList());
 			
 			AtomicInteger iatom = new AtomicInteger(1);
 			Path runGroupFolder = null;
-			for (EventFolder eventFolder : eventFolderSet) {
+			
+			double tmp = (double) (eventFolderSet.size()) / nSimultaneousRun;
+			int nOutFolder = tmp - (int) tmp == 0 ? (int) tmp : (int) tmp + 1;
+			Path[] runDirs = new Path[nOutFolder];
+			for (int i = 0; i < nOutFolder; i++) {
+				runDirs[i] = specfemRoot.resolve(String.format("run%04d-%04d", nSimultaneousRun*i+1 ,nSimultaneousRun*(i+1)));
+				Files.createDirectory(runDirs[i]);
+			}
+			
+			for (int i = 0; i < eventFolderSet.size(); i++) {
 //				if (iatom.get() == 1)
 //					runGroupFolder 
 //				if (iatom.get() <= nEvents)
+				
+				EventFolder eventFolder = eventFolderSet.get(i);
 					
 				String runFolder = String.format("run%04d", iatom.get());
-				Path dirPath = specfemRoot.resolve(runFolder);
+				Path dirPath = runDirs[i/nSimultaneousRun].resolve(runFolder);
 				Path dataFolderPath = dirPath.resolve("DATA");
 				Path databasesmpiFolderPath = dirPath.resolve("DATABASES_MPI");
 				Path outputfilesFolderPath = dirPath.resolve("OUTPUT_FILES");

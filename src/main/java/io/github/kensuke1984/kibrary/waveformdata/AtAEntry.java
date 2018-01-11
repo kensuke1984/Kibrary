@@ -99,6 +99,10 @@ public class AtAEntry {
 		value += another.value;
 	}
 	
+	public void setValue(double value) {
+		this.value = value;
+	}
+	
 	@Override
 	public String toString() {
 		return weightingType.name() + " " + frequencyRange + " "

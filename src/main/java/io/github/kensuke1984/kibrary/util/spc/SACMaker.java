@@ -556,7 +556,7 @@ public class SACMaker implements Runnable {
 	 *            secondary
 	 * @return if spc1 and spc2 have same information
 	 */
-	private static boolean check(DSMOutput spc1, DSMOutput spc2) {
+	public static boolean check(DSMOutput spc1, DSMOutput spc2) {
 		boolean isOK = true;
 		if (spc1.nbody() != spc2.nbody()) {
 			System.err

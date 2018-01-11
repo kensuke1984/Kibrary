@@ -344,6 +344,8 @@ public class PartialDatasetMaker_v2 implements Operation {
 							PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
 									cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
 									cutU);
+//							System.out.println(pid.getPerturbationLocation());
+							
 							try {
 								partialDataWriter.addPartialID(pid);
 								System.out.print(".");
@@ -540,7 +542,7 @@ private class WorkerTimePartial implements Runnable {
 			pw.println("#fpPath");
 			pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
 			pw.println("#modelName");
-			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
+			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle, 3: asymmetric triangle (user catalog), 4: coming soon, 5: symmetric triangle (user catalog). (0)");
 			pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
 			pw.println("#sourceTimeFunction");
 			pw.println("##Path of a time window file, must be set");
@@ -897,7 +899,7 @@ private class WorkerTimePartial implements Runnable {
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
 	private final String stfcatName = "ASTF2.stfcat"; //LSTF1 ASTF1 ASTF2
-	private final List<String> stfcat = readSTFCatalogue(stfcatName); 
+	private final List<String> stfcat = readSTFCatalogue(stfcatName);
 	
 	private void setSourceTimeFunctions() throws IOException {
 		if (sourceTimeFunction == 0)
@@ -920,10 +922,12 @@ private class WorkerTimePartial implements Runnable {
 			case 3:
 				double halfDuration1 = 0.;
 	        	double halfDuration2 = 0.;
+	        	boolean found = false;
 		      	for (String str : stfcat) {
 		      		String[] stflist = str.split("\\s+");
 		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
 		      	    if(id.equals(eventID)) {
+		      	    	found = true;
 		      	    	halfDuration1 = Double.valueOf(stflist[1]);
 		      	    	halfDuration2 = Double.valueOf(stflist[2]);
 		      	    	if(Integer.valueOf(stflist[3]) < 5.) {
@@ -933,8 +937,11 @@ private class WorkerTimePartial implements Runnable {
 //		      	    	System.out.println( "DEBUG1: GET STF of " + eventID
 //		      	    		+ " halfDuration 1 is " + halfDuration1 + " halfDuration 2 is " + halfDuration2 );
 		      	    }
-		      	}          	 
-	            stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+		      	}
+		      	if (found)
+		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+		      	else
+		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, halfDuration);
 	            break;
 			case 4:
 				throw new RuntimeException("Case 4 not implemented yet");
@@ -947,7 +954,7 @@ private class WorkerTimePartial implements Runnable {
 //				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 				halfDuration = 0.;
 				double amplitudeCorrection = 1.;
-				boolean found = false;
+				found = false;
 		      	for (String str : stfcat) {
 		      		String[] stflist = str.split("\\s+");
 		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());

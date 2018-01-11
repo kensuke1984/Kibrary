@@ -165,8 +165,8 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		makeStationMap(stationSet);
 		makeGlobalCMTIDMap(globalCMTIDSet);
 		for (int i = 0; i < periodRanges.length; i++) {
-			idStream.writeFloat((float) periodRanges[i][0]);
-			idStream.writeFloat((float) periodRanges[i][1]);
+			idStream.writeDouble(periodRanges[i][0]);
+			idStream.writeDouble(periodRanges[i][1]);
 		}
 		makePhaseMap(phases);
 		
@@ -198,9 +198,12 @@ public class WaveformDataWriter implements Closeable, Flushable {
 		perturbationLocationMap = new HashMap<>();
 		for (Location loc : perturbationMap) {
 			perturbationLocationMap.put(loc, i++);
-			idStream.writeFloat((float) loc.getLatitude());
-			idStream.writeFloat((float) loc.getLongitude());
-			idStream.writeFloat((float) loc.getR());
+//			idStream.writeFloat((float) loc.getLatitude());
+//			idStream.writeFloat((float) loc.getLongitude());
+//			idStream.writeFloat((float) loc.getR());
+			idStream.writeDouble(loc.getLatitude());
+			idStream.writeDouble(loc.getLongitude());
+			idStream.writeDouble(loc.getR());
 		}
 	}
 
@@ -212,8 +215,10 @@ public class WaveformDataWriter implements Closeable, Flushable {
 			idStream.writeBytes(StringUtils.rightPad(station.getStationName(), 8));
 			idStream.writeBytes(StringUtils.rightPad(station.getNetwork(), 8));
 			HorizontalPosition pos = station.getPosition();
-			idStream.writeFloat((float) pos.getLatitude());
-			idStream.writeFloat((float) pos.getLongitude());
+//			idStream.writeFloat((float) pos.getLatitude());
+//			idStream.writeFloat((float) pos.getLongitude());
+			idStream.writeDouble(pos.getLatitude());
+			idStream.writeDouble(pos.getLongitude());
 		}
 	}
 

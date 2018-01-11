@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
@@ -37,6 +38,11 @@ import java.util.stream.Stream;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
 public final class AtdFile {
@@ -250,6 +256,107 @@ public final class AtdFile {
 					ataEntries.size() + " AtA elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
 			return Collections.unmodifiableList(ataEntries);
 		}
+	}
+	
+	/**
+	 * @param infoPath
+	 *            of the information file to read
+	 * @return (<b>unmodifiable</b>) Set of timewindow information
+	 * @throws IOException
+	 *             if an I/O error occurs
+	 */
+	public static AtdEntry[][][][] readArray(Path atdPath) throws IOException {
+		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(atdPath)));) {
+			long t = System.nanoTime();
+			long fileSize = Files.size(atdPath);
+			// Read header
+			WeightingType[] weightingTypes = new WeightingType[dis.readShort()];
+			FrequencyRange[] frequencyRanges = new FrequencyRange[dis.readShort()];
+			Phases[] phases = new Phases[dis.readShort()];
+			PartialType[] partialTypes = new PartialType[dis.readShort()];
+			Location[] locations = new Location[dis.readShort()];
+			
+			int headerBytes = 5 * 2 + weightingTypes.length * oneWeightingTypeByte 
+					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte
+					+ partialTypes.length * onePartialTypeByte + locations.length * 3 * 4;
+			
+			long entryPart = fileSize - headerBytes;
+			if (entryPart % oneEntryByte != 0) {
+				System.out.println(fileSize + " " + entryPart + " " + oneEntryByte);
+				throw new RuntimeException(atdPath + " has some problems.");
+			}
+			
+			byte[] weightingTypeByte = new byte[oneWeightingTypeByte];
+			for (int i = 0; i < weightingTypes.length; i++) {
+				dis.read(weightingTypeByte);
+				weightingTypes[i] = WeightingType.valueOf(new String(weightingTypeByte).trim());
+			}
+			byte[] frequencyRangeByte = new byte[16];
+			for (int i = 0; i < frequencyRanges.length; i++) {
+				dis.read(frequencyRangeByte);
+				ByteBuffer bb = ByteBuffer.wrap(frequencyRangeByte);
+				frequencyRanges[i] = new FrequencyRange(bb.getDouble(), bb.getDouble());
+			}
+			byte[] phasesByte = new byte[onePhasesByte];
+			for (int i = 0; i < phases.length; i++) {
+				dis.read(phasesByte);
+				phases[i] = new Phases(new String(phasesByte).trim());
+			}
+			byte[] partialTypeByte = new byte[onePartialTypeByte];
+			for (int i = 0; i < partialTypes.length; i++) {
+				dis.read(partialTypeByte);
+				partialTypes[i] = PartialType.valueOf(new String(partialTypeByte).trim());
+			}
+			byte[] locationByte = new byte[12];
+			for (int i = 0; i < locations.length; i++) {
+				dis.read(locationByte);
+				ByteBuffer bb = ByteBuffer.wrap(locationByte);
+				locations[i] = new Location(bb.getFloat(), bb.getFloat(), bb.getFloat());
+			}
+			
+			int nEntry = (int) (entryPart / oneEntryByte);
+			byte[][] bytes = new byte[nEntry][oneEntryByte];
+			
+			int n1 = weightingTypes.length * frequencyRanges.length * phases.length;
+			int n0Atd = bytes.length / n1;
+			
+			AtdEntry[][][][] atdEntries = new AtdEntry[n0Atd][weightingTypes.length][frequencyRanges.length][phases.length];
+			
+			for (int i = 0; i < bytes.length; i++) {
+				byte[] tmpbytes = bytes[i];
+				ByteBuffer bb = ByteBuffer.wrap(tmpbytes);
+				int iWeight = bb.getShort();
+				WeightingType weightingType = weightingTypes[iWeight];
+				int iFreq = bb.getShort();
+				FrequencyRange frequencyRange = frequencyRanges[iFreq];
+				int iPhase = bb.getShort();
+				Phases phase = phases[iPhase];
+				int iPartialType = bb.getShort();
+				PartialType partialType = partialTypes[iPartialType];
+				int iLocation = bb.getShort();
+				Location location  = locations[iLocation];
+				double value = bb.getDouble();
+				
+				int i0Atd = i / n1;
+				
+				atdEntries[i0Atd][iWeight][iFreq][iPhase]
+						= new AtdEntry(weightingType, frequencyRange, phase, partialType, location, value);
+			}
+			System.err.println(
+					bytes.length + " Atd elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
+			return atdEntries;
+		}
+	}
+	
+	public static RealVector getAtdVector(AtdEntry[][][][] atdEntries, int iweight, int ifreq, int iphase) throws IOException {
+		RealVector atdVector = new ArrayRealVector(atdEntries.length);
+		
+		for (int i = 0; i < atdEntries.length; i++) {
+			double atdi = atdEntries[i][iweight][ifreq][iphase].getValue();
+			atdVector.setEntry(i, atdi);
+		}
+		
+		return atdVector;
 	}
 
 	/**

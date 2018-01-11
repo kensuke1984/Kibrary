@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary;
 
-import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
+import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker_v2;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
 
 import java.util.Arrays;
@@ -43,7 +43,7 @@ public enum Manhattan {
 	InformationFileMaker(7, InformationFileMaker.class), //
 	LetMeInvert(8, LetMeInvert.class), //
 	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
-	Partial1DDatasetMaker(10, Partial1DDatasetMaker.class), //
+	Partial1DDatasetMaker(10, Partial1DDatasetMaker_v2.class), //
 	PartialDatasetMaker(11, PartialDatasetMaker.class), //
 	PhaseEnvelope(12, PhaseEnvelope.class), //
 	RaypathDistribution(13, RaypathDistribution.class), //

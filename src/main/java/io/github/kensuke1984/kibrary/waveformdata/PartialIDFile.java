@@ -99,13 +99,15 @@ public final class PartialIDFile {
 			Phase[] phases = new Phase[dis.readShort()];
 			Location[] perturbationLocations = new Location[dis.readShort()];
 			// 4 * short 
-			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
-					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
+//			int headerBytes = 5 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length
+//					+ 16 * phases.length + 4 * 3 * perturbationLocations.length;
+			int headerBytes = 5 * 2 + (8 + 8 + 8 * 2) * stations.length + 15 * cmtIDs.length + 8 * 2 * periodRanges.length
+					+ 16 * phases.length + 8 * 3 * perturbationLocations.length;
 			long idParts = fileSize - headerBytes;
 			if (idParts % oneIDByte != 0)
 				throw new RuntimeException(idPath + " is not valid..");
-			// name(8),network(8),position(4*2)
-			byte[] stationBytes = new byte[24];
+			// name(8),network(8),position(8*2)
+			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
 				stations[i] = Station.createStation(stationBytes);
@@ -116,16 +118,18 @@ public final class PartialIDFile {
 				cmtIDs[i] = new GlobalCMTID(new String(cmtIDBytes).trim());
 			}
 			for (int i = 0; i < periodRanges.length; i++) {
-				periodRanges[i][0] = dis.readFloat();
-				periodRanges[i][1] = dis.readFloat();
+				periodRanges[i][0] = dis.readDouble();
+				periodRanges[i][1] = dis.readDouble();
 			}
 			byte[] phaseBytes = new byte[16];
 			for (int i = 0; i < phases.length; i++) {
 				dis.read(phaseBytes);
 				phases[i] = Phase.create(new String(phaseBytes).trim());
 			}
-			for (int i = 0; i < perturbationLocations.length; i++)
-				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
+			for (int i = 0; i < perturbationLocations.length; i++) {
+//				perturbationLocations[i] = new Location(dis.readFloat(), dis.readFloat(), dis.readFloat());
+				perturbationLocations[i] = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
+			}
 			int nid = (int) (idParts / oneIDByte);
 			System.err.println("Reading partialID file: " + idPath);
 			

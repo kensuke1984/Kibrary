@@ -20,6 +20,17 @@ public class taupModelMaker {
 //		int nR = Integer.parseInt(args[0]);
 		int nR = 5000;
 		
+		PolynomialStructure ak135 = PolynomialStructure.AK135;
+		
+		for (int i = 3482; i < 3882; i+=50) {
+			double vsh2 = ak135.getVshAt(i)*ak135.getVshAt(i);
+			double vsv2 = ak135.getVsvAt(i)*ak135.getVsvAt(i);
+			double vpv2 = ak135.getVpvAt(i)*ak135.getVpvAt(i);
+			System.out.println(vsh2 + " " + vsv2 + " " + vpv2);
+		}
+		
+		System.exit(0);
+		
 //		Path outpath = root.resolve("PREM.vel");
 //		outputSTD(PolynomialStructure.PREM, nR, outpath);
 //		

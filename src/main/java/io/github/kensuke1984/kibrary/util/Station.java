@@ -204,7 +204,7 @@ public class Station implements Comparable<Station> {
 		String name = new String(str).trim();
 		bb.get(str);
 		String network = new String(str).trim();
-		return new Station(name, new HorizontalPosition(bb.getFloat(), bb.getFloat()), network);
+		return new Station(name, new HorizontalPosition(bb.getDouble(), bb.getDouble()), network);
 	}
 
 }

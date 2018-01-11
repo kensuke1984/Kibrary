@@ -34,11 +34,11 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
 	@Override
 	public int hashCode() {
-//		final int prime = 31;
+		final int prime = 31;
 //		int result = 1;
 //		result = prime * result + ((latitude == null) ? 0 : latitude.hashCode());
 //		result = prime * result + ((longitude == null) ? 0 : longitude.hashCode());
-		int result = 31415 * (int) longitude.getLongitude() * (int) latitude.getLatitude();
+		int result = prime * (int) longitude.getLongitude() * (int) latitude.getLatitude();
 		return result;
 	}
 

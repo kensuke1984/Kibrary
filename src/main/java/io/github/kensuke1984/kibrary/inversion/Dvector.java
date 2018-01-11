@@ -125,18 +125,28 @@ public class Dvector {
 	 *            {@link BasicID}
 	 * @return if the ids are same （理論波形と観測波形は違うけど＾＾＠）
 	 */
-	private static boolean isPair(BasicID id0, BasicID id1) {
+	public static boolean isPair(BasicID id0, BasicID id1) {
 		boolean res = false;
 		if (id0.getPhases() == null && id1.getPhases() == null) // for compatibility with old format of BasicID
 			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 					&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
 					&& id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20.
 					&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
-		else
+		else {
 			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 				&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
 				&& id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
 				&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+//			if (res == false && id0.getStation().getPosition()) {
+//				String s = id0.getStation().equals(id1.getStation()) + " " + id0.getStation().getPosition() + " " + id1.getStation().getPosition() + " " 
+//						+ (id0.getSamplingHz() == id1.getSamplingHz()) + " " + id0.getSamplingHz() + " " + id1.getSamplingHz() + " "
+//						+ (id0.getMaxPeriod() == id1.getMaxPeriod()) + " " + id0.getMaxPeriod() + " " + id1.getMaxPeriod() + " "
+//						+ (id0.getMinPeriod() == id1.getMinPeriod()) + " " + id0.getMinPeriod() + " " + id1.getMinPeriod() + " "
+//						+ new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()));
+//				System.out.println(s);
+//			}
+			
+		}
 		return res;
 	}
 

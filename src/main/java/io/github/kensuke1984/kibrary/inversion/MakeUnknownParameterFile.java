@@ -52,7 +52,10 @@ public class MakeUnknownParameterFile {
 					continue;
 				}
 				double volume = getVolume(perturbation, dR, 5., 5.);
-				Files.write(unknownPath, ("MU " + perturbation + " " + volume + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(unknownPath, String.format("MU %.8f %.8f %.8f %.8f\n", perturbation.getLatitude()
+						, perturbation.getLongitude()
+						, perturbation.getR()
+						, volume).getBytes(), StandardOpenOption.APPEND);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -32,6 +33,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 
+	private boolean syntheticDataset;
+	
 	private SyntheticDSMInformationFileMaker(Properties property) {
 		this.property = (Properties) property.clone();
 		set();
@@ -54,6 +57,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			pw.println("#tlen");
 			pw.println("##np must be a power of 2 (1024)");
 			pw.println("#np");
+			pw.println("##Synthetic Dataset (false)");
+			pw.println("#syntheticDataset");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -71,7 +76,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("header"))
 			property.setProperty("header", "PREM");
-		
+		if (!property.containsKey("syntheticDataset"))
+			property.setProperty("syntheticDataset", "false");
 		// write additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
 	}
@@ -95,6 +101,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			structurePath = Paths.get(property.getProperty("structureFile").split("\\s+")[0]);
 		else
 			structurePath = Paths.get("PREM");
+		syntheticDataset = Boolean.parseBoolean(property.getProperty("syntheticDataset"));
 	}
 
 	/**
@@ -168,8 +175,19 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			writeProperties(outPath.resolve("dsmifm.properties"));
 		
 		//synthetic station set
-//		Set<Station> synStationSet = IntStream.range(1, 111).mapToObj(i -> new Station(String.format("%03d", i), new HorizontalPosition(0, i), "SYN"))
-//			.collect(Collectors.toSet());
+		Set<Station> synStationSet = new HashSet<>();
+		if (syntheticDataset) {
+			for (int i = 2; i < 241; i++) {
+				double distance = i/2.;
+				int d1 = (int) (i/2.);
+				int d2 = (int) ((i/2. - (int) (i/2.)) * 10);
+				String stationName = String.format("%03d%03d", d1, d2);
+				System.out.println(stationName);
+				Station station = new Station(stationName
+						, new HorizontalPosition(0, distance), "DSM");
+				synStationSet.add(station);
+			}
+		}
 		
 		for (EventFolder eventDir : eventDirs) {
 			try {
@@ -181,9 +199,10 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 								return null;
 							}
 						}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
+				if (syntheticDataset)
+					stations = synStationSet;
 				if (stations.isEmpty())
 					continue;
-//				Set<Station> stations = synStationSet;
 				int numberOfStation = (int) stations.stream().map(Station::toString).count();
 				if (numberOfStation != stations.size())
 					System.err.println("!Caution there are stations with the same name and different positions in "

@@ -167,8 +167,8 @@ public final class BasicIDFile {
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			double[][] periodRanges = new double[dis.readShort()][2];
 			Phase[] phases = new Phase[dis.readShort()];
-			int headerBytes = 2 * 4 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length
-					+ 16 * phases.length + 4 * 2 * periodRanges.length;
+			int headerBytes = 2 * 4 + (8 + 8 + 8 * 2) * stations.length + 15 * cmtIDs.length
+					+ 16 * phases.length + 8 * 2 * periodRanges.length;
 			long idParts = fileSize - headerBytes;
 			if (idParts % oneIDByte != 0) {
 				try {
@@ -179,8 +179,8 @@ public final class BasicIDFile {
 					throw new RuntimeException(idPath + " is invalid both in the old and current format");
 				}
 			}
-			// name(8),network(8),position(4*2)
-			byte[] stationBytes = new byte[24];
+			// name(8),network(8),position(8*2)
+			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
 				stations[i] = Station.createStation(stationBytes);
@@ -191,8 +191,8 @@ public final class BasicIDFile {
 				cmtIDs[i] = new GlobalCMTID(new String(cmtIDBytes).trim());
 			}
 			for (int i = 0; i < periodRanges.length; i++) {
-				periodRanges[i][0] = dis.readFloat();
-				periodRanges[i][1] = dis.readFloat();
+				periodRanges[i][0] = dis.readDouble();
+				periodRanges[i][1] = dis.readDouble();
 			}
 			byte[] phaseBytes = new byte[16];
 			for (int i = 0; i < phases.length; i++) {

@@ -95,7 +95,7 @@ public final class TimewindowInformationFile {
 			set = TimewindowInformationFile.read(f);
 		}
 		
-		set.stream().sorted().forEach(System.out::println);
+		set.stream().sorted().forEach(tw -> {System.out.println(tw + " " + tw.getStation().getPosition());});
 		
 		Set<Station> stations = set.stream().map(tw -> tw.getStation()).collect(Collectors.toSet());
 		Path stationFile = Paths.get("timewindow.station");
@@ -146,8 +146,8 @@ public final class TimewindowInformationFile {
 				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
 				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
 				HorizontalPosition pos = stations[i].getPosition();
-				dos.writeFloat((float) pos.getLatitude());
-				dos.writeFloat((float) pos.getLongitude());
+				dos.writeDouble(pos.getLatitude());
+				dos.writeDouble(pos.getLongitude());
 			}
 			for (int i = 0; i < ids.length; i++) {
 				idMap.put(ids[i], i);
@@ -194,12 +194,12 @@ public final class TimewindowInformationFile {
 			Station[] stations = new Station[dis.readShort()];
 			GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
 			Phase[] phases = new Phase[dis.readShort()];
-			int headerBytes = 3 * 2 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length + 16 * phases.length;
+			int headerBytes = 3 * 2 + (8 + 8 + 8 * 2) * stations.length + 15 * cmtIDs.length + 16 * phases.length;
 			long windowParts = fileSize - headerBytes;
 			if (windowParts % oneWindowByte != 0)
 				throw new RuntimeException(infoPath + " has some problems.");
-			// name(8),network(8),position(4*2)
-			byte[] stationBytes = new byte[24];
+			// name(8),network(8),position(8*2)
+			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
 				dis.read(stationBytes);
 				stations[i] = Station.createStation(stationBytes);

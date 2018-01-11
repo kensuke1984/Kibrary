@@ -176,6 +176,7 @@ public class SpectrumFile implements DSMOutput {
 				specFile.observerName = spcFileName.getObserverName();
 			else
 				specFile.observerName = observerName;
+			
 			if (specFile.spcFileType.equals(SpcFileType.PB) || specFile.spcFileType.equals(SpcFileType.PF)
 					|| specFile.spcFileType.equals(SpcFileType.PBSHCAT)
 					|| specFile.spcFileType.equals(SpcFileType.PBPSVCAT)
@@ -208,6 +209,14 @@ public class SpectrumFile implements DSMOutput {
 
 			//
 			switch (specFile.spcFileType) {
+			case PAR0:
+			case PAR1:
+			case PAR2:
+			case PARA:
+			case PARC:
+			case PARF:
+			case PARL:
+			case PARN:
 			case SYNTHETIC:
 				specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
 				break;
