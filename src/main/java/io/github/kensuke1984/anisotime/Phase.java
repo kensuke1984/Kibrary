@@ -30,14 +30,15 @@ import java.util.regex.Pattern;
  * Multiple parentheses are accepted. (2ScS)(2SKS) &rarr; ScSScSSKSSKS<br>
  * Nesting is not allowed. (2S(2K)S) &rarr; IllegalArgumentException</dd>
  * <dt>underside reflection</dt>
- * <dd> ^???  for the reflection at a depth of ??? km.</dd>
+ * <dd>^???  for the reflection at a depth of ??? km.</dd>
  * <dt>topside reflection</dt>
  * <dd>v???  for the reflection at a depth of ??? km.</dd>
  * <dt>topside diffraction</dt>
+ * <dd>under construction</dd>
  * </dl>
- *
+ * P and S after transmission strictly are downward, and p and s are upward.
  * @author Kensuke Konishi
- * @version 0.1.8
+ * @version 0.1.9
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -84,12 +85,14 @@ public class Phase {
     //Number rules as TauP rule 4-6
     //*KxxxK* K wave must go deeper than xxx. xxx is a depth (distance from the Earth surface).
     private static Pattern outercoreSpecification = Pattern.compile("K[\\d\\.]++[^K]");
-    private static Pattern mantleSpecification = Pattern.compile("[pPsS]\\d++(\\.\\d++)?[^pPsS]");
+    private static Pattern mantleSpecification = Pattern.compile("[pPsS]\\d++(\\.\\d++)?+[^pPsS]");
     //interactions without reflection
     //Number rule as TauP rule 7
-    private static Pattern bottomSide = Pattern.compile("[pPsS]\\^\\d++(\\.\\d++)?[^PS]");
-    private static Pattern topSide = Pattern.compile("[ps]v|[PS]v\\d++(\\.\\d++)?[^pPsS]|[PS]v\\d++(\\.\\d++)?[pPsS]c");
-    private static Pattern bothSide = Pattern.compile("K[\\^|v]\\d++(\\.\\d++)?[^K]|[IJ][\\^|v]\\d++(\\.\\d++)?[^IJ]");
+    private static Pattern bottomSide = Pattern.compile("[pPsS]\\^\\d++(\\.\\d++)?+[^PS]");
+    private static Pattern topSide =
+            Pattern.compile("[ps]v|[PS]v\\d++(\\.\\d++)?+[^pPsS]|[PS]v\\d++(\\.\\d++)?+[pPsS]c");
+    private static Pattern bothSide =
+            Pattern.compile("K[\\^|v]\\d++(\\.\\d++)?+[^K]|[IJ][\\^|v]\\d++(\\.\\d++)?+[^IJ]");
 
     // frequently use
     public static final Phase p = create("p");
@@ -134,6 +137,7 @@ public class Phase {
         PSV = psv;
         countParts();
     }
+
 
     /**
      * Input names must follow some rules.
@@ -262,6 +266,9 @@ public class Phase {
                                 ((Located) beforePart).getPassPoint();
                         double outerDepth = 0;
 
+                        if (beforePart.isTransmission() && !secondLast.isDownward())
+                            throw new RuntimeException("Problem around " + currentChar);
+
                         if (!beforePart.isEmission()) outerDepth =
                                 secondLast.isDownward() ? secondLast.getInnerDepth() : secondLast.getOuterDepth();
                         if (vFlag) {
@@ -276,6 +283,7 @@ public class Phase {
                             partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                             continue;
                         } else if (!Double.isNaN(nextDepth)) {
+                            if (nextDepth < outerDepth) throw new RuntimeException("Problem around " + currentChar);
                             switch (nextChar) {
                                 case 'p':
                                 case 's':
@@ -301,16 +309,18 @@ public class Phase {
                             case 10:
                             case 'P':
                             case 'S':
-                                if (beforePart.isTransmission() && !secondLast.isDownward()) partList.add(
-                                        new GeneralPart(PS, false, secondLast.getOuterDepth(), 0, PassPoint.OTHER,
-                                                PassPoint.EARTH_SURFACE));
-                                else {
-                                    partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT,
-                                            outerPoint));
-                                    partList.add(Located.BOUNCE);
-                                    partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
-                                            PassPoint.EARTH_SURFACE));
-                                }
+//                                if (beforePart.isTransmission() && !secondLast.isDownward())
+//                                    throw new RuntimeException("Problem around P");
+//                                    partList.add(
+//                                        new GeneralPart(PS, false, secondLast.getOuterDepth(), 0, PassPoint.OTHER,
+//                                                PassPoint.EARTH_SURFACE));
+//                                else {
+                                partList.add(
+                                        new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
+                                partList.add(Located.BOUNCE);
+                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                        PassPoint.EARTH_SURFACE));
+//                                }
                                 if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
                                 continue;
                             case 'c':
@@ -590,7 +600,6 @@ public class Phase {
 
         // check if other letters are used.
         if (others.matcher(phase).find()) return false;
-
         if (firstLetter.matcher(phase).find()) return false;
 
         if (ps.matcher(phase).find()) return false;
@@ -667,7 +676,6 @@ public class Phase {
         System.out.println(PHASENAME);
         Arrays.stream(passParts).forEach(System.out::println);
     }
-
 
     @Override
     public String toString() {
