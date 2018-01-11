@@ -29,6 +29,7 @@ import java.util.stream.IntStream;
  * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
  * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
+ *
  * @author Kensuke Konishi
  * @version 0.3.13b
  */
@@ -95,6 +96,11 @@ final class ANISOtimeCLI {
      * @throws ParseException if any
      */
     public static void main(String[] args) throws ParseException {
+//        args = "-mod prem -h 571.3 -ph S24p -deg 30".split("\\s+");
+        /*
+/Users/kensuke/Dropbox/Geller/anisoTimePaper/fig4paper/prem_elastic.pdf
+p -> P のgapを狭める
+         */
         if (args.length == 0) {
             About.main(null);
             return;
