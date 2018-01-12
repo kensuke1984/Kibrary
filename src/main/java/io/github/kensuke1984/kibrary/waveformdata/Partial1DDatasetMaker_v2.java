@@ -34,6 +34,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -153,6 +154,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		if (!property.containsKey("shPath"))
 			property.setProperty("shPath", "null");
 	}
+	
+	private boolean par00;
 
 	/**
 	 * parameterのセット
@@ -181,6 +184,10 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 		partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
 				.collect(Collectors.toSet());
+		if (partialTypes.contains(PartialType.PAR00)) {
+			par00 = true;
+			partialTypes.remove(PartialType.PAR00);
+		}
 		
 		if (partialTypes.contains(PartialType.TIME_RECEIVER) || partialTypes.contains(PartialType.TIME_SOURCE)) {
 				timePartialPath = Paths.get(property.getProperty("timePartialPath"));
@@ -360,7 +367,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				if (psvPath != null && shPath != null) {
 					if (spcFileType.equals(SpcFileType.PARN)
 					|| spcFileType.equals(SpcFileType.PARL)
-					|| spcFileType.equals(SpcFileType.PAR0))
+					|| spcFileType.equals(SpcFileType.PAR0)
+					|| spcFileType.equals(SpcFileType.PAR2))
 						shspcname = new SpcFileName(spcFileName.getPath().replace("PSV.spc", "SH.spc"));
 				}
 				
@@ -978,6 +986,67 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		
+		// computing PAR00
+		if (par00) {
+			PartialID[] partials = PartialIDFile.readPartialIDandDataFile(idPath, datasetPath);
+			List<PartialID> par0list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR0)).collect(Collectors.toList());
+			List<PartialID> par1list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR1)).collect(Collectors.toList());
+			List<PartialID> par2list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR2)).collect(Collectors.toList());
+			
+			Path idPath00 = workPath.resolve("partial001DID" + dateString + ".dat");
+			Path datasetPath00 = workPath.resolve("partial001D" + dateString + ".dat");
+			try (WaveformDataWriter pdw = new WaveformDataWriter(idPath00, datasetPath00, stationSet, idSet, periodRanges,
+					phases, perturbationLocationSet)) {
+				for (PartialID par0 : par0list) {
+					Phases phases = new Phases(par0.getPhases());
+					
+					PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
+							&& par.getStation().equals(par0.getStation())
+							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+							&& par.getMinPeriod() == par0.getMinPeriod()
+							&& par.getMaxPeriod() == par0.getMaxPeriod()
+							&& new Phases(par.getPhases()).equals(phases)
+							&& par.getSacComponent().equals(par0.getSacComponent()))
+							.findFirst().get();
+					
+					PartialID par2 = par2list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
+							&& par.getStation().equals(par0.getStation())
+							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+							&& par.getMinPeriod() == par0.getMinPeriod()
+							&& par.getMaxPeriod() == par0.getMaxPeriod()
+							&& new Phases(par.getPhases()).equals(phases)
+							&& par.getSacComponent().equals(par0.getSacComponent()))
+							.findFirst().get();
+					
+					double[] data = par0.getData();
+					double[] data1 = par1.getData();
+					double[] data2 = par2.getData();
+					
+					double r = par0.getPerturbationLocation().getR();
+					double vs2 = structure.getVshAt(r);
+					vs2 *= vs2;
+					double vp2 = structure.getVphAt(r);
+					vp2 *= vp2;
+					
+					for (int i = 0; i < data.length; i++) {
+						data[i] = data[i] + vs2 * data2[i] + 0.5 * (vp2 - vs2) * data1[i];
+					}
+					
+					PartialID partial00 = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
+							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, data);
+					
+					pdw.addPartialID(partial00);
+					pdw.addPartialID(par0);
+					pdw.addPartialID(par1);
+					pdw.addPartialID(par2);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		System.err.println();
 		String endLine = Partial1DDatasetMaker_v2.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime);
@@ -985,7 +1054,6 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		writeLog(endLine);
 		writeLog(idPath + " " + datasetPath + " were created");
 		writeLog(numberOfAddedID + " IDs are added.");
-
 	}
 
 	private double[][] periodRanges;
