@@ -19,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,8 +54,13 @@ public class OneDSvelocityStructure {
 		Set<AnswerFileName> answerFiles = collectAnswerFileName(cgPath);
 		answerFiles.stream().forEach(ans -> {
 			Path answerPath = cgPath.resolve(ans.toString());
-			double [] deltaMu = readAnswer();
-			double[] r  =  new double[deltaMu.length];
+			double[] deltaMus = readAnswer(answerPath);
+			double[] rs  =  new double[deltaMus.length];
+			AtomicInteger ac = new AtomicInteger(0);
+			Arrays.stream(deltaMus).forEach(dm -> {
+				
+				ac.getAndIncrement();
+			});
 		});
 		
 		try{	  
@@ -117,8 +123,8 @@ public class OneDSvelocityStructure {
 	
 	/**
 	 * @param path
-	 *            {@link Path} to look for {@link SpcFileName} in
-	 * @return set of {@link SpcFileName} in the dir
+	 *     {@link Path} to look for {@link AnswerFile} in
+	 * @return set of {@link AnswerFile} in the dir
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
@@ -131,25 +137,32 @@ public class OneDSvelocityStructure {
 
 class AnswerFileName extends File {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 614381206238464347L;
 	private String ansf;
 	
 	public AnswerFileName(URI uri) {
 		super(uri);
+		readName(getName());
 	}
 	
 	/**
 	 * @param pathname
 	 */
 	public AnswerFileName(String pathname) {
-		this.ansf = pathname;
+		super(pathname);
+		readName(getName());
 	}
 	
 	/**
 	 * @param path
-	 *            {@link Path} of a spectrum file
+	 * {@link Path} of a answer file
 	 */
 	public AnswerFileName(Path path) {
 		this(path.toString());
+		readName(getName());
 	}
 	
 	/**
@@ -189,6 +202,10 @@ class AnswerFileName extends File {
 	@Override
 	public String toString(){
 		return ansf;
+	}
+	
+	private void readName(String fileName) {
+		ansf = fileName;
 	}
 	
 }
