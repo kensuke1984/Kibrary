@@ -37,6 +37,7 @@ import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
+import io.github.kensuke1984.kibrary.util.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
@@ -172,18 +173,6 @@ public class LetMeInvert_fromAtA implements Operation {
 		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 		
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
-		
-		outPaths = new Path[weights.length][][];
-		for (int iweight = 0; iweight < weights.length; iweight++) {
-			outPaths[iweight] = new Path[frequencyRanges.length][];
-			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-				outPaths[iweight][ifreq] = new Path[phases.length];
-				for (int iphase = 0; iphase < phases.length; iphase++) {
-					String freqString = String.format("%.1f-%.1f", 1./frequencyRanges[ifreq][1], 1./frequencyRanges[ifreq][0]);
-					outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
-				}
-			}
-		}
 	}
 
 	/**
@@ -253,7 +242,7 @@ public class LetMeInvert_fromAtA implements Operation {
 
 	private Path[][][] outPaths;
 	
-	private double[] weights;
+	private WeightingType[] weights;
 	
 	private double[][] frequencyRanges;
 	
@@ -261,14 +250,61 @@ public class LetMeInvert_fromAtA implements Operation {
 
 	private void setEquation() throws IOException {
 		// set AtA matrix and Atd vector
+		System.out.println("Reading AtA...");
 		AtAEntry[][][][] ataEntries = AtAFile.read(ataPath);
+		System.out.println("Reading Atd...");
 		AtdEntry[][][][] atdEntries = AtdFile.readArray(atdPath);
 		
+		// set weights, freqency ranges, and phases
+		int nweight = atdEntries[0].length;
+		int nfreq = atdEntries[0][0].length;
+		int nphase = atdEntries[0][0][0].length;
+		weights = new WeightingType[nweight];
+		frequencyRanges = new double[nfreq][];
+		phases = new Phases[nphase];
+		String s = "";
+		for (int i = 0; i < weights.length; i++) {
+			s = "";
+			weights[i] = atdEntries[0][i][0][0].getWeightingType();
+			s += weights[i] + ", ";
+		}
+		System.out.println("Weighting types: " + s);
+		for (int i = 0; i < frequencyRanges.length; i++) {
+			s = "";
+			FrequencyRange range = atdEntries[0][0][i][0].getFrequencyRange();
+			frequencyRanges[i] = new double[] {range.getMinFreq(), range.getMaxFreq()};
+			s += range + ", ";
+		}
+		System.out.println("Frequency ranges: " + s);
+		for (int i = 0; i < phases.length; i++) {
+			s = "";
+			phases[i] = atdEntries[0][0][0][i].getPhases();
+			s += phases[i] + ", ";
+		}
+		System.out.println("Phases: " + s);
+		
+		// set output folders paths
+		outPaths = new Path[weights.length][][];
+		for (int iweight = 0; iweight < weights.length; iweight++) {
+			outPaths[iweight] = new Path[frequencyRanges.length][];
+			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+				outPaths[iweight][ifreq] = new Path[phases.length];
+				for (int iphase = 0; iphase < phases.length; iphase++) {
+					String freqString = String.format("%.1f-%.1f", 1./frequencyRanges[ifreq][1], 1./frequencyRanges[ifreq][0]);
+					Path path = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
+					if (path.toFile().exists())
+						throw new RuntimeException("Path already exists " + path);
+					outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
+				}
+			}
+		}
+		
 		// set unknown parameter
-		System.err.println("setting up unknown parameter set");
+		System.err.println("Setting unknown parameter set...");
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		
 		//set equations
+		System.out.println("Setting inverse equations...");
 		eq = new ObservationEquation[weights.length][][];
 		
 		for (int iweight = 0; iweight < weights.length; iweight++) {
@@ -288,20 +324,22 @@ public class LetMeInvert_fromAtA implements Operation {
 	/**
 	 * Output information of observation equation
 	 */
-	private Future<Void> output() throws IOException {
+	private Future<Void> output(int iweight, int ifreq, int iphase) throws IOException {
 		// // ステーションの情報の読み込み
 		System.err.print("reading station Information");
 		if (stationSet == null)
 			stationSet = StationInformationFile.read(stationInformationPath);
 		System.err.println(" done");
-		Dvector dVector = eq.getDVector();
+		Dvector dVector = eq[iweight][ifreq][iphase].getDVector();
 		Callable<Void> output = () -> {
-			outputDistribution(outPath.resolve("stationEventDistribution.inf"));
+			outputDistribution(outPaths[iweight][ifreq][iphase].resolve("stationEventDistribution.inf"), iweight, ifreq, iphase);
 //			dVector.outOrder(outPath);
 //			dVector.outPhases(outPath);
 //			outEachTrace(outPath.resolve("trace"));
-			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
-			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
+			UnknownParameterFile.write(eq[iweight][ifreq][iphase].getParameterList()
+					, outPaths[iweight][ifreq][iphase].resolve("unknownParameterOrder.inf"));
+			UnknownParameterFile.write(eq[iweight][ifreq][iphase].getOriginalParameterList()
+					, outPaths[iweight][ifreq][iphase].resolve("originalUnknownParameterOrder.inf"));
 //			eq.outputA(outPath.resolve("partial"));
 //			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 //			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
@@ -316,40 +354,46 @@ public class LetMeInvert_fromAtA implements Operation {
 
 	@Override
 	public void run() {
-		try {
-			System.err.println("The output folder: " + outPath);
-			Files.createDirectory(outPath);
-			if (property != null)
-				writeProperties(outPath.resolve("lmi.properties"));
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("Can not create " + outPath);
+		for (int iweight = 0; iweight < weights.length; iweight++) {
+			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+				for (int iphase = 0; iphase < phases.length; iphase++) {
+					try {
+						System.err.println("The output folder: " + outPaths[iweight][ifreq][iphase]);
+						Files.createDirectory(outPaths[iweight][ifreq][iphase]);
+						if (property != null)
+							writeProperties(outPaths[iweight][ifreq][iphase].resolve("lmi.properties"));
+					} catch (Exception e) {
+						e.printStackTrace();
+						throw new RuntimeException("Can not create " + outPaths[iweight][ifreq][iphase]);
+					}
+			
+					long start = System.nanoTime();
+			
+					// 観測方程式
+					Future<Void> future;
+					try {
+						future = output(iweight, ifreq, iphase);
+					} catch (Exception e) {
+						e.printStackTrace();
+						return;
+					}
+			
+					// 逆問題
+					solve(iweight, ifreq, iphase);
+					try {
+						future.get();
+					} catch (InterruptedException | ExecutionException e) {
+						e.printStackTrace();
+					}
+					try {
+						eq[iweight][ifreq][iphase].outputSensitivity(outPaths[iweight][ifreq][iphase].resolve("sensitivity.inf"));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
+				}
+			}
 		}
-
-		long start = System.nanoTime();
-
-		// 観測方程式
-		Future<Void> future;
-		try {
-			future = output();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return;
-		}
-
-		// 逆問題
-		solve();
-		try {
-			future.get();
-		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
-		}
-		try {
-			eq.outputSensitivity(outPath.resolve("sensitivity.inf"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
 	}
 
 	/**
@@ -360,11 +404,11 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outEachTrace(Path outPath) throws IOException {
+	public void outEachTrace(Path outPath, int iweight, int ifreq, int iphase) throws IOException {
 		if (Files.exists(outPath))
 			throw new FileAlreadyExistsException(outPath.toString());
 		Files.createDirectories(outPath);
-		Dvector d = eq.getDVector();
+		Dvector d = eq[iweight][ifreq][iphase].getDVector();
 
 		Path eventPath = outPath.resolve("eventVariance.inf");
 		Path stationPath = outPath.resolve("stationVariance.inf");
@@ -489,17 +533,17 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outEachTrace(Path outPath, RealVector[] vectors) throws IOException {
+	public void outEachTrace(Path outPath, RealVector[] vectors, int iweight, int ifreq, int iphase) throws IOException {
 		// if (outDirectory.exists())
 		// return;
-		int nTimeWindow = eq.getDVector().getNTimeWindow();
+		int nTimeWindow = eq[iweight][ifreq][iphase].getDVector().getNTimeWindow();
 		if (vectors.length != nTimeWindow)
 			return;
 		for (int i = 0; i < nTimeWindow; i++)
-			if (vectors[i].getDimension() != eq.getDVector().getSynVec()[i].getDimension())
+			if (vectors[i].getDimension() != eq[iweight][ifreq][iphase].getDVector().getSynVec()[i].getDimension())
 				return;
 		Files.createDirectories(outPath);
-		for (GlobalCMTID id : eq.getDVector().getUsedGlobalCMTIDset()) {
+		for (GlobalCMTID id : eq[iweight][ifreq][iphase].getDVector().getUsedGlobalCMTIDset()) {
 			Path eventPath = outPath.resolve(id.toString());
 			Files.createDirectories(eventPath);
 			Path record = eventPath.resolve("record.plt");
@@ -514,8 +558,8 @@ public class LetMeInvert_fromAtA implements Operation {
 				pwa.print("p ");
 			}
 		}
-		BasicID[] obsIDs = eq.getDVector().getObsIDs();
-		BasicID[] synIDs = eq.getDVector().getSynIDs();
+		BasicID[] obsIDs = eq[iweight][ifreq][iphase].getDVector().getObsIDs();
+		BasicID[] synIDs = eq[iweight][ifreq][iphase].getDVector().getSynIDs();
 		for (int i = 0; i < nTimeWindow; i++) {
 			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getStation() + "."
 					+ obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
@@ -546,31 +590,29 @@ public class LetMeInvert_fromAtA implements Operation {
 
 	}
 
-	private void solve() {
+	private void solve(int iweight, int ifreq, int iphase) {
 		inverseMethods.forEach(method -> {
 			try {
 				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD)
 					return; // TODO
-				if (modelCovariance)
-					solve(outPath.resolve(method.simple()), method.getMethod(eq.getCmAtA_1(), eq.getCmAtD()));
-				else
-					solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+				solve(outPaths[iweight][ifreq][iphase].resolve(method.simple()), method.getMethod(eq[iweight][ifreq][iphase].getAtA(), eq[iweight][ifreq][iphase].getAtD())
+						, iweight, ifreq, iphase);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
 	}
 
-	private void solve(Path outPath, InverseProblem inverseProblem) throws IOException {
+	private void solve(Path outPath, InverseProblem inverseProblem, int iweight, int ifreq, int iphase) throws IOException {
 		// invOutDir.mkdir();
 		inverseProblem.compute();
 		inverseProblem.outputAns(outPath);
-		outVariance(outPath, inverseProblem);
-		outVariancePerEvents(outPath, inverseProblem);
+		outVariance(outPath, inverseProblem, iweight, ifreq, iphase);
+		outVariancePerEvents(outPath, inverseProblem, iweight, ifreq, iphase);
 
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
 		RealMatrix p = inverseProblem.getBaseVectors();
-		for (int j = 0; j < eq.getMlength(); j++)
+		for (int j = 0; j < eq[iweight][ifreq][iphase].getMlength(); j++)
 			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
 	}
 
@@ -594,41 +636,40 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * 
 	 * @param outPath
 	 */
-	private void outVariance(Path outPath, InverseProblem inverse) throws IOException {
-
+	private void outVariance(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase) throws IOException {
 		Path out = outPath.resolve("variance.txt");
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
-		double[] variance = new double[eq.getMlength() + 1];
-		variance[0] = eq.getDVector().getVariance();
-		for (int i = 0; i < eq.getMlength(); i++)
-			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+		double[] variance = new double[eq[iweight][ifreq][iphase].getMlength() + 1];
+		variance[0] = eq[iweight][ifreq][iphase].getDVector().getVariance();
+		for (int i = 0; i < eq[iweight][ifreq][iphase].getMlength(); i++)
+			variance[i + 1] = eq[iweight][ifreq][iphase].varianceOf(inverse.getANS().getColumnVector(i));
 		writeDat(out, variance);
 		if (alpha == null)
 			return;
 		for (int i = 0; i < alpha.length; i++) {
 			out = outPath.resolve("aic" + i + ".txt");
-			double[] aic = computeAIC(variance, alpha[i]);
+			double[] aic = computeAIC(variance, alpha[i], iweight, ifreq, iphase);
 			writeDat(out, aic);
 		}
 		writeDat(outPath.resolve("aic.inf"), alpha);
 	}
 	
-	private void outVariancePerEvents(Path outPath, InverseProblem inverse) throws IOException {
+	private void outVariancePerEvents(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase) throws IOException {
 		Set<NDK> gcmtCat = GlobalCMTCatalog.readJar("globalcmt.catalog");
 		
-		Set<GlobalCMTID> eventSet = eq.getDVector().getUsedGlobalCMTIDset();
+		Set<GlobalCMTID> eventSet = eq[iweight][ifreq][iphase].getDVector().getUsedGlobalCMTIDset();
 		Path out = outPath.resolve("eventVariance.txt");
-		int n = 31 > eq.getMlength() ? eq.getMlength() : 31;
+		int n = 31 > eq[iweight][ifreq][iphase].getMlength() ? eq[iweight][ifreq][iphase].getMlength() : 31;
 		Map<GlobalCMTID, double[]> varianceMap = new HashMap<>();
 		for (GlobalCMTID id : eventSet) {
 			if (Files.exists(out))
 				throw new FileAlreadyExistsException(out.toString());
 			double[] variance = new double[n];
-			variance[0] = eq.getDVector().getEventVariance().get(id);
-			RealVector residual = eq.getDVector().getD();
-			RealVector obsVec = eq.getDVector().getObs();
-			RealVector mask = eq.getDVector().getMask(id);
+			variance[0] = eq[iweight][ifreq][iphase].getDVector().getEventVariance().get(id);
+			RealVector residual = eq[iweight][ifreq][iphase].getDVector().getD();
+			RealVector obsVec = eq[iweight][ifreq][iphase].getDVector().getObs();
+			RealVector mask = eq[iweight][ifreq][iphase].getDVector().getMask(id);
 			
 			for (int i = 0; i < residual.getDimension(); i++) {
 				residual.setEntry(i, residual.getEntry(i) * mask.getEntry(i));
@@ -636,7 +677,7 @@ public class LetMeInvert_fromAtA implements Operation {
 			}
 			
 			for (int i = 0; i < n-1; i++) {
-				RealVector adm = eq.getA().operate(inverse.getANS().getColumnVector(i));
+				RealVector adm = eq[iweight][ifreq][iphase].getA().operate(inverse.getANS().getColumnVector(i));
 				for (int j = 0; j < adm.getDimension(); j++)
 					adm.setEntry(j, adm.getEntry(j) * mask.getEntry(j));
 				variance[i + 1] = variance[0] + (-2 * adm.dotProduct(residual)
@@ -670,9 +711,9 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @param alpha
 	 * @return
 	 */
-	private double[] computeAIC(double[] variance, double alpha) {
+	private double[] computeAIC(double[] variance, double alpha, int iweight, int ifreq, int iphase) {
 		double[] aic = new double[variance.length];
-		int independentN = (int) (eq.getDlength() / alpha);
+		int independentN = (int) (eq[iweight][ifreq][iphase].getDlength() / alpha);
 		for (int i = 0; i < aic.length; i++)
 			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
 		return aic;
@@ -690,10 +731,6 @@ public class LetMeInvert_fromAtA implements Operation {
 
 	private boolean canGO() {
 		boolean cango = true;
-		if (Files.exists(outPath)) {
-			new FileAlreadyExistsException(outPath.toString()).printStackTrace();
-			cango = false;
-		}
 		if (!Files.exists(ataPath)) {
 			new NoSuchFileException(ataPath.toString()).printStackTrace();
 			cango = false;
@@ -726,10 +763,10 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outputDistribution(Path outPath) throws IOException {
+	public void outputDistribution(Path outPath, int iweight, int ifreq, int iphase) throws IOException {
 
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			BasicID[] obsIDs = eq.getDVector().getObsIDs();
+			BasicID[] obsIDs = eq[iweight][ifreq][iphase].getDVector().getObsIDs();
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTData event = id.getGlobalCMTID().getEvent();

@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunctionByGridSearch;
 import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
+import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
 import io.github.kensuke1984.kibrary.waveformdata.AtAMaker;
@@ -56,6 +57,7 @@ public enum Manhattan {
 	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
 	TimewindowMaker(21, TimewindowMaker.class),//
 	AtAMaker(22, AtAMaker.class),//
+	LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class)//
 	;
 
 	public static void printList() {

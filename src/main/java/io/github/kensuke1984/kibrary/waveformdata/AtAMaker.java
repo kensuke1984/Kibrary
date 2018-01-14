@@ -35,7 +35,9 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.util.spc.SpectrumFile;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.instrument.Instrumentation;
@@ -455,6 +457,9 @@ public class AtAMaker implements Operation {
 		setBandPassFilter();
 		setUnknownParameters();
 		
+		Path outUnknownPath = workPath.resolve("newUnknowns" + Utilities.getTemporaryString() + ".inf");
+		outputUnknownParameters(outUnknownPath);
+		
 		// redefine nwindowBuffer so that it divides timewindowInformation.size()
 		int integerratio = timewindowInformation.size() / nwindowBuffer;
 		int newNwindowBuffer = timewindowInformation.size() / integerratio;
@@ -859,7 +864,13 @@ public class AtAMaker implements Operation {
 		for (int i = 0; i < numberOfBuffers; i++)
 			bufferStartIndex[i] = i * ntmp;
 	}
-
+	
+	private void outputUnknownParameters(Path outpath) throws IOException {
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outpath.toFile())));
+		for (UnknownParameter p : newUnknownParameters)
+			pw.println(p);
+		pw.close();
+	}
 	
 	private int getParameterIndex(Location loc, PartialType type) {
 		int i = 0;
