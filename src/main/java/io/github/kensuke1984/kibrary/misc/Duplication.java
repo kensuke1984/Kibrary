@@ -22,10 +22,10 @@ import io.github.kensuke1984.kibrary.util.sac.SACExtension;
  */
 public class Duplication {
 	
-	static double latitude = 0;
-	static double longitude = 0;
+	static double[] latitudes = {0, 0, 0};
+	static double[] longitudes = {0, 0, 0};
 	static Path twPath = Paths.get("");
-	static String nStName = "";
+	static String[] nStNames = {"", "", ""};
 
 	/**
 	 * @param args
@@ -34,7 +34,7 @@ public class Duplication {
 	public static void main(String[] args) throws IOException {
 		// TODO 自動生成されたメソッド・スタブ
 		
-		HorizontalPosition hp = new HorizontalPosition(latitude, longitude);
+		HorizontalPosition hp = new HorizontalPosition(latitudes[0], longitudes[0]);
 		
 		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(twPath);
 		timewindows.stream()
@@ -43,8 +43,8 @@ public class Duplication {
 				String evtDir = tw.getGlobalCMTID().toString();
 				Path sacSynPath = Paths.get(evtDir+"/"+tw.getStation()+"."+tw.getGlobalCMTID().toString()+"."+SACExtension.Tsc);
 				Path sacObsPath = Paths.get(evtDir+"/"+tw.getStation()+"."+tw.getGlobalCMTID().toString()+"."+SACExtension.T);
-				Path newSynPath = Paths.get(evtDir+"/"+nStName+"."+tw.getGlobalCMTID().toString()+"."+SACExtension.Tsc);
-				Path newObsPath = Paths.get(evtDir+"/"+nStName+"."+tw.getGlobalCMTID().toString()+"."+SACExtension.T);
+				Path newSynPath = Paths.get(evtDir+"/"+nStNames[0]+"."+tw.getGlobalCMTID().toString()+"."+SACExtension.Tsc);
+				Path newObsPath = Paths.get(evtDir+"/"+nStNames[0]+"."+tw.getGlobalCMTID().toString()+"."+SACExtension.T);
 				try {
 					modifySAC(sacObsPath);
 					modifySAC(sacSynPath);
@@ -67,8 +67,9 @@ public class Duplication {
 			sacD.inputCMD("r " + sacPath.getFileName());// read
 			sacD.inputCMD("ch lovrok true");// overwrite permission
 			
+			//change station name
 			if (sacPath.toString().contains("Tsc") || sacPath.toString().contains("T"))
-				sacD.inputCMD("ch KSTNM "+nStName);
+				sacD.inputCMD("ch KSTNM "+nStNames[0]);
 				
 			sacD.inputCMD("w over");
 		}

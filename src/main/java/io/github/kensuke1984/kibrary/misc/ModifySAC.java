@@ -297,6 +297,8 @@ public class ModifySAC {
 			sacD.inputCMD("cd " + cwd);// set current directory
 			sacD.inputCMD("r " + sacPath.getFileName());// read
 			sacD.inputCMD("ch lovrok true");// overwrite permission
+			sacD.inputCMD("ch USER0 12.5");
+			sacD.inputCMD("ch USER1 200");
 			if (sacPath.toString().contains(".BHN.") || sacPath.toString().contains(".BLN."))
 				sacD.inputCMD("ch cmpaz 0 cmpinc 90");
 			else if (sacPath.toString().contains(".BHE.") || sacPath.toString().contains(".BLE."))
