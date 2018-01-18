@@ -22,6 +22,11 @@ public class taupModelMaker {
 		
 		PolynomialStructure ak135 = PolynomialStructure.AK135;
 		
+		double mu = ak135.computeMu(5800.);
+		double dmu = mu * ((1.01)*(1.01)-1);
+		System.out.println(mu + " " + dmu);
+		System.exit(0);
+		
 		for (int i = 3482; i < 3882; i+=50) {
 			double vsh2 = ak135.getVshAt(i)*ak135.getVshAt(i);
 			double vsv2 = ak135.getVsvAt(i)*ak135.getVsvAt(i);

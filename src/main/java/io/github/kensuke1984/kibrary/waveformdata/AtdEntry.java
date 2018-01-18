@@ -6,6 +6,10 @@ import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
+/**
+ * @author Anselme Borgeaud
+ *
+ */
 public class AtdEntry {
 	
 	private WeightingType weightingType;

@@ -61,7 +61,7 @@ public class ConjugateGradientMethod extends InverseProblem {
 		RealVector r = atd; // r_k = Atd -AtAm_k (A35)
 		
 		RealVector atap = ata.operate(p.getColumnVector(0));
-
+		
 		a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
 		ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));

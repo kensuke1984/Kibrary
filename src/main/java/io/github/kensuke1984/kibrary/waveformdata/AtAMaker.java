@@ -68,6 +68,10 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.util.FastMath;
 
+/**
+ * @author Anselme Borgeaud
+ *
+ */
 public class AtAMaker implements Operation {
 	private Properties property;
 	
@@ -122,6 +126,10 @@ public class AtAMaker implements Operation {
 	private AtAEntry[][][][] ataBuffer;
 	
 	private AtdEntry[][][][] atdEntries;
+	
+	private double[][][] residualVarianceNumerator;
+	
+	private double[][][] residualVarianceDenominator;
 	
 	private int numberOfBuffers;
 	
@@ -457,8 +465,12 @@ public class AtAMaker implements Operation {
 		setBandPassFilter();
 		setUnknownParameters();
 		
-		Path outUnknownPath = workPath.resolve("newUnknowns" + Utilities.getTemporaryString() + ".inf");
+		String tempString = Utilities.getTemporaryString();
+		
+		Path outUnknownPath = workPath.resolve("newUnknowns" + tempString + ".inf");
+		Path outLayerPath = workPath.resolve("newPerturbationLayers" + tempString + ".inf");
 		outputUnknownParameters(outUnknownPath);
+		outputPerturbationLayers(outLayerPath);
 		
 		// redefine nwindowBuffer so that it divides timewindowInformation.size()
 		int integerratio = timewindowInformation.size() / nwindowBuffer;
@@ -476,8 +488,6 @@ public class AtAMaker implements Operation {
 		Path outpartialDir = workPath.resolve("partials");
 		if (outPartial)
 			Files.createDirectories(outpartialDir);
-		
-		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
 		
 		//--- initialize Atd
 		atdEntries = new AtdEntry[nOriginalUnknown][][][];
@@ -505,6 +515,17 @@ public class AtAMaker implements Operation {
 			// sacdataを何ポイントおきに取り出すか
 			step[i] = (int) (partialSamplingHz / finalSamplingHz);
 		}
+		
+		//read basic ID
+		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		
+		//compute data variance
+		computeVariance(basicIDs);
+		//write data variance
+		System.out.println("Writing residual variance...");
+		Path outpath =  workPath.resolve("residualVariance" +  tempString + ".dat");
+		ResidualVarianceFile.write(outpath, residualVarianceNumerator, residualVarianceDenominator, weightingTypes, frequencyRanges, usedPhases, npts);
+		
 		
 		Set<GlobalCMTID> usedEvents = timewindowInformation.stream()
 				.map(tw -> tw.getGlobalCMTID())
@@ -678,11 +699,10 @@ public class AtAMaker implements Operation {
 			}
 		}
 		
-		//--- write Atd
 		if (!testBP) {
+			//--- write Atd
 			System.out.println("Writing Atd...");
-			
-			Path outputPath = workPath.resolve("atd" + Utilities.getTemporaryString() + ".dat");
+			Path outputPath = workPath.resolve("atd" + tempString + ".dat");
 			
 			List<AtdEntry> atdEntryList = new ArrayList<>();
 			for (int i = 0; i < nNewUnknown; i++) {
@@ -702,9 +722,86 @@ public class AtAMaker implements Operation {
 			
 			AtdFile.write(atdEntryList, weightingTypes, frequencyRanges, partialTypes, outputPath);
 		}
-		
+	}
+
+	private int getiWeight(WeightingType type) {
+		for (int i = 0; i < weightingTypes.length; i++)
+			if (type.equals(weightingTypes[i]))
+				return i;
+		return -1;
 	}
 	
+	private int getiFreq(FrequencyRange range) {
+		for (int i = 0; i < frequencyRanges.length; i++)
+			if (range.equals(frequencyRanges[i]))
+				return i;
+		return -1;
+	}
+	
+	private int getiPhase(Phases phases) {
+		return phaseMap.get(phases);
+	}
+	
+	private int npts;
+	
+	private void computeVariance(BasicID[] basicIDs) {
+		npts = 0;
+		
+		residualVarianceNumerator = new double[nWeight][][];
+		residualVarianceDenominator = new double[nWeight][][];
+		for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
+			residualVarianceNumerator[iweight] = new double[nFreq][];
+			residualVarianceDenominator[iweight] = new double[nFreq][];
+			for (int ifreq = 0; ifreq < nFreq; ifreq++) {
+				residualVarianceNumerator[iweight][ifreq] = new double[usedPhases.length];
+				residualVarianceDenominator[iweight][ifreq] = new double[usedPhases.length];
+				for (int iphase = 0; iphase < usedPhases.length; iphase++) {
+					residualVarianceNumerator[iweight][ifreq][iphase] = 0.;
+					residualVarianceDenominator[iweight][ifreq][iphase] = 0.;
+				}
+			}
+		}
+		
+		List<BasicID> obsIDs = Stream.of(basicIDs).filter(id ->  id.getWaveformType().equals(WaveformType.OBS)).collect(Collectors.toList());
+		List<BasicID> tmpSyns = Stream.of(basicIDs).filter(id -> id.getWaveformType().equals(WaveformType.SYN)).collect(Collectors.toList());
+		List<BasicID> synIDs = new ArrayList<>();
+		for (BasicID obsid : obsIDs) {
+			Phases phases = new Phases(obsid.getPhases());
+			BasicID synid = tmpSyns.stream().filter(id -> id.getGlobalCMTID().equals(obsid.getGlobalCMTID())
+					&& id.getStation().equals(obsid.getStation())
+					&& id.getSacComponent().equals(obsid.getSacComponent())
+					&& id.getMinPeriod() == obsid.getMinPeriod()
+					&& id.getMaxPeriod() == obsid.getMaxPeriod()
+					&& new Phases(id.getPhases()).equals(phases)
+					&& id.getSamplingHz() == obsid.getSamplingHz())
+					.findFirst().get();
+			synIDs.add(synid);
+		}
+		
+		for (int i = 0; i < obsIDs.size(); i++) {
+			BasicID obs = obsIDs.get(i);
+			BasicID syn = synIDs.get(i);
+			FrequencyRange range = new FrequencyRange(1./obs.getMaxPeriod(), 1./obs.getMinPeriod());
+			int ifreq = getiFreq(range);
+			int iphase = getiPhase(new Phases(obs.getPhases()));
+			double[] obsdata = obs.getData();
+			double[] syndata = syn.getData();
+			double numerator = 0;
+			double denominator = 0;
+			for (int k = 0; k < obsdata.length; k++) {
+				double tmp = obsdata[k] - syndata[k];
+				numerator += tmp * tmp;
+				denominator += obsdata[k] * obsdata[k];
+			}
+			for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
+				double weight = computeWeight(weightingTypes[iweight], obsdata, syndata);
+				residualVarianceNumerator[iweight][ifreq][iphase] += numerator * weight * weight;
+				residualVarianceDenominator[iweight][ifreq][iphase] += denominator * weight * weight;
+			}
+			
+			npts += obsdata.length;
+		}
+	}
 	
 	/**
 	 * @throws IOException
@@ -869,6 +966,16 @@ public class AtAMaker implements Operation {
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outpath.toFile())));
 		for (UnknownParameter p : newUnknownParameters)
 			pw.println(p);
+		pw.close();
+	}
+	
+	private void outputPerturbationLayers(Path outpath) throws IOException {
+		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outpath.toFile())));
+		double[] newRadii = mapping.getNewRadii();
+		double[] newLayerWidths = mapping.getNewLayerWidths();
+		for (int i = 0; i < newRadii.length; i++) {
+			pw.println(newRadii[i] + " " + newLayerWidths[i]);
+		}
 		pw.close();
 	}
 	
@@ -1070,6 +1177,7 @@ public class AtAMaker implements Operation {
 										double maxFreq = frequencyRanges[ifreq].getMaxFreq();
 										
 										Phases phases = new Phases(info.getPhases());
+										int iphase = phaseMap.get(phases);
 										
 										List<BasicID> obsSynIDs = recordBasicID.stream().filter(id -> id.getSacComponent().equals(info.getComponent())
 //												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
@@ -1096,8 +1204,9 @@ public class AtAMaker implements Operation {
 										if (Double.isNaN(weight))
 											throw new RuntimeException("Weight is NaN " + info);
 										
-										for (int k = 0; k < obsData.length; k++)
+										for (int k = 0; k < obsData.length; k++) {
 											residual[k] = (obsData[k] - synData[k]) * weight;
+										}
 									
 										Complex[] u = cutPartial(partial, info, ifreq);
 										
@@ -1133,8 +1242,6 @@ public class AtAMaker implements Operation {
 											cutU[k] *= weight * weightUnknown;
 											tmpatd += cutU[k] * residual[k];
 										}
-										
-										int iphase = phaseMap.get(phases);
 										
 //										System.out.println(iunknown + " " + new ArrayRealVector(cutU).getLInfNorm());
 										partials[iunknown][iweight][ifreq][iphase][windowCounter] = cutU;

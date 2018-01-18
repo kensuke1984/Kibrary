@@ -47,6 +47,10 @@ import org.apache.commons.math3.util.Precision;
 
 import com.amazonaws.transform.SimpleTypeStaxUnmarshallers.IntegerStaxUnmarshaller;
 
+/**
+ * @author Anselme Borgeaud
+ *
+ */
 public final class AtAFile {
 	
 	public static final int oneWeightingTypeByte = 10;

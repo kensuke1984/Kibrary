@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -11,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +58,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveformdata.ResidualVarianceFile;
 
 /**
  * 
@@ -63,7 +66,8 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
  * 
  * @version 2.0.3.3
  * 
- * @author Kensuke Konishi
+ * @author Kensuke Konishi (original LetMeInvert class)
+ * @author Anselme Borgeaud
  * 
  */
 public class LetMeInvert_fromAtA implements Operation {
@@ -87,6 +91,8 @@ public class LetMeInvert_fromAtA implements Operation {
 	 */
 	protected Path stationInformationPath;
 
+	protected Path residualVariancePath;
+	
 	/**
 	 * どうやって方程式を解くか。 cg svd
 	 */
@@ -107,16 +113,24 @@ public class LetMeInvert_fromAtA implements Operation {
 	private double maxMw;
 	
 	private boolean linaInversion;
+	
+	private Path inputPath;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
 		if (!property.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
+		if (!property.containsKey("inputPath") && !property.containsKey("atdPath"))
+			throw new IllegalArgumentException("One of the path 'inputPath' or 'atdPath' must be set");
+		if (property.containsKey("inputPath") && property.containsKey("atdPath"))
+			throw new IllegalArgumentException("Only one of the path 'inputPath' or 'atdPath' can be set");
 		if (!property.containsKey("ataPath"))
 			throw new IllegalArgumentException("There is no information about 'ataPath'.");
-		if (!property.containsKey("atdPath"))
-			throw new IllegalArgumentException("There is no information about 'atdPath'.");
+//		if (!property.containsKey("atdPath"))
+//			throw new IllegalArgumentException("There is no information about 'atdPath'.");
+		if (!property.containsKey("residualVariancePath"))
+			throw new IllegalArgumentException("There is no information about 'residualVariancePath'");
 		if (!property.containsKey("inverseMethods"))
 			property.setProperty("inverseMethods", "CG SVD");
 		if (!property.containsKey("time_source"))
@@ -146,8 +160,9 @@ public class LetMeInvert_fromAtA implements Operation {
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
 		stationInformationPath = getPath("stationInformationPath");
 		ataPath = getPath("ataPath");
-		atdPath = getPath("atdPath");
+		
 		unknownParameterListPath = getPath("unknownParameterListPath");
+		residualVariancePath = getPath("residualVariancePath");
 		if (property.containsKey("alpha"))
 			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
 					.toArray();
@@ -173,6 +188,13 @@ public class LetMeInvert_fromAtA implements Operation {
 		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 		
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
+		
+		if (property.containsKey("inputPath"))
+			inputPath = Paths.get(property.getProperty("inputPath"));
+		else {
+			inputPath = null;
+			atdPath = getPath("atdPath");
+		}
 	}
 
 	/**
@@ -189,29 +211,33 @@ public class LetMeInvert_fromAtA implements Operation {
 			pw.println("##These properties for LetMeInvert");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
-			pw.println("##Path of an output folder (workPath/lmiyymmddhhmmss)");
-			pw.println("#outPath");
-			pw.println("##Path of the Atd vector file");
+			pw.println("##Path for the input file for the checkerboard test, must be set if 'atdPath' is not");
+			pw.println("#inputPath input.inf");
+			pw.println("##Path of the Atd vector file, must be set if 'inputPath' is not");
 			pw.println("#atdPath atd.dat");
-			pw.println("##Path of the AtA matrix file");
+			pw.println("##Path of the AtA matrix file, must be set");
 			pw.println("#ataPath ata.dat");
 			pw.println("##Path of a unknown parameter list file, must be set");
 			pw.println("#unknownParameterListPath unknowns.inf");
+			pw.println("##Path of the residual variance file, must be set");
+			pw.println("#residualVariancePath residualVariance.dat");
 			pw.println("##Path of a station information file, must be set");
 			pw.println("#stationInformationPath station.inf");
 			pw.println("##double[] alpha it self, if it is set, compute aic for each alpha.");
 			pw.println("#alpha");
 			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
+			pw.println("##=======================================================================================");
+			pw.println("##--- Optional parameters ---------------------------------------------------------------");
 			pw.println("##boolean time_source (false). Time partial for the source");
-			pw.println("time_source false");
+			pw.println("#time_source false");
 			pw.println("##boolean time_receiver (false). Time partial for the receiver");
-			pw.println("time_receiver false");
+			pw.println("#time_receiver false");
 			pw.println("##DataSelectionInformationFile (leave blank if not needed)");
 			pw.println("#DataSelectionInformationFile");
-			pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
+			pw.println("##If want to select distance range: min distance (deg) of the data used in the inversion");
 			pw.println("#minDistance ");
-			pw.println("##If wish to select distance range: max distance (deg) of the data used in the inversion");
+			pw.println("##If want to select distance range: max distance (deg) of the data used in the inversion");
 			pw.println("#maxDistance ");
 			pw.println("##minimum Mw (0.)");
 			pw.println("#minMw");
@@ -247,41 +273,63 @@ public class LetMeInvert_fromAtA implements Operation {
 	private double[][] frequencyRanges;
 	
 	private Phases[] phases;
+	
+	double[][][] residualVariances;
+	double[][][] obsNorms;
+	
+	private List<UnknownParameter> parameterList;
+	
+	private RealVector inputVector;
 
 	private void setEquation() throws IOException {
-		// set AtA matrix and Atd vector
+		// set AtA matrix
 		System.out.println("Reading AtA...");
 		AtAEntry[][][][] ataEntries = AtAFile.read(ataPath);
-		System.out.println("Reading Atd...");
-		AtdEntry[][][][] atdEntries = AtdFile.readArray(atdPath);
+		
+		// set unknown parameter
+		System.err.println("Setting unknown parameter set...");
+		parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		
 		// set weights, freqency ranges, and phases
-		int nweight = atdEntries[0].length;
-		int nfreq = atdEntries[0][0].length;
-		int nphase = atdEntries[0][0][0].length;
+		int nweight = ataEntries[0].length;
+		int nfreq = ataEntries[0][0].length;
+		int nphase = ataEntries[0][0][0].length;
 		weights = new WeightingType[nweight];
 		frequencyRanges = new double[nfreq][];
 		phases = new Phases[nphase];
 		String s = "";
 		for (int i = 0; i < weights.length; i++) {
 			s = "";
-			weights[i] = atdEntries[0][i][0][0].getWeightingType();
+			weights[i] = ataEntries[0][i][0][0].getWeightingType();
 			s += weights[i] + ", ";
 		}
 		System.out.println("Weighting types: " + s);
 		for (int i = 0; i < frequencyRanges.length; i++) {
 			s = "";
-			FrequencyRange range = atdEntries[0][0][i][0].getFrequencyRange();
+			FrequencyRange range = ataEntries[0][0][i][0].getFrequencyRange();
 			frequencyRanges[i] = new double[] {range.getMinFreq(), range.getMaxFreq()};
 			s += range + ", ";
 		}
 		System.out.println("Frequency ranges: " + s);
 		for (int i = 0; i < phases.length; i++) {
 			s = "";
-			phases[i] = atdEntries[0][0][0][i].getPhases();
+			phases[i] = ataEntries[0][0][0][i].getPhases();
 			s += phases[i] + ", ";
 		}
 		System.out.println("Phases: " + s);
+		
+		//set Atd vector, or read the input vector for checkerboard test
+		AtdEntry[][][][] atdEntries = null;
+		if (inputPath == null) {
+			System.out.println("Reading Atd...");
+			atdEntries = AtdFile.readArray(atdPath);
+		}
+		else {
+			System.out.println("Reading checkerboard input " + inputPath + "...");
+			inputVector = readCheckerboardInput(inputPath);
+			if (inputVector.getDimension() != parameterList.size())
+				throw new RuntimeException("Length of input vector differs from number of parameters " + inputVector.getDimension() + " " + parameterList.size());
+		}
 		
 		// set output folders paths
 		outPaths = new Path[weights.length][][];
@@ -294,14 +342,20 @@ public class LetMeInvert_fromAtA implements Operation {
 					Path path = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
 					if (path.toFile().exists())
 						throw new RuntimeException("Path already exists " + path);
-					outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
+					if (inputPath == null)
+						outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
+					else
+						outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_checkerboard_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
 				}
 			}
 		}
 		
-		// set unknown parameter
-		System.err.println("Setting unknown parameter set...");
-		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
+		// set residual variances
+		npts = ResidualVarianceFile.readNPTS(residualVariancePath);
+		residualVariances = ResidualVarianceFile.readVariance(residualVariancePath);
+		obsNorms = ResidualVarianceFile.readObsNorm(residualVariancePath);
+		if (inputPath != null)
+			System.out.println("Warning: currently the output variance is meaningless for checkerboard test");
 		
 		//set equations
 		System.out.println("Setting inverse equations...");
@@ -313,12 +367,30 @@ public class LetMeInvert_fromAtA implements Operation {
 				eq[iweight][ifreq] = new ObservationEquation[phases.length];
 				for (int iphase = 0; iphase < phases.length; iphase++) {
 					RealMatrix ata = AtAFile.getAtARealMatrix(ataEntries, iweight, ifreq, iphase);
-					RealVector atd = AtdFile.getAtdVector(atdEntries, iweight, ifreq, iphase);
+					RealVector atd;
+					if (inputPath == null)
+						atd = AtdFile.getAtdVector(atdEntries, iweight, ifreq, iphase);
+					else
+						atd = ata.operate(inputVector);
 					eq[iweight][ifreq][iphase] = new ObservationEquation(ata, parameterList, atd);
 				}
 			}
 		}
+	}
+	
+	private RealVector readCheckerboardInput(Path path) throws IOException {
+		List<Double> inputList = new ArrayList<>();
+		BufferedReader br = Files.newBufferedReader(path);
+		String line;
+		while ((line = br.readLine()) != null) {
+			inputList.add(Double.parseDouble(line));
+		}
+		br.close();
+		RealVector inputVector = new ArrayRealVector(inputList.size());
+		for (int i = 0; i < inputList.size(); i++)
+			inputVector.setEntry(i, inputList.get(i));
 		
+		return inputVector;
 	}
 	
 	/**
@@ -330,9 +402,9 @@ public class LetMeInvert_fromAtA implements Operation {
 		if (stationSet == null)
 			stationSet = StationInformationFile.read(stationInformationPath);
 		System.err.println(" done");
-		Dvector dVector = eq[iweight][ifreq][iphase].getDVector();
+//		Dvector dVector = eq[iweight][ifreq][iphase].getDVector();
 		Callable<Void> output = () -> {
-			outputDistribution(outPaths[iweight][ifreq][iphase].resolve("stationEventDistribution.inf"), iweight, ifreq, iphase);
+//			outputDistribution(outPaths[iweight][ifreq][iphase].resolve("stationEventDistribution.inf"), iweight, ifreq, iphase);
 //			dVector.outOrder(outPath);
 //			dVector.outPhases(outPath);
 //			outEachTrace(outPath.resolve("trace"));
@@ -358,13 +430,13 @@ public class LetMeInvert_fromAtA implements Operation {
 			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
 				for (int iphase = 0; iphase < phases.length; iphase++) {
 					try {
-						System.err.println("The output folder: " + outPaths[iweight][ifreq][iphase]);
+						System.err.println("The output folder is " + outPaths[iweight][ifreq][iphase]);
 						Files.createDirectory(outPaths[iweight][ifreq][iphase]);
 						if (property != null)
 							writeProperties(outPaths[iweight][ifreq][iphase].resolve("lmi.properties"));
 					} catch (Exception e) {
 						e.printStackTrace();
-						throw new RuntimeException("Can not create " + outPaths[iweight][ifreq][iphase]);
+						throw new RuntimeException("Cannot create " + outPaths[iweight][ifreq][iphase]);
 					}
 			
 					long start = System.nanoTime();
@@ -608,7 +680,7 @@ public class LetMeInvert_fromAtA implements Operation {
 		inverseProblem.compute();
 		inverseProblem.outputAns(outPath);
 		outVariance(outPath, inverseProblem, iweight, ifreq, iphase);
-		outVariancePerEvents(outPath, inverseProblem, iweight, ifreq, iphase);
+//		outVariancePerEvents(outPath, inverseProblem, iweight, ifreq, iphase); // TODO make it work
 
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
 		RealMatrix p = inverseProblem.getBaseVectors();
@@ -641,9 +713,10 @@ public class LetMeInvert_fromAtA implements Operation {
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
 		double[] variance = new double[eq[iweight][ifreq][iphase].getMlength() + 1];
-		variance[0] = eq[iweight][ifreq][iphase].getDVector().getVariance();
+		variance[0] = residualVariances[iweight][ifreq][iphase];
 		for (int i = 0; i < eq[iweight][ifreq][iphase].getMlength(); i++)
-			variance[i + 1] = eq[iweight][ifreq][iphase].varianceOf(inverse.getANS().getColumnVector(i));
+			variance[i + 1] = eq[iweight][ifreq][iphase].varianceOf(inverse.getANS().getColumnVector(i), residualVariances[iweight][ifreq][iphase]
+					, obsNorms[iweight][ifreq][iphase]);
 		writeDat(out, variance);
 		if (alpha == null)
 			return;
@@ -702,7 +775,9 @@ public class LetMeInvert_fromAtA implements Operation {
 			e.printStackTrace();
 		}
 	}
-
+	
+	int npts;
+	
 	/**
 	 * 自由度iに対してAICを計算する 独立データは n / alpha 各々のAIC群
 	 * 
@@ -713,7 +788,8 @@ public class LetMeInvert_fromAtA implements Operation {
 	 */
 	private double[] computeAIC(double[] variance, double alpha, int iweight, int ifreq, int iphase) {
 		double[] aic = new double[variance.length];
-		int independentN = (int) (eq[iweight][ifreq][iphase].getDlength() / alpha);
+//		int independentN = (int) (eq[iweight][ifreq][iphase].getDlength() / alpha);
+		int independentN = (int) (npts / alpha);
 		for (int i = 0; i < aic.length; i++)
 			aic[i] = Utilities.computeAIC(variance[i], independentN, i);
 		return aic;
@@ -735,9 +811,17 @@ public class LetMeInvert_fromAtA implements Operation {
 			new NoSuchFileException(ataPath.toString()).printStackTrace();
 			cango = false;
 		}
-		if (!Files.exists(atdPath)) {
-			cango = false;
-			new NoSuchFileException(atdPath.toString()).printStackTrace();
+		if (atdPath != null) {
+			if (!Files.exists(atdPath)) {
+				cango = false;
+				new NoSuchFileException(atdPath.toString()).printStackTrace();
+			}
+		}
+		if (inputPath != null) {
+			if (!Files.exists(inputPath)) {
+				cango = false;
+				new NoSuchFileException(inputPath.toString()).printStackTrace();
+			}
 		}
 		if (!Files.exists(stationInformationPath)) {
 			new NoSuchFileException(stationInformationPath.toString()).printStackTrace();
@@ -763,6 +847,7 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
+	// TODO make it work
 	public void outputDistribution(Path outPath, int iweight, int ifreq, int iphase) throws IOException {
 
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {

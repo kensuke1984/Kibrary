@@ -73,8 +73,8 @@ public class InversionResult {
 		this.rootPath = rootPath;
 		inverseMethods = Stream.of(InverseMethodEnum.values()).filter(ime -> rootPath.resolve(ime.simple()).toFile().exists())
 			.collect(Collectors.toSet());
-		readVarianceMap();
-		readOrder();
+//		readVarianceMap();
+//		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
 		originalUnknownParameterList = UnknownParameterFile.read(rootPath.resolve("originalUnknownParameterOrder.inf"));
@@ -83,8 +83,8 @@ public class InversionResult {
 	public InversionResult(Path rootPath, Set<InverseMethodEnum> inverseMethods) throws IOException {
 		this.rootPath = rootPath;
 		this.inverseMethods = inverseMethods;
-		readVarianceMap();
-		readOrder();
+//		readVarianceMap();
+//		readOrder();
 		Path answerOrderPath = rootPath.resolve("unknownParameterOrder.inf");
 		unknownParameterList = UnknownParameterFile.read(answerOrderPath);
 		originalUnknownParameterList = UnknownParameterFile.read(rootPath.resolve("originalUnknownParameterOrder.inf"));

@@ -45,6 +45,10 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+/**
+ * @author Anselme Borgeaud
+ *
+ */
 public final class AtdFile {
 	
 	public static final int oneWeightingTypeByte = 10;
@@ -315,15 +319,15 @@ public final class AtdFile {
 			}
 			
 			int nEntry = (int) (entryPart / oneEntryByte);
-			byte[][] bytes = new byte[nEntry][oneEntryByte];
 			
 			int n1 = weightingTypes.length * frequencyRanges.length * phases.length;
-			int n0Atd = bytes.length / n1;
+			int n0Atd = nEntry / n1;
 			
 			AtdEntry[][][][] atdEntries = new AtdEntry[n0Atd][weightingTypes.length][frequencyRanges.length][phases.length];
 			
-			for (int i = 0; i < bytes.length; i++) {
-				byte[] tmpbytes = bytes[i];
+			for (int i = 0; i < nEntry; i++) {
+				byte[] tmpbytes = new byte[oneEntryByte];
+				dis.read(tmpbytes);
 				ByteBuffer bb = ByteBuffer.wrap(tmpbytes);
 				int iWeight = bb.getShort();
 				WeightingType weightingType = weightingTypes[iWeight];
@@ -343,7 +347,7 @@ public final class AtdFile {
 						= new AtdEntry(weightingType, frequencyRange, phase, partialType, location, value);
 			}
 			System.err.println(
-					bytes.length + " Atd elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
+					nEntry + " Atd elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
 			return atdEntries;
 		}
 	}

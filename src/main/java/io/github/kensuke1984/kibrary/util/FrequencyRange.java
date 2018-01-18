@@ -42,6 +42,6 @@ public class FrequencyRange {
 	}
 	
 	public String toString() {
-		return String.format("%.3f %.3f", minFreq, maxFreq);
+		return String.format("%.3f-%.3f", minFreq, maxFreq);
 	}
 }

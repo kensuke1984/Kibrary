@@ -253,6 +253,13 @@ public class ObservationEquation {
 				+ m.dotProduct(getAtA().operate(m));
 		return variance / obs2;
 	}
+	
+	public double varianceOf(RealVector m, double residualVariance, double obsNorm) {
+		Objects.requireNonNull(m);
+		double variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
+				+ m.dotProduct(getAtA().operate(m));
+		return variance / obsNorm;
+	}
 
 	private RealVector atd;
 
@@ -1207,7 +1214,7 @@ public class ObservationEquation {
 	
 	public void outputAtA(Path AtAPath) {
 		if (a == null) {
-			System.out.println("no more A");
+//			System.out.println("no more A");
 			return;
 		}
 		if (ata == null) {
@@ -1228,7 +1235,7 @@ public class ObservationEquation {
 	
 	public void outputAtd(Path AtdPath) {
 		if (a == null) {
-			System.out.println("no more A");
+//			System.out.println("no more A");
 			return;
 		}
 		if (atd == null) {
@@ -1246,8 +1253,8 @@ public class ObservationEquation {
 	
 	public void outputSensitivity(Path outPath) throws IOException {
 		if (a == null) {
-			System.out.println("no more A");
-			return;
+//			System.out.println("no more A");
+//			return;
 		}
 		if (ata == null) {
 			System.err.println(" No more ata. Computing again");

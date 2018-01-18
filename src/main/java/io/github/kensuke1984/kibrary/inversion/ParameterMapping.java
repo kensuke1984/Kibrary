@@ -22,11 +22,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author Anselme Borgeaud
+ *
+ */
 public class ParameterMapping {
 	private UnknownParameter[] originalUnknowns;
 	private UnknownParameter[] unknowns;
 	private int[] iOriginalToNew;
 	private double[] radii;
+	private double[] newRadii;
+	private double[] newLayerWidths;
 	private int[][] iNewToOriginal;
 	private Path input;
 	
@@ -84,6 +90,7 @@ public class ParameterMapping {
 		
 		List<Integer> radiiOriginalToNewIndex = new ArrayList<>();
 		List<Double> radii = new ArrayList<>();
+		List<Double> widths = new ArrayList<>();
 		
 		BufferedReader br = Files.newBufferedReader(input);
 		String line;
@@ -91,7 +98,8 @@ public class ParameterMapping {
 		while((line=br.readLine()) != null) {
 			String[] s = line.trim().split("\\s+");
 			double r = Double.parseDouble(s[0]);
-			int itmp = Integer.parseInt(s[1]);
+			double width = Double.parseDouble(s[1]);
+			int itmp = Integer.parseInt(s[2]);
 			if (iNewUnknown != itmp) {
 				if (itmp != iNewUnknown + 1)
 					throw new RuntimeException("Unexpected");
@@ -100,6 +108,7 @@ public class ParameterMapping {
 			
 			radiiOriginalToNewIndex.add(iNewUnknown);
 			radii.add(r);
+			widths.add(width);
 		}
 		iNewUnknown++;
 		
@@ -111,6 +120,20 @@ public class ParameterMapping {
 					tmplist.add(j);
 			}
 			radiiNewToOriginalIndex.add(tmplist);
+		}
+		
+		// set new perturbation layers
+		newRadii = new double[radiiNewToOriginalIndex.size()];
+		newLayerWidths = new double[radiiNewToOriginalIndex.size()];
+		for (int i = 0; i < radiiNewToOriginalIndex.size(); i++) {
+			double r = 0;
+			double width = 0;
+			for (int index : radiiNewToOriginalIndex.get(i)) {
+				r += radii.get(index);
+				width += widths.get(index);
+			}
+			newRadii[i] = r / radiiNewToOriginalIndex.get(i).size();
+			newLayerWidths[i] = width;
 		}
 		
 		//---- For debug
@@ -248,6 +271,14 @@ public class ParameterMapping {
 	
 	public Path getInput() {
 		return input;
+	}
+	
+	public double[] getNewRadii() {
+		return newRadii;
+	}
+	
+	public double[] getNewLayerWidths() {
+		return newLayerWidths;
 	}
 	
 	final double eps = 1e-6;
