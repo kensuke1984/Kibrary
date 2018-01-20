@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
 import io.github.kensuke1984.kibrary.util.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -20,18 +21,21 @@ public class AtdEntry {
 	
 	private PartialType partialType;
 	
+	private StaticCorrectionType correctionType;
+	
 	private Location location;
 	
 	private double value;
 	
 	private int UID;
 	
-	public AtdEntry(WeightingType weightingType, FrequencyRange frequencyRange, Phases phases,
+	public AtdEntry(WeightingType weightingType, FrequencyRange frequencyRange, Phases phases, StaticCorrectionType correctionType,
 			PartialType partialType, Location location, double value) {
 		this.weightingType = weightingType;
 		this.frequencyRange = frequencyRange;
 		this.phases = phases;
 		this.partialType = partialType;
+		this.correctionType = correctionType;
 		this.location = location;
 		this.value = value;
 		
@@ -44,6 +48,10 @@ public class AtdEntry {
 	
 	public PartialType getPartialType() {
 		return partialType;
+	}
+	
+	public StaticCorrectionType getCorrectionType() {
+		return correctionType;
 	}
 	
 	public Location getLocation() {

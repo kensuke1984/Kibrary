@@ -194,8 +194,8 @@ public class VelocityField3D {
 						for (UnknownParameter unknown : perturbations.keySet())
 							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
 						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
-						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 5., perturbationRs);
-						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 5., perturbationRs);
+						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 2., perturbationRs);
+						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 2., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);

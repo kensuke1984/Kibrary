@@ -5,7 +5,6 @@ import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
@@ -62,7 +61,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
@@ -70,13 +68,11 @@ import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.util.FastMath;
 
-import ucar.nc2.ft.point.standard.Table.CoordName;
-
 /**
  * @author Anselme Borgeaud
  *
  */
-public class AtAMaker implements Operation {
+public class CopyOfAtAMaker_copy implements Operation {
 	private Properties property;
 	
 	private Path workPath;
@@ -86,8 +82,6 @@ public class AtAMaker implements Operation {
 	
 	private Path[] waveformIDPath;
 	private Path[] waveformPath;
-	
-	private StaticCorrectionType[] correctionTypes;
 	
 	private Set<TimewindowInformation> timewindowInformation;
 	private PartialType[] partialTypes;
@@ -131,11 +125,11 @@ public class AtAMaker implements Operation {
 	
 	private AtAEntry[][][][] ataBuffer;
 	
-	private AtdEntry[][][][][] atdEntries;
+	private AtdEntry[][][][] atdEntries;
 	
-	private double[][][][] residualVarianceNumerator;
+	private double[][][] residualVarianceNumerator;
 	
-	private double[][][][] residualVarianceDenominator;
+	private double[][][] residualVarianceDenominator;
 	
 	private int numberOfBuffers;
 	
@@ -195,7 +189,7 @@ public class AtAMaker implements Operation {
 	 * @param property
 	 * @throws IOException
 	 */
-	public AtAMaker(Properties property) throws IOException {
+	public CopyOfAtAMaker_copy(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 	}
@@ -205,10 +199,10 @@ public class AtAMaker implements Operation {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		AtAMaker atam = new AtAMaker(Property.parse(args));
+		CopyOfAtAMaker_copy atam = new CopyOfAtAMaker_copy(Property.parse(args));
 		long startTime = System.nanoTime();
 
-		System.err.println(AtAMaker.class.getName() + " is going..");
+		System.err.println(CopyOfAtAMaker_copy.class.getName() + " is going..");
 		
 		// verify memory requirements
 //		AtAEntry entry = new AtAEntry();
@@ -219,7 +213,7 @@ public class AtAMaker implements Operation {
 		
 		atam.run();
 		
-		System.err.println(AtAMaker.class.getName() + " finished in "
+		System.err.println(CopyOfAtAMaker_copy.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 	
@@ -227,7 +221,7 @@ public class AtAMaker implements Operation {
 	 * @throws IOException
 	 */
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(AtAMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(CopyOfAtAMaker_copy.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan AtAMaker");
 			pw.println("##Number of processors used for parallel computation (1)");
@@ -240,8 +234,6 @@ public class AtAMaker implements Operation {
 			pw.println("#waveformIDPath");
 			pw.println("##Path a waveform files, must be set. Multiple paths with different static correction can be set, separated by a space");
 			pw.println("#waveformPath");
-			pw.println("##Static correction type used for corresponding waveform(ID)Path, must be set. Multiple types can be set, separated by a space");
-			pw.println("#correctionTypes");
 			pw.println("##Path of the back propagate spc catalog folder (BPcat/PREM)");
 			pw.println("#bpPath");
 			pw.println("##Theta- range and sampling for the BP catalog in the format: thetamin thetamax thetasampling. (1. 50. 2e-2)");
@@ -346,6 +338,7 @@ public class AtAMaker implements Operation {
 			property.setProperty("computationFlag", "1");
 	}
 
+
 	/**
 	 * @throws IOException
 	 */
@@ -408,8 +401,6 @@ public class AtAMaker implements Operation {
 			.collect(Collectors.toList()).toArray(new Path[0]);
 		waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
 				.collect(Collectors.toList()).toArray(new Path[0]);
-		correctionTypes = Stream.of(property.getProperty("correctionTypes").trim().split("\\s+")).map(s -> Paths.get(s))
-				.collect(Collectors.toList()).toArray(new StaticCorrectionType[0]);
 		
 		double[] tmpthetainfo = Stream.of(property.getProperty("thetaInfo").trim().split("\\s+")).mapToDouble(Double::parseDouble)
 				.toArray();
@@ -502,19 +493,16 @@ public class AtAMaker implements Operation {
 			Files.createDirectories(outpartialDir);
 		
 		//--- initialize Atd
-		atdEntries = new AtdEntry[nOriginalUnknown][][][][];
+		atdEntries = new AtdEntry[nOriginalUnknown][][][];
 		for (int i = 0; i < nOriginalUnknown; i++) {
-			atdEntries[i] = new AtdEntry[nWeight][][][];
+			atdEntries[i] = new AtdEntry[nWeight][][];
 			for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
-				atdEntries[i][iweight] = new AtdEntry[nFreq][][];
+				atdEntries[i][iweight] = new AtdEntry[nFreq][];
 				for (int ifreq = 0; ifreq < nFreq; ifreq++) {
-					atdEntries[i][iweight][ifreq] = new AtdEntry[usedPhases.length][];
+					atdEntries[i][iweight][ifreq] = new AtdEntry[usedPhases.length];
 					for (int iphase = 0; iphase < usedPhases.length; iphase++) {
-						atdEntries[i][iweight][ifreq][iphase] = new AtdEntry[correctionTypes.length];
-						for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-							atdEntries[i][iweight][ifreq][iphase][icorr] = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
-								, usedPhases[iphase], correctionTypes[icorr], originalUnknownParameters[i].getPartialType(), originalUnknownParameters[i].getLocation(), 0.);
-						}
+						atdEntries[i][iweight][ifreq][iphase] = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
+								, usedPhases[iphase], originalUnknownParameters[i].getPartialType(), originalUnknownParameters[i].getLocation(), 0.);
 					}
 				}
 			}
@@ -532,12 +520,12 @@ public class AtAMaker implements Operation {
 		}
 		
 		//compute data variance
-		computeVariance();
+		computeVariance(basicIDs);
 		//write data variance
 		System.out.println("Writing residual variance...");
 		Path outpath =  workPath.resolve("residualVariance" +  tempString + ".dat");
-		ResidualVarianceFile.write(outpath, residualVarianceNumerator, residualVarianceDenominator, weightingTypes
-				, frequencyRanges, usedPhases, correctionTypes, npts);
+		ResidualVarianceFile.write(outpath, residualVarianceNumerator, residualVarianceDenominator, weightingTypes, frequencyRanges, usedPhases, npts);
+		
 		
 		Set<GlobalCMTID> usedEvents = timewindowInformation.stream()
 				.map(tw -> tw.getGlobalCMTID())
@@ -569,13 +557,8 @@ public class AtAMaker implements Operation {
 			Set<Station> eventStations = eventTimewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(event))
 				.map(tw -> tw.getStation()).collect(Collectors.toSet());
 			
-			List<List<Integer>> IndicesEventBasicID = new ArrayList<>();
-			for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-				final int finalIcorr = icorr;
-				List<Integer> tmplist = IntStream.range(0, basicIDArray[icorr].length).filter(i -> basicIDArray[finalIcorr][i].getGlobalCMTID().equals(event))
-						.boxed().collect(Collectors.toList());
-				IndicesEventBasicID.add(tmplist);
-			}
+			List<BasicID> eventBasicIDs = Stream.of(basicIDs).filter(id -> id.getGlobalCMTID().equals(event))
+					.collect(Collectors.toList());
 			
 			Path fpEventPath = fpPath.resolve(event.toString() + "/" + modelName);
 			Set<SpcFileName> fpnames = Utilities.collectSpcFileName(fpEventPath);
@@ -586,13 +569,8 @@ public class AtAMaker implements Operation {
 				Set<TimewindowInformation> recordTimewindows = eventTimewindows.stream().filter(tw -> tw.getStation().equals(station))
 						.collect(Collectors.toSet());
 				
-				List<List<Integer>> IndicesRecordBasicID = new ArrayList<>();
-				for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-					final int finalIcorr = icorr;
-					List<Integer> tmplist = IndicesEventBasicID.get(icorr).stream().filter(i -> basicIDArray[finalIcorr][i].getStation().equals(station))
-							.collect(Collectors.toList());
-					IndicesRecordBasicID.add(tmplist);
-				}
+				List<BasicID> recordBasicID = eventBasicIDs.stream().filter(id -> id.getStation().equals(station))
+						.collect(Collectors.toList());
 				
 				List<TimewindowInformation> orderedRecordTimewindows = new ArrayList<>();
 				for (SACComponent component : components) {
@@ -628,7 +606,7 @@ public class AtAMaker implements Operation {
 				int currentWindowCounter = windowCounter.get();
 				
 				for (SpcFileName fpname : fpnames) {
-					todo.add(Executors.callable(new FPWorker(fpname, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+					todo.add(Executors.callable(new FPWorker(fpname, station, event, recordBasicID, orderedRecordTimewindows, currentWindowCounter)));
 				}
 				
 				if (windowCounter.incrementAndGet() == nwindowBuffer) {
@@ -730,20 +708,18 @@ public class AtAMaker implements Operation {
 				for (int iweight = 0; iweight < nWeight; iweight++) {
 					for (int ifreq = 0; ifreq < nFreq; ifreq++) {
 						for (int iphase = 0; iphase < usedPhases.length; iphase++) {
-							for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-								int[] iOriginalUnknowns = mapping.getiNewToOriginal(i);
-								AtdEntry atdEntry =  atdEntries[iOriginalUnknowns[0]][iweight][ifreq][iphase][icorr];
-								for (int k = 1; k < iOriginalUnknowns.length; k++)
-									atdEntry.add(atdEntries[iOriginalUnknowns[k]][iweight][ifreq][iphase][icorr]);
-	//							atdEntryList.add(atdEntries[i][iweight][ifreq][iphase]);
-								atdEntryList.add(atdEntry);
-							}
+							int[] iOriginalUnknowns = mapping.getiNewToOriginal(i);
+							AtdEntry atdEntry =  atdEntries[iOriginalUnknowns[0]][iweight][ifreq][iphase];
+							for (int k = 1; k < iOriginalUnknowns.length; k++)
+								atdEntry.add(atdEntries[iOriginalUnknowns[k]][iweight][ifreq][iphase]);
+//							atdEntryList.add(atdEntries[i][iweight][ifreq][iphase]);
+							atdEntryList.add(atdEntry);
 						}
 					}
 				}
 			}
 			
-			AtdFile.write(atdEntryList, weightingTypes, frequencyRanges, partialTypes, correctionTypes, outputPath);
+			AtdFile.write(atdEntryList, weightingTypes, frequencyRanges, partialTypes, outputPath);
 		}
 	}
 
@@ -767,68 +743,62 @@ public class AtAMaker implements Operation {
 	
 	private int npts;
 	
-	private void computeVariance() {
+	private void computeVariance(BasicID[] basicIDs) {
 		npts = 0;
 		
-		residualVarianceNumerator = new double[nWeight][][][];
-		residualVarianceDenominator = new double[nWeight][][][];
+		residualVarianceNumerator = new double[nWeight][][];
+		residualVarianceDenominator = new double[nWeight][][];
 		for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
-			residualVarianceNumerator[iweight] = new double[nFreq][][];
-			residualVarianceDenominator[iweight] = new double[nFreq][][];
+			residualVarianceNumerator[iweight] = new double[nFreq][];
+			residualVarianceDenominator[iweight] = new double[nFreq][];
 			for (int ifreq = 0; ifreq < nFreq; ifreq++) {
-				residualVarianceNumerator[iweight][ifreq] = new double[usedPhases.length][];
-				residualVarianceDenominator[iweight][ifreq] = new double[usedPhases.length][];
+				residualVarianceNumerator[iweight][ifreq] = new double[usedPhases.length];
+				residualVarianceDenominator[iweight][ifreq] = new double[usedPhases.length];
 				for (int iphase = 0; iphase < usedPhases.length; iphase++) {
-					residualVarianceNumerator[iweight][ifreq][iphase] = new double[correctionTypes.length];
-					for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-						residualVarianceNumerator[iweight][ifreq][iphase][icorr] = 0.;
-						residualVarianceDenominator[iweight][ifreq][iphase][icorr] = 0.;
-					}
+					residualVarianceNumerator[iweight][ifreq][iphase] = 0.;
+					residualVarianceDenominator[iweight][ifreq][iphase] = 0.;
 				}
 			}
 		}
 		
-		for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-			List<BasicID> obsIDs = Stream.of(basicIDArray[icorr]).filter(id ->  id.getWaveformType().equals(WaveformType.OBS)).collect(Collectors.toList());
-			List<BasicID> tmpSyns = Stream.of(basicIDArray[icorr]).filter(id -> id.getWaveformType().equals(WaveformType.SYN)).collect(Collectors.toList());
-			List<BasicID> synIDs = new ArrayList<>();
-			for (BasicID obsid : obsIDs) {
-				Phases phases = new Phases(obsid.getPhases());
-				BasicID synid = tmpSyns.stream().filter(id -> id.getGlobalCMTID().equals(obsid.getGlobalCMTID())
-						&& id.getStation().equals(obsid.getStation())
-						&& id.getSacComponent().equals(obsid.getSacComponent())
-						&& id.getMinPeriod() == obsid.getMinPeriod()
-						&& id.getMaxPeriod() == obsid.getMaxPeriod()
-						&& new Phases(id.getPhases()).equals(phases)
-						&& id.getSamplingHz() == obsid.getSamplingHz())
-						.findFirst().get();
-				synIDs.add(synid);
+		List<BasicID> obsIDs = Stream.of(basicIDs).filter(id ->  id.getWaveformType().equals(WaveformType.OBS)).collect(Collectors.toList());
+		List<BasicID> tmpSyns = Stream.of(basicIDs).filter(id -> id.getWaveformType().equals(WaveformType.SYN)).collect(Collectors.toList());
+		List<BasicID> synIDs = new ArrayList<>();
+		for (BasicID obsid : obsIDs) {
+			Phases phases = new Phases(obsid.getPhases());
+			BasicID synid = tmpSyns.stream().filter(id -> id.getGlobalCMTID().equals(obsid.getGlobalCMTID())
+					&& id.getStation().equals(obsid.getStation())
+					&& id.getSacComponent().equals(obsid.getSacComponent())
+					&& id.getMinPeriod() == obsid.getMinPeriod()
+					&& id.getMaxPeriod() == obsid.getMaxPeriod()
+					&& new Phases(id.getPhases()).equals(phases)
+					&& id.getSamplingHz() == obsid.getSamplingHz())
+					.findFirst().get();
+			synIDs.add(synid);
+		}
+		
+		for (int i = 0; i < obsIDs.size(); i++) {
+			BasicID obs = obsIDs.get(i);
+			BasicID syn = synIDs.get(i);
+			FrequencyRange range = new FrequencyRange(1./obs.getMaxPeriod(), 1./obs.getMinPeriod());
+			int ifreq = getiFreq(range);
+			int iphase = getiPhase(new Phases(obs.getPhases()));
+			double[] obsdata = obs.getData();
+			double[] syndata = syn.getData();
+			double numerator = 0;
+			double denominator = 0;
+			for (int k = 0; k < obsdata.length; k++) {
+				double tmp = obsdata[k] - syndata[k];
+				numerator += tmp * tmp;
+				denominator += obsdata[k] * obsdata[k];
+			}
+			for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
+				double weight = computeWeight(weightingTypes[iweight], obsdata, syndata);
+				residualVarianceNumerator[iweight][ifreq][iphase] += numerator * weight * weight;
+				residualVarianceDenominator[iweight][ifreq][iphase] += denominator * weight * weight;
 			}
 			
-			for (int i = 0; i < obsIDs.size(); i++) {
-				BasicID obs = obsIDs.get(i);
-				BasicID syn = synIDs.get(i);
-				FrequencyRange range = new FrequencyRange(1./obs.getMaxPeriod(), 1./obs.getMinPeriod());
-				int ifreq = getiFreq(range);
-				int iphase = getiPhase(new Phases(obs.getPhases()));
-				double[] obsdata = obs.getData();
-				double[] syndata = syn.getData();
-				double numerator = 0;
-				double denominator = 0;
-				for (int k = 0; k < obsdata.length; k++) {
-					double tmp = obsdata[k] - syndata[k];
-					numerator += tmp * tmp;
-					denominator += obsdata[k] * obsdata[k];
-				}
-				for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
-					double weight = computeWeight(weightingTypes[iweight], obsdata, syndata);
-					residualVarianceNumerator[iweight][ifreq][iphase][icorr] += numerator * weight * weight;
-					residualVarianceDenominator[iweight][ifreq][iphase][icorr] += denominator * weight * weight;
-				}
-				
-				if (icorr == 0)
-					npts += obsdata.length;
-			}
+			npts += obsdata.length;
 		}
 	}
 	
@@ -1046,16 +1016,16 @@ public class AtAMaker implements Operation {
 		SpcFileName fpname;
 		Station station;
 		GlobalCMTID event;
-		List<List<Integer>> IndicesRecordBasicID;
+		List<BasicID> recordBasicID;
 		List<TimewindowInformation> orderedRecordTimewindows;
 		int windowCounter;
 		
 		public FPWorker(SpcFileName fpname, Station station, GlobalCMTID event,
-				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
+				List<BasicID> recordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = fpname;
 			this.station = station;
 			this.event = event;
-			this.IndicesRecordBasicID = IndicesRecordBasicID;
+			this.recordBasicID = recordBasicID;
 			this.orderedRecordTimewindows = orderedRecordTimewindows;
 			this.windowCounter = windowCounter;
 		}
@@ -1207,31 +1177,24 @@ public class AtAMaker implements Operation {
 							
 //							AtomicInteger iwindow = new AtomicInteger(0);
 							
-							// find syn and obs
-							double minFreq = frequencyRanges[ifreq].getMinFreq();
-							double maxFreq = frequencyRanges[ifreq].getMaxFreq();
-							
 								for (TimewindowInformation info : orderedRecordTimewindows) {
 									double[] partial = partialmap.get(info.getComponent());
 									
-									Phases phases = new Phases(info.getPhases());
-									int iphase = phaseMap.get(phases);
-									
-									for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
+										// find syn and obs
+										double minFreq = frequencyRanges[ifreq].getMinFreq();
+										double maxFreq = frequencyRanges[ifreq].getMaxFreq();
 										
-										final int finalIcorr = icorr;
-										List<BasicID> obsSynIDs = IndicesRecordBasicID.get(icorr).stream().filter(i -> {
-												BasicID id = basicIDArray[finalIcorr][i];
-												return id.getSacComponent().equals(info.getComponent())
+										Phases phases = new Phases(info.getPhases());
+										int iphase = phaseMap.get(phases);
+										
+										List<BasicID> obsSynIDs = recordBasicID.stream().filter(id -> id.getSacComponent().equals(info.getComponent())
 //												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
 												&& equalToEpsilon(id.getMinPeriod(), 1. / maxFreq)
 												&& equalToEpsilon(id.getMaxPeriod(), 1. / minFreq)
-												&& new Phases(id.getPhases()).equals(phases);
-												}).map(i -> basicIDArray[finalIcorr][i])
+												&& new Phases(id.getPhases()).equals(phases))
 												.collect(Collectors.toList());
-										
 										if (obsSynIDs.size() != 2) {
-											synchronized (AtAMaker.class) {
+											synchronized (CopyOfAtAMaker_copy.class) {
 												obsSynIDs.forEach(System.out::println);
 												throw new RuntimeException("Unexpected: more, or less than two basicIDs (obs, syn) found (list above)");
 											}
@@ -1302,20 +1265,19 @@ public class AtAMaker implements Operation {
 //										AtdEntry entry = new AtdEntry(weightingTypes[iweight], frequencyRanges[ifreq]
 //												, phases, type, parameterLoc, tmpatd); //TODO parameterLoc
 										
-										double value = atdEntries[iunknown][iweight][ifreq][iphase][icorr].getValue();
+										double value = atdEntries[iunknown][iweight][ifreq][iphase].getValue();
 										value += tmpatd;
 										
 										if (Double.isNaN(value))
 											throw new RuntimeException("Atd value is NaN" + originalUnknownParameters[iunknown] + " " + info);
 										
-										atdEntries[iunknown][iweight][ifreq][iphase][icorr].setValue(value);
+										atdEntries[iunknown][iweight][ifreq][iphase].setValue(value);
 										
 //										AtdEntry tmp = atdEntries[iunknown][iweight][ifreq][iphase];
 //										tmp.add(entry);
 //										atdEntries[iunknown][iweight][ifreq][iphase] = tmp;
 										// END add entry to Atd
 									
-									} // END correction type
 								} // END timewindow
 //							} // END SAC component
 						} // END frequency range

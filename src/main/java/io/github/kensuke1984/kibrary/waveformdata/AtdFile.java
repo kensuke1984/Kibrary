@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
@@ -54,6 +55,7 @@ public final class AtdFile {
 	public static final int oneWeightingTypeByte = 10;
 	public static final int onePhasesByte = 20;
 	public static final int onePartialTypeByte = 10;
+	public static final int oneCorrectionTypeByte = 10;
 	
 	/**
 	 * bytes for one AtA entry
@@ -120,7 +122,7 @@ public final class AtdFile {
 	 *             if an I/O error occurs.
 	 */
 	public static void write(List<AtdEntry> atdEntries, WeightingType[] weightingTypes, FrequencyRange[] frequencyRanges,
-			PartialType[] partialTypes, Path outputPath, OpenOption... options)
+			PartialType[] partialTypes, StaticCorrectionType[] correctionTypes, Path outputPath, OpenOption... options)
 			throws IOException {
 		if (atdEntries.isEmpty())
 			throw new RuntimeException("Input information is empty..");
@@ -134,11 +136,13 @@ public final class AtdFile {
 			Map<FrequencyRange, Integer> frequencyRangesMap = new HashMap<>();
 			Map<Phases, Integer> phasesMap = new HashMap<>();
 			Map<PartialType, Integer> partialTypeMap = new HashMap<>();
+			Map<StaticCorrectionType, Integer> correctionTypeMap = new HashMap<>();
 			Map<Location, Integer> locationMap = new HashMap<>();
 			
 			dos.writeShort(weightingTypes.length);
 			dos.writeShort(frequencyRanges.length);
 			dos.writeShort(phases.length);
+			dos.writeShort(correctionTypes.length);
 			dos.writeShort(partialTypes.length);
 			dos.writeShort(locations.length);
 			
@@ -159,6 +163,12 @@ public final class AtdFile {
 					throw new RuntimeException("Phases string should be 20 characters or less " + phases[i].toString());
 				dos.writeBytes(StringUtils.rightPad(phases[i].toString(), onePhasesByte));
 			}
+			for (int i = 0; i < correctionTypes.length; i++) {
+				correctionTypeMap.put(correctionTypes[i], i);
+				if ((int) correctionTypes[i].name().chars().count() > oneCorrectionTypeByte)
+					throw new RuntimeException("CorrectionType string should be 10 characters or less " + correctionTypes[i].name());
+				dos.writeBytes(StringUtils.rightPad(correctionTypes[i].toString(), oneCorrectionTypeByte));
+			}
 			for (int i = 0; i < partialTypes.length; i++) {
 				partialTypeMap.put(partialTypes[i], i);
 				if ((int) partialTypes[i].name().chars().count() > onePartialTypeByte)
@@ -176,6 +186,7 @@ public final class AtdFile {
 				dos.writeShort(weightingTypeMap.get(entry.getWeightingType()));
 				dos.writeShort(frequencyRangesMap.get(entry.getFrequencyRange()));
 				dos.writeShort(phasesMap.get(entry.getPhases()));
+				dos.writeShort(correctionTypeMap.get(entry.getCorrectionType()));
 				dos.writeShort(partialTypeMap.get(entry.getPartialType()));
 				dos.writeShort(locationMap.get(entry.getLocation()));
 				dos.writeDouble(entry.getValue());
@@ -208,11 +219,12 @@ public final class AtdFile {
 			WeightingType[] weightingTypes = new WeightingType[dis.readShort()];
 			FrequencyRange[] frequencyRanges = new FrequencyRange[dis.readShort()];
 			Phases[] phases = new Phases[dis.readShort()];
+			StaticCorrectionType[] correctionTypes = new StaticCorrectionType[dis.readShort()];
 			PartialType[] partialTypes = new PartialType[dis.readShort()];
 			Location[] locations = new Location[dis.readShort()];
 			
-			int headerBytes = 5 * 2 + weightingTypes.length * oneWeightingTypeByte 
-					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte
+			int headerBytes = 6 * 2 + weightingTypes.length * oneWeightingTypeByte 
+					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte + correctionTypes.length * oneCorrectionTypeByte
 					+ partialTypes.length * onePartialTypeByte + locations.length * 3 * 4;
 			
 			long entryPart = fileSize - headerBytes;
@@ -236,6 +248,11 @@ public final class AtdFile {
 			for (int i = 0; i < phases.length; i++) {
 				dis.read(phasesByte);
 				phases[i] = new Phases(new String(phasesByte).trim());
+			}
+			byte[] correctionByte = new byte[oneCorrectionTypeByte];
+			for (int i = 0; i < correctionTypes.length; i++) {
+				dis.read(correctionByte);
+				correctionTypes[i] = StaticCorrectionType.valueOf(new String(correctionByte).trim());
 			}
 			byte[] partialTypeByte = new byte[onePartialTypeByte];
 			for (int i = 0; i < partialTypes.length; i++) {
@@ -254,7 +271,7 @@ public final class AtdFile {
 			for (int i = 0; i < nEntry; i++)
 				dis.read(bytes[i]);
 			List<AtdEntry> ataEntries = Arrays.stream(bytes).parallel().map(b -> 
-				create(b, weightingTypes, frequencyRanges, phases, partialTypes, locations))
+				create(b, weightingTypes, frequencyRanges, phases, correctionTypes, partialTypes, locations))
 				.collect(Collectors.toList());
 			System.err.println(
 					ataEntries.size() + " AtA elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -269,7 +286,7 @@ public final class AtdFile {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public static AtdEntry[][][][] readArray(Path atdPath) throws IOException {
+	public static AtdEntry[][][][][] readArray(Path atdPath) throws IOException {
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(atdPath)));) {
 			long t = System.nanoTime();
 			long fileSize = Files.size(atdPath);
@@ -277,11 +294,12 @@ public final class AtdFile {
 			WeightingType[] weightingTypes = new WeightingType[dis.readShort()];
 			FrequencyRange[] frequencyRanges = new FrequencyRange[dis.readShort()];
 			Phases[] phases = new Phases[dis.readShort()];
+			StaticCorrectionType[] correctionTypes = new StaticCorrectionType[dis.readShort()];
 			PartialType[] partialTypes = new PartialType[dis.readShort()];
 			Location[] locations = new Location[dis.readShort()];
 			
-			int headerBytes = 5 * 2 + weightingTypes.length * oneWeightingTypeByte 
-					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte
+			int headerBytes = 6 * 2 + weightingTypes.length * oneWeightingTypeByte 
+					+ frequencyRanges.length * 2 * 8 + phases.length * onePhasesByte + correctionTypes.length * oneCorrectionTypeByte
 					+ partialTypes.length * onePartialTypeByte + locations.length * 3 * 4;
 			
 			long entryPart = fileSize - headerBytes;
@@ -306,6 +324,11 @@ public final class AtdFile {
 				dis.read(phasesByte);
 				phases[i] = new Phases(new String(phasesByte).trim());
 			}
+			byte[] correctionByte = new byte[oneCorrectionTypeByte];
+			for (int i = 0; i < correctionTypes.length; i++) {
+				dis.read(correctionByte);
+				correctionTypes[i] = StaticCorrectionType.valueOf(new String(correctionByte).trim());
+			}
 			byte[] partialTypeByte = new byte[onePartialTypeByte];
 			for (int i = 0; i < partialTypes.length; i++) {
 				dis.read(partialTypeByte);
@@ -320,10 +343,10 @@ public final class AtdFile {
 			
 			int nEntry = (int) (entryPart / oneEntryByte);
 			
-			int n1 = weightingTypes.length * frequencyRanges.length * phases.length;
+			int n1 = weightingTypes.length * frequencyRanges.length * phases.length * correctionTypes.length;
 			int n0Atd = nEntry / n1;
 			
-			AtdEntry[][][][] atdEntries = new AtdEntry[n0Atd][weightingTypes.length][frequencyRanges.length][phases.length];
+			AtdEntry[][][][][] atdEntries = new AtdEntry[n0Atd][weightingTypes.length][frequencyRanges.length][phases.length][correctionByte.length];
 			
 			for (int i = 0; i < nEntry; i++) {
 				byte[] tmpbytes = new byte[oneEntryByte];
@@ -335,6 +358,8 @@ public final class AtdFile {
 				FrequencyRange frequencyRange = frequencyRanges[iFreq];
 				int iPhase = bb.getShort();
 				Phases phase = phases[iPhase];
+				int iCorr = bb.getShort();
+				StaticCorrectionType correctionType = correctionTypes[iCorr];
 				int iPartialType = bb.getShort();
 				PartialType partialType = partialTypes[iPartialType];
 				int iLocation = bb.getShort();
@@ -343,8 +368,8 @@ public final class AtdFile {
 				
 				int i0Atd = i / n1;
 				
-				atdEntries[i0Atd][iWeight][iFreq][iPhase]
-						= new AtdEntry(weightingType, frequencyRange, phase, partialType, location, value);
+				atdEntries[i0Atd][iWeight][iFreq][iPhase][iCorr]
+						= new AtdEntry(weightingType, frequencyRange, phase, correctionType, partialType, location, value);
 			}
 			System.err.println(
 					nEntry + " Atd elements were found in " + Utilities.toTimeString(System.nanoTime() - t));
@@ -378,11 +403,12 @@ public final class AtdFile {
 	 * @return
 	 */
 	private static AtdEntry create(byte[] bytes, WeightingType[] weightingTypes, FrequencyRange[] frequencyRanges
-			, Phases[] phases, PartialType[] partialTypes, Location[] locations) {
+			, Phases[] phases, StaticCorrectionType[] correctionTypes, PartialType[] partialTypes, Location[] locations) {
 		ByteBuffer bb = ByteBuffer.wrap(bytes);
 		WeightingType weightingType = weightingTypes[bb.getShort()];
 		FrequencyRange frequencyRange = frequencyRanges[bb.getShort()];
 		Phases phase = phases[bb.getShort()];
+		StaticCorrectionType correctionType = correctionTypes[bb.getShort()];
 		PartialType partialType = partialTypes[bb.getShort()];
 		Location location = locations[bb.getShort()];
 		double value = bb.getDouble();
@@ -396,7 +422,7 @@ public final class AtdFile {
 //		Phase[] usablephases = new Phase[tmpset.size()];
 //		usablephases = tmpset.toArray(usablephases);
 		
-		return new AtdEntry(weightingType, frequencyRange, phase, partialType, location, value);
+		return new AtdEntry(weightingType, frequencyRange, phase, correctionType, partialType, location, value);
 	}
 	
 }
