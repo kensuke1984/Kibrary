@@ -1,5 +1,5 @@
 // Apply the java plugin to add support for Java
-plugins { id "de.undercouch.download" version "3.2.0" }
+plugins { id "de.undercouch.download" version "3.3.0" }
 apply plugin: 'java'
 apply plugin: 'eclipse'
 sourceCompatibility = 1.8
@@ -10,15 +10,13 @@ def defaultEncoding = 'UTF-8'
 
 //def codename = 'sahagin'
 jar.baseName = 'kibrary'
-version = '0.4.3'
-
 def kibraryhome = "$System.env.HOME/.Kibrary"
+version = '0.4.4.2'
+task wrapper(type: Wrapper) { gradleVersion = '4.4.1' }
 
 repositories {
-    jcenter()
     mavenCentral()
 }
-
 dependencies {
     compile 'org.apache.commons:commons-math3:+'
     compile 'org.apache.commons:commons-lang3:+'
@@ -30,6 +28,8 @@ dependencies {
     compile 'commons-cli:commons-cli:+'
 }
 
+// path for jar files.
+def dependJarCopyTo = 'lib'
 jar {
     manifest {
         attributes 'Implementation-Title': 'kibrary', 'Implementation-Version': version
@@ -37,7 +37,6 @@ jar {
     }
     from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 }
-
 
 task downloadAndUnzip {
     doLast {
@@ -54,8 +53,6 @@ task downloadAndUnzip {
     }
 }
 
-task wrapper(type: Wrapper) { gradleVersion = '4.3' }
-
 task setupSourceCodes {
     doLast {
         def master = file(kibraryhome + '/Kibrary-master')
@@ -66,6 +63,29 @@ task setupSourceCodes {
             delete master
         }
     }
+}
+
+// Delete a folder for jar files
+task delDependJar {
+    doLast {
+        delete dependJarCopyTo
+    }
+}
+
+// Copy jar files into a folder.
+task getDependJar(dependsOn: delDependJar) {
+    doLast {
+        configurations.compile.each {
+            def fromJarFile = it.absolutePath
+            copy {
+                from fromJarFile
+                into dependJarCopyTo
+            }
+        }
+        println "----- Downloaded these jar files -----"
+        FileCollection copyFiles = files { file(dependJarCopyTo).listFiles() }
+        copyFiles.each {File file -> println file.name}
+    } 
 }
 
 compileJava {
