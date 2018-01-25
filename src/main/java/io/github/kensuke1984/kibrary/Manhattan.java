@@ -25,7 +25,7 @@ import java.util.Arrays;
  * The list of names of manhattan (operation)
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1
+ * @version 0.0.5.2
  */
 public enum Manhattan {
     CheckerBoardTest(1, CheckerBoardTest.class), //
@@ -41,7 +41,7 @@ public enum Manhattan {
     PartialDatasetMaker(11, PartialDatasetMaker.class), //
     RaypathDistribution(12, RaypathDistribution.class), //
     SecondHandler(13, SecondHandler.class), //
-    SpcSAC(14, SPC_SAC.class), //
+    SPC_SAC(14, SPC_SAC.class), //
     SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
     SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
     TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //
