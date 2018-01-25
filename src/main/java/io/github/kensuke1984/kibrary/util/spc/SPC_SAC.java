@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * the folder.
  *
  * @author Kensuke Konishi
- * @version 0.2.4.5
+ * @version 0.2.4.5.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SPC_SAC implements Operation {
@@ -44,19 +44,19 @@ public final class SPC_SAC implements Operation {
     private Path workPath;
     private Path sourceTimeFunctionPath;
     /**
-     * 計算するcomponents
+     * components to be computed
      */
     private Set<SACComponent> components;
     /**
-     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+     * the name of a folder containing SPC files (e.g. PREM)（""）
      */
     private String modelName;
     /**
-     * サンプリングヘルツ 当面は２０Hz固定
+     * sampling Hz [Hz] must be 20 now.
      */
     private double samplingHz;
     /**
-     * source time function.-1:Users, 0: none, 1: boxcar, 2: triangle
+     * source time function. -1:Users, 0: none, 1: boxcar, 2: triangle
      */
     private int sourceTimeFunction;
     private Path psvPath;
@@ -290,7 +290,7 @@ public final class SPC_SAC implements Operation {
     private AtomicInteger numberOfCreatedSAC = new AtomicInteger();
 
     /**
-     * 二つのspc(sh, psv)から SacMakerを作る {@link SACMaker}
+     * creates {@link SACMaker} from two SPC files(sh, psv)
      *
      * @param primeSPC     spectrum file for SAC
      * @param secondarySPC null is ok
