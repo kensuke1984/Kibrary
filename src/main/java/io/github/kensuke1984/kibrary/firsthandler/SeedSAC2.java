@@ -27,7 +27,7 @@ import java.util.regex.Matcher;
  * @author Kensuke Konishi
  * @version 0.1.8.3
  */
-class SeedSAC implements Runnable {
+class SeedSAC2 implements Runnable {
 
     /**
      * delta for sac files. Sac files with different delta will be interpolated
@@ -90,7 +90,7 @@ class SeedSAC implements Runnable {
      * @throws IOException if the outputDirectoryPath already has events which also
      *                     exists in the seed file or an error occurs
      */
-    SeedSAC(Path seedPath, Path outputDirectoryPath) throws IOException {
+    SeedSAC2(Path seedPath, Path outputDirectoryPath) throws IOException {
         this(seedPath, outputDirectoryPath, null);
     }
 
@@ -104,7 +104,7 @@ class SeedSAC implements Runnable {
      * @throws IOException If the folder already has event folders which also exists in
      *                     the seed file.
      */
-    SeedSAC(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
+    SeedSAC2(Path seedPath, Path outputDirectoryPath, GlobalCMTID id) throws IOException {
         seedFile = new SEEDFile(seedPath);
         if (id != null) this.id = id;
         else setID();
