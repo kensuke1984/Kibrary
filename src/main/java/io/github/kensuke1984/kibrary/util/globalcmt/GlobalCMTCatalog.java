@@ -20,15 +20,15 @@ import java.util.stream.IntStream;
  * Catalog of global CMT solutions.
  * <p>
  * The catalog contains list of events
- * from <b>1976 January - 2017 August</b>.
+ * from <b>1976 January - 2017 September</b>.
  *
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @version 0.1.4.1
  */
 final class GlobalCMTCatalog {
 
     public static void main(String[] args) {
-        System.out.println("The catalog contains events from Jan 1976 - Aug 2017.");
+        System.out.println("The catalog contains events from Jan 1976 - Sep 2017.");
     }
 
     private final static Set<NDK> NDKs;
