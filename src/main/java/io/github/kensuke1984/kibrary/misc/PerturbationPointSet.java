@@ -38,7 +38,6 @@ public class PerturbationPointSet {
 		Set<Location> locSet = new HashSet<Location>();
 		
 		HorizontalPosition start = new HorizontalPosition(minLat, minLon);
-//		System.out.println(start.toString());
 		
 		//Latitude方向に配置
 		for (int i=0; i < (int)((maxLat-minLat)/dltaDeg)+1; i++) {			
