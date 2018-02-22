@@ -22,7 +22,8 @@ public class BreakFastMail {
 
     private static final String IRIS_EMAIL = "breq_fast@iris.washington.edu";
 //    private static final String OHP_EMAIL = "breq-fast@ocean.eri.u-tokyo.ac.jp";
-    private static final String OHP_EMAIL = "breq-fast-vietnet@ohpdmc.eri.u-tokyo.ac.jp";
+//    private static final String OHP_EMAIL = "breq-fast-vietnet@ohpdmc.eri.u-tokyo.ac.jp";
+    private static final String OHP_EMAIL = "breq-fast-tsar@ohpdmc.eri.u-tokyo.ac.jp";
     
     private String name;
     private String institute;

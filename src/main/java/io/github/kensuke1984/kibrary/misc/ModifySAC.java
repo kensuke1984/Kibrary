@@ -36,6 +36,7 @@ public class ModifySAC {
 	 * or downsampled.
 	 */
 	private static final double delta = 0.05;
+	private static final double normarizeFactor = 0.702287e-6;
 	
 	public static void main(String[] args) throws IOException {
 		Path workPath = Paths.get(args[0]);
@@ -44,7 +45,8 @@ public class ModifySAC {
 			eventDir = new EventFolder(workPath.resolve(id.toString()));
 			try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(eventDir.toPath(), "*.[R-Z]")) {
 				for (Path sacPath : sacPathStream) {
-					fixDelta(sacPath);
+//					fixDelta(sacPath);
+					modifyNormarize(sacPath);
 				}
 			} catch (IOException | InterruptedException e) {
 				// TODO 自動生成された catch ブロック
@@ -308,6 +310,17 @@ public class ModifySAC {
 			else
 				
 			sacD.inputCMD("interpolate delta " + delta);
+			sacD.inputCMD("w over");
+		}
+	}
+	
+	private static void modifyNormarize(Path sacPath) throws IOException, InterruptedException {
+		try (SAC sacD = SAC.createProcess()) {
+			String cwd = sacPath.getParent().toString();
+			sacD.inputCMD("cd " + cwd);// set current directory
+			sacD.inputCMD("r " + sacPath.getFileName());// read
+			sacD.inputCMD("ch lovrok true");// overwrite permission
+			sacD.inputCMD("mul " + normarizeFactor);
 			sacD.inputCMD("w over");
 		}
 	}

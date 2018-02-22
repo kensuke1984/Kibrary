@@ -258,6 +258,8 @@ public final class SpcSAC implements Operation {
 			Utilities.collectSpcFileName(modelFolder).stream()
 					.filter(f -> !f.getName().contains("par") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
 		}
+//		System.out.println(psvPath);
+//		System.out.println("PSV set is empty? "+psvSet.isEmpty());
 		return psvSet;
 	}
 
