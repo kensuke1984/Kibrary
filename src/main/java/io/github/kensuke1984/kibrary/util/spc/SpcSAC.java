@@ -178,7 +178,7 @@ public final class SpcSAC implements Operation {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final List<String> stfcat = readSTFCatalogue("ASTF2.stfcat"); //LSTF1 ASTF1 ASTF2
+	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat"); //LSTF1 ASTF1 ASTF2
 	
 	private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
 		double halfDuration = id.getEvent().getHalfDuration();

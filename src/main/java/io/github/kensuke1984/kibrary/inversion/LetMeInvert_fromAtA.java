@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.awt.color.CMMException;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -35,6 +37,7 @@ import org.apache.commons.math3.util.Precision;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
@@ -100,7 +103,7 @@ public class LetMeInvert_fromAtA implements Operation {
 	
 	protected boolean time_source, time_receiver;
 	
-	private ObservationEquation[][][] eq;
+	private ObservationEquation[][][][] eq;
 	
 	private List<DataSelectionInformation> selectionInfo;
 	
@@ -115,6 +118,9 @@ public class LetMeInvert_fromAtA implements Operation {
 	private boolean linaInversion;
 	
 	private Path inputPath;
+	
+	private int maxNumVector;
+	private double deltaDegree;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -147,6 +153,12 @@ public class LetMeInvert_fromAtA implements Operation {
 			property.setProperty("maxMw", "10.");
 		if (!property.containsKey("linaInversion"))
 			property.setProperty("linaInversion", "false");
+		if (!property.containsKey("applyModelCovariance"))
+			property.setProperty("applyModelCovariance", "false");
+		if (!property.containsKey("applyDamping"))
+			property.setProperty("applyDamping", "false");
+		if (!property.containsKey("applyParameterWeight"))
+			property.setProperty("applyParameterWeight", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -195,7 +207,37 @@ public class LetMeInvert_fromAtA implements Operation {
 			inputPath = null;
 			atdPath = getPath("atdPath");
 		}
+		
+		if (property.containsKey("model")) {
+			model = property.getProperty("model").trim().toLowerCase();
+			perturbationLayerFile = workPath.resolve(property.getProperty("perturbationLayerFile"));
+			deltaDegree = Double.parseDouble(property.getProperty("deltaDegree"));
+			maxNumVector = Integer.parseInt(property.getProperty("maxNumVector"));
+		}
+		else
+			model = null;
+		
+		applyModelCovariance = Boolean.parseBoolean(property.getProperty("applyModelCovariance"));
+		if (applyModelCovariance) {
+			cmH = Double.parseDouble(property.getProperty("cmH"));
+			cmV = Double.parseDouble(property.getProperty("cmV"));
+		}
+		
+		applyDamping = Boolean.parseBoolean(property.getProperty("applyDamping"));
+		if (applyDamping) {
+			lambda = Double.parseDouble(property.getProperty("lambda"));
+			dampingType = DampingType.valueOf(property.getProperty("dampingType"));
+		}
+		
+		applyParameterWeight = Boolean.parseBoolean(property.getProperty("applyParameterWeight"));
+		if (applyParameterWeight) {
+			sensitivityFile = workPath.resolve(property.getProperty("sensitivityFile"));
+		}
 	}
+	
+	private boolean applyModelCovariance;
+	private double cmH;
+	private double cmV;
 
 	/**
 	 * AIC計算に用いるα 独立データ数はn/αと考える
@@ -203,6 +245,14 @@ public class LetMeInvert_fromAtA implements Operation {
 	protected double[] alpha;
 
 	private Properties property;
+	
+	private Path perturbationLayerFile;
+	
+	private String model;
+	
+	private boolean applyParameterWeight;
+	
+	private Path sensitivityFile;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -228,7 +278,37 @@ public class LetMeInvert_fromAtA implements Operation {
 			pw.println("##inverseMethods[] names of inverse methods (CG SVD)");
 			pw.println("#inverseMethods");
 			pw.println("##=======================================================================================");
-			pw.println("##--- Optional parameters ---------------------------------------------------------------");
+			pw.println("##=== Parameters for weighting of model parameters ======================================");
+			pw.println("##Set true if you want to apply model parameters weight");
+			pw.println("#applyParameterWeight");
+			pw.println("##Path of sensitivity (AtA diagonal) file");
+			pw.println("#sensitivityFile");
+			pw.println("##=======================================================================================");
+			pw.println("##=== Parameters for Model Covariance matrix and damping ================================");
+			pw.println("##Set true if you want to apply model covariance matrix (false)");
+			pw.println("#applyModelCovariance");
+			pw.println("##Horizontal correlation length");
+			pw.println("#cmH");
+			pw.println("##Vertical correlation length");
+			pw.println("#cmV");
+			pw.println("##Set true if you want to apply damping (false)");
+			pw.println("#applyDamping");
+			pw.println("##Damping type: L, LM. Must be set");
+			pw.println("#dampingType");
+			pw.println("##Damping coefficient. Must be set");
+			pw.println("#lambda");
+			pw.println("##=======================================================================================");
+			pw.println("##=== Parameters for GMT output =========================================================");
+			pw.println("##Name of initial model");
+			pw.println("#model");
+			pw.println("##Path of a perturbation layer file");
+			pw.println("#perturbationLayerFile perturbationLayers.inf");
+			pw.println("##Size of model grid in degree");
+			pw.println("#deltaDegree");
+			pw.println("##Number of CG vectors for which velocity perturbations are output (more is slower)");
+			pw.println("#maxNumVector 20");
+			pw.println("##=======================================================================================");
+			pw.println("##=== Optional parameters ===============================================================");
 			pw.println("##boolean time_source (false). Time partial for the source");
 			pw.println("#time_source false");
 			pw.println("##boolean time_receiver (false). Time partial for the receiver");
@@ -266,7 +346,7 @@ public class LetMeInvert_fromAtA implements Operation {
 //		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 //	}
 
-	private Path[][][] outPaths;
+	private Path[][][][] outPaths;
 	
 	private WeightingType[] weights;
 	
@@ -274,12 +354,20 @@ public class LetMeInvert_fromAtA implements Operation {
 	
 	private Phases[] phases;
 	
-	double[][][] residualVariances;
-	double[][][] obsNorms;
+	private StaticCorrectionType[] corrections;
+	
+	double[][][][] residualVariances;
+	double[][][][] obsNorms;
 	
 	private List<UnknownParameter> parameterList;
 	
 	private RealVector inputVector;
+	
+	private boolean applyDamping;
+	private double lambda;
+	private DampingType dampingType;
+	
+	private double[] parameterWeights;
 
 	private void setEquation() throws IOException {
 		// set AtA matrix
@@ -290,36 +378,8 @@ public class LetMeInvert_fromAtA implements Operation {
 		System.err.println("Setting unknown parameter set...");
 		parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		
-		// set weights, freqency ranges, and phases
-		int nweight = ataEntries[0].length;
-		int nfreq = ataEntries[0][0].length;
-		int nphase = ataEntries[0][0][0].length;
-		weights = new WeightingType[nweight];
-		frequencyRanges = new double[nfreq][];
-		phases = new Phases[nphase];
-		String s = "";
-		for (int i = 0; i < weights.length; i++) {
-			s = "";
-			weights[i] = ataEntries[0][i][0][0].getWeightingType();
-			s += weights[i] + ", ";
-		}
-		System.out.println("Weighting types: " + s);
-		for (int i = 0; i < frequencyRanges.length; i++) {
-			s = "";
-			FrequencyRange range = ataEntries[0][0][i][0].getFrequencyRange();
-			frequencyRanges[i] = new double[] {range.getMinFreq(), range.getMaxFreq()};
-			s += range + ", ";
-		}
-		System.out.println("Frequency ranges: " + s);
-		for (int i = 0; i < phases.length; i++) {
-			s = "";
-			phases[i] = ataEntries[0][0][0][i].getPhases();
-			s += phases[i] + ", ";
-		}
-		System.out.println("Phases: " + s);
-		
 		//set Atd vector, or read the input vector for checkerboard test
-		AtdEntry[][][][] atdEntries = null;
+		AtdEntry[][][][][] atdEntries = null;
 		if (inputPath == null) {
 			System.out.println("Reading Atd...");
 			atdEntries = AtdFile.readArray(atdPath);
@@ -331,21 +391,78 @@ public class LetMeInvert_fromAtA implements Operation {
 				throw new RuntimeException("Length of input vector differs from number of parameters " + inputVector.getDimension() + " " + parameterList.size());
 		}
 		
+		// set weights, freqency ranges, and phases
+		int nweight = atdEntries[0].length;
+		int nfreq = atdEntries[0][0].length;
+		int nphase = atdEntries[0][0][0].length;
+		int ncorr = atdEntries[0][0][0][0].length;
+		weights = new WeightingType[nweight];
+		frequencyRanges = new double[nfreq][];
+		phases = new Phases[nphase];
+		corrections = new StaticCorrectionType[ncorr];
+		String s = "";
+		for (int i = 0; i < weights.length; i++) {
+			weights[i] = atdEntries[0][i][0][0][0].getWeightingType();
+			s += weights[i] + ", ";
+		}
+		System.out.println("Weighting types: " + s);
+		s = "";
+		for (int i = 0; i < frequencyRanges.length; i++) {
+			FrequencyRange range = atdEntries[0][0][i][0][0].getFrequencyRange();
+			frequencyRanges[i] = new double[] {range.getMinFreq(), range.getMaxFreq()};
+			s += range + ", ";
+		}
+		System.out.println("Frequency ranges: " + s);
+		s = "";
+		for (int i = 0; i < phases.length; i++) {
+			phases[i] = atdEntries[0][0][0][i][0].getPhases();
+			s += phases[i] + ", ";
+		}
+		System.out.println("Phases: " + s);
+		s = "";
+		for (int i = 0; i < corrections.length; i++) {
+			corrections[i] = atdEntries[0][0][0][0][i].getCorrectionType();
+			s += corrections[i] + ", ";
+		}
+		System.out.println("Correction types: " + s);
+		
 		// set output folders paths
-		outPaths = new Path[weights.length][][];
+		String modelCovarianceString = "";
+		if (applyModelCovariance)
+			modelCovarianceString = String.format("_cmH%.0f_cmV%.0f", cmH, cmV);
+		String dampingString = "";
+		if (applyDamping)
+			dampingString = "_" + dampingType.name() + "_" + (int) (lambda * 100);
+		String parameterWeightString = "";
+		if (applyParameterWeight) {
+			parameterWeightString = "_PW";
+			parameterWeights = ModelCovarianceMatrix.readSensitivityFileAndComputeWeight(sensitivityFile);
+		}
+			
+		outPaths = new Path[weights.length][][][];
 		for (int iweight = 0; iweight < weights.length; iweight++) {
-			outPaths[iweight] = new Path[frequencyRanges.length][];
+			outPaths[iweight] = new Path[frequencyRanges.length][][];
 			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-				outPaths[iweight][ifreq] = new Path[phases.length];
+				outPaths[iweight][ifreq] = new Path[phases.length][];
 				for (int iphase = 0; iphase < phases.length; iphase++) {
-					String freqString = String.format("%.1f-%.1f", 1./frequencyRanges[ifreq][1], 1./frequencyRanges[ifreq][0]);
-					Path path = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
-					if (path.toFile().exists())
-						throw new RuntimeException("Path already exists " + path);
-					if (inputPath == null)
-						outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
-					else
-						outPaths[iweight][ifreq][iphase] = workPath.resolve("lmi_checkerboard_" + weights[iweight] + "_" + freqString + "_" + phases[iphase]);
+					outPaths[iweight][ifreq][iphase] = new Path[corrections.length];
+					for (int icorr = 0; icorr < corrections.length; icorr++) {
+						String freqString = String.format("%.1f-%.1f", 1./frequencyRanges[ifreq][1], 1./frequencyRanges[ifreq][0]);
+						if (inputPath == null) {
+							Path path = workPath.resolve("lmi_" + weights[iweight] + "_" + freqString + "_" + phases[iphase] + "_" + corrections[icorr] 
+									+ modelCovarianceString + dampingString + parameterWeightString);
+							if (path.toFile().exists())
+								throw new RuntimeException("Path already exists " + path);
+							outPaths[iweight][ifreq][iphase][icorr] = path;
+						}
+						else {
+							Path path = workPath.resolve("lmiCheckerboard" + weights[iweight] + "_" + freqString + "_" + phases[iphase] + "_" + corrections[icorr] 
+									+ modelCovarianceString + dampingString + parameterWeightString);
+							if (path.toFile().exists())
+								throw new RuntimeException("Path already exists " + path);
+							outPaths[iweight][ifreq][iphase][icorr] = path;
+						}
+					}
 				}
 			}
 		}
@@ -357,22 +474,101 @@ public class LetMeInvert_fromAtA implements Operation {
 		if (inputPath != null)
 			System.out.println("Warning: currently the output variance is meaningless for checkerboard test");
 		
+		//set model covariance matrix
+//		RealMatrix cm = null;
+		ModelCovarianceMatrix cmMaker = null;
+		if (applyModelCovariance) {
+			if (!applyParameterWeight) { 
+				System.out.println("Using model covariance matrix with " + cmV + " " + cmH);
+				cmMaker = new ModelCovarianceMatrix(parameterList, cmV, cmH);
+			}
+			else {
+				System.out.println("Using model covariance matrix and parameter weight with " + cmV + " " + cmH + " " + sensitivityFile);
+				cmMaker = new ModelCovarianceMatrix(parameterList, cmV, cmH, sensitivityFile);
+			}
+			
+//			cm = cmMaker.getCm();
+			
+//			if (Double.isNaN(cm.getNorm())) {
+//				int n = cm.getColumnDimension();
+//				for (int i = 0; i < n; i++) {
+//					for (int j = 0; j < n; j++) {
+//						double cmij = cm.getEntry(i, j);
+//						if (Double.isNaN(cmij))
+//							System.out.println(parameterList.get(i) + " " + parameterList.get(j) + " " + cmij);
+//					}
+//				}
+//				throw new RuntimeException("Model covariance matrix has NaN entries (see above)");
+//			}
+				
+		}
+		
 		//set equations
 		System.out.println("Setting inverse equations...");
-		eq = new ObservationEquation[weights.length][][];
+		eq = new ObservationEquation[weights.length][][][];
 		
 		for (int iweight = 0; iweight < weights.length; iweight++) {
-			eq[iweight] = new ObservationEquation[frequencyRanges.length][];
+			eq[iweight] = new ObservationEquation[frequencyRanges.length][][];
 			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-				eq[iweight][ifreq] = new ObservationEquation[phases.length];
+				eq[iweight][ifreq] = new ObservationEquation[phases.length][];
 				for (int iphase = 0; iphase < phases.length; iphase++) {
-					RealMatrix ata = AtAFile.getAtARealMatrix(ataEntries, iweight, ifreq, iphase);
-					RealVector atd;
-					if (inputPath == null)
-						atd = AtdFile.getAtdVector(atdEntries, iweight, ifreq, iphase);
-					else
-						atd = ata.operate(inputVector);
-					eq[iweight][ifreq][iphase] = new ObservationEquation(ata, parameterList, atd);
+					eq[iweight][ifreq][iphase] = new ObservationEquation[corrections.length];
+					for (int icorr = 0; icorr < corrections.length; icorr++) {
+//						if (applyParameterWeight) {
+//							ataEntries = AtAFile.multiply(ataEntries, parameterWeights);
+//							atdEntries = AtdFile.multiply(atdEntries, parameterWeights);
+//						}
+						RealMatrix ata = AtAFile.getAtARealMatrix(ataEntries, iweight, ifreq, iphase);
+						RealVector atd;
+						
+						if (inputPath == null)
+							atd = AtdFile.getAtdVector(atdEntries, iweight, ifreq, iphase, icorr);
+						else
+							atd = ata.operate(inputVector);
+						if (applyModelCovariance) {
+//							ata = cm.multiply(ata);
+							ata = cmMaker.leftMultiply(ata);
+						
+//							atd = cm.operate(atd);
+							atd = cmMaker.operate(atd);
+							
+							if (Double.isNaN(ata.getNorm())) {
+								int n = ata.getColumnDimension();
+								for (int i = 0; i < n; i++) {
+									for (int j = 0; j < n; j++) {
+										double ataij = ata.getEntry(i, j);
+										if (Double.isNaN(ataij))
+											System.out.println(parameterList.get(i) + " " + parameterList.get(j) + " " + ataij);
+									}
+								}
+								throw new RuntimeException("AtA matrix has NaN entries (see above)");
+							}
+						}
+//						if (applyParameterWeight) {
+//							ata = AtAFile.multiply(ata, parameterWeights);
+//							atd = AtdFile.multiply(atd, parameterWeights);
+//						}
+						if (applyDamping) {
+							int n = ata.getColumnDimension();
+							RealMatrix g = new Array2DRowRealMatrix(n, n);
+							if (dampingType.equals(DampingType.L)) {
+								double ataScale = 0;
+								for (int i = 0; i < n; i++)
+									ataScale += Math.abs(ata.getEntry(i, i));
+								ataScale /= n;
+								for (int i = 0; i < n; i++)
+									g.setEntry(i, i, lambda * ataScale);
+							}
+							else if (dampingType.equals(DampingType.LM)) {
+								for (int i = 0; i < n; i++)
+									g.setEntry(i, i, ata.getEntry(i, i) * lambda);
+							}
+							
+							ata = ata.add(g);
+						}
+						
+						eq[iweight][ifreq][iphase][icorr] = new ObservationEquation(ata, parameterList, atd);
+					}
 				}
 			}
 		}
@@ -396,22 +592,26 @@ public class LetMeInvert_fromAtA implements Operation {
 	/**
 	 * Output information of observation equation
 	 */
-	private Future<Void> output(int iweight, int ifreq, int iphase) throws IOException {
+	private Future<Void> output(int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		// // ステーションの情報の読み込み
-		System.err.print("reading station Information");
-		if (stationSet == null)
-			stationSet = StationInformationFile.read(stationInformationPath);
-		System.err.println(" done");
+//		System.err.println("reading station Information");
+//		if (stationSet == null)
+//			stationSet = StationInformationFile.read(stationInformationPath);
+//		System.err.println(" done");
 //		Dvector dVector = eq[iweight][ifreq][iphase].getDVector();
 		Callable<Void> output = () -> {
 //			outputDistribution(outPaths[iweight][ifreq][iphase].resolve("stationEventDistribution.inf"), iweight, ifreq, iphase);
 //			dVector.outOrder(outPath);
 //			dVector.outPhases(outPath);
 //			outEachTrace(outPath.resolve("trace"));
-			UnknownParameterFile.write(eq[iweight][ifreq][iphase].getParameterList()
-					, outPaths[iweight][ifreq][iphase].resolve("unknownParameterOrder.inf"));
-			UnknownParameterFile.write(eq[iweight][ifreq][iphase].getOriginalParameterList()
-					, outPaths[iweight][ifreq][iphase].resolve("originalUnknownParameterOrder.inf"));
+			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getParameterList()
+					, outPaths[iweight][ifreq][iphase][icorr].resolve("unknownParameterOrder.inf"));
+			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getOriginalParameterList()
+					, outPaths[iweight][ifreq][iphase][icorr].resolve("originalUnknownParameterOrder.inf"));
+			PrintWriter pw = new PrintWriter(outPaths[iweight][ifreq][iphase][icorr].resolve("parameterWeight.inf").toFile());
+			for (double pWeight : parameterWeights)
+				pw.println(pWeight);
+			pw.close();
 //			eq.outputA(outPath.resolve("partial"));
 //			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 //			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
@@ -429,40 +629,49 @@ public class LetMeInvert_fromAtA implements Operation {
 		for (int iweight = 0; iweight < weights.length; iweight++) {
 			for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
 				for (int iphase = 0; iphase < phases.length; iphase++) {
-					try {
-						System.err.println("The output folder is " + outPaths[iweight][ifreq][iphase]);
-						Files.createDirectory(outPaths[iweight][ifreq][iphase]);
-						if (property != null)
-							writeProperties(outPaths[iweight][ifreq][iphase].resolve("lmi.properties"));
-					} catch (Exception e) {
-						e.printStackTrace();
-						throw new RuntimeException("Cannot create " + outPaths[iweight][ifreq][iphase]);
+					for (int icorr = 0; icorr < corrections.length; icorr++) {
+						try {
+							System.err.println("The output folder is " + outPaths[iweight][ifreq][iphase][icorr]);
+							Files.createDirectory(outPaths[iweight][ifreq][iphase][icorr]);
+							if (property != null)
+								writeProperties(outPaths[iweight][ifreq][iphase][icorr].resolve("lmi.properties"));
+						} catch (Exception e) {
+							e.printStackTrace();
+							throw new RuntimeException("Cannot create " + outPaths[iweight][ifreq][iphase][icorr]);
+						}
+				
+						long start = System.nanoTime();
+				
+						// 観測方程式
+						Future<Void> future;
+						try {
+							future = output(iweight, ifreq, iphase, icorr);
+						} catch (Exception e) {
+							e.printStackTrace();
+							return;
+						}
+				
+						// 逆問題
+						solve(iweight, ifreq, iphase, icorr);
+						try {
+							future.get();
+						} catch (InterruptedException | ExecutionException e) {
+							e.printStackTrace();
+						}
+						try {
+							eq[iweight][ifreq][iphase][icorr].outputSensitivity(outPaths[iweight][ifreq][iphase][icorr].resolve("sensitivity.inf"));
+							
+							if (model != null) {
+								System.out.println("Outputting " + maxNumVector + " velocity perturbation vectors...");
+								Path inversionResultPath = outPaths[iweight][ifreq][iphase][icorr];
+								VelocityField3D.outputVelocity(model, perturbationLayerFile, maxNumVector, deltaDegree, inversionResultPath);
+							}
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+						
+						System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
 					}
-			
-					long start = System.nanoTime();
-			
-					// 観測方程式
-					Future<Void> future;
-					try {
-						future = output(iweight, ifreq, iphase);
-					} catch (Exception e) {
-						e.printStackTrace();
-						return;
-					}
-			
-					// 逆問題
-					solve(iweight, ifreq, iphase);
-					try {
-						future.get();
-					} catch (InterruptedException | ExecutionException e) {
-						e.printStackTrace();
-					}
-					try {
-						eq[iweight][ifreq][iphase].outputSensitivity(outPaths[iweight][ifreq][iphase].resolve("sensitivity.inf"));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					System.err.println("Inversion is done in " + Utilities.toTimeString(System.nanoTime() - start));
 				}
 			}
 		}
@@ -476,11 +685,11 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outEachTrace(Path outPath, int iweight, int ifreq, int iphase) throws IOException {
+	public void outEachTrace(Path outPath, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		if (Files.exists(outPath))
 			throw new FileAlreadyExistsException(outPath.toString());
 		Files.createDirectories(outPath);
-		Dvector d = eq[iweight][ifreq][iphase].getDVector();
+		Dvector d = eq[iweight][ifreq][iphase][icorr].getDVector();
 
 		Path eventPath = outPath.resolve("eventVariance.inf");
 		Path stationPath = outPath.resolve("stationVariance.inf");
@@ -605,17 +814,17 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * @throws IOException
 	 *             if an I/O error occurs
 	 */
-	public void outEachTrace(Path outPath, RealVector[] vectors, int iweight, int ifreq, int iphase) throws IOException {
+	public void outEachTrace(Path outPath, RealVector[] vectors, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		// if (outDirectory.exists())
 		// return;
-		int nTimeWindow = eq[iweight][ifreq][iphase].getDVector().getNTimeWindow();
+		int nTimeWindow = eq[iweight][ifreq][iphase][icorr].getDVector().getNTimeWindow();
 		if (vectors.length != nTimeWindow)
 			return;
 		for (int i = 0; i < nTimeWindow; i++)
-			if (vectors[i].getDimension() != eq[iweight][ifreq][iphase].getDVector().getSynVec()[i].getDimension())
+			if (vectors[i].getDimension() != eq[iweight][ifreq][iphase][icorr].getDVector().getSynVec()[i].getDimension())
 				return;
 		Files.createDirectories(outPath);
-		for (GlobalCMTID id : eq[iweight][ifreq][iphase].getDVector().getUsedGlobalCMTIDset()) {
+		for (GlobalCMTID id : eq[iweight][ifreq][iphase][icorr].getDVector().getUsedGlobalCMTIDset()) {
 			Path eventPath = outPath.resolve(id.toString());
 			Files.createDirectories(eventPath);
 			Path record = eventPath.resolve("record.plt");
@@ -630,8 +839,8 @@ public class LetMeInvert_fromAtA implements Operation {
 				pwa.print("p ");
 			}
 		}
-		BasicID[] obsIDs = eq[iweight][ifreq][iphase].getDVector().getObsIDs();
-		BasicID[] synIDs = eq[iweight][ifreq][iphase].getDVector().getSynIDs();
+		BasicID[] obsIDs = eq[iweight][ifreq][iphase][icorr].getDVector().getObsIDs();
+		BasicID[] synIDs = eq[iweight][ifreq][iphase][icorr].getDVector().getSynIDs();
 		for (int i = 0; i < nTimeWindow; i++) {
 			Path out = outPath.resolve(obsIDs[i].getGlobalCMTID() + "/" + obsIDs[i].getStation() + "."
 					+ obsIDs[i].getGlobalCMTID() + "." + obsIDs[i].getSacComponent() + "." + i + ".txt"); // TODO
@@ -662,29 +871,32 @@ public class LetMeInvert_fromAtA implements Operation {
 
 	}
 
-	private void solve(int iweight, int ifreq, int iphase) {
+	private void solve(int iweight, int ifreq, int iphase, int icorr) {
 		inverseMethods.forEach(method -> {
 			try {
 				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD)
 					return; // TODO
-				solve(outPaths[iweight][ifreq][iphase].resolve(method.simple()), method.getMethod(eq[iweight][ifreq][iphase].getAtA(), eq[iweight][ifreq][iphase].getAtD())
-						, iweight, ifreq, iphase);
+				solve(outPaths[iweight][ifreq][iphase][icorr].resolve(method.simple()), method.getMethod(eq[iweight][ifreq][iphase][icorr].getAtA(), eq[iweight][ifreq][iphase][icorr].getAtD())
+						, iweight, ifreq, iphase, icorr);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		});
 	}
 
-	private void solve(Path outPath, InverseProblem inverseProblem, int iweight, int ifreq, int iphase) throws IOException {
+	private void solve(Path outPath, InverseProblem inverseProblem, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		// invOutDir.mkdir();
 		inverseProblem.compute();
-		inverseProblem.outputAns(outPath);
-		outVariance(outPath, inverseProblem, iweight, ifreq, iphase);
+//		if (applyParameterWeight)
+//			inverseProblem.outputAns(outPath, parameterWeights);
+//		else
+			inverseProblem.outputAns(outPath);
+		outVariance(outPath, inverseProblem, iweight, ifreq, iphase, icorr);
 //		outVariancePerEvents(outPath, inverseProblem, iweight, ifreq, iphase); // TODO make it work
 
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
 		RealMatrix p = inverseProblem.getBaseVectors();
-		for (int j = 0; j < eq[iweight][ifreq][iphase].getMlength(); j++)
+		for (int j = 0; j < eq[iweight][ifreq][iphase][icorr].getMlength(); j++)
 			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
 	}
 
@@ -708,15 +920,15 @@ public class LetMeInvert_fromAtA implements Operation {
 	 * 
 	 * @param outPath
 	 */
-	private void outVariance(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase) throws IOException {
+	private void outVariance(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		Path out = outPath.resolve("variance.txt");
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
-		double[] variance = new double[eq[iweight][ifreq][iphase].getMlength() + 1];
-		variance[0] = residualVariances[iweight][ifreq][iphase];
-		for (int i = 0; i < eq[iweight][ifreq][iphase].getMlength(); i++)
-			variance[i + 1] = eq[iweight][ifreq][iphase].varianceOf(inverse.getANS().getColumnVector(i), residualVariances[iweight][ifreq][iphase]
-					, obsNorms[iweight][ifreq][iphase]);
+		double[] variance = new double[eq[iweight][ifreq][iphase][icorr].getMlength() + 1];
+		variance[0] = residualVariances[iweight][ifreq][iphase][icorr];
+		for (int i = 0; i < eq[iweight][ifreq][iphase][icorr].getMlength(); i++)
+			variance[i + 1] = eq[iweight][ifreq][iphase][icorr].varianceOf(inverse.getANS().getColumnVector(i), residualVariances[iweight][ifreq][iphase][icorr]
+					, obsNorms[iweight][ifreq][iphase][icorr]);
 		writeDat(out, variance);
 		if (alpha == null)
 			return;
@@ -728,21 +940,21 @@ public class LetMeInvert_fromAtA implements Operation {
 		writeDat(outPath.resolve("aic.inf"), alpha);
 	}
 	
-	private void outVariancePerEvents(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase) throws IOException {
+	private void outVariancePerEvents(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		Set<NDK> gcmtCat = GlobalCMTCatalog.readJar("globalcmt.catalog");
 		
-		Set<GlobalCMTID> eventSet = eq[iweight][ifreq][iphase].getDVector().getUsedGlobalCMTIDset();
+		Set<GlobalCMTID> eventSet = eq[iweight][ifreq][iphase][icorr].getDVector().getUsedGlobalCMTIDset();
 		Path out = outPath.resolve("eventVariance.txt");
-		int n = 31 > eq[iweight][ifreq][iphase].getMlength() ? eq[iweight][ifreq][iphase].getMlength() : 31;
+		int n = 31 > eq[iweight][ifreq][iphase][icorr].getMlength() ? eq[iweight][ifreq][iphase][icorr].getMlength() : 31;
 		Map<GlobalCMTID, double[]> varianceMap = new HashMap<>();
 		for (GlobalCMTID id : eventSet) {
 			if (Files.exists(out))
 				throw new FileAlreadyExistsException(out.toString());
 			double[] variance = new double[n];
-			variance[0] = eq[iweight][ifreq][iphase].getDVector().getEventVariance().get(id);
-			RealVector residual = eq[iweight][ifreq][iphase].getDVector().getD();
-			RealVector obsVec = eq[iweight][ifreq][iphase].getDVector().getObs();
-			RealVector mask = eq[iweight][ifreq][iphase].getDVector().getMask(id);
+			variance[0] = eq[iweight][ifreq][iphase][icorr].getDVector().getEventVariance().get(id);
+			RealVector residual = eq[iweight][ifreq][iphase][icorr].getDVector().getD();
+			RealVector obsVec = eq[iweight][ifreq][iphase][icorr].getDVector().getObs();
+			RealVector mask = eq[iweight][ifreq][iphase][icorr].getDVector().getMask(id);
 			
 			for (int i = 0; i < residual.getDimension(); i++) {
 				residual.setEntry(i, residual.getEntry(i) * mask.getEntry(i));
@@ -750,7 +962,7 @@ public class LetMeInvert_fromAtA implements Operation {
 			}
 			
 			for (int i = 0; i < n-1; i++) {
-				RealVector adm = eq[iweight][ifreq][iphase].getA().operate(inverse.getANS().getColumnVector(i));
+				RealVector adm = eq[iweight][ifreq][iphase][icorr].getA().operate(inverse.getANS().getColumnVector(i));
 				for (int j = 0; j < adm.getDimension(); j++)
 					adm.setEntry(j, adm.getEntry(j) * mask.getEntry(j));
 				variance[i + 1] = variance[0] + (-2 * adm.dotProduct(residual)
@@ -848,10 +1060,10 @@ public class LetMeInvert_fromAtA implements Operation {
 	 *             if an I/O error occurs
 	 */
 	// TODO make it work
-	public void outputDistribution(Path outPath, int iweight, int ifreq, int iphase) throws IOException {
+	public void outputDistribution(Path outPath, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			BasicID[] obsIDs = eq[iweight][ifreq][iphase].getDVector().getObsIDs();
+			BasicID[] obsIDs = eq[iweight][ifreq][iphase][icorr].getDVector().getObsIDs();
 			pw.println("#station(lat lon) event(lat lon r) EpicentralDistance Azimuth ");
 			Arrays.stream(obsIDs).forEach(id -> {
 				GlobalCMTData event = id.getGlobalCMTID().getEvent();

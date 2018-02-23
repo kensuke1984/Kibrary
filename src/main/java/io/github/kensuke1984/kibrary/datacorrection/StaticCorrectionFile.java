@@ -220,7 +220,11 @@ public final class StaticCorrectionFile {
 				return;
 			scf = StaticCorrectionFile.read(Paths.get(s));
 		}
-		scf.stream().sorted().forEach(System.out::println);
+		scf.stream().sorted().forEach(corr -> {
+			double azimuth = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(corr.getStation().getPosition()));
+			double distance = Math.toDegrees(corr.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(corr.getStation().getPosition()));
+			System.out.println(corr.toString() + " " + azimuth + " " + distance);
+		});
 	}
 
 }

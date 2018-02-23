@@ -463,6 +463,9 @@ public class LetMeInvert implements Operation {
 		case RECIPROCAL_AZED_DPP:
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
 			break;
+		case RECIPROCAL_AZED_DPP_V2:
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
+			break;
 		case TAKEUCHIKOBAYASHI:
 			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
 //			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
@@ -515,11 +518,11 @@ public class LetMeInvert implements Operation {
 			outputDistribution(outPath.resolve("stationEventDistribution.inf"));
 			dVector.outOrder(outPath);
 			dVector.outPhases(outPath);
-			outEachTrace(outPath.resolve("trace"));
+//			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
 //			eq.outputA(outPath.resolve("partial"));
-			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
+//			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
 			dVector.outWeighting(outPath);
 			return null;

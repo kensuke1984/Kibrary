@@ -18,23 +18,23 @@ public class taupModelMaker {
 				Paths.get("/Users/Anselme/Dropbox/Kenji/FWICarib/specfem/Dpp+2per/model/model.poly"));
 		Path root = Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES");
 //		int nR = Integer.parseInt(args[0]);
-		int nR = 5000;
+		int nR = 10000;
 		
 		PolynomialStructure ak135 = PolynomialStructure.AK135;
 		
-		double mu = ak135.computeMu(5800.);
-		double dmu = mu * ((1.01)*(1.01)-1);
-		System.out.println(mu + " " + dmu);
-		System.exit(0);
-		
-		for (int i = 3482; i < 3882; i+=50) {
-			double vsh2 = ak135.getVshAt(i)*ak135.getVshAt(i);
-			double vsv2 = ak135.getVsvAt(i)*ak135.getVsvAt(i);
-			double vpv2 = ak135.getVpvAt(i)*ak135.getVpvAt(i);
-			System.out.println(vsh2 + " " + vsv2 + " " + vpv2);
-		}
-		
-		System.exit(0);
+//		double mu = ak135.computeMu(5800.);
+//		double dmu = mu * ((1.01)*(1.01)-1);
+//		System.out.println(mu + " " + dmu);
+//		System.exit(0);
+//		
+//		for (int i = 3482; i < 3882; i+=50) {
+//			double vsh2 = ak135.getVshAt(i)*ak135.getVshAt(i);
+//			double vsv2 = ak135.getVsvAt(i)*ak135.getVsvAt(i);
+//			double vpv2 = ak135.getVpvAt(i)*ak135.getVpvAt(i);
+//			System.out.println(vsh2 + " " + vsv2 + " " + vpv2);
+//		}
+//		
+//		System.exit(0);
 		
 //		Path outpath = root.resolve("PREM.vel");
 //		outputSTD(PolynomialStructure.PREM, nR, outpath);
@@ -46,19 +46,20 @@ public class taupModelMaker {
 //		outputSTD(PolynomialStructure.AK135, nR, outpath);
 		
 //		Path outpath = root.resolve("MIASP91.vel");
-		PolynomialStructure miasp91 = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/miasp91.poly"));
+//		PolynomialStructure miasp91 = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/miasp91.poly"));
 //		outputSTD(miasp91, nR, outpath);
 		
-		Path outpath = root.resolve("TBL400_vs-Q.vel");
-		PolynomialStructure tbl = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/TBL400_3800_05_08_vs-Q.poly"));
-		outputSTD(tbl, nR, outpath);
+//		Path outpath = root.resolve("TBL400_vs-Q.vel");
+//		PolynomialStructure tbl = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/POLYFILES/TBL400_3800_05_08_vs-Q.poly"));
+//		outputSTD(tbl, nR, outpath);
+//		
+//		double r = 6371.-2000.000000000001;
+//		double dvs = miasp91.getVshAt(r) - tbl.getVshAt(r);
+//		double dvp = miasp91.getVphAt(r) - tbl.getVphAt(r);
+//		double drho = miasp91.getRhoAt(r) - tbl.getRhoAt(r);
+////		System.out.println(dvp + " " + dvs + " " + drho);
 		
-		double r = 6371.-2000.000000000001;
-		double dvs = miasp91.getVshAt(r) - tbl.getVshAt(r);
-		double dvp = miasp91.getVphAt(r) - tbl.getVphAt(r);
-		double drho = miasp91.getRhoAt(r) - tbl.getRhoAt(r);
-		System.out.println(dvp + " " + dvs + " " + drho);
-		
+		outputTauP(PolynomialStructure.TNASNA, nR);
 		
 //		System.out.println(miasp91.getRhoAt(6030.9));
 //		System.out.println(miasp91.getRhoAt(5781.0));

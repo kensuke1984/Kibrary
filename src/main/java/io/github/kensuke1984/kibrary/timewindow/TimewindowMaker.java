@@ -19,6 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.lang3.ArrayUtils;
 
 import ucar.jpeg.jj2000.j2k.util.ArrayUtil;
@@ -500,6 +502,8 @@ public class TimewindowMaker implements Operation {
 		// 震源観測点ペアの震央距離
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 		
+		System.out.println(eventR + " " + epicentralDistance);
+		
 		try {
 			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, model);
 			
@@ -579,7 +583,7 @@ public class TimewindowMaker implements Operation {
 			GlobalCMTID id = sacFileName.getGlobalCMTID();
 			// component of SacFile
 			SACComponent component = sacFileName.getComponent();
-	
+			
 			// window fix
 			Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
 					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
@@ -683,7 +687,7 @@ public class TimewindowMaker implements Operation {
 		Timewindow[] exWindows = exPhaseTime == null ? null
 				: Arrays.stream(exPhaseTime).mapToObj(time -> new Timewindow(time - exFrontShift, time + rearShift))
 						.sorted().toArray(Timewindow[]::new);
-
+		
 		windows = mergeWindow(windows);
 
 		if (exWindows == null)

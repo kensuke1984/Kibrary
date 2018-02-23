@@ -29,7 +29,7 @@ public class ResidualVarianceFile {
 					for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
 						double residual = numerator[iweight][ifreq][iphase][icorr] / denominator[iweight][ifreq][iphase][icorr];
 						pw.println(weights[iweight] + " " + frequencyRanges[ifreq] + " " + phases[iphase] + " " + correctionTypes[icorr] 
-								+ " " + String.format("%.8f", residual) + " " + String.format("%.8f", denominator[iweight][ifreq][iphase]));
+								+ " " + String.format("%.8f", residual) + " " + String.format("%.8f", denominator[iweight][ifreq][iphase][icorr]));
 					}
 				}
 			}
@@ -53,7 +53,7 @@ public class ResidualVarianceFile {
 				for (int iphase = 0; iphase < nphase; iphase++) {
 					residuals[iweight][ifreq][iphase] = new double[ncorr];
 					for (int icorr = 0; icorr < ncorr; icorr++) {
-						double residual = Double.parseDouble(br.readLine().split(" ")[3]);
+						double residual = Double.parseDouble(br.readLine().split(" ")[4]);
 						residuals[iweight][ifreq][iphase][icorr] = residual;
 					}
 				}
@@ -80,7 +80,7 @@ public class ResidualVarianceFile {
 				for (int iphase = 0; iphase < nphase; iphase++) {
 					residuals[iweight][ifreq][iphase] = new double[ncorr];
 					for (int icorr = 0; icorr < ncorr; icorr++) {
-						double residual = Double.parseDouble(br.readLine().split(" ")[4]);
+						double residual = Double.parseDouble(br.readLine().split(" ")[5]);
 						residuals[iweight][ifreq][iphase][icorr] = residual;
 					}
 				}

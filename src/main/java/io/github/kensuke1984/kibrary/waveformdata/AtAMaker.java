@@ -10,6 +10,7 @@ import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.inversion.ParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.inversion.Weighting;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
 import io.github.kensuke1984.kibrary.quick.LookAtBPspc;
 import io.github.kensuke1984.kibrary.quick.LookAtFPspc;
@@ -223,6 +224,8 @@ public class AtAMaker implements Operation {
 				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 	
+	private Path rootWaveformPath;
+	
 	/**
 	 * @throws IOException
 	 */
@@ -236,6 +239,8 @@ public class AtAMaker implements Operation {
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used (Z R T)");
 			pw.println("#components");
+			pw.println("##Path of the root folder for waveformIDPath and waveformPath. (.)");
+			pw.println("#rootWaveformPath");
 			pw.println("##Path of waveformID files, must be set. Multiple paths with different static correction can be set, separated by a space");
 			pw.println("#waveformIDPath");
 			pw.println("##Path a waveform files, must be set. Multiple paths with different static correction can be set, separated by a space");
@@ -304,6 +309,8 @@ public class AtAMaker implements Operation {
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", "");
+		if (!property.containsKey("rootWaveformPath"))
+			property.setProperty("rootWaveformPath", ".");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("bpPath"))
@@ -404,11 +411,21 @@ public class AtAMaker implements Operation {
 //		if (weightingTypes.length > 1)
 //			throw new IllegalArgumentException("Error: only 1 weighting type can be set now");
 		
-		waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> Paths.get(s))
-			.collect(Collectors.toList()).toArray(new Path[0]);
-		waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
-				.collect(Collectors.toList()).toArray(new Path[0]);
-		correctionTypes = Stream.of(property.getProperty("correctionTypes").trim().split("\\s+")).map(s -> Paths.get(s))
+		rootWaveformPath = Paths.get(property.getProperty("rootWaveformPath").trim());
+		if (property.getProperty("rootWaveformPath").trim().equals(".")) {
+			waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> Paths.get(s))
+					.collect(Collectors.toList()).toArray(new Path[0]);
+			waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
+					.collect(Collectors.toList()).toArray(new Path[0]);
+		}
+		else {
+			waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
+					.collect(Collectors.toList()).toArray(new Path[0]);
+			waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
+						.collect(Collectors.toList()).toArray(new Path[0]);
+		}
+		
+		correctionTypes = Stream.of(property.getProperty("correctionTypes").trim().split("\\s+")).map(s -> StaticCorrectionType.valueOf(s.trim()))
 				.collect(Collectors.toList()).toArray(new StaticCorrectionType[0]);
 		
 		double[] tmpthetainfo = Stream.of(property.getProperty("thetaInfo").trim().split("\\s+")).mapToDouble(Double::parseDouble)
@@ -476,6 +493,7 @@ public class AtAMaker implements Operation {
 		setBandPassFilter();
 		setUnknownParameters();
 		setWaveformData();
+		canGO();
 		
 		String tempString = Utilities.getTemporaryString();
 		
@@ -486,7 +504,7 @@ public class AtAMaker implements Operation {
 		
 		// redefine nwindowBuffer so that it divides timewindowInformation.size()
 		int integerratio = timewindowInformation.size() / nwindowBuffer;
-		int newNwindowBuffer = timewindowInformation.size() / integerratio;
+		int newNwindowBuffer = integerratio == 0 ? timewindowInformation.size() : timewindowInformation.size() / integerratio;
 		System.out.println("nWindowBuffer (new, previous) = " + newNwindowBuffer + " " + nwindowBuffer);
 		nwindowBuffer = newNwindowBuffer;
 		
@@ -780,6 +798,7 @@ public class AtAMaker implements Operation {
 				residualVarianceDenominator[iweight][ifreq] = new double[usedPhases.length][];
 				for (int iphase = 0; iphase < usedPhases.length; iphase++) {
 					residualVarianceNumerator[iweight][ifreq][iphase] = new double[correctionTypes.length];
+					residualVarianceDenominator[iweight][ifreq][iphase] = new double[correctionTypes.length];
 					for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
 						residualVarianceNumerator[iweight][ifreq][iphase][icorr] = 0.;
 						residualVarianceDenominator[iweight][ifreq][iphase][icorr] = 0.;
@@ -821,7 +840,7 @@ public class AtAMaker implements Operation {
 					denominator += obsdata[k] * obsdata[k];
 				}
 				for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
-					double weight = computeWeight(weightingTypes[iweight], obsdata, syndata);
+					double weight = computeWeight(weightingTypes[iweight], obs, syn);
 					residualVarianceNumerator[iweight][ifreq][iphase][icorr] += numerator * weight * weight;
 					residualVarianceDenominator[iweight][ifreq][iphase][icorr] += denominator * weight * weight;
 				}
@@ -998,6 +1017,11 @@ public class AtAMaker implements Operation {
 		for (int i = 0; i < waveformIDPath.length; i++) {
 			basicIDArray[i] = BasicIDFile.readBasicIDandDataFile(waveformIDPath[i], waveformPath[i]);
 		}
+	}
+	
+	private void canGO() {
+		if (basicIDArray[0].length < 2 * timewindowInformation.size())
+			throw new RuntimeException("Not enough waveforms for the given timewindow file");
 	}
 	
 	private void outputUnknownParameters(Path outpath) throws IOException {
@@ -1244,7 +1268,7 @@ public class AtAMaker implements Operation {
 										double[] synData = synID.getData();
 										double[] residual = new double[obsData.length];
 										
-										double weight = computeWeight(weightingTypes[iweight], obsData, synData);
+										double weight = computeWeight(weightingTypes[iweight], obsID, synID);
 										
 										if (Double.isNaN(weight))
 											throw new RuntimeException("Weight is NaN " + info);
@@ -1346,14 +1370,26 @@ public class AtAMaker implements Operation {
 		
 	}
 	
-	public double computeWeight(WeightingType type, double[] obs, double[] syn) {
+	public double computeWeight(WeightingType type, BasicID obs, BasicID syn) {
 		double weight = 1.;
 		if (type.equals(WeightingType.RECIPROCAL)) {
-			weight = 1. / new ArrayRealVector(obs).getLInfNorm();
+			weight = 1. / new ArrayRealVector(obs.getData()).getLInfNorm();
 		}
 		else if (type.equals(WeightingType.IDENTITY)) {
 			weight = 1.;
 		}
+		else if (type.equals(WeightingType.RECIPROCAL_AZED_TZCA)) {
+			weight = 1./ new ArrayRealVector(obs.getData()).getLInfNorm() *
+					Weighting.weightingAzimuthTZCA(obs) *
+					Weighting.weightingDistanceTZCA(obs);
+		}
+		else if (type.equals(WeightingType.RECIPROCAL_STAEVT_TZCA)) {
+			weight = 1. / new ArrayRealVector(obs.getData()).getLInfNorm() *
+					Weighting.weightingStationTZCA(obs) *
+					Weighting.weightEventTZCA(obs);
+		}
+		else
+			throw new RuntimeException("Weighting not yet implemented for " + type);
 		
 		return weight;
 	}

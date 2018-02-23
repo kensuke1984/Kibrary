@@ -46,7 +46,12 @@ public class FiniteDifferencePartial {
 				
 				String endstring = obsIds[i].isConvolute() ? "sc" : "s";
 				String outfile = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
+				String outfile2 = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent() + endstring;
+				String outfile3 = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent();
+				
 				PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outfile)));
+				PrintWriter pw2 = new PrintWriter(new BufferedWriter(new FileWriter(outfile2)));
+				PrintWriter pw3 = new PrintWriter(new BufferedWriter(new FileWriter(outfile3)));
 				
 				double[] obs = obsIds[i].getData();
 				double[] syn = synIds[i].getData();
@@ -54,9 +59,13 @@ public class FiniteDifferencePartial {
 				double dt = 1. / synIds[i].getSamplingHz();
 				for (int k = 0; k < obs.length; k++) {
 					pw.write(String.format("%.5f %.7e\n", t0+k*dt, (obs[k]-syn[k])/dm));
+					pw2.write(String.format("%.5f %.7e\n", t0+k*dt, syn[k]));
+					pw3.write(String.format("%.5f %.7e\n", t0+k*dt, obs[k]));
 				}
 				
 				pw.close();
+				pw2.close();
+				pw3.close();
 			}
 			
 		} catch (IOException e) {

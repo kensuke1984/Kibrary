@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
@@ -64,6 +65,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 			pw.println("#maxEventLongitude");
 			pw.println("#minEventDepth");
 			pw.println("#maxEventDepth");
+			pw.println("#networks");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -77,6 +79,8 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
 	private Path workPath;
 	private Properties property;
+	
+	private Set<String> networks;
 
 	public SecondHandler(Properties property) {
 		this.property = (Properties) property.clone();
@@ -136,6 +140,11 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 				Double.parseDouble(property.getProperty("maxEventDepth")) : 800;
 		double minEventDepth = property.containsKey("minEventDepth") ?
 				Double.parseDouble(property.getProperty("minEventDepth")) : 0;
+				
+		Set<String> networks = property.containsKey("networks") ? 
+				Stream.of(property.getProperty("networks").trim().split("\\s+")).collect(Collectors.toSet()) : null;
+		if (networks != null)
+			networks.stream().forEach(System.out::println);
 	
 		Predicate<SACData> p = new Predicate<SACData>() {
 
@@ -197,6 +206,14 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 				double eventDepth = obsSac.getValue(SACHeaderEnum.EVDP);
 				if (eventDepth > maxEventDepth || eventDepth < minEventDepth)
 					return false;
+				
+				// Network
+				if (networks != null) {
+					String network = obsSac.getSACString(SACHeaderEnum.KNETWK);
+					if (!networks.contains(network)) {
+						return false;
+					}
+				}
 
 				return true;
 			}

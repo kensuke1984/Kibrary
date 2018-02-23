@@ -227,6 +227,18 @@ public class PartialDatasetMaker_v2 implements Operation {
 
 			return cut;
 		}
+		
+		private Complex[] cutPartial(double[] u, TimewindowInformation timewindowInformation, double shift) {
+			int cutstart = (int) ((timewindowInformation.getStartTime() - shift) * partialSamplingHz) - ext;
+			// cutstartが振り切れた場合0 からにする
+			if (cutstart < 0)
+				return null;
+			int cutend = (int) ((timewindowInformation.getEndTime() - shift) * partialSamplingHz) + ext;
+			Complex[] cut = new Complex[cutend - cutstart];
+			Arrays.parallelSetAll(cut, i -> new Complex(u[i + cutstart]));
+
+			return cut;
+		}
 
 		private double[] sampleOutput(Complex[] u, TimewindowInformation timewindowInformation) {
 			// 書きだすための波形
@@ -242,7 +254,9 @@ public class PartialDatasetMaker_v2 implements Operation {
 		private SourceTimeFunction getSourceTimeFunction() {
 			return sourceTimeFunction == 0 ? null : userSourceTimeFunctions.get(id);
 		}
-
+		
+		private boolean shiftConvolution;
+		
 		@Override
 		public void run() {
 //			Location[] perturbationLocations = perturbationLocationSet.stream().toArray(Location[]::new);
@@ -336,7 +350,13 @@ public class PartialDatasetMaker_v2 implements Operation {
 //							System.out.println(partial[i*(int)partialSamplingHz]);
 //						}
 						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
-							Complex[] u = cutPartial(partial, info);
+							Complex[] u;
+//							if (!shiftConvolution)
+								u = cutPartial(partial, info);
+//							else {
+//								double shift = info.getGlobalCMTID().getEvent().getHalfDuration() - 
+//								u = cutPartial(partial, info, shift);
+//							}
 
 							u = filter.applyFilter(u);
 							double[] cutU = sampleOutput(u, info);
@@ -741,8 +761,8 @@ private class WorkerTimePartial implements Runnable {
 	@Override
 	public void run() throws IOException {
 		setLog();
-//		final int N_THREADS = Runtime.getRuntime().availableProcessors();
-		final int N_THREADS = 1;
+		final int N_THREADS = Runtime.getRuntime().availableProcessors();
+//		final int N_THREADS = 1;
 		writeLog("Running " + N_THREADS + " threads");
 		writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogID());
 		writeLog("SourceTimeFunction=" + sourceTimeFunction);
@@ -810,7 +830,6 @@ private class WorkerTimePartial implements Runnable {
 			else {
 				fpPathList = collectFP_jointCMT(idSet);
 			}
-			
 			
 			int donebp = 0;
 			// bpフォルダ内の各bpファイルに対して
@@ -898,7 +917,7 @@ private class WorkerTimePartial implements Runnable {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final String stfcatName = "ASTF2.stfcat"; //LSTF1 ASTF1 ASTF2
+	private final String stfcatName = "LSTF1.stfcat"; //LSTF1 ASTF1 ASTF2
 	private final List<String> stfcat = readSTFCatalogue(stfcatName);
 	
 	private void setSourceTimeFunctions() throws IOException {

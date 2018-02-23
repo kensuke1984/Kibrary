@@ -16,10 +16,9 @@ public class ProcessResult {
 		}
 	}
 	
-	
 	private static void createSACScript(Path root) throws IOException {
 		Path sacmacroFile = root.resolve("process.sacm");
-		Path basicsacShell = root.resolve("runbascisac.sh");
+		Path basicsacShell = root.resolve("runbasicsac.sh");
 		Path shellScript = root.resolve("runsac.sh");
 		
 		PrintWriter writer = new PrintWriter(sacmacroFile.toFile());
@@ -35,8 +34,9 @@ public class ProcessResult {
 				+ "SETBB COMP \"Z\"\n"
 				+ "endif\n"
 				+ "chnhdr KCMPNM %COMP\n"
-				+ "chnhdr IDEP \"VEL\""
-				+ "w %dir%/&1,KSTNM&_&1,KNETWK&.&1,KEVNM&.%COMP%sc\n"
+				+ "dif five\n"
+				+ "mul -1\n"
+				+ "w %dir%/&1,KSTNM&.&1,KEVNM&.%COMP%sc\n"
 				+ "ENDDO"
 				);
 		writer.close();
@@ -51,11 +51,12 @@ public class ProcessResult {
 		
 		writer = new PrintWriter(shellScript.toFile());
 		writer.println("#!/bin/sh\n"
+				+ "#To run in a folder that contains the event folders with SAC files output by SPECFEM3D_GLOBE\n"
 				+ "export SAC_DISPLAY_COPYRIGHT=0\n"
-				+ "for i in test*\n"
+				+ "for i in ./run*\n"
 				+ "do\n"
 				+ "   echo $i\n"
-				+ "   sh basicsac.sh $i\n"
+				+ "   sh runbasicsac.sh $i\n"
 				+ "done"
 				);
 		writer.close();

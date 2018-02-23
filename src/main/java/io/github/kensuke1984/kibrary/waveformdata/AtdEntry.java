@@ -102,7 +102,7 @@ public class AtdEntry {
 	@Override
 	public String toString() {
 		return weightingType.name() + " " + frequencyRange + " "
-		+ phases.toString() + " " + partialType.name() + " "
+		+ phases.toString() + " " + correctionType.name() + " " + partialType.name() + " "
 		+ location.toString() + " " + value;
 	}
 }

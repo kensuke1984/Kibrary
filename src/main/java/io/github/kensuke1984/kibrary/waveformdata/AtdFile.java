@@ -46,13 +46,15 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Precision;
 
+import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
+
 /**
  * @author Anselme Borgeaud
  *
  */
 public final class AtdFile {
 	
-	public static final int oneWeightingTypeByte = 10;
+	public static final int oneWeightingTypeByte = 4;
 	public static final int onePhasesByte = 20;
 	public static final int onePartialTypeByte = 10;
 	public static final int oneCorrectionTypeByte = 10;
@@ -63,11 +65,12 @@ public final class AtdFile {
 	 * weightingTypes 2
 	 * frequencyRange 2
 	 * phases 2
+	 * correctionType 2
 	 * partialType1 2
 	 * location1 2
 	 * value 8
 	 */
-	public static final int oneEntryByte = 18;
+	public static final int oneEntryByte = 20;
 
 	private AtdFile() {
 	}
@@ -135,8 +138,8 @@ public final class AtdFile {
 			Map<WeightingType, Integer> weightingTypeMap = new HashMap<>();
 			Map<FrequencyRange, Integer> frequencyRangesMap = new HashMap<>();
 			Map<Phases, Integer> phasesMap = new HashMap<>();
-			Map<PartialType, Integer> partialTypeMap = new HashMap<>();
 			Map<StaticCorrectionType, Integer> correctionTypeMap = new HashMap<>();
+			Map<PartialType, Integer> partialTypeMap = new HashMap<>();
 			Map<Location, Integer> locationMap = new HashMap<>();
 			
 			dos.writeShort(weightingTypes.length);
@@ -148,9 +151,8 @@ public final class AtdFile {
 			
 			for (int i = 0; i < weightingTypes.length; i++) {
 				weightingTypeMap.put(weightingTypes[i], i);
-				if ((int) weightingTypes[i].name().chars().count() > oneWeightingTypeByte)
-					throw new RuntimeException("WeightingType string should be 10 characters or less" + weightingTypes[i].name());
-				dos.writeBytes(StringUtils.rightPad(weightingTypes[i].name(), oneWeightingTypeByte));
+//				dos.writeBytes(StringUtils.rightPad(weightingTypes[i].name(), oneWeightingTypeByte));
+				dos.writeInt(weightingTypes[i].getValue());
 			}
 			for (int i = 0; i < frequencyRanges.length; i++) {
 				frequencyRangesMap.put(frequencyRanges[i], i);
@@ -233,10 +235,9 @@ public final class AtdFile {
 				throw new RuntimeException(atdPath + " has some problems.");
 			}
 			
-			byte[] weightingTypeByte = new byte[oneWeightingTypeByte];
 			for (int i = 0; i < weightingTypes.length; i++) {
-				dis.read(weightingTypeByte);
-				weightingTypes[i] = WeightingType.valueOf(new String(weightingTypeByte).trim());
+				int n = dis.readInt();
+				weightingTypes[i] = WeightingType.getType(n);
 			}
 			byte[] frequencyRangeByte = new byte[16];
 			for (int i = 0; i < frequencyRanges.length; i++) {
@@ -308,10 +309,9 @@ public final class AtdFile {
 				throw new RuntimeException(atdPath + " has some problems.");
 			}
 			
-			byte[] weightingTypeByte = new byte[oneWeightingTypeByte];
 			for (int i = 0; i < weightingTypes.length; i++) {
-				dis.read(weightingTypeByte);
-				weightingTypes[i] = WeightingType.valueOf(new String(weightingTypeByte).trim());
+				int n = dis.readInt();
+				weightingTypes[i] = WeightingType.getType(n);
 			}
 			byte[] frequencyRangeByte = new byte[16];
 			for (int i = 0; i < frequencyRanges.length; i++) {
@@ -346,7 +346,7 @@ public final class AtdFile {
 			int n1 = weightingTypes.length * frequencyRanges.length * phases.length * correctionTypes.length;
 			int n0Atd = nEntry / n1;
 			
-			AtdEntry[][][][][] atdEntries = new AtdEntry[n0Atd][weightingTypes.length][frequencyRanges.length][phases.length][correctionByte.length];
+			AtdEntry[][][][][] atdEntries = new AtdEntry[n0Atd][weightingTypes.length][frequencyRanges.length][phases.length][correctionTypes.length];
 			
 			for (int i = 0; i < nEntry; i++) {
 				byte[] tmpbytes = new byte[oneEntryByte];
@@ -377,11 +377,11 @@ public final class AtdFile {
 		}
 	}
 	
-	public static RealVector getAtdVector(AtdEntry[][][][] atdEntries, int iweight, int ifreq, int iphase) throws IOException {
+	public static RealVector getAtdVector(AtdEntry[][][][][] atdEntries, int iweight, int ifreq, int iphase, int icorr) throws IOException {
 		RealVector atdVector = new ArrayRealVector(atdEntries.length);
 		
 		for (int i = 0; i < atdEntries.length; i++) {
-			double atdi = atdEntries[i][iweight][ifreq][iphase].getValue();
+			double atdi = atdEntries[i][iweight][ifreq][iphase][icorr].getValue();
 			atdVector.setEntry(i, atdi);
 		}
 		
@@ -423,6 +423,63 @@ public final class AtdFile {
 //		usablephases = tmpset.toArray(usablephases);
 		
 		return new AtdEntry(weightingType, frequencyRange, phase, correctionType, partialType, location, value);
+	}
+	
+	public static AtdEntry[][][][][] add(AtdEntry[][][][][] atd1, AtdEntry[][][][][] atd2) {
+		int n0Atd = atd1.length;
+		int nWeight = atd1[0].length;
+		int nFreq = atd1[0][0].length;
+		int nPhase = atd1[0][0][0].length;
+		int nCorr = atd1[0][0][0][0].length;
+		AtdEntry[][][][][] atdSum = new AtdEntry[n0Atd][nWeight][nFreq][nPhase][nCorr];
+		
+		for (int i = 0; i < n0Atd; i++) {
+			for (int iweight = 0; iweight < nWeight; iweight++) {
+				for (int ifreq = 0; ifreq < nFreq; ifreq++) {
+					for (int iphase = 0; iphase < nPhase; iphase++) {
+						for (int icorr = 0; icorr < nCorr; icorr++) {
+							AtdEntry atdEntry = atd1[i][iweight][ifreq][iphase][icorr];
+							atdEntry.add(atd2[i][iweight][ifreq][iphase][icorr]);
+							atdSum[i][iweight][ifreq][iphase][icorr] = atdEntry;
+						}
+					}
+				}
+			}
+		}
+		
+		return atdSum;
+	}
+	
+	public static AtdEntry[][][][][] multiply(AtdEntry[][][][][] atd, double[] w) {
+		int n0Atd = atd.length;
+		int nWeight = atd[0].length;
+		int nFreq = atd[0][0].length;
+		int nPhase = atd[0][0][0].length;
+		int nCorr = atd[0][0][0][0].length;
+		AtdEntry[][][][][] atdMul = new AtdEntry[n0Atd][nWeight][nFreq][nPhase][nCorr];
+		
+		for (int i = 0; i < n0Atd; i++) {
+			for (int iweight = 0; iweight < nWeight; iweight++) {
+				for (int ifreq = 0; ifreq < nFreq; ifreq++) {
+					for (int iphase = 0; iphase < nPhase; iphase++) {
+						for (int icorr = 0; icorr < nCorr; icorr++) {
+							AtdEntry atdEntry = atd[i][iweight][ifreq][iphase][icorr];
+							atdEntry.setValue(atdEntry.getValue() * w[i]);
+							atdMul[i][iweight][ifreq][iphase][icorr] = atdEntry;
+						}
+					}
+				}
+			}
+		}
+		
+		return atdMul;
+	}
+	
+	public static RealVector multiply(RealVector atd, double[] w) {
+		RealVector atdMul = new ArrayRealVector(atd.getDimension());
+		for (int i = 0; i < atd.getDimension(); i++)
+			atdMul.setEntry(i, atd.getEntry(i) * w[i]);
+		return atdMul;
 	}
 	
 }

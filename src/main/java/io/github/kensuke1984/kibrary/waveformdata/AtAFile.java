@@ -53,7 +53,7 @@ import com.amazonaws.transform.SimpleTypeStaxUnmarshallers.IntegerStaxUnmarshall
  */
 public final class AtAFile {
 	
-	public static final int oneWeightingTypeByte = 10;
+	public static final int oneWeightingTypeByte = 4;
 	public static final int onePhasesByte = 20;
 	public static final int onePartialTypeByte = 10;
 	public static final int oneUnknownParameterByte = Physical3DParameter.oneUnknownByte;
@@ -221,9 +221,7 @@ public final class AtAFile {
 			
 			for (int i = 0; i < weightingTypes.length; i++) {
 				weightingTypeMap.put(weightingTypes[i], i);
-				if ((int) weightingTypes[i].name().chars().count() > oneWeightingTypeByte)
-					throw new RuntimeException("WeightingType string should be 10 characters or less" + weightingTypes[i].name());
-				dos.writeBytes(StringUtils.rightPad(weightingTypes[i].name(), oneWeightingTypeByte));
+				dos.writeInt(weightingTypes[i].getValue());
 			}
 			for (int i = 0; i < frequencyRanges.length; i++) {
 				frequencyRangesMap.put(frequencyRanges[i], i);
@@ -315,10 +313,9 @@ public final class AtAFile {
 				throw new RuntimeException(ataPath + " has some problems.");
 			}
 			
-			byte[] weightingTypeByte = new byte[oneWeightingTypeByte];
 			for (int i = 0; i < weightingTypes.length; i++) {
-				dis.read(weightingTypeByte);
-				weightingTypes[i] = WeightingType.valueOf(new String(weightingTypeByte).trim());
+				int n = dis.readInt();
+				weightingTypes[i] = WeightingType.getType(n);
 			}
 			byte[] frequencyRangeByte = new byte[16];
 			for (int i = 0; i < frequencyRanges.length; i++) {
@@ -492,6 +489,63 @@ public final class AtAFile {
 //		usablephases = tmpset.toArray(usablephases);
 		
 		return ataEntries;
+	}
+	
+	public static AtAEntry[][][][] add(AtAEntry[][][][] ata1, AtAEntry[][][][] ata2) {
+		int n0AtA = ata1.length;
+		int nWeight = ata1[0].length;
+		int nFreq = ata1[0][0].length;
+		int nPhase = ata1[0][0][0].length;
+		AtAEntry[][][][] ataSum = new AtAEntry[n0AtA][nWeight][nFreq][nPhase];
+		
+		for (int i0AtA = 0; i0AtA < n0AtA; i0AtA++) {
+			for (int iweight = 0; iweight < nWeight; iweight++) {
+				for (int ifreq = 0; ifreq < nFreq; ifreq++) {
+					for (int iphase = 0; iphase < nPhase; iphase++) {
+						AtAEntry ataEntry = ata1[i0AtA][iweight][ifreq][iphase];
+						ataEntry.add(ata2[i0AtA][iweight][ifreq][iphase]);
+						ataSum[i0AtA][iweight][ifreq][iphase] = ataEntry;
+					}
+				}
+			}
+		}
+		
+		return ataSum;
+	}
+	
+	public static AtAEntry[][][][] multiply(AtAEntry[][][][] ata, double[] w) {
+		int n0AtA = ata.length;
+		int nWeight = ata[0].length;
+		int nFreq = ata[0][0].length;
+		int nPhase = ata[0][0][0].length;
+		AtAEntry[][][][] ataMul = new AtAEntry[n0AtA][nWeight][nFreq][nPhase];
+		
+		for (int i0AtA = 0; i0AtA < n0AtA; i0AtA++) {
+			int iunknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * i0AtA) - 1));
+			int junknown = i0AtA - iunknown * (iunknown + 1) / 2;
+			for (int iweight = 0; iweight < nWeight; iweight++) {
+				for (int ifreq = 0; ifreq < nFreq; ifreq++) {
+					for (int iphase = 0; iphase < nPhase; iphase++) {
+						AtAEntry ataEntry = ata[i0AtA][iweight][ifreq][iphase];
+						ataEntry.setValue(ataEntry.getValue() * w[iunknown] * w[junknown]);
+						ataMul[i0AtA][iweight][ifreq][iphase] = ataEntry;
+					}
+				}
+			}
+		}
+		
+		return ataMul;
+	}
+	
+	public static RealMatrix multiply(RealMatrix ata, double[] w) {
+		int n = ata.getColumnDimension();
+		RealMatrix ataMul = new Array2DRowRealMatrix(n, n);
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				ataMul.setEntry(i, j, ata.getEntry(i, j) * w[i] * w[j]);
+			}
+		}
+		return ataMul;
 	}
 	
 }

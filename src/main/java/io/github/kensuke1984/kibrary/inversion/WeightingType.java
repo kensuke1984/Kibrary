@@ -1,5 +1,25 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+
+import java.util.Arrays;
+
 public enum WeightingType {
-	RECIPROCAL, LOWERUPPERMANTLE, TAKEUCHIKOBAYASHI, USERFUNCTION, IDENTITY, FINAL, RECIPROCAL_AZED, RECIPROCAL_AZED_DPP
+	RECIPROCAL(1), LOWERUPPERMANTLE(2), TAKEUCHIKOBAYASHI(3), USERFUNCTION(4), IDENTITY(5), 
+	FINAL(6), RECIPROCAL_AZED(7), RECIPROCAL_AZED_DPP(8), RECIPROCAL_AZED_TZCA(9),
+	RECIPROCAL_STAEVT_TZCA(10), RECIPROCAL_AZED_DPP_V2(8);
+	
+	private int value;
+	
+	private WeightingType(int n) {
+		value = n;
+	}
+	
+	public int getValue() {
+		return value;
+	}
+
+	public static WeightingType getType(int n) {
+		return Arrays.stream(WeightingType.values()).filter(type -> type.value == n).findAny()
+				.orElseThrow(() -> new IllegalArgumentException("Input n " + n + " is invalid."));
+	}
 }

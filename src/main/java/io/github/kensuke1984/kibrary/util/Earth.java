@@ -173,7 +173,6 @@ public final class Earth {
 	 * @return epicentral distance [rad] loc1とloc2の震央距離[rad]
 	 */
 	public static double getEpicentralDistance(HorizontalPosition loc1, HorizontalPosition loc2) {
-
 		double theta1 = loc1.getTheta();
 		double theta2 = loc2.getTheta();
 		double phi1 = loc1.getPhi();
@@ -184,7 +183,12 @@ public final class Earth {
 		 */
 		double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2)
 				+ FastMath.cos(theta1) * FastMath.cos(theta2);
-
+		
+		if (cosAlpha > 1.)
+			cosAlpha = 1;
+		else if (cosAlpha < -1)
+			cosAlpha = -1;
+		
 		return FastMath.acos(cosAlpha);
 	}
 	

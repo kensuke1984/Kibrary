@@ -2,6 +2,8 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.butterworth.LowPassFilter;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.selection.Bins2D;
 import io.github.kensuke1984.kibrary.selection.SurfaceWaveDetector;
@@ -47,15 +49,32 @@ public class TimewindowVisual {
 	public static void main(String[] args) throws IOException {
 		Path root = Paths.get(".");
 		Path timewindowPath = Paths.get("selectedTimewindow.dat");
+//		Path staticCorrectionPath = Paths.get("staticCorrection.dat");
+		List<Path> staticCorrectionPaths = new ArrayList<>();
 		Set<GlobalCMTID> ids = new HashSet<>();
-		if (args.length == 1)
+		if (args.length > 0) {
 			ids.add(new GlobalCMTID(args[0]));
+			for (int i = 1; i < args.length; i++)
+				staticCorrectionPaths.add(Paths.get(args[i]));
+		}
 		else
 			ids = Utilities.eventFolderSet(root).stream()
 				.map(event -> event.getGlobalCMTID()).collect(Collectors.toSet());
 		
+		List<Set<StaticCorrection>> correctionList = new ArrayList();
+		for (Path path : staticCorrectionPaths)
+			correctionList.add(StaticCorrectionFile.read(path));
+//		Set<StaticCorrection> corrections = StaticCorrectionFile.read(staticCorrectionPath);
+		
 		for (GlobalCMTID id : ids) {
 			final GlobalCMTID id_ = id;
+			
+			List<Set<StaticCorrection>> correctionListThisID = new ArrayList();
+			for (Set<StaticCorrection> corrections : correctionList)
+				correctionListThisID.add(corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(id_))
+					.collect(Collectors.toSet()));
+//			Set<StaticCorrection> correctionThisID = corrections.stream().filter(corr -> corr.getGlobalCMTID().equals(id_))
+//					.collect(Collectors.toSet());
 			
 			Path dirPath = root.resolve("timewindowVisual");
 			Path dir1 = dirPath.resolve(id.toString());
@@ -250,6 +269,17 @@ public class TimewindowVisual {
 					if (usedStations.contains(timewindow.getStation()))
 						continue;
 					
+					List<Double> timeShiftList = new ArrayList();
+					for (Set<StaticCorrection> corrections : correctionListThisID) {
+						Phases phases = new Phases(timewindow.getPhases());
+						timeShiftList.add(corrections.stream().filter(corr -> corr.getStation().equals(timewindow.getStation())
+								&& new Phases(corr.getPhases()).equals(phases) ).findFirst().get().getTimeshift());
+					}
+//								&& Math.abs(corr.getSynStartTime() - timewindow.getStartTime()) < 2. ).findFirst().get().getTimeshift());
+//					double timeShift = correctionThisID.stream().filter(corr -> corr.getStation().equals(timewindow.getStation())
+//							&& Math.abs(corr.getSynStartTime() - timewindow.getStartTime()) < 2. ).findFirst().get().getTimeshift();
+//					System.out.println(timeShift);
+					
 					DistanceAzimuth distance_azimuth = bins.getBinPosition(timewindow);
 					Path outpathBins = dir1.resolve(String.format("twv_bins_az%.1f.gmt", distance_azimuth.azimuth));
 					outpathList.add(outpathBins);
@@ -313,13 +343,17 @@ public class TimewindowVisual {
 						
 						String obsString = null;
 						String obsEnvelopeString = null;
+						String[] colors = new String[] {"blue", "green"};
+						List<String> obsStringList = new ArrayList<>();
 						if (isObs) {
-							obsString = trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 20);
-							obsEnvelopeString = trace2GMT(obsEnvelopeTrace, "cyan", 0, 0, distance_azimuth.distance, slowness, 20);
+							obsStringList.add(trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 10));
+							for (int k = 0; k < timeShiftList.size(); k++)
+								obsStringList.add(trace2GMT(obsFullTrace, colors[k], 0, 0, distance_azimuth.distance, slowness, 10, timeShiftList.get(k)));
+							obsEnvelopeString = trace2GMT(obsEnvelopeTrace, "cyan", 0, 0, distance_azimuth.distance, slowness, 10);
 						}
-						String synString = trace2GMT(synFullTrace, "red", 0, 0, distance_azimuth.distance, slowness, 20);
-						String synEnvelopeString = trace2GMT(synEnvelopeTrace, "magenta", 0, 0, distance_azimuth.distance, slowness, 20);
-						String twoBitsString = trace2GMT(twoBitsTrace, "black", 0, 0, distance_azimuth.distance, slowness, 20);
+						String synString = trace2GMT(synFullTrace, "red", 0, 0, distance_azimuth.distance, slowness, 10);
+						String synEnvelopeString = trace2GMT(synEnvelopeTrace, "magenta", 0, 0, distance_azimuth.distance, slowness, 10);
+						String twoBitsString = trace2GMT(twoBitsTrace, "black", 0, 0, distance_azimuth.distance, slowness, 10);
 						
 						if (!Files.exists(outpathBins)) {
 							createGMTFile(outpathBins);
@@ -330,7 +364,9 @@ public class TimewindowVisual {
 									, new String[] {"-BSW -Bx1000 -By20"}) + "\n").getBytes()
 								, StandardOpenOption.APPEND);
 							if (isObs) {
-								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
+//								obsStringList.add(trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 10));
+								for (int k = 0; k < timeShiftList.size() + 1; k++)
+									Files.write(outpathBins, (obsStringList.get(k) + "\n").getBytes(), StandardOpenOption.APPEND);
 								Files.write(outpathBins, (obsEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
 							}
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
@@ -343,7 +379,8 @@ public class TimewindowVisual {
 						}
 						else {
 							if (isObs) {
-								Files.write(outpathBins, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
+								for (int k = 0; k < timeShiftList.size() + 1; k++)
+									Files.write(outpathBins, (obsStringList.get(k) + "\n").getBytes(), StandardOpenOption.APPEND);
 //								Files.write(outpathBins, (obsEnvelopeString + "\n").getBytes(), StandardOpenOption.APPEND);
 							}
 							Files.write(outpathBins, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
@@ -407,6 +444,32 @@ public class TimewindowVisual {
 				+ String.format("-Wdefault,%s ", color)
 				+ String.format("-Xa%.2fc -Ya%.2fc ", X, Y)
 				+ "-K -O >> $outputps <<END\n";
+		
+		double[] time = trace.getX();
+		double[] amplitude = trace.getY();
+		
+//		double max = trace.getYVector().getMaxValue() > -trace.getYVector().getMinValue() ?
+//				trace.getYVector().getMaxValue() : -trace.getYVector().getMinValue();
+		
+		for (int i=0; i < (int) (amplitude.length / n); i++) {
+//			text += String.format("%.2f %.2f %.7f\n", time[i] - GCARC * redVel, GCARC, amplitude[i*n]);
+			text += String.format("%.2f %.2f %.7f\n", time[i*n] - GCARC * slowness, GCARC, amplitude[i*n]);
+		}
+		
+		return text += "END";
+	}
+	
+	public static String trace2GMT(Trace trace, String color, double X, double Y, double GCARC, double slowness, int nSample, double shift) {
+		String text = "";
+		double dt = 0.05;
+		int n = nSample;
+		
+		text += "gmt pswiggle -J -R -Z4. -B "
+				+ String.format("-Wdefault,%s ", color)
+				+ String.format("-Xa%.2fc -Ya%.2fc ", X, Y)
+				+ "-K -O >> $outputps <<END\n";
+		
+		trace = trace.shiftX(shift);
 		
 		double[] time = trace.getX();
 		double[] amplitude = trace.getY();

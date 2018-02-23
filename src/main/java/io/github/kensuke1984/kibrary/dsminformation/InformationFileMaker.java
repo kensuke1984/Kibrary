@@ -272,7 +272,13 @@ public class InformationFileMaker implements Operation {
 		// //////////////////////////////////////
 		System.out.println("making information files for the events(fp)");
 		for (EventFolder ed : eventDirs) {
-			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
+			GlobalCMTData ev;
+			try {
+				ev = ed.getGlobalCMTID().getEvent();
+			} catch (RuntimeException e) {
+				System.err.println(e.getMessage());
+				continue;
+			}
 			
 			// joint CMT inversion
 			if (jointCMT) {

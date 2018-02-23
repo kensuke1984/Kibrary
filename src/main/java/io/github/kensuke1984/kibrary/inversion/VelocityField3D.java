@@ -183,6 +183,7 @@ public class VelocityField3D {
 					Map<Location, Double> extendedZeroMeanPerturbationMap = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
+					double[][] profile1D = null;
 					if (trs == null) {
 						perturbations = toPerturbation(answerMap, layerMap, unknowns, structure, 1.);
 						Set<Double> rs = layerMap.keySet();
@@ -194,13 +195,15 @@ public class VelocityField3D {
 						for (UnknownParameter unknown : perturbations.keySet())
 							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
 						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
-						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 2., perturbationRs);
-						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 2., perturbationRs);
+						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 5., perturbationRs);
+						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 5., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
 							zeroQs = toQ(zeroMap, unknowns, structure, amplifyPerturbation);
 						}
+						
+						profile1D = average1DProfile(perturbationMap, perturbationRs);
 					}
 					else {
 						velocities = toVelocity(answerMap, trs, structure);
@@ -218,6 +221,7 @@ public class VelocityField3D {
 							pwQ = new PrintWriter(Files.newBufferedWriter(outpathQ, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 							pwQ.println("#perturbationR final_Q intial_Q");
 						}
+						//---------------
 						if (trs == null) {
 							for (Location loc : extendedPerturbationMap.keySet()) {
 								double perturbation = extendedPerturbationMap.get(loc);
@@ -230,7 +234,16 @@ public class VelocityField3D {
 										pwQ.println(Qs[j][2] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
 								}
 							}
+							
+							//1D profile
+							Path outpathProfile = inversionResultPath.resolve(inverse.simple() + "/" + "profile1D_" + inverse.simple() + i + ".txt");
+							PrintWriter pw2 = new PrintWriter(Files.newBufferedWriter(outpathProfile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+							for (int j = 0; j < profile1D.length; j++) {
+								pw2.println(profile1D[j][0] + " " + (6371.- profile1D[j][0]) + " " + profile1D[j][1]);
+							}
+							pw2.close();
 						}
+						//---------------
 						else {
 							for (UnknownParameter m : unknowns) {
 								Location loc = (Location) m.getLocation();
@@ -513,6 +526,24 @@ public class VelocityField3D {
 		return map;
 	}
 	
+	public static double[][] average1DProfile(Map<Location, Double> perturbationMap, double[] perturbationRs) {
+		double[][] profile = new double[perturbationRs.length][2];
+		Set<Location> locations = perturbationMap.keySet();
+		for (int i = 0; i < perturbationRs.length; i++) {
+			double r = perturbationRs[i];
+			Set<Location> tmpLocations = locations.stream().filter(loc -> loc.getR() == r)
+				.collect(Collectors.toSet());
+			double average = 0.;
+			for (Location tmploc : tmpLocations)
+				average += perturbationMap.get(tmploc);
+			average /= tmpLocations.size();
+			
+			profile[i][0] = r;
+			profile[i][1] = average;
+		}
+		return profile;
+	}
+	
 	public static Map<Location, Double> extendedPerturbationMap(Map<Location, Double> perturbationMap, double dL, double[] perturbationRs) {
 		Map<Location, Double> extended = new HashMap<>();
 		double minLat = 1e3;
@@ -579,5 +610,93 @@ public class VelocityField3D {
 		}
 
 		return extended;
+	}
+	
+	public static void outputVelocity(String modelName
+			, Path perturbationLayerFile, int maxNumVector, double deltaDegree
+			, Path inversionResultPath) throws IOException {
+		PolynomialStructure structure = null;
+		
+		switch (modelName) {
+		case "ak135":
+			structure = PolynomialStructure.AK135;
+			break;
+		case "AK135":
+			structure = PolynomialStructure.AK135;
+			break;
+		case "prem":
+			structure = PolynomialStructure.PREM;
+			break;
+		case "PREM":
+			structure = PolynomialStructure.PREM;
+			break;
+		case "iso_prem":
+			structure = PolynomialStructure.ISO_PREM;
+			break;
+		case "iprem":
+			structure = PolynomialStructure.ISO_PREM;
+			break;
+		case "stw105":
+			Path polynomialStructurePath = Paths.get("/mnt/melonpan/anpan/inversion/Dpp/POLY/stw105_smallCoeff.poly");
+			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
+				throw new RuntimeException("Error: no such file " + polynomialStructurePath.toString());
+			structure = new PolynomialStructure(polynomialStructurePath);
+			break;
+		case "STW105":
+			polynomialStructurePath = Paths.get("/mnt/melonpan/anpan/inversion/Dpp/POLY/stw105_smallCoeff.poly");
+			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
+				throw new RuntimeException("Error: no such file " + polynomialStructurePath.toString());
+			structure = new PolynomialStructure(polynomialStructurePath);
+			break;
+		default:
+			break;
+		}
+		
+		// read layer thickness
+		Map<Double, Double> layerMap = new HashMap<>();
+		Files.readAllLines(perturbationLayerFile).stream().forEach(s -> {
+			Double r = Double.parseDouble(s.trim().split(" ")[0]);
+			Double d = Double.parseDouble(s.trim().split(" ")[1]);
+			layerMap.put(r, d);
+		});
+		
+		InversionResult ir = new InversionResult(inversionResultPath);
+		
+		int n = ir.getNumberOfUnknowns() < maxNumVector ? ir.getNumberOfUnknowns() : maxNumVector;
+		
+		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
+		
+		for (InverseMethodEnum inverse : ir.getInverseMethods()) {
+			for (int i = 1; i < n; i++) {
+				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
+				Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
+				Map<UnknownParameter, Double> zeroMap = new HashMap<>();
+				answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
+				Map<UnknownParameter, Double> perturbations = null;
+				Map<Location, Double> extendedPerturbationMap = null;
+				Map<Location, Double> zeroMeanPerturbationMap = null;
+				Map<Location, Double> extendedZeroMeanPerturbationMap = null;
+				
+				perturbations = toPerturbation(answerMap, layerMap, unknowns, structure, 1.);
+				Set<Double> rs = layerMap.keySet();
+				double[] perturbationRs = new double[rs.size()];
+				int count = 0;
+				for (double r : rs)
+					perturbationRs[count++] = r;
+				Map<Location, Double> perturbationMap = new HashMap<>();
+				for (UnknownParameter unknown : perturbations.keySet())
+					perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+				zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
+				extendedPerturbationMap = extendedPerturbationMap(perturbationMap, deltaDegree, perturbationRs);
+				extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, deltaDegree, perturbationRs);
+				
+				PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+				for (Location loc : extendedPerturbationMap.keySet()) {
+					double perturbation = extendedPerturbationMap.get(loc);
+					double zeroMeanPerturbation = extendedZeroMeanPerturbationMap.get(loc);
+					pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);
+				}
+			}
+		}
 	}
 }

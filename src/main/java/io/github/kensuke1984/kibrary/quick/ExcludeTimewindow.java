@@ -16,12 +16,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ExcludeTimewindow {
 
@@ -29,6 +32,34 @@ public class ExcludeTimewindow {
 		Path timewindowFile = Paths.get(args[0]);
 //		Path timewindowASCIIFile = Paths.get(args[1]);
 		Path newTimewindowFile = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
+		
+		Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
+				,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
+				,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
+				,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
+				,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
+				,"201208020938A","201203050746A","200512232147A"})
+				.map(GlobalCMTID::new)
+				.collect(Collectors.toSet());
+		
+//		Path eachVarianceFile = Paths.get("eachVariance.txt");
+//		List<String> stationNames = new ArrayList<>();
+//		List<String> networkNames = new ArrayList<>();
+//		List<GlobalCMTID> recordIDList = new ArrayList<>();
+//		try {
+//			BufferedReader br = Files.newBufferedReader(eachVarianceFile);
+//			String line = "";
+//			while ((line = br.readLine()) != null) {
+//				String[] ss = line.split("\\s+");
+//				stationNames.add(ss[1].split("_")[0]);
+//				networkNames.add(ss[2]);
+//				recordIDList.add(new GlobalCMTID(ss[3]));
+//			}
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		System.out.println(recordIDList.size());
 		
 		try {
 			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowFile);
@@ -40,7 +71,7 @@ public class ExcludeTimewindow {
 //			Set<TimewindowInformation> newTimewindows = excludePhase(timewindows, phaseSet);
 			
 			
-			if (args.length == 2) {
+			if (args.length == 3) { //2
 				Set<Station> stations = StationInformationFile.read(Paths.get(args[1]));
 				
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
@@ -81,20 +112,49 @@ public class ExcludeTimewindow {
 //				
 //	//			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 //				
-				Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
-				for (TimewindowInformation timewindow : timewindows) {
-					GlobalCMTID event = timewindow.getGlobalCMTID();
-					Integer itmp = new Integer(1);
-					if (nTransverseMap.containsKey(event)) {
-						itmp = nTransverseMap.get(event) + 1;
-					}
-					nTransverseMap.put(event, itmp);
-				}
 				
-				Set<TimewindowInformation> newTimewindows = timewindows.stream().filter(tw -> nTransverseMap.get(tw.getGlobalCMTID()) >= 20)
-						.collect(Collectors.toSet());
+				
+//				Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
+//				for (TimewindowInformation timewindow : timewindows) {
+//					GlobalCMTID event = timewindow.getGlobalCMTID();
+//					Integer itmp = new Integer(1);
+//					if (nTransverseMap.containsKey(event)) {
+//						itmp = nTransverseMap.get(event) + 1;
+//					}
+//					nTransverseMap.put(event, itmp);
+//				}
+//				
+//				Set<TimewindowInformation> newTimewindows = timewindows.stream().filter(tw -> nTransverseMap.get(tw.getGlobalCMTID()) >= 20)
+//						.collect(Collectors.toSet());
+//				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+				
+				
+				Set<TimewindowInformation> newTimewindows = timewindows.stream().filter(tw -> {
+					String sta = tw.getStation().getStationName();
+					if (sta.equals("FUR") || sta.equals("C03") || sta.equals("SHO"))
+						return false;
+					else if (!wellDefinedEvent.contains(tw.getGlobalCMTID()))
+						return false;
+					else 
+						return true;
+				}).collect(Collectors.toSet());
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 				
+				
+//				Set<TimewindowInformation> newTimewindows = new HashSet<>();
+//				for (TimewindowInformation window : timewindows) {
+//					String staName = window.getStation().getStationName();
+//					String network = window.getStation().getNetwork();
+//					GlobalCMTID id = window.getGlobalCMTID();
+//					for (int i = 0; i < recordIDList.size(); i++) {
+//						if (stationNames.get(i).equals(staName) && networkNames.get(i).equals(network)
+//								&& recordIDList.get(i).equals(id)) {
+//							newTimewindows.add(window);
+//							break;
+//						}
+//					}
+//				}
+//				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 				
 			}
 		} catch (IOException e) {

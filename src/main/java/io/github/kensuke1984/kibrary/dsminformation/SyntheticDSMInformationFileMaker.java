@@ -1,27 +1,38 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 
 /**
  * 作業フォルダ下のイベント群に対してDSM(tipsv, tish)のinformation fileを作る
@@ -34,6 +45,8 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 public class SyntheticDSMInformationFileMaker implements Operation {
 
 	private boolean syntheticDataset;
+	
+	private boolean specfemDataset;
 	
 	private SyntheticDSMInformationFileMaker(Properties property) {
 		this.property = (Properties) property.clone();
@@ -59,6 +72,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			pw.println("#np");
 			pw.println("##Synthetic Dataset (false)");
 			pw.println("#syntheticDataset");
+			pw.println("##SPECFEM3D_GLOBE test dataset (false)");
+			pw.println("specfemDataset");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -78,6 +93,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			property.setProperty("header", "PREM");
 		if (!property.containsKey("syntheticDataset"))
 			property.setProperty("syntheticDataset", "false");
+		if (!property.containsKey("specfemDataset"))
+			property.setProperty("specfemDataset", "false");
 		// write additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
 	}
@@ -102,6 +119,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		else
 			structurePath = Paths.get("PREM");
 		syntheticDataset = Boolean.parseBoolean(property.getProperty("syntheticDataset"));
+		specfemDataset = Boolean.parseBoolean(property.getProperty("specfemDataset"));
 	}
 
 	/**
@@ -158,16 +176,93 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 	@Override
 	public void run() throws Exception {
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
-		PolynomialStructure ps = PolynomialStructure.PREM;
-		if (structurePath.toString().equals("PREM")) {
-			ps = PolynomialStructure.PREM;
-		}
-		else if (structurePath.toString().trim().equals("AK135")) {
-			ps = PolynomialStructure.AK135;
-		}
-		else
-			ps = new PolynomialStructure(structurePath);
+		String modelName = structurePath.toString().trim().toUpperCase();
+		PolynomialStructure ps = null;
 		
+		// PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
+		if (modelName.contains("_")) {
+			System.out.println("Using " + modelName);
+			String[] ss = modelName.split("_");
+			modelName = ss[0];
+			String[] range = ss[1].split("-");
+			double r1 = Double.parseDouble(range[0]);
+			double r2 = Double.parseDouble(range[1]);
+			Map<String, Double> quantityPercentMap = new HashMap<>();
+			for (int i = 2; i < ss.length; i++) {
+				String[] quantity_percent = ss[i].split("-");
+				double percent = quantity_percent[1].startsWith("M") ? -1 * Double.parseDouble(quantity_percent[1].substring(1)) / 100.
+						: Double.parseDouble(quantity_percent[1]) / 100.;
+				quantityPercentMap.put(quantity_percent[0], percent);
+			}
+			if (modelName.equals("MIASP91")) {
+				ps = PolynomialStructure.MIASP91;
+				for (String quantity : quantityPercentMap.keySet()) {
+					System.out.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+					if (quantity.equals("RHO"))
+						ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+					else if (quantity.equals("VS"))
+						ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+				}
+			}
+			else if (modelName.equals("PREM")) {
+				ps = PolynomialStructure.PREM;
+				for (String quantity : quantityPercentMap.keySet()) {
+					System.out.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+					if (quantity.equals("RHO"))
+						ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+					else if (quantity.equals("VS"))
+						ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+				}
+			}
+			else if (modelName.equals("AK135")) {
+				ps = PolynomialStructure.AK135;
+				for (String quantity : quantityPercentMap.keySet()) {
+					System.out.println("Adding " + quantity + " " + quantityPercentMap.get(quantity)*100 + "% discontinuity");
+					if (quantity.equals("RHO"))
+						ps = ps.addRhoDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+					else if (quantity.equals("VS"))
+						ps = ps.addVsDiscontinuity(r1, r2, quantityPercentMap.get(quantity));
+				}
+			}
+			else
+				throw new RuntimeException("Model not implemented yet");
+		}
+		else {
+			switch (modelName) {
+			case "PREM":
+				System.err.println("Using PREM");
+				ps = PolynomialStructure.PREM;
+				break;
+			case "AK135":
+				System.err.println("Using AK135");
+				ps = PolynomialStructure.AK135;
+				break;
+			case "AK135-ELASTIC":
+				System.err.println("Using AK135 elastic");
+				ps = PolynomialStructure.AK135_elastic;
+				break;
+			case "MIASP91":
+				System.err.println("Using MIASP91");
+				ps = PolynomialStructure.MIASP91;
+				break;
+			case "IPREM":
+				System.err.println("Using IPREM");
+				ps = PolynomialStructure.ISO_PREM;
+				break;
+			case "TNASNA":
+				System.err.println("Using TNASNA");
+				ps = PolynomialStructure.TNASNA;
+				break;
+			case "TBL50":
+				System.err.println("Using TBL50");
+				ps = PolynomialStructure.TBL50;
+				break;
+			default:
+				System.err.println("Using " + structurePath);
+				ps = new PolynomialStructure(structurePath);
+			}
+		}
+			
 		Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
 		Files.createDirectories(outPath);
 		
@@ -177,15 +272,34 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		//synthetic station set
 		Set<Station> synStationSet = new HashSet<>();
 		if (syntheticDataset) {
-			for (int i = 2; i < 241; i++) {
-				double distance = i/2.;
-				int d1 = (int) (i/2.);
-				int d2 = (int) ((i/2. - (int) (i/2.)) * 10);
-				String stationName = String.format("%03d%03d", d1, d2);
-				System.out.println(stationName);
+//			for (int i = 2; i < 241; i++) {
+			for (int i = 1; i < 120; i++) {
+//				double distance = i/2.;
+//				int d1 = (int) (i/2.);
+//				int d2 = (int) ((i/2. - (int) (i/2.)) * 10);
+				double distance = i;
+//				String stationName = String.format("%03d%03d", d1, d2);
+				String stationName = String.format("%03d", i);
 				Station station = new Station(stationName
 						, new HorizontalPosition(0, distance), "DSM");
 				synStationSet.add(station);
+			}
+		}
+		
+		//specfem test dataset
+		if (specfemDataset) {
+			Set<Station> specfemStationSet = IOUtils.readLines(SyntheticDSMInformationFileMaker.class.getClassLoader()
+					.getResourceAsStream("specfem_stations.inf"), Charset.defaultCharset())
+				.stream().map(s -> Station.createStation(s)).collect(Collectors.toSet());
+			try {
+				GlobalCMTData id = new GlobalCMTID("060994A").getEvent();
+				Path eventOut = outPath.resolve(id.toString());
+				SyntheticDSMInfo info = new SyntheticDSMInfo(ps, id, specfemStationSet, header, tlen, np);
+				Files.createDirectories(eventOut.resolve(header));
+				info.writePSV(eventOut.resolve(header + "_PSV.inf"));
+				info.writeSH(eventOut.resolve(header + "_SH.inf"));
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		

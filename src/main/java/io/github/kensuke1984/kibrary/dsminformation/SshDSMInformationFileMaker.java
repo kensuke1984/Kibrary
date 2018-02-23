@@ -148,11 +148,14 @@ public class SshDSMInformationFileMaker implements Operation {
 	public void run() throws Exception {
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 		PolynomialStructure ps = PolynomialStructure.PREM;
-		if (structurePath.toString().equals("PREM")) {
+		if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
 			ps = PolynomialStructure.PREM;
 		}
-		else if (structurePath.toString().trim().equals("AK135")) {
+		else if (structurePath.toString().trim().toUpperCase().equals("AK135")) {
 			ps = PolynomialStructure.AK135;
+		}
+		else if (structurePath.toString().trim().toUpperCase().equals("TBL50")) {
+			ps = PolynomialStructure.TBL50;
 		}
 		else
 			ps = new PolynomialStructure(structurePath);

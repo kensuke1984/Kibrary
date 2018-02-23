@@ -1,11 +1,16 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import javax.management.RuntimeErrorException;
 
 public class WeightUnknownParameter {
 	private UnknownParameterWeightType type;
@@ -36,6 +41,15 @@ public class WeightUnknownParameter {
 		
 		computeWeights();
 		applyTimeWeight();
+	}
+	
+	public WeightUnknownParameter(UnknownParameterWeightType type,
+			List<UnknownParameter> unknowns, Path sensitivityFile) {
+		this.type = type;
+		this.unknowns = unknowns;
+		this.weights = new HashMap<>();
+		
+		computeWeights(sensitivityFile);
 	}
 	
 	public Map<UnknownParameter, Double> getWeights() {
@@ -75,5 +89,74 @@ public class WeightUnknownParameter {
 				}
 			}
 		}
+	}
+	
+	private void computeWeights(Path inpath) {
+		if (type.equals(UnknownParameterWeightType.AtA)) {
+			Map<UnknownParameter, Double> sensitivityMap;
+			try {
+				sensitivityMap = readSensitivityFile(inpath);
+				for (UnknownParameter p : sensitivityMap.keySet()) {
+					double weight = 1. / sensitivityMap.get(p).doubleValue();
+					weight = weight > 4 ? 4. : weight;
+					weight = Math.sqrt(weight);
+					
+//					TODO find the corresponding unknown (with the good weight)
+					UnknownParameter unknown = unknowns.stream().filter(tmp -> tmp.getLocation().equals(p.getLocation()) 
+							&& tmp.getPartialType().equals(p.getPartialType())).findFirst().get();
+					weights.put(unknown, weight);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public Map<UnknownParameter, Double> readSensitivityFile(Path inpath) throws IOException {
+		Map<UnknownParameter, Double> sensitivityMap = new HashMap<>();
+		
+		BufferedReader br = Files.newBufferedReader(inpath);
+		String line;
+		while((line = br.readLine()) != null) {
+			String[] ss = line.trim().split("\\s+");
+			double lat = Double.parseDouble(ss[1]);
+			double lon = Double.parseDouble(ss[2]);
+			double r = Double.parseDouble(ss[3]);
+			double sensitivity = Double.parseDouble(ss[4]);
+			PartialType type = PartialType.valueOf(ss[0]);
+			
+			UnknownParameter p = new Physical3DParameter(type, new Location(lat, lon, r), 1.);
+			sensitivityMap.put(p, sensitivity);
+		}
+		br.close();
+		
+		return sensitivityMap;
+	}
+	
+	public static double[] readSensitivityFileAndComputeWeight(Path inpath) throws IOException {
+		List<Double> weightList = new ArrayList<>();
+		
+		BufferedReader br = Files.newBufferedReader(inpath);
+		String line;
+		while((line = br.readLine()) != null) {
+			String[] ss = line.trim().split("\\s+");
+			double lat = Double.parseDouble(ss[1]);
+			double lon = Double.parseDouble(ss[2]);
+			double r = Double.parseDouble(ss[3]);
+			double sensitivity = Double.parseDouble(ss[4]);
+			PartialType type = PartialType.valueOf(ss[0]);
+			
+			double weight = 1. / sensitivity;
+			weight = weight > 3 ? 3. : weight;
+			weight = Math.sqrt(weight);
+			weightList.add(weight);
+		}
+		br.close();
+		
+		double[] weights = new double[weightList.size()];
+		for (int i = 0; i < weights.length; i++)
+			weights[i] = weightList.get(i);
+		
+		return weights;
 	}
 }

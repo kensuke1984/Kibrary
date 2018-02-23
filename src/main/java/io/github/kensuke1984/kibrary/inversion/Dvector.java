@@ -350,6 +350,25 @@ public class Dvector {
 						* weightingAzimuthDpp(obs);
 			};
 			break;
+		case RECIPROCAL_AZED_DPP_V2:
+//			this.histogramDistance = new double[][] { {70.00, 1.000}, {75.00, 1.045}, {80.00, 1.270}, {85.00, 1.750}
+//				, {90.00, 2.000}, {95.00, 2.000}, {100.00, 1.000} };
+//			this.histogramAzimuth = new double[][] { {0.00, 1.000}, {5.00, 1.000}, {310.00, 1.000}, {315.00, 1.270}, {320.00, 1.000}
+//				, {325.00, 1.078}, {330.00, 1.375}, {335.00, 1.411}, {340.00, 2.000}, {345.00, 2.000}, {350.00, 2.000}, {355.00, 2.000} };
+			this.histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
+			this.histogramAzimuth = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
+			, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
+						* weightingEpicentralDistanceDpp(obs)
+						* weightingAzimuthDpp(obs);
+			};
+			break;
 		case IDENTITY:
 			this.weightingFunction = (obs, syn) -> 1.;
 			break;
@@ -917,10 +936,13 @@ public class Dvector {
 				}
 				break;
 			case RECIPROCAL_AZED:
-					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
 				break;
 			case RECIPROCAL_AZED_DPP:
-					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
+				break;
+			case RECIPROCAL_AZED_DPP_V2:
+				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
 				break;
 			case IDENTITY:
 				weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]);
@@ -1127,6 +1149,9 @@ public class Dvector {
 			break;
 		case RECIPROCAL_AZED_DPP:
 			System.out.println("Using observed reciprocal amplitude as weighting and applying azimuthal and epicentral distance weighting for Dpp");
+			break;
+		case RECIPROCAL_AZED_DPP_V2:
+			System.out.println("Using observed reciprocal amplitude as weighting and applying azimuthal and epicentral distance weighting for Dpp (v2)");
 			break;
 		case IDENTITY:
 			System.out.println("Using identity weighting");

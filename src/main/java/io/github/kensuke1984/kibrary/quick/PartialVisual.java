@@ -42,8 +42,8 @@ public class PartialVisual {
 			Path dir = Paths.get(String.format("%.1f-%.1f", partial.getMinPeriod(), partial.getMaxPeriod()));
 			Path outpath =  dir.resolve(partial.getStation().getStationName() + "." 
 					+ partial.getGlobalCMTID() + "." + partial.getSacComponent() + "."
-					+ (int) loc.getLatitude() + "."
-					+ (int) loc.getLongitude() + "." + (int) loc.getR() + "." + partial.getPartialType() + "."
+					+ (int) (loc.getLatitude()*100) + "."
+					+ (int) (loc.getLongitude()*100) + "." + (int) (loc.getR()*100) + "." + partial.getPartialType() + "."
 					+ phases + ".txt");
 			
 			double t0 = partial.getStartTime();

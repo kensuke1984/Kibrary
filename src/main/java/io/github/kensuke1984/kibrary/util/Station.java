@@ -86,7 +86,9 @@ public class Station implements Comparable<Station> {
 		if (position == null) {
 			if (other.position != null)
 				return false;
-		} else if (!position.equals(other.position))
+//		} else if (!position.equals(other.position))
+//			return false;
+		} else if (!equal(position, other.position))
 			return false;
 		if (stationName == null) {
 			if (other.stationName != null)
@@ -100,6 +102,16 @@ public class Station implements Comparable<Station> {
 		else if (other.network != null && !other.network.equals("DSM") && !network.equals(other.network))
 			return false;
 		return true;
+	}
+	
+	private boolean equal(HorizontalPosition pos1, HorizontalPosition pos2) {
+		double eps = 0.02;
+		if (!Utilities.equalWithinEpsilon(pos1.getLatitude(), pos2.getLatitude(), eps))
+			return false;
+		else if (!Utilities.equalWithinEpsilon(pos1.getLongitude(), pos2.getLongitude(), eps))
+			return false;
+		else
+			return true;
 	}
 	
 //	private boolean comparePosition(Station other) {
@@ -207,4 +219,14 @@ public class Station implements Comparable<Station> {
 		return new Station(name, new HorizontalPosition(bb.getDouble(), bb.getDouble()), network);
 	}
 
+	
+	public static Station createStation(String stationLine) {
+		String[] ss = stationLine.trim().split("\\s+");
+		String stationName = ss[0];
+		String network = ss[1];
+		double latitude = Double.parseDouble(ss[2]);
+		double longitude = Double.parseDouble(ss[3]);
+		HorizontalPosition position = new HorizontalPosition(latitude, longitude);
+		return new Station(stationName, position, network);
+	}
 }

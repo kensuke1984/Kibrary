@@ -314,7 +314,7 @@ public class InversionResult {
 	 */
 	public Map<UnknownParameter, Double> answerMapOf(InverseMethodEnum inverse, int n) throws IOException {
 		if (n <= 0)
-			throw new IllegalArgumentException("n is out of range. must be 1, 2,.. ");
+			throw new IllegalArgumentException("n is out of range. must be >= 0 " + n);
 		double[] unknownParameterWeigths = getUnkownParameterWeights();
 		double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + "/" + inverse.simple() + n + ".txt"))
 				.stream().mapToDouble(Double::parseDouble).toArray();
@@ -639,7 +639,7 @@ public class InversionResult {
 	
 	public double[] getUnkownParameterWeights() throws IOException {
 		if (!Files.exists(rootPath.resolve("unknownParameterWeigths.inf"))) {
-			System.out.println("Warning: no file unknownParameterWeigths.inf");
+//			System.out.println("Warning: no file unknownParameterWeigths.inf");
 			return null;
 		}
 		return Files.readAllLines(rootPath.resolve("unknownParameterWeigths.inf"))

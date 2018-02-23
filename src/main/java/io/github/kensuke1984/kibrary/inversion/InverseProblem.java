@@ -78,6 +78,25 @@ public abstract class InverseProblem {
 		}
 	}
 
+	/**
+	 * 解のアウトプット
+	 * 
+	 * @param outPath
+	 *            {@link File} for output of solutions
+	 * @throws IOException if an I/O error occurs
+	 */
+	public void outputAns(Path outPath, double[] parameterWeights) throws IOException {
+		Files.createDirectories(outPath);
+		System.err.println("outputting the answer files in " + outPath);
+		for (int i = 0; i < getParN(); i++) {
+			Path out = outPath.resolve(getEnum().simple() + (i+1) + ".txt");
+			double[] m = ans.getColumn(i);
+			for (int j = 0; j < m.length; j++)
+				m[j] *= parameterWeights[j];
+			writeDat(out, m);
+		}
+	}
+	
 	public abstract void compute();
 
 	/**

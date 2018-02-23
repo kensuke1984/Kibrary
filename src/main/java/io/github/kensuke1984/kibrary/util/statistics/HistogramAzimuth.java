@@ -43,8 +43,8 @@ public class HistogramAzimuth {
 		}
 		this.averageLoc = new Location(tmpLat, tmpLon, 0.);
 		
-		Set<String> networkSet = Stream.of(new String[] {"CU", "IU", "II"})
-				.collect(Collectors.toSet());
+//		Set<String> networkSet = Stream.of(new String[] {"CU", "IU", "II"})
+//				.collect(Collectors.toSet());
 		
 		try (Stream<BasicID> idStream = Stream.of(basicIDs);) {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
@@ -53,11 +53,11 @@ public class HistogramAzimuth {
 				Location cmtLocation = id.getGlobalCMTID().getEvent().getCmtLocation();
 				
 				// do not consider the following ids
-				if (cmtLocation.getLongitude() > -80)
-					return;
-				if (networkSet.contains(id.getStation().getNetwork())) {
-					return;
-				}
+//				if (cmtLocation.getLongitude() > -80)
+//					return;
+//				if (networkSet.contains(id.getStation().getNetwork())) {
+//					return;
+//				}
 				//
 				
 				HorizontalPosition staLoc = station.getPosition();
@@ -111,9 +111,57 @@ public class HistogramAzimuth {
 		else
 			idList = Stream.of(basicIDs).filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 				.collect(Collectors.toList());
-		BasicID[] usedIds = idList.toArray(new BasicID[idList.size()]);
 		
-		HistogramAzimuth histogram = new HistogramAzimuth(usedIds, stationSet, 5., false);
+		// divide events in three groups
+				List<BasicID> idList1 = idList.stream().filter(id -> {
+					Location loc = id.getGlobalCMTID().getEvent().getCmtLocation();
+					double lat = loc.getLatitude();
+					double lon = loc.getLongitude();
+					if (lat < 10.)
+						return true;
+					else
+						return false;
+				}).collect(Collectors.toList());
+				
+				List<BasicID> idList2 = idList.stream().filter(id -> {
+					Location loc = id.getGlobalCMTID().getEvent().getCmtLocation();
+					double lat = loc.getLatitude();
+					double lon = loc.getLongitude();
+					if (lat >= 10. && lon < -80.)
+						return true;
+					else
+						return false;
+				}).collect(Collectors.toList());
+				
+				List<BasicID> idList3 = idList.stream().filter(id -> {
+					Location loc = id.getGlobalCMTID().getEvent().getCmtLocation();
+					double lat = loc.getLatitude();
+					double lon = loc.getLongitude();
+					if (lat >= 10. && lon >= -80.)
+						return true;
+					else
+						return false;
+				}).collect(Collectors.toList());
+				//
+				
+				BasicID[] usedIds = idList.toArray(new BasicID[idList.size()]);
+				BasicID[] usedIds1 = idList1.toArray(new BasicID[idList1.size()]);
+				BasicID[] usedIds2 = idList2.toArray(new BasicID[idList2.size()]);
+				BasicID[] usedIds3 = idList3.toArray(new BasicID[idList3.size()]);
+				
+				HistogramAzimuth histogram = new HistogramAzimuth(usedIds, stationSet, 5., false);
+				HistogramAzimuth histogram1 = new HistogramAzimuth(usedIds1, stationSet, 5., false);
+				HistogramAzimuth histogram2 = new HistogramAzimuth(usedIds2, stationSet, 5., false);
+				HistogramAzimuth histogram3 = new HistogramAzimuth(usedIds3, stationSet, 5., false);
+				
+				Path outPath1 = root.resolve("azimuthHistogram1.txt");
+				Path outPath2 = root.resolve("azimuthHistogram2.txt");
+				Path outPath3 = root.resolve("azimuthHistogram3.txt");
+				
+				histogram.printHistogram(outPath);
+				histogram1.printHistogram(outPath1);
+				histogram2.printHistogram(outPath2);
+				histogram3.printHistogram(outPath3);
 		
 		histogram.printHistogram(outPath);
 		histogram.createScript(scriptPath);
