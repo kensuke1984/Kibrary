@@ -58,7 +58,7 @@ public class Phases {
 			this.length = phases.length;
 		}
 		public Phases(String phaseString) {
-			this.phases = Stream.of(phaseString.trim().split(",")).map(phasename -> Phase.create(phasename))
+			this.phases = Stream.of(phaseString.trim().split("_")).map(phasename -> Phase.create(phasename))
 					.toArray(Phase[]::new);
 			this.length = phases.length;
 		}

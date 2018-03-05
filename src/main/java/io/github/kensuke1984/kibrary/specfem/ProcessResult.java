@@ -20,6 +20,7 @@ public class ProcessResult {
 		Path sacmacroFile = root.resolve("process.sacm");
 		Path basicsacShell = root.resolve("runbasicsac.sh");
 		Path shellScript = root.resolve("runsac.sh");
+		Path mvtoeventScript = root.resolve("mvtoeventdir.sh");
 		
 		PrintWriter writer = new PrintWriter(sacmacroFile.toFile());
 		writer.println("SETBB dir $1\n"
@@ -53,10 +54,24 @@ public class ProcessResult {
 		writer.println("#!/bin/sh\n"
 				+ "#To run in a folder that contains the event folders with SAC files output by SPECFEM3D_GLOBE\n"
 				+ "export SAC_DISPLAY_COPYRIGHT=0\n"
-				+ "for i in ./run*\n"
+				+ "for i in ./run00*/OUTPUT_FILES\n"
 				+ "do\n"
 				+ "   echo $i\n"
 				+ "   sh runbasicsac.sh $i\n"
+				+ "done"
+				);
+		writer.close();
+		
+		writer = new PrintWriter(mvtoeventScript.toFile());
+		writer.println("#!/bin/sh\n"
+				+ "for i in run00*\n"
+				+ "do\n"
+				+ " cd $i\n"
+				+ " dir=$(awk 'NR==2 {print $3}' DATA/CMTSOLUTION)\n"
+				+ " echo $dir\n"
+				+ " mkdir $dir\n"
+				+ " mv OUTPUT_FILES/*sc $dir\n"
+				+ " cd ..\n"
 				+ "done"
 				);
 		writer.close();

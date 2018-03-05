@@ -220,6 +220,7 @@ public class TimewindowMaker implements Operation {
 
 	@Override
 	public void run() throws Exception {
+		System.out.println("Using exRearShift = " + exRearShift);
 		Utilities.runEventProcess(workPath, eventDir -> {
 			try {
 				eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
@@ -502,7 +503,7 @@ public class TimewindowMaker implements Operation {
 		// 震源観測点ペアの震央距離
 		double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 		
-		System.out.println(eventR + " " + epicentralDistance);
+//		System.out.println(eventR + " " + epicentralDistance);
 		
 		try {
 			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, model);
@@ -565,7 +566,6 @@ public class TimewindowMaker implements Operation {
 				}
 			}
 			
-			double exRearShift = 5.;
 			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);
 			// System.exit(0);
 			if (windows == null) {
@@ -593,6 +593,8 @@ public class TimewindowMaker implements Operation {
 			e.printStackTrace();
 		}
 	}
+	
+	final static double exRearShift = 0.;
 
 	/**
 	 * fix start and end time by delta these time must be (int) * delta

@@ -26,12 +26,14 @@ public class FrequencyRange {
 	        return false;
 	    }
 	    final FrequencyRange other = (FrequencyRange) obj;
-	    if (!Utilities.equalWithinEpsilon(minFreq, other.minFreq, 1e-8))
+	    if (!Utilities.equalWithinEpsilon(minFreq, other.minFreq, eps))
 	    	return false;
-	    if (!Utilities.equalWithinEpsilon(maxFreq, other.maxFreq, 1e-8))
+	    if (!Utilities.equalWithinEpsilon(maxFreq, other.maxFreq, eps))
 	    	return false;
 	    return true;
 	}
+	
+	final static double eps = 1e-3;
 
 	@Override
 	public int hashCode() {

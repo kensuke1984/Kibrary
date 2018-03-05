@@ -18,9 +18,18 @@ public class taupModelMaker {
 				Paths.get("/Users/Anselme/Dropbox/Kenji/FWICarib/specfem/Dpp+2per/model/model.poly"));
 		Path root = Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES");
 //		int nR = Integer.parseInt(args[0]);
-		int nR = 10000;
+		int nR = 15000;
 		
 		PolynomialStructure ak135 = PolynomialStructure.AK135;
+		
+//		double r1=6371. - 410 + 50;
+//		double r2=6371. - 410 - 50;
+//		double v1 = ak135.getVshAt(r1);
+//		double v2 = ak135.getVshAt(r2);
+//		double a = (v1-v2)/(r1-r2)*6371.;
+//		double b = -a*r1/6371. + v1;
+//		System.out.println(r1 + " " + r2 + " " + a + " " + b);
+//		System.exit(0);
 		
 //		double mu = ak135.computeMu(5800.);
 //		double dmu = mu * ((1.01)*(1.01)-1);
@@ -59,7 +68,9 @@ public class taupModelMaker {
 //		double drho = miasp91.getRhoAt(r) - tbl.getRhoAt(r);
 ////		System.out.println(dvp + " " + dvs + " " + drho);
 		
-		outputTauP(PolynomialStructure.TNASNA, nR);
+//		outputTauP(PolynomialStructure.TNASNA, nR);
+		
+		outputSTD(PolynomialStructure.MAK135, nR, Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES/MAK135.vel"));
 		
 //		System.out.println(miasp91.getRhoAt(6030.9));
 //		System.out.println(miasp91.getRhoAt(5781.0));
@@ -95,7 +106,7 @@ public class taupModelMaker {
 	
 	private static String stdline(PolynomialStructure model, double r) {
 		double Qmu = model.getQmuAt(r) == Double.POSITIVE_INFINITY ? Double.POSITIVE_INFINITY : model.getQmuAt(r);
-		return String.format("%.3f %.5f %.5f %.5f %.5f %.5f %.1f %.1f%n"
+		return String.format("%.3f %.8f %.8f %.8f %.8f %.8f %.1f %.1f%n"
 				,Earth.EARTH_RADIUS - r
 				,model.getVphAt(r)
 				,model.getVphAt(r)

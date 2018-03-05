@@ -957,10 +957,14 @@ private class WorkerTimePartial implements Runnable {
 //		      	    		+ " halfDuration 1 is " + halfDuration1 + " halfDuration 2 is " + halfDuration2 );
 		      	    }
 		      	}
-		      	if (found)
+		      	if (found) {
+		      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
 		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
-		      	else
+		      	}
+		      	else {
+		      		System.out.println(id + " Using GCMT STF with duration " + (halfDuration + halfDuration));
 		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, halfDuration);
+		      	}
 	            break;
 			case 4:
 				throw new RuntimeException("Case 4 not implemented yet");

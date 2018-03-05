@@ -178,6 +178,8 @@ public class PolynomialStructure implements Serializable {
 	
 	public static final PolynomialStructure AK135_elastic = initialAK135_elastic();
 	
+	public static final PolynomialStructure MAK135 = initialMAK135();
+	
 	/**
 	 * @param structurePath
 	 *            {@link Path} of a
@@ -766,7 +768,34 @@ public class PolynomialStructure implements Serializable {
 		final double[] qKappa = new double[] { 1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,
 				57823, }; // OK
 		return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-
+	}
+	
+	/**
+	 * standard AK135 Kennett <i>et al<i>. (1995)
+	 */
+	private static PolynomialStructure initialMAK135() {
+		PolynomialStructure mak135 = initialAK135();
+		mak135 = mak135.addBoundaries(5661.0, 5761.0 , 5911.0, 6011.0);
+		
+		// smoothed 660 km discontinuity
+		int i1 = mak135.getiZoneOf(5661+1);
+		int i2 = mak135.getiZoneOf(5761-1);
+		PolynomialFunction p = new PolynomialFunction(new double[] {38.96100749999991, -36.99958249999989});
+		mak135 = mak135.setVsh(i1, p);
+		mak135 = mak135.setVsh(i2, p);
+		mak135 = mak135.setVsv(i1, p);
+		mak135 = mak135.setVsv(i2, p);
+		
+		// smoothed 410 km discontinuity
+		i1 = mak135.getiZoneOf(5911+1);
+		i2 = mak135.getiZoneOf(6011-1);
+		p = new PolynomialFunction(new double[] {28.99255250000017, -25.65920250000018});
+		mak135 = mak135.setVsh(i1, p);
+		mak135 = mak135.setVsh(i2, p);
+		mak135 = mak135.setVsv(i1, p);
+		mak135 = mak135.setVsv(i2, p);
+		
+		return mak135;
 	}
 	
 	private static PolynomialStructure initialAK135_elastic() {

@@ -66,8 +66,7 @@ public class MakeUnknownParameterFile {
 		double r = point.getR();
 		if (r <= 0) {
 			System.out.println("location has no R information or invalid R:" + r);
-			return 0;
-		}
+				}
 		double latitude = point.getLatitude();// 地理緯度
 		double longitude = point.getLongitude();
 		Location tmpLoc = point.toLocation(r - 0.5 * dr);

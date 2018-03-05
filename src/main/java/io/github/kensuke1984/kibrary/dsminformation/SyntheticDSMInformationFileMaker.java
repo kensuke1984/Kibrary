@@ -257,6 +257,10 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 				System.err.println("Using TBL50");
 				ps = PolynomialStructure.TBL50;
 				break;
+			case "MAK135":
+				System.err.println("Using MAK135");
+				ps = PolynomialStructure.MAK135;
+				break;
 			default:
 				System.err.println("Using " + structurePath);
 				ps = new PolynomialStructure(structurePath);

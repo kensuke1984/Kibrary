@@ -839,6 +839,7 @@ public class AtAMaker implements Operation {
 					numerator += tmp * tmp;
 					denominator += obsdata[k] * obsdata[k];
 				}
+				
 				for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 					double weight = computeWeight(weightingTypes[iweight], obs, syn);
 					residualVarianceNumerator[iweight][ifreq][iphase][icorr] += numerator * weight * weight;
@@ -1244,12 +1245,12 @@ public class AtAMaker implements Operation {
 									for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
 										
 										final int finalIcorr = icorr;
+										final int finalIfreq = ifreq;
 										List<BasicID> obsSynIDs = IndicesRecordBasicID.get(icorr).stream().filter(i -> {
 												BasicID id = basicIDArray[finalIcorr][i];
 												return id.getSacComponent().equals(info.getComponent())
 //												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
-												&& equalToEpsilon(id.getMinPeriod(), 1. / maxFreq)
-												&& equalToEpsilon(id.getMaxPeriod(), 1. / minFreq)
+												&& new FrequencyRange(1./id.getMaxPeriod(), 1./id.getMinPeriod()).equals(frequencyRanges[finalIfreq])
 												&& new Phases(id.getPhases()).equals(phases);
 												}).map(i -> basicIDArray[finalIcorr][i])
 												.collect(Collectors.toList());

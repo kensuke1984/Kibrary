@@ -190,6 +190,7 @@ public final class SpcSAC implements Operation {
 		case 1:
 			return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		case 2:
+//			System.out.println(id + " Using GCMT triangle STF with duration " + 2*halfDuration);
 			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		case 3:
         	double halfDuration1 = 0.;
@@ -206,6 +207,7 @@ public final class SpcSAC implements Operation {
 	      	    	}
 	      	    }
 	      	}
+//	      	System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
             return SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
 		case 4:
 			throw new RuntimeException("Case 4 not implemented yet");
