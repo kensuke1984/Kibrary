@@ -17,12 +17,7 @@ import java.util.List;
  * @author Kensuke Konishi
  * @version 0.0.5.1
  */
-
-/**
- * Modified by Lina Yamaya
- * waveformrequest2015@gmail.com -> waveformdata.lina@gmail.com
- */
-public class BreakFastMail {
+public class BreakFastMail2 {
 
     private static final String IRIS_EMAIL = "breq_fast@iris.washington.edu";
     private static final String OHP_EMAIL = "breq-fast@ocean.eri.u-tokyo.ac.jp";
@@ -42,7 +37,7 @@ public class BreakFastMail {
     private String media = "FTP";
     private Channel[] channels;
 
-    public BreakFastMail(String name, String institute, String mail, String email, String phone, String fax,
+    public BreakFastMail2(String name, String institute, String mail, String email, String phone, String fax,
                          String label, String media, Channel[] channels) {
         this.name = name;
         this.institute = institute;
@@ -60,7 +55,7 @@ public class BreakFastMail {
         else if (!GraphicsEnvironment.isHeadless()) {
             password = PasswordInput.createAndShowGUI().getPassword();
         } else {
-            password = String.copyValueOf(System.console().readPassword("Password for waveformdata.lina@gmail.com"));
+            password = String.copyValueOf(System.console().readPassword("Password for waveformrequest2015@gmail.com"));
         }
         return password;
     }
@@ -70,9 +65,9 @@ public class BreakFastMail {
         email.setHostName("smtp.googlemail.com");
         email.setSmtpPort(465);
         getPassword();
-        email.setAuthenticator(new DefaultAuthenticator("waveformdata.lina@gmail.com", password));
+        email.setAuthenticator(new DefaultAuthenticator("waveformrequest2015@gmail.com", password));
         email.setSSLOnConnect(true);
-        email.setFrom("waveformdata.lina@gmail.com");
+        email.setFrom("waveformrequest2015@gmail.com");
         email.setSubject("Request" + Utilities.getTemporaryString());
         email.setMsg(String.join("\n", lines));
         email.addTo(IRIS_EMAIL);

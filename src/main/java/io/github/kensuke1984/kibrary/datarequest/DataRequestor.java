@@ -24,6 +24,12 @@ import java.util.Set;
  * @author Kensuke Konishi
  * @version 0.1.3.2
  */
+
+/**
+ * Modified by Lina Yamaya
+ * waveformrequest2015@gmail.com -> waveformdata.lina@gmail.com
+ */
+
 public class DataRequestor implements Operation {
 
     private String institute;
@@ -112,7 +118,7 @@ public class DataRequestor implements Operation {
                 pw.println("#fax 03-5841-8791");
             }
             pw.println("##Email address, must be defined");
-            pw.println("#email waveformrequest2015@gmail.com");
+            pw.println("#email waveformdata.lina@gmail.com");
             pw.println("##media(FTP)");
             pw.println("#media");
             pw.println("##Network names for request, must be defined");

@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * @version 0.2.4.5
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
-public final class SPC_SAC implements Operation {
+public final class SPC_SAC2 implements Operation {
 
     private Properties property;
     /**
@@ -70,7 +70,7 @@ public final class SPC_SAC implements Operation {
     private Set<SPCFile> shSPCs;
     private Path outPath;
 
-    public SPC_SAC(Properties properties) throws IOException {
+    public SPC_SAC2(Properties properties) throws IOException {
         property = (Properties) properties.clone();
         set();
     }
