@@ -91,7 +91,10 @@ public class BreakFastMail {
             for (int i = 1; i < args.length; i++) {
                 sendIris(Files.readAllLines(Paths.get(args[i])).toArray(new String[0]));
                 System.out.println("Sent " + args[i]);
-                Thread.sleep(2 * 60 * 1000);
+   // Changed by Lina
+   // Send mails every 20 sec.
+                Thread.sleep(20*1000);
+//                Thread.sleep(2 * 60 * 1000);
             }
         } else throw new IllegalArgumentException("-iris [mail files]   (Only sending to IRIS is possible now");
 
