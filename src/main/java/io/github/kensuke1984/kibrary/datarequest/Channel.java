@@ -34,36 +34,36 @@ public class Channel {
     /**
      * station (STA)
      */
-    private String stationName;
+    private final String STATION;
     /**
      * network code or virtual network (NN)
      */
-    private String networkName;
+    private final String NETWORK;
     /**
-     * starting time
+     * start time
      */
-    private LocalDateTime startTime;
+    private final LocalDateTime START;
 
 //	/**
 //	 * LocationIdentifier
 //	 */
     // private String locationIdentifier;
     /**
-     * ending time
+     * end time
      */
-    private LocalDateTime endTime;
+    private final LocalDateTime END;
     /**
      * 指定するチャンネル数（ワイルドカードは一つとして数える）
      */
-    private int channelNumber = 1;
-    private String[] channel = {"BH?"};
+    private final int channelNumber = 1;
+    private final String[] channel = {"BH?"};
 
     public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
         super();
-        this.stationName = stationName;
-        this.networkName = networkName;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        STATION = stationName;
+        NETWORK = networkName;
+        START = startTime;
+        END = endTime;
     }
 
     /**
@@ -100,22 +100,19 @@ public class Channel {
     public static Channel[] listChannels(String[] network, GlobalCMTID id, ChronoUnit headUnit, int headAdjustment,
                                          ChronoUnit footUnit, int footAdjustment) {
         Channel[] channels = new Channel[network.length];
-
         LocalDateTime cmtTime = id.getEvent().getCMTTime();
         LocalDateTime startTime = cmtTime.plus(headAdjustment, headUnit);
         LocalDateTime endTime = cmtTime.plus(footAdjustment, footUnit);
-
         for (int i = 0; i < network.length; i++)
             channels[i] = new Channel("?", network[i], startTime, endTime);
-
         return channels;
     }
+
 
     @Override
     public String toString() {
         String channels = Arrays.stream(channel).collect(Collectors.joining(" "));
-        return stationName + " " + networkName + " " + toLine(startTime) + " " + toLine(endTime) + " " + channelNumber +
-                " " + channels;
+        return STATION + " " + NETWORK + " " + toLine(START) + " " + toLine(END) + " " + channelNumber + " " + channels;
     }
 
 }

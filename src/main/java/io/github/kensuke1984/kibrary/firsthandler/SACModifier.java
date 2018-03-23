@@ -16,26 +16,24 @@ import java.util.Map;
  * {@link SeedSAC}内で行うSacの修正
  *
  * @author Kensuke Konishi
- * @version 0.1.8.2
+ * @version 0.1.8.3
  */
 class SACModifier {
 
     /**
-     * taperをかける時間（msec）
+     * [msec] time window for taper
      */
     private static final int taperTime = 60 * 1000;
-    /**
-     * Sacのイベント
-     */
-    private GlobalCMTData event;
-    private Path sacPath;
+
+    private final GlobalCMTData EVENT;
+    private final Path SAC_PATH;
     private Map<SACHeaderEnum, String> headerMap;
     /**
-     * PDEによる解凍かどうか デフォルトはCMT
+     * extract with PDE (true), CMT (false)
      */
-    private boolean byPDE;
+    private final boolean BYPDE;
 
-    private Path modifiedSacPath;
+    private final Path MODIFIED_PATH;
     /**
      * sac start time when this instance is made
      */
@@ -47,12 +45,12 @@ class SACModifier {
      * @param byPDE         true: PDE, false: CMT
      */
     SACModifier(GlobalCMTData globalCMTData, Path sacPath, boolean byPDE) throws IOException {
-        this.sacPath = sacPath;
+        SAC_PATH = sacPath;
         headerMap = SACUtil.readHeader(sacPath);
         String modifiedFileName = sacPath.getFileName().toString().replace(".SAC", ".MOD");
-        modifiedSacPath = sacPath.resolveSibling(modifiedFileName);
-        event = globalCMTData;
-        this.byPDE = byPDE;
+        MODIFIED_PATH = sacPath.resolveSibling(modifiedFileName);
+        EVENT = globalCMTData;
+        BYPDE = byPDE;
         setInitialSacStartTime();
     }
 
@@ -63,7 +61,7 @@ class SACModifier {
      */
     boolean checkHeader() {
         // System.out.println("Checking header validity in "+sacFile);
-        String channel = sacPath.getFileName().toString().split("\\.")[3];
+        String channel = SAC_PATH.getFileName().toString().split("\\.")[3];
 
         // check CMPINC
         if (channel.equals("BHN") || channel.equals("BHE") || channel.equals("BH1") || channel.equals("BH2"))
@@ -77,15 +75,15 @@ class SACModifier {
     /**
      * operate rtrend and rmean in SAC and the sac file is write to ??.MOD
      */
-    void preprocess() throws IOException, InterruptedException {
+    void preprocess() throws IOException {
         try (SAC sacProcess = SAC.createProcess()) {
-            String cwd = sacPath.getParent().toString();
+            String cwd = SAC_PATH.getParent().toString();
             sacProcess.inputCMD("cd " + cwd);
-            sacProcess.inputCMD("r " + sacPath.getFileName());
+            sacProcess.inputCMD("r " + SAC_PATH.getFileName());
             sacProcess.inputCMD("ch lovrok true");
             sacProcess.inputCMD("rtrend");
             sacProcess.inputCMD("rmean");
-            sacProcess.inputCMD("w " + modifiedSacPath.getFileName());
+            sacProcess.inputCMD("w " + MODIFIED_PATH.getFileName());
         }
     }
 
@@ -98,7 +96,7 @@ class SACModifier {
      * (smaller than {@link #taperTime})
      */
     boolean canInterpolate() {
-        LocalDateTime eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
+        LocalDateTime eventTime = BYPDE ? EVENT.getPDETime() : EVENT.getCMTTime();
         return eventTime.until(initialSacStartTime, ChronoUnit.MILLIS) < taperTime;
     }
 
@@ -106,17 +104,16 @@ class SACModifier {
      * set {@link #initialSacStartTime}
      */
     private void setInitialSacStartTime() {
-        int nzyear = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
-        int nzjday = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
-        int nzhour = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
-        int nzmin = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
-        int nzsec = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
-        int nzmsec = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
+        int year = Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR));
+        int jday = Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY));
+        int hour = Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR));
+        int min = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMIN));
+        int sec = Integer.parseInt(headerMap.get(SACHeaderEnum.NZSEC));
+        int msec = Integer.parseInt(headerMap.get(SACHeaderEnum.NZMSEC));
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInNanos = (long) (b * 1000 * 1000 * 1000);
         initialSacStartTime =
-                LocalDateTime.of(nzyear, 1, 1, nzhour, nzmin, nzsec, nzmsec * 1000 * 1000).plusDays(nzjday - 1)
-                        .plusNanos(bInNanos);
+                LocalDateTime.of(year, 1, 1, hour, min, sec, msec * 1000 * 1000).plusDays(jday - 1).plusNanos(bInNanos);
     }
 
     /**
@@ -126,15 +123,14 @@ class SACModifier {
      * @return if success or not
      */
     boolean interpolate() throws IOException {
-
         double b = Double.parseDouble(headerMap.get(SACHeaderEnum.B));
         long bInMillis = Math.round(b * 1000);
         double e = Double.parseDouble(headerMap.get(SACHeaderEnum.E));
         long eInMillis = Math.round(e * 1000);
-        LocalDateTime eventTime = byPDE ? event.getPDETime() : event.getCMTTime();
+        LocalDateTime eventTime = BYPDE ? EVENT.getPDETime() : EVENT.getCMTTime();
 
         // sacの読み込み
-        double[] sacdata = SACUtil.readSACData(modifiedSacPath);
+        double[] sacdata = SACUtil.readSACData(MODIFIED_PATH);
 
         // イベント時刻と合わせる
         // イベント時刻とSAC時刻の差
@@ -147,7 +143,7 @@ class SACModifier {
         // if the gap is bigger than tapertime then skip
         // if (sacStartTime.after(eventTime)) {
         if (taperTime < timeGapInMillis) {
-            System.err.println(modifiedSacPath + " starts too late");
+            System.err.println(MODIFIED_PATH + " starts too late");
             return false;
         } else if (0 <= timeGapInMillis) {
             System.err.println("seismograms start at after the event time... interpolating...");
@@ -179,7 +175,7 @@ class SACModifier {
             // headerMap.put(SacHeaderEnum.B, Double.toString(0));
         }
 
-        Location sourceLocation = byPDE ? event.getPDELocation() : event.getCmtLocation();
+        Location sourceLocation = BYPDE ? EVENT.getPDELocation() : EVENT.getCmtLocation();
 
         headerMap.put(SACHeaderEnum.B, Double.toString((bInMillis + timeGapInMillis) / 1000.0));
         headerMap.put(SACHeaderEnum.E, Double.toString((eInMillis + timeGapInMillis) / 1000.0));
@@ -190,12 +186,12 @@ class SACModifier {
         headerMap.put(SACHeaderEnum.NZMIN, Integer.toString(eventTime.getMinute()));
         headerMap.put(SACHeaderEnum.NZSEC, Integer.toString(eventTime.getSecond()));
         headerMap.put(SACHeaderEnum.NZMSEC, Integer.toString(eventTime.getNano() / 1000 / 1000));
-        headerMap.put(SACHeaderEnum.KEVNM, event.toString());
+        headerMap.put(SACHeaderEnum.KEVNM, EVENT.toString());
         headerMap.put(SACHeaderEnum.EVLA, Double.toString(sourceLocation.getLatitude()));
         headerMap.put(SACHeaderEnum.EVLO, Double.toString(sourceLocation.getLongitude()));
         headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourceLocation.getR()));
         headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
-        SACUtil.writeSAC(modifiedSacPath, headerMap, sacdata);
+        SACUtil.writeSAC(MODIFIED_PATH, headerMap, sacdata);
 
         return true;
     }
@@ -214,20 +210,19 @@ class SACModifier {
      * Rebuild by SAC.
      *
      * @throws IOException          if any
-     * @throws InterruptedException if any
      */
-    void rebuild() throws IOException, InterruptedException {
+    void rebuild() throws IOException {
 
         // nptsを元のSacfileのEでのポイントを超えない２の累乗ポイントにする
-        Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(modifiedSacPath);
+        Map<SACHeaderEnum, String> headerMap = SACUtil.readHeader(MODIFIED_PATH);
         int npts = (int) (Double.parseDouble(headerMap.get(SACHeaderEnum.E)) /
                 Double.parseDouble(headerMap.get(SACHeaderEnum.DELTA)));
         int newNpts = Integer.highestOneBit(npts);
         // System.out.println("rebuilding "+ sacFile);
-        String cwd = sacPath.getParent().toString();
+        String cwd = SAC_PATH.getParent().toString();
         try (SAC sacP1 = SAC.createProcess()) {
             sacP1.inputCMD("cd " + cwd);
-            sacP1.inputCMD("r " + modifiedSacPath.getFileName());
+            sacP1.inputCMD("r " + MODIFIED_PATH.getFileName());
             sacP1.inputCMD("interpolate b 0");
             sacP1.inputCMD("w over");
         }
@@ -235,11 +230,11 @@ class SACModifier {
             // current directoryをうつす
             sacP2.inputCMD("cd " + cwd);
             sacP2.inputCMD("cut b n " + newNpts);
-            sacP2.inputCMD("r " + modifiedSacPath.getFileName());
+            sacP2.inputCMD("r " + MODIFIED_PATH.getFileName());
             sacP2.inputCMD("w over");
         }
         // ヘッダーの更新
-        this.headerMap = SACUtil.readHeader(modifiedSacPath);
+        this.headerMap = SACUtil.readHeader(MODIFIED_PATH);
     }
 
 }

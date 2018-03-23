@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * Information file for SSHSH
  *
  * @author Kensuke Konishi
- * @version 0.1.2.1
+ * @version 0.1.2.2
  */
 public class SshDSMInformationFileMaker implements Operation {
 
@@ -34,19 +34,19 @@ public class SshDSMInformationFileMaker implements Operation {
     private Path workPath;
     private double[] perturbationR;
     /**
-     * 周波数ステップ数 2の累乗でないといけない
+     * number of steps in frequency domain, must be a power of 2 (2<sup>n</sup>)
      */
     private int np;
     /**
-     * 時間空間での長さ ２の累乗の１０分の一でないといけない
+     * [s] time length of data must be a power of 2 divided by 10 (2<sup>n</sup>/10)
      */
     private double tlen;
     /**
-     * 観測波形を選択する成分
+     * components to create an information file for
      */
     private Set<SACComponent> components;
     /**
-     * Information file name is header_[psv,sh].inf (default:PREM)
+     * Information file name is header_[PSV, SH].inf (default:PREM)
      */
     private String header;
     /**
@@ -86,10 +86,10 @@ public class SshDSMInformationFileMaker implements Operation {
             pw.println("#header");
             pw.println("##Path of a structure file you want to use. ()");
             pw.println("#structureFile");
-            pw.println("##TLEN must be a power of 2 over 10 (3276.8)");
-            pw.println("#TLEN");
-            pw.println("##NP must be a power of 2 (512)");
-            pw.println("#NP");
+            pw.println("##tlen (time length) must be a power of 2 over 10 (3276.8)");
+            pw.println("#tlen");
+            pw.println("##np must be a power of 2 (512)");
+            pw.println("#np");
             pw.println("##Depths for computations, must be defined");
             pw.println("#perturbationR 3500 3600");
         }
@@ -99,8 +99,8 @@ public class SshDSMInformationFileMaker implements Operation {
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("TLEN")) property.setProperty("TLEN", "3276.8");
-        if (!property.containsKey("NP")) property.setProperty("NP", "512");
+        if (!property.containsKey("tlen")) property.setProperty("tlen", "3276.8");
+        if (!property.containsKey("np")) property.setProperty("np", "512");
         if (!property.containsKey("header")) property.setProperty("header", "PREM");
         if (!property.containsKey("perturbationR") || property.getProperty("perturbationR").isEmpty())
             throw new RuntimeException("perturbationR must be defined.");
@@ -113,8 +113,8 @@ public class SshDSMInformationFileMaker implements Operation {
         if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-        np = Integer.parseInt(property.getProperty("NP"));
-        tlen = Double.parseDouble(property.getProperty("TLEN"));
+        np = Integer.parseInt(property.getProperty("np"));
+        tlen = Double.parseDouble(property.getProperty("tlen"));
         header = property.getProperty("header");
 
         if (property.containsKey("structureFile")) structurePath = Paths.get(property.getProperty("structureFile"));

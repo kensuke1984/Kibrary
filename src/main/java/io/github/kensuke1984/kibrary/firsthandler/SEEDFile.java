@@ -38,9 +38,9 @@ public class SEEDFile {
     }
 
     /**
-     * a SEED file
+     * path of a SEED file
      */
-    private Path seedPath;
+    private final Path ORIGNAL_PATH;
     /**
      * B010F05 Starting date of this volume:
      */
@@ -62,8 +62,16 @@ public class SEEDFile {
      */
     private String volumeLabel;
 
+    /**
+     * temporary symbolic link for shortening path
+     */
+    private final Path TEMP_LINK;
+
+
     public SEEDFile(Path seedPath) throws IOException {
-        this.seedPath = seedPath;
+        ORIGNAL_PATH = seedPath;
+        TEMP_LINK = Files.createSymbolicLink(Files.createTempDirectory("seed").resolve(seedPath.getFileName()),
+                seedPath.toAbsolutePath());
         // searchRdseed();
         readVolumeHeader();
     }
@@ -91,11 +99,14 @@ public class SEEDFile {
 
     @Override
     public String toString() {
-        return seedPath.toString();
+        return ORIGNAL_PATH.toString();
     }
 
+    /**
+     * @return Path of the seed file.
+     */
     public Path getSeedPath() {
-        return seedPath;
+        return ORIGNAL_PATH;
     }
 
     public LocalDateTime getStartingDate() {
@@ -119,13 +130,12 @@ public class SEEDFile {
     }
 
     /**
-     * rdseed -cf seedFile から読み込める情報を読み取る。
+     * Read information by 'rdseed -cf seedFile'
      *
      * @throws IOException if any
      */
     private void readVolumeHeader() throws IOException {
-        if (!Files.exists(seedPath)) throw new NoSuchFileException(seedPath.toString());
-
+        if (!Files.exists(ORIGNAL_PATH)) throw new NoSuchFileException(ORIGNAL_PATH.toString());
         String[] lines = readSeed("-cf");
         for (String line : lines) {
             if (line.contains("Starting date of this volume")) {
@@ -167,8 +177,8 @@ public class SEEDFile {
      * rdseed $option を行ったときの出力を返す if rdseed does not exist, it returns empty
      * array of String
      *
-     * @param option -cf 等
-     * @return write of rdseed$option. (this method never returns null)
+     * @param option e.g. -cf
+     * @return write of rdseed $option. (this method never returns null)
      * @throws IOException if any
      */
     private String[] readSeed(String option) throws IOException {
@@ -176,7 +186,7 @@ public class SEEDFile {
         commands.add("rdseed");
         String[] parts = option.split("\\s+");
         commands.addAll(Arrays.asList(parts));
-        commands.add(seedPath.toString());
+        commands.add(TEMP_LINK.toString());
         ExternalProcess process = ExternalProcess.launch(commands);
         int exitStatus = process.waitFor();
         if (exitStatus == 1 || exitStatus == 255)
@@ -187,27 +197,24 @@ public class SEEDFile {
     /**
      * Run rdseed -q write -fRd $seedFile<br>
      *
-     * @param outputPath rdseed の出力先 if this is relative path, then the root is the
-     *                   directory of the seed file
+     * @param outputPath for rdseed
      * @throws IOException if any
      */
     void extract(Path outputPath) throws IOException {
         if (Files.exists(outputPath)) Files.createDirectories(outputPath);
-        System.out.println("Extracting seedFile: " + seedPath);
+        System.err.println("Extracting seedFile: " + ORIGNAL_PATH + " in " + outputPath);
         readSeed("-q " + outputPath + " -fRd");
     }
 
     /**
-     * 移動後 {@link SEEDFile#seedPath}も変更する
+     * Creates a symbolic link (absolute path) to the seed file in the directory.
      *
      * @param directory if it does not exist, it will be created
-     * @return seedFile を directoryに持っていけたらtrue
      * @throws IOException if an I/O error occurs
      */
-    public boolean toDirectory(Path directory) throws IOException {
-        Files.move(seedPath, directory.resolve(seedPath.getFileName()));
-        seedPath = directory.resolve(seedPath.getFileName());
-        return true;
+    void createLink(Path directory) throws IOException {
+        Files.createSymbolicLink(directory.resolve(ORIGNAL_PATH.getFileName()), ORIGNAL_PATH.toAbsolutePath());
+//        Files.move(seedPath, directory.resolve(seedPath.getFileName()));
     }
 
 }

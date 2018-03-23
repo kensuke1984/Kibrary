@@ -16,11 +16,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Global CMT searchを行う時のQuery
+ * Query for search of Global CMT
  *
  * @author Kensuke Konishi
- * @version 0.1.11
- *          TODO thread safe
+ * @version 0.1.12
+ * TODO thread safe (immutable)
  */
 public class GlobalCMTSearch {
 
@@ -34,23 +34,23 @@ public class GlobalCMTSearch {
      */
     private LocalDateTime endDate;
     /**
-     * lower limit of centroid time shift Default: -9999
+     * lower limit of centroid time shift [s] Default: -9999
      */
     private double lowerCentroidTimeShift = -9999;
     /**
-     * lower limit of depth range Default: 0
+     * lower limit of depth range [km] Default: 0
      */
     private double lowerDepth;
     /**
-     * lower limit of latitude range [-90:90] Default: -90
+     * lower limit of latitude range [-90:90] (deg) Default: -90
      */
     private double lowerLatitude = -90;
     /**
-     * lower limit of longitude range [-180:180] Default: -180
+     * lower limit of longitude range [-180:180] (deg) Default: -180
      */
     private double lowerLongitude = -180;
     /**
-     * lower limit of bodywave magnitude Default: 0
+     * lower limit of body wave magnitude Default: 0
      */
     private double lowerMb;
     /**
@@ -66,11 +66,11 @@ public class GlobalCMTSearch {
      */
     private double lowerHalfDuration;
     /**
-     * lower limit of null axis plunge [0, 90] (degree) Default: 0
+     * lower limit of null axis plunge [0, 90] (deg) Default: 0
      */
     private int lowerNullAxisPlunge;
     /**
-     * lower limit of tension axis plunge [0, 90] (degree) Default: 0
+     * lower limit of tension axis plunge [0, 90] (deg) Default: 0
      */
     private int lowerTensionAxisPlunge;
     /**
@@ -94,7 +94,7 @@ public class GlobalCMTSearch {
      */
     private double upperLongitude = 180;
     /**
-     * upper limit of bodywave magnitude Default: 10
+     * upper limit of body wave magnitude Default: 10
      */
     private double upperMb = 10;
     /**
@@ -110,11 +110,11 @@ public class GlobalCMTSearch {
      */
     private double upperHalfDuration = 20;
     /**
-     * upper limit of null axis plunge [0, 90] (degree) Default: 90
+     * upper limit of null axis plunge [0, 90] (deg) Default: 90
      */
     private int upperNullAxisPlunge = 90;
     /**
-     * upper limit of tension axis plunge [0, 90] (degree) Default: 90
+     * upper limit of tension axis plunge [0, 90] (deg) Default: 90
      */
     private int upperTensionAxisPlunge = 90;
 
@@ -152,7 +152,7 @@ public class GlobalCMTSearch {
     /**
      * show date and time of event id
      *
-     * @param id global cmt id
+     * @param id Global CMT id
      */
     private static void printIDinformation(GlobalCMTID id) {
         GlobalCMTData event = id.getEvent();
@@ -183,8 +183,9 @@ public class GlobalCMTSearch {
      *
      * @param predicate {@link Predicate} for {@link GlobalCMTData}
      */
-    public void addPredicate(Predicate<GlobalCMTData> predicate) {
+    public GlobalCMTSearch addPredicate(Predicate<GlobalCMTData> predicate) {
         predicateSet.add(predicate);
+        return this;
     }
 
     /**
@@ -230,16 +231,8 @@ public class GlobalCMTSearch {
         return lowerNullAxisPlunge;
     }
 
-    public void setLowerNullAxisPlunge(int lowerNullAxisPlunge) {
-        this.lowerNullAxisPlunge = lowerNullAxisPlunge;
-    }
-
     public int getLowerTensionAxisPlunge() {
         return lowerTensionAxisPlunge;
-    }
-
-    public void setLowerTensionAxisPlunge(int lowerTensionAxisPlunge) {
-        this.lowerTensionAxisPlunge = lowerTensionAxisPlunge;
     }
 
     public LocalDateTime getStartDate() {
@@ -278,16 +271,8 @@ public class GlobalCMTSearch {
         return upperNullAxisPlunge;
     }
 
-    public void setUpperNullAxisPlunge(int upperNullAxisPlunge) {
-        this.upperNullAxisPlunge = upperNullAxisPlunge;
-    }
-
     public int getUpperTensionAxisPlunge() {
         return upperTensionAxisPlunge;
-    }
-
-    public void setUpperTensionAxisPlunge(int upperTensionAxisPlunge) {
-        this.upperTensionAxisPlunge = upperTensionAxisPlunge;
     }
 
     /**
@@ -332,29 +317,31 @@ public class GlobalCMTSearch {
     /**
      * Set centroid timeshift range
      *
-     * @param lowerCentroidTimeShift lower limit of centroid time shift
-     * @param upperCentroidTimeShift upper limit of centroid time shift
+     * @param lowerCentroidTimeShift [s] lower limit of centroid time shift
+     * @param upperCentroidTimeShift [s] upper limit of centroid time shift
      */
-    public void setCentroidTimeShiftRange(double lowerCentroidTimeShift, double upperCentroidTimeShift) {
+    public GlobalCMTSearch setCentroidTimeShiftRange(double lowerCentroidTimeShift, double upperCentroidTimeShift) {
         if (upperCentroidTimeShift < lowerCentroidTimeShift)
             throw new RuntimeException("Input centroid time shift range is invalid");
         this.lowerCentroidTimeShift = lowerCentroidTimeShift;
         this.upperCentroidTimeShift = upperCentroidTimeShift;
+        return this;
     }
 
     /**
      * @param lowerHalfDuration [s] lower limit of half duration
      * @param upperHalfDuration [s] uppper limit of half duration
      */
-    public void setHalfDurationRange(double lowerHalfDuration, double upperHalfDuration) {
+    public GlobalCMTSearch setHalfDurationRange(double lowerHalfDuration, double upperHalfDuration) {
         if (upperHalfDuration < lowerHalfDuration)
             throw new IllegalArgumentException("Input halfDuration range is invalid.");
         this.lowerHalfDuration = lowerHalfDuration;
         this.upperHalfDuration = upperHalfDuration;
+        return this;
     }
 
     /**
-     * @return lower limit of half duration
+     * @return [s] lower limit of half duration
      */
     public double getLowerHalfDuration() {
         return lowerHalfDuration;
@@ -373,10 +360,12 @@ public class GlobalCMTSearch {
      * @param lowerDepth [km] lower limit of depth
      * @param upperDepth [km] upper limit of depth
      */
-    public void setDepthRange(double lowerDepth, double upperDepth) {
-        if (lowerDepth < 0 || upperDepth < lowerDepth) throw new IllegalArgumentException("input depth range is invalid");
+    public GlobalCMTSearch setDepthRange(double lowerDepth, double upperDepth) {
+        if (lowerDepth < 0 || upperDepth < lowerDepth)
+            throw new IllegalArgumentException("input depth range is invalid");
         this.lowerDepth = lowerDepth;
         this.upperDepth = upperDepth;
+        return this;
     }
 
     /**
@@ -389,11 +378,12 @@ public class GlobalCMTSearch {
      * @param lowerLatitude [deg] [-90, upperLatitude)
      * @param upperLatitude [deg] (lowerLatitude, 90]
      */
-    public void setLatitudeRange(double lowerLatitude, double upperLatitude) {
+    public GlobalCMTSearch setLatitudeRange(double lowerLatitude, double upperLatitude) {
         if (lowerLatitude < -90 || upperLatitude < lowerLatitude || 90 < upperLatitude)
             throw new IllegalArgumentException("Input latitude range is invalid");
         this.lowerLatitude = lowerLatitude;
         this.upperLatitude = upperLatitude;
+        return this;
     }
 
     /**
@@ -403,11 +393,12 @@ public class GlobalCMTSearch {
      * @param lowerLongitude [-180, upperLongitude or 180)
      * @param upperLongitude (lowerLongitude, 360)
      */
-    public void setLongitudeRange(double lowerLongitude, double upperLongitude) {
+    public GlobalCMTSearch setLongitudeRange(double lowerLongitude, double upperLongitude) {
         if (upperLongitude < lowerLongitude || 180 <= lowerLongitude || lowerLongitude < -180 || 360 < upperLongitude)
             throw new IllegalArgumentException("Invalid longitude range.");
         this.lowerLongitude = lowerLongitude;
         this.upperLongitude = upperLongitude;
+        return this;
     }
 
     /**
@@ -416,10 +407,11 @@ public class GlobalCMTSearch {
      * @param lowerMb lower limit of Mb
      * @param upperMb upper limit of Mb
      */
-    public void setMbRange(double lowerMb, double upperMb) {
+    public GlobalCMTSearch setMbRange(double lowerMb, double upperMb) {
         if (upperMb < lowerMb) throw new RuntimeException("Input Mb range is invalid");
         this.lowerMb = lowerMb;
         this.upperMb = upperMb;
+        return this;
     }
 
     /**
@@ -428,10 +420,11 @@ public class GlobalCMTSearch {
      * @param lowerMs lower limit of Ms
      * @param upperMs upper limit of Ms
      */
-    public void setMsRange(double lowerMs, double upperMs) {
+    public GlobalCMTSearch setMsRange(double lowerMs, double upperMs) {
         if (upperMs < lowerMs) throw new RuntimeException("input Ms range is invalid");
         this.lowerMs = lowerMs;
         this.upperMs = upperMs;
+        return this;
     }
 
     /**
@@ -440,10 +433,11 @@ public class GlobalCMTSearch {
      * @param lowerMw lower limit of Mw range
      * @param upperMw upper limit of Mw range
      */
-    public void setMwRange(double lowerMw, double upperMw) {
+    public GlobalCMTSearch setMwRange(double lowerMw, double upperMw) {
         if (upperMw < lowerMw) throw new RuntimeException("input Mw range is invalid");
         this.lowerMw = lowerMw;
         this.upperMw = upperMw;
+        return this;
     }
 
     /**
@@ -452,12 +446,12 @@ public class GlobalCMTSearch {
      * @param lowerNullAxisPlunge lower limit of Null axis plunge
      * @param upperNullAxisPlunge upper limit of Null axis plunge
      */
-    public void setNullAxisPlungeRange(int lowerNullAxisPlunge, int upperNullAxisPlunge) {
+    public GlobalCMTSearch setNullAxisPlungeRange(int lowerNullAxisPlunge, int upperNullAxisPlunge) {
         if (upperNullAxisPlunge < lowerNullAxisPlunge || 90 < upperNullAxisPlunge || lowerNullAxisPlunge < 0)
             throw new RuntimeException("input null axis plunge range is invalid");
         this.lowerNullAxisPlunge = lowerNullAxisPlunge;
         this.upperNullAxisPlunge = upperNullAxisPlunge;
-
+        return this;
     }
 
     /**
@@ -466,11 +460,12 @@ public class GlobalCMTSearch {
      * @param lowerTensionAxisPlunge [deg] lower limit of tension axis plunge
      * @param upperTensionAxisPlunge [deg] upper limit of tension axis plunge
      */
-    public void setTensionAxisPlungeRange(int lowerTensionAxisPlunge, int upperTensionAxisPlunge) {
+    public GlobalCMTSearch setTensionAxisPlungeRange(int lowerTensionAxisPlunge, int upperTensionAxisPlunge) {
         if (lowerTensionAxisPlunge < 0 || upperTensionAxisPlunge < lowerTensionAxisPlunge ||
                 90 < upperTensionAxisPlunge) throw new RuntimeException("invalid tension axis plunge range");
         this.lowerTensionAxisPlunge = lowerTensionAxisPlunge;
         this.upperTensionAxisPlunge = upperTensionAxisPlunge;
+        return this;
     }
 
 }

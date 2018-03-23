@@ -1,10 +1,14 @@
 package io.github.kensuke1984.kibrary.util;
 
+import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.SimpleEmail;
 import org.apache.commons.math3.util.FastMath;
 
 import java.awt.*;
@@ -34,7 +38,7 @@ import java.util.stream.Stream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.4
  */
 public final class Utilities {
 
@@ -242,8 +246,7 @@ public final class Utilities {
      */
     public static Set<SPCFile> collectSpcFileName(Path path) throws IOException {
         try (Stream<Path> stream = Files.list(path)) {
-            return stream.filter(FormattedSPCFile::isFormatted).map(FormattedSPCFile::new)
-                    .collect(Collectors.toSet());
+            return stream.filter(FormattedSPCFile::isFormatted).map(FormattedSPCFile::new).collect(Collectors.toSet());
         }
     }
 
@@ -270,6 +273,21 @@ public final class Utilities {
         Files.move(srcPath, destDirectory.resolve(srcPath.getFileName()), options);
     }
 
+
+    /**
+     * @param targetPath    even if a target path is a relative path, the symlink is for its absolute path.
+     * @param destDirectory in which the symlink is created.
+     * @param createDestDir if this value is true and the destDirectory does not exist, this method creates the directory.
+     * @param options       for copying
+     * @throws IOException if any
+     */
+    public static void createLinkInDirectory(Path targetPath, Path destDirectory, boolean createDestDir,
+                                             CopyOption... options) throws IOException {
+        System.out.println(destDirectory.resolve(targetPath.getFileName()));
+        if (createDestDir) Files.createDirectories(destDirectory);
+        Files.createSymbolicLink(destDirectory.resolve(targetPath.getFileName()), targetPath.toAbsolutePath());
+    }
+
     /**
      * Changes an input double value to a string. The value is rounded to have n
      * decimal places.
@@ -294,4 +312,37 @@ public final class Utilities {
         Desktop.getDesktop().mail(uri);
     }
 
+    /**
+     * @param subject       of the mail
+     * @param to            address of the mail
+     * @param lines         mail
+     * @param authenticator for Gmail
+     * @throws Exception if any
+     */
+    public static void sendGmail(String subject, String to, String[] lines, DefaultAuthenticator authenticator)
+            throws Exception {
+        Email email = new SimpleEmail();
+        email.setHostName("smtp.googlemail.com");
+        email.setSmtpPort(465);
+        email.setAuthenticator(authenticator);
+        email.setSSLOnConnect(true);
+        email.setFrom(Environment.getEmail());
+        email.setSubject(subject);
+        email.setMsg(String.join("\n", lines));
+        email.addTo(to);
+        email.send();
+    }
+
+    /**
+     * Input dialog or input prompt shows up.
+     * Your input is hidden.
+     *
+     * @param phrase key for the password
+     * @return password, secret phrase, ...
+     */
+    public static String getPassword(String phrase) throws InterruptedException {
+        return GraphicsEnvironment.isHeadless() ?
+                String.copyValueOf(System.console().readPassword("Password for " + phrase)) :
+                PasswordInput.getPassword(phrase);
+    }
 }

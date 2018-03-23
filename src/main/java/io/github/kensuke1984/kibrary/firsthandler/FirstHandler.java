@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * intermediate files explicitly.
  *
  * @author Kensuke Konishi
- * @version 0.2.1.3
+ * @version 0.2.2
  */
 public class FirstHandler implements Operation {
     private double samplingHz;
@@ -99,7 +99,7 @@ public class FirstHandler implements Operation {
     }
 
     /**
-     * parameterのセット
+     * set parameters
      */
     private void set() {
         checkAndPutDefaults();
@@ -144,7 +144,7 @@ public class FirstHandler implements Operation {
                 return new SeedSAC(seedPath, outPath);
             } catch (Exception e) {
                 try {
-                    System.err.println(seedPath + " has problem. " + e);
+                    System.err.println(seedPath + " has problems. " + e);
                     Utilities.moveToDirectory(seedPath, ignoredSeedPath, true);
                 } catch (Exception e1) {
                     e1.printStackTrace();
@@ -158,7 +158,7 @@ public class FirstHandler implements Operation {
         int threadNum = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(threadNum);
 
-        seedSacs.forEach(es::submit);
+        seedSacs.forEach(es::submit); //TODO exception handling
 
         es.shutdown();
         try {
@@ -170,9 +170,10 @@ public class FirstHandler implements Operation {
         for (SeedSAC seedSac : seedSacs)
             try {
                 if (seedSac == null) continue;
-                if (!seedSac.hadRun()) Utilities.moveToDirectory(seedSac.getSeedPath(), ignoredSeedPath, true);
-                else if (seedSac.hasProblem()) Utilities.moveToDirectory(seedSac.getSeedPath(), badSeedPath, true);
-                else Utilities.moveToDirectory(seedSac.getSeedPath(), goodSeedPath, true);
+                if (!seedSac.hadRun()) Utilities.createLinkInDirectory(seedSac.getSeedPath(), ignoredSeedPath, true);
+                else if (seedSac.hasProblem())
+                    Utilities.createLinkInDirectory(seedSac.getSeedPath(), badSeedPath, true);
+                else Utilities.createLinkInDirectory(seedSac.getSeedPath(), goodSeedPath, true);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -182,7 +183,6 @@ public class FirstHandler implements Operation {
         try (Stream<Path> workPathStream = Files.list(workPath)) {
             return workPathStream.filter(path -> path.toString().endsWith(".seed")).collect(Collectors.toSet());
         }
-
     }
 
     @Override

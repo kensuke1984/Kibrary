@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.datarequest;
+package io.github.kensuke1984.kibrary.util;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,19 +13,21 @@ import java.util.Arrays;
  * is stated in the Kibrary License statement.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.2
+ * @version 0.0.2
  */
 class PasswordInput extends JPanel implements ActionListener {
-
-    private static final long serialVersionUID = 8903201119454585411L;
+    /**
+     * 2018/2/1
+     */
+    private static final long serialVersionUID = -5714596316649848840L;
     private static String OK = "ok";
     private static String HELP = "help";
 
     private JFrame controllingFrame; // needed for dialogs
     private JPasswordField passwordField;
-    private String password;
+    private volatile String password;
 
-    private PasswordInput(JFrame f) {
+    private PasswordInput(JFrame f, String phrase) {
         // Use the default FlowLayout.
         controllingFrame = f;
 
@@ -34,7 +36,7 @@ class PasswordInput extends JPanel implements ActionListener {
         passwordField.setActionCommand(OK);
         passwordField.addActionListener(this);
 
-        JLabel label = new JLabel("waveformrequest2015@gmail.com: ");
+        JLabel label = new JLabel(phrase + ": ");
         label.setLabelFor(passwordField);
 
         JComponent buttonPane = createButtonPanel();
@@ -52,14 +54,15 @@ class PasswordInput extends JPanel implements ActionListener {
      * Create the GUI and show it. For thread safety, this method should be
      * invoked from the event dispatch thread.
      */
-    static PasswordInput createAndShowGUI() {
+    private static PasswordInput createAndShowGUI(String phrase) {
         // Create and set up the window.
-        JFrame frame = new JFrame("Password for the Gmail");
+        JFrame frame = new JFrame();
+//        frame.setUndecorated(true);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         // Create and set up the content pane.
-        PasswordInput newContentPane = new PasswordInput(frame);
+        PasswordInput newContentPane = new PasswordInput(frame, phrase);
         newContentPane.setOpaque(true); // content panes must be opaque
         frame.setContentPane(newContentPane);
 
@@ -70,10 +73,17 @@ class PasswordInput extends JPanel implements ActionListener {
             public void windowActivated(WindowEvent e) {
                 newContentPane.resetFocus();
             }
+
+            @Override
+            public void windowClosing(WindowEvent e) {
+                System.err.println("OK. The secret is secret. But I guess you must move forward sometime.");
+                newContentPane.password = "";
+            }
         });
 
         // Display the window.
         frame.pack();
+        frame.setResizable(false);
         frame.setVisible(true);
         return newContentPane;
     }
@@ -82,7 +92,6 @@ class PasswordInput extends JPanel implements ActionListener {
         JPanel p = new JPanel(new GridLayout(0, 1));
         JButton okButton = new JButton("OK");
         JButton helpButton = new JButton("Help");
-
         okButton.setActionCommand(OK);
         helpButton.setActionCommand(HELP);
         okButton.addActionListener(this);
@@ -92,24 +101,25 @@ class PasswordInput extends JPanel implements ActionListener {
         return p;
     }
 
-    String getPassword() throws InterruptedException {
+    public String getPassword() throws InterruptedException {
         while (password == null) Thread.sleep(10);
         return password;
+    }
+
+    public static String getPassword(String phrase) throws InterruptedException {
+        return createAndShowGUI(phrase).getPassword();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
-
         if (OK.equals(cmd)) { // Process the password.
             char[] input = passwordField.getPassword();
             password = String.copyValueOf(input);
             // Zero out the possible password, for security.
             Arrays.fill(input, '0');
-
             passwordField.selectAll();
             resetFocus();
-
             ((Window) SwingUtilities.getRoot(this)).dispose();
         } else { // The user has asked for help.
             JOptionPane.showMessageDialog(controllingFrame, "Recall Geller's group password, would you?");

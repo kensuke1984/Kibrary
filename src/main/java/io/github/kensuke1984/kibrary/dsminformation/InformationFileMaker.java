@@ -22,7 +22,7 @@ import java.util.*;
  * TODO information of eliminated stations and events
  *
  * @author Kensuke Konishi
- * @version 0.2.1.4
+ * @version 0.2.2
  */
 public class InformationFileMaker implements Operation {
     /**
@@ -84,7 +84,7 @@ public class InformationFileMaker implements Operation {
             pw.println("##double TLEN must be a power of 2/10, must be set");
             pw.println("#TLEN 3276.8");
             pw.println("##polynomial structure file (can be blank)");
-            pw.println("##if so or it doesn't exist model is an initial PREM");
+            pw.println("##if this is blank or doesn't exist model is an initial PREM");
             pw.println("#structureFile ");
         }
         System.err.println(outPath + " is created.");
@@ -109,8 +109,8 @@ public class InformationFileMaker implements Operation {
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
         if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("TLEN")) property.setProperty("TLEN", "3276.8");
-        if (!property.containsKey("NP")) property.setProperty("NP", "1024");
+        if (!property.containsKey("TLEN")) throw new RuntimeException("TLEN must be defined.");
+        if (!property.containsKey("NP")) throw new RuntimeException("NP must be defined.");
         if (!property.containsKey("header")) property.setProperty("header", "PREM");
     }
 
@@ -123,7 +123,6 @@ public class InformationFileMaker implements Operation {
         locationsPath = getPath("locationsPath");
 
         stationInformationPath = getPath("stationInformationPath");
-        // str = reader.getValues("partialTypes");
         np = Integer.parseInt(property.getProperty("NP"));
         tlen = Double.parseDouble(property.getProperty("TLEN"));
         header = property.getProperty("header");
@@ -131,7 +130,7 @@ public class InformationFileMaker implements Operation {
         if (property.containsKey("structureFile")) {
             Path psPath = getPath("structureFile");
             ps = psPath == null ? PolynomialStructure.PREM : new PolynomialStructure(psPath);
-        }
+        } else ps = PolynomialStructure.PREM;
     }
 
     /**
@@ -202,7 +201,6 @@ public class InformationFileMaker implements Operation {
         Path bpPath = outputPath.resolve("BPinfo");
         Path fpPath = outputPath.resolve("FPinfo");
         createPointInformationFile();
-        // System.exit(0);
 
         //
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
@@ -212,7 +210,7 @@ public class InformationFileMaker implements Operation {
 
         // System.exit(0);
         // //////////////////////////////////////
-        System.out.println("making information files for the events(fp)");
+        System.err.println("Making information files for the events(fp)");
         for (EventFolder ed : eventDirs) {
             GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
             FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);

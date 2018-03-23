@@ -8,33 +8,33 @@ import io.github.kensuke1984.anisotime.Phase;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.2.1
+ * @version 0.0.2.1.1
  */
 public class TauPPhase {
 
     /**
-     * epicentral DISTANCE (deg)
+     * [deg] epicentral DISTANCE
      */
     private final double DISTANCE;
     /**
-     * source DEPTH not radius (km)
+     * [km] source DEPTH not radius
      */
     private final double DEPTH;
     private final Phase PHASE_NAME;
     /**
-     * travel time (s)
+     * [s] travel time
      */
     private final double TRAVELTIME;
     /**
-     * ray parameter (s/deg)
+     * [s/deg] ray parameter
      */
     private final double RAY_PARAMETER;
     /**
-     * TAKEOFF (deg)
+     * [deg] TAKEOFF
      */
     private final double TAKEOFF;
     /**
-     * INCIDENT (deg)
+     * [deg] INCIDENT
      */
     private final double INCIDENT;
     /**
