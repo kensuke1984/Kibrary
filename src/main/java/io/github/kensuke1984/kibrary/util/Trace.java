@@ -4,13 +4,13 @@ import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.linear.*;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @version 0.1.3.0.2
  */
 public class Trace {
 
@@ -44,6 +44,14 @@ public class Trace {
         Y = y.clone();
         X_VECTOR = new ArrayRealVector(x, false);
         Y_VECTOR = new ArrayRealVector(y, false);
+        indexOfDownwardConvex = IntStream.range(1, X.length - 1)
+                .filter(i -> Y[i] < Y[i - 1] && 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).boxed()
+                .sorted(Comparator.comparingDouble(o -> -Y[o] * Y[o])).mapToInt(i -> i).toArray();
+        indexOfUpwardConvex = IntStream.range(1, X.length - 1)
+                .filter(i -> Y[i - 1] < Y[i] && 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).boxed()
+                .sorted(Comparator.comparingDouble(o -> -Y[o] * Y[o])).mapToInt(i -> i).toArray();
+        indexOfPeak = IntStream.range(1, X.length - 1).filter(i -> 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).boxed()
+                .sorted(Comparator.comparingDouble(o -> -Y[o] * Y[o])).mapToInt(i -> i).toArray();
     }
 
     /**
@@ -118,16 +126,16 @@ public class Trace {
     }
 
     /**
-     * @param i index for x [0, length -1]
-     * @return x[i]
+     * @param i index for <i>x</i> [0, length -1]
+     * @return x[i], second at the ith point
      */
     public double getXAt(int i) {
         return X[i];
     }
 
     /**
-     * @param i index for y [0, length -1]
-     * @return y[i]
+     * @param i index (NOT time) for y [0, length -1]
+     * @return y[i], amplitude at the ith point (X[i] sec)
      */
     public double getYAt(int i) {
         return Y[i];
@@ -177,12 +185,15 @@ public class Trace {
     }
 
     /**
-     * x=cの点でのyの値をfをn次関数として補完する 補完の際には直近のn+1点で補完
+     * Interpolates a value at <i>x = c</i>, only if the time series has no point at <i>x = c</i>,
+     * assuming that nearest <i>n+1</i> points are on an <i>n</i> th order function.
      * f(x) = &Sigma; a<sub>i</sub> x<sup>i</sup>
      *
-     * @param n degree of function for interpolation
-     * @param c point for the value
-     * @return y = f(c) = &Sigma; a<sub>i</sub> c<sup>i</sup>
+     * @param n degree of function for interpolation.
+     *          If <i>n = 0</i>, then the value y at the closest point returns.
+     * @param c point for the value. If the value c exists in the time series (x),
+     *          no interpolation is performed.
+     * @return interpolated y = f(c) = &Sigma; a<sub>i</sub> c<sup>i</sup>
      */
     public double toValue(int n, double c) {
         if (X.length < n + 1) throw new IllegalArgumentException("n is too big");
@@ -217,33 +228,46 @@ public class Trace {
     }
 
     /**
-     * peak is defined as 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1]))
-     *
-     * @return index of a peak (ordered)
+     * @return index of maximal and minimal points. The order follows the absolute values of the points.
      */
-    public int[] indexOfPeaks() {
-        return IntStream.range(1, X.length - 1).filter(i -> 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).toArray();
+    public int[] getIndexOfPeak() {
+        return indexOfPeak.clone();
     }
 
+    /**
+     * @return index of minimal points. The order follows the absolute values of the points.
+     */
+    public int[] getIndexOfDownwardConvex() {
+        return indexOfDownwardConvex.clone();
+    }
+
+    /**
+     * @return index of maximal points. The order follows the absolute values of the points.
+     */
+    public int[] getIndexOfUpwardConvex() {
+        return indexOfUpwardConvex.clone();
+    }
+
+    /**
+     * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i-1] &lt; y[i]
+     * <p>
+     * index of upward convex
+     * index is ordered by the absolute values of the convex.
+     */
+    private int[] indexOfUpwardConvex;
     /**
      * 0 &lt; (y(x[i])-y(x[i-1])) * (y(x[i]) - y(x[i+1])) and y[i] &lt; y[i-1]
-     *
-     * @return index of downward convex
+     * index of downward convex
+     * index is ordered by the absolute values of the convex.
      */
-    public int[] indexOfDownwardConvex() {
-        return IntStream.range(1, X.length - 1)
-                .filter(i -> Y[i] < Y[i - 1] && 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).toArray();
-    }
-
+    private int[] indexOfDownwardConvex;
     /**
-     * 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1])) and y[i-1] &lt; t[i]
-     *
-     * @return index of downward convex
+     * peak is defined as 0 &lt; (y(x[i])-y(x[i-1]))*(y(x[i])-y(x[i+1]))
+     * index of a peak
+     * index is ordered by the absolute values of the convex.
      */
-    public int[] indexOfUpwardConvex() {
-        return IntStream.range(1, X.length - 1)
-                .filter(i -> Y[i - 1] < Y[i] && 0 < (Y[i + 1] - Y[i]) * (Y[i - 1] - Y[i])).toArray();
-    }
+    private int[] indexOfPeak;
+
 
     /**
      * @param target value of x to look for the nearest x value to

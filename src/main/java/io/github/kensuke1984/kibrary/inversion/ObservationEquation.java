@@ -62,7 +62,7 @@ public class ObservationEquation {
     }
 
     /**
-     * @param m 解のベクトル
+     * @param m target vector
      * @return Amをsyntheticに足したd列 順番はDvectorと同じ
      */
     public RealVector[] bornOut(RealVector m) {
@@ -120,8 +120,8 @@ public class ObservationEquation {
     }
 
     /**
-     * Am=dのAを作る まずmとdの情報から Aに必要な偏微分波形を決める。
-     *
+     * Build a kernel matrix from the PartialIDs
+     * according to unknown parameter and waveform data
      * @param ids source for A
      */
     private void readA(PartialID[] ids) {

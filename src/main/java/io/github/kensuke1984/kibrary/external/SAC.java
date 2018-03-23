@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * Sac process made by SacLauncher
+ * Sac process made by SACLauncher
  *
  * @author Kensuke Konishi
  * @version 0.1.0.1
@@ -13,7 +13,7 @@ import java.io.PrintWriter;
 public class SAC extends ExternalProcess implements Closeable {
 
     /**
-     * Input for Sac
+     * Input for SAC
      */
     private PrintWriter standardInput;
 
@@ -22,14 +22,17 @@ public class SAC extends ExternalProcess implements Closeable {
         standardInput = new PrintWriter(super.standardInput);
     }
 
+    /**
+     * @return SAC operating in a simple process 'sac'. Please care about the working folder.
+     * @throws IOException if any
+     */
     public static SAC createProcess() throws IOException {
         if (System.getenv("SACAUX") != null && isInPath("sac")) return new SAC(new ProcessBuilder("sac").start());
         throw new RuntimeException("No sac in PATH or No SACAUX is set.");
     }
 
     /**
-     * Make an order to Sac
-     *
+     * Make an order to SAC
      * @param line command line for SAC
      */
     public void inputCMD(String line) {
@@ -51,6 +54,6 @@ public class SAC extends ExternalProcess implements Closeable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
+
 }

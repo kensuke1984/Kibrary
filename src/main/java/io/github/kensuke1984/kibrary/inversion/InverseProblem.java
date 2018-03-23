@@ -57,8 +57,7 @@ public abstract class InverseProblem {
     public abstract RealMatrix computeCovariance(double sigmaD, int j);
 
     /**
-     * 解のアウトプット
-     *
+     * output the answer
      * @param outPath {@link File} for write of solutions
      * @throws IOException if an I/O error occurs
      */
@@ -75,7 +74,7 @@ public abstract class InverseProblem {
     public abstract void compute();
 
     /**
-     * @return 基底ベクトルを並べた行列 i番目のcolumnに i番目の基底ベクトル
+     * @return RealMatrix in which the i-th column is i-th basis vector.
      */
     public abstract RealMatrix getBaseVectors();
 

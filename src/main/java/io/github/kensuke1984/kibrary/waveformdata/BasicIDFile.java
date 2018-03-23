@@ -44,13 +44,13 @@ import java.util.stream.IntStream;
  * </dl>
  *
  * @author Kensuke Konishi
- * @version 0.3.0.5
+ * @version 0.3.0.5.1
  * @see BasicID
  */
 public final class BasicIDFile {
 
     /**
-     * File size for an ID [byte]
+     * [byte] File size for an ID
      */
     public static final int oneIDByte = 28;
 
@@ -128,7 +128,7 @@ public final class BasicIDFile {
                 ids[i] = id.setData(data);
             });
         }
-        System.err.println("Reading waveform done in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println("Waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
         return ids;
     }
 
@@ -168,13 +168,12 @@ public final class BasicIDFile {
             int nid = (int) (idParts / oneIDByte);
             BasicID[] ids = new BasicID[nid];
             byte[][] bytes = new byte[nid][oneIDByte];
+            System.err.println("Reading basicID file: " + idPath);
             for (int i = 0; i < nid; i++)
                 dis.read(bytes[i]);
-            IntStream.range(0, nid).parallel().forEach(i -> {
-                ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges);
-            });
-            System.err.println(
-                    "Reading " + ids.length + " basic IDs done in " + Utilities.toTimeString(System.nanoTime() - t));
+            IntStream.range(0, nid).parallel()
+                    .forEach(i -> ids[i] = createID(bytes[i], stations, cmtIDs, periodRanges));
+            System.err.println(ids.length + " basic IDs are read in " + Utilities.toTimeString(System.nanoTime() - t));
             return ids;
         }
     }

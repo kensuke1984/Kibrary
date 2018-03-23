@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 /**
- * Am=d における m の情報
+ * m in Am=d
  * <p>
  * 3D(MU): PartialType lat lon r (weighting) <br>
  * 1D(PAR2): PartialType r (weighting)<br>

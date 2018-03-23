@@ -58,7 +58,7 @@ import java.util.stream.Stream;
  * Because of DSM condition, stations can not have the same name...
  *
  * @author Kensuke Konishi
- * @version 2.3.1.2
+ * @version 2.3.1.3
  */
 public class PartialDatasetMaker implements Operation {
 
@@ -75,11 +75,11 @@ public class PartialDatasetMaker implements Operation {
     private int np;
 
     /**
-     * BPinfo このフォルダの直下に 0000????を置く
+     * Path of a folder which contains 0000???? (BPinfo)
      */
     private Path bpPath;
     /**
-     * FPinfo このフォルダの直下に イベントフォルダ（FP）を置く
+     * Path of a folder which contains event folders (FPinfo)
      */
     private Path fpPath;
 
@@ -243,6 +243,8 @@ public class PartialDatasetMaker implements Operation {
         if (!property.containsKey("partialTypes")) property.setProperty("partialTypes", "MU");
         if (!property.containsKey("partialSamplingHz")) property.setProperty("partialSamplingHz", "20");
         if (!property.containsKey("finalSamplingHz")) property.setProperty("finalSamplingHz", "1");
+        if (!property.containsKey("perturbationPath"))
+            throw new IllegalArgumentException("There is no information about perturbationPath.");
     }
 
     /**

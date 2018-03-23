@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -21,21 +22,24 @@ import java.util.regex.Matcher;
 /**
  * Class for extracting a seed file. It creates SAC files from the seed file.
  * <p>
- * This class assumes that rdseed, evalresp and sac exists in your PATH. The
- * software can be found in IRIS.
+ * This class requires that rdseed, evalresp and sac exists in your PATH.
+ * The software
+ * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/rdseed/>rdseed</a>,
+ * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/evalresp/>evalresp</a> and
+ * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found in IRIS.
  *
  * @author Kensuke Konishi
- * @version 0.1.8.3
+ * @version 0.1.8.4.1
  */
 class SeedSAC implements Runnable {
 
     /**
-     * delta for sac files. Sac files with different delta will be interpolated
+     * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
      */
     private static final double delta = 0.05;
     /**
-     * Sampling Hz in write SacFile
+     * [Hz] Sampling Hz in write SAC files
      */
     private static final double samplingHz = 20;
     /**
@@ -51,15 +55,15 @@ class SeedSAC implements Runnable {
      */
     private GlobalCMTData event;
     /**
-     * このseedfileのイベントフォルダ
+     * where output goes.
      */
     private EventFolder eventDir;
     /**
-     * 処理するseedファイル
+     * seed file to process
      */
     private SEEDFile seedFile;
     /**
-     * 梱包するイベントの id
+     * event ID
      */
     private GlobalCMTID id;
     /**
@@ -70,17 +74,15 @@ class SeedSAC implements Runnable {
      * Maximum epicentral distance of write sac files 震央距離の最大値
      */
     private double epicentralDistanceMax = 180;
-    /**
-     * 解凍できるかどうか
-     */
+
     private boolean eventDirAlreadyExists;
     /**
-     * PDE時刻, 位置を基準に解凍するかどうか デフォルトはfalse (CMT)
+     * true: the base time will be PDE time, false: CMT (default)
      */
     private boolean byPDE;
     private boolean hadRun;
     /**
-     * 何か問題はないか？ あるかどうかは例外フォルダがあるかどうか true: problem, false: no problem
+     * true: exception has occurred, false: not
      */
     private boolean problem;
 
@@ -95,7 +97,7 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * 解凍するseed file
+     * seed file to extract
      *
      * @param seedPath            解凍するseedファイル
      * @param outputDirectoryPath inside this folder, the seed file is extracted. If the folder
@@ -116,8 +118,7 @@ class SeedSAC implements Runnable {
         if (eventDir.exists()) eventDirAlreadyExists = false;
         else if (!eventDir.mkdirs()) throw new RuntimeException("Can not create " + eventDir);
         else eventDirAlreadyExists = true;
-
-        seedFile.toDirectory(eventDir.toPath());
+        seedFile.createLink(eventDir.toPath());
     }
 
     /**
@@ -125,10 +126,9 @@ class SeedSAC implements Runnable {
      * Change cmpaz cmpinc BHN BHE BHZ のときはcmpaz cmpincを変更する
      *
      * @param sacPath Path of a file to fix
-     * @throws IOException          if an I/O error occurs
-     * @throws InterruptedException if something during sac processing.
+     * @throws IOException if an I/O error occurs
      */
-    private static void fixDelta(Path sacPath) throws IOException, InterruptedException {
+    private static void fixDelta(Path sacPath) throws IOException {
         try (SAC sacD = SAC.createProcess()) {
             String cwd = sacPath.getParent().toString();
             sacD.inputCMD("cd " + cwd);// set current directory
@@ -183,7 +183,6 @@ class SeedSAC implements Runnable {
      */
     private GlobalCMTID findIDinFilename() {
         String fileName = seedFile.getSeedPath().getFileName().toString();
-        // System.out.println(fileName);
         Matcher m1 = GlobalCMTID.RECENT_GLOBALCMTID_PATTERN.matcher(fileName);
         if (m1.find()) return new GlobalCMTID(m1.group());
 
@@ -204,9 +203,8 @@ class SeedSAC implements Runnable {
      * イベントフォルダ内すべてのMODファイルの装置関数をdeconvolutionする。
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
      */
-    private void deconvolute() throws IOException {
+    private void deconvolute() {
         // System.out.println("Conducting deconvolution");
-
         Path noSpectraPath = eventDir.toPath().resolve("noSpectraOrInvalidMOD");
         Path duplicateChannelPath = eventDir.toPath().resolve("duplicateChannel");
         // evalresp後のRESP.*ファイルを移動する TODO メソッドを分ける
@@ -334,25 +332,19 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * イベントフォルダ内のmerge後のSACを修正する
-     *
-     * @return if successful
+     * modify merged SAC files
      */
-    private boolean modifySACs() {
+    private void modifySACs() throws IOException, InterruptedException {
         // System.out.println("Modifying sac files in "
         // + eventDir.getAbsolutePath());
-        // イベントフォルダ内のSACを集める
         Path trashBoxPath = eventDir.toPath().resolve("trash");
         Path mergedBoxPath = eventDir.toPath().resolve("merged");
 
-        // SacFileの検証
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPathStream) {
-                // System.out.println(sacFile);
                 SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
                 // TODO 00 01 "" duplication detect
-
                 // header check khole e.t.c
                 if (!sm.canInterpolate() || !sm.checkHeader()) {
                     // System.out.println(sacPath + " has too big gap to be
@@ -361,31 +353,23 @@ class SeedSAC implements Runnable {
                     continue;
                 }
 
-                // Sacのトレンド除去 interpolationをして、.SAC > .MOD として書き込む first
+                // remove trends in SAC files interpolate the files .SAC > .MOD
                 sm.preprocess();
 
-                // タイムウインドウ補完
                 sm.interpolate();
 
-                // Sacを整える
                 sm.rebuild();
-                // System.exit(0);
 
-                // 震央距離check
+                // filter by distance
                 if (!sm.checkEpicentralDistance(epicentralDistanceMin, epicentralDistanceMax)) {
                     Utilities.moveToDirectory(sacPath, trashBoxPath, true);
                     continue;
                 }
 
-                // 処理の終わった.SACファイルはmergedに
+                // move SAC files after treatment in the merged folder
                 Utilities.moveToDirectory(sacPath, mergedBoxPath, true);
-
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
-        return true;
     }
 
     /**
@@ -395,7 +379,7 @@ class SeedSAC implements Runnable {
      * <p>
      * 回転できたものは rotatedNEフォルダに できなかったものはnonrotatedNEに
      */
-    private void rotate() {
+    private void rotate() throws IOException {
         Path trashBox = eventDir.toPath().resolve("nonRotatedNE");
         Path neDir = eventDir.toPath().resolve("rotatedNE");
         try (DirectoryStream<Path> eStream = Files.newDirectoryStream(eventDir.toPath(), "*.E")) {
@@ -418,23 +402,19 @@ class SeedSAC implements Runnable {
                     Utilities.moveToDirectory(nPath, trashBox, true);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
-        // If there are files (.N) which had no pair .E, move them to trash
+        // If there are files (.N) which had no pairs (.E), move them to trash
         try (DirectoryStream<Path> nPaths = Files.newDirectoryStream(eventDir.toPath(), "*.N")) {
             for (Path nPath : nPaths)
                 Utilities.moveToDirectory(nPath, trashBox, true);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
     }
 
     /**
-     * rdseedで解凍されてきた.SACファイルのdelta, cmpinc, cmpaz を整える TODO
-     * 整える前のファイルはrdseedoutputに補完する
+     * Adjusts delta, cmpinc and cmpaz in SAC files extracted by 'rdseed'
+     * The SAC files are copied in 'rdseedOutputBackup' for backup.
      */
     private void preprocess() throws IOException {
         Path backupPath = eventDir.toPath().resolve("rdseedOutputBackup");
@@ -442,59 +422,77 @@ class SeedSAC implements Runnable {
         try (DirectoryStream<Path> sacPaths = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPaths) {
                 Files.copy(sacPath, backupPath.resolve(sacPath.getFileName()));
-                // System.out.println("..illegal delta.");
-                try {
-                    fixDelta(sacPath);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                fixDelta(sacPath);
             }
         }
 
     }
 
+    public static void main(String[] args) throws IOException {
+        Path root = Paths.get("/home/kensuke/secondDisk/Africa/seeds1/test/");
+        Path out = root.resolve("out");
+        Files.createDirectories(out);
+//        new SeedSAC(root.resolve("032598M.20180208174425.393908.seed"), out).run();
+        new SeedSAC(root.resolve("072097C.20180208174425.81706.seed"), out).run();
+    }
+
     @Override
     public void run() {
         if (!eventDirAlreadyExists) throw new RuntimeException("The condition is no good.");
-        System.err.println("Opening " + seedFile + " in " + eventDir);
+        System.err.println("Opening " + seedFile + " in " + eventDir.getPath());
         // run rdseed -q write -fRd
         try {
-            seedFile.extract(seedFile.getSeedPath().getParent());
-        } catch (IOException e1) {
-            e1.printStackTrace();
-            return;
+            seedFile.extract(eventDir.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error on extracting " + seedFile, e);
         }
 
         try {
             if (cmpMod)
                 // fix delta values
                 preprocess();
-            // merge uneven sacfiles
+            // merge uneven SAC files
             mergeUnevenSac();
         } catch (IOException e) {
-            throw new RuntimeException("Error on " + id, e);
+            e.printStackTrace();
+            throw new RuntimeException("Error on pre-processing " + seedFile, e);
         }
 
-        // sacを修正する
-        modifySACs();
+        try {
+            modifySACs();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error on modifying " + seedFile, e);
+        }
+
 
         // Use only BH[12ENZ]
         // remove waveforms of .[~NEZ]
-        selectChannels();
-
-        // 装置関数のdeconvolution OK!
         try {
-            deconvolute();
+            selectChannels();
         } catch (IOException e) {
-            throw new RuntimeException("Deconvolution error on " + id, e);
+            throw new RuntimeException("Error on selecting channels " + seedFile, e);
         }
-        // System.exit(0);
 
-        // .N, .E -> .R, .Tへの回転
-        rotate();
+        // instrumentation function deconvolution
+        deconvolute();
 
-        // あまりものをすてる
-        toTrash();
+        // rotation (.N, .E -> .R, .T)
+        try {
+            rotate();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error on rotating " + seedFile, e);
+        }
+
+        // trash
+        try {
+            toTrash();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error on moving files to the trash box " + seedFile, e);
+        }
 
         problem = check();
 
@@ -502,7 +500,7 @@ class SeedSAC implements Runnable {
 
         if (removeIntermediateFiles) removeIntermediateFiles();
 
-        System.out.println("finish");
+        System.err.println("finish");
     }
 
     private void removeIntermediateFiles() {
@@ -534,34 +532,26 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * @return 何か問題はないか
+     * @return if any problem
      */
     private boolean check() {
-        Path rdseedOutput = eventDir.toPath().resolve("rdseedOutputBackup");
-        // if(rdseedOutput.exists())
-        // System.out.println("There are sac files which delta is different from
-        // "+deltaInMillis/1000.0);
-        Path unmerged = eventDir.toPath().resolve("nonMergedUnevendata");
-        // if(unmerged.exists())
-        // System.out.println("There are sac files which couldnt be merged.");
-        Path unrotated = eventDir.toPath().resolve("nonRotatedNE");
-        // if(unrotated.exists())
-        // System.out.println("There are sac files which couldnt be rotated.");
+        Path eventPath = eventDir.toPath();
+        Path rdseedOutput = eventPath.resolve("rdseedOutputBackup");
+        Path unmerged = eventPath.resolve("nonMergedUnevendata");
+        Path unrotated = eventPath.resolve("nonRotatedNE");
         return Files.exists(rdseedOutput) || Files.exists(unmerged) || Files.exists(unrotated);
     }
 
     /**
      * unused SPECTRA*, RESP* files ->trash
      */
-    private void toTrash() {
+    private void toTrash() throws IOException {
         Path trash = eventDir.toPath().resolve("trash");
         try (DirectoryStream<Path> files = Files.newDirectoryStream(eventDir.toPath())) {
             for (Path path : files) {
                 String name = path.getFileName().toString();
                 if (name.contains("SPECTRA.") || name.contains("RESP.")) Utilities.moveToDirectory(path, trash, true);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -594,12 +584,11 @@ class SeedSAC implements Runnable {
     /**
      * Remove files with suffixes other than [BH][HL][ENZ12]
      */
-    private void selectChannels() {
+    private void selectChannels() throws IOException {
         // System.out.println("Selecting Channels");
         Path trashBox = eventDir.toPath().resolve("invalidChannel");
         try (DirectoryStream<Path> modStream = Files.newDirectoryStream(eventDir.toPath(), "*.MOD")) {
             for (Path modPath : modStream) {
-                // System.out.println(modFile);
                 String name = modPath.getFileName().toString();
                 String channel = name.split("\\.")[3];
                 if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE") ||
@@ -608,10 +597,11 @@ class SeedSAC implements Runnable {
                         channel.equals("HLN") || channel.equals("HLE")) continue;
                 Utilities.moveToDirectory(modPath, trashBox, true);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-
     }
 
+    @Override
+    public String toString() {
+        return seedFile.toString();
+    }
 }

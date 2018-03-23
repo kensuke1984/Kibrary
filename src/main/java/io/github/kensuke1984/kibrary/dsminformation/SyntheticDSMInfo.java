@@ -69,7 +69,6 @@ public class SyntheticDSMInfo extends DSMheader {
             String[] structurePart = STRUCTURE.toPSVlines();
             Arrays.stream(structurePart).forEach(pw::println);
 
-
             Location eventLocation = EVENT.getCmtLocation();
             // source
             pw.println("c parameter for the source");

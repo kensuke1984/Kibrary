@@ -17,7 +17,7 @@ import java.util.Map;
  * Read/Write of a SAC file. (SAC: seismic analysis code)
  *
  * @author Kensuke Konishi
- * @version 0.1.1.1
+ * @version 0.1.1.2
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public final class SACUtil {
@@ -27,7 +27,7 @@ public final class SACUtil {
 
     /**
      * By rotating hoge.E and hoge.N, write hoge.R and hoge.T The rotation is
-     * done by SAC.
+     * done by SAC (rotate r).
      *
      * @param sacEPath    SAC file which component is E. must exist.
      * @param sacNPath    SAC file which component is N. must exist.
@@ -69,7 +69,6 @@ public final class SACUtil {
             sacProcess.inputCMD("write over");
         }
         return true;
-
     }
 
     /**
@@ -155,7 +154,7 @@ public final class SACUtil {
             stream.writeSACDouble(Double.parseDouble(headerMap.get(SACHeaderEnum.num67))); // 67
             stream.writeSACDouble(Double.parseDouble(headerMap.get(SACHeaderEnum.num68))); // 68
             stream.writeSACDouble(Double.parseDouble(headerMap.get(SACHeaderEnum.num69))); // 69
-            // / int
+            // int
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.NZYEAR))); // 70
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.NZJDAY))); // 71
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.NZHOUR))); // 72
@@ -171,7 +170,7 @@ public final class SACUtil {
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.NXSIZE))); // 82
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.NYSIZE))); // 83
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.num84))); // 84
-            // /////////enumerized
+            // enumerized
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.IFTYPE))); // 85
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.IDEP))); // 86
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.IZTYPE))); // 87
@@ -192,13 +191,13 @@ public final class SACUtil {
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.num102))); // 102
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.num103))); // 103
             stream.writeSACInt(Integer.parseInt(headerMap.get(SACHeaderEnum.num104))); // 104
-            // / BOOLEAN
+            // BOOLEAN
             stream.writeSACBoolean(Boolean.parseBoolean(headerMap.get(SACHeaderEnum.LEVEN))); // 105
             stream.writeSACBoolean(Boolean.parseBoolean(headerMap.get(SACHeaderEnum.LPSPOL))); // 106
             stream.writeSACBoolean(Boolean.parseBoolean(headerMap.get(SACHeaderEnum.LOVROK))); // 107
             stream.writeSACBoolean(Boolean.parseBoolean(headerMap.get(SACHeaderEnum.LCALDA))); // 108
             stream.writeSACBoolean(Boolean.parseBoolean(headerMap.get(SACHeaderEnum.num109))); // 109
-            // / String
+            // String
             stream.writeSACString(headerMap.get(SACHeaderEnum.KSTNM), 8); // 110-111
             stream.writeSACString(headerMap.get(SACHeaderEnum.KEVNM), 16); // 112-115
             stream.writeSACString(headerMap.get(SACHeaderEnum.KHOLE), 8); // 116-117
@@ -387,9 +386,7 @@ public final class SACUtil {
             headerMap.put(SACHeaderEnum.KNETWK, stream.readString(8));
             headerMap.put(SACHeaderEnum.KDATRD, stream.readString(8));
             headerMap.put(SACHeaderEnum.KINST, stream.readString(8));
-
         }
-
         return headerMap;
     }
 
@@ -413,7 +410,6 @@ public final class SACUtil {
                 data[i] = stream.readFloat();
             return data;
         }
-
     }
 
 }

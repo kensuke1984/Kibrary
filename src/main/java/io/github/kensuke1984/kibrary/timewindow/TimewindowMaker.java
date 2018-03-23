@@ -1,9 +1,11 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauPException;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
-import io.github.kensuke1984.kibrary.external.TauPTimeReader;
+import io.github.kensuke1984.kibrary.external.TauP_Time;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -35,7 +37,7 @@ import java.util.stream.Collectors;
  * window is set to integer multiple of DELTA in SAC files.
  *
  * @author Kensuke Konishi
- * @version 0.2.3
+ * @version 0.2.3.1
  */
 public class TimewindowMaker implements Operation {
 
@@ -253,16 +255,16 @@ public class TimewindowMaker implements Operation {
         }
     }
 
-    private void makeTimeWindow(SACFileName sacFileName) throws IOException {
+    private void makeTimeWindow(SACFileName sacFileName) throws IOException, TauPException, TauModelException {
         SACData sacFile = sacFileName.read();
-        // 震源深さ radius
+        // radius
         double eventR = 6371 - sacFile.getValue(SACHeaderEnum.EVDP);
-        // 震源観測点ペアの震央距離
+        // distance b/w source and receiver
         double epicentralDistance = sacFile.getValue(SACHeaderEnum.GCARC);
 
-        Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases);
+        Set<TauPPhase> usePhases = TauP_Time.getTauPPhase(eventR, epicentralDistance, this.usePhases);
         Set<TauPPhase> exPhases = this.exPhases == null || this.exPhases.isEmpty() ? Collections.emptySet() :
-                TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.exPhases);
+                TauP_Time.getTauPPhase(eventR, epicentralDistance, this.exPhases);
 
         if (usePhases.isEmpty()) {
             writeInvalid(sacFileName);

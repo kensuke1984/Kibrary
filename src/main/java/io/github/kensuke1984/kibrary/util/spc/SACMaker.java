@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * in Global CMT catalogue, the information for the event is written in SAC.
  *
  * @author Kensuke Konishi
- * @version 0.1.8
+ * @version 0.1.9
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
@@ -38,7 +38,7 @@ public class SACMaker implements Runnable {
     /**
      * Options
      */
-    private final static Options options = new Options();
+    private final static Options OPTIONS = new Options();
     /**
      * Help Formatter
      */
@@ -46,14 +46,17 @@ public class SACMaker implements Runnable {
 
     private static void setOptions() {
 //        options.addOption("u", "unformatted", false, "When names of spectrum files are NOT formatted.");
-        options.addOption("o", true, "Folder to output SAC files. (Default:current directory)");
-        options.addOption("c", true, "Output components. Default is all(ZRT). (e.g. -c ZR)");
-        options.addOption("help", "Shows this message. This option has the highest priority.");
-        options.addOption(null, "scardec", true, "use the source parameter by SCARDEC. (--scardec yyyyMMdd_HHmmss)");
+        OPTIONS.addOption("o", true, "Folder to output SAC files. (Default:current directory)");
+        OPTIONS.addOption("c", true, "Output components. Default is all(ZRT). (e.g. -c ZR)");
+        OPTIONS.addOption("help", "Shows this message. This option has the highest priority.");
+        OPTIONS.addOption(null, "scardec", true, "use the source parameter by SCARDEC. (--scardec yyyyMMdd_HHmmss)");
+        OPTIONS.addOption(null, "gcmt", true,
+                "boxcar/triangle source time function is considered using the source parameter (half duration) by the Global CMT project. (e.g. -gcmt triangle");
+        OPTIONS.addOption(null, "gid", true, "an ID for the event in the Global CMT catalogue. (e.g. -gid 010202A)");
     }
 
     static void printHelp() {
-        helpFormatter.printHelp("SACMaker", options);
+        helpFormatter.printHelp("SACMaker", OPTIONS);
     }
 
     private final static Map<SACHeaderEnum, String> initialMap = new EnumMap<>(SACHeaderEnum.class);
@@ -183,7 +186,7 @@ public class SACMaker implements Runnable {
     private DSMOutput secondarySPC;
     private DSMOutput primeSPC;
     /**
-     * 時間領域に持ってくるときのサンプリングヘルツ
+     * [Hz]
      */
     private double samplingHz = 20;
     /**
@@ -315,13 +318,16 @@ public class SACMaker implements Runnable {
                 printHelp();
                 return;
             }
-        CommandLine cli = new DefaultParser().parse(options, args);
+        CommandLine cli = new DefaultParser().parse(OPTIONS, args);
 
         if (cli.getArgs().length < 1 || 2 < cli.getArgs().length)
             throw new IllegalArgumentException("\"Usage:(options) spcfile1 (spcfile2)\"");
 
         Path outPath = Paths.get(cli.getOptionValue("o", "."));
         if (!Files.exists(outPath)) throw new RuntimeException(outPath + " does not exist.");
+
+        if (cli.hasOption("scardec") && cli.hasOption("gcmt"))
+            throw new IllegalArgumentException("Options -gcmt and -scardec cannot be used simultaneously.");
 
         Set<SACComponent> components = SACComponent.componentSetOf(cli.getOptionValue('c', "ZRT"));
 
@@ -339,12 +345,25 @@ public class SACMaker implements Runnable {
             SCARDEC_ID id = SCARDEC.pick(predicate);
             scardec = id.toSCARDEC();
         }
+        GlobalCMTID id = null;
+        String stfshape = null;
+        if (cli.hasOption("gcmt") && cli.hasOption("gid")) {
+            id = new GlobalCMTID(cli.getOptionValue("gid"));
+            stfshape = cli.getOptionValue("gcmt");
+            if (!(stfshape.equals("triangle") || stfshape.equals("boxcar")))
+                throw new IllegalArgumentException("The option -gcmt only accepts 'boxcar' or 'triangle'.");
+        } else if (cli.hasOption("gcmt") || cli.hasOption("gid")) {
+            throw new RuntimeException("The options 'gcmt' and 'gid' must be specified at the same time.");
+        }
+
         String[] spcfiles = cli.getArgs();
         SPCFile oneName = new FormattedSPCFile(spcfiles[0]);
         DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
         DSMOutput pairSPC = null;
-        if (1 < spcfiles.length) {
+        if (1 < spcfiles.length)
+
+        {
             SPCFile pairName = new FormattedSPCFile(spcfiles[1]);
             pairSPC = Spectrum.getInstance(pairName);
         }
@@ -353,6 +372,12 @@ public class SACMaker implements Runnable {
         if (scardec != null) {
             sm.beginDateTime = scardec.getOriginTime();
             sm.setSourceTimeFunction(scardec.getOptimalSTF(oneSPC.np(), oneSPC.tlen()));
+        }
+        if (id != null) {
+            double halfDuration = id.getEvent().getHalfDuration();
+            sm.setSourceTimeFunction(stfshape.equals("boxcar") ?
+                    SourceTimeFunction.boxcarSourceTimeFunction(oneSPC.np(), oneSPC.tlen(), 20, halfDuration) :
+                    SourceTimeFunction.triangleSourceTimeFunction(oneSPC.np(), oneSPC.tlen(), 20, halfDuration));
         }
         sm.setOutPath(outPath);
         sm.components = components;
@@ -377,7 +402,7 @@ public class SACMaker implements Runnable {
     private void setInformation() {
         station = new Station(primeSPC.getObserverID(), primeSPC.getObserverPosition(), "DSM");
         path = new Raypath(primeSPC.getSourceLocation(), primeSPC.getObserverPosition());
-        if (globalCMTID != null)
+        if (globalCMTID != null && beginDateTime == null)
             beginDateTime = pde ? globalCMTID.getEvent().getPDETime() : globalCMTID.getEvent().getCMTTime();
         npts = findNPTS();
         lsmooth = findLsmooth();

@@ -13,7 +13,7 @@ import org.apache.commons.math3.util.FastMath;
  * true.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.0.1
+ * @version 0.0.5.0.2
  */
 public abstract class ButterworthFilter {
 
@@ -42,7 +42,7 @@ public abstract class ButterworthFilter {
      */
     double as;
     /**
-     * フィルターを引き返すか true:zero phase false:causal
+     * True:zero phase, False:causal
      */
     boolean backward = true;
     double[] b1;
@@ -73,14 +73,14 @@ public abstract class ButterworthFilter {
     }
 
     /**
-     * @param data フィルタを掛ける系列
-     * @return フィルタをかけたあとの数列
+     * @param data data to be applied the filter
+     * @return arrays after applied the filter
      */
     public abstract Complex[] applyFilter(Complex[] data);
 
     /**
-     * @param data フィルタを掛ける系列
-     * @return フィルタをかけたあとの数列
+     * @param data data to be applied the filter
+     * @return arrays after applied the filter
      */
     public double[] applyFilter(double[] data) {
         Complex[] cdata = new Complex[data.length];
@@ -112,7 +112,7 @@ public abstract class ButterworthFilter {
     /**
      * computes {@link #sigmaSoverSigmaP} from an input n
      *
-     * @param n
+     * @param n a parameter for the filter. see Saito
      */
     void nToSigmaSoverSigmaP(int n) {
         sigmaSoverSigmaP = FastMath.exp(FastMath.log(as / ap) / n);
