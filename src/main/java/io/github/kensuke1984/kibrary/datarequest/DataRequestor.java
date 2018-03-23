@@ -22,17 +22,11 @@ import java.util.Set;
  * It makes a data requesting mail.
  *
  * @author Kensuke Konishi
- * @version 0.1.3.2
+ * @version 0.1.4
  */
 public class DataRequestor implements Operation {
 
-    private String institute;
-    private String mail;
-    private String email;
-    private String phone;
-    private String fax;
     // private String label;
-    private String media;
     // private String[] alternateMedia;
     private String[] networks;
     private LocalDate startDate;
@@ -64,7 +58,7 @@ public class DataRequestor implements Operation {
     private Properties property;
     private String date = Utilities.getTemporaryString();
 
-    public DataRequestor(Properties property) throws IOException {
+    public DataRequestor(Properties property) {
         this.property = (Properties) property.clone();
         set();
     }
@@ -76,45 +70,24 @@ public class DataRequestor implements Operation {
     public static void main(String[] args) throws Exception {
         DataRequestor dr = new DataRequestor(Property.parse(args));
         dr.run();
-
     }
 
-    private static void output(BreakFastMail mail) {
-        Path out = Paths.get(mail.getLabel() + ".mail");
+    private Path output(BreakFastMail mail) {
+        Path out = workPath.resolve(mail.getLabel() + ".mail");
         try {
             Files.write(out, Arrays.asList(mail.getLines()));
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return out;
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
         Path outPath = Paths.get(DataRequestor.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-            String userName = System.getProperty("user.name");
             pw.println("manhattan DataRequestor");
-            pw.println("##Institute institute, must be defined");
-            if (userName.equals("kensuke")) {
-                pw.println("institute Academia Sinica");
-                pw.println("##Mail of your institute, must be defined");
-                pw.println("mail 128, Sec. 2, Academia Road, Nangang, Taipei 11529, Taiwan");
-                pw.println("##Phone number, must be defined");
-                pw.println("phone +886-2-2783-9910");
-                pw.println("##Fax number, must be defined");
-                pw.println("fax +886-2-2783-9871");
-            } else {
-                pw.println("#institute University of Tokyo");
-                pw.println("##Mail of your institute, must be defined");
-                pw.println("#mail 7-3-1 Hongo, Bunkyo, Tokyo, Japan");
-                pw.println("##Phone number, must be defined");
-                pw.println("#phone 03-5841-4290");
-                pw.println("##Fax number, must be defined");
-                pw.println("#fax 03-5841-8791");
-            }
-            pw.println("##Email address, must be defined");
-            pw.println("#email waveformrequest2015@gmail.com");
-            pw.println("##media(FTP)");
-            pw.println("#media");
+            pw.println("##Path of a work folder (.)");
+            pw.println("#workPath");
             pw.println("##Network names for request, must be defined");
             pw.println("##Note that it will make a request for all stations in the networks.");
             pw.println("#networks II IU _US-All");
@@ -151,12 +124,6 @@ public class DataRequestor implements Operation {
 
     private void checkAndPutDefaults() {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("institute")) throw new RuntimeException("No information about institute");
-        if (!property.containsKey("mail")) throw new RuntimeException("No information about mail");
-        if (!property.containsKey("email")) throw new RuntimeException("No information about email");
-        if (!property.containsKey("phone")) throw new RuntimeException("No information about phone");
-        if (!property.containsKey("fax")) throw new RuntimeException("No information about fax");
-        if (!property.containsKey("media")) property.setProperty("media", "FTP");
         if (!property.containsKey("networks")) throw new RuntimeException("No information about networks");
         if (!property.containsKey("lowerDepth")) property.setProperty("lowerDepth", "100");
         if (!property.containsKey("upperDepth")) property.setProperty("upperDepth", "700");
@@ -178,12 +145,6 @@ public class DataRequestor implements Operation {
     private void set() {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        institute = property.getProperty("institute");
-        mail = property.getProperty("mail");
-        email = property.getProperty("email");
-        phone = property.getProperty("phone");
-        fax = property.getProperty("fax");
-        media = property.getProperty("media");
         networks = property.getProperty("networks").split("\\s+");
         lowerDepth = Double.parseDouble(property.getProperty("lowerDepth"));
         lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
@@ -210,8 +171,7 @@ public class DataRequestor implements Operation {
     public BreakFastMail createBreakFastMail(GlobalCMTID id) {
         Channel[] channels = Channel.listChannels(networks, id, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
                 footAdjustment);
-        return new BreakFastMail(System.getProperty("user.name"), institute, mail, email, phone, fax, id + "." + date,
-                media, channels);
+        return new BreakFastMail(id + "." + date, channels);
     }
 
     private Set<GlobalCMTID> listIDs() {
@@ -234,20 +194,25 @@ public class DataRequestor implements Operation {
     }
 
     @Override
-    public void run() throws Exception {
+    public void run() {
         requestedIDs = listIDs();
         System.out.println(requestedIDs.size() + " events are found.");
         System.out.println("Label contains \"" + date + "\"");
+        requestedIDs.forEach(id -> output(createBreakFastMail(id)));
+        Path sent = workPath.resolve("sent" + Utilities.getTemporaryString());
         if (send) try {
-            System.out.println("Sending requests in 5 sec");
+            System.err.println("Sending requests in 5 sec.");
+            System.err.println("Sent mails will be in " + sent);
             Thread.sleep(1000 * 5);
         } catch (Exception e2) {
         }
         requestedIDs.forEach(id -> {
             BreakFastMail m = createBreakFastMail(id);
             try {
-                output(m);
+                Path out = output(m);
                 if (!send) return;
+                Files.createDirectories(sent);
+                Files.move(out, sent.resolve(out.getFileName()));
                 System.err.println("Sending a request for " + id);
                 m.sendIris();
                 Thread.sleep(300 * 1000);

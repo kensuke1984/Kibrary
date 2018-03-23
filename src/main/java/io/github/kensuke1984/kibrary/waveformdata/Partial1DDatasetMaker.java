@@ -15,6 +15,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.*;
+import org.apache.commons.math3.util.Precision;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
  * <p>
  * TODO shとpsvの曖昧さ 両方ある場合ない場合等 現状では combineして対処している
  * <p>
- * Time length (TLEN) and the number of step in frequency domain (NP) in DSM
+ * Time length (TLEN) and the number of step in frequency domain (NP) in the DSM
  * software must be same. Those values are set in a parameter file.
  * <p>
  * Only partials for radius written in a parameter file are computed.
@@ -40,7 +41,7 @@ import java.util.stream.Collectors;
  * same events</b> TODO
  *
  * @author Kensuke Konishi
- * @version 0.2.1.1
+ * @version 0.2.1.2
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
@@ -57,11 +58,11 @@ public class Partial1DDatasetMaker implements Operation {
 
     private Set<PartialType> partialTypes;
     /**
-     * bandpassの最小周波数（Hz）
+     * [Hz] minimum frequency for a bandpass filter
      */
     private double minFreq;
     /**
-     * bandpassの最大周波数（Hz）
+     * [Hz] maximum frequency for a bandpass filter
      */
     private double maxFreq;
     /**
@@ -82,7 +83,7 @@ public class Partial1DDatasetMaker implements Operation {
      */
     private int sourceTimeFunction;
     /**
-     * time length (DSM parameter)
+     * [s] time length (DSM parameter)
      */
     private double tlen;
     /**
@@ -251,13 +252,14 @@ public class Partial1DDatasetMaker implements Operation {
         numberOfAddedID++;
     }
 
-    private void setLsmooth() {
+    private void setLsmooth() throws IOException {
         int pow2np = Integer.highestOneBit(np);
         if (pow2np < np) pow2np *= 2;
 
         int lsmooth = (int) (0.5 * tlen * partialSamplingHz / pow2np);
         int ismooth = Integer.highestOneBit(lsmooth);
         this.lsmooth = ismooth == lsmooth ? lsmooth : ismooth * 2;
+        writeLog("Set lsmooth " + this.lsmooth);
     }
 
     private void readSourceTimeFunctions() throws IOException {
@@ -294,7 +296,6 @@ public class Partial1DDatasetMaker implements Operation {
         if (partialTypes.contains(PartialType.PARQ)) fujiConversion = new FujiConversion(PolynomialStructure.PREM);
 
         setLsmooth();
-        writeLog("Set lsmooth " + lsmooth);
 
         System.err.print("Reading timewindow information ");
         timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
@@ -305,7 +306,6 @@ public class Partial1DDatasetMaker implements Operation {
         System.err.println("Designing filter.");
         setBandPassFilter();
         System.err.println("Model name is " + modelName);
-        writeLog(filter.toString());
         setPerturbationLocation();
         stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
                 .collect(Collectors.toSet());
@@ -355,7 +355,7 @@ public class Partial1DDatasetMaker implements Operation {
         double omegaL = minFreq * 2 * Math.PI / partialSamplingHz;
         filter = new BandPassFilter(omegaH, omegaL, 4);
         filter.setBackward(backward);
-        periodRanges = new double[][]{{1 / maxFreq, 1 / minFreq}};
+        periodRanges = new double[][]{{Precision.round(1 / maxFreq, 3), Precision.round(1 / minFreq, 3)}};
         writeLog(filter.toString());
     }
 

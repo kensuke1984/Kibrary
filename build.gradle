@@ -1,7 +1,7 @@
 // Apply the java plugin to add support for Java
 plugins { id "de.undercouch.download" version "3.3.0" }
 apply plugin: 'java'
-apply plugin: 'eclipse'
+//apply plugin: 'eclipse'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -26,6 +26,7 @@ dependencies {
     compile 'commons-net:commons-net:+'
     compile 'net.sf.epsgraphics:epsgraphics:+'
     compile 'commons-cli:commons-cli:+'
+    compile 'edu.sc.seis:TauP:+'
 }
 
 // path for jar files.

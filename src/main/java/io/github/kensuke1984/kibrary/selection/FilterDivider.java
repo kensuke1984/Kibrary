@@ -2,11 +2,13 @@ package io.github.kensuke1984.kibrary.selection;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.butterworth.*;
+import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  *
  * @author Kensuke Konishi
- * @version 0.2.2.2
+ * @version 0.2.3
  */
 public class FilterDivider implements Operation {
 
@@ -72,6 +74,11 @@ public class FilterDivider implements Operation {
      */
     private int np;
 
+    /**
+     * SAC files with NPTS over this value will be slimmed.
+     */
+    private int npts;
+
     public FilterDivider(Properties property) {
         this.property = (Properties) property.clone();
         set();
@@ -99,9 +106,13 @@ public class FilterDivider implements Operation {
             pw.println("##The filter can be 'lowpass', 'highpass', 'bandpass', 'bandstop'");
             pw.println("#filter");
             pw.println("##The value of NP (4)");
-            pw.println("#NP");
+            pw.println("#np");
             pw.println("##If backward computation is performed. true: zero phase, false: causal  (true)");
             pw.println("#backward");
+            pw.println("##If you want to slim SAC files down to the specific number of NPTS (must be a power of 2).");
+            pw.println(
+                    "##When this npts is set, SAC files are slimmed. SAC files with a value of NPTS over the set value are not slimmed.");
+            pw.println("#npts");
         }
         System.err.println(outPath + " is created.");
     }
@@ -132,9 +143,9 @@ public class FilterDivider implements Operation {
         if (!property.containsKey("highFreq")) property.setProperty("highFreq", "0.08");
         if (!property.containsKey("lowFreq")) property.setProperty("lowFreq", "0.005");
         if (!property.containsKey("backward")) property.setProperty("backward", "true");
-        if (!property.containsKey("NP")) property.setProperty("NP", "4");
+        if (!property.containsKey("np")) property.setProperty("np", "4");
         if (!property.containsKey("filter")) property.setProperty("filter", "bandpass");
-
+        if (!property.containsKey("npts")) property.setProperty("npts", String.valueOf(Integer.MAX_VALUE));
     }
 
     private void set() {
@@ -152,7 +163,8 @@ public class FilterDivider implements Operation {
         highFreq = Double.parseDouble(property.getProperty("highFreq"));
         lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
         backward = Boolean.parseBoolean(property.getProperty("backward"));
-        np = Integer.parseInt(property.getProperty("NP"));
+        np = Integer.parseInt(property.getProperty("np"));
+        npts = Integer.parseInt(property.getProperty("npts"));
     }
 
     private AtomicInteger processedFolders = new AtomicInteger(); // already processed
@@ -177,21 +189,31 @@ public class FilterDivider implements Operation {
     /**
      * Apply the filter on the sacFile and write in the outDir
      *
-     * @param sacFileName a sacfilename to be filtered
+     * @param name a name of a SAC file to be filtered
      */
-    private void filterAndout(SACFileName sacFileName) {
+    private void filterAndout(SACFileName name) {
         try {
-            SACData sacFile = sacFileName.read().applyButterworthFilter(filter);
-            Path outPath = this.outPath.resolve(sacFileName.getGlobalCMTID() + "/" + sacFileName.getName());
-            sacFile.writeSAC(outPath);
+            SACData sacFile = name.read().applyButterworthFilter(filter);
+            Path out = outPath.resolve(name.getGlobalCMTID() + "/" + name.getName());
+            sacFile.writeSAC(out);
+            if (npts < sacFile.getInt(SACHeaderEnum.NPTS)) slim(out);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    private void slim(Path path) throws IOException {
+        try (SAC sac = SAC.createProcess()) {
+            sac.inputCMD("cut b n " + npts);
+            sac.inputCMD("r " + path.toAbsolutePath());
+            sac.inputCMD("w over");
+        }
+    }
+
+
     /**
-     * @param fMin 透過帯域 最小周波数
-     * @param fMax 透過帯域 最大周波数
+     * @param fMin [Hz] 透過帯域 最小周波数
+     * @param fMax [Hz] 透過帯域 最大周波数
      * @param n    parameter n
      */
     private void setFilter(double fMin, double fMax, int n) {

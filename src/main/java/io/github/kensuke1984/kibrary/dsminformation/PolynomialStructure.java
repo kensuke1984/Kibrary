@@ -702,6 +702,7 @@ public class PolynomialStructure implements Serializable {
             qMu[i] = Double.parseDouble(etaParts[4]);
             qKappa[i] = Double.parseDouble(etaParts[5]);
         }
+
     }
 
     /**

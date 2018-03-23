@@ -34,9 +34,7 @@ public class ExternalProcess {
      * connected to standard input
      */
     protected final OutputStream standardInput;
-    /**
-     * {@link Process} for Sac
-     */
+
     protected Process process;
 
     ExternalProcess(Process process) {

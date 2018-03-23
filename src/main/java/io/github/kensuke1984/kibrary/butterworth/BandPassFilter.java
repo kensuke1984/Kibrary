@@ -43,28 +43,29 @@ public class BandPassFilter extends ButterworthFilter {
         double high = 2 * Math.PI * Double.parseDouble(args[2]) * delta;
 
         ButterworthFilter filter = new BandPassFilter(high, low, n);
+        filter.backward = true;
         Path out = Files.createTempDirectory(Paths.get("."), "filtered");
         sac.applyButterworthFilter(filter).writeSAC(out.resolve(path.getFileName()));
     }
 
     /**
      * maximum value of transmission band
-     * |ω| < omegaH transmits.
+     * |ω| &lt;  &omega;<sub>H</sub> transmits.
      */
     private double omegaH;
     /**
      * minimum value of transmission band
-     * |ω| > omegaL transmits
+     * &omega;<sub>L</sub> &lt; |ω| transmits
      */
     private double omegaL;
     /**
      * maximum value of stop band
-     * |ω| > omegaSh stopped.
+     * &omega;<sub>Sh</sub> &lt; |ω| stopped.
      */
     private double omegaSh;
     /**
      * minimum value of stop band
-     * |ω| < omegaSl stopped.
+     * |ω| &lt; &omega;<sub>Sl</sub> stopped.
      */
     private double omegaSl;
     /**
@@ -137,7 +138,6 @@ public class BandPassFilter extends ButterworthFilter {
      */
     private static Complex[] computeRecursion(double b1, double b2, Complex[] x) {
         Complex[] y = new Complex[x.length];
-
         y[0] = x[0];
         // y[0] = x[0].multiply(a0);
         y[1] = x[1].subtract(y[0].multiply(b1));

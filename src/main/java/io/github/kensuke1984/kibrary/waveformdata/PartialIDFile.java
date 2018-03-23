@@ -43,20 +43,19 @@ import java.util.stream.IntStream;
  * READing has problem. TODO
  *
  * @author Kensuke Konishi
- * @version 0.3.1.1
+ * @version 0.3.1.1.1
  */
 public final class PartialIDFile {
 
     /**
-     * File size for an ID
+     * [byte] File size for an ID
      */
     public static final int oneIDByte = 30;
 
     private PartialIDFile() {
     }
 
-    public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser)
-            throws IOException {
+    public static PartialID[] read(Path idPath, Path dataPath, Predicate<PartialID> chooser) throws IOException {
         PartialID[] ids = read(idPath);
         long t = System.nanoTime();
         long dataSize = Files.size(dataPath);
@@ -80,7 +79,7 @@ public final class PartialIDFile {
             System.err.println("\rReading partial data ... 100.0 %");
         }
         if (chooser != null) ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
-        System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println("Partial data are read in " + Utilities.toTimeString(System.nanoTime() - t));
         return ids;
     }
 

@@ -128,7 +128,6 @@ public class SyntheticDSMInformationFileMaker implements Operation {
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
         PolynomialStructure ps =
                 structurePath == null ? PolynomialStructure.PREM : new PolynomialStructure(structurePath);
-
         Path outPath = workPath.resolve("synthetic" + Utilities.getTemporaryString());
         Files.createDirectories(outPath);
         for (EventFolder eventDir : eventDirs) {

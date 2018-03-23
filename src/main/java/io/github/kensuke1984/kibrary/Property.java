@@ -11,7 +11,7 @@ import java.util.Properties;
  * This class will create a default property for a procedure in Kibrary.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1
+ * @version 0.0.3.2
  */
 public class Property {
 
@@ -36,5 +36,8 @@ public class Property {
         else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
         else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
         return property;
+    }
+
+    private Property() {
     }
 }
