@@ -14,7 +14,13 @@ It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
 If you are not sure about the version you have, 
-click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check.  
+click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check. 
+ 
+If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you can have the latest Java as below.
+```bash
+ % brew update
+ % brew cask install java
+```
 
 Binary release of Kibrary can be found [here](https://www.dropbox.com/sh/iwki3nss7fb1rl1/AACPEKq3efHRNFAlB1bS5bgya?dl=0), however, installation following as below is recommended.
 
@@ -59,9 +65,9 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 Last updated Jul 26, 2016
 
 
-[release-image]:https://img.shields.io/badge/release-Sahagin-pink.svg
-[release]:https://en.wikipedia.org/wiki/Sahuagin
-[version-image]:https://img.shields.io/badge/version-0.4-yellow.svg
+[release-image]:https://img.shields.io/badge/release-Pixie-pink.svg
+[release]:https://en.wikipedia.org/wiki/Pixie
+[version-image]:https://img.shields.io/badge/version-0.4.4-yellow.svg
 
 [alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: https://www.apache.org/licenses/LICENSE-2.0
