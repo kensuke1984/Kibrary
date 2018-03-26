@@ -608,10 +608,12 @@ public class LetMeInvert_fromAtA implements Operation {
 					, outPaths[iweight][ifreq][iphase][icorr].resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getOriginalParameterList()
 					, outPaths[iweight][ifreq][iphase][icorr].resolve("originalUnknownParameterOrder.inf"));
-			PrintWriter pw = new PrintWriter(outPaths[iweight][ifreq][iphase][icorr].resolve("parameterWeight.inf").toFile());
-			for (double pWeight : parameterWeights)
-				pw.println(pWeight);
-			pw.close();
+			if (applyParameterWeight) {
+				PrintWriter pw = new PrintWriter(outPaths[iweight][ifreq][iphase][icorr].resolve("parameterWeight.inf").toFile());
+				for (double pWeight : parameterWeights)
+					pw.println(pWeight);
+				pw.close();
+			}
 //			eq.outputA(outPath.resolve("partial"));
 //			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 //			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));

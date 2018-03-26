@@ -257,7 +257,7 @@ public class AtAMaker implements Operation {
 			pw.println("#computationFlag");
 			pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
 			pw.println("#modelName");
-			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
+			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (2)");
 			pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
 			pw.println("#sourceTimeFunction");
 			pw.println("##Path of a time window file, must be set");
@@ -324,7 +324,7 @@ public class AtAMaker implements Operation {
 		if (!property.containsKey("minFreq"))
 			property.setProperty("minFreq", "0.005");
 		if (!property.containsKey("sourceTimeFunction"))
-			property.setProperty("sourceTimeFunction", "0");
+			property.setProperty("sourceTimeFunction", "2");
 		if (!property.containsKey("partialTypes"))
 			property.setProperty("partialTypes", "MU");
 		if (!property.containsKey("partialSamplingHz"))
@@ -893,8 +893,10 @@ public class AtAMaker implements Operation {
 	}
 	
 	private void setSourceTimeFunctions(Set<GlobalCMTID> idSet) throws IOException {
-		if (sourceTimeFunction == 0)
+		if (sourceTimeFunction == 0) {
+			System.out.println("No convolution");
 			return;
+		}
 //		if (sourceTimeFunction == -1) {
 //			readSourceTimeFunctions();
 //			return;
@@ -906,12 +908,15 @@ public class AtAMaker implements Operation {
 			SourceTimeFunction stf;
 			switch (sourceTimeFunction) {
 			case 1:
+				System.out.println("Using boxcar STF");
 				stf = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 				break;
 			case 2:
+				System.out.println("Using triangle STF");
 				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 				break;
 			case 3:
+				System.out.println("Using asymmetric triangle STF with user catalog");
 				double halfDuration1 = 0.;
 	        	double halfDuration2 = 0.;
 		      	for (String str : stfcat) {
@@ -933,6 +938,7 @@ public class AtAMaker implements Operation {
 			case 4:
 				throw new RuntimeException("Case 4 not implemented yet");
 			case 5:
+				System.out.println("Using triangle STF with user catalog");
 //				double mw = id.getEvent().getCmt().getMw();
 ////				double duration = 9.60948E-05 * Math.pow(10, 0.6834 * mw);
 //				double duration = 0.018084 * Math.pow(10, 0.3623 * mw);

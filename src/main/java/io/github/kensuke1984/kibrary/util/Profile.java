@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.util;
 
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -65,16 +66,20 @@ public class Profile {
 					i++;
 					List<TimewindowInformation> timewindow = findWindow(eventtimewindows, sacname);
 					
+					if (timewindow.size() == 0)
+						continue;
+					
 					SACData sacdata = sacname.read();
 					String filename = sacname.getStationName() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
 					Path tracePath = eventProfilePath.resolve(filename);
 					
 					PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 					
-					Trace obstrace = sacname.read().createTrace().cutWindow(700, 1800);
+//					Trace obstrace = sacname.read().createTrace().cutWindow(700, 1800);
+					Trace obstrace = sacname.read().createTrace().cutWindow(timewindow.get(0));
 					String synname = sacname.getName().replace(".T", ".Tsc");
 					SACData syndata = new SACFileName(event.getPath() + "/" + synname).read();
-					Trace syntrace = syndata.createTrace().cutWindow(700, 1800);
+					Trace syntrace = syndata.createTrace().cutWindow(timewindow.get(0));
 					
 					List<Trace> windowSyntraces = timewindow.stream().map(tw -> syndata.createTrace().cutWindow(tw)).collect(Collectors.toList());
 					
@@ -183,6 +188,15 @@ public class Profile {
 //		
 //		return res;
 //	}
+	
+	private static Trace add(Trace trace1, Trace trace2) {
+		double[] x1 = trace1.getX();
+		double[] x2 = trace2.getX();
+		double start = x1[0] < x2[0] ? x2[0] : x1[0];
+		double end = x1[x1.length] > x2[x2.length] ? x2[x2.length] : x1[x1.length];
+		
+		return trace1.cutWindow(start, end).add((trace2).cutWindow(start, end));
+	}
 	
 	private static List<TimewindowInformation> findWindow(Set<TimewindowInformation> timewindows, SACFileName sacname) throws IOException {
 		SACData data = sacname.read();

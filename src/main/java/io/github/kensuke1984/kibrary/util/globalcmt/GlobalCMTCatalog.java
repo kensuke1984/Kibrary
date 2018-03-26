@@ -85,7 +85,7 @@ public final class GlobalCMTCatalog {
 	}
 
 	static {
-		String tmpCatalog = "synthetics.catalog"; //NDK_CMT_20170807 globalcmt NDK_LCMTSTF NDK_no_rm200503211243A 
+		String tmpCatalog = "globalcmt.catalog"; //NDK_CMT_20170807 globalcmt NDK_LCMTSTF NDK_no_rm200503211243A 
 		// NDK_LSTF gcmt_c-10 gcmt_c10 synthetics NDK_LMT_35
 		// NDK_LMT_35_8s.catalog NDK_LSTF_35_8s.dat
 		Set<NDK> readSet = readJar(tmpCatalog);

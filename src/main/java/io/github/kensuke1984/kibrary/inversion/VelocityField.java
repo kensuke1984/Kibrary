@@ -184,8 +184,8 @@ public class VelocityField {
 						pw.println("#perturbationR final_Vsh initial_Vsh");
 						if (trs == null) {
 							for (int j = 0; j < velocities.length; j++) {
-								pw.println(velocities[j][1] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
 								pw.println(velocities[j][2] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
+								pw.println(velocities[j][1] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
 								pwIteration.println((6371. - velocities[j][1] - 10.) + " " + structure.getVphAt(velocities[j][1] + 10.) 
 										+ " " + velocities[j][0] + " " + structure.getRhoAt(velocities[j][1] + 10.));
 							}

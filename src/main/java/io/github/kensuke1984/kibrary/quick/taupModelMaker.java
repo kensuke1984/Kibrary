@@ -22,14 +22,20 @@ public class taupModelMaker {
 		
 		PolynomialStructure ak135 = PolynomialStructure.AK135;
 		
-//		double r1=6371. - 410 + 50;
-//		double r2=6371. - 410 - 50;
-//		double v1 = ak135.getVshAt(r1);
-//		double v2 = ak135.getVshAt(r2);
-//		double a = (v1-v2)/(r1-r2)*6371.;
-//		double b = -a*r1/6371. + v1;
-//		System.out.println(r1 + " " + r2 + " " + a + " " + b);
-//		System.exit(0);
+		double dv_mean = (ak135.getVshAt(5711)*1.015-ak135.getVshAt(5773.5)) / 2. - (ak135.getVshAt(5711)-ak135.getVshAt(5773.5)) / 2.;
+		System.out.println(dv_mean);
+		System.out.println(ak135.getVshAt(5711)*0.015);
+		System.out.println(dv_mean/ak135.getVshAt(5711+62.5/2.));
+		System.exit(0);
+		
+		double r1=6371. - 660 + 62.5;
+		double r2=6371. - 660;
+		double v1 = ak135.getVshAt(r1);
+		double v2 = ak135.getVshAt(r2)*1.015;
+		double a = (v1-v2)/(r1-r2)*6371.;
+		double b = -a*r1/6371. + v1;
+		System.out.printf("%.2f %.2f %.6f %.6f",r1, r2, b, a);
+		System.exit(0);
 		
 //		double mu = ak135.computeMu(5800.);
 //		double dmu = mu * ((1.01)*(1.01)-1);

@@ -130,13 +130,19 @@ public class ExcludeTimewindow {
 				
 				
 				Set<TimewindowInformation> newTimewindows = timewindows.stream().filter(tw -> {
-					String sta = tw.getStation().getStationName();
-					if (sta.equals("FUR") || sta.equals("C03") || sta.equals("SHO"))
-						return false;
-					else if (!wellDefinedEvent.contains(tw.getGlobalCMTID()))
-						return false;
-					else 
-						return true;
+//					String sta = tw.getStation().getStationName();
+//					if (sta.equals("FUR") || sta.equals("C03") || sta.equals("SHO"))
+//						return false;
+//					else if (!wellDefinedEvent.contains(tw.getGlobalCMTID()))
+//						return false;
+//					else 
+//						return true;
+					if (tw.getGlobalCMTID().equals(new GlobalCMTID("201302091416A"))) {
+						double azimuth = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getStation().getPosition()));
+						if (azimuth >= 335 && azimuth <= 355)
+							return true;
+					}
+					return false;
 				}).collect(Collectors.toSet());
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 				

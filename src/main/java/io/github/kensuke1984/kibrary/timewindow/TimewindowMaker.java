@@ -17,18 +17,11 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import javax.management.RuntimeErrorException;
-
-import org.apache.commons.lang3.ArrayUtils;
-
-import ucar.jpeg.jj2000.j2k.util.ArrayUtil;
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
-import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -36,6 +29,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
+
+import io.github.kensuke1984.kibrary.timewindow.Timewindow;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;;
 
 /**
  * workingDirectory/イベントフォルダ内の波形に対して タイムウインドウをつけていく
@@ -112,7 +108,7 @@ public class TimewindowMaker implements Operation {
 		if (!property.containsKey("model"))
 			property.setProperty("model", "prem");
 		if (!property.containsKey("minLength"))
-			property.setProperty("minLength", "40");
+			property.setProperty("minLength", "0");
 	}
 
 	private Path workPath;
@@ -505,6 +501,7 @@ public class TimewindowMaker implements Operation {
 		
 //		System.out.println(eventR + " " + epicentralDistance);
 		
+		
 		try {
 			Set<TauPPhase> usePhases = TauPTimeReader.getTauPPhase(eventR, epicentralDistance, this.usePhases, model);
 			
@@ -548,22 +545,46 @@ public class TimewindowMaker implements Operation {
 			double[] phaseTime = toTravelTime(usePhases);
 			double[] exPhaseTime = exPhases.isEmpty() ? null : toTravelTime(exPhases);
 			
+//			System.out.println("In");
+//			for (int i = 0; i < phaseTime.length; i++)
+//				System.out.println(phaseTime[i]);
+//			if (exPhaseTime != null) {
+//				System.out.println("Out");
+//			for (int i = 0; i < exPhaseTime.length; i++)
+//				System.out.println(exPhaseTime[i]);
+//			}
+//			System.out.println("Next");
+			
 			// Extrapolate travel time for sS phase at small epicentral distances, where TauP cannot compute travel time
 			// Used for inversion in the transition zone
 			// TODO find a smart solution, i.e. a way to compute precise travel time for small epicentral distances
-			Set<Phase> exPhaseNames = exPhases.stream().map(p -> p.getPhaseName())
-					.collect(Collectors.toSet());
-			if (this.exPhases.contains(Phase.create("sS"))
-					&& !exPhaseNames.contains(Phase.create("sS"))) {
-				double sStraveltime = TauPTimeReader.extrapolate_sS(eventR, epicentralDistance, model);
-				if (sStraveltime > 0) {
-					double[] tmp = exPhaseTime == null ? new double[1] : new double[exPhaseTime.length + 1];
-					tmp[0] = sStraveltime;
-					for (int i = 1; i < tmp.length; i++)
-						tmp[i] = exPhaseTime[i-1];
-					exPhaseTime = tmp;
-					System.out.println("DEBUG0: " + eventR + " " + epicentralDistance + " " + sStraveltime);
-				}
+//			Set<Phase> exPhaseNames = exPhases.stream().map(p -> p.getPhaseName())
+//					.collect(Collectors.toSet());
+//			if (this.exPhases.contains(Phase.create("sS"))
+//					&& !exPhaseNames.contains(Phase.create("sS"))) {
+//				double sStraveltime = TauPTimeReader.extrapolate_sS(eventR, epicentralDistance, model);
+//				if (sStraveltime > 0) {
+//					double[] tmp = exPhaseTime == null ? new double[1] : new double[exPhaseTime.length + 1];
+//					tmp[0] = sStraveltime;
+//					for (int i = 1; i < tmp.length; i++)
+//						tmp[i] = exPhaseTime[i-1];
+//					exPhaseTime = tmp;
+//					System.out.println("DEBUG0: " + eventR + " " + epicentralDistance + " " + sStraveltime);
+//				}
+//			}
+			// Trying another way to do it. Just using the travel time difference between S and sS at 40 degrees. This ignore triplications.
+			if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("sS")) && !this.usePhases.contains(Phase.ScS)
+					&& this.usePhases.contains(Phase.S)) {
+				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
+				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
+				if (tmpPhases.size() != 1)
+					System.out.println("Warning: sS not found at 40 degrees");
+				exPhaseTime = new double[1];
+				double sStime40 = tmpPhases.stream().findFirst().get().getTravelTime();
+				double Stime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.S)).findFirst().get().getTravelTime();
+				double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).findFirst().get().getTravelTime();
+//				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
+				exPhaseTime[0] = sStime40 - Stime40 + Stime;
 			}
 			
 			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);
@@ -587,14 +608,14 @@ public class TimewindowMaker implements Operation {
 			// window fix
 			Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
 					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
-					.filter(tw -> tw.getPhases().length > 0)
+					.filter(tw -> tw.getPhases().length > minLength)
 					.forEach(timewindowSet::add);
 		} catch (RuntimeException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	final static double exRearShift = 0.;
+	final static double exRearShift = 3.;
 
 	/**
 	 * fix start and end time by delta these time must be (int) * delta
@@ -691,9 +712,10 @@ public class TimewindowMaker implements Operation {
 						.sorted().toArray(Timewindow[]::new);
 		
 		windows = mergeWindow(windows);
-
+		
 		if (exWindows == null)
 			return windows;
+		
 		exWindows = mergeWindow(exWindows);
 		return considerExPhase(windows, exWindows);
 	}

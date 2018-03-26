@@ -120,146 +120,149 @@ public class TimewindowVisual {
 				
 				Set<Station> usedStations = new HashSet<>();
 				
+				// MTZ
 				double slowness = 15.;
+				// D"
+//				double slowness = 7.4;
 				
-	//			Map<Integer, Trace> obsStacks = new HashMap<>();
-	//			Map<Integer, Trace> synStacks = new HashMap<>();
-	//			Map<Integer, double[]> mapWindows = new HashMap<>();
-	//			
-	//			timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(id))
-	//				.forEach(tw -> {
-	//					try {
-	//						Path synPath = root.resolve(id.toString() + "/" + tw.getStation().getStationName() + "." + id.toString() + "." + "Tsc");
-	//						SACFileName synName = new SACFileName(synPath);
-	//						Path obsPath = root.resolve(id.toString() + "/" + tw.getStation().getStationName() + "." + id.toString() + "." + "T");
-	//						
-	//						boolean isObs = true;
-	//						if (!Files.exists(obsPath))
-	//							isObs = false;
-	//						
-	//						SACFileName obsName = null;
-	//						if (isObs)
-	//							obsName = new SACFileName(obsPath);
-	//						
-	//						double Y = iatom.getAndIncrement() * 4;
-	//						
-	//						double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition())
-	//								* 180 / Math.PI;
-	//						double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getStation().getPosition())
-	//								* 180 / Math.PI;
-	//						
-	//						//stack bin
-	//						int bin = (int) distance;
-	//						
-	//						text.add(String.format("gmt pstext -J -R -Xa-1c -Ya%.2fc -K -O -N -F+jLB >> $outputps << END\n", Y)
-	//								+ "0 .3 " + tw.getStation().getStationName() + " " + tw.getStation().getNetwork() + "\n"
-	//								+ String.format("0 0 %.1f\n0 -.3 %s", distance, new Phases(tw.getPhases()).toString()) + "\nEND");
-	//						
-	//						if (!usedStations.contains(tw.getStation())) {
-	//							double normalize = 1.;
-	//							Trace synFullTrace = synName.read().createTrace().cutWindow(slowness * distance, slowness * distance + 3500.);
-	//							
-	//							//stacks
-	//							if (synStacks.containsKey(bin)) {
-	//								Trace trace0 = synStacks.get(bin);
-	//								Trace trace1 = new Trace(trace0.getX(), synFullTrace.getY());
-	//								Trace trace = trace0.add(trace1);
-	//								synStacks.replace(bin, trace);
-	//							}
-	//							else {
-	//								synStacks.put(bin, synFullTrace);
-	//								mapWindows.put(bin, new double[] {tw.getStartTime() - slowness * distance, tw.getEndTime() - slowness * distance});
-	//							}
-	//							
-	//							if (isObs) {
-	//								Trace obsFullTrace = obsName.read().createTrace().cutWindow(slowness * distance, slowness * distance + 3500.);
-	//								
-	//								//stacks
-	//								if (obsStacks.containsKey(bin)) {
-	//									Trace trace0 = obsStacks.get(bin);
-	//									Trace trace1 = new Trace(trace0.getX(), obsFullTrace.getY());
-	//									Trace trace = trace0.add(trace1);
-	//									obsStacks.replace(bin, trace);
-	//								}
-	//								else {
-	//									obsStacks.put(bin, obsFullTrace);
-	//								}
-	//								
-	//								normalize = 1. / obsFullTrace.getYVector().getLInfNorm();
-	//								obsFullTrace = obsFullTrace.multiply(normalize);
-	//								textProfile.add(trace2GMT(obsFullTrace, "black", 0, 0, distance, slowness, 40));
-	//							}
-	//							else 
-	//								normalize = 1. / synFullTrace.getYVector().getLInfNorm();
-	//							synFullTrace = synFullTrace.multiply(normalize);
-	//							textProfile.add(trace2GMT(synFullTrace, "red", 0, 0, distance, slowness, 40));
-	//							
-	//							usedStations.add(tw.getStation());
-	//						}
-	//						textProfile.add(verticalLine(tw.getStartTime() - slowness * distance, distance, 3, "green", 0, 0));
-	//						textProfile.add(verticalLine(tw.getEndTime() - slowness * distance, distance, 3, "green", 0, 0));
-	//						
-	//						Trace synTrace = synName.read().createTrace().cutWindow(tw.getStartTime() - 40, tw.getEndTime() + 100);
-	//						double normalize = 1.;
-	//						if (isObs) {
-	//							Trace obsTrace = obsName.read().createTrace().cutWindow(tw.getStartTime() - 40, tw.getEndTime() + 100);
-	//							normalize = 1. / obsTrace.getYVector().getLInfNorm();
-	//							obsTrace = obsTrace.multiply(normalize);
-	//							text.add(trace2GMT(obsTrace, "black", 2, Y, 0, 0., 40));
-	//						}
-	//						else
-	//							normalize = 1. / synTrace.getYVector().getLInfNorm();
-	//						synTrace = synTrace.multiply(normalize);
-	//						
-	//						text.add(trace2GMT(synTrace, "red", 2, Y, 0, 0., 40));
-	//						
-	//						text.add(verticalLine(40, 0, 1, "green", 2, Y));
-	//						text.add(verticalLine((tw.getEndTime() - tw.getStartTime() + 40), 0, 1, "green", 2, Y));
-	//
-	//						
-	//					} catch (IOException e) {
-	//						e.printStackTrace();
-	//					}
-	//				});
-	//			
-	//			text.add(endGMT());
-	//			textProfile.add(endGMT());
-	//			
-	//			createGMTFile(outpath);
-	//			
-	//			for (String line : text)
-	//				Files.write(outpath, (line + "\n").getBytes(), StandardOpenOption.APPEND);
-	//			
-	//			createGMTFile(outpathProfile);
-	//			for (String line : textProfile)
-	//				Files.write(outpathProfile, (line + "\n").getBytes(), StandardOpenOption.APPEND);
-	//			
-	//			//stack
-	//			Files.deleteIfExists(outpathStack);
-	//			Files.createFile(outpathStack);
-	//			createGMTFile(outpathStack);
-	//			String begin = beginGMT(dirPath.toString() + "stack." + id.toString() + ".ps"
-	//					, "0/1000/0/75"
-	//					, "X14c/21c"
-	//					, gmtSets2
-	//					, new String[] {"-BSW -Bx1000 -By20"});
-	//			Files.write(outpathStack, (begin + "\n").getBytes(), StandardOpenOption.APPEND);
-	//			for (int bin : synStacks.keySet()) {
-	//				Trace obs = obsStacks.get(bin);
-	//				Trace syn = synStacks.get(bin);
-	//				double[] tw = mapWindows.get(bin);
-	//				double normalize = 1. / syn.getYVector().getLInfNorm();
-	//				obs = obs.multiply(normalize);
-	//				syn = syn.multiply(normalize);
-	//				String obsString = trace2GMT(obs, "black", 0, 0, bin, slowness, 10);
-	//				String synString = trace2GMT(syn, "red", 0, 0, bin, slowness, 10);
-	//				String twString0 = verticalLine(tw[0], bin, 3, "green", 0, 0);
-	//				String twString1 = verticalLine(tw[1], bin, 3, "green", 0, 0);
-	//				Files.write(outpathStack, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
-	//				Files.write(outpathStack, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
-	//				Files.write(outpathStack, (twString0 + "\n" + twString1 + "\n").getBytes(), StandardOpenOption.APPEND);
-	//			}
-	//			Files.write(outpathStack, endGMT().getBytes(), StandardOpenOption.APPEND);
+//				Map<Integer, Trace> obsStacks = new HashMap<>();
+//				Map<Integer, Trace> synStacks = new HashMap<>();
+//				Map<Integer, double[]> mapWindows = new HashMap<>();
+//				
+//				timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(id))
+//					.forEach(tw -> {
+//						try {
+//							Path synPath = root.resolve(id.toString() + "/" + tw.getStation().getStationName() + "." + id.toString() + "." + "Tsc");
+//							SACFileName synName = new SACFileName(synPath);
+//							Path obsPath = root.resolve(id.toString() + "/" + tw.getStation().getStationName() + "." + id.toString() + "." + "T");
+//							
+//							boolean isObs = true;
+//							if (!Files.exists(obsPath))
+//								isObs = false;
+//							
+//							SACFileName obsName = null;
+//							if (isObs)
+//								obsName = new SACFileName(obsPath);
+//							
+//							double Y = iatom.getAndIncrement() * 4;
+//							
+//							double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition())
+//									* 180 / Math.PI;
+//							double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getStation().getPosition())
+//									* 180 / Math.PI;
+//							
+//							//stack bin
+//							int bin = (int) distance;
+//							
+//							text.add(String.format("gmt pstext -J -R -Xa-1c -Ya%.2fc -K -O -N -F+jLB >> $outputps << END\n", Y)
+//									+ "0 .3 " + tw.getStation().getStationName() + " " + tw.getStation().getNetwork() + "\n"
+//									+ String.format("0 0 %.1f\n0 -.3 %s", distance, new Phases(tw.getPhases()).toString()) + "\nEND");
+//							
+//							if (!usedStations.contains(tw.getStation())) {
+//								double normalize = 1.;
+//								Trace synFullTrace = synName.read().createTrace().cutWindow(slowness * distance, slowness * distance + 3500.);
+//								
+//								//stacks
+//								if (synStacks.containsKey(bin)) {
+//									Trace trace0 = synStacks.get(bin);
+//									Trace trace1 = new Trace(trace0.getX(), synFullTrace.getY());
+//									Trace trace = trace0.add(trace1);
+//									synStacks.replace(bin, trace);
+//								}
+//								else {
+//									synStacks.put(bin, synFullTrace);
+//									mapWindows.put(bin, new double[] {tw.getStartTime() - slowness * distance, tw.getEndTime() - slowness * distance});
+//								}
+//								
+//								if (isObs) {
+//									Trace obsFullTrace = obsName.read().createTrace().cutWindow(slowness * distance, slowness * distance + 3500.);
+//									
+//									//stacks
+//									if (obsStacks.containsKey(bin)) {
+//										Trace trace0 = obsStacks.get(bin);
+//										Trace trace1 = new Trace(trace0.getX(), obsFullTrace.getY());
+//										Trace trace = trace0.add(trace1);
+//										obsStacks.replace(bin, trace);
+//									}
+//									else {
+//										obsStacks.put(bin, obsFullTrace);
+//									}
+//									
+//									normalize = 1. / obsFullTrace.getYVector().getLInfNorm();
+//									obsFullTrace = obsFullTrace.multiply(normalize);
+//									textProfile.add(trace2GMT(obsFullTrace, "black", 0, 0, distance, slowness, 40));
+//								}
+//								else 
+//									normalize = 1. / synFullTrace.getYVector().getLInfNorm();
+//								synFullTrace = synFullTrace.multiply(normalize);
+//								textProfile.add(trace2GMT(synFullTrace, "red", 0, 0, distance, slowness, 40));
+//								
+//								usedStations.add(tw.getStation());
+//							}
+//							textProfile.add(verticalLine(tw.getStartTime() - slowness * distance, distance, 3, "green", 0, 0));
+//							textProfile.add(verticalLine(tw.getEndTime() - slowness * distance, distance, 3, "green", 0, 0));
+//							
+//							Trace synTrace = synName.read().createTrace().cutWindow(tw.getStartTime() - 40, tw.getEndTime() + 100);
+//							double normalize = 1.;
+//							if (isObs) {
+//								Trace obsTrace = obsName.read().createTrace().cutWindow(tw.getStartTime() - 40, tw.getEndTime() + 100);
+//								normalize = 1. / obsTrace.getYVector().getLInfNorm();
+//								obsTrace = obsTrace.multiply(normalize);
+//								text.add(trace2GMT(obsTrace, "black", 2, Y, 0, 0., 40));
+//							}
+//							else
+//								normalize = 1. / synTrace.getYVector().getLInfNorm();
+//							synTrace = synTrace.multiply(normalize);
+//							
+//							text.add(trace2GMT(synTrace, "red", 2, Y, 0, 0., 40));
+//							
+//							text.add(verticalLine(40, 0, 1, "green", 2, Y));
+//							text.add(verticalLine((tw.getEndTime() - tw.getStartTime() + 40), 0, 1, "green", 2, Y));
+//	
+//							
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						}
+//					});
+//				
+//				text.add(endGMT());
+//				textProfile.add(endGMT());
+//				
+//				createGMTFile(outpath);
+//				
+//				for (String line : text)
+//					Files.write(outpath, (line + "\n").getBytes(), StandardOpenOption.APPEND);
+//				
+//				createGMTFile(outpathProfile);
+//				for (String line : textProfile)
+//					Files.write(outpathProfile, (line + "\n").getBytes(), StandardOpenOption.APPEND);
+//				
+//				//stack
+//				Files.deleteIfExists(outpathStack);
+//				Files.createFile(outpathStack);
+//				createGMTFile(outpathStack);
+//				String begin = beginGMT(dirPath.toString() + "stack." + id.toString() + ".ps"
+//						, "0/1000/0/75"
+//						, "X14c/21c"
+//						, gmtSets2
+//						, new String[] {"-BSW -Bx1000 -By20"});
+//				Files.write(outpathStack, (begin + "\n").getBytes(), StandardOpenOption.APPEND);
+//				for (int bin : synStacks.keySet()) {
+//					Trace obs = obsStacks.get(bin);
+//					Trace syn = synStacks.get(bin);
+//					double[] tw = mapWindows.get(bin);
+//					double normalize = 1. / syn.getYVector().getLInfNorm();
+//					obs = obs.multiply(normalize);
+//					syn = syn.multiply(normalize);
+//					String obsString = trace2GMT(obs, "black", 0, 0, bin, slowness, 10);
+//					String synString = trace2GMT(syn, "red", 0, 0, bin, slowness, 10);
+//					String twString0 = verticalLine(tw[0], bin, 3, "green", 0, 0);
+//					String twString1 = verticalLine(tw[1], bin, 3, "green", 0, 0);
+//					Files.write(outpathStack, (obsString + "\n").getBytes(), StandardOpenOption.APPEND);
+//					Files.write(outpathStack, (synString + "\n").getBytes(), StandardOpenOption.APPEND);
+//					Files.write(outpathStack, (twString0 + "\n" + twString1 + "\n").getBytes(), StandardOpenOption.APPEND);
+//				}
+//				Files.write(outpathStack, endGMT().getBytes(), StandardOpenOption.APPEND);
 				
 				
 				//bins
@@ -346,10 +349,10 @@ public class TimewindowVisual {
 						
 						String obsString = null;
 						String obsEnvelopeString = null;
-						String[] colors = new String[] {"blue", "green"};
+						String[] colors = new String[] {"black", "blue", "green"};
 						List<String> obsStringList = new ArrayList<>();
 						if (isObs) {
-							obsStringList.add(trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 10));
+//							obsStringList.add(trace2GMT(obsFullTrace, "black", 0, 0, distance_azimuth.distance, slowness, 10)); uncomment for TZ
 							for (int k = 0; k < timeShiftList.size(); k++)
 								obsStringList.add(trace2GMT(obsFullTrace, colors[k], 0, 0, distance_azimuth.distance, slowness, 10, timeShiftList.get(k)));
 //							obsEnvelopeString = trace2GMT(obsEnvelopeTrace, "cyan", 0, 0, distance_azimuth.distance, slowness, 10);
@@ -361,7 +364,10 @@ public class TimewindowVisual {
 						if (!Files.exists(outpathBins)) {
 							createGMTFile(outpathBins);
 							Files.write(outpathBins, (beginGMT(String.format("bins_az%.1f_", distance_azimuth.azimuth) + id.toString() + ".ps"
-									, "100/300/13/37"
+									//MTZ
+//									, "100/300/13/37"
+									//D"
+									, "650/850/69/101"
 									, "X14c/28c"
 									, gmtSets2
 									, new String[] {"-BSWne -Bx50f25 -By5f2.5"}) + "\n").getBytes()

@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.external;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -102,13 +103,15 @@ public final class TauPTimeReader {
 		String[] cmd = makeCMD(eventR, epicentralDistance, phase, model);
 		ProcessBuilder pb = new ProcessBuilder(cmd);
 		pb.redirectError(ExternalProcess.bitBucket);
+//		pb.redirectError(Paths.get("error_taup.log").toFile());
 		try {
 			Process p = pb.start();
 			List<String> outLines = new ArrayList<>();
 			try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
 				String line;
-				while ((line = br.readLine()) != null)
+				while ((line = br.readLine()) != null) {
 					outLines.add(line);
+				}
 			}
 			return outLines;
 		} catch (Exception e) {

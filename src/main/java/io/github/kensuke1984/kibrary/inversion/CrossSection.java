@@ -24,9 +24,13 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 public class CrossSection {
 
 	public static void main(String[] args) {
+		// file with lat lon depth dVs
 		Path file = Paths.get(args[0]);
+		// fileR with depths points of the ouput cross-section
 		Path fileR = Paths.get(args[1]);
+		// positionFile with the start point (lat lon) and end point (lat lon) of the output cross-section
 		Path positionFile = Paths.get(args[2]);
+		
 		Location[] locations = readWavefieldPoints(file);
 		double[] values = readWavefieldValues(file);
 		double[] rs = readRs(fileR);
@@ -41,9 +45,9 @@ public class CrossSection {
 		Location centerLocation = startPos.getMidpoint(endPos)
 				.toLocation(Earth.EARTH_RADIUS);
 		double azimuth = startPos.getAzimuth(endPos);
-		double theta = 20. * Math.PI/180.;//
-//		double theta = centerLocation.getEpicentralDistance(endPos);
-		double deltaTheta = 1. * Math.PI / 180.;
+//		double theta = 20. * Math.PI/180.;
+		double theta = centerLocation.getEpicentralDistance(endPos) / 2.;
+		double deltaTheta = Math.toRadians(1.);
 		
 		CrossSectionLine csline 
 			= new CrossSectionLine(centerLocation, theta, azimuth, deltaTheta);
@@ -204,6 +208,12 @@ public class CrossSection {
 		return y;
 	}
 	
+	/**
+	 * @param file
+	 * lat1 lon1
+	 * lat2 lon2
+	 * @return
+	 */
 	private static HorizontalPosition[] readPosition(Path file) {
 		HorizontalPosition[] positions = new HorizontalPosition[2];
 		try {

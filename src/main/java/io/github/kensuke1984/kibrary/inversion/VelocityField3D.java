@@ -160,6 +160,7 @@ public class VelocityField3D {
 		if (partialTypes.contains(PartialType.MU)) {
 			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocityInitialModel" + ".txt");
+				
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 					pw.println("# perturbationR Vsh");
 					for (int j = 0; j <= 1000; j++) {
@@ -170,6 +171,7 @@ public class VelocityField3D {
 				int n = unknowns.size();
 				for (int i = 1; i <= n; i++) {
 					outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
+					Path outpathForCrosssection = inversionResultPath.resolve(inverse.simple() + "/" + "forCrosssection" + inverse.simple() + i + ".txt");
 					Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");
 					Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
@@ -181,6 +183,7 @@ public class VelocityField3D {
 					Map<Location, Double> extendedPerturbationMap = null;
 					Map<Location, Double> zeroMeanPerturbationMap = null;
 					Map<Location, Double> extendedZeroMeanPerturbationMap = null;
+					Map<Location, Double> perturbationMap = new HashMap<>();
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					double[][] profile1D = null;
@@ -191,12 +194,11 @@ public class VelocityField3D {
 						int count = 0;
 						for (double r : rs)
 							perturbationRs[count++] = r;
-						Map<Location, Double> perturbationMap = new HashMap<>();
 						for (UnknownParameter unknown : perturbations.keySet())
 							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
 						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
-						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 5., perturbationRs);
-						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 5., perturbationRs);
+						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 2., perturbationRs);
+						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 2., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
@@ -215,6 +217,7 @@ public class VelocityField3D {
 					}
 					try {
 						PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+						PrintWriter pwCS = new PrintWriter(Files.newBufferedWriter(outpathForCrosssection, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						PrintWriter pwQ = null;
 						PrintWriter pwIteration = new PrintWriter(Files.newBufferedWriter(outpathIteration, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						if (partialTypes.contains(PartialType.PARQ)) {
@@ -226,6 +229,11 @@ public class VelocityField3D {
 							for (Location loc : extendedPerturbationMap.keySet()) {
 								double perturbation = extendedPerturbationMap.get(loc);
 								double zeroMeanPerturbation = extendedZeroMeanPerturbationMap.get(loc);
+								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);
+							}
+							for (Location loc : perturbationMap.keySet()) {
+								double perturbation = perturbationMap.get(loc);
+								double zeroMeanPerturbation = zeroMeanPerturbationMap.get(loc);
 								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);
 							}
 							if (partialTypes.contains(PartialType.PARQ)) {
@@ -257,6 +265,7 @@ public class VelocityField3D {
 						}
 						
 						pw.close();
+						pwCS.close();
 						if (partialTypes.contains(PartialType.PARQ))
 							pwQ.close();
 						pwIteration.close();

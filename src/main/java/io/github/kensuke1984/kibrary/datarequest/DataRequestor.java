@@ -12,8 +12,10 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -94,6 +96,8 @@ public class DataRequestor implements Operation {
 		this.property = (Properties) property.clone();
 		set();
 	}
+	
+	Path eventsFromFile;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -165,6 +169,7 @@ public class DataRequestor implements Operation {
 		headAdjustment = Integer.parseInt(property.getProperty("headAdjustment"));
 		footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
 		send = Boolean.parseBoolean(property.getProperty("send"));
+		eventsFromFile = property.containsKey("eventsFromFile") ? Paths.get(property.getProperty("eventsFromFile")) : null;
 	}
 
 	private Properties property;
@@ -193,6 +198,10 @@ public class DataRequestor implements Operation {
 		search.setMwRange(lowerMw, upperMw);
 		search.setDepthRange(lowerDepth, upperDepth);
 		return search.search();
+	}
+	
+	private Set<GlobalCMTID> readIDs() throws IOException {
+		return Files.readAllLines(eventsFromFile).stream().map(line -> new GlobalCMTID(line.trim())).collect(Collectors.toSet());
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
@@ -225,6 +234,8 @@ public class DataRequestor implements Operation {
 			pw.println("##Network names for request, must be defined");
 			pw.println("##Note that it will make a request for all stations in the networks.");
 			pw.println("#networks II IU _US-All");
+			pw.println("##Path of a file with events you want to request");
+			pw.println("#eventsFromFile");
 			pw.println("##Starting date yyyy-mm-dd, must be defined");
 			pw.println("#startDate 1990-01-01");
 			pw.println("##End date yyyy-mm-dd, must be defined");
@@ -268,7 +279,10 @@ public class DataRequestor implements Operation {
 
 	@Override
 	public void run() throws Exception {
-		requestedIDs = listIDs();
+		if (eventsFromFile != null)
+			requestedIDs = readIDs();
+		else
+			requestedIDs = listIDs();
 		System.out.println(requestedIDs.size() + " events are found.");
 		System.out.println("Label contains \"" + date + "\"");
 		try {

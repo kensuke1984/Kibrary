@@ -180,7 +180,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		PolynomialStructure ps = null;
 		
 		// PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
-		if (modelName.contains("_")) {
+		if (!modelName.contains("/") && modelName.contains("_")) {
 			System.out.println("Using " + modelName);
 			String[] ss = modelName.split("_");
 			modelName = ss[0];

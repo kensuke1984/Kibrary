@@ -1,7 +1,5 @@
 package io.github.kensuke1984.kibrary.timewindow;
 
-import io.github.kensuke1984.anisotime.Phase;
-
 import org.apache.commons.math3.util.Precision;
 
 /**

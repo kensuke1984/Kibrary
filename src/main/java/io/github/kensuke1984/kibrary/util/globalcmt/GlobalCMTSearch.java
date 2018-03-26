@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,7 +39,7 @@ public class GlobalCMTSearch {
 		LocalDate startDate = LocalDate.of(2005, 1, 1);
 		LocalDate endDate = LocalDate.now();
 		GlobalCMTSearch sea = new GlobalCMTSearch(startDate, endDate);
-		sea.setDepthRange(10., 700.);
+//		sea.setDepthRange(10., 700.);
 //		sea.setLatitudeRange(50., 70.);
 //		sea.setLongitudeRange(160., 220.);
 //		sea.setLatitudeRange(-12, 30);
@@ -55,17 +57,69 @@ public class GlobalCMTSearch {
 		sea.setLongitudeRange(-70, -55);
 		sea.setDepthRange(13., 100.);
 		
-		Set<GlobalCMTID> ids = sea.search();
+		//USArray 100-120 deg
+		sea.setMwRange(6., 7.0);
+//		sea.setLatitudeRange(-90, 90);
+		sea.setLatitudeRange(10, 90);
+		sea.setLongitudeRange(-180, 180);
+		sea.setDepthRange(300, 700.);
+		
+		//Atlantic
+		sea.setMwRange(5.7, 7.0);
+//		sea.setLatitudeRange(-90, 90);
+//		sea.setLatitudeRange(-45, 45);
+		sea.setLatitudeRange(-30, 30);
+		sea.setLongitudeRange(-50, 0);
+		sea.setDepthRange(13, 700.);
+		
+		HorizontalPosition usarrayWest = new HorizontalPosition(40, -120);
+		HorizontalPosition usarrayMiddle = new HorizontalPosition(40, -100);
+		HorizontalPosition usarrayEast = new HorizontalPosition(40, -80);
+		
+//		Set<GlobalCMTID> ids = sea.search().stream().filter(id -> {
+//			Location loc = id.getEvent().getCmtLocation();
+//			double distance1 = Math.toDegrees(usarrayWest.getEpicentralDistance(loc));
+//			double distance2 = Math.toDegrees(usarrayMiddle.getEpicentralDistance(loc));
+//			double distance3 = Math.toDegrees(usarrayEast.getEpicentralDistance(loc));
+//			if ( (distance1 <= 120 && distance1 >= 100) 
+//				|| (distance2 <= 120 && distance2 >= 100)
+//				|| (distance3 <= 120 && distance3 >= 100) )
+//				return true;
+//			else
+//				return false;
+//		}).collect(Collectors.toSet());
+//		System.out.println(ids.size() + " event founds");
+		
+//		Atlantic 
+		Set<GlobalCMTID> ids = sea.search().stream().filter(id -> {
+			Location loc = id.getEvent().getCmtLocation();
+			double distance1 = Math.toDegrees(usarrayWest.getEpicentralDistance(loc));
+			double distance2 = Math.toDegrees(usarrayMiddle.getEpicentralDistance(loc));
+			double distance3 = Math.toDegrees(usarrayEast.getEpicentralDistance(loc));
+			if ( (distance1 <= 100 && distance1 >= 70) 
+				|| (distance2 <= 100 && distance2 >= 70)
+				|| (distance3 <= 100 && distance3 >= 70) )
+				return true;
+			else
+				return false;
+		}).collect(Collectors.toSet());
 		System.out.println(ids.size() + " event founds");
 		
-		for (GlobalCMTID id : ids)
-			System.out.println(id);
+//		Set<GlobalCMTID> ids = sea.search();
+//		System.out.println(ids.size() + " event founds");
 		
+//		for (GlobalCMTID id : ids)
+//			System.out.println(id);
+		
+//		Path outfile = Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/DATA/eventList_Japan.txt");
+		Path outfile = Paths.get("/Users/Anselme/Dropbox/Kenji/eventList_Atlantic.txt");
+//		"/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/GlobalCMTIDs_UMstudy_CA_AtlanticEvent_info.txt"
 		try {
 			PrintWriter pw = new PrintWriter(
 					new BufferedWriter(
-							new FileWriter("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/GlobalCMTIDs_UMstudy_CA_AtlanticEvent_info.txt")));
-			pw.println(">id, lon, lat, depth (km), Mw, ref. distance US (deg), ref. distance Alaska (deg)");
+							new FileWriter(outfile.toString())));
+//			pw.println(">id, lon, lat, depth (km), Mw, ref. distance US (deg), ref. distance Alaska (deg)");
+			pw.println(">id, lon, lat, depth (km), Mw");
 			for (GlobalCMTID id : ids) {
 //				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(30, -100))
 //						* 180 / Math.PI;
@@ -73,13 +127,13 @@ public class GlobalCMTSearch {
 //						* 180 / Math.PI;
 //				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(48, -124))
 //						* 180 / Math.PI;
-				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(30, -90))
-						* 180 / Math.PI;
-				double distance2 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(65, -150))
-						* 180 / Math.PI;
+//				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(30, -90))
+//						* 180 / Math.PI;
+//				double distance2 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(65, -150))
+//						* 180 / Math.PI;
 //				double distance1 = id.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(28, -100))
 //						* 180 / Math.PI;
-				pw.printf("%15s   %.1f   %.1f  %.1f %.1f %.1f %1f%n"
+				pw.printf("%15s   %.3f   %.3f  %.3f %.3f%n"
 						, id.toString()
 //						, id.getEvent().getCMTTime().format(formatter)
 						, id.getEvent().getCmtLocation().getLongitude()
@@ -88,19 +142,20 @@ public class GlobalCMTSearch {
 //						, distance
 //						, id.getEvent().getCMTTime().format(formatter)
 						, id.getEvent().getCmt().getMw()
-						, distance1
-						, distance2);
-				System.out.printf("%15s,   %.1f,   %.1f,  %.1f, %.1f, %.1f, %1f%n"
-						, id.toString()
-//						, id.getEvent().getCMTTime().format(formatter)
-						, id.getEvent().getCmtLocation().getLongitude()
-						, id.getEvent().getCmtLocation().getLatitude()
-						, Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR()
-//						, distance
-//						, id.getEvent().getCMTTime().format(formatter)
-						, id.getEvent().getCmt().getMw()
-						, distance1
-						, distance2);
+						);
+//						, distance1
+//						, distance2);
+//				System.out.printf("%15s,   %.1f,   %.1f,  %.1f, %.1f, %.1f, %1f%n"
+//						, id.toString()
+////						, id.getEvent().getCMTTime().format(formatter)
+//						, id.getEvent().getCmtLocation().getLongitude()
+//						, id.getEvent().getCmtLocation().getLatitude()
+//						, Earth.EARTH_RADIUS - id.getEvent().getCmtLocation().getR()
+////						, distance
+////						, id.getEvent().getCMTTime().format(formatter)
+//						, id.getEvent().getCmt().getMw()
+//						, distance1
+//						, distance2);
 			}
 			pw.close();
 		} catch (FileNotFoundException error) {

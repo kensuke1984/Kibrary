@@ -209,8 +209,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		structurePath = property.getProperty("ps");
 		
-		psvPath = property.getProperty("psvPath") != null ? Paths.get(property.getProperty("psvPath")) : null;
-		shPath = property.getProperty("shPath") != null ? Paths.get(property.getProperty("shPath")) : null;
+		psvPath = !property.getProperty("psvPath").equals("null") ? Paths.get(property.getProperty("psvPath")) : null;
+		shPath = !property.getProperty("shPath").equals("null") ? Paths.get(property.getProperty("shPath")) : null;
 	}
 
 	/**
@@ -316,12 +316,18 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 			Set<SpcFileName> spcFileNames;
 			try {
-				if (shPath != null && psvPath == null)
+				if (shPath != null && psvPath == null) {
 					spcFileNames = collectSHSPCs(spcFolder);
-				else if (psvPath != null && shPath == null)
+//					System.out.println("Collecting SH spc");
+				}
+				else if (psvPath != null && shPath == null) {
 					spcFileNames = collectPSVSPCs(spcFolder);
-				else
+//					System.out.println("Collecting PSV spc");
+				}
+				else {
 					spcFileNames = collectPSVSPCs(spcFolder);
+//					System.out.println("Collecting PSV and SH spc");
+				}
 			} catch (IOException e1) {
 				e1.printStackTrace();
 				return;

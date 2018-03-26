@@ -51,7 +51,7 @@ public class MakeUnknownParameterFile {
 					System.err.format("Ignoring radius %.4f%n", perturbation.getR());
 					continue;
 				}
-				double volume = getVolume(perturbation, dR, 5., 5.);
+				double volume = getVolume(perturbation, dR, 2., 2.);
 				Files.write(unknownPath, String.format("MU %.8f %.8f %.8f %.8f\n", perturbation.getLatitude()
 						, perturbation.getLongitude()
 						, perturbation.getR()
