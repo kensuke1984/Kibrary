@@ -46,7 +46,7 @@ public class OneDSvelocityStructure {
 	private static double deltaR = 20;
 	private static String invMethod = "CG";
 	
-	public static void main(String[] args){
+	public static void main(String[] args) throws IOException{
 		Path workdirPath = Paths.get(args[0]);
 		Path cgPath = Paths.get(workdirPath.resolve("CG").toString());
 		Path graphPath = workdirPath.resolve("graph"+invMethod);
@@ -57,12 +57,14 @@ public class OneDSvelocityStructure {
 			double[] deltaMus = readAnswer(answerPath);
 			double[] rs  =  new double[deltaMus.length];
 			AtomicInteger ac = new AtomicInteger(0);
+			//TODO
 			Arrays.stream(deltaMus).forEach(dm -> {
 				
 				ac.getAndIncrement();
 			});
 		});
 		
+		/**
 		try{	  
 			String filepath;
 			int count=1;
@@ -96,7 +98,9 @@ public class OneDSvelocityStructure {
 		}catch(IOException error){
 			System.out.println("ファイルを読み出せません");
 		}
+		**/
 	}
+	
 
 	/**
 	 * ?.datの解のファイルを読み込んで解(deltaMu)の配列を作る	

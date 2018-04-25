@@ -55,12 +55,12 @@ public class ThreeDPartialWaveformMaker {
 
 	private static ButterworthFilter filter;
 	private static Path perturbFilePath;
-	private static Set<Station> stationSet;
+//	private static Set<Station> stationSet;
 	private static Set<GlobalCMTID> idSet;
-	private static double[][] periodRanges;
+//	private static double[][] periodRanges;
 	private static PerturbationPoint perturbationPoints;
 	private static Set<Location> perturbationLocationSet;
-	private static Phase[] phases;
+//	private static Phase[] phases;
 	private static File horizontalPointFile;
 	private static File perturbationPointFile;
 	private static Path suzukiDir;
@@ -71,9 +71,9 @@ public class ThreeDPartialWaveformMaker {
 	 */
 	public static void main(String[] args) throws IOException {
 		
-		if (args.length<5)
+		if (args.length!=8)
 			System.err.println("usage: globalCMTID, station name,  SH or PSV, partial type, component, "
-					+ "home directry path, perturbationPath, horizontal Point File, perturbation point file");
+					+ "home directry path, horizontal Point File, perturbation point file");
 
 		double fmax = 0.125;
 		double fmin = 0.005;
@@ -85,18 +85,10 @@ public class ThreeDPartialWaveformMaker {
 		PartialType parType = PartialType.valueOf(args[3]);
 		SACComponent component = SACComponent.valueOf(args[4]);		
 		suzukiDir = Paths.get(args[5]);
-		
-		perturbFilePath = Paths.get(args[6]);
-		horizontalPointFile = new File(args[7]);
-		perturbationPointFile = new File(args[8]);
-		
-//		ThreeDPartialWaveformMaker tdpwm = new ThreeDPartialWaveformMaker();
-//		tdpwm.readPerturbationLocations();
-		
+		horizontalPointFile = new File(args[6]);
+		perturbationPointFile = new File(args[7]);
 		perturbationPoints = new PerturbationPoint(horizontalPointFile, perturbationPointFile);
-		
 		String[] ppoints = perturbationPoints.getPointName();
-		
 		
 		if (Files.notExists(suzukiDir.resolve("3DparWave")))
 			Files.createDirectories(suzukiDir.resolve("3DparWave"));

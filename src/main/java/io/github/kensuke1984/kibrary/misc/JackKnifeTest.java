@@ -19,6 +19,7 @@ import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
@@ -57,7 +58,8 @@ public class JackKnifeTest {
 			stationSet.add(id.getStation());
 		});
 		
-		try (WaveformDataWriter wdw = new WaveformDataWriter(idPath, dataPath, stationSet, globalCMTIDSet, periodRanges);
+		//TODO!!!
+		try (WaveformDataWriter wdw = new WaveformDataWriter(idPath, dataPath, stationSet, globalCMTIDSet, periodRanges, null);
 				Stream<BasicID> idStreamObs = Arrays.stream(src);
 				Stream<BasicID> idStreamSyn = Arrays.stream(src);) {
 			List<BasicID> idObsList = idStreamObs.filter(id -> id.getWaveformType().equals(WaveformType.OBS))

@@ -18,9 +18,9 @@ import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
+import io.github.kensuke1984.kibrary.external.SHELL;
 
 /**
  * @version 0.0.1
@@ -46,7 +46,11 @@ public class ModifySAC {
 			try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(eventDir.toPath(), "*.[R-Z]")) {
 				for (Path sacPath : sacPathStream) {
 //					fixDelta(sacPath);
-					modifyNormarize(sacPath);
+//					modifyNormarize(sacPath);
+					if (sacPath.toString().split("/")[2].startsWith("NNE")) {
+//						modifyStationName(sacPath);
+						modifyFileName(sacPath);
+					}
 				}
 			} catch (IOException | InterruptedException e) {
 				// TODO 自動生成された catch ブロック
@@ -322,6 +326,25 @@ public class ModifySAC {
 			sacD.inputCMD("ch lovrok true");// overwrite permission
 			sacD.inputCMD("mul " + normarizeFactor);
 			sacD.inputCMD("w over");
+		}
+	}
+	
+	private static void modifyStationName(Path sacPath) throws IOException, InterruptedException {
+		try (SAC sacD = SAC.createProcess()) {
+			String cwd = sacPath.getParent().toString();
+			sacD.inputCMD("cd " + cwd);// set current directory
+			sacD.inputCMD("r " + sacPath.getFileName());// read
+			sacD.inputCMD("ch lovrok true");// overwrite permission
+			sacD.inputCMD("ch kstnm " + "N"+sacPath.getFileName().toString().split("\\.")[0]);
+			sacD.inputCMD("w over");
+		}
+	}
+	
+	private static void modifyFileName(Path sacPath) throws IOException, InterruptedException {
+		try (SHELL shellProcess = SHELL.createProcess();) {
+			System.out.println("mv "+ sacPath.getFileName().toString() + " N" + sacPath.getFileName().toString());
+			shellProcess.inputCMD("mv "+ sacPath.getFileName().toString() + " N" + sacPath.getFileName().toString());
+			shellProcess.close();
 		}
 	}
 }

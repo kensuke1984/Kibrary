@@ -3,10 +3,13 @@ package io.github.kensuke1984.kibrary.inversion;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -141,10 +144,9 @@ public class PerturbationPoint extends HorizontalPoint {
 	/**
 	 * @param args
 	 *            dir dR dLatitude dLongitude
-	 * @throws FileAlreadyExistsException if any
-	 * @throws NoSuchFileException if any
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
+	public static void main(String[] args) throws IOException {
 		if (args.length != 4) {
 			System.out.println("dir dR dLatitude dLongitude");
 			return;
@@ -197,12 +199,13 @@ public class PerturbationPoint extends HorizontalPoint {
 	 *            {@link File} for {@link HorizontalPoint}
 	 * @param perturbationPointFile
 	 *            {@link File} for link PerturbationPoint}
-	 * @throws NoSuchFileException if any
+	 * @throws IOException 
 	 */
-	public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws NoSuchFileException {
+	public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws IOException {
 		super(horizontalPointFile);
 		this.perturbationPointFile = perturbationPointFile;
 		readPerturbationPointFile();
+//		readPartialLocation(perturbationPointFile.toPath());
 	}
 
 	/**
@@ -247,6 +250,41 @@ public class PerturbationPoint extends HorizontalPoint {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static Location toLocation(String line) {
+		String[] parts = line.split("\\s+");
+		if (Double.parseDouble(parts[1]) > 180.0){
+//			System.out.println(Double.parseDouble(parts[2]));
+		return new Location(Double.parseDouble(parts[0]),
+				Double.parseDouble(parts[1])-360.0, Double.parseDouble(parts[2]));
+		} else 
+//			System.out.println(Double.parseDouble(parts[2]));
+			return new Location(Double.parseDouble(parts[0]),
+					Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+	}
+
+	/**
+	 * @param parPath
+	 *            unknown file (MU lat lon radius volume)
+	 * @return
+	 * @throws IOException 
+	 */
+	private void readPartialLocation(Path parPath) throws IOException {
+//		System.out.println(parPath);
+		List<String> lines = FileUtils.readLines(parPath.toFile(), Charset.defaultCharset());
+		lines.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));
+		
+		pointN = lines.size();
+		perturbationLocation = new Location[pointN];
+		try {
+			perturbationLocation = Files.readAllLines(parPath).stream()
+					.map(PerturbationPoint::toLocation)
+					.toArray(n -> new Location[n]);
+		} catch (Exception e) {
+			throw new RuntimeException("par file has problems");
+		}
+
 	}
 
 	public Location[] getPerturbationLocation() {

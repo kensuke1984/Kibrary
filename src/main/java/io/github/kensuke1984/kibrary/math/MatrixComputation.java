@@ -42,7 +42,7 @@ class MatrixComputation {
 		if (a.getColumnDimension() != length)
 			throw new RuntimeException("dimension invalid");
 		RealVector vector = new ArrayRealVector(n);
-		IntStream.range(0, n).parallel().forEach(i -> {
+		IntStream.range(0, n).parallel().forEachOrdered(i -> {
 			double value = 0;
 			for (int k = 0; k < length; k++)
 				value += a.getEntry(i, k) * m.getEntry(k);

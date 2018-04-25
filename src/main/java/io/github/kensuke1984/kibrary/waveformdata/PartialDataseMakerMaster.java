@@ -1021,12 +1021,12 @@ private class WorkerTimePartial implements Runnable {
 		if (!fpExistence) {
 			idSet.stream().filter(id -> !Files.exists(fpPath.resolve(id.toString())))
 				.forEach(id -> System.out.println(id));
-			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
+			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath + " for FPinfo");
 		}
 		if (!bpExistence) {
 			stationSet.stream().filter(station -> !Files.exists(bpPath.resolve("0000" + station)))
 				.forEach(sta -> System.out.println(sta));
-			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
+			throw new RuntimeException("propagation spectors are not enough for " + timewindowPath + " for BPinfo");
 		}
 		writeLog(timewindowInformation.size() + " timewindows are found in " + timewindowPath + ". " + idSet.size()
 				+ " events and " + stationSet.size() + " stations.");

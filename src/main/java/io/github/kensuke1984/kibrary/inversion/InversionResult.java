@@ -61,7 +61,6 @@ public class InversionResult {
 	private Map<InverseMethodEnum, Double[]> answerVarianceMap = new EnumMap<>(InverseMethodEnum.class);
 	
 	private Set<InverseMethodEnum> inverseMethods;
-	
 	/**
 	 * 
 	 * @param rootPath
