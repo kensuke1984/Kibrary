@@ -36,9 +36,6 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
  */
 public class BornCreate {
 	
-	static InverseMethodEnum CG = InverseMethodEnum.CONJUGATE_GRADIENT;
-//	static InverseMethodEnum SVD = InverseMethodEnum.SVD;
-	
 	public static void main(String[] args) {
 		if (args.length<6)
 			System.err.println("USAGE: output dir, Inversion method, timewindow path, Inversion result dir., min, max.");
@@ -71,7 +68,7 @@ public class BornCreate {
 				ArrayList<Double> corEachBasis = new ArrayList<Double>();
 				int bornOrder = j;
 				System.out.println("Now at "+bornOrder+" of "+unknownp.size());
-				ir.createBorn(ime, j);
+//				ir.createBorn(ime, j);
 //				/**
 					timewindows.stream().forEachOrdered(tw -> {
 //						GlobalCMTID obsID = tw.getGlobalCMTID();
@@ -80,7 +77,7 @@ public class BornCreate {
 						.filter(id -> id.getStation().equals(tw.getStation()))
 						.forEach(id -> {
 							try{
-							ir.createBorn(ime, bornOrder);
+							ir.bornOf(id, ime, bornOrder);
 //						RealVector bornWave = ir.bornOf(id, ime, bornOrder).getYVector();
 //						RealVector obsWave = ir.observedOf(id).getYVector();
 						//ここで各震源観測点ペアのOBSとBORNのCorrelationを書き出す。
