@@ -27,9 +27,11 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 public class GetStationEventDistribution {
 	
 	public static void main(String[] args) throws IOException {
-		Path waveIDPath = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/ALL/waveformID.dat");
-		Path waveformPath = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/ALL/waveform.dat");
-		Path outPath = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/ALL/stationEventDistribution.txt");
+		if (args.length != 3 || args[0] == "--help")
+			System.err.println("usage: waveID, waveData, output");
+		Path waveIDPath = Paths.get(args[0]);
+		Path waveformPath = Paths.get(args[1]);
+		Path outPath = Paths.get(args[2]);
 		System.out.println(waveIDPath+" read.");
 		GetStationEventDistribution getSED = new GetStationEventDistribution();
 		getSED.outputDistribution(waveIDPath, waveformPath, outPath);

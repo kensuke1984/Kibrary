@@ -185,6 +185,10 @@ public class DataSelection implements Operation {
 			property.setProperty("convolute", "true");
 		if (!property.containsKey("SnScSnPair"))
 			property.setProperty("SnScSnPair", "false");
+		if (!property.containsKey("minDistance"))
+			property.setProperty("minDistance", "70");
+		if (!property.containsKey("maxDistance"))
+			property.setProperty("maxDistance", "100");
 	}
 
 	private void set() throws IOException {
@@ -221,7 +225,8 @@ public class DataSelection implements Operation {
 		SnScSnPair = Boolean.parseBoolean(property.getProperty("SnScSnPair"));
 		
 		minSNratio = Double.parseDouble(property.getProperty("minSNratio"));
-		
+		minDistance = Double.parseDouble(property.getProperty("minDistance"));
+		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
 		dataSelectionInfo = new ArrayList<>();
 	}
 
@@ -333,7 +338,7 @@ public class DataSelection implements Operation {
 					lpw.println("#convolved");
 				else
 					lpw.println("#not convolved");
-				lpw.println("#s e c phase use ratio(syn/obs){abs max min} variance correlation SNratio");
+				lpw.println("#s e c phase use ratio(syn/obs){abs max min} variance correlation SNratio distance");
 
 				for (SACFileName obsName : obsFiles) {
 					// check components
@@ -475,6 +480,8 @@ public class DataSelection implements Operation {
 		cor = Precision.round(cor, 2);
 		
 		SNratio = Precision.round(SNratio, 2);
+		Phases refPhases = new Phases(new Phase[] {Phase.S, Phase.ScS});
+//		System.out.println(new Phases(window.getPhases()).equals(refPhases));
 		
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
@@ -483,12 +490,13 @@ public class DataSelection implements Operation {
 				|| SNratio < minSNratio
 				|| Double.isNaN(absRatio) || Double.isNaN(maxRatio) 
 				|| Double.isNaN(minRatio) || Double.isNaN(var) 
-				|| Double.isNaN(cor) || Double.isNaN(SNratio));
+				|| Double.isNaN(cor) || Double.isNaN(SNratio)
+				|| !new Phases(window.getPhases()).equals(refPhases));
 		
 		Phases phases = new Phases(window.getPhases());
 		
 		writer.println(stationName + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
-				+ minRatio + " " + var + " " + cor + " " + SNratio);
+				+ minRatio + " " + var + " " + cor + " " + SNratio + " "+ epiDistance);
 		
 		dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
 		
@@ -496,7 +504,8 @@ public class DataSelection implements Operation {
 	}
 	
 	private double noisePerSecond(SACData sac, SACComponent component) {
-		double len = 50;
+		double len = 50;:q
+		
 		double distance = sac.getValue(SACHeaderEnum.GCARC);
 		double depth = sac.getValue(SACHeaderEnum.EVDP);
 		double firstArrivalTime = 0;
@@ -514,7 +523,8 @@ public class DataSelection implements Operation {
 				break;
 			case Z:
 			case R:
-				timeTool.parsePhaseList("P, Pdiff, p");
+				timeTool.parsePhaseList("S, Sdiff, s");
+//				timeTool.parsePhaseList("P, Pdiff, p");
 				timeTool.setSourceDepth(depth);
 				timeTool.calculate(distance);
 				if (timeTool.getNumArrivals() == 0)

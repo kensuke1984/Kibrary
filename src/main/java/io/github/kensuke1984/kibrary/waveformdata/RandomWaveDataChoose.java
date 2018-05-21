@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,18 +48,22 @@ public class RandomWaveDataChoose {
 		Path idPath = Paths.get(args[2]);
 		Path dataPath = Paths.get(args[3]);
 		Path gidPath = Paths.get(args[4]);
-//		Path partialIDPath = Paths.get(args[5]);
 		BasicID[] src = BasicIDFile.readBasicIDandDataFile(srcID, srcData);
-//		PartialID[] partialIDs = PartialIDFile.readPartialIDFile(partialIDPath);
 		
 		Set<Station> stationSet = new HashSet<>();
 		Set<GlobalCMTID> globalCMTIDSet = new HashSet<>();
+		List<WaveID> waveids = new ArrayList<>();
 		
 		List<String> lines = Files.readAllLines(gidPath, StandardCharsets.UTF_8);
 		Set<GlobalCMTID> globalCMTIDSetRef = new HashSet<>();
 		lines.stream().forEachOrdered(idstring -> {
-			globalCMTIDSetRef.add(new GlobalCMTID(idstring));
-		});
+            globalCMTIDSetRef.add(new GlobalCMTID(idstring.split(" ")[1]));
+            waveids.add(new WaveID(idstring.split(" ")[0], idstring.split(" ")[1]));
+//          System.out.println(new WaveID(idstring.split(" ")[0], idstring.split(" ")[3]).toString());
+    });
+//		lines.stream().forEachOrdered(idstring -> {
+//			globalCMTIDSetRef.add(new GlobalCMTID(idstring));
+//		});
 		
 		double minPeriod = 0;
 		double maxPeriod = 0;
@@ -83,19 +88,53 @@ public class RandomWaveDataChoose {
 				Stream<BasicID> idStreamSyn = Arrays.stream(src);) {
 			List<BasicID> idObsList = idStreamObs.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 					.collect(Collectors.toList());
-			Collections.shuffle(idObsList);
+//			Collections.shuffle(idObsList);
 			System.out.println("OBS list size is "+idObsList.size());
 			List<BasicID> idSynList = idStreamSyn.filter(id -> id.getWaveformType().equals(WaveformType.SYN))
 					.collect(Collectors.toList());
 			System.out.println("SYN list size is "+idSynList.size());
-			Collections.shuffle(idSynList);
+//			Collections.shuffle(idSynList);
 			
+			for (WaveID wid : waveids) {
+                  idObsList.stream().filter(id -> globalCMTIDSetRef.contains(id.getGlobalCMTID()))
+                  .filter(id -> id.getWaveformType().equals(WaveformType.OBS))
+//                  .filter(id -> (id.getSacComponent().equals(SACComponent.T)))
+                  .distinct()
+                  .filter(id -> wid.equals(new WaveID(id.getStation().toString(), id.getGlobalCMTID().toString())))
+                  //.distinct()
+                  .forEachOrdered(id -> {
+                  try {
+                          wdw.addBasicID(id);
+                  } catch (Exception e) {
+                          e.printStackTrace();
+                  }
+                  idSynList.stream()
+                          .filter(idSyn -> globalCMTIDSetRef.contains(idSyn.getGlobalCMTID()))
+                          .filter(idSyn -> idSyn.getWaveformType().equals(WaveformType.SYN))
+                          .filter(idSyn -> idSyn.getGlobalCMTID().equals(id.getGlobalCMTID()))
+                          .filter(idSyn -> idSyn.getStation().equals(id.getStation()))
+                          .filter(idSyn -> idSyn.getSacComponent().equals(id.getSacComponent()))
+                          .filter(idSyn -> idSyn.getNpts()==id.getNpts())
+                          .filter(idSyn -> id.getStartTime()<idSyn.getStartTime()+15 && id.getStartTime()>idSyn.getStartTime()-15)
+                          .distinct()
+                          .forEachOrdered(idSyn -> {
+                                  try {
+//                                        System.out.println("syn phase "+idSyn.getPhases()[0]+" "+idSyn.getPhases()[1]);
+                                          System.out.println(id + "\n" + idSyn);
+                                          wdw.addBasicID(idSyn);
+                                  } catch (IOException e1) {
+                                          // TODO 自動生成された catch ブロック
+                                          e1.printStackTrace();
+                                  }
+                          });
+                  });
+                  }
 			
+			/**
 			idObsList.stream().filter(id -> globalCMTIDSetRef.contains(id.getGlobalCMTID()))
 			.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 			.filter(id -> !(id.getSacComponent().equals(SACComponent.Z)))
-			.filter(id -> !(id.getStation().equals(new Station("MLAC", new HorizontalPosition(37.6302, -118.8361), "CI"))))
-			
+			.filter(id -> !(id.getStation().equals(new Station("MLAC", new HorizontalPosition(37.6302, -118.8361), "CI"))))		
 			.forEachOrdered(id -> {
 			try {
 				wdw.addBasicID(id);
@@ -121,7 +160,7 @@ public class RandomWaveDataChoose {
 					}
 				});
 			});
-			
+			**/
 			/**
 			IntStream.range(0, idObsList.size()).filter(e -> e % 2 == 0)
 					.mapToObj(e -> idObsList.get(e))

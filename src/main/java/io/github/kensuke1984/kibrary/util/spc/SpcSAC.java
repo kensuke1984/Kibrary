@@ -270,7 +270,7 @@ public final class SpcSAC implements Operation {
 		if (psvFileName.getMode() == SpcFileComponent.SH)
 			return null;
 		return new SpcFileName(shPath.resolve(psvFileName.getSourceID() + "/" + modelName + "/"
-				+ psvFileName.getName().replace("PSV.spc", "SH.spc")));
+				+ psvFileName.getName().replace("SH.spc", "PSV.spc")));
 	}
 
 	@Override

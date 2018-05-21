@@ -426,7 +426,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 							shift = timeCorrection ? sc.getTimeshift() : 0;
 							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
 						} catch (NoSuchElementException e) {
-							System.err.println("There is no static correction information for\\n " + window);
+							System.err.println("There is no static correction information for \\n" + window);
 							continue;
 						}
 

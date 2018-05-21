@@ -544,6 +544,13 @@ public class Partial1DDatasetMaker implements Operation {
 			}
 		}
 		
+		/**
+		 * SHとPSV両方ある場合
+		 * @param oneSPC
+		 * @param pairSPC
+		 * @param timewindowCurrentEvent
+		 * @throws IOException
+		 */
 		private void addPartialSpectrum(SpcFileName oneSPC, SpcFileName pairSPC, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 //			System.out.println(spcname.getObserverID());
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
@@ -556,6 +563,9 @@ public class Partial1DDatasetMaker implements Operation {
 			System.out.println(oneSPC+" && "+pairSPC+" used.");
 			DSMOutput primeSPC = oneSPC.read();
 			DSMOutput secondarySPC = pairSPC.read();
+			
+			check(primeSPC, secondarySPC);
+			
 			if (primeSPC.tlen() != tlen || secondarySPC.tlen() != tlen || primeSPC.np() != np || secondarySPC.np() != np) {
 				System.err.println(primeSPC + " or "+ secondarySPC + " has different np or tlen.");
 				writeLog(primeSPC+ " or "+ secondarySPC + " has different np or tlen.");
@@ -571,9 +581,9 @@ public class Partial1DDatasetMaker implements Operation {
 			if (oneSPC.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum1 = fujiConversion.convert(primeSPC);
 				qSpectrum2 = fujiConversion.convert(secondarySPC);
-//				process(qSpectrum1, qSpectrum2);
+				process(qSpectrum1, qSpectrum2);
 			}
-//			process(primeSPC, secondarySPC);
+			process(primeSPC, secondarySPC);
 
 			for (SACComponent component : components) {
 				Set<TimewindowInformation> tw = tmpTws.stream()
@@ -657,6 +667,61 @@ public class Partial1DDatasetMaker implements Operation {
 			Arrays.setAll(sampleU, j -> u[cutstart + j * step]);
 
 			return sampleU;
+		}
+		
+		/**
+		 * TODO
+		 * 
+		 * @param spc1
+		 * @param spc2
+		 * @return if spc1 and spc2 have same information
+		 */
+		private boolean check(DSMOutput spc1, DSMOutput spc2) {
+			boolean isOK = true;
+			if (spc1.nbody() != spc2.nbody()) {
+				System.err
+						.println("Numbers of bodies (nbody) are different. fp, bp: " + spc1.nbody() + " ," + spc2.nbody());
+				isOK = false;
+			}
+
+			if (!spc1.getSourceID().equals(spc2.getSourceID())) {
+				System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
+				isOK = false;
+			}
+			if (isOK) {
+				if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR()))
+					isOK = false;
+
+				if (!isOK) {
+					System.err.println("the depths are invalid(different) as below  fp : bp");
+					for (int i = 0; i < spc1.nbody(); i++)
+						System.out.println(spc1.getBodyR()[i] + " : " + spc2.getBodyR()[i]);
+				}
+			}
+			if (spc1.np() != spc2.np()) {
+				System.err.println("nps are different. fp, bp: " + spc1.np() + ", " + spc2.np());
+				isOK = false;
+			}
+
+			// double
+			// tlen
+			if (spc1.tlen() != spc2.tlen()) {
+				System.out.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
+				isOK = false;
+			}
+
+			// 場所
+			if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
+				System.out.println("locations of sources of input spcfiles are different");
+				System.out.println(spc1.getSourceLocation());
+				System.out.println(spc2.getSourceLocation());
+				isOK = false;
+			}
+			if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
+				System.out.println("locations of stations of input spcfiles are different");
+				isOK = false;
+			}
+			return isOK;
 		}
 
 		private EventFolder eventDir;
