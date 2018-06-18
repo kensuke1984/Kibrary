@@ -31,7 +31,7 @@ import java.util.function.Predicate;
  * @author Kensuke Konishi
  * @version 1.2.0.2
  */
-public class SecondHandler implements Consumer<EventFolder>, Operation {
+public class SecondHandler2 implements Consumer<EventFolder>, Operation {
     /**
      * SACのDELTA
      */
@@ -42,7 +42,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
     private Predicate<SACData> predicate;
     private String trashName;
 
-    public SecondHandler(Properties property) {
+    public SecondHandler2(Properties property) {
         this.property = (Properties) property.clone();
         set();
         String date = Utilities.getTemporaryString();
@@ -50,7 +50,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(SecondHandler.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(SecondHandler2.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan SecondHandler");
             pw.println("##Path of a working folder (.)");
@@ -71,9 +71,6 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
             pw.println("#maxEventLatitude");
             pw.println("#minEventLongitude");
             pw.println("#maxEventLongitude");
-            pw.println("#minEventDepth");
-            pw.println("#maxEventDepth");
-            
         }
         System.err.println(outPath + " is created.");
     }
@@ -83,12 +80,12 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
      * @throws Exception if any
      */
     public static void main(String[] args) throws Exception {
-        SecondHandler s = new SecondHandler(Property.parse(args));
-        System.err.println(SecondHandler.class.getName() + " is going");
+        SecondHandler2 s = new SecondHandler2(Property.parse(args));
+        System.err.println(SecondHandler2.class.getName() + " is going");
         long time = System.nanoTime();
         s.run();
         System.err.println(
-                SecondHandler.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
+                SecondHandler2.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - time));
     }
 
     /**
@@ -143,11 +140,6 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
                 Double.parseDouble(property.getProperty("minEventLongitude")) : -180;
         double maxEventLongitude = property.containsKey("maxEventLongitude") ?
                 Double.parseDouble(property.getProperty("maxEventLongitude")) : 180;
-                
-        double minEventDepth = property.containsKey("minEventDepth") ?
-                Double.parseDouble(property.getProperty("minEventDepth")) : 0;
-        double maxEventDepth = property.containsKey("maxEventDepth") ?
-                Double.parseDouble(property.getProperty("maxEventDepth")) : 700;
 
         return obsSac -> {
             // Check the value of B
@@ -180,12 +172,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 
             // Event Longitude
             double eventLongitude = obsSac.getValue(SACHeaderEnum.EVLO);
-            if (eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude) return false;
-            
-            // Event Depth
-            double eventDepth = obsSac.getValue(SACHeaderEnum.EVDP);
-            System.out.println(eventDepth);
-            return !(eventDepth < minEventDepth || maxEventDepth < eventDepth);
+            return !(eventLongitude < minEventLongitude || maxEventLongitude < eventLongitude);
         };
     }
 
