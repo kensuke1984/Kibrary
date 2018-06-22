@@ -11,8 +11,6 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
-
-import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
@@ -26,7 +24,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +32,7 @@ import java.util.stream.Collectors;
  * @author Kensuke Konishi
  * @version 2.0.3.6
  */
-public class LetMeInvert implements Operation {
+public class LetMeInvert2 implements Operation {
     /**
      * path of waveform data
      */
@@ -80,14 +77,14 @@ public class LetMeInvert implements Operation {
     private Path outPath;
     private Set<Station> stationSet;
 
-    public LetMeInvert(Properties property) throws IOException {
+    public LetMeInvert2(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
         if (!canGO()) throw new RuntimeException();
         setEquation();
     }
 
-    public LetMeInvert(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
+    public LetMeInvert2(Path workPath, Set<Station> stationSet, ObservationEquation equation) throws IOException {
         eq = equation;
         this.stationSet = stationSet;
         outPath = workPath.resolve("lmi" + Utilities.getTemporaryString());
@@ -95,7 +92,7 @@ public class LetMeInvert implements Operation {
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
-        Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
+        Path outPath = Paths.get(LetMeInvert2.class.getName() + Utilities.getTemporaryString() + ".properties");
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
             pw.println("manhattan LetMeInvert");
             pw.println("##These properties for LetMeInvert");
@@ -128,12 +125,12 @@ public class LetMeInvert implements Operation {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
-        LetMeInvert lmi = new LetMeInvert(Property.parse(args));
-        System.err.println(LetMeInvert.class.getName() + " is running.");
+        LetMeInvert2 lmi = new LetMeInvert2(Property.parse(args));
+        System.err.println(LetMeInvert2.class.getName() + " is running.");
         long startT = System.nanoTime();
         lmi.run();
         System.err.println(
-                LetMeInvert.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
+                LetMeInvert2.class.getName() + " finished in " + Utilities.toTimeString(System.nanoTime() - startT));
     }
 
     private static void writeDat(Path out, double[] dat) throws IOException {
@@ -181,18 +178,12 @@ public class LetMeInvert implements Operation {
      * @throws IOException if any
      */
     private void setEquation() throws IOException {
-    	// set weighting
-    	ToDoubleBiFunction<BasicID,
-    	BasicID> weightingFunction = (obs,syn) 
-    			-> 1 / new ArrayRealVector(obs.getData()).getLInfNorm();
-    	
         BasicID[] ids = BasicIDFile.read(waveIDPath, waveformPath);
 
         // set Dvector
         System.err.println("Creating D vector.");
-//		Dvector dVector = new Dvector(ids);
-        Dvector dVector = new Dvector(ids, id -> true, weightingFunction);
-        
+        Dvector dVector = new Dvector(ids);
+
         // set unknown parameter
         System.err.println("Setting up unknown parameter set.");
         List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
