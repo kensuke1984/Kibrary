@@ -186,14 +186,14 @@ public class LetMeInvert implements Operation {
 //    	BasicID> weightingFunction = (obs,syn) 
 //    			-> 1 / new ArrayRealVector(obs.getData()).getLInfNorm();
     	double[] weight = new double[7];
-    	weight[0] = 67.;
-    	weight[1] = 478.;
-    	weight[2] = 116.;
-    	weight[3] = 29.;
-    	weight[4] = 8.;
+    	weight[0] = 698./67.;
+    	weight[1] = 698./478.;
+    	weight[2] = 698./116.;
+    	weight[3] = 698./29.;
+    	weight[4] = 698./8.;
     	ToDoubleBiFunction<BasicID,
     	BasicID> weightingFunction = (obs,syn) 
-    			-> 1 / weight[(int)(obs.getStation().getPosition()
+    			-> 1. / weight[(int)(obs.getStation().getPosition()
     			.getEpicentralDistance(obs.getGlobalCMTID().getEvent().getCmtLocation())* 180 / Math.PI/5)];
     			
     	
