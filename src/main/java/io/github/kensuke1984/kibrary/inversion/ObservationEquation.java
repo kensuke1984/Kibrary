@@ -275,7 +275,7 @@ public class ObservationEquation {
             return;
         }
         if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
-        Files.createDirectories(AtAPath);
+        Files.createFile(AtAPath);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtAPath))) {
         	System.out.println(PARAMETER_LIST.size());
 //			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
