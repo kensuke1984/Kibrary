@@ -2,7 +2,6 @@ package io.github.kensuke1984.kibrary.util.spc;
 
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SCARDEC;
-import io.github.kensuke1984.kibrary.datacorrection.SCARDEC.SCARDEC_ID;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.util.Raypath;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -59,7 +58,8 @@ public class SACMaker implements Runnable {
         helpFormatter.printHelp("SACMaker", OPTIONS);
     }
 
-    private final static Map<SACHeaderEnum, String> initialMap = new EnumMap<>(SACHeaderEnum.class);
+    private final static Map<SACHeaderEnum, String> initialMap =
+            new EnumMap<SACHeaderEnum, String>(SACHeaderEnum.class);
 
     static {
         initialMap.put(SACHeaderEnum.DEPMIN, "-12345.0");
@@ -271,7 +271,6 @@ public class SACMaker implements Runnable {
 
         if (isOK) {
             if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR())) isOK = false;
-
             if (!isOK) {
                 System.err.println("the depths are invalid(different) as below  fp : bp");
                 for (int i = 0; i < spc1.nbody(); i++)
@@ -342,7 +341,7 @@ public class SACMaker implements Runnable {
             Predicate<SCARDEC.SCARDEC_ID> predicate =
                     id -> id.getOriginTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
                             .equals(cli.getOptionValue("scardec"));
-            SCARDEC_ID id = SCARDEC.pick(predicate);
+            SCARDEC.SCARDEC_ID id = SCARDEC.pick(predicate);
             scardec = id.toSCARDEC();
         }
         GlobalCMTID id = null;

@@ -38,7 +38,7 @@ public class SyntheticDSMInfo extends DSMheader {
     /**
      * @param structure of velocity
      * @param event     {@link GlobalCMTID}
-     * @param stations  ステーション情報
+     * @param stations  station information
      * @param outputDir name of outputDir (relative PATH)
      * @param tlen      TLEN[s]
      * @param np        NP
