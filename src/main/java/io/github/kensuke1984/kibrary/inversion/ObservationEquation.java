@@ -11,7 +11,9 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.FileAlreadyExistsException;
@@ -280,7 +282,7 @@ public class ObservationEquation {
         System.out.println("AtAPath is " + AtAPath);
         File newfile = new File(AtAPath.resolve("AtA.dat").toString());
         newfile.createNewFile();
-        try (PrintWriter pw = new PrintWriter(new newBufferedWriter(new FileWriter(newfile)))) {
+        try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(newfile)))){
         	System.out.println(PARAMETER_LIST.size());
 //			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
 //				for (int j = 0; j <= i; j++) {
