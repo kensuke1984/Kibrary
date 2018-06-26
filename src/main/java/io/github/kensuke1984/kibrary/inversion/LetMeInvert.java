@@ -227,9 +227,10 @@ public class LetMeInvert implements Operation {
             outEachTrace(outPath.resolve("trace"));
             UnknownParameterFile.write(outPath.resolve("unknownParameterOrder.inf"), eq.getparameterList());
             eq.outputA(outPath.resolve("partial"));
-            eq.outputAtA(outPath.resolve("AtA"));
+            
             return null;
         };
+        eq.outputAtA(outPath.resolve("AtA"));
         FutureTask<Void> future = new FutureTask<>(output);
 
         new Thread(future).start();
