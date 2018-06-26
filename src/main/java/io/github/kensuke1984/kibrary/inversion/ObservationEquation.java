@@ -284,11 +284,11 @@ public class ObservationEquation {
         newfile.createNewFile();
         try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(newfile)))){
         	System.out.println(PARAMETER_LIST.size());
-//			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
-//				for (int j = 0; j <= i; j++) {
-//					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
-//				}
-//			}
+			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
+				for (int j = 0; j <= i; j++) {
+					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
+				}
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
