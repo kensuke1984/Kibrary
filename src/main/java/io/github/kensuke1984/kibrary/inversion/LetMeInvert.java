@@ -231,7 +231,7 @@ public class LetMeInvert implements Operation {
             
             return null;
         };
-        eq.outputAtA(outPath.resolve("AtA"));
+//        eq.outputAtA(outPath.resolve("AtA"));
         FutureTask<Void> future = new FutureTask<>(output);
 
         new Thread(future).start();
@@ -242,7 +242,7 @@ public class LetMeInvert implements Operation {
     public void run() {
         try {
             System.err.println("The write folder: " + outPath);
-//            Files.createDirectory(outPath);
+            Files.createDirectory(outPath);
             if (property != null) writeProperties(outPath.resolve("lmi.properties"));
         } catch (Exception e) {
             e.printStackTrace();
