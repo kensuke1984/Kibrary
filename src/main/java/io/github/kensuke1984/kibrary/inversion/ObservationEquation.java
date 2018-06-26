@@ -269,17 +269,17 @@ public class ObservationEquation {
      *
      * @param outputPath {@link Path} for an write folder
      */
-    void outputAtA(Path outputPath) throws IOException {
+    void outputAtA(Path AtAPath) throws IOException {
         if (a == null) {
             System.err.println("no more A");
             return;
         }
-        if (Files.exists(outputPath)) throw new FileAlreadyExistsException(outputPath.toString());
-        Files.createDirectories(outputPath);
+        if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
+        Files.createDirectories(AtAPath);
         BasicID[] ids = DVECTOR.getSynIDs();
         IntStream.range(0, ids.length).forEach(i -> {
             BasicID id = ids[i];
-            Path eventPath = outputPath.resolve(id.getGlobalCMTID().toString());
+            Path eventPath = AtAPath.resolve(id.getGlobalCMTID().toString());
             try {
                 Files.createDirectories(eventPath);
             } catch (Exception e) {
