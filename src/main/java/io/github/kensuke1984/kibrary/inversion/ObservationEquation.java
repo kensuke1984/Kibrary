@@ -280,7 +280,7 @@ public class ObservationEquation {
         System.out.println("AtAPath is " + AtAPath);
         File newfile = new File(AtAPath.resolve("AtA.dat").toString());
         newfile.createNewFile();
-        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtAPath))) {
+        try (PrintWriter pw = new PrintWriter(new newBufferedWriter(new FileWriter(newfile)))) {
         	System.out.println(PARAMETER_LIST.size());
 //			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
 //				for (int j = 0; j <= i; j++) {
