@@ -276,31 +276,15 @@ public class ObservationEquation {
         }
         if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
         Files.createDirectories(AtAPath);
-        BasicID[] ids = DVECTOR.getSynIDs();
-        IntStream.range(0, ids.length).forEach(i -> {
-            BasicID id = ids[i];
-            Path eventPath = AtAPath.resolve(id.getGlobalCMTID().toString());
-            try {
-                Files.createDirectories(eventPath);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            int start = DVECTOR.getStartPoints(i);
-            double synStartTime = id.getStartTime();
-            Path outPath = eventPath.resolve(
-                    id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
-            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
-            	for (int k = 0; k < PARAMETER_LIST.size(); k++) {
-    				for (int j = 0; j <= i; j++) {
-    					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
-    				}
-    			}
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
-
-        });
-
+        try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtAPath))) {
+			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
+				for (int j = 0; j <= i; j++) {
+					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 
 
