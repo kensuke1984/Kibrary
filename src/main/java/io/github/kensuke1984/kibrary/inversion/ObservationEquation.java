@@ -263,6 +263,46 @@ public class ObservationEquation {
         });
 
     }
+    
+    /**
+     * AtAを書く それぞれのpartialごとに分けて出す debug用？
+     *
+     * @param outputPath {@link Path} for an write folder
+     */
+    void outputAtA(Path outputPath) throws IOException {
+        if (a == null) {
+            System.err.println("no more A");
+            return;
+        }
+        if (Files.exists(outputPath)) throw new FileAlreadyExistsException(outputPath.toString());
+        Files.createDirectories(outputPath);
+        BasicID[] ids = DVECTOR.getSynIDs();
+        IntStream.range(0, ids.length).forEach(i -> {
+            BasicID id = ids[i];
+            Path eventPath = outputPath.resolve(id.getGlobalCMTID().toString());
+            try {
+                Files.createDirectories(eventPath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            int start = DVECTOR.getStartPoints(i);
+            double synStartTime = id.getStartTime();
+            Path outPath = eventPath.resolve(
+                    id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent() + "." + i + ".txt");
+            try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath))) {
+            	for (int k = 0; k < PARAMETER_LIST.size(); k++) {
+    				for (int j = 0; j <= i; j++) {
+    					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
+    				}
+    			}
+            } catch (Exception e2) {
+                e2.printStackTrace();
+            }
+
+        });
+
+    }
+
 
     /**
      * 与えたベクトルdに対して A<sup>T</sup>dを計算する

@@ -185,16 +185,16 @@ public class LetMeInvert implements Operation {
 //    	ToDoubleBiFunction<BasicID,
 //    	BasicID> weightingFunction = (obs,syn) 
 //    			-> 1 / new ArrayRealVector(obs.getData()).getLInfNorm();
-    	double[] weight = new double[7];
-    	weight[0] = 67.;
-    	weight[1] = 478.;
-    	weight[2] = 116.;
-    	weight[3] = 29.;
-    	weight[4] = 8.;
+//    	double[] weight = new double[7];
+//    	weight[0] = 67.;
+//    	weight[1] = 478.;
+//    	weight[2] = 116.;
+//    	weight[3] = 29.;
+//    	weight[4] = 8.;
     	ToDoubleBiFunction<BasicID,
     	BasicID> weightingFunction = (obs,syn) 
-    			-> 1. / weight[(int)(obs.getStation().getPosition()
-    			.getEpicentralDistance(obs.getGlobalCMTID().getEvent().getCmtLocation())* 180 / Math.PI/5)];
+    			-> 1. ;/// weight[(int)(obs.getStation().getPosition()
+//   			.getEpicentralDistance(obs.getGlobalCMTID().getEvent().getCmtLocation())* 180 / Math.PI/5)];
     			
     	
         BasicID[] ids = BasicIDFile.read(waveIDPath, waveformPath);
@@ -227,6 +227,7 @@ public class LetMeInvert implements Operation {
             outEachTrace(outPath.resolve("trace"));
             UnknownParameterFile.write(outPath.resolve("unknownParameterOrder.inf"), eq.getparameterList());
             eq.outputA(outPath.resolve("partial"));
+            eq.outputAtA(outPath.resolve("AtA"));
             return null;
         };
         FutureTask<Void> future = new FutureTask<>(output);
