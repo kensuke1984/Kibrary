@@ -275,9 +275,10 @@ public class ObservationEquation {
             System.err.println("no more A");
             return;
         }
-//        if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
+        if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
+        Files.createDirectories(AtAPath);
         System.out.println("AtAPath is " + AtAPath);
-        File newfile = new File(AtAPath.toString());
+        File newfile = new File(AtAPath.resolve("AtA.dat").toString());
         newfile.createNewFile();
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtAPath))) {
         	System.out.println(PARAMETER_LIST.size());
