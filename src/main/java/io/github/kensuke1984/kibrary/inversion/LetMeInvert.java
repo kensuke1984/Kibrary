@@ -242,7 +242,7 @@ public class LetMeInvert implements Operation {
     public void run() {
         try {
             System.err.println("The write folder: " + outPath);
-            Files.createDirectory(outPath);
+//            Files.createDirectory(outPath);
             if (property != null) writeProperties(outPath.resolve("lmi.properties"));
         } catch (Exception e) {
             e.printStackTrace();
