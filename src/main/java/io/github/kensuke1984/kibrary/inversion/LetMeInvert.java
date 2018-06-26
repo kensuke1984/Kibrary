@@ -211,7 +211,7 @@ public class LetMeInvert implements Operation {
         // set partial matrix
         PartialID[] partialIDs = PartialIDFile.read(partialIDPath, partialPath);
         eq = new ObservationEquation(partialIDs, parameterList, dVector);
-        eq.outputAtA(outPath.resolve("AtA"));
+//        eq.outputAtA(outPath.resolve("AtA"));
     }
 
     /**
@@ -231,7 +231,7 @@ public class LetMeInvert implements Operation {
             
             return null;
         };
-//        eq.outputAtA(outPath.resolve("AtA"));
+        eq.outputAtA(outPath.resolve("AtA"));
         FutureTask<Void> future = new FutureTask<>(output);
 
         new Thread(future).start();
