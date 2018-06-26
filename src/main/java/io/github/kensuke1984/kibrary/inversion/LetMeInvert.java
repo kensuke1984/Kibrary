@@ -201,8 +201,8 @@ public class LetMeInvert implements Operation {
 
         // set Dvector
         System.err.println("Creating D vector.");
-//		Dvector dVector = new Dvector(ids);
-        Dvector dVector = new Dvector(ids, id -> true, weightingFunction);
+		Dvector dVector = new Dvector(ids);
+//        Dvector dVector = new Dvector(ids, id -> true, weightingFunction);
         
         // set unknown parameter
         System.err.println("Setting up unknown parameter set.");
@@ -242,7 +242,7 @@ public class LetMeInvert implements Operation {
     public void run() {
         try {
             System.err.println("The write folder: " + outPath);
-            Files.createDirectory(outPath);
+ //           Files.createDirectory(outPath);
             if (property != null) writeProperties(outPath.resolve("lmi.properties"));
         } catch (Exception e) {
             e.printStackTrace();
