@@ -186,11 +186,11 @@ public class LetMeInvert2 implements Operation {
 //    	BasicID> weightingFunction = (obs,syn) 
 //    			-> 1 / new ArrayRealVector(obs.getData()).getLInfNorm();
     	double[] weight = new double[7];
-    	weight[0] = 67.;
-    	weight[1] = 478.;
-    	weight[2] = 116.;
-    	weight[3] = 29.;
-    	weight[4] = 8.;
+    	weight[0] = 55.;
+    	weight[1] = 627.;
+    	weight[2] = 620.;
+    	weight[3] = 391.;
+    	weight[4] = 54.;
     	ToDoubleBiFunction<BasicID,
     	BasicID> weightingFunction = (obs,syn) 
     			-> 1. / (new ArrayRealVector(obs.getData()).getLInfNorm()*
