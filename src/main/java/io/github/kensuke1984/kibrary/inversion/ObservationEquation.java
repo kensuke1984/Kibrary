@@ -274,14 +274,15 @@ public class ObservationEquation {
             System.err.println("no more A");
             return;
         }
-//        if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
-//        Files.createDirectories(AtAPath);
+        if (Files.exists(AtAPath)) throw new FileAlreadyExistsException(AtAPath.toString());
+        Files.createDirectories(AtAPath);
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(AtAPath))) {
-			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
-				for (int j = 0; j <= i; j++) {
-					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
-				}
-			}
+        	System.out.println(PARAMETER_LIST.size());
+//			for (int i = 0; i < PARAMETER_LIST.size(); i++) {
+//				for (int j = 0; j <= i; j++) {
+//					pw.println(PARAMETER_LIST.get(i) + " " + PARAMETER_LIST.get(j) + " " + ata.getEntry(i, j));
+//				}
+//			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
