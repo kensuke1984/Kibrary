@@ -261,7 +261,6 @@ public class InformationFileMaker implements Operation {
 		for (EventFolder ed : eventDirs) {
 			GlobalCMTData ev = ed.getGlobalCMTID().getEvent();
 			FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-			System.out.println("In InformationFileMaker structure " + ps);
 			Path infPath = fpPath.resolve(ev.toString());
 			Files.createDirectories(infPath.resolve(header));
 			fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
