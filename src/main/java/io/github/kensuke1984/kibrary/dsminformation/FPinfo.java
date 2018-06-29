@@ -60,6 +60,7 @@ public class FPinfo extends DSMheader {
             String[] header = outputDSMHeader();
             Arrays.stream(header).forEach(pw::println);
 
+            System.out.println(STRUCTURE);
             // structure
             String[] structurePart = STRUCTURE.toSHlines();
             Arrays.stream(structurePart).forEach(pw::println);
