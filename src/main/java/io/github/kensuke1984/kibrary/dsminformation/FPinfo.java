@@ -61,6 +61,8 @@ public class FPinfo extends DSMheader {
             Arrays.stream(header).forEach(pw::println);
 
             System.out.println("structure is " + STRUCTURE);
+            System.out.println("event is " + EVENT);
+            
             // structure
             String[] structurePart = STRUCTURE.toSHlines();
             Arrays.stream(structurePart).forEach(pw::println);
