@@ -128,7 +128,7 @@ public class InformationFileMaker implements Operation {
 			Path psPath = getPath("structureFile");
 //			ps = psPath == null ? PolynomialStructure.PREM : new PolynomialStructure(psPath);
 			// Lina changed		
-			PolynomialStructure ps = PolynomialStructure.PREM;	
+			ps = PolynomialStructure.PREM;	
 			System.out.println("model name is "+ psPath + "!");
 			if(psPath.equals(Paths.get("AK135"))) {
 				System.out.println("get!!");
