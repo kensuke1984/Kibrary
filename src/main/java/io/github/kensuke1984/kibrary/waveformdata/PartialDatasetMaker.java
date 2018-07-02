@@ -500,6 +500,7 @@ public class PartialDatasetMaker implements Operation {
         boolean fpExistence = idSet.stream().allMatch(id -> Files.exists(fpPath.resolve(id.toString())));
         boolean bpExistence = stationSet.stream().allMatch(station -> Files.exists(bpPath.resolve("0000" + station)));
         System.out.println("fpPath is " + fpPath + "   existance is " + fpExistence);
+        System.out.println("idSet " + idSet.size());
         System.out.println("bpPath is " + bpPath + "   existance is " + fpExistence);
         if (!fpExistence || !bpExistence)
             throw new RuntimeException("propagation spectors are not enough for " + timewindowPath);
