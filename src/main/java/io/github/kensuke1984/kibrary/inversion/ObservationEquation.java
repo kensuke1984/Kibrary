@@ -148,7 +148,9 @@ public class ObservationEquation {
         });
 //		System.out.println(count.get()+" "+ DVECTOR.getNTimeWindow() * PARAMETER_LIST.size()+" "+PARAMETER_LIST.size());
         if (count.get() != DVECTOR.getNTimeWindow() * PARAMETER_LIST.size())
-            throw new RuntimeException("Input partials are not enough.");
+            throw new RuntimeException(
+            		"countget " + count.get() + " dvector " + DVECTOR.getNTimeWindow() + " parameterlist " + PARAMETER_LIST.size() 
+            		+ "Input partials are not enough.");
         System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
