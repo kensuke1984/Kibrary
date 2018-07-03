@@ -315,7 +315,7 @@ public class BandPassFilter extends ButterworthFilter {
 
     @Override
     public Complex[] applyFilter(Complex[] data) {
-    	System.out.println(data.length);
+    	System.out.println("Datalength is " + data.length);
         Complex[] y = new Complex[data.length];
         System.arraycopy(data, 0, y, 0, data.length);
         // Complex[] x = data;
