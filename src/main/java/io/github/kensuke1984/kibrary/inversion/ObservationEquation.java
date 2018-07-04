@@ -3,7 +3,9 @@ package io.github.kensuke1984.kibrary.inversion;
 import io.github.kensuke1984.kibrary.inversion.montecarlo.DataGenerator;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -23,8 +25,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * A&delta;m=&delta;d
@@ -147,10 +152,26 @@ public class ObservationEquation {
             count.incrementAndGet();
         });
 //		System.out.println(count.get()+" "+ DVECTOR.getNTimeWindow() * PARAMETER_LIST.size()+" "+PARAMETER_LIST.size());
-        if (count.get() != DVECTOR.getNTimeWindow() * PARAMETER_LIST.size())
-            throw new RuntimeException(
-            		"countget " + count.get() + " dvector " + DVECTOR.getNTimeWindow() + " parameterlist " + PARAMETER_LIST.size() 
-            		+ "Input partials are not enough.");
+        
+        if ( count.get() != DVECTOR.getNTimeWindow() * PARAMETER_LIST.size() ) {
+			System.out.println("Printing BasicIDs that are not in the partialID set...");
+			Set<id_station> idStationSet 
+				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getStation()))
+					.distinct().collect(Collectors.toSet());
+			Stream.of(DVECTOR.getObsIDs()).forEach(id -> {
+				id_station idStation = new id_station(id.getGlobalCMTID(), id.getStation());
+				if (!idStationSet.contains(idStation)) {
+					System.out.println(id);
+				}
+			});
+			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " != " +
+					DVECTOR.getNTimeWindow() + " * (" + PARAMETER_LIST.size() + ")");  
+		}
+        
+//        if (count.get() != DVECTOR.getNTimeWindow() * PARAMETER_LIST.size())
+//            throw new RuntimeException(
+//            		"countget " + count.get() + " dvector " + DVECTOR.getNTimeWindow() + " parameterlist " + PARAMETER_LIST.size() 
+//            		+ "Input partials are not enough.");
         System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
@@ -349,4 +370,39 @@ public class ObservationEquation {
         return VARIANCE_GENERATOR;
     }
 
+    private class id_station {
+		private GlobalCMTID id;
+		private Station station;
+		
+		public id_station(GlobalCMTID id, Station station) {
+			this.id = id;
+			this.station = station;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			   if (obj == null) {
+			        return false;
+			    }
+			    if (!id_station.class.isAssignableFrom(obj.getClass())) {
+			        return false;
+			    }
+			    final id_station other = (id_station) obj;
+			    if ((this.id == null) ? (other.id != null) : !this.id.equals(other.id)) {
+			        return false;
+			    }
+			    if ((this.station == null) ? (other.station != null) : !this.station.equals(other.station)) {
+			        return false;
+			    }
+			    return true;
+		}
+		
+		@Override
+		public int hashCode() {
+		    int hash = 3;
+		    hash = 53 * hash + (this.id != null ? this.id.hashCode() : 0);
+		    hash = 53 * hash + (this.station != null ? this.station.hashCode() : 0);
+		    return hash;
+		}
+	}
 }
