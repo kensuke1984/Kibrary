@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -78,7 +79,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 	private Path workPath;
 	private Properties property;
-
+	
+	boolean correctionBootstrap;
+	private int nSample;
+	
 	/**
 	 * components to be included in the dataset
 	 */
@@ -91,11 +95,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+			property.setProperty("workPath", ".");
 		if (!property.containsKey("obsPath"))
-			property.setProperty("obsPath", "");
+			property.setProperty("obsPath", ".");
 		if (!property.containsKey("synPath"))
-			property.setProperty("synPath", "");
+			property.setProperty("synPath", ".");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("convolute"))
@@ -110,6 +114,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			property.setProperty("sacSamplingHz", "20");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
+		if (!property.containsKey("correctionBootstrap"))
+			property.setProperty("correctionBootstrap", "false");
+		if (!property.containsKey("nSample"))
+			property.setProperty("nSample", "100");
 	}
 
 	private void set() throws NoSuchFileException {
@@ -139,7 +147,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
 		sacSamplingHz = 20;
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+		
+		correctionBootstrap = Boolean.parseBoolean(property.getProperty("correctionBootstrap"));
+		nSample = correctionBootstrap ? Integer.parseInt(property.getProperty("nSample")) : 1;
 	}
+	
+	private Random random;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
@@ -160,6 +173,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("#timeCorrection");
 			pw.println("##boolean amplitudeCorrection (false)");
 			pw.println("#amplitudeCorrection");
+			pw.println("#correctionBootstrap false");
+			pw.println("#nSample 100");
 			pw.println("##Path of a timewindow information file, must be defined");
 			pw.println("#timewindowPath timewindow.dat");
 			pw.println("##Path of a static correction file, ");
@@ -295,24 +310,37 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
 		readPeriodRanges();
-
-		int n = Runtime.getRuntime().availableProcessors();
-		ExecutorService execs = Executors.newFixedThreadPool(n);
-		String dateStr = Utilities.getTemporaryString();
-		Path waveIDPath = workPath.resolve("waveformID" + dateStr + ".dat");
-		Path waveformPath = workPath.resolve("waveform" + dateStr + ".dat");
-		try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
-				periodRanges, phases)) {
-			dataWriter = bdw;
-			for (EventFolder eventDir : eventDirs)
-				execs.execute(new Worker(eventDir));
-
-			execs.shutdown();
-			while (!execs.isTerminated())
-				Thread.sleep(1000);
-			System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
-		} catch (Exception e) {
-			e.printStackTrace();
+		
+		for (int isample = 0; isample < nSample; isample++) {
+			if (correctionBootstrap)
+				System.err.println("Random sample " + isample);
+			random = new Random(); // initialize random generator with a new seed for each set of waveforms
+			int n = Runtime.getRuntime().availableProcessors();
+			ExecutorService execs = Executors.newFixedThreadPool(n);
+			String dateStr = Utilities.getTemporaryString();
+			Path waveIDPath = null;
+			Path waveformPath = null;
+			if (!correctionBootstrap) {
+				waveIDPath = workPath.resolve("waveformID" + dateStr + ".dat");
+				waveformPath = workPath.resolve("waveform" + dateStr + ".dat");
+			}
+			else {
+				waveIDPath = workPath.resolve("waveformID" + String.format("_RND%04d", isample) + ".dat");
+				waveformPath = workPath.resolve("waveform" + String.format("_RND%04d", isample) + ".dat");
+			}
+			try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
+					periodRanges, phases)) {
+				dataWriter = bdw;
+				for (EventFolder eventDir : eventDirs)
+					execs.execute(new Worker(eventDir));
+	
+				execs.shutdown();
+				while (!execs.isTerminated())
+					Thread.sleep(1000);
+				System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -425,6 +453,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 							StaticCorrection sc = getStaticCorrection(window);
 							shift = timeCorrection ? sc.getTimeshift() : 0;
 							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
+							
+							if (correctionBootstrap) {
+								double tmp = 2 * random.nextGaussian(); 
+								shift += tmp;
+								System.out.println(tmp + " " + shift);
+							}
 						} catch (NoSuchElementException e) {
 							System.err.println("There is no static correction information for\\n " + window);
 							continue;

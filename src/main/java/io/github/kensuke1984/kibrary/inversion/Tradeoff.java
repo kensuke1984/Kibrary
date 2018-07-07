@@ -65,9 +65,9 @@ public class Tradeoff {
 			Collections.reverse(perturbationRs);
 			
 			List<UnknownParameter> orderedParameterList = new ArrayList<>();
-			perturbationRs.stream().forEach(pR -> {
+			perturbationRs.stream().forEachOrdered(pR -> {
 				parameterList.stream().filter(p -> p.getLocation().getR() == pR)
-					.forEach(p -> orderedParameterList.add(p));
+					.forEachOrdered(p -> orderedParameterList.add(p));
 			});
 			
 //			System.out.println("DEBUG0: " + orderedParameterList.size() + " " + parameterList.size());
@@ -75,19 +75,29 @@ public class Tradeoff {
 			//for test on a small dataset
 			GlobalCMTID oneID = Stream.of(waveforms)
 					.map(id -> id.getGlobalCMTID()).collect(Collectors.toList()).get(0);
-			BasicID[] oneIDwaveforms = Stream.of(waveforms).filter(id -> id.getGlobalCMTID().equals(oneID))
-				.collect(Collectors.toList()).toArray(new BasicID[0]);
-			Dvector dVector = new Dvector(oneIDwaveforms);
+//			System.out.println(oneID);
+//			BasicID[] oneIDwaveforms = Stream.of(waveforms).filter(id -> id.getGlobalCMTID().equals(oneID))
+//				.collect(Collectors.toList()).toArray(new BasicID[0]);
+//			Dvector dVector = new Dvector(oneIDwaveforms);
 			
+			//using one record
+//			BasicID[] oneWaveform = new BasicID[] {waveforms[0], waveforms[1]};
+//			System.out.println("Using one record: " + oneWaveform[0].getGlobalCMTID() + " " + oneWaveform[0].getStation());
+//			Dvector dVector = new Dvector(oneWaveform);
+			
+			//using the whole dataset
 //			Dvector dVector = new Dvector(waveforms);
-			ObservationEquation eq = new ObservationEquation(partials
-					, orderedParameterList, dVector, false, false, null, null, null);
 			
-			Tradeoff trade = new Tradeoff(eq.getAtA(), orderedParameterList);
+			Dvector dVector = new Dvector(waveforms, id -> true, WeightingType.RECIPROCAL);
+			System.out.println("Using the whole dataset, #waveforms = " + dVector.getNTimeWindow());
+			ObservationEquation eq = new ObservationEquation(partials
+					, orderedParameterList, dVector, false, false, null, null, null, null);
+			
+			Tradeoff trade = new Tradeoff(eq.getAtA(), eq.getParameterList());
 			
 //			System.out.println("DEBUG1: " + eq.getParameterList().size());
 			
-			double layer1R = 6138;
+			double layer1R = 6321.0;
 			double minDeltaR = Double.MAX_VALUE;
 			double tmpLayerR = 0.;
 			for (Double perturbationR : perturbationRs) {
@@ -113,7 +123,7 @@ public class Tradeoff {
 				for (int j = 0; j < correlations[0].length; j++) {
 					writer.write(unknownGrid[1][j].getLocation().toString() + " ");
 					for (int i = 0; i < correlations.length; i++) {
-						writer.write(String.valueOf(correlations[i][j]) + " ");
+						writer.write(String.format("%.8f", correlations[i][j]) + " ");
 					}
 					writer.write("\n");
 				}

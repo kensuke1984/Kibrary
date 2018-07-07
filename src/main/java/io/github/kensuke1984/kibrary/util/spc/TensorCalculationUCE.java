@@ -212,6 +212,19 @@ class TensorCalculationUCE {
 		Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
 		return c;
 	}
+	
+	/**
+	 * uとEtaの計算をする（積） cross correlation
+	 * 
+	 * @param u
+	 * @param eta
+	 * @return c[i] = u[i]* eta[i]
+	 */
+	private Complex[] calcCrossCorrelation2(Complex[] u, Complex[] eta) {
+		Complex[] c = new Complex[np + 1];
+		Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
+		return c;
+	}
 
 	/**
 	 * 

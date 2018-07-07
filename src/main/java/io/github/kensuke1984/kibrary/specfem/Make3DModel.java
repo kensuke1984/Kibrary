@@ -1,6 +1,9 @@
 package io.github.kensuke1984.kibrary.specfem;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
+import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 
 import java.io.FileWriter;
@@ -10,6 +13,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -23,10 +28,28 @@ import java.util.List;
  */
 public class Make3DModel {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 //		List<PerturbationPoint> oneLayerModel = onePerturbationLayer(3480., 3630., 2.);
-		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_100km(1.);
-		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_100km_1per.inf");
+//		List<PerturbationPoint> checkerboard = checkerboardDppCACAR_100km(1.);
+//		Path outpath = Paths.get("/Users/Anselme/checkerboard_5_100km_1per.inf");
+		
+//		double[] depths = new double[] {330, 410, 535, 660, 820};
+//		double dD = 5.;
+//		double nD = 0;
+//		for (int i = 0; i < depths.length-1; i++) {
+//			nD += (int) ((depths[i+1] - depths[i]) / dD);
+//			System.out.println(depths[i+1] - depths[i]);
+//		}
+//		System.out.println(nD);
+//		System.exit(0);
+		
+		List<UnknownParameter> unknowns = UnknownParameterFile.read(Paths.get(args[0]));
+//		List<PerturbationPoint> checkerboard = checkerboardCATZ_4deg_4layers(2., unknowns);
+//		Path outpath = Paths.get("checkerboard_4x4_4layers_2per.inf");
+		
+		List<PerturbationPoint> checkerboard = checkerboardCATZ_6deg_4layers(3., unknowns);
+		Path outpath = Paths.get("checkerboard_6x6_4layers_3per.inf");
+		
 		try {
 			writeModel(checkerboard, outpath);
 		} catch (IOException e) {
@@ -134,6 +157,145 @@ public class Make3DModel {
 			if (k < 3)
 				layerSign *= -1;
 		}
+		return perturbations;
+	}
+	
+	public static List<PerturbationPoint> checkerboardCATZ_4deg_4layers(double dvs, List<UnknownParameter> unknowns) {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		
+		double[] depths = new double[] {330, 410, 535, 660, 820};
+		
+		double dD = 5.;
+		int nD = 0;
+		for (int i = 0; i < depths.length-1; i++) {
+			nD += (int) ((depths[i+1] - depths[i]) / dD);
+		}
+		
+		double minLat = 1e3;
+		double maxLat = -1e3;
+		double minLon = 1e3;
+		double maxLon = -1e3;
+		for (HorizontalPosition loci : positions) {
+			if (loci.getLatitude() < minLat)
+				minLat = loci.getLatitude();
+			if (loci.getLongitude() < minLon)
+				minLon = loci.getLongitude();
+			if (loci.getLatitude() > maxLat)
+				maxLat = loci.getLatitude();
+			if (loci.getLongitude() > maxLon)
+				maxLon = loci.getLongitude();
+		}
+		
+		minLat -= 2;
+		maxLat += 2;
+		minLon -= 2;
+		maxLon += 2;
+		
+		int nlat = (int) (Math.abs(maxLat - minLat) / 4);
+		int nlon = (int) (Math.abs(maxLon - minLon) / 4);
+		
+		double layerSign = 1;
+		int iDepth = 0;
+		for (int k = 0; k <= nD;k++) {
+			double depth = depths[0] + k  * dD;
+			if (depth == depths[iDepth + 1]) {
+				iDepth++;
+				if (iDepth < 4)
+					layerSign *= -1;
+			}
+			
+			double r = 6371. - depth;
+			double lonSign = 1;
+			for (int i = 0; i <= nlon; i++) {
+				double lon = minLon + 4 * i;
+				double latSign = 1;
+				for (int j = 0; j <= nlat; j++) {
+					double lat = minLat + 4 * j;
+					
+					Location location = new Location(lat, lon, r);
+					PerturbationPoint perturbation = new PerturbationPoint(location
+							, layerSign * lonSign * latSign * dvs);
+					perturbations.add(perturbation);
+					latSign *= -1;
+				}
+				lonSign *= -1;
+			}
+			
+			System.out.println(depth + " " + depths[iDepth] + " " + layerSign);
+		}
+		
+		return perturbations;
+	}
+	
+	public static List<PerturbationPoint> checkerboardCATZ_6deg_4layers(double dvs, List<UnknownParameter> unknowns) {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		List<HorizontalPosition> positions = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition()).distinct().collect(Collectors.toList());
+		
+		double[] depths = new double[] {330, 410, 535, 660, 820};
+		
+		double dD = 5.;
+		int nD = 0;
+		for (int i = 0; i < depths.length-1; i++) {
+			nD += (int) ((depths[i+1] - depths[i]) / dD);
+		}
+		
+		double minLat = 1e3;
+		double maxLat = -1e3;
+		double minLon = 1e3;
+		double maxLon = -1e3;
+		for (HorizontalPosition loci : positions) {
+			if (loci.getLatitude() < minLat)
+				minLat = loci.getLatitude();
+			if (loci.getLongitude() < minLon)
+				minLon = loci.getLongitude();
+			if (loci.getLatitude() > maxLat)
+				maxLat = loci.getLatitude();
+			if (loci.getLongitude() > maxLon)
+				maxLon = loci.getLongitude();
+		}
+		
+		// recentering voxels
+		minLat -= 3;
+		maxLat += 3;
+		minLon -= 3;
+		maxLon += 3;
+		
+		int nlat = (int) (Math.abs(maxLat - minLat) / 6);
+		int nlon = (int) (Math.abs(maxLon - minLon) / 6);
+		
+		double layerSign = 1;
+		int iDepth = 0;
+		for (int k = 0; k <= nD;k++) {
+			double depth = depths[0] + k  * dD;
+			if (depth == depths[iDepth + 1]) {
+				iDepth++;
+				if (iDepth < 4)
+					layerSign *= -1;
+			}
+			
+			double r = 6371. - depth;
+			double lonSign = 1;
+			for (int i = 0; i <= nlon; i++) {
+				double lon = minLon + 6 * i;
+				double latSign = 1;
+				for (int j = 0; j <= nlat; j++) {
+					double lat = minLat + 6 * j;
+					
+					Location location = new Location(lat, lon, r);
+					PerturbationPoint perturbation = new PerturbationPoint(location
+							, layerSign * lonSign * latSign * dvs);
+					perturbations.add(perturbation);
+					latSign *= -1;
+				}
+				lonSign *= -1;
+			}
+			
+			System.out.println(depth + " " + depths[iDepth] + " " + layerSign);
+		}
+		
 		return perturbations;
 	}
 		

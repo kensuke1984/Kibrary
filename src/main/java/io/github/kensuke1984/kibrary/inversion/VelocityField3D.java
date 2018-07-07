@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
@@ -129,6 +130,12 @@ public class VelocityField3D {
 				throw new RuntimeException("Error: no such file " + polynomialStructurePath.toString());
 			structure = new PolynomialStructure(polynomialStructurePath);
 			break;
+		case "mak135":
+			polynomialStructurePath = Paths.get("/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/POLYNOMIALS/mak135.poly");
+			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
+				throw new RuntimeException("Error: no such file " + polynomialStructurePath.toString());
+			structure = new PolynomialStructure(polynomialStructurePath);
+			break;
 		default:
 			break;
 		}
@@ -148,10 +155,12 @@ public class VelocityField3D {
 				layerMap.put(r, d);
 			});
 		
-		InversionResult ir = new InversionResult(inversionResultPath);
+		InversionResult ir = new InversionResult(inversionResultPath, true);
 		List<UnknownParameter> unknowns = ir.getUnknownParameterList();
 		List<UnknownParameter> originalUnknowns = ir.getOriginalUnknownParameterList();
 		TriangleRadialSpline trs = null;
+		List<HorizontalPosition> horizontalPoints = unknowns.stream().map(p -> p.getLocation().toHorizontalPosition())
+				.distinct().collect(Collectors.toList());
 		if (partialCombination.equals("trs")) {
 			Map<PartialType, Integer[]> nNewParameter = trs.parseNParameters(unknowns);
 			trs = new TriangleRadialSpline(nNewParameter, originalUnknowns);
@@ -163,41 +172,53 @@ public class VelocityField3D {
 				
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
 					pw.println("# perturbationR Vsh");
-					for (int j = 0; j <= 1000; j++) {
-						double r = 3480. + (Earth.EARTH_RADIUS - 3480.) / 1000. * j;
+					for (int j = 0; j <= 10000; j++) {
+						double r = 3480. + (Earth.EARTH_RADIUS - 3480.) / 10000. * j;
 						pw.println(r + " " + structure.getVshAt(r));
 					}
 				}
 				int n = unknowns.size();
+//				n = 15;
 				for (int i = 1; i <= n; i++) {
 					outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
 					Path outpathForCrosssection = inversionResultPath.resolve(inverse.simple() + "/" + "forCrosssection" + inverse.simple() + i + ".txt");
 					Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");
 					Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
+					Map<Location, Double> locAnswerMap = new HashMap<>();
+					answerMap.forEach((m, v) -> locAnswerMap.put(m.getLocation(), v));
 					Map<UnknownParameter, Double> zeroMap = new HashMap<>();
 					answerMap.forEach((m, v) -> zeroMap.put(m, 0.));
 					Map<UnknownParameter, Double> velocities = null;
 					Map<UnknownParameter, Double> zeroVelocities = null;
 					Map<UnknownParameter, Double> perturbations = null;
+					Map<UnknownParameter, Double> perturbations_toAK135 = null;
 					Map<Location, Double> extendedPerturbationMap = null;
 					Map<Location, Double> zeroMeanPerturbationMap = null;
 					Map<Location, Double> extendedZeroMeanPerturbationMap = null;
 					Map<Location, Double> perturbationMap = new HashMap<>();
+					Map<Location, Double> perturbationMap_toAK135 = new HashMap<>();
+					Map<Location, Double> extendedPerturbationMap_toAK135 = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					double[][] profile1D = null;
+					Set<Double> rs = layerMap.keySet();
+					double[] perturbationRs = new double[rs.size()];
 					if (trs == null) {
 						perturbations = toPerturbation(answerMap, layerMap, unknowns, structure, 1.);
-						Set<Double> rs = layerMap.keySet();
-						double[] perturbationRs = new double[rs.size()];
+						perturbations_toAK135 = toPerturbation(answerMap, layerMap, unknowns, structure, PolynomialStructure.AK135, 1);
+//						Set<Double> rs = layerMap.keySet();
+//						double[] perturbationRs = new double[rs.size()];
 						int count = 0;
 						for (double r : rs)
 							perturbationRs[count++] = r;
 						for (UnknownParameter unknown : perturbations.keySet())
 							perturbationMap.put(unknown.getLocation(), perturbations.get(unknown));
+						for (UnknownParameter unknown : perturbations_toAK135.keySet())
+							perturbationMap_toAK135.put(unknown.getLocation(), perturbations_toAK135.get(unknown));
 						zeroMeanPerturbationMap = zeroMeanMap(perturbationMap, perturbationRs);
 						extendedPerturbationMap = extendedPerturbationMap(perturbationMap, 2., perturbationRs);
+						extendedPerturbationMap_toAK135 = extendedPerturbationMap(perturbationMap_toAK135, 2., perturbationRs);
 						extendedZeroMeanPerturbationMap = extendedPerturbationMap(zeroMeanPerturbationMap, 2., perturbationRs);
 						zeroVelocities = toVelocity(zeroMap, layerMap, unknowns, structure, 1.);
 						if (partialTypes.contains(PartialType.PARQ)) {
@@ -229,12 +250,14 @@ public class VelocityField3D {
 							for (Location loc : extendedPerturbationMap.keySet()) {
 								double perturbation = extendedPerturbationMap.get(loc);
 								double zeroMeanPerturbation = extendedZeroMeanPerturbationMap.get(loc);
-								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);
+								double perturbation_toAK135 = extendedPerturbationMap_toAK135.get(loc);
+								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation + " " + perturbation_toAK135);
 							}
 							for (Location loc : perturbationMap.keySet()) {
 								double perturbation = perturbationMap.get(loc);
 								double zeroMeanPerturbation = zeroMeanPerturbationMap.get(loc);
-								pw.println(loc + " " + perturbation + " " + zeroMeanPerturbation);
+								double perturbation_toAK135 = extendedPerturbationMap_toAK135.get(loc);
+								pwCS.println(loc + " " + perturbation + " " + zeroMeanPerturbation + " " + perturbation_toAK135);
 							}
 							if (partialTypes.contains(PartialType.PARQ)) {
 								for (int j = 0; j < Qs.length; j++) {
@@ -250,6 +273,33 @@ public class VelocityField3D {
 								pw2.println(profile1D[j][0] + " " + (6371.- profile1D[j][0]) + " " + profile1D[j][1]);
 							}
 							pw2.close();
+							
+							//local 1D profile at each horizontal point
+							if (i == 7) {
+								for (HorizontalPosition p : horizontalPoints) {
+									Path outpath3 = inversionResultPath.resolve(inverse.simple() + "/" + "local1D_" + p.getLatitude() + "_" + p.getLongitude()
+											+ "_" + inverse.simple() + i + ".txt");
+									PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outpath3, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+									for (double r : perturbationRs) {
+										Location loc = p.toLocation(r);
+										double d = layerMap.get(r);
+										double dmu = locAnswerMap.get(loc);
+										double r1 = r - d/2.;
+										double r2 = r + d/2.;
+										for (int k = 1; k < 100; k++) {
+											double rk = r1 + (r2 - r1) / 100. * k;
+											double vs_prime = Math.sqrt((structure.computeMu(rk) + dmu) / structure.getRhoAt(rk));
+											double vs = structure.getVshAt(rk);
+											pw3.println(rk + " " + (6371.-rk) + " " + vs_prime + " " + vs);
+										}
+//										double vs_prime = getSimpsonVsh(r1, r2, structure, dmu);
+//										double vs = structure.getVshAt(r);
+//										pw3.println(r1 + " " + (6371.-r1) + " " + vs_prime + " " + vs);
+//										pw3.println(r2 + " " + (6371.-r2) + " " + vs_prime + " " + vs);
+									}
+									pw3.close();
+								}
+							}
 						}
 						//---------------
 						else {
@@ -329,6 +379,42 @@ public class VelocityField3D {
 		return perturbationMap;
 	}
 	
+	private static Map<UnknownParameter, Double> toPerturbation(Map<UnknownParameter
+			, Double> answerMap, Map<Double, Double> layerMap
+			, List<UnknownParameter> parameterOrder, PolynomialStructure structure0, PolynomialStructure structure1
+			, double amplifyPerturbation) {
+		Map<UnknownParameter, Double> perturbationMap = new HashMap<>();
+		for (UnknownParameter m : parameterOrder) {
+			if (m.getPartialType().isTimePartial())
+				continue;
+			Location loc = (Location) m.getLocation();
+			double r = loc.getR();
+			double dR = 0;
+			try {
+				dR = layerMap.get(r);
+			} catch (NullPointerException e) {
+				System.out.println("NullPointerException: didn't find layer for radius " + r);
+				e.printStackTrace();
+			}
+			double rmin = r - dR / 2.;
+			double rmax = r + dR / 2.;
+			if (structure0.equals(PolynomialStructure.AK135)) {
+				if (r == 6343.8) {
+					rmin = 6336.61;
+					rmax = Earth.EARTH_RADIUS;
+				}
+			}
+//			double v1 = toVelocity(answerMap.get(m), r, rmin
+//					, rmax, structure, amplifyPerturbation);
+//			double v0 = structure.getVshAt(r);
+//			double perturbation = (1. - v1 / v0) * 100;
+			double perturbation = toPerturbation(answerMap.get(m)
+					,rmin, rmax, structure0, structure1) * 100.;
+			perturbationMap.put(m, perturbation);
+		}
+		return perturbationMap;
+	}
+	
 	private static double[][] toQ(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
 			, double amplifyPerturbation) {
 		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
@@ -377,6 +463,11 @@ public class VelocityField3D {
 	private static double toPerturbation(double deltaMu
 			,double rmin, double rmax, PolynomialStructure structure) {
 		return getSimpsonVsPerturbation(rmin, rmax, structure, deltaMu);
+	}
+	
+	private static double toPerturbation(double deltaMu
+			,double rmin, double rmax, PolynomialStructure structure0, PolynomialStructure structure1) {
+		return getSimpsonVsPerturbation(rmin, rmax, structure0, structure1, deltaMu);
 	}
 	
 	private static double toQ(double dq, double r, double rmin, double rmax, PolynomialStructure structure,
@@ -445,9 +536,33 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
+	public static double getSimpsonVsPerturbation(double r1, double r2
+			, PolynomialStructure structure0, PolynomialStructure structure1, double dMu) {
+		double res = 0;
+		double dr = (r2 - r1) / 40.;
+		double vol = r2 - r1;
+		for (int i=0; i < 40; i++) {
+			double a = r1 + i * dr;
+			double b = r1 + (i + 1) * dr;
+			double ab = (a + b) / 2.;
+			double v_a = dvs(a, dMu, structure0, structure1);
+			double v_ab = dvs(ab, dMu, structure0, structure1);
+			double v_b = dvs(b, dMu, structure0, structure1);
+			res += (b - a) / 6. * (v_a + 4 * v_ab + v_b);
+		}
+		
+		return res / vol;
+	}
+	
 	private static double dvs(double r, double dMu, PolynomialStructure structure) {
 		double v0 = Math.sqrt(structure.computeMu(r) / structure.getRhoAt(r));
 		double v1 = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
+		return (v1 - v0) / v0;
+	}
+	
+	private static double dvs(double r, double dMu, PolynomialStructure structure0, PolynomialStructure structure1) {
+		double v0 = Math.sqrt(structure1.computeMu(r) / structure1.getRhoAt(r));
+		double v1 = Math.sqrt((structure0.computeMu(r) + dMu) / structure0.getRhoAt(r));
 		return (v1 - v0) / v0;
 	}
 	

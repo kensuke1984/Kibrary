@@ -9,6 +9,6 @@ package io.github.kensuke1984.kibrary.util.spc;
  * @author Kensuke Konishi
  *
  */
-enum SpcFileComponent {
+public enum SpcFileComponent {
 	PSV, SH
 }

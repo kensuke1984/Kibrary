@@ -7,31 +7,57 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 
 public class taupModelMaker {
 
 	public static void main(String[] args) throws IOException {
 //		PolynomialStructure model = PolynomialStructure.PREM;
 		PolynomialStructure model = new PolynomialStructure(
-				Paths.get("/Users/Anselme/Dropbox/Kenji/FWICarib/specfem/Dpp+2per/model/model.poly"));
+				Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/1D_REFERENCE_MODEL/POLYNOMIALS/tnasna.poly"));
 		Path root = Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES");
+//		PolynomialStructure model = new PolynomialStructure(Paths.get(args[0]));
 //		int nR = Integer.parseInt(args[0]);
-		int nR = 15000;
+		int nR = 10000;
+		
+		double distance = Math.toDegrees(new HorizontalPosition(60,-153).getEpicentralDistance(new HorizontalPosition(45, -115)));
+//		System.out.println(distance);
 		
 		PolynomialStructure ak135 = PolynomialStructure.AK135;
+
+		System.out.println(ak135.getVphAt(5150)*0.001 + 24.138794);
+		System.out.println(ak135.getVphAt(5150)*ak135.getRhoAt(5150));
+		System.out.println( (2*ak135.getVphAt(5150)*ak135.getRhoAt(5150)*0.1) );
+		System.out.println(ak135.getVphAt(5150)/(2*ak135.getVshAt(5150))*0.1);
+		System.out.println(ak135.getVphAt(5150)/ak135.getVshAt(5150));
 		
-		double dv_mean = (ak135.getVshAt(5711)*1.015-ak135.getVshAt(5773.5)) / 2. - (ak135.getVshAt(5711)-ak135.getVshAt(5773.5)) / 2.;
-		System.out.println(dv_mean);
-		System.out.println(ak135.getVshAt(5711)*0.015);
-		System.out.println(dv_mean/ak135.getVshAt(5711+62.5/2.));
+		
 		System.exit(0);
 		
-		double r1=6371. - 660 + 62.5;
-		double r2=6371. - 660;
+//		System.out.println(ak135.getVshAt(3480) + " " + PolynomialStructure.PREM.getVshAt(3480) + " " + PolynomialStructure.TNASNA.getVshAt(3480) + " " + PolynomialStructure.TBL50.getVshAt(3480));
+//		System.exit(0);
+		
+//		double dv_mean = (ak135.getVshAt(5711)*1.015-ak135.getVshAt(5773.5)) / 2. - (ak135.getVshAt(5711)-ak135.getVshAt(5773.5)) / 2.;
+//		System.out.println(dv_mean);
+//		System.out.println(ak135.getVshAt(5711)*0.015);
+//		System.out.println(dv_mean/ak135.getVshAt(5711+62.5/2.));
+//		System.exit(0);
+		
+		double r1=6161.0;
+		double r2=5961.0+1e-5;
 		double v1 = ak135.getVshAt(r1);
-		double v2 = ak135.getVshAt(r2)*1.015;
+		double v2 = ak135.getVshAt(r2)*0.985;
+//		double r1=5961.0-1e-5;
+//		double r2=5711.0+1e-5;
+//		double v1 = ak135.getVshAt(r1)*0.985;
+//		double v2 = ak135.getVshAt(r2)*1.015;
+//		double r1=5711-1e-5;
+//		double r2=5611.0;
+//		double v1 = ak135.getVshAt(r1)*1.015;
+//		double v2 = ak135.getVshAt(r2);
 		double a = (v1-v2)/(r1-r2)*6371.;
 		double b = -a*r1/6371. + v1;
 		System.out.printf("%.2f %.2f %.6f %.6f",r1, r2, b, a);
@@ -76,7 +102,9 @@ public class taupModelMaker {
 		
 //		outputTauP(PolynomialStructure.TNASNA, nR);
 		
-		outputSTD(PolynomialStructure.MAK135, nR, Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES/MAK135.vel"));
+//		outputSTD(PolynomialStructure.MAK135, nR, Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES/MAK135.vel"));
+		
+//		outputTauP(model, nR);
 		
 //		System.out.println(miasp91.getRhoAt(6030.9));
 //		System.out.println(miasp91.getRhoAt(5781.0));

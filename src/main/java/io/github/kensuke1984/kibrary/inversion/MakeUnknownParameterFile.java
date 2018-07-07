@@ -17,7 +17,11 @@ import java.util.stream.Collectors;
 public class MakeUnknownParameterFile {
 
 	public static void main(String[] args) {
+		// each line: partial latitude, partial longitude, partial depth
+		// number of line = number of voxels
 		Path perturbationPointPath = Paths.get(args[0]);
+		// each line: perturbation depth, thickness (in the vertical direction)
+		// number of line = number of depth layers
 		Path perturbationLayerPath = Paths.get(args[1]);
 		
 		try {

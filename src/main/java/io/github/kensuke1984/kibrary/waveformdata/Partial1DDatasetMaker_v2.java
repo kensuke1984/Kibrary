@@ -104,6 +104,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			pw.println("#np 1024");
 			pw.println("##double[] freqRanges (input several ranges following the format minFreq1,maxFreq1 minFreq2,maxFreq2) (0.005,0.08)");
 			pw.println("#freqRanges 0.005,0.08");
+			pw.println("#filterNp 4");
 			pw.println("#double");
 			pw.println("#partialSamplingHz cant change now");
 			pw.println("##double sampling Hz in output dataset (1)");
@@ -126,7 +127,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+			property.setProperty("workPath", ".");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("modelName"))
@@ -139,6 +140,8 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			property.setProperty("backward", "true");
 		if (!property.containsKey("freqRanges"))
 			property.setProperty("freqRanges", "0.005,0.08");
+		if (!property.containsKey("filterNp"))
+			property.setProperty("filterNp", "4");
 		if (!property.containsKey("finalSamplingHz"))
 			property.setProperty("finalSamplingHz", "1");
 		if (!property.containsKey("timewindowPath"))
@@ -149,14 +152,12 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			property.setProperty("np", "1024");
 		if (!property.containsKey("ps"))
 			property.setProperty("ps", "PREM");
-		if (!property.containsKey("psvPath"))
-			property.setProperty("psvPath", "null");
-		if (!property.containsKey("shPath"))
-			property.setProperty("shPath", "null");
 	}
 	
 	private boolean par00;
 
+	private int filterNp;
+	
 	/**
 	 * parameterのセット
 	 */
@@ -200,6 +201,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		Set<double[]> periodsSet = Arrays.stream(property.getProperty("freqRanges").split("\\s+")).map(s 
 				-> new double[] {1. / Double.parseDouble(s.split(",")[1]), 1. / Double.parseDouble(s.split(",")[0])}).collect(Collectors.toSet());
 		periodRanges = periodsSet.toArray(new double[periodsSet.size()][]);
+		filterNp = Integer.parseInt(property.getProperty("filterNp"));
 		bodyR = Arrays.stream(property.getProperty("bodyR").split("\\s+")).mapToDouble(Double::parseDouble).toArray();
 		// partialSamplingHz
 		// =Double.parseDouble(reader.getFirstValue("partialSamplingHz")); TODO
@@ -209,8 +211,11 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		structurePath = property.getProperty("ps");
 		
-		psvPath = !property.getProperty("psvPath").equals("null") ? Paths.get(property.getProperty("psvPath")) : null;
-		shPath = !property.getProperty("shPath").equals("null") ? Paths.get(property.getProperty("shPath")) : null;
+		psvPath = property.containsKey("psvPath") ? Paths.get(property.getProperty("psvPath")) : null;
+		shPath = property.containsKey("shPath") ? Paths.get(property.getProperty("shPath")) : null;
+		
+		if (shPath == null && psvPath == null)
+			throw new RuntimeException("None of psv or sh paths are defined");
 	}
 
 	/**
@@ -318,15 +323,15 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			try {
 				if (shPath != null && psvPath == null) {
 					spcFileNames = collectSHSPCs(spcFolder);
-//					System.out.println("Collecting SH spc");
+					System.out.println("Collecting SH spc");
 				}
 				else if (psvPath != null && shPath == null) {
 					spcFileNames = collectPSVSPCs(spcFolder);
-//					System.out.println("Collecting PSV spc");
+					System.out.println("Collecting PSV spc");
 				}
 				else {
 					spcFileNames = collectPSVSPCs(spcFolder);
-//					System.out.println("Collecting PSV and SH spc");
+					System.out.println("Collecting PSV and SH spc");
 				}
 			} catch (IOException e1) {
 				e1.printStackTrace();
@@ -953,7 +958,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		// filter設計
 		System.err.println("Designing filter.");
 		setBandPassFilter();
-		writeLog(filter.toString());
+//		writeLog(filter.toString());
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
 				.collect(Collectors.toSet());
 		idSet = Utilities.globalCMTIDSet(workPath);
@@ -1068,7 +1073,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		for (double[] periods : periodRanges) {
 			double omegaH = 1. / periods[0] * 2 * Math.PI / partialSamplingHz;
 			double omegaL = 1. / periods[1] * 2 * Math.PI / partialSamplingHz;
-			ButterworthFilter tmpfilter = new BandPassFilter(omegaH, omegaL, 4);
+			ButterworthFilter tmpfilter = new BandPassFilter(omegaH, omegaL, filterNp);
 			tmpfilter.setBackward(backward);
 			filter.add(tmpfilter);
 			writeLog(tmpfilter.toString());

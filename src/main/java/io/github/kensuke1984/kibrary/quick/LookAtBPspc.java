@@ -41,6 +41,17 @@ public class LookAtBPspc {
 		SpcTensorComponent c7 = SpcTensorComponent.valueOfBP(3, 1, 2);
 		SpcTensorComponent c8 = SpcTensorComponent.valueOfBP(3, 2, 2);
 		SpcTensorComponent c9 = SpcTensorComponent.valueOfBP(3, 3, 2);
+		
+//		SpcTensorComponent c1 = SpcTensorComponent.valueOfBP(1, 1, 3);
+//		SpcTensorComponent c2 = SpcTensorComponent.valueOfBP(1, 2, 3);
+//		SpcTensorComponent c3 = SpcTensorComponent.valueOfBP(1, 3, 3);
+//		SpcTensorComponent c4 = SpcTensorComponent.valueOfBP(2, 1, 3);
+//		SpcTensorComponent c5 = SpcTensorComponent.valueOfBP(2, 2, 3);
+//		SpcTensorComponent c6 = SpcTensorComponent.valueOfBP(2, 3, 3);
+//		SpcTensorComponent c7 = SpcTensorComponent.valueOfBP(3, 1, 3);
+//		SpcTensorComponent c8 = SpcTensorComponent.valueOfBP(3, 2, 3);
+//		SpcTensorComponent c9 = SpcTensorComponent.valueOfBP(3, 3, 3);
+		
 		Complex[] spcC1 = dsmOutput.getSpcBodyList().get(0).getSpcComponent(c1).getValueInFrequencyDomain(); 
 		Complex[] spcC2 = dsmOutput.getSpcBodyList().get(0).getSpcComponent(c2).getValueInFrequencyDomain(); 
 		Complex[] spcC3 = dsmOutput.getSpcBodyList().get(0).getSpcComponent(c3).getValueInFrequencyDomain(); 

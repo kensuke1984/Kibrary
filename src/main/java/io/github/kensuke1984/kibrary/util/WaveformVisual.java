@@ -27,63 +27,63 @@ public class WaveformVisual {
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		Path stackDir = Paths.get("stack");
+		Path stackDir = Paths.get("stack" + Utilities.getTemporaryString());
 		Files.createDirectory(stackDir);
 		
-		SACComponent[] components = new SACComponent[] {SACComponent.T, SACComponent.R};
+		SACComponent[] components = new SACComponent[] {SACComponent.T};
 		
-		for (SACComponent component : components) {
 		for (GlobalCMTID event : events) {
 			Path eventDir = stackDir.resolve(event.toString());
 			Files.createDirectory(eventDir);
-			
-			double[][] obsStack = new double[120][0];
-			double[][] synStack = new double[120][0];
-			
-			for (BasicID id : ids) {
-				if (!id.getGlobalCMTID().equals(event) || !id.getSacComponent().equals(component))
-					continue;
+		
+			for (SACComponent component : components) {
+				double[][] obsStack = new double[120][0];
+				double[][] synStack = new double[120][0];
 				
-				double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
-				int k = (int) distance;
+				for (BasicID id : ids) {
+					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
+						continue;
+					
+					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+					int k = (int) distance;
+					
+					if (id.getWaveformType().equals(WaveformType.OBS))
+						obsStack[k] = add(obsStack[k], id.getData());
+					if (id.getWaveformType().equals(WaveformType.SYN))
+						synStack[k] = add(synStack[k], id.getData());
+				}
 				
-				if (id.getWaveformType().equals(WaveformType.OBS))
-					obsStack[k] = add(obsStack[k], id.getData());
-				if (id.getWaveformType().equals(WaveformType.SYN))
-					synStack[k] = add(synStack[k], id.getData());
+				
+				Path plotPath = eventDir.resolve(Paths.get("plot.plt"));
+				PrintWriter pwPlot = new PrintWriter(plotPath.toFile());
+				pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
+				pwPlot.println("set output \"" + event + "." + component + ".ps\"");
+				pwPlot.println("unset key");
+				pwPlot.println("set yrange [8:32]"); 
+				pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
+				pwPlot.println("set ylabel 'Distance (deg)'");
+				pwPlot.println("set size .5,1");
+				pwPlot.print("p ");
+				
+				for (int i = 0; i < obsStack.length; i++) {
+					if (obsStack[i].length == 0)
+						continue;
+					
+					double max = new ArrayRealVector(obsStack[i]).getLInfNorm();
+					
+					String filename = i + "." + event.toString() + "." + component + ".txt";
+					Path outpath = eventDir.resolve(filename);
+					PrintWriter pw = new PrintWriter(outpath.toFile());
+					for (int j = 0; j < obsStack[i].length; j++)
+						pw.println(j + " " + (synStack[i][j] / max) + " " + (obsStack[i][j] / max));
+					pw.close();
+					
+					pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lc rgb 'red',\\");
+					pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lc rgb 'black',\\");
+				}
+				
+				pwPlot.close();
 			}
-			
-			
-			Path plotPath = eventDir.resolve(Paths.get("plot.plt"));
-			PrintWriter pwPlot = new PrintWriter(plotPath.toFile());
-			pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
-			pwPlot.println("set output \"" + event + "." + component + ".ps\"");
-			pwPlot.println("unset key");
-			pwPlot.println("set yrange [9:36]"); 
-			pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
-			pwPlot.println("set ylabel 'Distance (deg)'");
-			pwPlot.println("set size .5,1");
-			pwPlot.print("p ");
-			
-			for (int i = 0; i < obsStack.length; i++) {
-				if (obsStack[i].length == 0)
-					continue;
-				
-				double max = new ArrayRealVector(obsStack[i]).getLInfNorm();
-				
-				String filename = i + "." + event.toString() + "." + component + ".txt";
-				Path outpath = eventDir.resolve(filename);
-				PrintWriter pw = new PrintWriter(outpath.toFile());
-				for (int j = 0; j < obsStack[i].length; j++)
-					pw.println(j + " " + " " + (synStack[i][j] / max) + " " + (obsStack[i][j] / max));
-				pw.close();
-				
-				pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lc rgb 'red',\\");
-				pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lc rgb 'black',\\");
-			}
-			
-			pwPlot.close();
-		}
 		}
 	}
 	

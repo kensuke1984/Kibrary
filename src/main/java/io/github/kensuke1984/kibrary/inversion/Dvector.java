@@ -88,14 +88,14 @@ public class Dvector {
 		List<GlobalCMTID> events = idList.stream().map(id -> id.getGlobalCMTID())
 				.distinct().collect(Collectors.toList());
 		
-		Files.deleteIfExists(Paths.get("eventVariance.inf"));
-		Files.createFile(Paths.get("eventVariance.inf"));
-		for (GlobalCMTID event : events) {
-			BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
-					.collect(Collectors.toList()).toArray(new BasicID[0]);
-			Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
-			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
-		}
+//		Files.deleteIfExists(Paths.get("eventVariance.inf"));
+//		Files.createFile(Paths.get("eventVariance.inf"));
+//		for (GlobalCMTID event : events) {
+//			BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
+//					.collect(Collectors.toList()).toArray(new BasicID[0]);
+//			Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+//			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
+//		}
 		
 		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 		

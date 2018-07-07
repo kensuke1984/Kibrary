@@ -160,6 +160,10 @@ public class Station implements Comparable<Station> {
 	public String toString() {
 		return stationName + "_" + network;
 	}
+	
+	public String getStringID() {
+		return stationName + "_" + network;
+	}
 
 	/**
 	 * @return the position of the station

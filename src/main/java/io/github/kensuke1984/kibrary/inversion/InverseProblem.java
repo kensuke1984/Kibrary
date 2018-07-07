@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -22,7 +23,11 @@ public abstract class InverseProblem {
 	protected RealMatrix ans;
 	protected RealMatrix ata;
 	protected RealVector atd;
-
+	
+	public void setANS(int i, RealVector v) {
+		ans.setColumnVector(i-1, v);
+	}
+	
 	public RealMatrix getANS() {
 		return ans;
 	}

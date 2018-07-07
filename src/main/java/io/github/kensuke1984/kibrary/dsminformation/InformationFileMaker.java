@@ -144,6 +144,9 @@ public class InformationFileMaker implements Operation {
 			else if (psPath.toString().trim().equals("AK135")) {
 				ps = PolynomialStructure.AK135;
 			}
+			else if (psPath.toString().trim().equals("AK135_elastic")) {
+				ps = PolynomialStructure.AK135_elastic;
+			}
 			else
 				ps = new PolynomialStructure(psPath);
 		}

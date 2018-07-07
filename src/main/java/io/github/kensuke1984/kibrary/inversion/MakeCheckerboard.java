@@ -38,6 +38,7 @@ public class MakeCheckerboard {
 				horizontalSigns.add(Double.parseDouble(line));
 			}
 			reader.close();
+			int nH = horizontalSigns.size();
 			
 			reader = Files.newBufferedReader(verticalSignFile);
 			line = null;
@@ -58,10 +59,14 @@ public class MakeCheckerboard {
 				Location loc = (Location) unknowns.get(i)
 						.getLocation();
 				double dmu = dMU(dv, loc.getR(), structure);
-//				double tmp = (i % nR) % 2 == 0 ? 1 : -1;
-//				double sign = horizontalSigns.get(i / nR) * tmp;
-				double sign = horizontalSigns.get(i / nR) * 
-						verticalSignMap.get(loc.getR());
+				// order 1
+				double tmp = (i % nR) % 2 == 0 ? 1 : -1;
+				double sign = horizontalSigns.get(i / nR) * tmp;
+//				int iH = i / nR;
+				// order 2
+//				int iH = i % nH;
+//				double sign = horizontalSigns.get(iH) * 
+//						verticalSignMap.get(loc.getR());
 				System.out.format("%.4f%n", sign * dmu);
 				writer.write(String.format("%s %.4f%n", loc.toString(), sign * dv));
 			}

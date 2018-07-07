@@ -17,6 +17,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.RealVector;
 
+import io.github.kensuke1984.kibrary.math.geometry.XYZ;
 import io.github.kensuke1984.kibrary.util.Location;
 
 public class Complementation {
@@ -76,7 +77,22 @@ public class Complementation {
 		double wsum = 0;
 		double wzsum = 0;
 		  for(int i=0;i<nearPoints.length;i++){	
-		  double weight = Complementation.weight(nearPoints[i], target);
+			  if (nearPoints[i].equals(target))
+				  return nearpointsValue[i];
+			  double weight = Complementation.weight(nearPoints[i], target);
+			  wsum += weight;
+			  double wz = weight * nearpointsValue[i];
+			  wzsum += wz;
+		  }
+		return wzsum/wsum;
+//		return value;
+	}
+	
+	public double complementEnhanceHorizontal(Location[] nearPoints, double[] nearpointsValue, Location target){
+		double wsum = 0;
+		double wzsum = 0;
+		  for(int i=0;i<nearPoints.length;i++){	
+		  double weight = Complementation.weightHorizontalEnhanced(nearPoints[i], target);
 		  wsum += weight;
 		  double wz = weight * nearpointsValue[i];
 		  wzsum += wz;
@@ -115,6 +131,14 @@ public class Complementation {
 		return 1/distance;
 //		double weight = 1/distance;
 //		return weight;
+	}
+	
+	private static double weightHorizontalEnhanced(Location loc1, Location loc2) {
+		double arcDistance = loc1.getEpicentralDistance(loc2) * (loc1.getR() + loc2.getR()) / 2.;
+		double dR = Math.abs(loc1.getR() - loc2.getR());
+		arcDistance /= 4.;
+		
+		return Math.sqrt(arcDistance * arcDistance + dR * dR);
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
@@ -7,7 +8,9 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.inversion.HorizontalParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.ParameterMapping;
+import io.github.kensuke1984.kibrary.inversion.ThreeDParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.Weighting;
@@ -65,6 +68,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import javax.management.RuntimeErrorException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.complex.Complex;
@@ -157,11 +162,16 @@ public class AtAMaker implements Operation {
 	private int n0AtABuffer;
 	
 	private int nwindowBuffer;
+	private int nwindowBufferLastIteration;
+	private int nInteration;
 	
 	private String thetaInfo;
 	private double thetamin;
 	private double thetamax;
 	private double dtheta;
+	
+	private boolean correctionBootstrap;
+	private int nSample;
 	
 	private int nproc;
 	
@@ -169,9 +179,12 @@ public class AtAMaker implements Operation {
 	
 	private int computationFlag;
 	
-	Path unknownMappingFile;
+	Path verticalMappingFile;
+	Path horizontalMappingFile;
 	
 	ParameterMapping mapping;
+	HorizontalParameterMapping horizontalMapping;
+	ThreeDParameterMapping threedMapping;
 	
 	private int workProgressCounter;
 	private int progressStep;
@@ -226,6 +239,14 @@ public class AtAMaker implements Operation {
 	
 	private Path rootWaveformPath;
 	
+	private boolean writeA;
+	
+	private Path partialIDPath;
+	
+	private Path partialPath;
+	
+	private List<PartialID> partialIDs;
+	
 	/**
 	 * @throws IOException
 	 */
@@ -267,7 +288,8 @@ public class AtAMaker implements Operation {
 			pw.println("##Path of unknown parameter file, must be set");
 			pw.println("#unknownParameterPath");
 			pw.println("##Path of a file with the mapping to compine unknown parameters, ignored if not set");
-			pw.println("#unknownMappingFile");
+			pw.println("#verticalMappingFile");
+			pw.println("#horizontalMappingFile");
 			pw.println("##Weighting scheme for data weighting. Choose among (RECIPROCAL, IDENTITY). Can enter multiple values (separated by a space). (RECIPROCAL)");
 			pw.println("#weightingTypes");
 			pw.println("##double time length DSM parameter tlen, must be set");
@@ -290,6 +312,12 @@ public class AtAMaker implements Operation {
 			pw.println("#numberOfBuffers");
 			pw.println("##Number of timewindow to store in the (temporary) partial vector (100)");
 			pw.println("#nwindowBuffer");
+			pw.println("#---------------");
+			pw.println("#correctionBootstrap false");
+			pw.println("#nSample 100");
+			pw.println("#---------------");
+			pw.println("#writeA");
+			pw.println("#---------------");
 			pw.println("##File for Qstructure (if no file, then PREM)");
 			pw.println("#qinf");
 			pw.println("##path of the time partials directory, must be set if PartialType containes TIME_SOURCE or TIME_RECEIVER");
@@ -308,7 +336,7 @@ public class AtAMaker implements Operation {
 	 */
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+			property.setProperty("workPath", ".");
 		if (!property.containsKey("rootWaveformPath"))
 			property.setProperty("rootWaveformPath", ".");
 		if (!property.containsKey("components"))
@@ -351,6 +379,12 @@ public class AtAMaker implements Operation {
 			property.setProperty("backward", "false");
 		if(!property.containsKey("computationFlag"))
 			property.setProperty("computationFlag", "1");
+		if(!property.containsKey("writeA"))
+			property.setProperty("writeA", "false");
+		if(!property.containsKey("correctionBootstrap"))
+			property.setProperty("correctionBootstrap", "false");
+		if (!property.containsKey("nSample"))
+			property.setProperty("nSample", "100");
 	}
 
 	/**
@@ -410,23 +444,45 @@ public class AtAMaker implements Operation {
 			throw new IllegalArgumentException("Error: weightingTypes must be set");
 //		if (weightingTypes.length > 1)
 //			throw new IllegalArgumentException("Error: only 1 weighting type can be set now");
+
+		correctionBootstrap = Boolean.parseBoolean(property.getProperty("correctionBootstrap"));
+		nSample = Integer.parseInt(property.getProperty("nSample"));
 		
 		rootWaveformPath = Paths.get(property.getProperty("rootWaveformPath").trim());
-		if (property.getProperty("rootWaveformPath").trim().equals(".")) {
-			waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> Paths.get(s))
-					.collect(Collectors.toList()).toArray(new Path[0]);
-			waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
-					.collect(Collectors.toList()).toArray(new Path[0]);
+		
+		if (!correctionBootstrap) {
+			if (property.getProperty("rootWaveformPath").trim().equals(".")) {
+				waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> Paths.get(s))
+						.collect(Collectors.toList()).toArray(new Path[0]);
+				waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> Paths.get(s))
+						.collect(Collectors.toList()).toArray(new Path[0]);
+			}
+			else {
+				waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
+						.collect(Collectors.toList()).toArray(new Path[0]);
+				waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
+							.collect(Collectors.toList()).toArray(new Path[0]);
+			}
 		}
 		else {
-			waveformIDPath = Stream.of(property.getProperty("waveformIDPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
-					.collect(Collectors.toList()).toArray(new Path[0]);
-			waveformPath = Stream.of(property.getProperty("waveformPath").trim().split("\\s+")).map(s -> rootWaveformPath.resolve(s))
-						.collect(Collectors.toList()).toArray(new Path[0]);
+			waveformIDPath = new Path[nSample];
+			waveformPath = new Path[nSample];
+			for (int isample = 0; isample < nSample; isample++) {
+				waveformIDPath[isample] = rootWaveformPath.resolve(String.format("waveformID_RND%4d.dat", isample));
+				waveformPath[isample] = rootWaveformPath.resolve(String.format("waveform_RND%4d.dat", isample));
+			}
 		}
 		
-		correctionTypes = Stream.of(property.getProperty("correctionTypes").trim().split("\\s+")).map(s -> StaticCorrectionType.valueOf(s.trim()))
+		if (!correctionBootstrap) {
+			correctionTypes = Stream.of(property.getProperty("correctionTypes").trim().split("\\s+")).map(s -> StaticCorrectionType.valueOf(s.trim()))
 				.collect(Collectors.toList()).toArray(new StaticCorrectionType[0]);
+		}
+		else {
+			correctionTypes = new StaticCorrectionType[nSample];
+			for (int isample = 0; isample < nSample; isample++) {
+				correctionTypes[isample] = StaticCorrectionType.valueOf(String.format("RND%4d", isample));
+			}
+		}
 		
 		double[] tmpthetainfo = Stream.of(property.getProperty("thetaInfo").trim().split("\\s+")).mapToDouble(Double::parseDouble)
 				.toArray();
@@ -459,10 +515,19 @@ public class AtAMaker implements Operation {
 
 		unknownParameterPath = getPath("unknownParameterPath");
 		
-		if (property.getProperty("unknownMappingFile") != null)
-			unknownMappingFile = Paths.get(property.getProperty("unknownMappingFile").trim());
+		if (property.containsKey("verticalMappingFile"))
+			verticalMappingFile = Paths.get(property.getProperty("verticalMappingFile").trim());
 		else
-			unknownMappingFile = null;
+			verticalMappingFile = null;
+		if (property.containsKey("horizontalMappingFile"))
+			horizontalMappingFile = Paths.get(property.getProperty("horizontalMappingFile").trim());
+		else
+			horizontalMappingFile = null;
+		
+		writeA = Boolean.parseBoolean(property.getProperty("writeA"));
+		if (writeA)
+			partialIDs = new ArrayList<>();
+		
 	}
 	
 	
@@ -475,7 +540,7 @@ public class AtAMaker implements Operation {
 	
 	Map<HorizontalPosition, DSMOutput> bpMap;
 	
-	private final String stfcatName = "ASTF2.stfcat"; //LSTF1 ASTF1 ASTF2
+	private final String stfcatName = "CATZ_STF.stfcat"; //LSTF1 ASTF1 ASTF2
 	private final List<String> stfcat = readSTFCatalogue(stfcatName);
 	
 	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
@@ -497,16 +562,24 @@ public class AtAMaker implements Operation {
 		
 		String tempString = Utilities.getTemporaryString();
 		
+		partialPath = workPath.resolve("partial" + tempString + ".dat");
+		partialIDPath = workPath.resolve("partialID" + tempString + ".dat");
+		
 		Path outUnknownPath = workPath.resolve("newUnknowns" + tempString + ".inf");
 		Path outLayerPath = workPath.resolve("newPerturbationLayers" + tempString + ".inf");
 		outputUnknownParameters(outUnknownPath);
 		outputPerturbationLayers(outLayerPath);
 		
 		// redefine nwindowBuffer so that it divides timewindowInformation.size()
-		int integerratio = timewindowInformation.size() / nwindowBuffer;
-		int newNwindowBuffer = integerratio == 0 ? timewindowInformation.size() : timewindowInformation.size() / integerratio;
-		System.out.println("nWindowBuffer (new, previous) = " + newNwindowBuffer + " " + nwindowBuffer);
+		nInteration = timewindowInformation.size() / nwindowBuffer;
+		int newNwindowBuffer = nInteration == 0 ? timewindowInformation.size() : timewindowInformation.size() / nInteration;
+		nwindowBufferLastIteration = timewindowInformation.size() - nInteration * newNwindowBuffer;
+		System.out.println("nWindowBuffer (new, new_lastIteration, previous) = " + newNwindowBuffer + " "
+				+ nwindowBufferLastIteration + " " + nwindowBuffer);
 		nwindowBuffer = newNwindowBuffer;
+		int iterationCount = 0;
+		
+		TimewindowInformation[] timewindowOrder = new TimewindowInformation[nwindowBuffer];
 		
 		usedPhases = timewindowInformation.stream().map(tw -> new Phases(tw.getPhases()))
 			.collect(Collectors.toSet()).toArray(new Phases[0]);
@@ -559,6 +632,10 @@ public class AtAMaker implements Operation {
 		
 		Set<GlobalCMTID> usedEvents = timewindowInformation.stream()
 				.map(tw -> tw.getGlobalCMTID())
+				.collect(Collectors.toSet());
+		
+		Set<Station> usedStations = timewindowInformation.stream()
+				.map(tw -> tw.getStation())
 				.collect(Collectors.toSet());
 		
 		//--- initialize source time functions
@@ -649,8 +726,14 @@ public class AtAMaker implements Operation {
 					todo.add(Executors.callable(new FPWorker(fpname, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
 				}
 				
-				if (windowCounter.incrementAndGet() == nwindowBuffer) {
+				if (orderedRecordTimewindows.size() != 1)
+					throw new RuntimeException("More than one timewindow");
+				timewindowOrder[currentWindowCounter] = orderedRecordTimewindows.get(0);
+				
+				if ( (windowCounter.incrementAndGet() == nwindowBuffer && iterationCount < nInteration) 
+						|| (windowCounter.get() == nwindowBufferLastIteration && iterationCount == nInteration) ) {
 					windowCounter.set(0);
+					iterationCount++;
 					try {
 						System.out.println("Computing " + todo.size() + " tasks");
 						long t1i = System.currentTimeMillis();
@@ -724,6 +807,9 @@ public class AtAMaker implements Operation {
 						} // END AtA buffers loop
 					} // END IF test BP
 					} // END IF computation flag (compute AtA?)
+					
+					if (writeA) // write A
+						fillA(timewindowOrder);
 				} // END IF nwindowbuffer reached?
 				
 			} // END station loop
@@ -738,6 +824,9 @@ public class AtAMaker implements Operation {
 			}
 		}
 		
+		if (writeA)
+			writeA(partialIDPath, partialPath, usedStations, usedEvents);
+		
 		if (!testBP) {
 			//--- write Atd
 			System.out.println("Writing Atd...");
@@ -749,7 +838,17 @@ public class AtAMaker implements Operation {
 					for (int ifreq = 0; ifreq < nFreq; ifreq++) {
 						for (int iphase = 0; iphase < usedPhases.length; iphase++) {
 							for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-								int[] iOriginalUnknowns = mapping.getiNewToOriginal(i);
+								int[] iOriginalUnknowns; 
+								
+								if (horizontalMapping != null) {
+									iOriginalUnknowns = horizontalMapping.getiNewToOriginal(i);
+								}
+								else if (threedMapping != null) {
+									iOriginalUnknowns = threedMapping.getiNewToOriginal(i);
+								}
+								else {
+									iOriginalUnknowns = mapping.getiNewToOriginal(i);
+								}
 								AtdEntry atdEntry =  atdEntries[iOriginalUnknowns[0]][iweight][ifreq][iphase][icorr];
 								for (int k = 1; k < iOriginalUnknowns.length; k++)
 									atdEntry.add(atdEntries[iOriginalUnknowns[k]][iweight][ifreq][iphase][icorr]);
@@ -763,6 +862,70 @@ public class AtAMaker implements Operation {
 			
 			AtdFile.write(atdEntryList, weightingTypes, frequencyRanges, partialTypes, correctionTypes, outputPath);
 		}
+	}
+	
+	private void fillA(TimewindowInformation[] timewindows) {
+		for (int iunknown = 0; iunknown < nNewUnknown; iunknown++) {
+			int[] iOriginalUnknowns; 
+			
+			if (horizontalMapping != null) {
+				iOriginalUnknowns = horizontalMapping.getiNewToOriginal(iunknown);
+			}
+			else if (threedMapping != null) {
+				iOriginalUnknowns = threedMapping.getiNewToOriginal(iunknown);
+			}
+			else {
+				iOriginalUnknowns = mapping.getiNewToOriginal(iunknown);
+			}
+			
+			for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
+				for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+					for (int iphase = 0; iphase < usedPhases.length; iphase++) {
+						for (int iwin = 0; iwin < nwindowBuffer; iwin++) {
+		//					TimewindowInformation info = orderedRecordTimewindows.get(l);
+		//					Phases phases = new Phases(info.getPhases());
+							Phases phases = usedPhases[iphase];
+							Phase[] phaseArray = phases.toSet().toArray(new Phase[0]);
+							
+		//					System.out.println(partials[iunknown][iweight][ifreq].length + " " + l);
+		//					double[] partiali = partials[iunknown][iweight][ifreq][iphase][iwin];
+		//					double[] partialj = partials[junknown][iweight][ifreq][iphase][iwin];
+							
+							int it = partials[iunknown][iweight][ifreq][iphase][iwin].length;
+							if (it > 0) {
+								double[] partiali = new double[it];
+								for (int iOriginal = 0; iOriginal < iOriginalUnknowns.length; iOriginal++) {
+									for (int k = 0; k < partiali.length; k++)
+										partiali[k] += partials[iOriginalUnknowns[iOriginal]][iweight][ifreq][iphase][iwin][k];
+								}
+								
+								TimewindowInformation window = timewindows[iwin];
+								PartialID partialID = new PartialID(window.getStation(), window.getGlobalCMTID(), window.getComponent()
+										, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
+										, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getLocation()
+										, newUnknownParameters[iunknown].getPartialType(), partiali);
+								
+								partialIDs.add(partialID);
+							}
+							else
+								System.out.println(0);
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private void writeA(Path idPath, Path dataPath, Set<Station> stations, Set<GlobalCMTID> events) throws IOException {
+		double[][] periodRanges = new double[][] { {1./frequencyRanges[0].getMaxFreq(), 1./frequencyRanges[0].getMinFreq()} };
+		Phase[] phaseArray = usedPhases[0].toSet().toArray(new Phase[0]);
+		Set<Location> perturbationPoints = Stream.of(newUnknownParameters).map(p -> p.getLocation()).collect(Collectors.toSet());
+		WaveformDataWriter writer = new WaveformDataWriter(idPath, dataPath, stations, events, periodRanges, phaseArray, perturbationPoints);
+		
+		for (PartialID partial : partialIDs)
+			writer.addPartialID(partial);
+		
+		writer.close();
 	}
 
 	private int getiWeight(WeightingType type) {
@@ -997,13 +1160,31 @@ public class AtAMaker implements Operation {
 		originalUnkownRadii = Stream.of(originalUnknownParameters).map(p -> p.getLocation().getR())
 				.collect(Collectors.toSet());
 		
-		if (unknownMappingFile != null) {
-			mapping = new ParameterMapping(originalUnknownParameters, unknownMappingFile); 
+		if (verticalMappingFile != null && horizontalMappingFile == null) {
+			System.out.println("Using vertical mapping " + verticalMappingFile);
+			mapping = new ParameterMapping(originalUnknownParameters, verticalMappingFile); 
 			newUnknownParameters = mapping.getUnknowns();
+			horizontalMapping = null;
+			threedMapping = null;
+		}
+		else if (verticalMappingFile == null && horizontalMappingFile != null) {
+			System.out.println("Using horizontal mapping " + horizontalMappingFile);
+			horizontalMapping = new HorizontalParameterMapping(originalUnknownParameters, horizontalMappingFile);
+			newUnknownParameters = mapping.getUnknowns();
+			threedMapping = null;
+		}
+		else if (verticalMappingFile != null && horizontalMappingFile != null) {
+			System.out.println("Using 3-D mapping " + verticalMappingFile + " " + horizontalMappingFile);
+			threedMapping = new ThreeDParameterMapping(horizontalMappingFile, verticalMappingFile, originalUnknownParameters);
+			newUnknownParameters = threedMapping.getNewUnknowns();
+			horizontalMapping = null;
 		}
 		else {
+			System.out.println("No mapping");
 			mapping = new ParameterMapping(originalUnknownParameters);
 			newUnknownParameters = mapping.getUnknowns();
+			horizontalMapping = null;
+			threedMapping = null;
 		}
 		
 		nOriginalUnknown = originalUnknownParameters.length;
@@ -1040,8 +1221,19 @@ public class AtAMaker implements Operation {
 	
 	private void outputPerturbationLayers(Path outpath) throws IOException {
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outpath.toFile())));
-		double[] newRadii = mapping.getNewRadii();
-		double[] newLayerWidths = mapping.getNewLayerWidths();
+		double[] newRadii = null;
+		double[] newLayerWidths = null;
+		if (horizontalMapping != null) {
+			System.out.println("Not implemented yet");
+		}
+		else if (threedMapping != null) {
+			newRadii = threedMapping.getNewRadii();
+			newLayerWidths = threedMapping.getNewLayerWidths();
+		}
+		else {
+			newRadii = mapping.getNewRadii();
+			newLayerWidths = mapping.getNewLayerWidths();
+		}
 		for (int i = 0; i < newRadii.length; i++) {
 			pw.println(newRadii[i] + " " + newLayerWidths[i]);
 		}
@@ -1058,7 +1250,6 @@ public class AtAMaker implements Operation {
 		}
 		return -1;
 	}
-
 	
 	private final double epsilon = 1e-6;
 	
@@ -1417,8 +1608,21 @@ public class AtAMaker implements Operation {
 			int iunknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * i0AtA) - 1));
 			int junknown = i0AtA - iunknown * (iunknown + 1) / 2;
 			
-			int[] iOriginalUnknowns = mapping.getiNewToOriginal(iunknown);
-			int[] jOriginalUnknowns = mapping.getiNewToOriginal(junknown);
+			int[] iOriginalUnknowns;
+			int[] jOriginalUnknowns;
+			
+			if (horizontalMapping != null) {
+				iOriginalUnknowns = horizontalMapping.getiNewToOriginal(iunknown);
+				jOriginalUnknowns = horizontalMapping.getiNewToOriginal(junknown);
+			}
+			else if (threedMapping != null) {
+				iOriginalUnknowns = threedMapping.getiNewToOriginal(iunknown);
+				jOriginalUnknowns = threedMapping.getiNewToOriginal(junknown);
+			}
+			else {
+				iOriginalUnknowns = mapping.getiNewToOriginal(iunknown);
+				jOriginalUnknowns = mapping.getiNewToOriginal(junknown);
+			}
 			
 			//--- for debug
 //			String s = String.valueOf(newUnknownParameters[iunknown]) + "\n";

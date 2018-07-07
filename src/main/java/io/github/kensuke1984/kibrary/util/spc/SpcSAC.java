@@ -65,11 +65,11 @@ public final class SpcSAC implements Operation {
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+			property.setProperty("workPath", ".");
 		if (!property.containsKey("psvPath"))
-			property.setProperty("psvPath", "");
+			property.setProperty("psvPath", ".");
 		if (!property.containsKey("shPath"))
-			property.setProperty("shPath", "");
+			property.setProperty("shPath", ".");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("sourceTimeFunction"))
@@ -178,7 +178,7 @@ public final class SpcSAC implements Operation {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat"); //LSTF1 ASTF1 ASTF2
+	private final List<String> stfcat = readSTFCatalogue("CATZ_STF.stfcat"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 	
 	private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
 		double halfDuration = id.getEvent().getHalfDuration();

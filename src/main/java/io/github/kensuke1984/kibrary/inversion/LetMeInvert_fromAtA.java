@@ -127,14 +127,14 @@ public class LetMeInvert_fromAtA implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
-		if (!property.containsKey("inputPath") && !property.containsKey("atdPath"))
-			throw new IllegalArgumentException("One of the path 'inputPath' or 'atdPath' must be set");
-		if (property.containsKey("inputPath") && property.containsKey("atdPath"))
-			throw new IllegalArgumentException("Only one of the path 'inputPath' or 'atdPath' can be set");
+//		if (!property.containsKey("inputPath") && !property.containsKey("atdPath"))
+//			throw new IllegalArgumentException("One of the path 'inputPath' or 'atdPath' must be set");
+//		if (property.containsKey("inputPath") && property.containsKey("atdPath"))
+//			throw new IllegalArgumentException("Only one of the path 'inputPath' or 'atdPath' can be set");
 		if (!property.containsKey("ataPath"))
 			throw new IllegalArgumentException("There is no information about 'ataPath'.");
-//		if (!property.containsKey("atdPath"))
-//			throw new IllegalArgumentException("There is no information about 'atdPath'.");
+		if (!property.containsKey("atdPath"))
+			throw new IllegalArgumentException("There is no information about 'atdPath'.");
 		if (!property.containsKey("residualVariancePath"))
 			throw new IllegalArgumentException("There is no information about 'residualVariancePath'");
 		if (!property.containsKey("inverseMethods"))
@@ -159,6 +159,8 @@ public class LetMeInvert_fromAtA implements Operation {
 			property.setProperty("applyDamping", "false");
 		if (!property.containsKey("applyParameterWeight"))
 			property.setProperty("applyParameterWeight", "false");
+		if (!property.containsKey("applyRadialWeight"))
+			property.setProperty("applyRadialWeight", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -201,12 +203,18 @@ public class LetMeInvert_fromAtA implements Operation {
 		
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
 		
+//		if (property.containsKey("inputPath") && property.containsKey("atdPath"))
+//			throw new RuntimeException("Define either inputPath or atdPath, not both.");
+		
 		if (property.containsKey("inputPath"))
 			inputPath = Paths.get(property.getProperty("inputPath"));
-		else {
+		else
 			inputPath = null;
+		
+//		if (property.containsKey("atdPath"))
 			atdPath = getPath("atdPath");
-		}
+//		else
+//			atdPath = null;
 		
 		if (property.containsKey("model")) {
 			model = property.getProperty("model").trim().toLowerCase();
@@ -224,15 +232,17 @@ public class LetMeInvert_fromAtA implements Operation {
 		}
 		
 		applyDamping = Boolean.parseBoolean(property.getProperty("applyDamping"));
-		if (applyDamping) {
-			lambda = Double.parseDouble(property.getProperty("lambda"));
-			dampingType = DampingType.valueOf(property.getProperty("dampingType"));
-		}
+//		if (applyDamping) {
+		lambda = Double.parseDouble(property.getProperty("lambda"));
+		dampingType = DampingType.valueOf(property.getProperty("dampingType"));
+//		}
 		
 		applyParameterWeight = Boolean.parseBoolean(property.getProperty("applyParameterWeight"));
 		if (applyParameterWeight) {
 			sensitivityFile = workPath.resolve(property.getProperty("sensitivityFile"));
 		}
+		
+		applyRadialWeight = Boolean.parseBoolean(property.getProperty("applyRadialWeight"));
 	}
 	
 	private boolean applyModelCovariance;
@@ -253,6 +263,8 @@ public class LetMeInvert_fromAtA implements Operation {
 	private boolean applyParameterWeight;
 	
 	private Path sensitivityFile;
+	
+	private boolean applyRadialWeight;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvert_fromAtA.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -261,9 +273,9 @@ public class LetMeInvert_fromAtA implements Operation {
 			pw.println("##These properties for LetMeInvert");
 			pw.println("##Path of a work folder (.)");
 			pw.println("#workPath");
-			pw.println("##Path for the input file for the checkerboard test, must be set if 'atdPath' is not");
+			pw.println("##Path for the input file for the checkerboard test");
 			pw.println("#inputPath input.inf");
-			pw.println("##Path of the Atd vector file, must be set if 'inputPath' is not");
+			pw.println("##Path of the Atd vector file, must be set");
 			pw.println("#atdPath atd.dat");
 			pw.println("##Path of the AtA matrix file, must be set");
 			pw.println("#ataPath ata.dat");
@@ -283,6 +295,7 @@ public class LetMeInvert_fromAtA implements Operation {
 			pw.println("#applyParameterWeight");
 			pw.println("##Path of sensitivity (AtA diagonal) file");
 			pw.println("#sensitivityFile");
+			pw.println("#applyRadialWeight");
 			pw.println("##=======================================================================================");
 			pw.println("##=== Parameters for Model Covariance matrix and damping ================================");
 			pw.println("##Set true if you want to apply model covariance matrix (false)");
@@ -385,6 +398,8 @@ public class LetMeInvert_fromAtA implements Operation {
 			atdEntries = AtdFile.readArray(atdPath);
 		}
 		else {
+			System.out.println("Reading Atd (header info)");
+			atdEntries = AtdFile.readArray(atdPath);
 			System.out.println("Reading checkerboard input " + inputPath + "...");
 			inputVector = readCheckerboardInput(inputPath);
 			if (inputVector.getDimension() != parameterList.size())
@@ -480,7 +495,9 @@ public class LetMeInvert_fromAtA implements Operation {
 		if (applyModelCovariance) {
 			if (!applyParameterWeight) { 
 				System.out.println("Using model covariance matrix with " + cmV + " " + cmH);
-				cmMaker = new ModelCovarianceMatrix(parameterList, cmV, cmH);
+				if (applyRadialWeight)
+					System.out.println("Using radial weight");
+				cmMaker = new ModelCovarianceMatrix(parameterList, cmV, cmH, 1., applyRadialWeight);
 			}
 			else {
 				System.out.println("Using model covariance matrix and parameter weight with " + cmV + " " + cmH + " " + sensitivityFile);
@@ -526,9 +543,19 @@ public class LetMeInvert_fromAtA implements Operation {
 						else
 							atd = ata.operate(inputVector);
 						if (applyModelCovariance) {
+							double ataScale = 0;
+							for (int i = 0; i < ata.getColumnDimension(); i++)
+								ataScale += Math.abs(ata.getEntry(i, i));
+							ataScale /= ata.getColumnDimension();
+							
 //							ata = cm.multiply(ata);
+							cmMaker.mapMultiply(1. / (ataScale * lambda));
+							
 							ata = cmMaker.leftMultiply(ata);
-						
+							
+							for (int k = 0; k < ata.getColumnDimension(); k++)
+								ata.addToEntry(k, k, 1.);
+							
 //							atd = cm.operate(atd);
 							atd = cmMaker.operate(atd);
 							

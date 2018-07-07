@@ -37,7 +37,7 @@ public class QMUPartialCorrelation {
 		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(basicIDPath, basicDataPath);
 		Dvector dVector = new Dvector(basicIDs);
 		
-		ObservationEquation equation = new ObservationEquation(partialIDs, unknowns, dVector, false, false, null, null, null);
+		ObservationEquation equation = new ObservationEquation(partialIDs, unknowns, dVector, false, false, null, null, null, null);
 		RealMatrix ata = equation.getAtA();
 		
 		Path outpath = Paths.get("parMU_Q_correlation.inf");

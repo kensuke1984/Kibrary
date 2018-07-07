@@ -108,11 +108,15 @@ public class LetMeInvert implements Operation {
 	
 	private ObservationEquation eq;
 	
+	private Path verticalMapping;
+	
 	private String[] phases;
 	
 	private List<DataSelectionInformation> selectionInfo;
 	
 	private boolean modelCovariance;
+	
+	private double cm0, cmH, cmV;
 	
 	private double lambdaQ, lambdaMU;
 	
@@ -257,7 +261,22 @@ public class LetMeInvert implements Operation {
 		}
 		else
 			selectionInfo = null;
+		
 		modelCovariance = Boolean.valueOf(property.getProperty("modelCovariance"));
+		
+		if (modelCovariance) {
+			if (!property.containsKey("cm0"))
+				throw new RuntimeException("cm0 must be set when modelCovariance=true");
+			if (!property.containsKey("cmH"))
+				throw new RuntimeException("cmH must be set when modelCovariance=true");
+			if (!property.containsKey("cmV"))
+				throw new RuntimeException("cmV must be set when modelCovariance=true");
+			
+			cm0 = Double.parseDouble(property.getProperty("cm0"));
+			cmH = Double.parseDouble(property.getProperty("cmH"));
+			cmV = Double.parseDouble(property.getProperty("cmV"));
+		}
+		
 		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
 		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
@@ -273,6 +292,8 @@ public class LetMeInvert implements Operation {
 		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 		
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
+		
+		verticalMapping = property.containsKey("verticalMapping") ? Paths.get(property.getProperty("verticalMapping")) : null;
 	}
 
 	/**
@@ -317,6 +338,7 @@ public class LetMeInvert implements Operation {
 			pw.println("time_receiver false");
 			pw.println("##Use phases (blank = all phases)");
 			pw.println("#phases");
+			pw.println("#verticalMapping");
 			pw.println("##CombinationType to combine 1-D pixels or voxels (null)");
 			pw.println("#combinationType");
 			pw.println("#nUnknowns PAR2 9 9 PARQ 9 9");
@@ -324,6 +346,12 @@ public class LetMeInvert implements Operation {
 			pw.println("#DataSelectionInformationFile");
 			pw.println("##boolean modelCovariance (false)");
 			pw.println("#modelCovariance");
+			pw.println("##double cm0");
+			pw.println("#cm0");
+			pw.println("##double cmH");
+			pw.println("#cmH");
+			pw.println("##double cmV");
+			pw.println("#cmV");
 			pw.println("##double lambdaQ (0.3)");
 			pw.println("#lambdaQ");
 			pw.println("##double lambdaMU (0.03)");
@@ -491,11 +519,13 @@ public class LetMeInvert implements Operation {
 			throw new RuntimeException("Error: Weighting should be LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
 		}
 		
-		if (modelCovariance)
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling);
+		if (modelCovariance) {
+//			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling, verticalMapping);
+			eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMapping);
+		}
 		else
 			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
-					unknownParameterWeightType);
+					unknownParameterWeightType, verticalMapping);
 		
 //		Path AtAPath = workPath.resolve("ata_stable_" + weightingType + ".dat");
 //		Path AtdPath = workPath.resolve("atd_stable_" + weightingType + ".dat");
@@ -518,10 +548,10 @@ public class LetMeInvert implements Operation {
 			outputDistribution(outPath.resolve("stationEventDistribution.inf"));
 			dVector.outOrder(outPath);
 			dVector.outPhases(outPath);
-//			outEachTrace(outPath.resolve("trace"));
+			outEachTrace(outPath.resolve("trace"));
 			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
 			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
-//			eq.outputA(outPath.resolve("partial"));
+			eq.outputA(outPath.resolve("partial"));
 //			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
 			dVector.outWeighting(outPath);
@@ -762,7 +792,6 @@ public class LetMeInvert implements Operation {
 			}
 
 		}
-
 	}
 
 	private void solve() {
@@ -770,8 +799,10 @@ public class LetMeInvert implements Operation {
 			try {
 				if (method == InverseMethodEnum.LEAST_SQUARES_METHOD)
 					return; // TODO
-				if (modelCovariance)
-					solve(outPath.resolve(method.simple()), method.getMethod(eq.getCmAtA_1(), eq.getCmAtD()));
+				if (modelCovariance) {
+//					solve(outPath.resolve(method.simple()), method.getMethod(eq.getCmAtA_1(), eq.getCmAtD()));
+					solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+				}
 				else
 					solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
 			} catch (Exception e) {
@@ -783,14 +814,30 @@ public class LetMeInvert implements Operation {
 	private void solve(Path outPath, InverseProblem inverseProblem) throws IOException {
 		// invOutDir.mkdir();
 		inverseProblem.compute();
-		inverseProblem.outputAns(outPath);
+		Files.createDirectories(outPath);
 		outVariance(outPath, inverseProblem);
 		outVariancePerEvents(outPath, inverseProblem);
-
+		
+		if (eq.getCm() != null) {
+			System.out.println("Computing model perturbation from the modified inverse problem's solution");
+			computeDeltaM(inverseProblem);
+		}
+		inverseProblem.outputAns(outPath);
+		
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
 		RealMatrix p = inverseProblem.getBaseVectors();
 		for (int j = 0; j < eq.getMlength(); j++)
 			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
+	}
+	
+	private void computeDeltaM(InverseProblem inverseProblem) {
+		int n = eq.getMlength();//Math.max(20, eq.getMlength());
+		ModelCovarianceMatrix cm = eq.getCm();
+		RealMatrix l = cm.getL();
+		for (int i = 1; i <= n; i++) {
+			RealVector deltaM = l.operate(inverseProblem.getAns(i));
+			inverseProblem.setANS(i, deltaM);
+		}
 	}
 
 	/**
@@ -814,7 +861,6 @@ public class LetMeInvert implements Operation {
 	 * @param outPath
 	 */
 	private void outVariance(Path outPath, InverseProblem inverse) throws IOException {
-
 		Path out = outPath.resolve("variance.txt");
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());

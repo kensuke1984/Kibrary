@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 
@@ -75,22 +76,28 @@ public class Profile {
 					
 					PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 					
+					Timewindow largerWindow = new Timewindow(timewindow.get(0).getStartTime() - 100, timewindow.get(0).getEndTime() + 200);
+					
 //					Trace obstrace = sacname.read().createTrace().cutWindow(700, 1800);
-					Trace obstrace = sacname.read().createTrace().cutWindow(timewindow.get(0));
+					SACData obsdata = sacname.read();
+					Trace obstrace = obsdata.createTrace().cutWindow(largerWindow);
 					String synname = sacname.getName().replace(".T", ".Tsc");
 					SACData syndata = new SACFileName(event.getPath() + "/" + synname).read();
-					Trace syntrace = syndata.createTrace().cutWindow(timewindow.get(0));
+					Trace syntrace = syndata.createTrace().cutWindow(largerWindow);
 					
 					List<Trace> windowSyntraces = timewindow.stream().map(tw -> syndata.createTrace().cutWindow(tw)).collect(Collectors.toList());
 					
-					double maxObs = obstrace.getYVector().getLInfNorm();
+					double maxObs = obsdata.createTrace().cutWindow(timewindow.get(0)).getYVector().getLInfNorm();
 					double distance = sacdata.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(sacdata.getStation().getPosition())
 							* 180. / Math.PI;
-					pw.println("\"" + filename + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs * 2, distance) + "w lines lw .6 lc \"black\",\\");
-					pw.println("\"" + filename + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs * 2, distance) + "w lines lw .6 lc \"red\",\\");
+					
+					double t0 = timewindow.get(0).getStartTime();
+					
+					pw.println("\"" + filename + "\" " + String.format("u ($1-%.3f):($2/%.3e+%.2f) ", t0, maxObs * 2, distance) + "w lines lw .6 lc \"black\",\\");
+					pw.println("\"" + filename + "\" " + String.format("u ($1-%.3f):($3/%.3e+%.2f) ", t0, maxObs * 2, distance) + "w lines lw .6 lc \"red\",\\");
 					for (int j = 0; j < windowSyntraces.size(); j++) {
 						String name = sacname.getStationName() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + String.format("_tw%d", j) + ".txt";
-						pw.println("\"" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs * 2, distance) + "w lines lw .8 lc \"cyan\",\\");
+						pw.println("\"" + name + "\" " + String.format("u ($1-%.3f):($2/%.3e+%.2f) ", t0, maxObs * 2, distance) + "w lines lw .8 lc \"cyan\",\\");
 					}
 					
 					double[] time = obstrace.getX();
@@ -116,8 +123,8 @@ public class Profile {
 					k = (int) distance;
 					if (k >= maxDistance)
 						continue;
-					obsTraces[k] = obsTraces[k] == null ? obstrace : obsTraces[k].add(obstrace);
-					synTraces[k] = synTraces[k] == null ? syntrace : synTraces[k].add(syntrace);
+					obsTraces[k] = obsTraces[k] == null ? obstrace : add(obsTraces[k], obstrace);
+					synTraces[k] = synTraces[k] == null ? syntrace : add(synTraces[k], syntrace);
 				}
 				pw.close();
 				
@@ -151,6 +158,7 @@ public class Profile {
 					double[] time = obsTraces[i].getX();
 					double[] obsY = obsTraces[i].getY();
 					double[] synY = synTraces[i].getY();
+					
 					for (int j = 0; j < obsTraces[i].getLength() / resampling; j++)
 						pwTrace.printf("%.3f %.6e %.6e\n", time[j * resampling], synY[j * resampling], obsY[j * resampling]);
 					
@@ -193,7 +201,7 @@ public class Profile {
 		double[] x1 = trace1.getX();
 		double[] x2 = trace2.getX();
 		double start = x1[0] < x2[0] ? x2[0] : x1[0];
-		double end = x1[x1.length] > x2[x2.length] ? x2[x2.length] : x1[x1.length];
+		double end = x1[x1.length-1] > x2[x2.length-1] ? x2[x2.length-1] : x1[x1.length-1];
 		
 		return trace1.cutWindow(start, end).add((trace2).cutWindow(start, end));
 	}

@@ -28,7 +28,7 @@ public class MakeRunFolder {
 	public static void main(String[] args) {
 		Path specfemRoot = Paths.get(System.getProperty("user.dir"));
 		Path eventFolderPath = Paths.get(args[0]);
-		int nSimultaneousRun = 8;
+		int nSimultaneousRun = 20;
 		
 		try {
 			if (!Files.isDirectory(specfemRoot))

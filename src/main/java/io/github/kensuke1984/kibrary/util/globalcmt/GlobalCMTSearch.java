@@ -72,6 +72,17 @@ public class GlobalCMTSearch {
 		sea.setLongitudeRange(-50, 0);
 		sea.setDepthRange(13, 700.);
 		
+		//Aleutians
+		sea.setMwRange(5.5, 7.2);
+		sea.setLatitudeRange(50, 70);
+		sea.setLongitudeRange(-160, -140);
+		sea.setDepthRange(80, 700.);
+		
+		sea.setMwRange(5.5, 7.2);
+		sea.setLatitudeRange(50, 70);
+		sea.setLongitudeRange(175, 195);
+		sea.setDepthRange(80, 700.);
+		
 		HorizontalPosition usarrayWest = new HorizontalPosition(40, -120);
 		HorizontalPosition usarrayMiddle = new HorizontalPosition(40, -100);
 		HorizontalPosition usarrayEast = new HorizontalPosition(40, -80);
@@ -91,28 +102,29 @@ public class GlobalCMTSearch {
 //		System.out.println(ids.size() + " event founds");
 		
 //		Atlantic 
-		Set<GlobalCMTID> ids = sea.search().stream().filter(id -> {
-			Location loc = id.getEvent().getCmtLocation();
-			double distance1 = Math.toDegrees(usarrayWest.getEpicentralDistance(loc));
-			double distance2 = Math.toDegrees(usarrayMiddle.getEpicentralDistance(loc));
-			double distance3 = Math.toDegrees(usarrayEast.getEpicentralDistance(loc));
-			if ( (distance1 <= 100 && distance1 >= 70) 
-				|| (distance2 <= 100 && distance2 >= 70)
-				|| (distance3 <= 100 && distance3 >= 70) )
-				return true;
-			else
-				return false;
-		}).collect(Collectors.toSet());
-		System.out.println(ids.size() + " event founds");
-		
-//		Set<GlobalCMTID> ids = sea.search();
+//		Set<GlobalCMTID> ids = sea.search().stream().filter(id -> {
+//			Location loc = id.getEvent().getCmtLocation();
+//			double distance1 = Math.toDegrees(usarrayWest.getEpicentralDistance(loc));
+//			double distance2 = Math.toDegrees(usarrayMiddle.getEpicentralDistance(loc));
+//			double distance3 = Math.toDegrees(usarrayEast.getEpicentralDistance(loc));
+//			if ( (distance1 <= 100 && distance1 >= 70) 
+//				|| (distance2 <= 100 && distance2 >= 70)
+//				|| (distance3 <= 100 && distance3 >= 70) )
+//				return true;
+//			else
+//				return false;
+//		}).collect(Collectors.toSet());
 //		System.out.println(ids.size() + " event founds");
 		
-//		for (GlobalCMTID id : ids)
-//			System.out.println(id);
+		Set<GlobalCMTID> ids = sea.search();
+		System.out.println(ids.size() + " event founds");
+		
+		for (GlobalCMTID id : ids)
+			System.out.println(id);
 		
 //		Path outfile = Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/DATA/eventList_Japan.txt");
-		Path outfile = Paths.get("/Users/Anselme/Dropbox/Kenji/eventList_Atlantic.txt");
+		Path outfile = Paths.get("/Users/Anselme/Dropbox/Kenji/eventList_Aleutians_MTZ.txt");
+//		Path outfile = Paths.get("/Users/Anselme/Dropbox/Kenji/eventList_Atlantic.txt");
 //		"/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/GlobalCMTIDs_UMstudy_CA_AtlanticEvent_info.txt"
 		try {
 			PrintWriter pw = new PrintWriter(

@@ -20,6 +20,11 @@ import org.apache.commons.math3.util.FastMath;
  */
 public class BandPassFilter extends ButterworthFilter {
 
+	public static void main(String[] args) {
+		ButterworthFilter filter = new BandPassFilter(0.08*2*Math.PI/20., 0.005*2*Math.PI/20., 6);
+		System.out.println(filter.toString());
+	}
+	
 	/**
 	 * @return &omega;<sub>H</sub>
 	 */
@@ -139,7 +144,7 @@ public class BandPassFilter extends ButterworthFilter {
 		double cut = 1 / (1 + as * as);
 		return "filter permiability, cut: " + permeability + "  " + cut + "\n" + "band pass (Hz):"
 				+ omegaL / 2.0 / Math.PI / 0.05 + "  " + omegaH / 2.0 / Math.PI / 0.05 + "\n" + "cut region (Hz): "
-				+ omegaSl / 2.0 / Math.PI / 0.05 + ",  " + omegaSh / 2.0 / Math.PI / 0.05 + "backword " + backward;
+				+ omegaSl / 2.0 / Math.PI / 0.05 + ",  " + omegaSh / 2.0 / Math.PI / 0.05 + " backward " + backward + " filterNp " + n;
 	}
 
 	/**

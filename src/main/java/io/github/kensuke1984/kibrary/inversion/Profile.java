@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
@@ -15,7 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -27,11 +30,15 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.stat.inference.TTest;
 
 
 public class Profile {
 	public static void main(String[] args) {
 		int methodOrder = Integer.parseInt(args[0]);
+		GlobalCMTID oneEvent = null;
+		if (args.length == 2)
+			oneEvent = new GlobalCMTID(args[1]);
 		InverseMethodEnum method = InverseMethodEnum.CONJUGATE_GRADIENT;
 		String inversionResultString = null;
 		Path inversionResultPath = null;
@@ -93,35 +100,70 @@ public class Profile {
 			List<BasicID> obsList = ir.getBasicIDList().stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 				.collect(Collectors.toList());
 			Set<GlobalCMTID> events = ir.idSet();
+			
+			Map<Station, Double> stationSynVariance = new HashMap<>();
+			Map<Station, Double> stationBornVariance = new HashMap<>();
+			Map<Station, Double> stationObsNorm = new HashMap<>();
+			obsList.parallelStream().forEach(id -> {
+				Station station = id.getStation();
+				stationSynVariance.put(station, 0.);
+				stationBornVariance.put(station, 0.);
+				stationObsNorm.put(station, 0.);
+			});
+//			for (Station station : ir.stationSet()) {
+//				stationSynVariance.put(station, 0.);
+//				stationBornVariance.put(station, 0.);
+//				stationObsNorm.put(station, 0.);
+//			}
+			
+			double[] totalSynVariance = new double[] {0.};
+			double[] totalBornVariance = new double[] {0.};
+			double[] totalObsNorm = new double[] {0.};
+			
 			for (GlobalCMTID event : events) {
+				if (oneEvent != null && !event.equals(oneEvent))
+					continue;
+				System.out.println(event);
+				
 				List<BasicID> tmpObs = obsList.stream().filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
 				
 				Path outpath = inversionResultPath.resolve(profilePath.resolve(event.toString() + ".plt"));
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-					pw.println("set terminal postscript enhanced color font \"Helvetica,12\"");
+					pw.println("set terminal postscript enhanced color font \"Helvetica,14\"");
 					pw.println("set output \"" + event + ".ps\"");
 					pw.println("unset key");
+					pw.println("set xlabel 'Time aligned on S-wave arrival (s)'");
+					pw.println("set ylabel 'Distance (deg)'");
+					pw.println("set xtics 10");
+					pw.println("set ytics 5");
 					pw.println("set size .5,1");
 					pw.print("p ");
 					int n = tmpObs.size();
-					AtomicInteger i = new AtomicInteger();
+//					AtomicInteger i = new AtomicInteger();
 					double[] synVariance = new double[1];
 					double[] bornVariance = new double[1];
 					double[] obsNorm = new double[1];
+					
+					String[] scriptString = new String[] {""};
+					String[] varString = new String[] {""};
+					
 					tmpObs.parallelStream().forEach(id -> {
-						i.incrementAndGet();
+//						i.incrementAndGet();
 						try {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
 							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
 							String name = ir.getTxtName(id);
 							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 									* 180. / Math.PI;
-							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"black\",\\");
-							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"red\",\\");
-							if (i.get() == n)
-								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\"");
-							else
-								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\",\\");
+							scriptString[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\",\\\n";
+//							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"black\",\\");
+//							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"red\",\\");
+////							if (i.get() == n)
+////								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\"");
+////							else
+//								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\",\\");
 							
 							// output variance
 							RealVector synVector = ir.syntheticOf(id).getYVector();
@@ -132,17 +174,35 @@ public class Profile {
 							
 							double tmpSyn = Math.sqrt(tmpSynVariance / tmpObsNorm);
 							double tmpBorn =  Math.sqrt(tmpBornVariance / tmpObsNorm);
-							pw2.println(id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
+							varString[0] += id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + "\n";
+//							pw2.println(id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
 							
 							synVariance[0] += tmpSynVariance;
 							bornVariance[0] += tmpBornVariance;
 							obsNorm[0] += tmpObsNorm;
+							
+							totalSynVariance[0] += tmpSynVariance;
+							totalBornVariance[0] += tmpBornVariance;
+							totalObsNorm[0] += tmpObsNorm;
+							
+							Station sta = id.getStation();
+							try {
+								stationSynVariance.put(sta, stationSynVariance.get(sta) + tmpSynVariance);
+								stationBornVariance.put(sta, stationBornVariance.get(sta) + tmpBornVariance);
+								stationObsNorm.put(sta, stationObsNorm.get(sta) + tmpObsNorm);
+							} catch (NullPointerException e) {
+								System.err.println(sta + " " + sta.getPosition());
+								e.printStackTrace();
+							}
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
 					});
-					double tmpSyn = Math.sqrt(synVariance[0] / obsNorm[0]);
-					double tmpBorn =  Math.sqrt(bornVariance[0] / obsNorm[0]);
+					pw.print(scriptString[0]);
+					pw2.print(varString[0]);
+					
+					double tmpSyn = synVariance[0] / obsNorm[0]; //Math.sqrt(synVariance[0] / obsNorm[0]);
+					double tmpBorn =  bornVariance[0] / obsNorm[0]; //Math.sqrt(bornVariance[0] / obsNorm[0]);
 					pw1.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
 					
 				} catch (IOException e) {
@@ -150,10 +210,11 @@ public class Profile {
 				}
 				
 				int m = 140;
+				int l = 36;
 				
-				RealVector[] obsVectors = new RealVector[m];
-				RealVector[] synVectors = new RealVector[m];
-				RealVector[] bornVectors = new RealVector[m];
+				RealVector[][] obsVectors = new RealVector[m][l+1];
+				RealVector[][] synVectors = new RealVector[m][l+1];
+				RealVector[][] bornVectors = new RealVector[m][l+1];
 				
 				
 				Path stackPath = stackRoot.resolve(event.toString());
@@ -172,11 +233,17 @@ public class Profile {
 					
 					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 							* 180. / Math.PI;
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
 					int i = (int) (distance);
+					int j = (int) (azimuth / 10);
 					
-					obsVectors[i] = obsVectors[i] == null ? obsVector : add(obsVectors[i], obsVector);
-					synVectors[i] = synVectors[i] == null ? synVector : add(synVectors[i], synVector);
-					bornVectors[i] = bornVectors[i] == null ? bornVector : add(bornVectors[i], bornVector);
+					obsVectors[i][0] = obsVectors[i][0] == null ? obsVector : add(obsVectors[i][0], obsVector);
+					synVectors[i][0] = synVectors[i][0] == null ? synVector : add(synVectors[i][0], synVector);
+					bornVectors[i][0] = bornVectors[i][0] == null ? bornVector : add(bornVectors[i][0], bornVector);
+					
+					obsVectors[i][j+1] = obsVectors[i][j+1] == null ? obsVector : add(obsVectors[i][j+1], obsVector);
+					synVectors[i][j+1] = synVectors[i][j+1] == null ? synVector : add(synVectors[i][j+1], synVector);
+					bornVectors[i][j+1] = bornVectors[i][j+1] == null ? bornVector : add(bornVectors[i][j+1], bornVector);
 					
 					double tmpSynVariance = synVector.subtract(obsVector).dotProduct(synVector.subtract(obsVector));
 					double tmpBornVariance = bornVector.subtract(obsVector).dotProduct(bornVector.subtract(obsVector));
@@ -194,36 +261,40 @@ public class Profile {
 				Files.deleteIfExists(outPlot);
 				
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPlot, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
-					pw.println("set terminal postscript enhanced color font \"Helvetica,12\"");
+					pw.println("set terminal postscript enhanced color font \"Helvetica,14\"");
 					pw.println("set output \"" + event + ".ps\"");
 					pw.println("unset key");
+					pw.println("set xlabel 'Time aligned on S-wave arrival (s)'");
+					pw.println("set ylabel 'Distance (deg)'");
+					pw.println("set xtics 10");
+					pw.println("set ytics 5");
 					pw.println("set size .5,1");
 					pw.print("p ");
 					
 					for (int i = 0; i < m; i++) {
-						if (obsVectors[i] == null)
+						if (obsVectors[i][0] == null)
 							continue;
 						Path outObs = stackPath.resolve(String.format("obsStack_%s_%d-%d.txt", event, i, i+1));
 						Path outSyn = stackPath.resolve(String.format("synStack_%s_%d-%d.txt", event, i, i+1));
 						Path outBorn = stackPath.resolve(String.format("bornStack_%s_%d-%d.txt", event, i, i+1));
 						
-						double maxObs = obsVectors[i].getLInfNorm();
+						double maxObs = obsVectors[i][0].getLInfNorm();
 						
 						try (PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outObs, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-							for (int k = 0; k < obsVectors[i].getDimension(); k++)
-								pw3.println(k + " " + obsVectors[i].getEntry(k));
+							for (int k = 0; k < obsVectors[i][0].getDimension(); k++)
+								pw3.println(k + " " + obsVectors[i][0].getEntry(k));
 						} catch (IOException e) {
 						e.printStackTrace();
 						}
 						try (PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outSyn, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-							for (int k = 0; k < synVectors[i].getDimension(); k++)
-								pw3.println(k + " " + synVectors[i].getEntry(k));
+							for (int k = 0; k < synVectors[i][0].getDimension(); k++)
+								pw3.println(k + " " + synVectors[i][0].getEntry(k));
 						} catch (IOException e) {
 						e.printStackTrace();
 						}
 						try (PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outBorn, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-							for (int k = 0; k < bornVectors[i].getDimension(); k++)
-								pw3.println(k + " " + bornVectors[i].getEntry(k));
+							for (int k = 0; k < bornVectors[i][0].getDimension(); k++)
+								pw3.println(k + " " + bornVectors[i][0].getEntry(k));
 						} catch (IOException e) {
 						e.printStackTrace();
 						}
@@ -233,15 +304,96 @@ public class Profile {
 						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"blue\",\\");
 					}
 					pw.println();
-					
 				} catch (IOException e) {
 					e.printStackTrace();
+				}
+				
+				for (int j = 0; j < l; j++) {
+					boolean pass = true;
+					for (int i = 0; i < m; i++)
+						if (obsVectors[i][j+1] != null)
+							pass = false;
+					if (pass)
+						continue;
+					outPlot = stackPath.resolve(event + ".az" + j + ".plt");
+					Files.deleteIfExists(outPlot);
+					PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPlot, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+					
+					pw.println("set terminal postscript enhanced color font \"Helvetica,14\"");
+					pw.println("set output \"" + event + ".az" + j + ".ps\"");
+					pw.println("unset key");
+					
+
+					pw.println("set xtics 10");
+					pw.println("set ytics 5");
+					pw.println("set size .5,1");
+					pw.print("p ");
+					
+					for (int i = 0; i < m; i++) {
+						if (obsVectors[i][j+1] == null)
+							continue;
+						Path outObs = stackPath.resolve(String.format("obsStack_%s_%d-%d.az" + j + ".txt", event, i, i+1));
+						Path outSyn = stackPath.resolve(String.format("synStack_%s_%d-%d.az" + j + ".txt", event, i, i+1));
+						Path outBorn = stackPath.resolve(String.format("bornStack_%s_%d-%d.az" + j + ".txt", event, i, i+1));
+						
+						double maxObs = obsVectors[i][j+1].getLInfNorm();
+						
+						try (PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outObs, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+							for (int k = 0; k < obsVectors[i][j+1].getDimension(); k++)
+								pw3.println(k + " " + obsVectors[i][j+1].getEntry(k));
+						} catch (IOException e) {
+						e.printStackTrace();
+						}
+						try (PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outSyn, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+							for (int k = 0; k < synVectors[i][j+1].getDimension(); k++)
+								pw3.println(k + " " + synVectors[i][j+1].getEntry(k));
+						} catch (IOException e) {
+						e.printStackTrace();
+						}
+						try (PrintWriter pw3 = new PrintWriter(Files.newBufferedWriter(outBorn, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+							for (int k = 0; k < bornVectors[i][j+1].getDimension(); k++)
+								pw3.println(k + " " + bornVectors[i][j+1].getEntry(k));
+						} catch (IOException e) {
+						e.printStackTrace();
+						}
+						
+						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"black\",\\");
+						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"red\",\\");
+						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%d) ", maxObs * 2, i) + "w lines lc \"blue\",\\");
+					}
+					pw.println();
+					pw.close();
 				}
 			}
 			pw1.flush();
 			pw1.close();
 			pw4.flush();
 			pw4.close();
+			
+			// write variance at each station
+			pw1 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("stationVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+			pw1.println("# Station synVariance bornVariance varianceReduction;(syn - born)");
+			
+			for (Station sta : stationObsNorm.keySet()) {
+				try {
+				double bornVariance = stationBornVariance.get(sta) / stationObsNorm.get(sta);
+				double synVariance = stationSynVariance.get(sta) / stationObsNorm.get(sta);
+				pw1.println(sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() 
+						+ " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
+				} catch (NullPointerException e) {
+					System.err.println(sta + " " + sta.getPosition());
+				}
+			}
+			pw1.close();
+			
+			// write total variance
+			pw2 = new PrintWriter(Files.newBufferedWriter(inversionResultPath.resolve("totalVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+			pw2.println("SynVariance bornVariance varianceReduction;(syn - born)");
+			
+			double bornVariance = totalBornVariance[0] / totalObsNorm[0];
+			double synVariance = totalSynVariance[0] / totalObsNorm[0];
+			pw1.println(synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
+			pw2.close();
 			
 		} catch (IOException e) {
 			e.printStackTrace();

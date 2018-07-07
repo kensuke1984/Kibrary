@@ -114,6 +114,38 @@ public class ThreeDPartialMaker {
 		findLsmooth();
 		setAngles();
 	}
+	
+	public ThreeDPartialMaker(DSMOutput fpSH, DSMOutput fpPSV, DSMOutput bpSH, DSMOutput bpPSV) {
+		ignoreBodyR = new HashSet<>();
+		
+		this.fp = sum(fpSH, fpPSV);
+		this.bp = sum(bpSH, bpPSV);
+		
+		if (!isGoodPairPermissive(fp, bp)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
+		
+		this.bp2 = null;
+		this.bp3 = null;
+		this.dh = null;
+		findLsmooth();
+		setAngles();
+	}
+	
+	private DSMOutput sum(DSMOutput sh, DSMOutput psv) {
+		DSMOutput shpsv = psv;
+		
+		List<SpcBody> shBody = sh.getSpcBodyList();
+		List<SpcBody> psvBody = psv.getSpcBodyList();
+		
+		for (int i = 0; i < psvBody.size(); i++) {
+			SpcBody tmpBody = psvBody.get(i);
+			tmpBody.addBody(shBody.get(i));
+			psv.setSpcBody(i, tmpBody);
+		}
+		
+		return shpsv;
+	}
 
 	/**
 	 * Create a {@link DSMOutput} from a {@link ForwardPropagation} and a
@@ -225,6 +257,11 @@ public class ThreeDPartialMaker {
 			@Override
 			public SpcFileName getSpcFileName() {
 				return spcFileName;
+			}
+			
+			@Override
+			public void setSpcBody(int i, SpcBody body) {
+//				spcBody.set(i, body); TODO
 			}
 		};
 	}
@@ -476,11 +513,16 @@ public class ThreeDPartialMaker {
 	 */
 	private Complex[] inverseFourierTransform(Complex[] complex) {
 		// must be tested
+//		System.out.println(lsmooth);
 		int nnp = fp.np() * lsmooth;
 		FastFourierTransformer fft = new FastFourierTransformer(DftNormalization.STANDARD);
 
 		Complex[] data = new Complex[nnp * 2];
-
+		
+		//test tapper
+//		Complex[] tmp = rightTapper(complex);
+//		System.arraycopy(tmp, 0, data, 0, fp.np() + 1);
+		
 		// pack to temporary Complex array
 		System.arraycopy(complex, 0, data, 0, fp.np() + 1);
 
@@ -490,10 +532,25 @@ public class ThreeDPartialMaker {
 		// set values for imaginary frequency
 		for (int i = 0; i < nnp - 1; i++)
 			data[nnp + i + 1] = data[nnp - i - 1].conjugate();
-
+//		
+//		for (int i = 0; i < nnp; i++)
+//			data[nnp + i] = data[nnp - i - 1].conjugate();
+//
+		
 		// fast fourier transformation
 		return fft.transform(data, TransformType.INVERSE); // check
 
+	}
+	
+	private Complex[] rightTapper(Complex[] complex) {
+		Complex[] tappered = complex.clone();
+		int l = complex.length;
+		int n = 30;
+		
+		for (int i = 0; i < n; i++)
+			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * n) * i));
+		
+		return tappered;
 	}
 
 	/**

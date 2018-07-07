@@ -25,6 +25,8 @@ public interface DSMOutput {
 	 * @return list of spc bodies
 	 */
 	List<SpcBody> getSpcBodyList();
+	
+	void setSpcBody(int i, SpcBody body);
 
 	/**
 	 * @return array of body Rs

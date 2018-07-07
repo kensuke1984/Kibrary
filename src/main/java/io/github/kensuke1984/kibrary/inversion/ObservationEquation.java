@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.management.RuntimeErrorException;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -50,10 +52,10 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
  * @see {@link Dvector} {@link UnknownParameter}
  */
 public class ObservationEquation {
-
+	
 	private Matrix a;
 	
-	private Matrix cm;
+	private ModelCovarianceMatrix cm;
 	
 	private List<Double> unknownParameterWeigths;
 	
@@ -75,7 +77,12 @@ public class ObservationEquation {
 	 */
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
 			boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
-			, Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType) {
+			, Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath) {
+		if (verticalMappingPath != null) {
+			this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+			combinationType = CombinationType.VERTICAL_MAPPING;
+			System.out.println("Using vertical mapping " + verticalMappingPath);
+		}
 		this.dVector = dVector;
 		this.parameterList = parameterList;
 		this.originalParameterList = parameterList;
@@ -90,13 +97,21 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
+		System.out.println("Using combination type " + combinationType);
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
 				unknownParameterWeightType);
 		atd = computeAtD(dVector.getD());
 	}
 	
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
-			boolean time_source, boolean time_receiver, Map<PartialType, Integer[]> nUnknowns, double lambdaMU, double lambdaQ, double correlationScaling) {
+			boolean time_source, boolean time_receiver, Map<PartialType, Integer[]> nUnknowns, double lambdaMU, double lambdaQ, double correlationScaling
+			, Path verticalMappingPath) {
+		CombinationType combinationType = null;
+		if (verticalMappingPath != null) {
+			this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+			System.out.println("Using vertical mapping " + verticalMappingPath);
+			combinationType = CombinationType.VERTICAL_MAPPING;
+		}
 		this.dVector = dVector;
 		this.parameterList = parameterList;
 		this.originalParameterList = parameterList;
@@ -111,7 +126,7 @@ public class ObservationEquation {
 			}
 			System.out.println();
 		}
-		readA(partialIDs, time_receiver, time_source, bouncingOrders, null, nUnknowns, null);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns, null);
 		
 		double AtANormalizedTrace = 0;
 		double count = 0;
@@ -122,48 +137,60 @@ public class ObservationEquation {
 		AtANormalizedTrace /= count;
 		System.out.println("AtANormalizedTrace = " + AtANormalizedTrace);
 		
+		double normalization = AtANormalizedTrace * 0.1;
+		
 		// model covariance matrix
-		cm = new Matrix(this.parameterList.size(), this.parameterList.size());
-		for (int i = 0; i < this.parameterList.size(); i++) {
-			UnknownParameter unknown_i = this.parameterList.get(i);
-			if (unknown_i.getPartialType().isTimePartial()) {
-				cm.setEntry(i, i, 1e4);
-				continue;
-			}
-			for (int j = i; j < this.parameterList.size(); j++) {
-				UnknownParameter unknown_j = this.parameterList.get(j);
-				if (!unknown_i.getPartialType().equals(unknown_j.getPartialType()))
-					continue; // cm.setEntry(i, j, 0.);
-				double ri = unknown_i.getLocation().getR();
-				double rj = unknown_j.getLocation().getR();
-				double vij = .5 * (computeCorrelationLength(ri, correlationScaling)
-						+ computeCorrelationLength(rj, correlationScaling));
-				if (unknown_i.getPartialType().equals(PartialType.PARQ))
-					vij = 1.;//200. * correlationScaling;
-				if (unknown_i.getLocation().getR() >= 6346.6)
-					vij = 1e-3;
-				double rij = ri - rj;
-				double cmij = Math.exp(-2 * rij * rij / vij / vij);
-				if (unknown_i.getLocation().getR() >= 6346.6) {
-					if (unknown_i.getPartialType().equals(PartialType.PAR2) || unknown_i.getPartialType().equals(PartialType.MU))
-						cmij *= 1. / (lambdaMU * AtANormalizedTrace * 20);
-					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
-						cmij *= 1. / (lambdaQ * AtANormalizedTrace * 20);
-					else
-						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
-				}
-				else {
-					if (unknown_i.getPartialType().equals(PartialType.PAR2) || unknown_i.getPartialType().equals(PartialType.MU))
-						cmij *= 1. / (lambdaMU * AtANormalizedTrace);
-					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
-						cmij *= 1. / (lambdaQ * AtANormalizedTrace);
-					else
-						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
-				}
-				cm.setEntry(i, j, cmij);
-				cm.setEntry(j, i, cmij);
-			}
-		}
+		cm = new ModelCovarianceMatrix(parameterList, 0., correlationScaling, normalization, true);
+		
+//		this.cm = new Matrix(this.parameterList.size(), this.parameterList.size());
+//		RealMatrix matrix = cm.getCm();
+//		for (int i = 0; i < this.parameterList.size(); i++) {
+//			for (int j = 0; j < this.parameterList.size(); j++) {
+//				this.cm.setEntry(i, j, matrix.getEntry(i, j));
+//			}
+//		}
+		
+//		cm = new Matrix(this.parameterList.size(), this.parameterList.size());
+//		for (int i = 0; i < this.parameterList.size(); i++) {
+//			UnknownParameter unknown_i = this.parameterList.get(i);
+//			if (unknown_i.getPartialType().isTimePartial()) {
+//				cm.setEntry(i, i, 1e4);
+//				continue;
+//			}
+//			for (int j = i; j < this.parameterList.size(); j++) {
+//				UnknownParameter unknown_j = this.parameterList.get(j);
+//				if (!unknown_i.getPartialType().equals(unknown_j.getPartialType()))
+//					continue; // cm.setEntry(i, j, 0.);
+//				double ri = unknown_i.getLocation().getR();
+//				double rj = unknown_j.getLocation().getR();
+//				double vij = .5 * (computeCorrelationLength(ri, correlationScaling)
+//						+ computeCorrelationLength(rj, correlationScaling));
+//				if (unknown_i.getPartialType().equals(PartialType.PARQ))
+//					vij = 1.;//200. * correlationScaling;
+//				if (unknown_i.getLocation().getR() >= 6346.6)
+//					vij = 1e-3;
+//				double rij = ri - rj;
+//				double cmij = Math.exp(-2 * rij * rij / vij / vij);
+//				if (unknown_i.getLocation().getR() >= 6346.6) {
+//					if (unknown_i.getPartialType().equals(PartialType.PAR2) || unknown_i.getPartialType().equals(PartialType.MU))
+//						cmij *= 1. / (lambdaMU * AtANormalizedTrace * 20);
+//					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
+//						cmij *= 1. / (lambdaQ * AtANormalizedTrace * 20);
+//					else
+//						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
+//				}
+//				else {
+//					if (unknown_i.getPartialType().equals(PartialType.PAR2) || unknown_i.getPartialType().equals(PartialType.MU))
+//						cmij *= 1. / (lambdaMU * AtANormalizedTrace);
+//					else if (unknown_i.getPartialType().equals(PartialType.PARQ))
+//						cmij *= 1. / (lambdaQ * AtANormalizedTrace);
+//					else
+//						throw new RuntimeException("Partial type " + unknown_i.getPartialType() + " not yet possible");
+//				}
+//				cm.setEntry(i, j, cmij);
+//				cm.setEntry(j, i, cmij);
+//			}
+//		}
 		
 		Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
 		for (int i = 0; i < a.getColumnDimension(); i++)
@@ -176,17 +203,82 @@ public class ObservationEquation {
 //			}
 //		}
 		
-		ata = a.computeAtA();
-		cmAtA_1 = (cm.multiply(ata)).add(identity);
+		RealMatrix tmpB = cm.lRightMultiply(a);
+		Matrix b = new Matrix(a.getRowDimension(), a.getColumnDimension());
+		for (int i = 0; i < a.getRowDimension(); i++) {
+			for (int j = 0; j < a.getColumnDimension(); j++) {
+				b.setEntry(i, j, tmpB.getEntry(i, j));
+			}
+		}
+		a = b;
+		ata = b.computeAtA();
+		cmAtA_1 = ata.add(identity);
+		
+//		ata = a.computeAtA();
+		
+//		cmAtA_1 = (cm.multiply(ata)).add(identity);
+		
+//		System.out.println("Computing cmAtA");
+//		cmAtA_1 = cm.leftMultiply(ata);
 
+		//corrected version using cholesky decompostion of the covariance matrix
+		
 		atd = computeAtD(dVector.getD());
-		cmAtd = cm.operate(a.transpose().operate(dVector.getD()));
+		cmAtd = atd;
+		
+//		cmAtd = cm.operate(a.transpose().operate(dVector.getD()));
 		
 //		for (int i = 0; i < parameterList.size(); i++) {
 //			for (int j = 0; j < parameterList.size(); j++) {
 //				System.out.println(i + " " + j + " " + ata.getEntry(i, j) + " " + atd.getEntry(j) + " " + cmAtA_1.getEntry(i, j) + " " + cmAtd.getEntry(j));
 //			}
 //		}
+	}
+	
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector
+			, double cm0, double cmH, double cmV, Path verticalMappingPath) {
+		CombinationType combinationType = null;
+		if (verticalMappingPath != null) {
+			this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+			System.out.println("Using vertical mapping " + verticalMappingPath);
+			combinationType = CombinationType.VERTICAL_MAPPING;
+		}
+		this.dVector = dVector;
+		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
+	
+		readA(partialIDs, false, false, null, combinationType, null, null);
+		
+		double AtANormalizedTrace = 0;
+		double count = 0;
+		for (int i = 0; i < this.parameterList.size(); i++) {
+			AtANormalizedTrace += a.getColumnVector(i).getNorm();
+			count++;
+		}
+		AtANormalizedTrace /= count;
+		System.out.println("AtANormalizedTrace = " + AtANormalizedTrace);
+		
+		double normalization = AtANormalizedTrace * cm0;
+		
+		// model covariance matrix
+		cm = new ModelCovarianceMatrix(parameterList, cmV, cmH, normalization, true);
+		
+		Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+		for (int i = 0; i < a.getColumnDimension(); i++)
+			identity.setEntry(i, i, 1.);
+		
+		RealMatrix tmpB = cm.lRightMultiply(a);
+		for (int i = 0; i < a.getRowDimension(); i++) {
+			for (int j = 0; j < a.getColumnDimension(); j++) {
+				a.setEntry(i, j, tmpB.getEntry(i, j));
+			}
+		}
+		ata = a.computeAtA();
+		cmAtA_1 = ata.add(identity);
+		ata = ata.add(identity);
+		
+		atd = computeAtD(dVector.getD());
+		cmAtd = atd;
 	}
 	
 	// scaling = 1. gives a correlation lenght of 50 km in the uppermost mantle
@@ -265,6 +357,8 @@ public class ObservationEquation {
 
 	private RealVector cmAtd;
 	
+	private ParameterMapping mapping;
+	
 	/**
 	 * Am=dのAを作る まずmとdの情報から Aに必要な偏微分波形を決める。
 	 * 
@@ -321,6 +415,9 @@ public class ObservationEquation {
 			}
 			int row = dVector.getStartPoints(k);
 			double weighting = dVector.getWeighting(k) * parameterList.get(column).getWeighting();
+			if (unknownParameterWeightType != null && unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT))
+				weighting = 1.;
+			weighting = 1.; // TO CHANGE
 			double[] partial = id.getData();
 			for (int j = 0; j < partial.length; j++)
 				a.setEntry(row + j, column, partial[j] * weighting);
@@ -348,12 +445,29 @@ public class ObservationEquation {
 		}
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
+		
 		if (combinationType != null) {
-
 //---------------------------------------------------------------------------------
 //------------------------------ CORRIDOR_BOXCAR -------------------------------
 //---------------------------------------------------------------------------------
-
+			
+			if (combinationType.equals(CombinationType.VERTICAL_MAPPING)) {
+				System.out.println("--> Using " + combinationType);
+				
+				parameterList = Stream.of(mapping.getUnknowns()).collect(Collectors.toList());
+				
+				Matrix aPrime = new Matrix(dVector.getNpts(), parameterList.size());
+				
+				for (int i = 0; i < parameterList.size(); i++) {
+					RealVector vector = new ArrayRealVector(a.getRowDimension());
+					for (int index : mapping.getiNewToOriginal(i))
+						vector = vector.add(a.getColumnVector(index));
+					aPrime.setColumnVector(i, vector);
+				}
+				
+				a = aPrime;
+			}
+			
 			if (combinationType.equals(CombinationType.CORRIDOR_BOXCAR)) {
 				System.out.println("Combining 1-D pixels into boxcars");
 				int totalUnknown = 0; 
@@ -1063,7 +1177,7 @@ public class ObservationEquation {
 //			System.out.println("\n");
 //		}
 		
-		if (unknownParameterWeightType != null) {
+		if (unknownParameterWeightType != null && !unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT)) {
 			unknownParameterWeigths = new ArrayList<>();
 			WeightUnknownParameter wup = null;
 			if (time_receiver || time_source)
@@ -1151,7 +1265,15 @@ public class ObservationEquation {
 		return ata;
 	}
 	
+	public ModelCovarianceMatrix getCm() {
+		return cm;
+	}
+	
 	public RealMatrix getCmAtA_1() {
+		if (cmAtA_1 != null) {
+			System.out.println("No recomputation of cmAtA_1");
+			return cmAtA_1;
+		}
 		if (cm == null)
 			throw new RuntimeException("The model covariance matrix Cm is not set");
 		if (ata == null) {
@@ -1160,10 +1282,11 @@ public class ObservationEquation {
 					ata = a.computeAtA();
 				}
 				if (cmAtA_1 == null) {
-					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
-					for (int i = 0; i < a.getColumnDimension(); i++)
-						identity.setEntry(i, i, 1.);
-					cmAtA_1 = (cm.multiply(ata)).add(identity);
+					throw new RuntimeException("The model covariance matrix Cm is not set");
+//					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+//					for (int i = 0; i < a.getColumnDimension(); i++)
+//						identity.setEntry(i, i, 1.);
+//					cmAtA_1 = (cm.multiply(ata)).add(identity);
 				}
 			}
 		}
@@ -1185,7 +1308,7 @@ public class ObservationEquation {
 			throw new FileAlreadyExistsException(outputPath.toString());
 		Files.createDirectories(outputPath);
 		BasicID[] ids = dVector.getSynIDs();
-		IntStream.range(0, ids.length).forEach(i -> {
+		IntStream.range(0, ids.length).parallel().forEach(i -> {
 			BasicID id = ids[i];
 			Path eventPath = outputPath.resolve(id.getGlobalCMTID().toString());
 			try {
@@ -1261,10 +1384,11 @@ public class ObservationEquation {
 				if (cm == null)
 					ata = a.computeAtA();
 				else {
-					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
-					for (int i = 0; i < a.getColumnDimension(); i++)
-						identity.setEntry(i, i, 1.);
-					ata = (cm.multiply(a.computeAtA())).add(identity);
+					throw new RuntimeException("No cm");
+//					Matrix identity = new Matrix(a.getColumnDimension(), a.getColumnDimension());
+//					for (int i = 0; i < a.getColumnDimension(); i++)
+//						identity.setEntry(i, i, 1.);
+//					ata = (cm.multiply(a.computeAtA())).add(identity);
 				}
 		}
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {

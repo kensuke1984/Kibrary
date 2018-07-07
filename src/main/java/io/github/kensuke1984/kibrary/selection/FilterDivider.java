@@ -79,13 +79,13 @@ public class FilterDivider implements Operation {
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+			property.setProperty("workPath", ".");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("obsPath"))
-			property.setProperty("obsPath", "");
+			property.setProperty("obsPath", ".");
 		if (!property.containsKey("synPath"))
-			property.setProperty("synPath", "");
+			property.setProperty("synPath", ".");
 		if (!property.containsKey("delta"))
 			property.setProperty("delta", "0.05");
 		if (!property.containsKey("highFreq"))

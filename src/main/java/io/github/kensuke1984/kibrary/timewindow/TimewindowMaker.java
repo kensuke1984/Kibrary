@@ -90,7 +90,7 @@ public class TimewindowMaker implements Operation {
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
+			property.setProperty("workPath", ".");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
 		if (!property.containsKey("frontShift"))
@@ -221,6 +221,7 @@ public class TimewindowMaker implements Operation {
 			try {
 				eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 						.forEach(sfn -> {
+//							System.out.println(sfn);
 					try {
 						if (corridor)
 							makeTimeWindowForCorridor(sfn);
@@ -577,14 +578,28 @@ public class TimewindowMaker implements Operation {
 					&& this.usePhases.contains(Phase.S)) {
 				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
 				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
-				if (tmpPhases.size() != 1)
+				if (tmpPhases.size() == 0)
 					System.out.println("Warning: sS not found at 40 degrees");
 				exPhaseTime = new double[1];
-				double sStime40 = tmpPhases.stream().findFirst().get().getTravelTime();
-				double Stime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.S)).findFirst().get().getTravelTime();
-				double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).findFirst().get().getTravelTime();
+				double sStime40 = tmpPhases.stream().map(p -> p.getTravelTime()).sorted().findFirst().get();
+				double Stime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+				double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
 //				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
 				exPhaseTime[0] = sStime40 - Stime40 + Stime;
+			}
+			
+			if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("pP")) && !this.usePhases.contains(Phase.PcP)
+					&& this.usePhases.contains(Phase.P)) {
+				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
+				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
+				if (tmpPhases.size() == 0)
+					System.out.println("Warning: pP not found at 40 degrees (unexpected)");
+				exPhaseTime = new double[1];
+				double pPtime40 = tmpPhases.stream().map(p -> p.getTravelTime()).sorted().findFirst().get();
+				double Ptime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+				double Ptime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+//				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
+				exPhaseTime[0] = pPtime40 - Ptime40 + Ptime;
 			}
 			
 			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);
@@ -608,8 +623,9 @@ public class TimewindowMaker implements Operation {
 			// window fix
 			Arrays.stream(windows).map(window -> fix(window, delta)).filter(window -> window.getEndTime() <= e).map(
 					window -> new TimewindowInformation(window.getStartTime(), window.getEndTime(), station, id, component, containPhases(window, usePhases)))
-					.filter(tw -> tw.getPhases().length > minLength)
+					.filter(tw ->  tw.getLength() > minLength)
 					.forEach(timewindowSet::add);
+//			System.out.println(windows.length + " " + windows[0].getLength() + " " + windows[0].getEndTime() + " " + e + " " + timewindowSet.size());
 		} catch (RuntimeException e) {
 			e.printStackTrace();
 		}

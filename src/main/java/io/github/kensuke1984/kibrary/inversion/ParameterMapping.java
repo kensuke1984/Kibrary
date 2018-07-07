@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import com.sleepycat.bind.tuple.IntegerBinding;
 
 import java.util.stream.Collectors;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class ParameterMapping {
 	}
 	
 	public ParameterMapping(UnknownParameter[] originalUnknowns) {
+		System.err.println("Warning: constructor not done yet, please do not use it.");
 		this.originalUnknowns = originalUnknowns;
 		this.unknowns = originalUnknowns;
 		this.iOriginalToNew = new int[unknowns.length];
@@ -79,6 +81,17 @@ public class ParameterMapping {
 		}
 		
 		this.input = null;
+		
+		List<Double> tmpRs = Stream.of(originalUnknowns).map(p -> p.getLocation().getR()).distinct().collect(Collectors.toList());
+		Collections.sort(tmpRs);
+		
+		this.newRadii = new double[tmpRs.size()];
+		this.newLayerWidths = new double[tmpRs.size()];
+		
+		for (int i = 0; i < tmpRs.size(); i++) {
+			this.newRadii[i] = tmpRs.get(i);
+		}
+		
 	}
 	
 	public void read(Path input) throws IOException {

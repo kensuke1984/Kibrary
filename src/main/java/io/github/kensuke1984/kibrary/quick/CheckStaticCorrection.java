@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class CheckStaticCorrection {
@@ -25,10 +26,15 @@ public class CheckStaticCorrection {
 		Set<StaticCorrection> mixed = new HashSet<>();
 		
 		for (StaticCorrection corr : fujiCorrections) {
-			StaticCorrection semCorr = semCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
+			StaticCorrection semCorr = null;
+			try {
+				semCorr = semCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
 					&& corr.getStation().equals(c.getStation())
 					&& corr.getComponent().equals(c.getComponent())
 					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
+			} catch (NoSuchElementException e) {
+				continue;
+			}
 			double ratio = Math.abs(semCorr.getTimeshift() - corr.getTimeshift()) / Math.abs(corr.getTimeshift());
 			double difference = corr.getTimeshift() - semCorr.getTimeshift();
 //			ratio = Math.log(ratio);
@@ -67,6 +73,13 @@ public class CheckStaticCorrection {
 		pw.close();
 		pw2.close();
 		pw3.close();
+		
+		Path outpath4 = Paths.get("correctionDifferenceStation.txt");
+		PrintWriter pw4 = new PrintWriter(outpath4.toFile());
+		for (StaticCorrection corr : differences) {
+			pw4.println(corr.getStation() + " " + corr.getStation().getPosition() + " " + corr.getTimeshift());
+		}
+		pw4.close();
 	}
 	
 	public static double[][] averageMap(Set<StaticCorrection> ratios) {
