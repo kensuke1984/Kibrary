@@ -1,5 +1,5 @@
 // Apply the java plugin to add support for Java
-plugins { id "de.undercouch.download" version "3.3.0" }
+plugins { id "de.undercouch.download" version "3.4.3" }
 apply plugin: 'java'
 //apply plugin: 'eclipse'
 sourceCompatibility = 1.8
@@ -12,7 +12,7 @@ def defaultEncoding = 'UTF-8'
 jar.baseName = 'kibrary'
 def kibraryhome = "$System.env.HOME/.Kibrary"
 version = '0.4.4.2'
-task wrapper(type: Wrapper) { gradleVersion = '4.8.1' }
+task wrapper(type: Wrapper) { gradleVersion = '4.9' }
 
 repositories {
     mavenCentral()
