@@ -108,7 +108,7 @@ class PartialIDMerge {
 			throw new RuntimeException("par file has problems");
 		}
 	}
-		private static void readPartialLoc(Path parPath) {
+	private static void readPartialLoc(Path parPath) {
 			try {
 				Files.readAllLines(parPath).stream()
 						.map(PartialIDMerge::toLocation)

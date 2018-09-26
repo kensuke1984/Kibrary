@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package io.github.kensuke1984.kibrary.misc;
 
@@ -25,39 +25,41 @@ public class VarianceGet {
 
 	/**
 	 * @param args
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
-		
+		if (args.length!=3 || args[0].equals("-help") || args[0].equals("--help"))
+			System.err.println("Usage: waveformID, waveformData, output directory");
 		//観測・理論波形のID情報ファイル
 		Path waveIDPath = Paths.get(args[0]);
 		System.out.println(waveIDPath);
 		//観測・理論波形のデータファイル
-		Path waveformPath = Paths.get(args[1]);	
+		Path waveformPath = Paths.get(args[1]);
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
 		Dvector dVector = new Dvector(ids);
 		double variance = dVector.getVariance();
-//		dVector.
-		System.out.println(variance);
 		
+		System.out.println("Variance is "+variance);
+
 		BasicID[] obsIDs = dVector.getObsIDs();
-		BasicID[] synIDs = dVector.getSynIDs();
+//		BasicID[] synIDs = dVector.getSynIDs();
 		RealVector[] obsVec = dVector.getObsVec();
 		RealVector[] synVec = dVector.getSynVec();
 		RealVector[] delVec = dVector.getdVec();
-		
+
 		Path outPath = Paths.get(args[2]);
 		// each trace variance
 		Path eachVariancePath = outPath.resolve("variance.txt");
 		try (PrintWriter pw1 = new PrintWriter(Files.newBufferedWriter(eachVariancePath))) {
 			for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 				double variances = delVec[i].dotProduct(delVec[i]) / obsVec[i].dotProduct(obsVec[i]);
-				double dotProduct = obsVec[i].getMaxValue();
+				double correlation = obsVec[i].dotProduct(synVec[i]) / obsVec[i].getNorm() / synVec[i].getNorm();
+//				double dotProduct = obsVec[i].getMaxValue();
 				pw1.println(i + " " + obsIDs[i].getStation() + " " + obsIDs[i].getStation().getNetwork() + " "
-						+ obsIDs[i].getGlobalCMTID() + " " + variances);
+						+ obsIDs[i].getGlobalCMTID() + " " + variances+ " "+ correlation);
 			}
 		}
-		
+
 	}
 
 }

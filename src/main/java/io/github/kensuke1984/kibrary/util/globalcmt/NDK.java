@@ -455,5 +455,20 @@ final class NDK implements GlobalCMTData {
     public String toString() {
         return id.toString();
     }
+    
+    @Override
+	public double getTimeDifference() {
+		return timeDifference;
+	}
+
+	@Override
+	public String getHypocenterReferenceCatalog() {
+		return hypocenterReferenceCatalog;
+	}
+	
+	@Override
+	public String getGeographicalLocationName() {
+		return geographicalLocation;
+	}
 
 }

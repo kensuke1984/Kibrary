@@ -22,6 +22,7 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 /**
  * File containing information of stations .<br>
@@ -100,9 +101,11 @@ public final class StationInformationFile {
 		Path out = workPath.resolve("station" + Utilities.getTemporaryString() + ".inf");
 
 		Set<SACFileName> sacNameSet = Utilities.sacFileNameSet(workPath);
-		Set<Station> stationSet = sacNameSet.stream().map(sacName -> {
+		// 2018/08/13 add filter for only OBS waveforms
+		Set<Station> stationSet = sacNameSet.stream().filter(s -> s.isOBS()).map(sacName -> {
+//		Set<Station> stationSet = sacNameSet.stream().map(sacName -> {
 			try {
-				System.out.println(sacName+" "+sacName.readHeader().getStation().getPosition().toLocation(0));
+//				System.out.println(sacName+" "+sacName.readHeader().getStation().getPosition().toLocation(0));
 				return sacName.readHeader();
 			} catch (Exception e) {
 				System.err.println(sacName + " is an invalid SAC file.");

@@ -30,5 +30,11 @@ public interface GlobalCMTData {
     LocalDateTime getPDETime();
 
     GlobalCMTID getGlobalCMTID();
+    
+    double getTimeDifference();
+	
+	String getHypocenterReferenceCatalog();
+	
+	String getGeographicalLocationName();
 
 }

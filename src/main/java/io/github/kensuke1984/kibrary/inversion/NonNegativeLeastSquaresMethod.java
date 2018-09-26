@@ -17,6 +17,7 @@ import org.apache.commons.math3.linear.RealVector;
  * @author Anselme
  * Implementation of the non negative least square algorithm of Stark and Parker (1993)
  */
+
 public class NonNegativeLeastSquaresMethod extends InverseProblem {
 	
 	public static void main(String[] args) {

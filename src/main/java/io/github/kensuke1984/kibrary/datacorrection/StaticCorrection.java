@@ -1,7 +1,12 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.commons.math3.util.Precision;
 
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
@@ -84,7 +89,47 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	 * start time of synthetic waveform
 	 */
 	private final double synStartTime;
+	
+//	private final Phase[] phases;
 
+	
+	/**
+	 * 
+	 * When a time window for a synthetic is [synStartTime, synEndTime], then
+	 * <br>
+	 * use a window of [synStartTime-timeshift, synEndTime-timeshift] in a
+	 * observed one.<br>
+	 * Example, if you want to align a phase which arrives Ts in synthetic and
+	 * To in observed, the timeshift will be Ts-To.<br>
+	 * Amplitude ratio shall be observed / synthetic.
+	 * 
+	 * @param station
+	 *            for shift
+	 * @param eventID
+	 *            for shift
+	 * @param component
+	 *            for shift
+	 * @param synStartTime
+	 *            for identification
+	 * @param timeShift
+	 *            value Synthetic [t1, t2], Observed [t1-timeShift,
+	 *            t2-timeShift]
+	 * @param amplitudeRatio
+	 *            Observed / Synthetic
+	 */
+	/**
+	public StaticCorrection(Station station, GlobalCMTID eventID, SACComponent component, double synStartTime,
+			double timeShift, double amplitudeRatio, Phase[] phases) {
+		this.station = station;
+		this.eventID = eventID;
+		this.component = component;
+		this.synStartTime = Precision.round(synStartTime, 2);
+		this.timeShift = Precision.round(timeShift, 2);
+		this.amplitudeRatio = Precision.round(amplitudeRatio, 2);
+		this.phases = phases;
+	}
+	**/
+	
 	/**
 	 * 
 	 * When a time window for a synthetic is [synStartTime, synEndTime], then
@@ -151,10 +196,22 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	public double getSynStartTime() {
 		return synStartTime;
 	}
+	
+//	public Phase[] getPhases() {
+//		return phases;
+//	}
 
+//	@Override
+//	public String toString() {
+//		List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+//		return station.getName() + " " + station.getNetwork() + " " + station.getPosition() + " " + eventID 
+//				+ " " + component + " " + synStartTime + " " + timeShift + " " + amplitudeRatio + " " + String.join(",", phaseStrings);
+//	}
 	@Override
 	public String toString() {
-		return station + " " + eventID + " " + component + " " + synStartTime + " " + timeShift + " " + amplitudeRatio;
+//		List<String> phaseStrings = Stream.of(phases).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
+		return station.getName() + " " + station.getNetwork() + " " + station.getPosition() + " " + eventID 
+				+ " " + component + " " + synStartTime + " " + timeShift + " " + amplitudeRatio;
 	}
 
 }

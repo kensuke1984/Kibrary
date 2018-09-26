@@ -188,5 +188,23 @@ public class SpcBody {
 	public void toTimeDomain(int lsmooth) {
 		Arrays.stream(spcComponents).forEach(component -> component.toTimeDomain(lsmooth));
 	}
+	
+	/**
+	 * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
+	 * 
+	 */
+	public int findLsmooth(double tlen, double samplingFrequency) {
+		int tmpNp = Integer.highestOneBit(np);
+		if (tmpNp < np)
+			tmpNp *= 2;
+
+		int lsmooth = (int) (0.5 * tlen * samplingFrequency / np);
+		int i = Integer.highestOneBit(lsmooth);
+		if (i < lsmooth)
+			i *= 2;
+		lsmooth = i;
+		
+		return lsmooth;
+	}
 
 }

@@ -211,11 +211,11 @@ public class PartialDatasetMaker implements Operation {
 		}
 		
 		/**
-		 * @param primeBP
-		 * @param secondaryBP
+		 * @param primeBP (toroidal or spheroidal mode)
+		 * @param secondaryBP (the other mode for primeBP)
 		 * @param station
-		 * @param primeFPFile
-		 * @param secondaryFPFile
+		 * @param primeFPFile (toroidal or spheroidal mode)
+		 * @param secondaryFPFile (the other mode for primeFP)
 		 */
 		private PartialComputation(DSMOutput primeBP, DSMOutput secondaryBP, 
 						Station station, SpcFileName primeFPFile, SpcFileName secondaryFPFile) {

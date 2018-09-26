@@ -284,7 +284,7 @@ public class Answer {
 	 * @return typeについての解のマップを作る
 	 */
 	private static Map<Location, Double> createMap(PartialType type) {
-		if (type == PartialType.TIME) {
+		if (type == PartialType.TIME_RECEIVER || type == PartialType.TIME_SOURCE) {
 			System.out.println("madda");
 			return null;
 		}
@@ -315,7 +315,7 @@ public class Answer {
 		double value = 0;
 		Map<Location, Double> ansMap = createMap(type);
 
-		if (type == PartialType.TIME) {
+		if (type == PartialType.TIME_RECEIVER || type == PartialType.TIME_SOURCE) {
 			System.out.println("madda");
 			return 0;
 		}

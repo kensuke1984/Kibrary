@@ -322,8 +322,10 @@ public class DataSelection implements Operation {
 
     private boolean check(PrintWriter writer, String stationName, GlobalCMTID id, SACComponent component,
                           TimewindowInformation window, RealVector obsU, RealVector synU, SACData synSAC) throws IOException {
-        if (obsU.getDimension() < synU.getDimension()) synU = synU.getSubVector(0, obsU.getDimension() - 1);
-        else if (synU.getDimension() < obsU.getDimension()) obsU = obsU.getSubVector(0, synU.getDimension() - 1);
+        if (obsU.getDimension() < synU.getDimension())
+        	synU = synU.getSubVector(0, obsU.getDimension() - 1);
+        else if (synU.getDimension() < obsU.getDimension())
+        	obsU = obsU.getSubVector(0, synU.getDimension() - 1);
 
         // check
         double synMax = synU.getMaxValue();
@@ -346,9 +348,10 @@ public class DataSelection implements Operation {
         absRatio = Precision.round(absRatio, 2);
         var = Precision.round(var, 2);
         cor = Precision.round(cor, 2);
-        boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio ||
-                ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor ||
-                var < minVariance || maxVariance < var || epiDistance > maxDistance || epiDistance < minDistance);
+        boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
+                || ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
+                || var < minVariance || maxVariance < var 
+                || epiDistance > maxDistance || epiDistance < minDistance);
 
         writer.println(stationName + " " + id + " " + component + " " + isok + " " + absRatio + " " + maxRatio + " " +
                 minRatio + " " + var + " " + cor);

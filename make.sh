@@ -1,8 +1,8 @@
 #!/bin/sh
 
-jarname=kibrary-yuki-0.1.jar
-sendto=wave
+jarname=kibrary-yuki-0.1.2.jar
+sendto=lettuce
 
 rm -rf $jarname
-jar cvf $jarname .
-scp $jarname suzuki@$sendto.eps.s.u-tokyo.ac.jp:/home/suzuki/bin
+jar cf $jarname .
+scp -rq $jarname suzuki@$sendto.eps.s.u-tokyo.ac.jp:/home/suzuki/bin

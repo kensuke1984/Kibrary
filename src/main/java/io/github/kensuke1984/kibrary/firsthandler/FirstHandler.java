@@ -58,6 +58,15 @@ public class FirstHandler implements Operation {
             pw.println("##epicentral distance range Min(0) Max(180)");
             pw.println("#epicentralDistanceMin");
             pw.println("#epicentralDistanceMax");
+            pw.println("##All geometrical filter is for stations. (-90)");
+			pw.println("#Lower limit of latitude [deg] [-90:upperLatitude) (-90)");
+			pw.println("#lowerLatitude");
+			pw.println("##Upper limit of latitude [deg] (lowerLatitude:90] (90)");
+			pw.println("#upperLatitude");
+			pw.println("##Lower limit of longitude [deg] [-180:upperLongitude) (-180)");
+			pw.println("#lowerLongitude");
+			pw.println("##Upper limit of longitude [deg] (lowerLongitude:360] (180)");
+			pw.println("#upperLongitude");
             pw.println("##boolean if it is true, remove intermediate files (true)");
             pw.println("#removeIntermediateFile");
         }
@@ -74,6 +83,12 @@ public class FirstHandler implements Operation {
         if (!property.containsKey("catalog")) property.setProperty("catalog", "cmt");
         if (!property.containsKey("samplingHz")) property.setProperty("samplingHz", "20"); // TODO
         if (!property.containsKey("removeIntermediateFile")) property.setProperty("removeIntermediateFile", "true");
+        if (!property.containsKey("epicentralDistanceMin")) property.setProperty("epicentralDistanceMin", "70");
+        if (!property.containsKey("epicentralDistanceMax")) property.setProperty("epicentralDistanceMax", "100");
+        if (!property.containsKey("lowerLatitude")) property.setProperty("lowerLatitude", "-90");
+		if (!property.containsKey("upperLatitude")) property.setProperty("upperLatitude", "90");
+		if (!property.containsKey("lowerLongitude")) property.setProperty("lowerLongitude", "-180");
+		if (!property.containsKey("upperLonitude")) property.setProperty("upperLonitude", "180");
     }
 
     /**
@@ -96,9 +111,22 @@ public class FirstHandler implements Operation {
                 throw new RuntimeException("Invalid catalog name.");
         }
         removeIntermediateFile = Boolean.parseBoolean(property.getProperty("removeIntermediateFile"));
+        epicentralDistanceMin = Double.parseDouble(property.getProperty("epicentralDistanceMin"));
+        epicentralDistanceMax = Double.parseDouble(property.getProperty("epicentralDistanceMax"));
+        lowerLatitude = Double.parseDouble(property.getProperty("lowerLatitude"));
+		lowerLongitude = Double.parseDouble(property.getProperty("lowerLongitude"));
+        upperLatitude = Double.parseDouble(property.getProperty("upperLatitude"));
+		upperLongitude = Double.parseDouble(property.getProperty("upperLongitude"));
     }
 
     private double samplingHz;
+    
+    private double epicentralDistanceMin;
+    private double epicentralDistanceMax;
+    private double lowerLatitude;
+    private double lowerLongitude;
+    private double upperLatitude;
+    private double upperLongitude;
 
     /**
      * which catalog to use 0:CMT 1: PDE

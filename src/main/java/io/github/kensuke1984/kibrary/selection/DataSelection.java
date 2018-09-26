@@ -504,7 +504,7 @@ public class DataSelection implements Operation {
 	}
 	
 	private double noisePerSecond(SACData sac, SACComponent component) {
-		double len = 50;:q
+		double len = 50;
 		
 		double distance = sac.getValue(SACHeaderEnum.GCARC);
 		double depth = sac.getValue(SACHeaderEnum.EVDP);

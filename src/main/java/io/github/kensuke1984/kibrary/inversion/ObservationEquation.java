@@ -166,12 +166,16 @@ public class ObservationEquation {
 		Arrays.stream(ids).parallel().forEach(id -> {
 			if (count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() == dVector.getNTimeWindow() * nn)
 				return;
+			System.out.println(count.get()+" "+id.getGlobalCMTID()+" "+id.getStation()+" "+id.getPerturbationLocation());
+//			System.out.println(parameterList.contains(id.getPerturbationLocation()));
 			int column = whatNumer(id.getPartialType(), id.getPerturbationLocation(),
 					id.getStation(), id.getGlobalCMTID(), id.getPhases());
+//			System.out.println("column is "+column+ " "+ id.getPerturbationLocation());
 			if (column < 0)
 				return;
 			// 偏微分係数id[i]が何番目のタイムウインドウにあるか
 			int k = dVector.whichTimewindow(id);
+//			System.out.println("row is "+k);
 			if (k < 0)
 				return;
 			int row = dVector.getStartPoints(k);
@@ -179,19 +183,23 @@ public class ObservationEquation {
 			double[] partial = id.getData();
 			for (int j = 0; j < partial.length; j++)
 				a.setEntry(row + j, column, partial[j] * weighting);
+//			System.out.println(count.get()+" "+id.getGlobalCMTID()+" "+id.getStation()+" "+id.getSacComponent());
 			if (!id.getPartialType().isTimePartial())
 				count.incrementAndGet();
 			else if (id.getPartialType().equals(PartialType.TIME_SOURCE))
 				count_TIMEPARTIAL_SOURCE.incrementAndGet();
 			else if (id.getPartialType().equals(PartialType.TIME_RECEIVER))
 				count_TIMEPARTIAL_RECEIVER.incrementAndGet();
+//			System.out.println(count.get()+" " + id.getPartialType().name());
 			//count errorが出た時はcount.get()してみる
 //			System.out.println(count.get()+" " + id.getPartialType().name()+" "+id.getPartialType().isTimePartial());
 		});
-		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) )
+		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) ){
 			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
 					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + "+ n +" )");  
+//			System.out.println("Count is "+count.get()+". #Timewindow x #parameter is "+dvector.getNTimeWindow() * parameterList.size());
+		}
 		System.err.println("A is read and built in " + Utilities.toTimeString(System.nanoTime() - t));
 		
 		if (nUnknowns != -1) {
