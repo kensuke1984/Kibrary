@@ -53,6 +53,7 @@ public final class FujiConversion {
             SPCBody newBody = new SPCBody(3, np);
             for (int ip = 0; ip < np + 1; ip++) {
                 Complex[] dudq = new Complex[body.getNumberOfComponent()];
+//                Complex[] dudQ = new Complex[body.getNumberOfComponent()];
                 double omegaOverOmega0 = (ip + 1) / omega0;
                 double log = 2 * FastMath.log(omegaOverOmega0) / Math.PI;
                 double dmudmu0Real = (1 + q * log);
@@ -64,6 +65,7 @@ public final class FujiConversion {
 //                    dudQ[iComponent] = dudmu0.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
                     dudq[iComponent] = dudmu0.multiply(dmudq).divide(dmudmu0);
                 }
+//                newBody.add(ip, dudQ);
                 newBody.add(ip, dudq);
             }
             spcBodyList.add(newBody);
