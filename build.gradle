@@ -12,7 +12,7 @@ def defaultEncoding = 'UTF-8'
 jar.baseName = 'kibrary'
 def kibraryhome = "$System.env.HOME/.Kibrary"
 version = '0.4.4.2'
-task wrapper(type: Wrapper) { gradleVersion = '4.10' }
+task wrapper(type: Wrapper) { gradleVersion = '4.10.2' }
 
 repositories {
     mavenCentral()
@@ -20,12 +20,12 @@ repositories {
 dependencies {
     compile 'org.apache.commons:commons-math3:+'
     compile 'org.apache.commons:commons-lang3:+'
+    compile 'org.apache.commons:commons-email:+'
     compile 'commons-io:commons-io:+'
     compile 'commons-net:commons-net:+'
-    compile 'org.apache.commons:commons-email:+'
     compile 'commons-net:commons-net:+'
-    compile 'net.sf.epsgraphics:epsgraphics:+'
     compile 'commons-cli:commons-cli:+'
+    compile 'net.sf.epsgraphics:epsgraphics:+'
     compile 'edu.sc.seis:TauP:+'
 }
 
