@@ -4,6 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.Physical3DParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
+import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.FrequencyRange;
@@ -269,6 +270,24 @@ public final class AtAFile {
 //				}
 				
 		}
+	}
+	
+	public static void write(RealMatrix ata, WeightingType weightingType, FrequencyRange frequencyRange,
+			UnknownParameter[] unknownParameters, Phases phase, Path outputPath, OpenOption... options) throws IOException {
+		WeightingType[] weightingTypes = new WeightingType[] {weightingType};
+		FrequencyRange[] frequencyRanges = new FrequencyRange[] {frequencyRange};
+		Phases[] phases = new Phases[] {phase};
+		
+		int n0AtA = unknownParameters.length * (unknownParameters.length + 1) / 2;
+		AtAEntry[][][][] ataEntries = new AtAEntry[n0AtA][1][1][1];
+		for (int i = 0; i < n0AtA; i++) {
+			int iunknown = (int) (0.5 * (FastMath.sqrt(1 + 8 * i) - 1));
+			int junknown = i - iunknown * (iunknown + 1) / 2;
+			AtAEntry entry = new AtAEntry(weightingType, frequencyRange, phase, unknownParameters[iunknown], unknownParameters[junknown], ata.getEntry(iunknown, junknown));
+			ataEntries[i][0][0][0] = entry;
+		}
+		
+		write(ataEntries, weightingTypes, frequencyRanges, unknownParameters, phases, outputPath, options);
 	}
 	
 	public static void print(AtAEntry[][][][] ataEntries) {

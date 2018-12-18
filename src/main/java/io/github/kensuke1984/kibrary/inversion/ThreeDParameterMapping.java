@@ -26,18 +26,29 @@ public class ThreeDParameterMapping {
 	public static void main(String[] args) {
 		Path unknownPath = Paths.get(args[0]);
 		Path inputVerticalMapping = Paths.get(args[1]);
-		Path inputHorizontalMapping = Paths.get(args[2]);
+//		Path inputHorizontalMapping = Paths.get(args[2]);
+		
+		double dlon = 2;
+		double dlat = 2;
+		int samplingRate = 2;
 		
 		try {
-			UnknownParameter[] originalUnknowns = UnknownParameterFile.read(unknownPath).toArray(new UnknownParameter[0]);
+			List<UnknownParameter> originalUnknowns = UnknownParameterFile.read(unknownPath);
 		
-			ThreeDParameterMapping mapping = new ThreeDParameterMapping(inputHorizontalMapping, inputVerticalMapping, originalUnknowns);
+//			ThreeDParameterMapping mapping = new ThreeDParameterMapping(inputHorizontalMapping, inputVerticalMapping, originalUnknowns);
+			
+			ResampleGrid sampler = new ResampleGrid(originalUnknowns, dlat, dlon, samplingRate);
+			ThreeDParameterMapping mapping = new ThreeDParameterMapping(sampler, inputVerticalMapping);
+			
 			UnknownParameter[] newUnknowns = mapping.getNewUnknowns();
+			UnknownParameter[] newOriginalUnknowns = mapping.getOriginalUnknowns();
 			
 			for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
-				System.out.println(newUnknowns[iNew]);
+//				System.out.println(">+");
+				System.out.println("> " + newUnknowns[iNew]);
+//				System.out.println(">-");
 				for (int iOriginal : mapping.getiNewToOriginal(iNew))
-					System.out.println("--> " + originalUnknowns[iOriginal]);
+					System.out.println(newOriginalUnknowns[iOriginal]);
 			}
 			
 //			for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
@@ -62,8 +73,81 @@ public class ThreeDParameterMapping {
 		make();
 	}
 	
+	public ThreeDParameterMapping(ResampleGrid resampler, Path inputVerticalMapping) {
+		this.inputHorizontalMapping = null;
+		this.inputVerticalMapping = inputVerticalMapping;
+		this.originalUnknowns = resampler.getResampledUnkowns().toArray(new UnknownParameter[0]);
+		
+		map(resampler);
+		make();
+	}
+	
 	public void map() {
 		HorizontalParameterMapping horizontalMapping = new HorizontalParameterMapping(originalUnknowns, inputHorizontalMapping);
+		ParameterMapping verticalMapping = new ParameterMapping(originalUnknowns, inputVerticalMapping);
+		
+		this.newLayerWidths = verticalMapping.getNewLayerWidths();
+		this.newRadii = verticalMapping.getNewRadii();
+		
+		int[][] iNewToOriginalHorizontal = horizontalMapping.getiNewToOriginal();
+		int[] iOriginalToNewVertical = verticalMapping.getiOriginalToNew();
+		
+		List<Set<Integer>> tmpIOriginalList = new ArrayList<>();
+		List<Set<Integer>> tmpIHorizontalRedundantList = new ArrayList<>();
+		for (int i = 0; i < iNewToOriginalHorizontal.length; i++) {
+			Set<Integer> iOriginal3D = new HashSet<>();
+			for (int j = 0; j < iNewToOriginalHorizontal[i].length; j++) {
+				int iOriginal = iNewToOriginalHorizontal[i][j];
+				int iNewVertical = iOriginalToNewVertical[iOriginal];
+				int[] iOriginals = verticalMapping.getiNewToOriginal(iNewVertical);
+				for (int k : iOriginals)
+					iOriginal3D.add(k);
+			}
+			tmpIOriginalList.add(iOriginal3D);
+			
+			Set<Integer> iHorizontalRedundant = new HashSet<>();
+			for (int j : iOriginal3D)
+				iHorizontalRedundant.add(horizontalMapping.getiOriginalToNew(j));
+			
+			tmpIHorizontalRedundantList.add(iHorizontalRedundant);
+		}
+		
+		List<Set<Integer>> iNewToOrignalList = new ArrayList<>();
+		List<Set<Integer>> filledList = new ArrayList<>();
+		iNewToOrignalList.add(tmpIOriginalList.get(0));
+		filledList.add(tmpIHorizontalRedundantList.get(0));
+		for (int i = 1; i < iNewToOriginalHorizontal.length; i++) {
+			boolean filled = false;
+			Set<Integer> redundants = tmpIHorizontalRedundantList.get(i);
+			for  (Set<Integer> tmpSet : filledList) {
+				if (tmpSet.equals(redundants)) {
+					filled = true;
+					break;
+				}
+			}
+			if (!filled) {
+				iNewToOrignalList.add(tmpIOriginalList.get(i));
+				filledList.add(tmpIHorizontalRedundantList.get(i));
+			}
+		}
+		
+		iNewToOriginal = new int[iNewToOrignalList.size()][];
+		for (int i = 0; i < iNewToOrignalList.size(); i++) {
+			Set<Integer> iSet = iNewToOrignalList.get(i);
+			iNewToOriginal[i] = new int[iSet.size()];
+			int counter = 0;
+			for (int j : iSet) {
+				iNewToOriginal[i][counter] = j;
+				counter++;
+			}
+		}
+		
+		unknowns = new UnknownParameter[iNewToOriginal.length];
+	}
+	
+	public void map(ResampleGrid resampler) {
+		HorizontalParameterMapping horizontalMapping = new HorizontalParameterMapping(resampler.getTargetUnknowns(), resampler.getResampledUnkowns()
+				, resampler.getiTargetToResampled(), resampler.getiResampledToTarget());
 		ParameterMapping verticalMapping = new ParameterMapping(originalUnknowns, inputVerticalMapping);
 		
 		this.newLayerWidths = verticalMapping.getNewLayerWidths();
@@ -147,7 +231,6 @@ public class ThreeDParameterMapping {
 			latmean = getCenter(lats);
 			lonmean = getCenter(lons);
 			rmean /= iNewToOriginal[i].length;
-			
 			
 			UnknownParameter refUnknown = originalUnknowns[iNewToOriginal[i][0]];
 			PartialType type = refUnknown.getPartialType();

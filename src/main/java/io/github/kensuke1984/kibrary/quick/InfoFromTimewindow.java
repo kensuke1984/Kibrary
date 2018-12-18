@@ -20,12 +20,17 @@ public class InfoFromTimewindow {
 
 	public static void main(String[] args) throws IOException {
 		Path timewindowpath = Paths.get(args[0]);
-		Path stationFile = Paths.get("station" + Utilities.getTemporaryString() + ".inf");
+		String tmpString = Utilities.getTemporaryString();
+		Path stationFile = Paths.get("station" + tmpString + ".inf");
+		Path eventFile = Paths.get("event" + tmpString + ".inf");
 		
 		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowpath);
 		
 		Files.deleteIfExists(stationFile);
 		Files.createFile(stationFile);
+		
+		Files.deleteIfExists(eventFile);
+		Files.createFile(eventFile);
 		
 		Set<Station> usedStation = new HashSet<>();
 		Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
@@ -39,13 +44,20 @@ public class InfoFromTimewindow {
 			
 			Station sta = timewindow.getStation();
 			usedStation.add(sta);
+			
+			System.out.println((6371. - event.getEvent().getCmtLocation().getR()) + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(sta.getPosition())));
 		}
 		
 		for (Station sta : usedStation)
 			Files.write(stationFile, (sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition()+"\n").getBytes(), StandardOpenOption.APPEND);
 		
-		for (GlobalCMTID id : nTransverseMap.keySet())
+		for (GlobalCMTID id : nTransverseMap.keySet()) {
 			System.out.println(id + " " + nTransverseMap.get(id));
+			double depth = 6371 - id.getEvent().getCmtLocation().getR();
+			double mw = id.getEvent().getCmt().getMw();
+			double duration = id.getEvent().getHalfDuration() * 2;
+			Files.write(eventFile, (id + " " + depth + " " + mw + " " + duration + "\n").getBytes(), StandardOpenOption.APPEND);
+		}
 	}
 
 }

@@ -15,8 +15,9 @@ import org.apache.commons.math3.linear.RealVector;
  */
 public enum InverseMethodEnum {
 	SINGURAR_VALUE_DECOMPOSITION, CONJUGATE_GRADIENT, LEAST_SQUARES_METHOD,
-	NON_NEGATIVE_LEAST_SQUARES_METHOD, BICONJUGATE_GRADIENT_STABILIZED_METHOD;
-
+	NON_NEGATIVE_LEAST_SQUARES_METHOD, BICONJUGATE_GRADIENT_STABILIZED_METHOD,
+	FAST_CONJUGATE_GRADIENT, FAST_CONJUGATE_GRADIENT_DAMPED;
+	
 	public String simple() {
 		switch (this) {
 		case SINGURAR_VALUE_DECOMPOSITION:
@@ -29,8 +30,12 @@ public enum InverseMethodEnum {
 			return "NNLS";
 		case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
 			return "BCGS";
+		case FAST_CONJUGATE_GRADIENT:
+			return "CG";
+		case FAST_CONJUGATE_GRADIENT_DAMPED:
+			return "CG";
 		default:
-			throw new RuntimeException("UnEXpECCted");
+			throw new RuntimeException("Unexpected");
 		}
 	}
 
@@ -51,6 +56,12 @@ public enum InverseMethodEnum {
 		case "BCGS":
 		case "bcgs":
 			return BICONJUGATE_GRADIENT_STABILIZED_METHOD;
+		case "FCG":
+		case "fcg":
+			return FAST_CONJUGATE_GRADIENT;
+		case "FCGD":
+		case "fcgd":
+			return FAST_CONJUGATE_GRADIENT_DAMPED;
 		default:
 			throw new IllegalArgumentException("Invalid name for InverseMethod");
 		}
@@ -62,6 +73,10 @@ public enum InverseMethodEnum {
 			return new SingularValueDecomposition(ata, atd);
 		case CONJUGATE_GRADIENT:
 			return new ConjugateGradientMethod(ata, atd);
+		case FAST_CONJUGATE_GRADIENT:
+			return new FastConjugateGradientMethod(ata, atd, false); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
+		case FAST_CONJUGATE_GRADIENT_DAMPED:
+			return new FastConjugateGradientMethod(ata, atd, true); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
 		case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
 			return new BiConjugateGradientStabilizedMethod(ata, atd);
 		default:

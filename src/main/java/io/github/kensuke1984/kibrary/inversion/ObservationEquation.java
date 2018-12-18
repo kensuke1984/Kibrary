@@ -26,9 +26,11 @@ import javax.management.RuntimeErrorException;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.stat.correlation.Covariance;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.math.Matrix;
+import io.github.kensuke1984.kibrary.math.MatrixComputation;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -101,6 +103,42 @@ public class ObservationEquation {
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
 				unknownParameterWeightType);
 		atd = computeAtD(dVector.getD());
+		ata = a.computeAtA();
+		System.out.println("AtA mean trace = " + (ata.getTrace() / ata.getColumnDimension()));
+		System.out.println("Atd mean norm = " + (atd.getNorm() / ata.getColumnDimension()));
+	}
+	
+	private RealVector m;
+	
+	public void applyConditioner(RealVector m) {
+		this.m = m;
+		
+		int n = atd.getDimension();
+		
+		for (int i = 0; i < n; i++)
+			atd.setEntry(i, atd.getEntry(i) * m.getEntry(i));
+		
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				ata.setEntry(i, j, ata.getEntry(i, j) * m.getEntry(i) * m.getEntry(j));
+//				setRowVector(i, ata.getRowVector(i).mapMultiply(m.getEntry(i)));
+			}
+		}
+	}
+	
+	public RealVector getM() {
+		return m;
+	}
+	
+	public void applyModelCovarianceMatrix(ModelCovarianceMatrix cm) {
+		this.cm = cm;
+		Matrix identity = new Matrix(ata.getRowDimension(), ata.getColumnDimension());
+		for (int i = 0; i < ata.getColumnDimension(); i++)
+			identity.setEntry(i, i, 1.);
+		
+		ata = cm.rightMultiplyByL(ata);
+		ata = cm.leftMultiplyByLT(ata).add(identity);
+		atd = cm.getL().preMultiply(atd);
 	}
 	
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
@@ -203,7 +241,7 @@ public class ObservationEquation {
 //			}
 //		}
 		
-		RealMatrix tmpB = cm.lRightMultiply(a);
+		RealMatrix tmpB = cm.rightMultiplyByL(a);
 		Matrix b = new Matrix(a.getRowDimension(), a.getColumnDimension());
 		for (int i = 0; i < a.getRowDimension(); i++) {
 			for (int j = 0; j < a.getColumnDimension(); j++) {
@@ -252,7 +290,8 @@ public class ObservationEquation {
 		double AtANormalizedTrace = 0;
 		double count = 0;
 		for (int i = 0; i < this.parameterList.size(); i++) {
-			AtANormalizedTrace += a.getColumnVector(i).getNorm();
+			double norm = a.getColumnVector(i).getNorm();
+			AtANormalizedTrace += norm * norm;
 			count++;
 		}
 		AtANormalizedTrace /= count;
@@ -267,42 +306,38 @@ public class ObservationEquation {
 		for (int i = 0; i < a.getColumnDimension(); i++)
 			identity.setEntry(i, i, 1.);
 		
-		RealMatrix tmpB = cm.lRightMultiply(a);
+		RealMatrix tmpB = cm.rightMultiplyByL(a);
+		Matrix b = new Matrix(tmpB.getRowDimension(), tmpB.getColumnDimension());
 		for (int i = 0; i < a.getRowDimension(); i++) {
 			for (int j = 0; j < a.getColumnDimension(); j++) {
-				a.setEntry(i, j, tmpB.getEntry(i, j));
+				b.setEntry(i, j, tmpB.getEntry(i, j));
 			}
 		}
-		ata = a.computeAtA();
-		cmAtA_1 = ata.add(identity);
-		ata = ata.add(identity);
 		
-		atd = computeAtD(dVector.getD());
-		cmAtd = atd;
+		a = b;
+		atd = b.preMultiply(dVector.getD());
+		
+		ata = a.computeAtA().add(identity);
 	}
 	
-	// scaling = 1. gives a correlation lenght of 50 km in the uppermost mantle
-	private static double computeCorrelationLength(double r, double scaling) {
-		return scaling * 250;
-//		if (r < 3550.0 && r >= 3480.0)
-//			return scaling * 186.68;
-//		else if (r < 3690.0 && r >= 3550.0)
-//			return scaling * (4.565e-01 * (r-3690.0) + 250.59);
-//		if (r < 3690.0 && r >= 3480.0)
-//			return scaling * (0.24089 * (r - 3690.0) + 250.588);
-//			return scaling * 250.;
-//		else if (r < 4410.0 && r >= 3690.0)
-//			return scaling * (-2.064e-03 * (r-4410.0) + 249.10);
-//		else if (r < 5330.0 && r >= 4410.0)
-//			return scaling * (-7.354e-02 * (r-5330.0) + 181.45);
-//		else if (r < 5670.0 && r >= 5330.0)
-//			return scaling * (-1.555e-01 * (r-5670.0) + 128.57);
-//		else if (r < 6310.0 && r >= 5670.0)
-//			return scaling * (-1.051e-01 * (r-6310.0) + 61.30);
-//			return scaling * (-0.1384 * (r-6310.0) + 40.);
-//		else
-//			return scaling * (-1.853e-01 * (r-6371.0) + 50.00);
-//			return scaling * (-0.1639 * (r-6371.0) + 30.);
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector, Matrix ata_prev, RealVector atd_prev) {
+		this.dVector = dVector;
+		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
+	
+		readA(partialIDs, false, false, null, null, null, null);
+		
+		ata = a.computeAtA().add(ata_prev);
+		atd = computeAtD(dVector.getD()).add(atd_prev);
+	}
+	
+	public ObservationEquation(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector dVector) {
+		this.dVector = dVector;
+		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
+	
+		this.ata = ata;
+		this.atd = atd;
 	}
 	
 	private List<UnknownParameter> originalParameterList;
@@ -341,15 +376,25 @@ public class ObservationEquation {
 	public double varianceOf(RealVector m) {
 		Objects.requireNonNull(m);
 		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
-		double variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+		double variance = 0;
+		if (ata != null)
+			variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
 				+ m.dotProduct(getAtA().operate(m));
+		else
+			variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+				+ m.dotProduct(getA().preMultiply(getA().operate(m))) + m.dotProduct(m);
 		return variance / obs2;
 	}
 	
 	public double varianceOf(RealVector m, double residualVariance, double obsNorm) {
 		Objects.requireNonNull(m);
-		double variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
+		double variance = 0;
+		if (ata != null)
+			variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
 				+ m.dotProduct(getAtA().operate(m));
+		else
+			variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
+				+ m.dotProduct(getA().preMultiply(getA().operate(m)));
 		return variance / obsNorm;
 	}
 
@@ -415,12 +460,23 @@ public class ObservationEquation {
 			}
 			int row = dVector.getStartPoints(k);
 			double weighting = dVector.getWeighting(k) * parameterList.get(column).getWeighting();
-			if (unknownParameterWeightType != null && unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT))
-				weighting = 1.;
-			weighting = 1.; // TO CHANGE
+//			if (unknownParameterWeightType != null && unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT))
+//				weighting = 1.;
+			weighting = dVector.getWeighting(k); // TO CHANGE
+			
+			RealVector weightingVector = dVector.getWeightingVector(k);
+
 			double[] partial = id.getData();
-			for (int j = 0; j < partial.length; j++)
-				a.setEntry(row + j, column, partial[j] * weighting);
+//			for (int j = 0; j < partial.length; j++) {
+			if (dVector.getWindowNPTS(k) != partial.length) {
+//				System.out.println("Trim partial ID to " + dVector.getWindowNPTS(k) + " points");
+				partial = Arrays.copyOf(partial, dVector.getWindowNPTS(k));
+			}
+			for (int j = 0; j < dVector.getWindowNPTS(k); j++) {
+//				a.setEntry(row + j, column, partial[j] * weighting);
+				a.setEntry(row + j, column, partial[j] * weightingVector.getEntry(j));
+//				a.setEntry(row + j, column, partial[j] * weightingVector.getEntry(j) / parameterList.get(column).getWeighting() * 16); //REALLY TEMPORARY
+			}
 			if (!id.getPartialType().isTimePartial())
 				count.incrementAndGet();
 			else if (id.getPartialType().equals(PartialType.TIME_SOURCE))
@@ -1178,6 +1234,7 @@ public class ObservationEquation {
 //		}
 		
 		if (unknownParameterWeightType != null && !unknownParameterWeightType.equals(UnknownParameterWeightType.NO_WEIGHT)) {
+			System.out.println("Further weighting AtA");
 			unknownParameterWeigths = new ArrayList<>();
 			WeightUnknownParameter wup = null;
 			if (time_receiver || time_source)
@@ -1239,8 +1296,13 @@ public class ObservationEquation {
 			case Q:
 			case MU:
 			case LAMBDA:
-				if (location.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation()))
+			case KAPPA:
+			case LAMBDA2MU:
+				if (location.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation())) {
 					return i;
+				}
+				break;
+			default:
 				break;
 			}
 		}
@@ -1263,6 +1325,20 @@ public class ObservationEquation {
 				}
 			}
 		return ata;
+	}
+	
+	public RealVector getDiagonalOfAtA() {
+		RealVector r = new ArrayRealVector(parameterList.size());
+		if (ata != null)
+			for (int i = 0; i < parameterList.size(); i++) {
+				r.setEntry(i, ata.getEntry(i, i));
+			}
+		else
+			for (int i = 0; i < parameterList.size(); i++) {
+				double ataii = a.getColumnVector(i).dotProduct(a.getColumnVector(i));
+				r.setEntry(i, ataii);
+			}
+		return r;
 	}
 	
 	public ModelCovarianceMatrix getCm() {
@@ -1498,5 +1574,10 @@ public class ObservationEquation {
 		    return hash;
 		}
 	}
-
+	
+	public void setAtdForCheckerboard(RealVector checkeboardPerturbationVector) {
+		if (ata == null)
+			throw new RuntimeException("Cannot set checkerboard since ata=null");
+		atd = ata.operate(checkeboardPerturbationVector);
+	}
 }

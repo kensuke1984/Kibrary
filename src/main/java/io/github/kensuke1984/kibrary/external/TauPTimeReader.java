@@ -125,6 +125,10 @@ public final class TauPTimeReader {
 	public static double extrapolate_sS(double eventR, double epicentralDistance, String model) {
 		double[] depths = new double[] {50., 60., 75., 200., 260., 310., 350.};
 		double[] distances = new double[] {14., 16., 17., 18., 19., 20.};
+		if (model.toLowerCase().equals("ak135")) {
+			depths = new double[] {80., 130, 200., 270., 310., 350.};
+			distances = new double[] {16., 17., 18, 19, 20.};
+		}
 		double traveltime = -1;
 		
 		double depth = Earth.EARTH_RADIUS - eventR;

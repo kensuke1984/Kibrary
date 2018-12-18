@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.timewindow;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,6 +18,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
@@ -24,12 +28,13 @@ import io.github.kensuke1984.kibrary.external.TauPPhase;
 import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
-
 import io.github.kensuke1984.kibrary.timewindow.Timewindow;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;;
 
@@ -137,6 +142,11 @@ public class TimewindowMaker implements Operation {
 		model = property.getProperty("model").trim().toLowerCase();
 		
 		minLength = Double.parseDouble(property.getProperty("minLength"));
+		
+		String catalogueName_sS =  "firstAppearance_sS." + model + ".catalogue";
+		String catalogueName_pP =  "firstAppearance_pP." + model + ".catalogue";
+		catalogue_sS = readCatalogue(catalogueName_sS);
+		catalogue_pP = readCatalogue(catalogueName_pP);
 	}
 
 	private static Set<Phase> phaseSet(String arg) {
@@ -187,6 +197,9 @@ public class TimewindowMaker implements Operation {
 	private double minLength;
 	
 	private String model;
+	
+	private double[][] catalogue_sS;
+	private double[][] catalogue_pP;
 
 	/**
 	 * Run must finish within 10 hours.
@@ -573,33 +586,68 @@ public class TimewindowMaker implements Operation {
 //					System.out.println("DEBUG0: " + eventR + " " + epicentralDistance + " " + sStraveltime);
 //				}
 //			}
+				
 			// Trying another way to do it. Just using the travel time difference between S and sS at 40 degrees. This ignore triplications.
-			if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("sS")) && !this.usePhases.contains(Phase.ScS)
-					&& this.usePhases.contains(Phase.S)) {
-				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
-				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
-				if (tmpPhases.size() == 0)
-					System.out.println("Warning: sS not found at 40 degrees");
-				exPhaseTime = new double[1];
-				double sStime40 = tmpPhases.stream().map(p -> p.getTravelTime()).sorted().findFirst().get();
-				double Stime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
-				double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
-//				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
-				exPhaseTime[0] = sStime40 - Stime40 + Stime;
-			}
+//			if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("sS")) && !this.usePhases.contains(Phase.ScS)
+//					&& this.usePhases.contains(Phase.S)) {
+//				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
+//				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
+//				if (tmpPhases.size() == 0)
+//					System.out.println("Warning: sS not found at 40 degrees");
+//				exPhaseTime = new double[1];
+//				double sStime40 = tmpPhases.stream().map(p -> p.getTravelTime()).sorted().findFirst().get();
+//				double Stime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+//				double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+////				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
+//				exPhaseTime[0] = sStime40 - Stime40 + Stime;
+//			}
 			
-			if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("pP")) && !this.usePhases.contains(Phase.PcP)
-					&& this.usePhases.contains(Phase.P)) {
-				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
-				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
-				if (tmpPhases.size() == 0)
-					System.out.println("Warning: pP not found at 40 degrees (unexpected)");
-				exPhaseTime = new double[1];
-				double pPtime40 = tmpPhases.stream().map(p -> p.getTravelTime()).sorted().findFirst().get();
-				double Ptime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
-				double Ptime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
-//				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
-				exPhaseTime[0] = pPtime40 - Ptime40 + Ptime;
+//			if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("pP")) && !this.usePhases.contains(Phase.PcP)
+//					&& this.usePhases.contains(Phase.P)) {
+//				Set<TauPPhase> tmpPhases = TauPTimeReader.getTauPPhase(eventR, 40., this.exPhases, model);
+//				Set<TauPPhase> tmpPhases2 = TauPTimeReader.getTauPPhase(eventR, 40., this.usePhases, model);
+//				if (tmpPhases.size() == 0)
+//					System.out.println("Warning: pP not found at 40 degrees (unexpected)");
+//				exPhaseTime = new double[1];
+//				double pPtime40 = tmpPhases.stream().map(p -> p.getTravelTime()).sorted().findFirst().get();
+//				double Ptime40 = tmpPhases2.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+//				double Ptime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+////				System.out.println((sStime40 - Stime40) + " " + (sStime40 - Stime40 + Stime) + " " + Stime);
+//				exPhaseTime[0] = pPtime40 - Ptime40 + Ptime;
+//			}
+			
+			boolean firstAppearance = false;
+			if (exPhaseTime == null) {
+				firstAppearance = true;
+				if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("pP")) && !this.usePhases.contains(Phase.PcP)
+						&& this.usePhases.contains(Phase.P)) {
+					if (epicentralDistance > 30)
+						throw new RuntimeException("Unexpected: pP should exist for epicentral distance " + epicentralDistance);
+					
+					double minDepth = catalogue_pP[0][0];
+					double dDepth = catalogue_pP[0][2];
+					int icat = (int) (((6371. - eventR) - minDepth) / dDepth) + 1;
+					
+					double differentialTime = catalogue_pP[icat][2] - catalogue_pP[icat][3];
+					double Ptime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.P)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+					
+					exPhaseTime = new double[] {Ptime + differentialTime};
+				}
+				
+				if (this.exPhases.size() == 1 && this.exPhases.contains(Phase.create("sS")) && !this.usePhases.contains(Phase.ScS)
+						&& this.usePhases.contains(Phase.S)) {
+					if (epicentralDistance > 30)
+						throw new RuntimeException("Unexpected: sS should exist for epicentral distance " + epicentralDistance);
+					
+					double minDepth = catalogue_sS[0][0];
+					double dDepth = catalogue_sS[0][2];
+					int icat = (int) (((6371. - eventR) - minDepth) / dDepth) + 1;
+					
+					double differentialTime = catalogue_sS[icat][2] - catalogue_sS[icat][3];
+					double Stime = usePhases.stream().filter(p -> p.getPhaseName().equals(Phase.S)).map(p -> p.getTravelTime()).sorted().findFirst().get();
+					
+					exPhaseTime = new double[] {Stime + differentialTime};
+				}
 			}
 			
 			Timewindow[] windows = createTimeWindows(phaseTime, exPhaseTime, exRearShift);
@@ -608,6 +656,10 @@ public class TimewindowMaker implements Operation {
 				writeInvalid(sacFileName);
 				return;
 			}
+			
+//			if (firstAppearance) {
+//				System.out.println((6371-eventR) + " " + epicentralDistance + " " + windows[0] + " " + exPhaseTime[0]);
+//			}
 			
 			// System.out.println(sacFile.getValue(SacHeaderEnum.E));
 			// delta (time step) in SacFile
@@ -631,7 +683,8 @@ public class TimewindowMaker implements Operation {
 		}
 	}
 	
-	final static double exRearShift = 3.;
+	
+	final private static double exRearShift = 10.;
 
 	/**
 	 * fix start and end time by delta these time must be (int) * delta
@@ -731,6 +784,8 @@ public class TimewindowMaker implements Operation {
 		
 		if (exWindows == null)
 			return windows;
+		
+//		System.out.println(exFrontShift + " " + exWindows[0].getStartTime());
 		
 		exWindows = mergeWindow(exWindows);
 		return considerExPhase(windows, exWindows);
@@ -898,6 +953,39 @@ public class TimewindowMaker implements Operation {
 				phases.add(phase.getPhaseName());
 		}
 		return phases.toArray(new Phase[phases.size()]);
+	}
+	
+	public static double[][] readCatalogue(String catalog) {
+		try {
+			List<String> lines = IOUtils.readLines(
+					TimewindowMaker.class.getClassLoader().getResourceAsStream(catalog), //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
+					Charset.defaultCharset());
+			String[] ss = lines.get(0).split("\\s+");
+			double hmin = Double.parseDouble(ss[0]);
+			double hmax = Double.parseDouble(ss[1]);
+			double dh = Double.parseDouble(ss[2]);
+			int nh = lines.size() - 1;
+			
+			if ((hmax - hmin) / dh + 1 != nh)
+				throw new Exception("Catalog is broken");
+			
+			double[][] catalogue = new double[nh + 1][4];
+			catalogue[0] = new double[] {hmin, hmax, dh};
+			for (int i = 1; i < nh + 1; i++) {
+				ss = lines.get(i).split("\\s+");
+				catalogue[i][0] = Double.parseDouble(ss[0]);
+				catalogue[i][1] = Double.parseDouble(ss[1]);
+				catalogue[i][2] = Double.parseDouble(ss[2]);
+				catalogue[i][3] = Double.parseDouble(ss[3]);
+			}
+			
+			return catalogue;
+		} catch (NullPointerException e) {
+			return null;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override

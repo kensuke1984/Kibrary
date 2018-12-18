@@ -28,6 +28,16 @@ public class CrossSectionLine {
 		this.deltaTheta = deltaTheta;
 		setPoints();
 	}
+	
+	public CrossSectionLine(HorizontalPosition startPoint, HorizontalPosition endPoint, double deltaThetaRad) {
+		this.centerLocation = null;
+		this.theta = startPoint.getEpicentralDistance(endPoint);
+		this.azimuth = startPoint.getAzimuth(endPoint);
+		this.deltaTheta = deltaThetaRad;
+		this.startPoint = startPoint;
+		this.endPoint = endPoint;
+		setPointsFromExtremities();
+	}
 
 	/**
 	 * 中心点の座標
@@ -78,42 +88,58 @@ public class CrossSectionLine {
 	 * 与えられた情報から　各点の座標を求める
 	 */
 	protected void setPoints() {
-			int nTheta = (int) Math.round(theta / deltaTheta);
-			HorizontalPosition[] positions = new HorizontalPosition[2 * nTheta+1];
-			thetaX = new double[2*nTheta+1];
-			for(int i=-nTheta;i<nTheta+1;i++){
-				if(i<0){
-					double theta = -i * deltaTheta;
-					XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, Math.PI);
-					xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
-					xyz = xyz.rotateaboutY(centerLocation.getTheta());
-					xyz = xyz.rotateaboutZ(centerLocation.getPhi());
-					positions[i + nTheta] = xyz.toLocation();
-	//				System.out.println(xyz.getLocation());
-					thetaX[i+nTheta]= -theta;
-				}
-				else if(i>=0){
-					double theta = i* deltaTheta;
-					XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0);
-					xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
-					xyz = xyz.rotateaboutY(centerLocation.getTheta());
-					xyz = xyz.rotateaboutZ(centerLocation.getPhi());
-					positions[i + nTheta] = xyz.toLocation();
-	//				System.out.println(xyz.getLocation());
-					thetaX[i+nTheta]= theta;
-				}
-				
-				this.positions = positions;
-				
-			
-				
+		int nTheta = (int) Math.round(theta / deltaTheta);
+		HorizontalPosition[] positions = new HorizontalPosition[2 * nTheta+1];
+		thetaX = new double[2*nTheta+1];
+		for(int i=-nTheta;i<nTheta+1;i++){
+			if(i<0){
+				double theta = -i * deltaTheta;
+				XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, Math.PI);
+				xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
+				xyz = xyz.rotateaboutY(centerLocation.getTheta());
+				xyz = xyz.rotateaboutZ(centerLocation.getPhi());
+				positions[i + nTheta] = xyz.toLocation();
+//				System.out.println(xyz.getLocation());
+				thetaX[i+nTheta]= -theta;
+			}
+			else if(i>=0){
+				double theta = i* deltaTheta;
+				XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0);
+				xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
+				xyz = xyz.rotateaboutY(centerLocation.getTheta());
+				xyz = xyz.rotateaboutZ(centerLocation.getPhi());
+				positions[i + nTheta] = xyz.toLocation();
+//				System.out.println(xyz.getLocation());
+				thetaX[i+nTheta]= theta;
 			}
 			
-			startPoint = positions[0] ;
-			endPoint = positions[positions.length-1] ;
-			
-			
+			this.positions = positions;
 		}
+		
+		startPoint = positions[0] ;
+		endPoint = positions[positions.length-1] ;
+	}
+	
+	protected void setPointsFromExtremities() {
+		int nTheta = (int) Math.round(theta / deltaTheta);
+		HorizontalPosition[] positions = new HorizontalPosition[nTheta + 1];
+		thetaX = new double[nTheta+1];
+		for(int i = 0; i <= nTheta; i++){
+			double theta = i * deltaTheta;
+			XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, 0);
+			xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
+			xyz = xyz.rotateaboutY(startPoint.getTheta());
+			xyz = xyz.rotateaboutZ(startPoint.getPhi());
+			positions[i] = xyz.toLocation();
+//				System.out.println(xyz.getLocation());
+			thetaX[i]= theta;
+			
+			this.positions = positions;
+		}
+		
+		startPoint = positions[0] ;
+		endPoint = positions[positions.length-1] ;
+	}
 
 	public HorizontalPosition getCenterLocation() {
 		return centerLocation;

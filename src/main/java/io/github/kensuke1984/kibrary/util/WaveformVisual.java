@@ -27,18 +27,39 @@ public class WaveformVisual {
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		
-		Path stackDir = Paths.get("stack" + Utilities.getTemporaryString());
-		Files.createDirectory(stackDir);
+		String tmpString = Utilities.getTemporaryString();
 		
-		SACComponent[] components = new SACComponent[] {SACComponent.T};
+		Path stackDir = Paths.get("stack" + tmpString);
+		Path profileDir = Paths.get("profile" + tmpString);
+		Files.createDirectory(stackDir);
+		Files.createDirectory(profileDir);
+		
+		SACComponent[] components = new SACComponent[] {SACComponent.T, SACComponent.R, SACComponent.Z};
+		
+		double dt = 1./ ids[0].getSamplingHz();
 		
 		for (GlobalCMTID event : events) {
 			Path eventDir = stackDir.resolve(event.toString());
 			Files.createDirectory(eventDir);
+			
+			Path profileEventDir = profileDir.resolve(event.toString());
+			Files.createDirectory(profileEventDir);
 		
 			for (SACComponent component : components) {
 				double[][] obsStack = new double[120][0];
 				double[][] synStack = new double[120][0];
+				
+				
+				Path plotProfilePath = profileEventDir.resolve(Paths.get("plot_" + component + ".plt"));
+				PrintWriter pwPlot = new PrintWriter(plotProfilePath.toFile());
+				pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
+				pwPlot.println("set output \"" + event + "." + component + ".ps\"");
+				pwPlot.println("unset key");
+				pwPlot.println("set yrange [63:102]"); 
+				pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
+				pwPlot.println("set ylabel 'Distance (deg)'");
+				pwPlot.println("set size .5,1");
+				pwPlot.print("p ");
 				
 				for (BasicID id : ids) {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
@@ -51,15 +72,30 @@ public class WaveformVisual {
 						obsStack[k] = add(obsStack[k], id.getData());
 					if (id.getWaveformType().equals(WaveformType.SYN))
 						synStack[k] = add(synStack[k], id.getData());
+					
+					String filename = id.getStation() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
+					Path outpath = profileEventDir.resolve(filename);
+					PrintWriter pw = new PrintWriter(outpath.toFile());
+					Trace trace = id.getTrace();
+					for (int i = 0; i < trace.getLength(); i++)
+						pw.println(trace.getXAt(i) + " " + trace.getYAt(i));
+					pw.close();
+					
+					double max = trace.getYVector().getLInfNorm();
+					if (id.getWaveformType().equals(WaveformType.SYN))
+						pwPlot.println("'" + filename + "' u 0:($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'red',\\");
+					if (id.getWaveformType().equals(WaveformType.OBS))
+						pwPlot.println("'" + filename + "' u 0:($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'black',\\");
 				}
+				pwPlot.close();
 				
 				
-				Path plotPath = eventDir.resolve(Paths.get("plot.plt"));
-				PrintWriter pwPlot = new PrintWriter(plotPath.toFile());
+				Path plotPath = eventDir.resolve(Paths.get("plot_" + component + ".plt"));
+				pwPlot = new PrintWriter(plotPath.toFile());
 				pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
 				pwPlot.println("set output \"" + event + "." + component + ".ps\"");
 				pwPlot.println("unset key");
-				pwPlot.println("set yrange [8:32]"); 
+				pwPlot.println("set yrange [63:102]"); 
 				pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 				pwPlot.println("set ylabel 'Distance (deg)'");
 				pwPlot.println("set size .5,1");
@@ -75,7 +111,7 @@ public class WaveformVisual {
 					Path outpath = eventDir.resolve(filename);
 					PrintWriter pw = new PrintWriter(outpath.toFile());
 					for (int j = 0; j < obsStack[i].length; j++)
-						pw.println(j + " " + (synStack[i][j] / max) + " " + (obsStack[i][j] / max));
+						pw.println((j * dt) + " " + (synStack[i][j] / max) + " " + (obsStack[i][j] / max));
 					pw.close();
 					
 					pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lc rgb 'red',\\");

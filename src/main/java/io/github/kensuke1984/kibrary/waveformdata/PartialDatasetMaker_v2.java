@@ -28,6 +28,7 @@ import javax.management.RuntimeErrorException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.jsoup.select.Collector;
 
 import com.google.common.util.concurrent.UncheckedExecutionException;
@@ -45,6 +46,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
@@ -246,6 +248,15 @@ public class PartialDatasetMaker_v2 implements Operation {
 			mode = "BOTH";
 //			fpname = fpFile;
 			id = new GlobalCMTID(fpname.getSourceID());
+			if (!checkPair(bp, bp_other))
+				throw new RuntimeException("SH and PSV bp files are not a pair" + bp + " " + bp_other);
+		}
+		
+		private boolean checkPair(DSMOutput bp1, DSMOutput bp2) {
+			boolean res = true;
+			if (!bp1.getObserverPosition().equals(bp2.getObserverPosition()))
+				res = false;
+			return res;
 		}
 
 		/**
@@ -335,40 +346,36 @@ public class PartialDatasetMaker_v2 implements Operation {
 				return;
 			}
 			
-//			System.out.println("fp read");
-			
-//			ThreeDPartialMaker threedPartialMaker = new ThreeDPartialMaker(fp, bp);
-//			threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
-//			if (structure != null)
-//				threedPartialMaker.setStructure(structure);
-			
-//			ThreeDPartialMaker threedPartialMaker_other = null;
-//			if (mode.equals("BOTH")) {
-//				threedPartialMaker_other = new ThreeDPartialMaker(fp_other, bp_other);
-//				threedPartialMaker_other.setSourceTimeFunction(getSourceTimeFunction());
-//				if (structure != null)
-//					threedPartialMaker_other.setStructure(structure);
-//			}
+			if (!checkPair(bp, fp))
+				throw new RuntimeException("BP and FP files are not a pair" + bp + " " + fp);
+			if (mode.equals("BOTH")) {
+				if (!checkPair(bp_other, fp_other))
+					throw new RuntimeException("BP and FP files are not a pair" + bp_other + " " + fp_other);
+			}
 			
 			ThreeDPartialMaker threedPartialMaker = null;
 			if (mode.equals("BOTH")) {
-				System.out.println("Using both PSV and SH");
+//				System.out.println("Using both PSV and SH");
 				threedPartialMaker = new ThreeDPartialMaker(fp, fp_other, bp, bp_other);
 			}
 			else {
 				threedPartialMaker = new ThreeDPartialMaker(fp, bp);
 			}
 			threedPartialMaker.setSourceTimeFunction(getSourceTimeFunction());
+			
 			if (structure != null)
 				threedPartialMaker.setStructure(structure);
 			
-//			if (bp.getSourceLocation().getLongitude() == fp.getObserverPosition().getLongitude()) {
-//				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + bp.getSourceLocation().getLongitude() 
-//						+ "." + fp.getSourceID() + ".txt");
+////			if (bp.getSourceLocation().getLongitude() == fp.getObserverPosition().getLongitude()) {
+//			if (fp.getObserverPosition().getLongitude() == 14.5) {
+////				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + bp.getSourceLocation().getLongitude() 
+////						+ "." + fp.getSourceID() + ".txt");
+//				Path path = Paths.get(fp.getObserverPosition().getLongitude() + "_" + fp.getBodyR()[0] 
+//						+ "." + ".txt");
 //				try {
 //					Files.deleteIfExists(path);
 //					Files.createFile(path);
-//					int lsmooth = (int) (0.5 * 6553.6 * 20. / 1024.);
+//					int lsmooth = (int) (0.5 * 3276.8 * 20. / 512.);
 //					int j = Integer.highestOneBit(lsmooth);
 //					if (j < lsmooth)
 //						j *= 2;
@@ -380,13 +387,15 @@ public class PartialDatasetMaker_v2 implements Operation {
 //					fpBody.toTimeDomain(lsmooth);
 //					bpBody.toTimeDomain(lsmooth);
 //					
-//					double[] fpserie = fpBody.getTimeseries(SACComponent.T);
-//					double[] bpserie = bpBody.getTimeseries(SACComponent.T);
-//					System.out.println("FP serie has npts=" + fpserie.length);
-//					System.out.println("BP serie has npts=" + bpserie.length);
+//					double[] fpserieT = fpBody.getTimeseries(SACComponent.T); //wrong should be SpcComponent no SACComponent
+//					double[] bpserieT = bpBody.getTimeseries(SACComponent.T);
+//					double[] fpserieR = fpBody.getTimeseries(SACComponent.R);
+//					double[] bpserieR = bpBody.getTimeseries(SACComponent.R);
+////					System.out.println("FP serie has npts=" + fpserie.length);
+////					System.out.println("BP serie has npts=" + bpserie.length);
 //					
-//					for (int i = 0; i < fpserie.length / 20; i++) {
-//						Files.write(path, (i + " " + fpserie[i * 20] + " " + bpserie[i * 20] + "\n").getBytes(), StandardOpenOption.APPEND);
+//					for (int i = 0; i < fpserieT.length / 20; i++) {
+//						Files.write(path, (i + " " + fpserieT[i * 20] + " " + bpserieT[i * 20] + " " + fpserieR[i * 20] + " " + bpserieR[i * 20] + "\n").getBytes(), StandardOpenOption.APPEND);
 //					}
 //				} catch (IOException e) {
 //					e.printStackTrace();
@@ -411,41 +420,33 @@ public class PartialDatasetMaker_v2 implements Operation {
 						if (timewindowList.stream().noneMatch(info -> info.getComponent() == component))
 							continue;
 //						System.out.println(bp.getBodyR()[ibody] + " " + fpname);
-						double[] partial = threedPartialMaker.createPartial(component, ibody, type);
-						
-//						double[] tmp = null;
-//						if (mode.equals("BOTH"))
-//							tmp = threedPartialMaker_other.createPartial(component, ibody, type);
-//						double[] partial_other = tmp;
-						
-//						for (int i = 0; i < 600; i++) {
-//							System.out.println(partial[i*(int)partialSamplingHz]);
-//						}
+						double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type);
+//						System.out.println(component + " " + type + " " + new ArrayRealVector(partial).getLInfNorm());
+
 						timewindowList.stream().filter(info -> info.getComponent() == component).forEach(info -> {
+//							System.out.println(component + " " + info.getComponent());
 							Complex[] u;
 //							if (!shiftConvolution)
-								u = cutPartial(partial, info);
+							u = cutPartial(partial, info);
 							
-//							Complex[] u_other = null;
-//							if (mode.equals("BOTH")) {
-//								u_other = cutPartial(partial_other, info);
-//								u_other = filter.applyFilter(u_other);
-//							}
-								
-//							else {
-//								double shift = info.getGlobalCMTID().getEvent().getHalfDuration() - 
-//								u = cutPartial(partial, info, shift);
-//							}
-
 							u = filter.applyFilter(u);
-							
 							double[] cutU = sampleOutput(u, info);
 							
-//							if (mode.equals("BOTH")) {
-//								double[] cutU_other = sampleOutput(u_other, info);
-//								for (int i = 0; i < cutU.length; i++)
-//									cutU[i] += cutU_other[i];
-//							}
+							
+							//DEBUG
+							if (location.getR() == 5581 && location.getLongitude() == 14.5) {
+								Path outpath = Paths.get("par_" + type + "_5581_14.5_" + new Phases(info.getPhases()) + "_" + component + ".txt");
+								try {
+								PrintWriter pwtmp = new PrintWriter(outpath.toFile());
+								double t0 = info.getStartTime();
+								for (int ii = 0; ii < cutU.length; ii++)
+									pwtmp.println((t0 + ii / finalSamplingHz) + " " + cutU[ii]);
+								pwtmp.close();
+								} catch (IOException e) {
+									e.printStackTrace();
+								}
+							}
+							//
 							
 							PartialID pid = new PartialID(station, id, component, finalSamplingHz, info.getStartTime(),
 									cutU.length, 1 / maxFreq, 1 / minFreq, info.getPhases(), 0, sourceTimeFunction != 0, location, type,
@@ -636,6 +637,12 @@ private class WorkerTimePartial implements Runnable {
 
 	private String mode;
 	
+	private boolean catalogue;
+	
+	private double thetamin;
+	private double thetamax;
+	private double dtheta;
+	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(PartialDatasetMaker_v2.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -648,6 +655,10 @@ private class WorkerTimePartial implements Runnable {
 			pw.println("#bpPath");
 			pw.println("##Path of a forward propagate spc folder (FPinfo)");
 			pw.println("#fpPath");
+			pw.println("##Boolean interpolate fp and bp from a catalogue (false)");
+			pw.println("#catalogue");
+			pw.println("##Theta- range and sampling for the BP catalog in the format: thetamin thetamax thetasampling. (1. 50. 2e-2)");
+			pw.println("#thetaRange");
 			pw.println("##Mode: PSV, SH, BOTH (SH)");
 			pw.println("#mode");
 			pw.println("##String if it is PREM spector file is in bpdir/PREM  (PREM)");
@@ -694,6 +705,8 @@ private class WorkerTimePartial implements Runnable {
 			property.setProperty("bpPath", "BPinfo");
 		if (!property.containsKey("fpPath"))
 			property.setProperty("fpPath", "FPinfo");
+		if (!property.containsKey("catalogue"))
+			property.setProperty("catalogue", "false");
 		if (!property.containsKey("modelName"))
 			property.setProperty("modelName", "PREM");
 		if (!property.containsKey("maxFreq"))
@@ -774,6 +787,15 @@ private class WorkerTimePartial implements Runnable {
 		if (!(mode.equals("SH") || mode.equals("PSV") || mode.equals("BOTH")))
 				throw new RuntimeException("Error: mode should be one of the following: SH, PSV, BOTH");
 		System.out.println("Using mode " + mode);
+		
+		catalogue = Boolean.parseBoolean(property.getProperty("catalogue"));
+		if (catalogue) {
+			double[] tmpthetainfo = Stream.of(property.getProperty("thetaInfo").trim().split("\\s+")).mapToDouble(Double::parseDouble)
+					.toArray();
+			thetamin = tmpthetainfo[0];
+			thetamax = tmpthetainfo[1];
+			dtheta = tmpthetainfo[2];
+		}
 	}
 
 	private void setLog() throws IOException {
@@ -1069,6 +1091,7 @@ private class WorkerTimePartial implements Runnable {
 				stf = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 				break;
 			case 2:
+				System.out.println("Using triangle STF");
 				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 //				System.out.println("Triangle STF " + halfDuration);
 				break;

@@ -100,6 +100,50 @@ class TensorCalculationUCE {
 			}
 		return partial;
 	}
+	
+	/**
+	 * Uj,q Cjqrs Eri,sのi成分の計算
+	 * 
+	 * @param i
+	 *            (0: Z 1:R 2:T)
+	 * @return {@link Complex}[np] i成分を返す
+	 */
+	public Complex[] calcSerial(int i) {
+		Complex[] partial = new Complex[np + 1];
+		Arrays.fill(partial, Complex.ZERO);
+
+		for (int r = 0; r < 3; r++)
+			for (int s = 0; s < 3; s++) {
+				SpcTensorComponent irs = SpcTensorComponent.valueOfBP(i + 1, r + 1, s + 1);
+				eta[r][s] = bp.getSpcComponent(irs).getValueInFrequencyDomain();
+			}
+
+		eta = rotateEta(eta);
+		
+//		for (int r = 0; r < 3; r++) {
+//			for (int s = 0; s < 3; s++) {
+//				System.out.println(r + " " + s + " " + eta[r][s][i]);
+//			}
+//		}
+
+		for (int p = 0; p < 3; p++)
+			for (int q = 0; q < 3; q++) {
+				SpcTensorComponent pq = SpcTensorComponent.valueOfFP(p + 1, q + 1);
+				u[p][q] = fp.getSpcComponent(pq).getValueInFrequencyDomain();
+				
+//				System.out.println(p + " " + u[p][q][i]);
+				
+				// u = rotate(u,anglefp);
+				for (int r = 0; r < 3; r++)
+					for (int s = 0; s < 3; s++) {
+						// 球座標系とデカルト座標の調整
+						double factor = getFactor(p, q, r, s);
+						if (factor != 0)
+							addPartial(partial, calcCrossCorrelationSerial(u[p][q], eta[r][s]), factor);
+					}
+			}
+		return partial;
+	}
 
 	/**
 	 * 球座標系pqrs(0, 1, 2)に対して 係数を求める (0, 1, 2) = (r, theta, phi) (->) (Z, X, Y) =
@@ -197,7 +241,6 @@ class TensorCalculationUCE {
 				}
 
 		return newETA;
-
 	}
 
 	/**
@@ -210,6 +253,19 @@ class TensorCalculationUCE {
 	private Complex[] calcCrossCorrelation(Complex[] u, Complex[] eta) {
 		Complex[] c = new Complex[np + 1];
 		Arrays.parallelSetAll(c, i -> u[i].multiply(eta[i]));
+		return c;
+	}
+	
+	/**
+	 * uとEtaの計算をする（積） cross correlation
+	 * 
+	 * @param u
+	 * @param eta
+	 * @return c[i] = u[i]* eta[i]
+	 */
+	private Complex[] calcCrossCorrelationSerial(Complex[] u, Complex[] eta) {
+		Complex[] c = new Complex[np + 1];
+		Arrays.setAll(c, i -> u[i].multiply(eta[i]));
 		return c;
 	}
 	

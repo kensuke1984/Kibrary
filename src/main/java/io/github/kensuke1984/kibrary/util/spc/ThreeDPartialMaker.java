@@ -40,7 +40,9 @@ public class ThreeDPartialMaker {
 	 * forward propagation
 	 */
 	private DSMOutput fp;
-
+	private DSMOutput fp2;
+	private DSMOutput fp3;
+	
 	/**
 	 * back propagation
 	 */
@@ -52,6 +54,8 @@ public class ThreeDPartialMaker {
 	 * distances for interpolation
 	 */
 	double[] dh;
+	
+	double[] dhFP;
 
 	/**
 	 * SACファイルにするときのサンプリング値 デフォルト20Hz
@@ -93,6 +97,8 @@ public class ThreeDPartialMaker {
 			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
 		ignoreBodyR.forEach(System.out::println);
 		this.fp = fp;
+		this.fp2 = null;
+		this.fp3 = null;
 		this.bp = bp1;
 		this.bp2 = bp2;
 		this.bp3 = bp3;
@@ -101,15 +107,150 @@ public class ThreeDPartialMaker {
 		setAngles();
 	}
 	
+	/**
+	 * 用いたいspcファイルたちと ヘッダーに加えたい情報
+	 * 
+	 * @param fp
+	 *            a spc file for forward propagation
+	 * @param bp
+	 *            a spc file for back propagation
+	 */
+	public ThreeDPartialMaker(DSMOutput fpSH, DSMOutput fpPSV, DSMOutput bp1SH,
+			DSMOutput bp1PSV, DSMOutput bp2SH, DSMOutput bp2PSV, DSMOutput bp3SH, DSMOutput bp3PSV, double[] dh) {
+		ignoreBodyR = new HashSet<>();
+		if (!isGoodPairPermissive(fpSH, bp1SH)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPairPermissive(fpSH, bp2SH)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPairPermissive(fpSH, bp3SH)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
+		
+		this.fp = fpSH;
+		this.bp = bp1SH;
+		this.bp2 = bp2SH;
+		this.bp3 = bp3SH;
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		for (int i = 0; i < fpSH.nbody(); i++) {
+			SpcBody body = fpPSV.getSpcBodyList().get(i).copy();
+			this.fp.getSpcBodyList().get(i).addBody(body);
+		}
+		
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		for (int i = 0; i < bp1SH.nbody(); i++) {
+			SpcBody body = bp1PSV.getSpcBodyList().get(i).copy();
+			this.bp.getSpcBodyList().get(i).addBody(body);
+			
+			SpcBody body2 = bp2PSV.getSpcBodyList().get(i).copy();
+			this.bp2.getSpcBodyList().get(i).addBody(body2);
+			
+			SpcBody body3 = bp3PSV.getSpcBodyList().get(i).copy();
+			this.bp3.getSpcBodyList().get(i).addBody(body3);
+		}
+//		System.out.println("PSV and SH added");
+		
+		this.fp2 = null;
+		this.fp3 = null;
+		this.dh = dh;
+		findLsmooth();
+		setAngles();
+	}
+	
+	/**
+	 * 用いたいspcファイルたちと ヘッダーに加えたい情報
+	 * 
+	 * @param fp
+	 *            a spc file for forward propagation
+	 * @param bp
+	 *            a spc file for back propagation
+	 */
+	public ThreeDPartialMaker(DSMOutput fp1, DSMOutput fp2, DSMOutput fp3, DSMOutput bp1, DSMOutput bp2, DSMOutput bp3, double[] dhBP, double[] dhFP) {
+		ignoreBodyR = new HashSet<>();
+		if (!isGoodPairPermissive(fp1, bp1)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPairPermissive(fp2, bp2)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPairPermissive(fp3, bp3)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
+		this.fp = fp1;
+		this.fp2 = fp2;
+		this.fp3 = fp3;
+		this.bp = bp1;
+		this.bp2 = bp2;
+		this.bp3 = bp3;
+		this.dh = dhBP;
+		this.dhFP = dhFP;
+		findLsmooth();
+		setAngles();
+	}
+	
+	/**
+	 * 用いたいspcファイルたちと ヘッダーに加えたい情報
+	 * 
+	 * @param fp
+	 *            a spc file for forward propagation
+	 * @param bp
+	 *            a spc file for back propagation
+	 */
+	public ThreeDPartialMaker(DSMOutput fp1PSV, DSMOutput fp1SH, DSMOutput fp2PSV,  DSMOutput fp2SH, DSMOutput fp3PSV, DSMOutput fp3SH,
+			DSMOutput bp1PSV, DSMOutput bp1SH, DSMOutput bp2PSV, DSMOutput bp2SH, DSMOutput bp3PSV, DSMOutput bp3SH, double[] dhBP, double[] dhFP) {
+		ignoreBodyR = new HashSet<>();
+		if (!isGoodPair(fp1SH, bp1SH)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPair(fp2SH, bp2SH)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		if (!isGoodPair(fp3SH, bp3SH)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
+		
+		this.fp = fp1PSV;
+		this.fp2 = fp2PSV;
+		this.fp3 = fp3PSV;
+		this.bp = bp1PSV;
+		this.bp2 = bp2PSV;
+		this.bp3 = bp3PSV;
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		for (int i = 0; i < fp1PSV.nbody(); i++) {
+			SpcBody body = fp1SH.getSpcBodyList().get(i).copy();
+			this.fp.getSpcBodyList().get(i).addBody(body);
+			
+			SpcBody body2 = fp2SH.getSpcBodyList().get(i).copy();
+			this.fp2.getSpcBodyList().get(i).addBody(body2);
+			
+			SpcBody body3 = fp3SH.getSpcBodyList().get(i).copy();
+			this.fp3.getSpcBodyList().get(i).addBody(body3);
+		}
+		
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		for (int i = 0; i < bp1PSV.nbody(); i++) {
+			SpcBody body = bp1SH.getSpcBodyList().get(i).copy();
+			this.bp.getSpcBodyList().get(i).addBody(body);
+			
+			SpcBody body2 = bp2SH.getSpcBodyList().get(i).copy();
+			this.bp2.getSpcBodyList().get(i).addBody(body2);
+			
+			SpcBody body3 = bp3SH.getSpcBodyList().get(i).copy();
+			this.bp3.getSpcBodyList().get(i).addBody(body3);
+		}
+		
+		this.dh = dhBP;
+		this.dhFP = dhFP;
+		findLsmooth();
+		setAngles();
+	}
+	
 	public ThreeDPartialMaker(DSMOutput fp, DSMOutput bp) {
 		ignoreBodyR = new HashSet<>();
-		if (!isGoodPairPermissive(fp, bp)) //isGoodPair
+		if (!isGoodPair(fp, bp)) //isGoodPair
 			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
 		ignoreBodyR.forEach(System.out::println);
 		this.fp = fp;
 		this.bp = bp;
 		this.bp2 = null;
 		this.bp3 = null;
+		this.fp2 = null;
+		this.fp3 = null;
 		this.dh = null;
 		findLsmooth();
 		setAngles();
@@ -118,8 +259,25 @@ public class ThreeDPartialMaker {
 	public ThreeDPartialMaker(DSMOutput fpSH, DSMOutput fpPSV, DSMOutput bpSH, DSMOutput bpPSV) {
 		ignoreBodyR = new HashSet<>();
 		
-		this.fp = sum(fpSH, fpPSV);
-		this.bp = sum(bpSH, bpPSV);
+		this.fp = fpPSV;
+		this.bp = bpPSV;
+		
+//		System.out.println(fpSH.getSpcFileName() + " " + fpPSV.getSpcFileName() + " " + bpSH.getSpcFileName() + " " + bpPSV.getSpcFileName());
+		
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		
+		for (int i = 0; i < fpPSV.nbody(); i++) {
+			SpcBody body = fpSH.getSpcBodyList().get(i).copy();
+			this.fp.getSpcBodyList().get(i).addBody(body);
+		}
+		
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		
+		for (int i = 0; i < bpPSV.nbody(); i++) {
+			SpcBody body = bpSH.getSpcBodyList().get(i).copy();
+			this.bp.getSpcBodyList().get(i).addBody(body);
+		}
+//		System.out.println("PSV and SH added");
 		
 		if (!isGoodPairPermissive(fp, bp)) //isGoodPair
 			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
@@ -127,11 +285,14 @@ public class ThreeDPartialMaker {
 		
 		this.bp2 = null;
 		this.bp3 = null;
+		this.fp2 = null;
+		this.fp3 = null;
 		this.dh = null;
 		findLsmooth();
 		setAngles();
 	}
 	
+	@Deprecated
 	private DSMOutput sum(DSMOutput sh, DSMOutput psv) {
 		DSMOutput shpsv = psv;
 		
@@ -139,9 +300,9 @@ public class ThreeDPartialMaker {
 		List<SpcBody> psvBody = psv.getSpcBodyList();
 		
 		for (int i = 0; i < psvBody.size(); i++) {
-			SpcBody tmpBody = psvBody.get(i);
-			tmpBody.addBody(shBody.get(i));
-			psv.setSpcBody(i, tmpBody);
+			SpcBody body = psvBody.get(i).copy();
+			body.addBody(shBody.get(i));
+			shpsv.setSpcBody(i, body);
 		}
 		
 		return shpsv;
@@ -294,14 +455,24 @@ public class ThreeDPartialMaker {
 //			return new double[npts];
 		//
 		
+		long t1i = System.currentTimeMillis();
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
 				: computeTensorCulculus(component, iBody, iBody, type);
+		long t1f = System.currentTimeMillis();
+		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
+		
 		if (null != sourceTimeFunction)
 			partial_frequency = sourceTimeFunction.convolve(partial_frequency);
+		//test tapper
+//		partial_frequency = rightTapper(partial_frequency); //TODO
+		//
+		long t2i = System.currentTimeMillis();
 		Complex[] partial_time = toTimedomain(partial_frequency);
 		double[] partialdouble = new double[npts];
 		for (int j = 0; j < npts; j++)
 			partialdouble[j] = partial_time[j].getReal();
+		long t2f = System.currentTimeMillis();
+		System.out.println("iFFT finished in " + (t2f - t2i)*1e-3 + " s");
 //		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
 		return partialdouble;
 	}
@@ -323,14 +494,26 @@ public class ThreeDPartialMaker {
 //			return new double[npts];
 		//
 		
+		long t1i = System.currentTimeMillis();
 		Complex[] partial_frequency = type == PartialType.Q ? computeQpartial(component, iBody)
-				: computeTensorCulculus(component, iBody, iBody, type);
+				: computeTensorCulculusSerial(component, iBody, iBody, type);
+		long t1f = System.currentTimeMillis();
+//		System.out.println("Tensor multiplication finished in " + (t1f - t1i)*1e-3 + " s");
+		
 		if (null != sourceTimeFunction)
 			partial_frequency = sourceTimeFunction.convolveSerial(partial_frequency);
+		
+		//test tapper
+		partial_frequency = rightTapper(partial_frequency); //TODO
+		//
+		
+		long t2i = System.currentTimeMillis();
 		Complex[] partial_time = toTimedomain(partial_frequency);
 		double[] partialdouble = new double[npts];
 		for (int j = 0; j < npts; j++)
 			partialdouble[j] = partial_time[j].getReal();
+		long t2f = System.currentTimeMillis();
+//		System.out.println("iFFt finished in " + (t2f - t2i)*1e-3 + " s");
 //		Arrays.stream(partial_time).mapToDouble(Complex::abs).toArray();
 		return partialdouble;
 	}
@@ -383,20 +566,65 @@ public class ThreeDPartialMaker {
 	
 	private Complex[] computeTensorCulculus(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
 		SpcBody bpBody = null;
+		SpcBody fpBody = null;
 		if (bp2 == null) {
 			bpBody = bp.getSpcBodyList().get(iBodyBp);
+			fpBody = fp.getSpcBodyList().get(iBodyFp);
 //			System.err.println("No interpolation performed");
+//			System.out.println("DEBUG BP noInterp: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+		}
+		else if (fp2 == null) {
+			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
+					, bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+			fpBody = fp.getSpcBodyList().get(iBodyFp);
+//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
 		}
 		else {
 			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
 					, bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+			fpBody = SpcBody.interpolate(fp.getSpcBodyList().get(iBodyFp)
+					, fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
+//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+//			System.out.println("DEBUG FP: " +  fpBody.getSpcComponents()[8].getValueInFrequencyDomain()[10]);
 		}
-		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fp.getSpcBodyList().get(iBodyFp),
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
 				bpBody, type.getWeightingFactor(), angleForTensor);
 		return component == SACComponent.Z ? tensorcalc.calc(0)
 				: rotatePartial(tensorcalc.calc(1), tensorcalc.calc(2), component);
 	}
 	
+	private Complex[] computeTensorCulculusSerial(SACComponent component, int iBodyBp, int iBodyFp, PartialType type) {
+		SpcBody bpBody = null;
+		SpcBody fpBody = null;
+		if (bp2 == null) {
+			bpBody = bp.getSpcBodyList().get(iBodyBp);
+			fpBody = fp.getSpcBodyList().get(iBodyFp);
+//			System.err.println("No interpolation performed");
+//			System.out.println("DEBUG BP noInterp: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+		}
+		else if (fp2 == null) {
+			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
+					, bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+			fpBody = fp.getSpcBodyList().get(iBodyFp);
+//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+		}
+		else {
+			bpBody = SpcBody.interpolate(bp.getSpcBodyList().get(iBodyBp)
+					, bp2.getSpcBodyList().get(iBodyBp), bp3.getSpcBodyList().get(iBodyBp), dh);
+			fpBody = SpcBody.interpolate(fp.getSpcBodyList().get(iBodyFp)
+					, fp2.getSpcBodyList().get(iBodyFp), fp3.getSpcBodyList().get(iBodyFp), dhFP);
+//			System.out.println("DEBUG BP: " +  bpBody.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
+//			System.out.println("DEBUG FP: " +  fpBody.getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		}
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		TensorCalculationUCE tensorcalc = new TensorCalculationUCE(fpBody,
+				bpBody, type.getWeightingFactor(), angleForTensor);
+		return component == SACComponent.Z ? tensorcalc.calcSerial(0)
+				: rotatePartial(tensorcalc.calcSerial(1), tensorcalc.calcSerial(2), component);
+	}
+	
+	@Deprecated
 	private SpcBody interpolate(SpcBody bpBody1, SpcBody bpBody2, double unitDistance) {
 		return bpBody1.interpolate(bpBody2, unitDistance);
 	}
@@ -545,10 +773,12 @@ public class ThreeDPartialMaker {
 	private Complex[] rightTapper(Complex[] complex) {
 		Complex[] tappered = complex.clone();
 		int l = complex.length;
-		int n = 30;
+		int n = l / 5;
 		
-		for (int i = 0; i < n; i++)
-			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * n) * i));
+		for (int i = 0; i < n; i++) {
+//			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * (n - 1)) * i));
+			tappered[i + l - n] = tappered[i + l - n].multiply(1. - (double) i / (n - 1.));
+		}
 		
 		return tappered;
 	}

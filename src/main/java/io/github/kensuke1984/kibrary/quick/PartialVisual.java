@@ -19,8 +19,8 @@ import java.util.stream.Stream;
 public class PartialVisual {
 
 	public static void main(String[] args) throws IOException {
-		Path partialIDPath = Paths.get("partialID.dat");
-		Path dataPath = Paths.get("partial.dat");
+		Path partialIDPath = Paths.get(args[0]);
+		Path dataPath = Paths.get(args[1]);
 		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, dataPath);
 		
 		Set<double[]> periodRanges = Stream.of(partials).map(id -> new double[] {id.getMinPeriod(), id.getMaxPeriod()})

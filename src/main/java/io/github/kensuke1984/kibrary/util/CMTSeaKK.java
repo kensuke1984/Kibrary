@@ -68,27 +68,33 @@ class CMTSeaKK {
 //				System.out.println(new GlobalCMTID("200506021056A").getEvent().getHalfDuration());
 //				System.exit(0);
 			
-				GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(2003, 1, 1), LocalDate.of(2005, 12, 30));
+				GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(1976, 1, 1), LocalDate.of(2018, 8, 1));
 
-//				sea.setLongitudeRange(-120, -30);
-				sea.setLatitudeRange(-10, 30);
-				sea.setDepthRange(80, 750);
+				sea.setLongitudeRange(-115, -75);
+				sea.setLatitudeRange(9, 32);
+				sea.setDepthRange(0, 750);
 //				sea.setLongitudeRange(170, 220);
 //				sea.setLatitudeRange(50, 70);
-				sea.setDepthRange(80, 750);
-				sea.setMwRange(5.5, 7.5);
+//				sea.setDepthRange(80, 750);
+				sea.setMwRange(1., 7.5);
 				Set<GlobalCMTID> id = sea.search();
 				
-				Path outpath = Paths.get("/Users/Anselme/Dropbox/Kenji/GlobalCMTIDs_UMstudy_Aleutians.txt");
+				System.out.println(id.size());
+				
+				Path outpath = Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/NEW/STRUCTURE/USED/CA_EVENTS/SEISMICITY/CA_seismicity.txt");
 				
 				Files.deleteIfExists(outpath);
 				Files.createFile(outpath);
 				
 				for (GlobalCMTID i : id) {
-					double distance = i.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(40, -120))
-							* 180 / Math.PI;
+//					double distance = i.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(40, -120))
+//							* 180 / Math.PI;
 //					if (distance <= 110 && distance >= 60)
-						Files.write(outpath, (i.toString() + "\n").getBytes(), StandardOpenOption.APPEND);
+						Files.write(outpath, (i.toString() + " "
+								+ i.getEvent().getCmtLocation().getLatitude() + " "
+								+ i.getEvent().getCmtLocation().getLongitude() + " "
+								+ (6371 - i.getEvent().getCmtLocation().getR()) + " "
+								+ i.getEvent().getCmt().getMw() + "\n").getBytes(), StandardOpenOption.APPEND);
 				}
 
 //				if (id.size() > 1)

@@ -36,6 +36,7 @@ public class ParameterMapping {
 	private double[] newLayerWidths;
 	private int[][] iNewToOriginal;
 	private Path input;
+	private Map<PartialType, Integer> typeIndex;
 	
 	public static void main(String[] args) throws IOException {
 		Path unknownParameterPath = Paths.get("unknowns.inf");
@@ -46,19 +47,24 @@ public class ParameterMapping {
 		
 		UnknownParameter[] newUnknowns = mapping.getUnknowns();
 		
-		for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
-			System.out.println(newUnknowns[iNew]);
-			for (int iOriginal : mapping.getiNewToOriginal(iNew))
-				System.out.println("--> " + originalUnknowns[iOriginal]);
-		}
-		
-//		for (UnknownParameter unknown: mapping.getUnknowns()) {
-//			System.out.println(unknown);
+//		for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
+//			System.out.println(newUnknowns[iNew]);
+//			for (int iOriginal : mapping.getiNewToOriginal(iNew))
+//				System.out.println("--> " + originalUnknowns[iOriginal]);
 //		}
+		
+		for (UnknownParameter unknown: mapping.getUnknowns()) {
+			System.out.println(unknown);
+		}
 	}
 	
 	public ParameterMapping(UnknownParameter[] originalUnknowns, Path input) {
 		this.originalUnknowns = originalUnknowns;
+		this.typeIndex = new HashMap<>();
+		List<PartialType> tmpTypes = Stream.of(originalUnknowns).map(p -> p.getPartialType())
+				.distinct().collect(Collectors.toList());
+		for (int i = 0; i < tmpTypes.size(); i++)
+			typeIndex.put(tmpTypes.get(i), i);
 		this.input = input;
 		try {
 			read(input);
@@ -162,6 +168,9 @@ public class ParameterMapping {
 		List<HorizontalPosition> horizontalPoints = originalUnknownList.stream().map(p -> p.getLocation().toHorizontalPosition())
 			.distinct().collect(Collectors.toList());
 		
+		int nNewUnknown = horizontalPoints.size() * iNewUnknown * typeIndex.size();
+//		System.out.println("nNewUnknown = " + nNewUnknown);
+		
 		for (int i = 0; i < horizontalPoints.size(); i++) {
 			HorizontalPosition horizontalPoint = horizontalPoints.get(i);
 			for (int k = 0; k < originalUnknowns.length; k++) {
@@ -169,7 +178,8 @@ public class ParameterMapping {
 					for (int l = 0; l < radiiOriginalToNewIndex.size(); l++) {
 						double r = radii.get(l);
 						if (Utilities.equalWithinEpsilon(originalUnknowns[k].getLocation().getR(), r, eps)) {
-							iOriginalToNew[k] = radiiOriginalToNewIndex.get(l) * horizontalPoints.size() + i;
+							iOriginalToNew[k] = radiiOriginalToNewIndex.get(l) * horizontalPoints.size() + i 
+									+ typeIndex.get(originalUnknowns[k].getPartialType()) * nNewUnknown / typeIndex.size();
 						}
 					}
 				}
@@ -192,9 +202,6 @@ public class ParameterMapping {
 //			}
 //		}
 //		countNew++;
-		
-		int nNewUnknown = horizontalPoints.size() * iNewUnknown;
-//		System.out.println("nNewUnknown = " + nNewUnknown);
 		
 		Map<Integer, List<Integer>> iNewToOriginalMap = new HashMap<>();
 		for (int i = 0; i < iOriginalToNew.length; i++) {

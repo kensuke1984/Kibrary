@@ -97,7 +97,7 @@ public class Tradeoff {
 			
 //			System.out.println("DEBUG1: " + eq.getParameterList().size());
 			
-			double layer1R = 6321.0;
+			double layer1R = 6171.0;
 			double minDeltaR = Double.MAX_VALUE;
 			double tmpLayerR = 0.;
 			for (Double perturbationR : perturbationRs) {

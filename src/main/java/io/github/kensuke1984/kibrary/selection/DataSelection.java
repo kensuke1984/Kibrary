@@ -523,7 +523,7 @@ public class DataSelection implements Operation {
 	}
 	
 	private double noisePerSecond(SACData sac, SACComponent component) {
-		double len = 100;
+		double len = 50;
 		double distance = sac.getValue(SACHeaderEnum.GCARC);
 		double depth = sac.getValue(SACHeaderEnum.EVDP);
 		double firstArrivalTime = 0;
@@ -556,7 +556,7 @@ public class DataSelection implements Operation {
 			e.printStackTrace();
 		}
 	
-		return sac.createTrace().cutWindow(firstArrivalTime - 40 - len, firstArrivalTime - 40).getYVector().getNorm() / len;
+		return sac.createTrace().cutWindow(firstArrivalTime - 20 - len, firstArrivalTime - 20).getYVector().getNorm() / len;
 	}
 
 	/**

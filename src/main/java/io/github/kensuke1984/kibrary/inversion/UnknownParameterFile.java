@@ -89,6 +89,8 @@ public class UnknownParameterFile {
 				case L:
 				case N:
 				case Q:
+				case MU:
+				case LAMBDA:
 				default:
 					unknown = new Physical3DParameter(type, new Location(Double.parseDouble(parts[1]),
 							Double.parseDouble(parts[2]), Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));

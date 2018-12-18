@@ -82,6 +82,7 @@ public class BPVisual {
 				SpcComponent[] spcComponents = body.getSpcComponents();
 				for (int j = 0; j < spcComponents.length; j++) {
 					double[] bpserie = spcComponents[j].getTimeseries();
+					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
 					for (TimewindowInformation info : timewindows) {
 						Station station = info.getStation();
 						GlobalCMTID event = info.getGlobalCMTID();
@@ -100,6 +101,14 @@ public class BPVisual {
 							for (double y : cutU)
 								pw.println(String.format("%.16e", y));
 						}
+						
+						Path outpath2 = workingDir.resolve(station.getStationName() + "." 
+								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
+								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".spectrum.txt");
+						try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath2, StandardOpenOption.CREATE_NEW))) {
+							for (Complex y : bpspectrum)
+								pw.println(String.format("%.16e", y.abs()));
+						}
 					}
 				}
 			}
@@ -110,10 +119,10 @@ public class BPVisual {
 		Path timewindowPath = Paths.get(args[0]);
 		Path workingDir = Paths.get(".");
 		double partialSamplingHz = 20.;
-		double finalSamplingHz = 8.;
-		double minFreq = 0.005;
+		double finalSamplingHz = 4.;
+		double minFreq = 0.01;
 		double maxFreq = 0.05;
-		int filterNp = 4;
+		int filterNp = 6;
 		
 		BPVisual bpVisual = new BPVisual(timewindowPath, workingDir
 				, partialSamplingHz, finalSamplingHz, minFreq, maxFreq, filterNp);

@@ -53,6 +53,14 @@ public class ModelCovarianceMatrix {
 		params.add(p1);
 		params.add(p2);
 		params.add(p3);
+		
+		UnknownParameter l1 = new Physical3DParameter(PartialType.LAMBDA, new Location(0, 0, 6371),  1.);
+		UnknownParameter l2 = new Physical3DParameter(PartialType.LAMBDA, new Location(2, 0, 6371),  1.);
+		UnknownParameter l3 = new Physical3DParameter(PartialType.LAMBDA, new Location(4, 0, 6371),  1.);
+		params.add(l1);
+		params.add(l2);
+		params.add(l3);
+		
 		ModelCovarianceMatrix c = new ModelCovarianceMatrix(params, 0., 1.);
 		
 		RealMatrix tmpC = c.getCm();
@@ -91,22 +99,58 @@ public class ModelCovarianceMatrix {
 			System.out.println();
 		}
 		
-		RealMatrix m = new Array2DRowRealMatrix(new double[][] {{1, 0, 0}, {0, 2, 0}, {0, 0, 1}});
+		RealMatrix m = new Array2DRowRealMatrix(new double[][] {{1, 0, 0, 0, 0, 0}, {0, 2, 0, 0, 0, 0}, {0, 0, 1, 0, 0, 0}, {0, 0, 0, 2, 0, 0}, {0, 0, 0, 0, 1, 0}, {0, 0, 0, 0, 0, 2}});
 		
-		RealMatrix tmpCM = c.lRightMultiply(m);
-		System.out.println("\nCM (fast) =");
+		RealMatrix tmpML = c.rightMultiplyByL(m);
+		System.out.println("\nML (fast) =");
 		for (int i = 0; i < params.size(); i++) {
 			for (int j = 0; j < params.size(); j++) {
-				System.out.printf("%.5f ", tmpCM.getEntry(i, j));
+				System.out.printf("%.5f ", tmpML.getEntry(i, j));
 			}
 			System.out.println();
 		}
 		
-		tmpCM = m.multiply(c.getL());
-		System.out.println("\nCM =");
+		tmpML = m.multiply(c.getL());
+		System.out.println("\nML =");
 		for (int i = 0; i < params.size(); i++) {
 			for (int j = 0; j < params.size(); j++) {
-				System.out.printf("%.5f ", tmpCM.getEntry(i, j));
+				System.out.printf("%.5f ", tmpML.getEntry(i, j));
+			}
+			System.out.println();
+		}
+		
+		RealMatrix tmpLM = c.leftMultiplyByL(m);
+		System.out.println("\nLM (fast) =");
+		for (int i = 0; i < params.size(); i++) {
+			for (int j = 0; j < params.size(); j++) {
+				System.out.printf("%.5f ", tmpLM.getEntry(i, j));
+			}
+			System.out.println();
+		}
+		
+		tmpLM = c.getL().multiply(m);
+		System.out.println("\nLM =");
+		for (int i = 0; i < params.size(); i++) {
+			for (int j = 0; j < params.size(); j++) {
+				System.out.printf("%.5f ", tmpLM.getEntry(i, j));
+			}
+			System.out.println();
+		}
+		
+		RealMatrix tmpLTM = c.leftMultiplyByLT(m);
+		System.out.println("\nLTM (fast) =");
+		for (int i = 0; i < params.size(); i++) {
+			for (int j = 0; j < params.size(); j++) {
+				System.out.printf("%.5f ", tmpLTM.getEntry(i, j));
+			}
+			System.out.println();
+		}
+		
+		tmpLTM = c.getLt().multiply(m);
+		System.out.println("\nLTM =");
+		for (int i = 0; i < params.size(); i++) {
+			for (int j = 0; j < params.size(); j++) {
+				System.out.printf("%.5f ", tmpLTM.getEntry(i, j));
 			}
 			System.out.println();
 		}
@@ -125,6 +169,9 @@ public class ModelCovarianceMatrix {
 	
 	private int[][] ltindexNonZeroElements;
 	private double[][] ltvalueNonZeroElements;
+	
+	private int[][] lindexNonZeroElements;
+	private double[][] lvalueNonZeroElements;
 	
 	private double[] preWeight;
 	
@@ -165,6 +212,8 @@ public class ModelCovarianceMatrix {
 		this.valueNonZeroElements = new double[parameters.size()][];
 		this.ltindexNonZeroElements = new int[parameters.size()][];
 		this.ltvalueNonZeroElements = new double[parameters.size()][];
+		this.lindexNonZeroElements = new int[parameters.size()][];
+		this.lvalueNonZeroElements = new double[parameters.size()][];
 		preWeight = new double[parameters.size()];
 		for (int i = 0; i < preWeight.length; i++)
 			preWeight[i] = 1.;
@@ -184,6 +233,8 @@ public class ModelCovarianceMatrix {
 		this.valueNonZeroElements = new double[parameters.size()][];
 		this.ltindexNonZeroElements = new int[parameters.size()][];
 		this.ltvalueNonZeroElements = new double[parameters.size()][];
+		this.lindexNonZeroElements = new int[parameters.size()][];
+		this.lvalueNonZeroElements = new double[parameters.size()][];
 		try {
 			preWeight = readSensitivityFileAndComputeWeight(sensitivityFile);
 		} catch (IOException e) {
@@ -205,6 +256,8 @@ public class ModelCovarianceMatrix {
 		this.valueNonZeroElements = new double[parameters.size()][];
 		this.ltindexNonZeroElements = new int[parameters.size()][];
 		this.ltvalueNonZeroElements = new double[parameters.size()][];
+		this.lindexNonZeroElements = new int[parameters.size()][];
+		this.lvalueNonZeroElements = new double[parameters.size()][];
 		preWeight = new double[parameters.size()];
 		for (int i = 0; i < preWeight.length; i++)
 			preWeight[i] = 1.;
@@ -213,7 +266,7 @@ public class ModelCovarianceMatrix {
 				UnknownParameter p = parameters.get(i);
 				double depth = 6371 - p.getLocation().getR();
 				if (depth >= 600)
-					preWeight[i] *= 1.4;//1.2248 (for 12.5 s); //sqrt(1.4) // 1.4 is the calculated value but may be too strong. Trying sqrt(1.5) ~ 1.2248
+					preWeight[i] *= 1.;//1.2248 (for 12.5 s); //sqrt(1.4) // 1.4 is the calculated value but may be too strong. Trying sqrt(1.5) ~ 1.2248
 			}
 		}
 		//normalize weights
@@ -262,22 +315,28 @@ public class ModelCovarianceMatrix {
 						cmV = 0.;
 				}
 				
-				if (i == j) {
-					cm.setEntry(i, i, preWeight[i] * preWeight[j]);
-					tmpI.add(i);
-					tmpV.add(preWeight[i] * preWeight[j]);
+				if (!parameters.get(i).getPartialType().equals(parameters.get(j).getPartialType())) {
+					cm.setEntry(i, j, 0.);
+					cm.setEntry(j, i, 0.);
 				}
 				else {
-//					double cmij = cmH * cmV;
-					double cmij = preWeight[i] * preWeight[j] * cmH * cmV;
-					if (cmij < threshold)
-						cmij = 0;
-					else {
-						tmpI.add(j);
-						tmpV.add(cmij);
+					if (i == j) {
+						cm.setEntry(i, i, preWeight[i] * preWeight[j]);
+						tmpI.add(i);
+						tmpV.add(preWeight[i] * preWeight[j]);
 					}
-					cm.setEntry(i, j, cmij);
-					cm.setEntry(j, i, cmij);
+					else {
+	//					double cmij = cmH * cmV;
+						double cmij = preWeight[i] * preWeight[j] * cmH * cmV;
+						if (cmij < threshold)
+							cmij = 0;
+						else {
+							tmpI.add(j);
+							tmpV.add(cmij);
+						}
+						cm.setEntry(i, j, cmij);
+						cm.setEntry(j, i, cmij);
+					}
 				}
 			}
 			tmpIndexes.add(tmpI);
@@ -306,19 +365,32 @@ public class ModelCovarianceMatrix {
 		List<List<Integer>> tmpIndexes = new ArrayList<>();
 		List<List<Double>> tmpValues = new ArrayList<>();
 		
+		List<List<Integer>> tmpIndexesL = new ArrayList<>();
+		List<List<Double>> tmpValuesL = new ArrayList<>();
+		
 		for (int i = 0; i < n; i++) {
 			List<Integer> tmpI = new ArrayList<>();
 			List<Double> tmpV = new ArrayList<>();
+			List<Integer> tmpIL = new ArrayList<>();
+			List<Double> tmpVL = new ArrayList<>();
 			for (int j = 0; j < n; j++) {
 				double ltij = lt.getEntry(i, j);
 				if (ltij > 0.) {
 					tmpI.add(j);
 					tmpV.add(ltij);
 				}
+				double lij = l.getEntry(i, j);
+				if (lij > 0) {
+					tmpIL.add(j);
+					tmpVL.add(lij);
+				}
 			}
 			
 			tmpIndexes.add(tmpI);
 			tmpValues.add(tmpV);
+			
+			tmpIndexesL.add(tmpIL);
+			tmpValuesL.add(tmpVL);
 		}
 		
 		for (int i = 0; i < n; i++) {
@@ -326,19 +398,31 @@ public class ModelCovarianceMatrix {
 			List<Double> tmpV = tmpValues.get(i);
 			ltindexNonZeroElements[i] = new int[tmpI.size()];
 			ltvalueNonZeroElements[i] = new double[tmpV.size()];
+			
+			List<Integer> tmpIL = tmpIndexesL.get(i);
+			List<Double> tmpVL = tmpValuesL.get(i);
+			lindexNonZeroElements[i] = new int[tmpIL.size()];
+			lvalueNonZeroElements[i] = new double[tmpVL.size()];
+			
 //			System.out.println(tmpI.size());
 			for (int j = 0; j < tmpI.size(); j++) {
 				ltindexNonZeroElements[i][j] = tmpI.get(j);
 				ltvalueNonZeroElements[i][j] = tmpV.get(j);
 			}
+			
+			for (int j = 0; j < tmpIL.size(); j++) {
+				lindexNonZeroElements[i][j] = tmpIL.get(j);
+				lvalueNonZeroElements[i][j] = tmpVL.get(j);
+			}
 		}
 	}
 	
-	public RealMatrix lRightMultiply(RealMatrix m) {
+	public RealMatrix rightMultiplyByL(RealMatrix m) {
 		if (m.getColumnDimension() != l.getRowDimension())
 			throw new RuntimeException("M column dimension and L row dimension mismatch " + m.getColumnDimension() + " " + l.getRowDimension());
 		int n1 = m.getRowDimension();
-		int n2 = m.getColumnDimension();
+//		int n2 = m.getColumnDimension();
+		int n2 = l.getColumnDimension();
 		RealMatrix res = new Array2DRowRealMatrix(n1, n2);
 		for (int i = 0; i < n1; i++) {
 			for (int j = 0; j < n2; j++) {
@@ -347,6 +431,46 @@ public class ModelCovarianceMatrix {
 				double resij = 0.;
 				for (int k = 0; k < tmpI.length; k++) {
 					resij += tmpV[k] * m.getEntry(i, tmpI[k]);
+				}
+				res.setEntry(i, j, resij);
+			}
+		}
+		return res;
+	}
+	
+	public RealMatrix leftMultiplyByL(RealMatrix m) {
+		if (m.getRowDimension() != l.getColumnDimension())
+			throw new RuntimeException("M row dimension and L column dimension mismatch " + m.getRowDimension() + " " + l.getColumnDimension());
+		int n1 = l.getRowDimension();
+		int n2 = m.getColumnDimension();
+		RealMatrix res = new Array2DRowRealMatrix(n1, n2);
+		for (int i = 0; i < n1; i++) {
+			int[] tmpI = lindexNonZeroElements[i];
+			double[] tmpV = lvalueNonZeroElements[i];
+			for (int j = 0; j < n2; j++) {
+				double resij = 0.;
+				for (int k = 0; k < tmpI.length; k++) {
+					resij += tmpV[k] * m.getEntry(tmpI[k], j);
+				}
+				res.setEntry(i, j, resij);
+			}
+		}
+		return res;
+	}
+	
+	public RealMatrix leftMultiplyByLT(RealMatrix m) {
+		if (m.getRowDimension() != l.getColumnDimension())
+			throw new RuntimeException("M row dimension and L column dimension mismatch " + m.getRowDimension() + " " + l.getColumnDimension());
+		int n1 = l.getRowDimension();
+		int n2 = m.getColumnDimension();
+		RealMatrix res = new Array2DRowRealMatrix(n1, n2);
+		for (int i = 0; i < n1; i++) {
+			int[] tmpI = ltindexNonZeroElements[i];
+			double[] tmpV = ltvalueNonZeroElements[i];
+			for (int j = 0; j < n2; j++) {
+				double resij = 0.;
+				for (int k = 0; k < tmpI.length; k++) {
+					resij += tmpV[k] * m.getEntry(tmpI[k], j);
 				}
 				res.setEntry(i, j, resij);
 			}

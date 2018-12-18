@@ -46,4 +46,8 @@ public class FrequencyRange {
 	public String toString() {
 		return String.format("%.3f-%.3f", minFreq, maxFreq);
 	}
+	
+	public double[] toPeriodRange() {
+		return new double[] {1./maxFreq, 1./minFreq};
+	}
 }

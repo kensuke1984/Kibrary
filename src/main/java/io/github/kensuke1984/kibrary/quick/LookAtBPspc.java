@@ -11,12 +11,22 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
+import io.github.kensuke1984.kibrary.util.spc.SpectrumFile;
 
 public class LookAtBPspc {
 
 	public static void main(String[] args) throws IOException {
 		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
-		DSMOutput dsmOutput = spcName.read();
+		
+		DSMOutput dsmOutput = null;
+		if (args.length == 1)
+			dsmOutput = spcName.read();
+		else if (args.length == 2) {
+			double phi = Double.parseDouble(args[1]);
+			System.out.println("Phi = " + phi);
+			dsmOutput = SpectrumFile.getInstance(spcName, phi);
+		}
+		
 		print(dsmOutput);
 	}
 	

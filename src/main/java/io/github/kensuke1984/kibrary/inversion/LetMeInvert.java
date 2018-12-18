@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -24,18 +26,47 @@ import java.util.concurrent.FutureTask;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
+
+
+
+
+
+
+import org.jfree.util.ArrayUtilities;
+
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
+import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
+import io.github.kensuke1984.kibrary.util.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
@@ -46,6 +77,10 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.AtAEntry;
+import io.github.kensuke1984.kibrary.waveformdata.AtAFile;
+import io.github.kensuke1984.kibrary.waveformdata.AtdEntry;
+import io.github.kensuke1984.kibrary.waveformdata.AtdFile;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
@@ -133,6 +168,14 @@ public class LetMeInvert implements Operation {
 	private UnknownParameterWeightType unknownParameterWeightType;
 	
 	private boolean linaInversion;
+	
+	private boolean jackknife;
+	
+	private int nRealisation;
+	
+	private boolean checkerboard;
+	
+	private Path checkerboardPerturbationPath;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -173,6 +216,20 @@ public class LetMeInvert implements Operation {
 			property.setProperty("maxMw", "10.");
 		if (!property.containsKey("linaInversion"))
 			property.setProperty("linaInversion", "false");
+		if (!property.containsKey("jackknife"))
+			property.setProperty("jackknife", "false");
+		if (!property.containsKey("conditioner"))
+			property.setProperty("conditioner", "false");
+		if (!property.containsKey("lowMemoryCost"))
+			property.setProperty("lowMemoryCost", "false");
+		if (!property.containsKey("nStepsForLowMemoryMode"))
+			property.setProperty("nStepsForLowMemoryMode", "10");
+		if (!property.containsKey("usePrecomputedAtA"))
+			property.setProperty("usePrecomputedAtA", "false");
+		if (!property.containsKey("checkerboard"))
+			property.setProperty("checkerboard", "false");
+		if (!property.containsKey("trimWindow"))
+			property.setProperty("trimWindow", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -294,6 +351,30 @@ public class LetMeInvert implements Operation {
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
 		
 		verticalMapping = property.containsKey("verticalMapping") ? Paths.get(property.getProperty("verticalMapping")) : null;
+		
+		jackknife = Boolean.parseBoolean(property.getProperty("jackknife"));
+		if (jackknife)
+			nRealisation = Integer.parseInt(property.getProperty("nRealisation"));
+		
+		conditioner = Boolean.parseBoolean(property.getProperty("conditioner"));
+		
+		lowMemoryCost = Boolean.parseBoolean(property.getProperty("lowMemoryCost"));
+		
+		nStepsForLowMemoryMode = Integer.parseInt(property.getProperty("nStepsForLowMemoryMode"));
+		
+		usePrecomputedAtA = Boolean.parseBoolean(property.getProperty("usePrecomputedAtA"));
+		if (usePrecomputedAtA) {
+			precomputedAtdPath = Stream.of(property.getProperty("precomputedAtdPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
+			precomputedAtAPath = Stream.of(property.getProperty("precomputedAtAPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
+		}
+		
+		checkerboard = Boolean.parseBoolean(property.getProperty("checkerboard"));
+		if (checkerboard)
+			checkerboardPerturbationPath = Paths.get(property.getProperty("checkerboardPerturbationPath"));
+		
+		trimWindow = Boolean.parseBoolean(property.getProperty("trimWindow"));
+		if (trimWindow)
+			trimmedLength = Double.parseDouble(property.getProperty("trimmedLength"));
 	}
 
 	/**
@@ -369,6 +450,24 @@ public class LetMeInvert implements Operation {
 			pw.println("#maxMw");
 			pw.println("##Set parameters for inversion for Yamaya et al. CMT paper (false)");
 			pw.println("#linaInversion");
+			pw.println("##Perform a jacknife test (false)");
+			pw.println("#jackknife");
+			pw.println("##Number of jacknife inversions");
+			pw.println("#nRealisation 300");
+			pw.println("##conditioner for preconditioned CG (false)");
+			pw.println("#conditioner");
+			pw.println("##build AtA iteratively for low memory cost (false)");
+			pw.println("#lowMemoryCost");
+			pw.println("#nStepsForLowMemoryMode");
+			pw.println("#usePrecomputedAtA");
+			pw.println("#precomputedAtAPath");
+			pw.println("#precomputedAtdPath");
+			pw.println("##Perform checkerboard test (false)");
+			pw.println("#checkerboard");
+			pw.println("#checkerboardPerturbationPath");
+			pw.println("##Trim timewindows (false)");
+			pw.println("#trimWindow");
+			pw.println("#trimmedLength");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -391,16 +490,30 @@ public class LetMeInvert implements Operation {
 	}
 
 	private Path outPath;
+	
+	private boolean conditioner;
 
+	private boolean lowMemoryCost;
+	
+	private int nStepsForLowMemoryMode;
+	
+	private boolean usePrecomputedAtA;
+	
+	private Path[] precomputedAtAPath;
+	
+	private Path[] precomputedAtdPath;
+	
+	private boolean trimWindow;
+	
+	private double trimmedLength;
+	
 	private void setEquation() throws IOException {
-		// set partial matrix
-		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
 		
 		// set unknown parameter
-				System.err.println("setting up unknown parameter set");
-				List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
+		System.err.println("setting up unknown parameter set");
+		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		
 		Predicate<BasicID> chooser = null;
 		
@@ -421,17 +534,34 @@ public class LetMeInvert implements Operation {
 			};
 		}
 		else if (linaInversion) {
-			System.out.println("Setting chooser for Yamaya et al. CMT paper");
+//			System.out.println("Setting chooser for Yamaya et al. CMT paper");
+			System.out.println("Setting chooser for well defined events");
 			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
-			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
-					,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
-					,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
-					,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
-					,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
-					,"201208020938A","201203050746A","200512232147A"})
+			
+//			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
+//					,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
+//					,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
+//					,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
+//					,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
+//					,"201208020938A","201203050746A","200512232147A"})
+//					.map(GlobalCMTID::new)
+//					.collect(Collectors.toSet()); // LCMT
+//			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","200506021056A","201409241116A"
+//					,"200511171926A","200809031125A","200711180540A","201302221201A","201009130715A","201509281528A"
+//					,"201205280507A","200707211534A","201005241618A","200705251747A","201502111857A","201203050746A"})
+//					.map(GlobalCMTID::new)
+//					.collect(Collectors.toSet()); // MTZ Carib
+			
+			Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"031704A","062003D","200503211243A","200506021056A","200511171926A","200608250044A"
+					,"200609220232A","200611130126A","200705251747A","200707120523A","200707211327A","200707211534A","200711180540A","200808262100A","200809031125A"
+					,"200810122055A","200907120612A","200909050358A","200909301903A","200911141944A","201001280804A","201005241618A","201009130715A","201101010956A"
+					,"201104170158A","201106080306A","201109021347A","201111221848A","201203050746A","201205280507A","201206020752A","201208020938A","201302221201A"
+					,"201409241116A","201502021049A","201502111857A","201509281528A","201511260545A"})
 					.map(GlobalCMTID::new)
-					.collect(Collectors.toSet());
+					.collect(Collectors.toSet()); // D" Carib P and S joint inversion
+			
 			System.out.println("Using " + wellDefinedEvent.size() + " well defined events");
+			
 			chooser = id -> {
 				if (!wellDefinedEvent.contains(id.getGlobalCMTID()))
 					return false;
@@ -476,11 +606,13 @@ public class LetMeInvert implements Operation {
 		double[] weighting = null;
 		List<UnknownParameter> parameterForStructure = new ArrayList<>();
 		switch (weightingType) {
-		case LOWERUPPERMANTLE:
-			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
-			dVector = new Dvector(ids, chooser, weightingType, lowerUpperMantleWeighting, atLeastThreeRecordsPerStation);
-			break;
+//		case LOWERUPPERMANTLE:
+//			double[] lowerUpperMantleWeighting = Weighting.LowerUpperMantle1D(partialIDs);
+//			dVector = new Dvector(ids, chooser, weightingType, lowerUpperMantleWeighting, atLeastThreeRecordsPerStation);
+//			break;
 		case RECIPROCAL:
+		case RECIPROCAL_PcP:
+		case RECIPROCAL_COS:
 //			System.out.println(selectionInfo.size());
 //			System.out.println(selectionInfo.get(0).getTimewindow());
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
@@ -494,24 +626,24 @@ public class LetMeInvert implements Operation {
 		case RECIPROCAL_AZED_DPP_V2:
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
 			break;
-		case TAKEUCHIKOBAYASHI:
-			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
-//			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
-			parameterForStructure = parameterList.stream()
-					.filter(unknonw -> unknonw.getPartialType().equals(PartialType.PAR2))
-					.collect(Collectors.toList());
-//			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
-			weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
-			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
-			break;
-		case FINAL:
-			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
-			parameterForStructure = parameterList.stream()
-					.filter(unknonw -> unknonw.getPartialType().equals(PartialType.PAR2))
-					.collect(Collectors.toList());
-			weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
-			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
-			break;
+//		case TAKEUCHIKOBAYASHI:
+//			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
+////			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
+//			parameterForStructure = parameterList.stream()
+//					.filter(unknonw -> unknonw.getPartialType().equals(PartialType.PAR2))
+//					.collect(Collectors.toList());
+////			double[] weighting = Weighting.CG(partialIDs, parameterForStructure, dVector, gamma);
+//			weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
+//			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
+//			break;
+//		case FINAL:
+//			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
+//			parameterForStructure = parameterList.stream()
+//					.filter(unknonw -> unknonw.getPartialType().equals(PartialType.PAR2))
+//					.collect(Collectors.toList());
+//			weighting = Weighting.TakeuchiKobayashi1D(partialIDs, parameterForStructure, dVector, gamma);
+//			dVector = new Dvector(ids, chooser, weightingType, weighting, atLeastThreeRecordsPerStation);
+//			break;
 		case IDENTITY:
 			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation, selectionInfo);
 			break;
@@ -519,19 +651,189 @@ public class LetMeInvert implements Operation {
 			throw new RuntimeException("Error: Weighting should be LOWERUPPERMANTLE, RECIPROCAL, TAKEUCHIKOBAYASHI, IDENTITY, or FINAL");
 		}
 		
-		if (modelCovariance) {
-//			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling, verticalMapping);
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMapping);
+		if (trimWindow)
+			dVector.trimWindow(trimmedLength);
+		
+		if (usePrecomputedAtA) {
+			System.out.println("Using " + precomputedAtAPath.length + " precomputed matrices");
+			AtdEntry[][][][][] atdEntries = AtdFile.readArray(precomputedAtdPath[0]);
+			RealVector atd = AtdFile.getAtdVector(atdEntries, 0, 0, 0, 0);
+			RealMatrix ata = AtAFile.getAtARealMatrixParallel(precomputedAtAPath[0], 0, 0, 0);
+			for (int k = 1; k < precomputedAtAPath.length; k++) {
+				atdEntries = AtdFile.readArray(precomputedAtdPath[k]);
+				atd = atd.add(AtdFile.getAtdVector(atdEntries, 0, 0, 0, 0));
+				ata = ata.add(AtAFile.getAtARealMatrixParallel(precomputedAtAPath[k], 0, 0, 0));
+			}
+			
+			eq = new ObservationEquation(ata, atd, parameterList, dVector);
+			
+			String tempString = Utilities.getTemporaryString();
+			//write AtA for later use
+			Path outputPath = workPath.resolve("ata" + tempString + ".dat");
+			FrequencyRange frequencyRange = new FrequencyRange(1./ids[0].getMaxPeriod(), 1./ids[0].getMinPeriod());
+			UnknownParameter[] unknownParameters = parameterList.toArray(new UnknownParameter[0]);
+			Phases phase = new Phases(ids[0].getPhases());
+			AtAFile.write(eq.getAtA(), weightingType, frequencyRange, unknownParameters, phase, outputPath);
+			
+			//write Atd for later use
+			Path outputPathAtd = workPath.resolve("atd" + tempString + ".dat");
+			StaticCorrectionType correctionType = StaticCorrectionType.S;
+			AtdFile.write(eq.getAtD(), unknownParameters, weightingType, frequencyRange, phase, correctionType, outputPathAtd);
+			
+			if (checkerboard) {
+				System.out.println("Computing checkerboard input from " + checkerboardPerturbationPath);
+				eq.setAtdForCheckerboard(readCheckerboardPerturbationVector());
+			}
 		}
-		else
-			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
-					unknownParameterWeightType, verticalMapping);
+		else {
+			if (!lowMemoryCost) {
+				// read all partial IDs
+				PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+				
+				if (modelCovariance) {
+		//			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling, verticalMapping);
+					eq = new ObservationEquation(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMapping);
+				}
+				else {
+					eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
+							unknownParameterWeightType, verticalMapping);
+				}
+			}
+			else {
+				Matrix atatmp = new Matrix(parameterList.size(), parameterList.size());
+				RealVector atdtmp = new ArrayRealVector(parameterList.size());
+				
+				int nIDPerStep = ((int) (ids.length / 2 / nStepsForLowMemoryMode)) * 2;
+				int nIDLastStep = ids.length - nIDPerStep * nStepsForLowMemoryMode + nIDPerStep;
+				
+				// read ids headers only
+				PartialID[] partialIDsNoData = PartialIDFile.readPartialIDFile(partialIDPath);
+				
+				int[] cumulativeNPTS = new int[partialIDsNoData.length];
+				cumulativeNPTS[0] = 0;
+				for (int i = 1; i < cumulativeNPTS.length; i++)
+					cumulativeNPTS[i] = cumulativeNPTS[i-1] + partialIDsNoData[i-1].getNpts();
+				
+				String tempString = Utilities.getTemporaryString();
+				for (int istep = 0; istep < nStepsForLowMemoryMode; istep++) {
+					System.out.println("Step " + istep);
+					int startIndex = istep * nIDPerStep;
+					int n = istep == nStepsForLowMemoryMode - 1 ? nIDLastStep : nIDPerStep;
+					
+					BasicID[] idstmp = Arrays.copyOfRange(ids, startIndex, startIndex + n);
+					int[] partialIndexes = 
+						IntStream.range(0, partialIDsNoData.length).parallel()
+						.filter(i -> {
+							boolean res = false;
+							for (BasicID idtmp : idstmp)
+								if (isPair(idtmp, partialIDsNoData[i])) {
+									res = true;
+									break;
+								}
+							return res;
+						}).sorted().toArray();
+					
+					System.out.println(partialIndexes.length + " " + idstmp.length * parameterList.size() + " " + parameterList.size() + " " + idstmp.length);
+					
+					PartialID[] partialIDs = new PartialID[partialIndexes.length];
+					for (int k = 0; k < partialIDs.length; k++)
+						partialIDs[k] = partialIDsNoData[partialIndexes[k]];
+					
+					partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDs, partialPath, partialIndexes, cumulativeNPTS);
+					
+					Dvector dVectortmp = new Dvector(idstmp, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
+					
+					if (modelCovariance) {
+						eq = new ObservationEquation(partialIDs, parameterList, dVectortmp, atatmp, atdtmp);
+					}
+					else {
+						eq = new ObservationEquation(partialIDs, parameterList, dVectortmp, atatmp, atdtmp);
+	//					throw new RuntimeException("Not implemented yet");
+	//					eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
+	//							unknownParameterWeightType, verticalMapping);
+					}
+					
+					//write AtA for later use
+					Path outputPath = workPath.resolve("ata" + istep + "_" + tempString + ".dat");
+					FrequencyRange frequencyRange = new FrequencyRange(1./ids[0].getMaxPeriod(), 1./ids[0].getMinPeriod());
+					UnknownParameter[] unknownParameters = parameterList.toArray(new UnknownParameter[0]);
+					Phases phase = new Phases(ids[0].getPhases());
+					AtAFile.write(eq.getAtA(), weightingType, frequencyRange, unknownParameters, phase, outputPath);
+					
+					//write Atd for later use
+					Path outputPathAtd = workPath.resolve("atd" + istep + "_" + tempString + ".dat");
+					StaticCorrectionType correctionType = StaticCorrectionType.S;
+					AtdFile.write(eq.getAtD(), unknownParameters, weightingType, frequencyRange, phase, correctionType, outputPathAtd);
+				}
+				
+				//write AtA for later use
+				Path outputPath = workPath.resolve("ata" + tempString + ".dat");
+				FrequencyRange frequencyRange = new FrequencyRange(1./ids[0].getMaxPeriod(), 1./ids[0].getMinPeriod());
+				UnknownParameter[] unknownParameters = parameterList.toArray(new UnknownParameter[0]);
+				Phases phase = new Phases(ids[0].getPhases());
+				AtAFile.write(eq.getAtA(), weightingType, frequencyRange, unknownParameters, phase, outputPath);
+				
+				//write Atd for later use
+				Path outputPathAtd = workPath.resolve("atd" + tempString + ".dat");
+				StaticCorrectionType correctionType = StaticCorrectionType.S;
+				AtdFile.write(eq.getAtD(), unknownParameters, weightingType, frequencyRange, phase, correctionType, outputPathAtd);
+			}
+		}
+		if (modelCovariance) {
+			System.out.println("Building covariance matrix");
+			double meanTrace = eq.getAtA().getTrace() / parameterList.size();
+			System.out.println("AtANormalizedTrace = " + meanTrace);
+			ModelCovarianceMatrix cm = new ModelCovarianceMatrix(parameterList, cmV, cmH, cm0 / meanTrace, true);
+			eq.applyModelCovarianceMatrix(cm);
+		}
+		if (conditioner) {
+			RealVector m = new ArrayRealVector(eq.getMlength());
+			
+			Set<Double> rs = eq.getParameterList().stream().map(p -> p.getLocation().getR()).collect(Collectors.toSet());
+			Set<PartialType> types = eq.getParameterList().stream().map(p -> p.getPartialType()).collect(Collectors.toSet());
+			
+			System.out.print("Applying conditionner with partial types ");
+			types.stream().forEach(t -> System.out.print(t + " "));
+			System.out.println();
+			
+			RealVector diagonalOfAtA = eq.getDiagonalOfAtA();
+			
+			for (PartialType type : types) {
+				for (double r : rs) {
+					double mr = 0;
+					for (int ip = 0; ip < m.getDimension(); ip++)
+						if (eq.getParameterList().get(ip).getPartialType().equals(type))
+							if (eq.getParameterList().get(ip).getLocation().getR() == r) {
+//								mr += eq.getAtA().getEntry(ip, ip);
+								mr += diagonalOfAtA.getEntry(ip);
+							}
+//					mr = Math.pow(1. / mr, 0.375);
+					mr = Math.pow(1. / mr, 0.5);
+//					System.out.println(r + " " + type + " " + mr);
+					
+					for (int ip = 0; ip < m.getDimension(); ip++)
+						if (eq.getParameterList().get(ip).getPartialType().equals(type))
+							if (eq.getParameterList().get(ip).getLocation().getR() == r)
+								m.setEntry(ip, mr);
+				}
+			}
+			
+			eq.applyConditioner(m);
+		}
 		
 //		Path AtAPath = workPath.resolve("ata_stable_" + weightingType + ".dat");
 //		Path AtdPath = workPath.resolve("atd_stable_" + weightingType + ".dat");
 //		eq.outputAtA(AtAPath);
 //		eq.outputAtd(AtdPath);
 //		System.exit(0);
+	}
+	
+	
+	public boolean isPair(BasicID basicID, PartialID partialID) {
+		return basicID.getGlobalCMTID().equals(partialID.getGlobalCMTID()) 
+				&& basicID.getStation().equals(partialID.getStation()) 
+				&& basicID.getSacComponent().equals(partialID.getSacComponent())
+				&& Math.abs(basicID.getStartTime() - partialID.getStartTime()) < 1.;
 	}
 	
 	/**
@@ -801,10 +1103,55 @@ public class LetMeInvert implements Operation {
 					return; // TODO
 				if (modelCovariance) {
 //					solve(outPath.resolve(method.simple()), method.getMethod(eq.getCmAtA_1(), eq.getCmAtD()));
-					solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+					if (method == InverseMethodEnum.FAST_CONJUGATE_GRADIENT || method == InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED) {
+						if (jackknife) {
+							for (int ires = 0; ires < nRealisation; ires++) {
+								System.out.println("Jackknife realisation " + ires);
+								Random random = new Random();
+								RealMatrix a = eq.getA();
+								RealMatrix ja = MatrixUtils.createRealMatrix(a.getRowDimension(), a.getColumnDimension());
+								for (int iline = 0; iline < a.getRowDimension(); iline++) {
+									boolean one = random.nextBoolean();
+									if (one)
+										ja.setRowVector(iline, a.getRowVector(iline));
+								}
+								RealVector jatd = ja.preMultiply(eq.getDVector().getD());
+								solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.getMethod(ja, jatd));
+							}
+						}
+						else {
+							solve(outPath.resolve(method.simple()), method.getMethod(eq.getA(), eq.getAtD()));
+						}
+					}
+					else {
+						solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+					}
 				}
-				else
-					solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+				else {
+					if (method == InverseMethodEnum.FAST_CONJUGATE_GRADIENT || method == InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED) {
+						if (jackknife) {
+							for (int ires = 0; ires < nRealisation; ires++) {
+								System.out.println("Jackknife realisation " + ires);
+								Random random = new Random();
+								RealMatrix a = eq.getA();
+								RealMatrix ja = MatrixUtils.createRealMatrix(a.getRowDimension(), a.getColumnDimension());
+								for (int iline = 0; iline < a.getRowDimension(); iline++) {
+									boolean one = random.nextBoolean();
+									if (one)
+										ja.setRowVector(iline, a.getRowVector(iline));
+								}
+								RealVector jatd = ja.preMultiply(eq.getDVector().getD());
+								solveMinimalOutput(outPath.resolve(method.simple() + String.valueOf(ires)), method.getMethod(ja, jatd));
+							}
+						}
+						else {
+							solve(outPath.resolve(method.simple()), method.getMethod(eq.getA(), eq.getAtD()));
+						}
+					}
+					else {
+						solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
+					}
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -818,6 +1165,33 @@ public class LetMeInvert implements Operation {
 		outVariance(outPath, inverseProblem);
 		outVariancePerEvents(outPath, inverseProblem);
 		
+		inverseProblem.outputAnsX(outPath);
+		
+		if (eq.getCm() != null) {
+			System.out.println("Computing model perturbation from the modified inverse problem's solution");
+			computeDeltaM(inverseProblem);
+		}
+		
+		if (eq.getM() != null) {
+			System.out.println("Computing model perturbation for pre-conditionned CG");
+			computeDeltaMFromConditionner(inverseProblem);
+		}
+		
+		inverseProblem.outputAns(outPath);
+		
+		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
+		RealMatrix p = inverseProblem.getBaseVectors();
+		for (int j = 0; j < eq.getMlength(); j++)
+			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
+	}
+	
+	private void solveMinimalOutput(Path outPath, InverseProblem inverseProblem) throws IOException {
+		// invOutDir.mkdir();
+		inverseProblem.compute();
+		Files.createDirectories(outPath);
+//		outVariance(outPath, inverseProblem);
+//		outVariancePerEvents(outPath, inverseProblem);
+		
 		if (eq.getCm() != null) {
 			System.out.println("Computing model perturbation from the modified inverse problem's solution");
 			computeDeltaM(inverseProblem);
@@ -825,9 +1199,9 @@ public class LetMeInvert implements Operation {
 		inverseProblem.outputAns(outPath);
 		
 		// 基底ベクトルの書き出し SVD: vt, CG: cg ベクトル
-		RealMatrix p = inverseProblem.getBaseVectors();
-		for (int j = 0; j < eq.getMlength(); j++)
-			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
+//		RealMatrix p = inverseProblem.getBaseVectors();
+//		for (int j = 0; j < eq.getMlength(); j++)
+//			writeDat(outPath.resolve("p" + j + ".txt"), p.getColumn(j));
 	}
 	
 	private void computeDeltaM(InverseProblem inverseProblem) {
@@ -839,7 +1213,18 @@ public class LetMeInvert implements Operation {
 			inverseProblem.setANS(i, deltaM);
 		}
 	}
-
+	
+	private void computeDeltaMFromConditionner(InverseProblem inverseProblem) {
+		int n = eq.getMlength();//Math.max(20, eq.getMlength());
+		RealVector m = eq.getM();
+		for (int i = 1; i <= n; i++) {
+			RealVector deltaM = inverseProblem.getAns(i);
+			for (int k = 0; k < n; k++)
+				deltaM.setEntry(k, deltaM.getEntry(k) * m.getEntry(k));
+			inverseProblem.setANS(i, deltaM);
+		}
+	}
+	
 	/**
 	 * @param args
 	 *            [parameter file name]
@@ -861,12 +1246,15 @@ public class LetMeInvert implements Operation {
 	 * @param outPath
 	 */
 	private void outVariance(Path outPath, InverseProblem inverse) throws IOException {
+		System.out.println("Outputting variance");
 		Path out = outPath.resolve("variance.txt");
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
 		double[] variance = new double[eq.getMlength() + 1];
 		variance[0] = eq.getDVector().getVariance();
-		for (int i = 0; i < eq.getMlength(); i++)
+		int tmpN = eq.getMlength();
+//		for (int i = 0; i < eq.getMlength(); i++)
+		for (int i = 0; i < tmpN; i++)
 			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
 		writeDat(out, variance);
 		if (alpha == null)
@@ -880,6 +1268,10 @@ public class LetMeInvert implements Operation {
 	}
 	
 	private void outVariancePerEvents(Path outPath, InverseProblem inverse) throws IOException {
+		if (eq.getA() == null) {
+			System.out.println("a is null, cannot output variance per event");
+			return;
+		}
 		Set<NDK> gcmtCat = GlobalCMTCatalog.readJar("globalcmt.catalog");
 		
 		Set<GlobalCMTID> eventSet = eq.getDVector().getUsedGlobalCMTIDset();
@@ -1018,6 +1410,10 @@ public class LetMeInvert implements Operation {
 		}
 	}
 
+	private RealVector readCheckerboardPerturbationVector() throws IOException {
+		return new ArrayRealVector(Files.readAllLines(checkerboardPerturbationPath).stream().mapToDouble(s -> Double.parseDouble(s.trim())).toArray());
+	}
+	
 	private Set<Station> stationSet;
 
 	@Override

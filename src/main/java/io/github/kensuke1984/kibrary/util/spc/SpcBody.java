@@ -67,7 +67,7 @@ public class SpcBody {
 	}
 	
 	public static SpcBody interpolate(SpcBody body1, SpcBody body2, SpcBody body3, double[] dh) {
-		SpcBody s = body1;
+		SpcBody s = body1.copy();
 //		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
 //		double c2 = dh[0] - dh[0]*dh[1];
 //		double c3 = dh[0]*dh[1]/2.;
@@ -76,9 +76,9 @@ public class SpcBody {
 		double c3 = dh[0]*dh[1] / 2.;
 		
 		for (int j = 0; j < body1.nComponent; j++) {
-			SpcComponent comp1 = body1.spcComponents[j];
-			SpcComponent comp2 = body2.spcComponents[j];
-			SpcComponent comp3 = body3.spcComponents[j];
+			SpcComponent comp1 = body1.spcComponents[j].copy();
+			SpcComponent comp2 = body2.spcComponents[j].copy();
+			SpcComponent comp3 = body3.spcComponents[j].copy();
 			
 			comp1.mapMultiply(c1);
 			comp2.mapMultiply(c2);

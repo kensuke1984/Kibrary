@@ -47,7 +47,8 @@ public abstract class InverseProblem {
 	 * @return the number of unknown parameters
 	 */
 	public int getParN() {
-		return ata.getColumnDimension();
+//		return ata.getColumnDimension();
+		return atd.getDimension();
 	}
 
 	/**
@@ -78,6 +79,16 @@ public abstract class InverseProblem {
 		System.err.println("outputting the answer files in " + outPath);
 		for (int i = 0; i < getParN(); i++) {
 			Path out = outPath.resolve(getEnum().simple() + (i+1) + ".txt");
+			double[] m = ans.getColumn(i);
+			writeDat(out, m);
+		}
+	}
+	
+	public void outputAnsX(Path outPath) throws IOException {
+		Files.createDirectories(outPath);
+		System.err.println("outputting the answer files in " + outPath);
+		for (int i = 0; i < getParN(); i++) {
+			Path out = outPath.resolve(getEnum().simple() + "_x" + (i+1) + ".txt");
 			double[] m = ans.getColumn(i);
 			writeDat(out, m);
 		}

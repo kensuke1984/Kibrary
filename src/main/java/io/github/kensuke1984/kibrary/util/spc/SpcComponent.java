@@ -180,6 +180,10 @@ public class SpcComponent {
 		// pack to temporary Complex array
 		Complex[] data = new Complex[nptsInTimeDomain];
 		System.arraycopy(uFreq, 0, data, 0, np + 1);
+		
+		//test tapper
+//		Complex[] tmp = rightTapper(uFreq);
+//		System.arraycopy(tmp, 0, data, 0, np + 1);
 
 		// set blank due to lsmooth
 		Arrays.fill(data, np + 1, nnp + 1, Complex.ZERO);
@@ -193,6 +197,19 @@ public class SpcComponent {
 
 		// put values in time domain into collections
 		uTime = data;
+	}
+	
+	private Complex[] rightTapper(Complex[] complex) {
+		Complex[] tappered = complex.clone();
+		int l = complex.length;
+		int n = l / 5;
+		
+		for (int i = 0; i < n; i++) {
+//			tappered[i + l - n] = tappered[i + l - n].multiply(FastMath.cos(Math.PI / (2 * (n - 1)) * i));
+			tappered[i + l - n] = tappered[i + l - n].multiply(1. - (double) i / (n - 1.));
+		}
+		
+		return tappered;
 	}
 	
 }

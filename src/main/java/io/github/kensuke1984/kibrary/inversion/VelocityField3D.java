@@ -554,7 +554,7 @@ public class VelocityField3D {
 		return res / vol;
 	}
 	
-	private static double dvs(double r, double dMu, PolynomialStructure structure) {
+	public static double dvs(double r, double dMu, PolynomialStructure structure) {
 		double v0 = Math.sqrt(structure.computeMu(r) / structure.getRhoAt(r));
 		double v1 = Math.sqrt((structure.computeMu(r) + dMu) / structure.getRhoAt(r));
 		return (v1 - v0) / v0;

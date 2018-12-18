@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -204,6 +205,23 @@ public final class AtdFile {
 				
 			}
 		}
+	}
+	
+	public static void write(RealVector atd, UnknownParameter[] unknowns, WeightingType weightingType, FrequencyRange frequencyRange
+			, Phases phases, StaticCorrectionType correctionType, Path outputPath, OpenOption... options)
+			throws IOException {
+		WeightingType[] weightingTypes = new WeightingType[] {weightingType};
+		FrequencyRange[] frequencyRanges = new FrequencyRange[] {frequencyRange};
+		StaticCorrectionType[] correctionTypes = new StaticCorrectionType[] {correctionType};
+		PartialType[] partialTypes = Stream.of(unknowns).map(u -> u.getPartialType()).collect(Collectors.toList()).toArray(new PartialType[0]);
+		
+		List<AtdEntry> atdEntries = new ArrayList<>();
+		for (int i = 0; i < unknowns.length; i++) {
+			AtdEntry entry = new AtdEntry(weightingType, frequencyRange, phases, correctionType, unknowns[i].getPartialType(), unknowns[i].getLocation(), atd.getEntry(i));
+			atdEntries.add(entry);
+		}
+		
+		write(atdEntries, weightingTypes, frequencyRanges, partialTypes, correctionTypes, outputPath, options);
 	}
 
 	/**

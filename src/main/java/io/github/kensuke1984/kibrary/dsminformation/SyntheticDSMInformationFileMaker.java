@@ -277,7 +277,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		Set<Station> synStationSet = new HashSet<>();
 		if (syntheticDataset) {
 //			for (int i = 2; i < 241; i++) {
-			for (int i = 10; i <= 30; i+=2) {
+			for (int i = 10; i <= 100; i+=1) {
 //				double distance = i/2.;
 //				int d1 = (int) (i/2.);
 //				int d2 = (int) ((i/2. - (int) (i/2.)) * 10);

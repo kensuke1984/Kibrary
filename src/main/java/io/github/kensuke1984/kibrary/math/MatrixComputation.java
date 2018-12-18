@@ -20,7 +20,7 @@ import io.github.kensuke1984.kibrary.util.Utilities;
  * @version 0.0.2
  * @author Kensuke Konishi
  */
-class MatrixComputation {
+public class MatrixComputation {
 
 	public static Matrix computeAtA(RealMatrix a) {
 		long start = System.nanoTime();

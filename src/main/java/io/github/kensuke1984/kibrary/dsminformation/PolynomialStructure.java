@@ -406,6 +406,10 @@ public class PolynomialStructure implements Serializable {
 		double v = computeVs(r);
 		return v * v * getRhoAt(r);
 	}
+	
+	public double computeKappa(double r) {
+		return computeLambda(r) + 2./3. * computeMu(r);
+	}
 
 	/**
 	 * @param r
@@ -577,6 +581,12 @@ public class PolynomialStructure implements Serializable {
 	 */
 	public double getVshAt(double r) {
 		return vsh[zoneOf(r)].value(toX(r));
+	}
+	
+	public double getVbAt(double r) {
+		double vsh = getVshAt(r);
+		double vph = getVphAt(r);
+		return Math.sqrt(vph * vph - 4./3. * vsh * vsh);
 	}
 	
 	public double getEtaAt(double r) {

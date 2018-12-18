@@ -316,6 +316,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				System.err.println("Random sample " + isample);
 			random = new Random(); // initialize random generator with a new seed for each set of waveforms
 			int n = Runtime.getRuntime().availableProcessors();
+			System.out.println("Running on " + n + " processors");
 			ExecutorService execs = Executors.newFixedThreadPool(n);
 			String dateStr = Utilities.getTemporaryString();
 			Path waveIDPath = null;
@@ -333,7 +334,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				dataWriter = bdw;
 				for (EventFolder eventDir : eventDirs)
 					execs.execute(new Worker(eventDir));
-	
 				execs.shutdown();
 				while (!execs.isTerminated())
 					Thread.sleep(1000);
@@ -501,7 +501,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					&& s.getComponent() == t.getComponent();
 			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-		return staticCorrectionSet.stream().filter(s -> isPair2.test(s, window)).findAny().get();
+		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
 	}
 
 	private double[] cutDataSac(SACData sac, double startTime, int npts) {

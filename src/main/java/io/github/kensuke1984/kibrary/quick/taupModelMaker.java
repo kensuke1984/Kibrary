@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption;
 
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.inversion.VelocityField3D;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 
@@ -27,7 +28,26 @@ public class taupModelMaker {
 //		System.out.println(distance);
 		
 		PolynomialStructure ak135 = PolynomialStructure.AK135;
-
+		
+		System.out.println("dvs (%) = " + VelocityField3D.dvs(5867.25, 1., ak135)*100);
+		System.out.println("dvs (%) = " + VelocityField3D.dvs(5671., 1., ak135)*100);
+		
+		double r = 5581;
+		double dmu = ak135.computeMu(r) * 0.005;
+		System.out.println(dmu);
+		double vs = ak135.getVshAt(r);
+		double vsPrime = Math.sqrt(dmu / ak135.getRhoAt(r) + vs * vs);
+		double dvs = vsPrime - vs;
+		System.out.println(dvs + " " + dvs/vs*100 + " " + (dvs+12.213901));
+		
+		System.exit(0);
+		
+		System.out.println(PolynomialStructure.PREM.getVshAt(6371-2500));
+//		double vs = PolynomialStructure.PREM.getVshAt(6371-2500);
+		double vp = PolynomialStructure.PREM.getVphAt(6371-2500);
+		System.out.println(vp);
+		System.exit(0);
+		
 		System.out.println(ak135.getVphAt(5150)*0.001 + 24.138794);
 		System.out.println(ak135.getVphAt(5150)*ak135.getRhoAt(5150));
 		System.out.println( (2*ak135.getVphAt(5150)*ak135.getRhoAt(5150)*0.1) );

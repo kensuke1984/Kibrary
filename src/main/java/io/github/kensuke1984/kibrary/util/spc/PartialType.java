@@ -18,10 +18,10 @@ import java.util.Arrays;
 public enum PartialType {
 
 	A(0), C(1), F(2), L(3), N(4), MU(5), LAMBDA(6), Q(7), TIME_SOURCE(8), TIME_RECEIVER(9), PAR1(10), PAR2(11), PARA(12), PARC(13), PARF(
-			14), PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23), PAR0(24), PAR00(25);
+			14), PARL(15), PARN(16), PARQ(17), G1(18), G2(19), G3(20), G4(21), G5(22), G6(23), PAR0(24), PAR00(25), KAPPA(26), LAMBDA2MU(27);
 
 	public boolean is3D() {
-		return 8 < value;
+		return 8 < value || value >= 26;
 	}
 	
 	public boolean isTimePartial() {
@@ -64,6 +64,10 @@ public enum PartialType {
 			return WeightingFactor.MU;
 		case LAMBDA:
 			return WeightingFactor.LAMBDA;
+		case KAPPA:
+			return WeightingFactor.KAPPA;
+		case LAMBDA2MU:
+			return WeightingFactor.LAMBDA2MU;
 		default:
 			throw new RuntimeException("Unexpected happens");
 		}

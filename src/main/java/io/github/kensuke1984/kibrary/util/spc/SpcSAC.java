@@ -178,7 +178,7 @@ public final class SpcSAC implements Operation {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final List<String> stfcat = readSTFCatalogue("CATZ_STF.stfcat"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
+	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 	
 	private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
 		double halfDuration = id.getEvent().getHalfDuration();
@@ -193,22 +193,28 @@ public final class SpcSAC implements Operation {
 //			System.out.println(id + " Using GCMT triangle STF with duration " + 2*halfDuration);
 			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		case 3:
-        	double halfDuration1 = 0.;
-        	double halfDuration2 = 0.;
+        	double halfDuration1 = id.getEvent().getHalfDuration();
+        	double halfDuration2 = id.getEvent().getHalfDuration();
+        	boolean found = false;
 	      	for (String str : stfcat) {
 	      		String[] stflist = str.split("\\s+");
 	      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
 	      	    if(id.equals(eventID)) {
-	      	    	halfDuration1 = Double.valueOf(stflist[1]);
-	      	    	halfDuration2 = Double.valueOf(stflist[2]);
-	      	    	if(Integer.valueOf(stflist[3]) < 5.) {
-	      	    		halfDuration1 = id.getEvent().getHalfDuration();
-	      	    		halfDuration2 = id.getEvent().getHalfDuration();
+	      	    	if(Integer.valueOf(stflist[3]) >= 5.) {
+	      	    		halfDuration1 = Double.valueOf(stflist[1]);
+	      	    		halfDuration2 = Double.valueOf(stflist[2]);
+	      	    		found = true;
 	      	    	}
 	      	    }
 	      	}
-//	      	System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
-            return SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
+	      	SourceTimeFunction stf = null;
+	      	if (found) {
+	      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
+	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
+	      	}
+	      	else
+	      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+	      	return stf;
 		case 4:
 			throw new RuntimeException("Case 4 not implemented yet");
 		case 5:
@@ -220,7 +226,7 @@ public final class SpcSAC implements Operation {
 //			return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 			halfDuration = 0.;
 			double amplitudeCorrection = 1.;
-			boolean found = false;
+			found = false;
 	      	for (String str : stfcat) {
 	      		String[] stflist = str.split("\\s+");
 	      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());
@@ -230,7 +236,7 @@ public final class SpcSAC implements Operation {
 	      	    	found = true;
 	      	    }
 	      	}
-	      	SourceTimeFunction stf = null;
+	      	stf = null;
 	      	if (found)
 	      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, 1. / amplitudeCorrection);
 	      	else

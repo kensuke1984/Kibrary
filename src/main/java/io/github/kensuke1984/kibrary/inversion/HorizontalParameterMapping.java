@@ -34,15 +34,21 @@ public class HorizontalParameterMapping {
 	private double[] newPixelWidths;
 	private int[][] iNewToOriginal;
 	private Path input;
+	private Map<PartialType, Integer> typeIndexMap;
 	
 	public static void main(String[] args) throws IOException {
 		Path unknownParameterPath = Paths.get("newUnknowns.inf");
 		Path parameterMappingPath = Paths.get("horizontalPointMapping.inf");
 		
 		UnknownParameter[] originalUnknowns = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
+//		System.out.println("originalUnknowns.length = " + originalUnknowns.length);
 		HorizontalParameterMapping mapping = new HorizontalParameterMapping(originalUnknowns, parameterMappingPath);
 		
 		UnknownParameter[] newUnknowns = mapping.getUnknowns();
+		
+//		List<UnknownParameter> parameterList = Stream.of(newUnknowns).collect(Collectors.toList());
+//		Path outPath = Paths.get("unknowns" + Utilities.getTemporaryString() + ".dat");
+//		UnknownParameterFile.write(parameterList, outPath);
 		
 		for (int iNew = 0; iNew < newUnknowns.length; iNew++) {
 			System.out.println(newUnknowns[iNew]);
@@ -50,20 +56,33 @@ public class HorizontalParameterMapping {
 				System.out.println("--> " + originalUnknowns[iOriginal]);
 		}
 		
-//		for (UnknownParameter unknown: mapping.getUnknowns()) {
-//			System.out.println(unknown);
-//		}
+		for (UnknownParameter unknown: mapping.getUnknowns()) {
+			System.out.println(unknown);
+		}
 	}
 	
 	public HorizontalParameterMapping(UnknownParameter[] originalUnknowns, Path input) {
 		this.originalUnknowns = originalUnknowns;
 		this.input = input;
+		typeIndexMap = new HashMap<>();
+		List<PartialType> typeList = Stream.of(originalUnknowns).map(u -> u.getPartialType()).distinct().collect(Collectors.toList());
+		for (int i = 0; i < typeList.size(); i++)
+			typeIndexMap.put(typeList.get(i), i);
 		try {
 			read(input);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		make();
+	}
+	
+	public HorizontalParameterMapping(List<UnknownParameter> originalUnknowns, List<UnknownParameter> newUnknowns,
+			int[][] iNewToOriginal, int[] iOriginalToNew) {
+		this.originalUnknowns = originalUnknowns.toArray(new UnknownParameter[0]);
+		this.unknowns = newUnknowns.toArray(new UnknownParameter[0]);
+		this.iNewToOriginal = iNewToOriginal;
+		this.iOriginalToNew = iOriginalToNew;
+		this.input = null;
 	}
 	
 	public HorizontalParameterMapping(UnknownParameter[] originalUnknowns) {
@@ -82,6 +101,8 @@ public class HorizontalParameterMapping {
 	
 	public void read(Path input) throws IOException {
 		iOriginalToNew = new int[originalUnknowns.length];
+		
+//		System.out.println("iOriginalToNew.length = " + iOriginalToNew.length);
 		
 		List<UnknownParameter> originalUnknownList = new ArrayList<>();
 		for (UnknownParameter p : originalUnknowns)
@@ -115,6 +136,8 @@ public class HorizontalParameterMapping {
 			widths.add(width);
 		}
 		nNewPoints = nNewPoints + 1; // indexing starts from 0
+		
+//		System.out.println("nNewPoints = " + nNewPoints);
 		
 		List<List<Integer>> positionNewToOriginalIndex = new ArrayList<>();
 		for (int i = 0; i < nNewPoints; i++) {
@@ -163,6 +186,13 @@ public class HorizontalParameterMapping {
 		List<Double> radii = originalUnknownList.stream().map(p -> p.getLocation().getR())
 			.distinct().collect(Collectors.toList());
 		
+//		System.out.println(radii.size());
+		
+		int nNewUnknownSingleType = radii.size() * nNewPoints;
+		int nNewUnknownAllTypes = nNewUnknownSingleType * typeIndexMap.size();
+		
+		System.out.println(nNewUnknownSingleType + " " + nNewUnknownAllTypes);
+		
 		for (int i = 0; i < radii.size(); i++) {
 			double r = radii.get(i);
 			for (int k = 0; k < originalUnknowns.length; k++) {
@@ -170,7 +200,7 @@ public class HorizontalParameterMapping {
 					for (int l = 0; l < positionOriginalToNewIndex.size(); l++) {
 						HorizontalPosition position = positions.get(l);
 						if (position.equals(originalUnknowns[k].getLocation().toHorizontalPosition())) {
-							iOriginalToNew[k] = positionOriginalToNewIndex.get(l) * radii.size() + i;
+							iOriginalToNew[k] = positionOriginalToNewIndex.get(l) * radii.size() + i + typeIndexMap.get(originalUnknowns[k].getPartialType()) * nNewUnknownSingleType;
 						}
 					}
 				}
@@ -194,14 +224,11 @@ public class HorizontalParameterMapping {
 //		}
 //		countNew++;
 		
-		int nNewUnknown = radii.size() * nNewPoints;
 //		System.out.println("nNewUnknown = " + nNewUnknown);
 		
 		Map<Integer, List<Integer>> iNewToOriginalMap = new HashMap<>();
 		for (int i = 0; i < iOriginalToNew.length; i++) {
 			Integer key = iOriginalToNew[i];
-			
-//			System.out.println(i + " " + key);
 			
 			List<Integer> tmplist;
 			if (iNewToOriginalMap.containsKey(key)) {
@@ -216,10 +243,10 @@ public class HorizontalParameterMapping {
 			}
 		}
 		
-//		System.out.println(iNewToOriginalMap.size());
+//		System.out.println(iNewToOriginalMap.size() + " " + nNewUnknown + " " + iOriginalToNew.length);
 		
-		iNewToOriginal = new int[nNewUnknown][];
-		for (int i = 0; i < nNewUnknown; i++) {
+		iNewToOriginal = new int[nNewUnknownAllTypes][];
+		for (int i = 0; i < nNewUnknownAllTypes; i++) {
 			List<Integer> tmplist = iNewToOriginalMap.get(i);
 			iNewToOriginal[i] = new int[tmplist.size()];
 			for (int j = 0; j < tmplist.size(); j++)
@@ -237,7 +264,7 @@ public class HorizontalParameterMapping {
 //		}
 		//---
 		
-		unknowns = new UnknownParameter[nNewUnknown];
+		unknowns = new UnknownParameter[nNewUnknownAllTypes];
 	}
 	
 	private double getCenter(List<Double> xs) {
@@ -315,6 +342,14 @@ public class HorizontalParameterMapping {
 	
 	public double[] getNewPixelWidths() {
 		return newPixelWidths;
+	}
+	
+	public int getNoriginal() {
+		return originalUnknowns.length;
+	}
+	
+	public int getNnew() {
+		return unknowns.length;
 	}
 	
 	final double eps = 1e-6;

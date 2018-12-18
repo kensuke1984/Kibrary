@@ -336,6 +336,34 @@ public class InversionResult {
 			return IntStream.range(0, values.length).boxed()
 					.collect(Collectors.toMap(unknownParameterList::get, i -> values[i] * unknownParameterWeigths[i]));
 	}
+	
+	public Map<UnknownParameter, Double> answerMapOfX(InverseMethodEnum inverse, int n) throws IOException {
+		if (n <= 0)
+			throw new IllegalArgumentException("n is out of range. must be >= 0 " + n);
+		double[] unknownParameterWeigths = getUnkownParameterWeights();
+		double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + "/" + inverse.simple() + "_x" + n + ".txt"))
+				.stream().mapToDouble(Double::parseDouble).toArray();
+		if (unknownParameterWeigths == null)
+			return IntStream.range(0, values.length).boxed()
+				.collect(Collectors.toMap(unknownParameterList::get, i -> values[i]));
+		else
+			return IntStream.range(0, values.length).boxed()
+					.collect(Collectors.toMap(unknownParameterList::get, i -> values[i] * unknownParameterWeigths[i]));
+	}
+	
+	public Map<UnknownParameter, Double> answerMapOf(InverseMethodEnum inverse, int n, int iRes) throws IOException {
+		if (n <= 0)
+			throw new IllegalArgumentException("n is out of range. must be >= 0 " + n);
+		double[] unknownParameterWeigths = getUnkownParameterWeights();
+		double[] values = Files.readAllLines(rootPath.resolve(inverse.simple() + iRes + "/" + inverse.simple() + n + ".txt"))
+				.stream().mapToDouble(Double::parseDouble).toArray();
+		if (unknownParameterWeigths == null)
+			return IntStream.range(0, values.length).boxed()
+				.collect(Collectors.toMap(unknownParameterList::get, i -> values[i]));
+		else
+			return IntStream.range(0, values.length).boxed()
+					.collect(Collectors.toMap(unknownParameterList::get, i -> values[i] * unknownParameterWeigths[i]));
+	}
 
 	/**
 	 * If you want to have a trace of 3rd (from 0) timewindow and CG2.<br>
@@ -483,7 +511,7 @@ public class InversionResult {
 
 		Files.createDirectories(bornPath.getParent());
 		Trace syn = syntheticOf(id);
-		Map<UnknownParameter, Double> answer = answerMapOf(method, n);
+		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
 		Trace born = syn;
 
 		for (UnknownParameter par : unknownParameterList)

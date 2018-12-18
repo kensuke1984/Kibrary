@@ -332,7 +332,7 @@ public class FujiStaticCorrection implements Operation {
 	 * @param window
 	 * @return value for time shift
 	 */
-	private double computeTimeshiftForBestCorrelation(SACData obsSac, SACData synSac, Timewindow window) {
+	private double computeTimeshiftForBestCorrelation_old(SACData obsSac, SACData synSac, Timewindow window) {
 		double delta = 1 / sacSamplingHz;
 
 		// マーカーが何秒か
@@ -354,6 +354,39 @@ public class FujiStaticCorrection implements Operation {
 		// create observed timewindow
 		double obsStartSec = startSec - searchRange;
 		double obsEndSec = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA) + searchRange;
+		double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
+
+		int pointshift = getBestPoint(obs, syn, delta);
+		double timeshift = pointshift * delta;
+		return Precision.round(timeshift, 2);
+
+	}
+	
+	private double computeTimeshiftForBestCorrelation(SACData obsSac, SACData synSac, Timewindow window) {
+		double delta = 1 / sacSamplingHz;
+
+		// マーカーが何秒か
+		double startSec = window.getStartTime();
+		double endSec = window.getEndTime();
+
+		// create synthetic timewindow
+		double[] syn = cutSac(synSac, startSec, endSec);
+
+		// which point gives the maximum value
+		int maxPoint = getMaxPoint(syn);
+
+		// startpointから、一番早くしきい値（割合が最大振幅のthreshold）を超える点までのポイント数
+		int endPoint = getEndPoint(syn, maxPoint);
+		
+		double endtime = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA);
+		startSec = endtime -  10;
+				
+		// recreate synthetic timewindow
+		syn = cutSac(synSac, startSec, endtime);
+
+		// create observed timewindow
+		double obsStartSec = startSec - searchRange;
+		double obsEndSec = endtime + searchRange;
 		double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
 
 		int pointshift = getBestPoint(obs, syn, delta);
@@ -417,15 +450,19 @@ public class FujiStaticCorrection implements Operation {
 			// double variance = 0;
 			double tmpcor = 0;
 			double obssum = 0;
+			double synsum = 0;
 			for (int j = 0; j < syn.length; j++) {
 				tmpcor += syn[j] * obs[j + shiftI];
 				obssum += obs[j + shiftI] * obs[j + shiftI];
 				// variance += (syn[j] - obs[j + shiftI])
 				// * (syn[j] - obs[j + shiftI]);
+				
+				synsum += syn[j] * syn[j];
 			}
 			obssum = Math.sqrt(obssum);
-			// tmpcor /= synsum * obssum;
-			tmpcor /= obssum;
+			synsum = Math.sqrt(synsum);
+			 tmpcor /= synsum * obssum;
+//			tmpcor /= obssum; //BEFORE
 			// variance /= obssum;
 			// System.out.println(((int) (-searchRange / delta) + shiftI) + " "
 			// + tmpcor + " " + variance);

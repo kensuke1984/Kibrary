@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -63,7 +64,7 @@ public final class PartialIDFile {
 		long dataSize = Files.size(dataPath);
 		PartialID lastID = ids[ids.length - 1];
 		if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
-			throw new RuntimeException(dataPath + " is not invalid for " + idPath);
+			throw new RuntimeException(dataPath + " is invalid for " + idPath);
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
 			for (int i = 0; i < ids.length; i++) {
 				if (!chooser.test(ids[i])) {
@@ -81,6 +82,29 @@ public final class PartialIDFile {
 			ids = Arrays.stream(ids).parallel().filter(Objects::nonNull).toArray(PartialID[]::new);
 		System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
 		return ids;
+	}
+	
+	public static PartialID[] readPartialIDandDataFile(PartialID[] idsNoData, Path dataPath, int[] partialIndexes, int[] cumulativeNPTS)
+			throws IOException {
+		long t = System.nanoTime();
+//		long dataSize = Files.size(dataPath);
+//		PartialID lastID = idsNoData[idsNoData.length - 1];
+//		if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
+//			throw new RuntimeException(dataPath + " is invalid");
+		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
+			dis.skipBytes(cumulativeNPTS[partialIndexes[0]] * 8);
+			for (int i = 0; i < partialIndexes.length; i++) {
+				double[] data = new double[idsNoData[i].NPTS];
+				for (int j = 0; j < data.length; j++)
+					data[j] = dis.readDouble();
+				idsNoData[i] = idsNoData[i].setData(data);
+				
+				if (i < partialIndexes.length - 1)
+					dis.skipBytes((cumulativeNPTS[partialIndexes[i+1]] - cumulativeNPTS[partialIndexes[i] + 1]) * 8);
+			}
+		}
+		System.err.println("Partial waveforms are read in " + Utilities.toTimeString(System.nanoTime() - t));
+		return idsNoData;
 	}
 
 	/**

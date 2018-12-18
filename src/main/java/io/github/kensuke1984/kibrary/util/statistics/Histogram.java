@@ -157,7 +157,7 @@ public class Histogram {
 //		BasicID[] usedIds2 = idList2.toArray(new BasicID[idList2.size()]);
 //		BasicID[] usedIds3 = idList3.toArray(new BasicID[idList3.size()]);
 		
-		Histogram histogram = new Histogram(usedIds, stationSet, 5., false);
+		Histogram histogram = new Histogram(usedIds, stationSet, 2., false);
 //		Histogram histogram1 = new Histogram(usedIds1, stationSet, 5., false);
 //		Histogram histogram2 = new Histogram(usedIds2, stationSet, 5., false);
 //		Histogram histogram3 = new Histogram(usedIds3, stationSet, 5., false);
@@ -177,7 +177,7 @@ public class Histogram {
 		for (GlobalCMTID event : events) {
 			List<BasicID> tmpList = idList.stream().filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
 			BasicID[] tmpIds = tmpList.toArray(new BasicID[tmpList.size()]);
-			histogram = new Histogram(tmpIds, stationSet, 5., false);
+			histogram = new Histogram(tmpIds, stationSet, 2., false);
 			
 			String filename = "epicentralDistanceHistogram_" + event.toString() + ".txt";
 			outPath = dir.resolve(filename);

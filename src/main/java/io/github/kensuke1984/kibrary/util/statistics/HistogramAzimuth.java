@@ -149,10 +149,10 @@ public class HistogramAzimuth {
 				BasicID[] usedIds2 = idList2.toArray(new BasicID[idList2.size()]);
 				BasicID[] usedIds3 = idList3.toArray(new BasicID[idList3.size()]);
 				
-				HistogramAzimuth histogram = new HistogramAzimuth(usedIds, stationSet, 5., false);
-				HistogramAzimuth histogram1 = new HistogramAzimuth(usedIds1, stationSet, 5., false);
-				HistogramAzimuth histogram2 = new HistogramAzimuth(usedIds2, stationSet, 5., false);
-				HistogramAzimuth histogram3 = new HistogramAzimuth(usedIds3, stationSet, 5., false);
+				HistogramAzimuth histogram = new HistogramAzimuth(usedIds, stationSet, 2., false);
+				HistogramAzimuth histogram1 = new HistogramAzimuth(usedIds1, stationSet, 2., false);
+				HistogramAzimuth histogram2 = new HistogramAzimuth(usedIds2, stationSet, 2., false);
+				HistogramAzimuth histogram3 = new HistogramAzimuth(usedIds3, stationSet, 2., false);
 				
 				Path outPath1 = root.resolve("azimuthHistogram1.txt");
 				Path outPath2 = root.resolve("azimuthHistogram2.txt");

@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 
@@ -59,6 +60,9 @@ public class InformationFileMaker implements Operation {
 			pw.println("#structureFile ");
 			pw.println("##Boolean compute 6 green functions for the FP wavefield to use for joint structure-CMT inversion (false)");
 			pw.println("#jointCMT ");
+			pw.println("##Boolean wavefield catalogue (false)");
+			pw.println("#catalogue");
+			pw.println("#thetaRange");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -81,6 +85,8 @@ public class InformationFileMaker implements Operation {
 			property.setProperty("header", "PREM");
 		if (!property.containsKey("jointCMT"))
 			property.setProperty("jointCMT", "false");
+		if (!property.containsKey("catalogue"))
+			property.setProperty("catalogue", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogID());
@@ -119,6 +125,12 @@ public class InformationFileMaker implements Operation {
 	private Path workPath;
 	
 	private boolean jointCMT;
+	
+	private boolean catalogue;
+	
+	private double thetamin;
+	private double thetamax;
+	private double dtheta;
 
 	private void set() throws IOException {
 		checkAndPutDefaults();
@@ -154,6 +166,16 @@ public class InformationFileMaker implements Operation {
 			ps = PolynomialStructure.PREM;
 		
 		jointCMT = Boolean.parseBoolean(property.getProperty("jointCMT"));
+		
+		catalogue = Boolean.parseBoolean(property.getProperty("catalogue"));
+		if (catalogue) {
+			double[] tmpthetainfo = Stream.of(property.getProperty("thetaRange").trim().split("\\s+")).mapToDouble(Double::parseDouble)
+					.toArray();
+			thetamin = tmpthetainfo[0];
+			thetamax = tmpthetainfo[1];
+			dtheta = tmpthetainfo[2];
+		}
+			
 	}
 
 	private Properties property;
@@ -263,6 +285,8 @@ public class InformationFileMaker implements Operation {
 		
 		Path bpPath = outputPath.resolve("BPinfo");
 		Path fpPath = outputPath.resolve("FPinfo");
+		Path fpCatPath = outputPath.resolve("FPcat");
+		Path bpCatPath = outputPath.resolve("BPcat");
 		createPointInformationFile();
 		
 		//
@@ -310,6 +334,11 @@ public class InformationFileMaker implements Operation {
 				Files.createDirectories(infPath.resolve(header));
 				fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
 				fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+				
+				Path catInfPath = fpCatPath.resolve(ev.toString());
+				Files.createDirectories(catInfPath.resolve(header));
+				fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
+				fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
 			}
 		}
 
@@ -324,6 +353,11 @@ public class InformationFileMaker implements Operation {
 			bp.writeSHBP(infPath.resolve(header + "_SH.inf"));
 			bp.writePSVBP(infPath.resolve(header + "_PSV.inf"));
 		}
+		BPinfo bp = new BPinfo(header, ps, tlen, np, perturbationR, perturbationPointPositions);
+		Path catInfPath = bpCatPath;
+		Files.createDirectories(catInfPath.resolve(header));
+		bp.writeSHBPCat(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
+		bp.writePSVBPCat(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
 
 		// TODO
 		if (fpPath.toFile().delete() && bpPath.toFile().delete()) {

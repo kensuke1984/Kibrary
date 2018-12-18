@@ -200,8 +200,8 @@ public final class TauPPierceReader {
 	private static String[] makeCMD(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 //		System.out.println(phase);
-		if (!phase.trim().equals("ScS"))
-			throw new RuntimeException("Error: at the moment only ScS is supported for taup_pierce reader");
+		if (!(phase.trim().equals("ScS") || phase.trim().equals("PcP")))
+			throw new RuntimeException("Error: at the moment only ScS and PcP are supported for taup_pierce reader");
 		String cmd = path 
 				+ " -h " + (6371 - eventLocation.getR()) 
 				+ " -evt " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()
@@ -215,8 +215,8 @@ public final class TauPPierceReader {
 	private static String[] makeCMD(Location eventLocation, HorizontalPosition stationPosition, Set<Phase> phases, String model, double pierceDepth) {
 		String phase = phases.stream().map(Object::toString).collect(Collectors.joining(","));
 //		System.out.println(phase);
-		if (!phase.trim().equals("ScS"))
-			throw new RuntimeException("Error: at the moment only ScS is supported for taup_pierce reader");
+		if (!(phase.trim().equals("ScS") || phase.trim().equals("PcP")))
+			throw new RuntimeException("Error: at the moment only ScS and PcP are supported for taup_pierce reader");
 		String cmd = path 
 				+ " -h " + (6371 - eventLocation.getR()) 
 				+ " -evt " + eventLocation.getLatitude() + " " + eventLocation.getLongitude()

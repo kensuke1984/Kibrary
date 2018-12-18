@@ -149,7 +149,7 @@ public class SpectrumFile implements DSMOutput {
 				specFile.spcFileType = SpcFileType.SYNTHETIC;
 				break;
 			case 7: // back propagation PSV catalog. 8 is an identifier. The actual number of component is 27 (27 non-zero component).
-				System.out.println("PBPSVCAT");
+//				System.out.println("PBPSVCAT");
 				specFile.nComponent = 27;
 				specFile.spcFileType = SpcFileType.PBPSVCAT;
 				break;
@@ -168,6 +168,10 @@ public class SpectrumFile implements DSMOutput {
 			case 11: // Optimized forward propagation SH catalog. 11 is an identifier. The actual number of component is 9. 
 				specFile.nComponent = 9;
 				specFile.spcFileType = SpcFileType.PFSHO;
+				break;
+			case 12: // forward propagation SH catalog. 10 is an identifier. The actual number of component is 9.
+				specFile.nComponent = 9;
+				specFile.spcFileType = SpcFileType.PFPSVCAT;
 				break;
 			case 27: // back propagation
 				specFile.nComponent = 27;
@@ -226,16 +230,6 @@ public class SpectrumFile implements DSMOutput {
 				specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
 				break;
 			case PBSHCAT:
-				if (sourceLocation == null)
-					specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), 0);
-				else {
-					dis.readDouble();
-					dis.readDouble();
-					if (sourceLocation.getR() != Earth.EARTH_RADIUS)
-						throw new RuntimeException("Error: BP source depth should be 0. " + sourceLocation.getR() + " " + Earth.EARTH_RADIUS);
-					specFile.sourceLocation = sourceLocation;
-				}
-				break;
 			case PBPSVCAT:
 				if (sourceLocation == null)
 					specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), 0);
@@ -247,11 +241,23 @@ public class SpectrumFile implements DSMOutput {
 					specFile.sourceLocation = sourceLocation;
 				}
 				break;
+//			case PBPSVCAT:
+//				if (sourceLocation == null)
+//					specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), 0);
+//				else {
+//					dis.readDouble();
+//					dis.readDouble();
+//					if (sourceLocation.getR() != Earth.EARTH_RADIUS)
+//						throw new RuntimeException("Error: BP source depth should be 0. " + sourceLocation.getR() + " " + Earth.EARTH_RADIUS);
+//					specFile.sourceLocation = sourceLocation;
+//				}
+//				break;
 			case PF:
 			case PFSHO:
 				specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
 				break;
 			case PFSHCAT:
+			case PFPSVCAT:
 				if (sourceLocation == null)
 					specFile.sourceLocation = new Location(dis.readDouble(), dis.readDouble(), dis.readDouble());
 				else {
@@ -329,8 +335,7 @@ public class SpectrumFile implements DSMOutput {
 							u[k] = new Complex(tmpReal, tmpImag);
 						}
 					}
-					else if (specFile.spcFileType.equals(SpcFileType.PFSHCAT)) {
-						
+					else if (specFile.spcFileType.equals(SpcFileType.PFSHCAT) ) {
 						for (int k = 0; k < specFile.nComponent; k++) {
 							double tmpReal_m2 = dis.readDouble();
 							double tmpImag_m2 = dis.readDouble();
@@ -346,6 +351,31 @@ public class SpectrumFile implements DSMOutput {
 									+ tmpReal_p1*cosphi - tmpImag_p1*sinphi
 									+ tmpReal_p2*cos2phi - tmpImag_p2*sin2phi;
 							double tmpImag = -tmpReal_m2*sin2phi + tmpImag_m2*cos2phi 
+									- tmpReal_m1*sinphi + tmpImag_m1*cosphi
+									+ tmpReal_p1*sinphi + tmpImag_p1*cosphi
+									+ tmpReal_p2*sin2phi + tmpImag_p2*cos2phi;
+							
+							u[k] = new Complex(tmpReal, tmpImag);
+						}
+					}
+					else if (specFile.spcFileType.equals(SpcFileType.PFPSVCAT) ) {
+						for (int k = 0; k < specFile.nComponent; k++) {
+							double tmpReal_m2 = dis.readDouble();
+							double tmpImag_m2 = dis.readDouble();
+							double tmpReal_m1 = dis.readDouble();
+							double tmpImag_m1 = dis.readDouble();
+							double tmpReal_m0 = dis.readDouble();
+							double tmpImag_m0 = dis.readDouble();
+							double tmpReal_p1 = dis.readDouble();
+							double tmpImag_p1 = dis.readDouble();
+							double tmpReal_p2 = dis.readDouble();
+							double tmpImag_p2 = dis.readDouble();
+							
+							double tmpReal = tmpReal_m0 + tmpReal_m2*cos2phi + tmpImag_m2*sin2phi
+									+ tmpReal_m1*cosphi + tmpImag_m1*sinphi
+									+ tmpReal_p1*cosphi - tmpImag_p1*sinphi
+									+ tmpReal_p2*cos2phi - tmpImag_p2*sin2phi;
+							double tmpImag = tmpImag_m0 - tmpReal_m2*sin2phi + tmpImag_m2*cos2phi 
 									- tmpReal_m1*sinphi + tmpImag_m1*cosphi
 									+ tmpReal_p1*sinphi + tmpImag_p1*cosphi
 									+ tmpReal_p2*sin2phi + tmpImag_p2*cos2phi;
@@ -408,6 +438,6 @@ public class SpectrumFile implements DSMOutput {
 	
 	@Override
 	public void setSpcBody(int i, SpcBody body) {
-		spcBody.set(i, body);
+		spcBody.set(i, body.copy());
 	}
 }

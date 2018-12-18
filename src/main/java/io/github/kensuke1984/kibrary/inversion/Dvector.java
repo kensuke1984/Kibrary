@@ -30,6 +30,9 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauP_Time;
+import io.github.kensuke1984.kibrary.quick.taupModelMaker;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.Phases;
@@ -134,9 +137,10 @@ public class Dvector {
 					&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
 		else {
 			res = id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
-				&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
+				&& id0.getSacComponent() == id1.getSacComponent()
 				&& id0.getSamplingHz() == id1.getSamplingHz() && new Phases(id0.getPhases()).equals(new Phases(id1.getPhases()))
 				&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
+//				&& id0.getNpts() == id1.getNpts();
 //			if (res == false && id0.getStation().getPosition()) {
 //				String s = id0.getStation().equals(id1.getStation()) + " " + id0.getStation().getPosition() + " " + id1.getStation().getPosition() + " " 
 //						+ (id0.getSamplingHz() == id1.getSamplingHz()) + " " + id0.getSamplingHz() + " " + id1.getSamplingHz() + " "
@@ -239,6 +243,8 @@ public class Dvector {
 	 * weighting for i th timewindow.
 	 */
 	private double[] weighting;
+	
+	private RealVector[] weightingVectors;
 
 	/**
 	 * Function for weighting of each timewindow with IDs.
@@ -282,6 +288,7 @@ public class Dvector {
 		this.weightingType = weigthingType;
 		switch (weigthingType) {
 		case RECIPROCAL:
+		case RECIPROCAL_PcP:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData());
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
@@ -290,6 +297,19 @@ public class Dvector {
 				}
 				return 1. / obsVec.getLInfNorm(); 
 //						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
+		case RECIPROCAL_COS:
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData());
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				double d = Math.toDegrees(obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()));
+				double w = 1. * Math.cos((d - 70) / (78 - d) * Math.PI / 2.) + 1.;
+				if (d > 78 || d < 70) w = 1.;
+				return 1. / obsVec.getLInfNorm() * w; 
 			};
 			break;
 		case RECIPROCAL_AZED:
@@ -676,6 +696,10 @@ public class Dvector {
 	public int getStartPoints(int i) {
 		return startPoints[i];
 	}
+	
+	public int getWindowNPTS(int i) {
+		return obsIDs[i].getNpts();
+	}
 
 	public BasicID[] getSynIDs() {
 		return synIDs.clone();
@@ -708,6 +732,10 @@ public class Dvector {
 	 */
 	public double getWeighting(int i) {
 		return weighting[i];
+	}
+	
+	public RealVector getWeightingVector(int i) {
+		return weightingVectors[i];
 	}
 
 	/**
@@ -811,7 +839,49 @@ public class Dvector {
 	 * |obs-syn|
 	 */
 	private double dNorm;
-
+	
+	private double[] weightPcP(int iwin) {
+		int n = obsIDs[iwin].getNpts();
+		double[] weight = new double[n];
+		
+		double t0 = obsIDs[iwin].getStartTime();
+		double dt = 1. / obsIDs[iwin].getSamplingHz();
+		
+		double tau1 = 3.;
+		double tau2 = 9.;
+		double delta = 2.;
+		double a = 1.5;
+				
+		double depth = 6371. - obsIDs[iwin].getGlobalCMTID().getEvent().getCmtLocation().getR();
+		double distance = Math.toDegrees(obsIDs[iwin].getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsIDs[iwin].getStation().getPosition()));
+		try {
+			TauP_Time timeTool = new TauP_Time("prem");
+			timeTool.parsePhaseList("PcP");
+			timeTool.setSourceDepth(depth);
+			timeTool.calculate(distance);
+			double tPcP = timeTool.getArrival(0).getTime();
+			
+			double t1 = tPcP - tau1;
+			double t2 = tPcP + tau2;
+			
+			for (int i = 0; i < n; i++) {
+				double t = t0 + i * dt;
+				if (t <= t1 - delta || t > t2 + delta)
+					weight[i] = 1.;
+				else if (t1 - delta < t && t <= t1)
+					weight[i] = 1 + a / delta * (t - t1 + delta);
+				else if (t1 < t && t <= t2)
+					weight[i] = 1 + a;
+				else if (t2 < t && t <= t2 + delta)
+					weight[i] = 1 + a / delta * (t2 - t + delta);
+			}
+		} catch (TauModelException e) {
+			e.printStackTrace();
+		}
+		
+		return weight;
+	}
+	
 	private void read() {
 		// double t = System.nanoTime();
 		int start = 0;
@@ -922,7 +992,9 @@ public class Dvector {
 				weighting[i] = new Phases(obsIDs[i].getPhases()).isLowerMantle() ? 
 						lowerUpperMantleWeighting[0] : lowerUpperMantleWeighting[1];
 				break;
+			case RECIPROCAL_PcP:
 			case RECIPROCAL:
+			case RECIPROCAL_COS:
 				if (info != null) {
 					System.err.println("Using Signal-to-Noise ratio from the data selection information file");
 					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
@@ -955,17 +1027,34 @@ public class Dvector {
 			case FINAL:
 				Trace obstrace = obsIDs[i].getTrace();
 				weighting[i] *= obstrace.getMaxValue() > -obstrace.getMinValue() ? 1. / obstrace.getMaxValue() : -1. / obstrace.getMinValue();
-				break;	
+				break;
 			default:
 				break;
 			}
+			
+			double[] ws = new double[obsVec[i].getDimension()];
+			if (weightingType.equals(WeightingType.RECIPROCAL_PcP)) {
+				ws = weightPcP(i);
+				for (int j = 0; j < ws.length; j++)
+					ws[j] *= weighting[i];
+			}
+			else {
+				for (int j = 0; j < ws.length; j++)
+					ws[j] = weighting[i];
+			}
+			weightingVectors[i] = new ArrayRealVector(ws);
 
-			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
+//			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
 
 			// 理論波形の読み込み
 			synVec[i] = new ArrayRealVector(synIDs[i].getData(), false);
-			synVec[i] = synVec[i].mapMultiply(weighting[i]);
-
+//			synVec[i] = synVec[i].mapMultiply(weighting[i]);
+			
+			for (int j = 0; j < ws.length; j++) {
+				obsVec[i].setEntry(j, obsVec[i].getEntry(j) * ws[j]);
+				synVec[i].setEntry(j, synVec[i].getEntry(j) * ws[j]);
+			}
+			
 			double denominator = obsVec[i].dotProduct(obsVec[i]);
 			dVec[i] = obsVec[i].subtract(synVec[i]);
 			double numerator = dVec[i].dotProduct(dVec[i]);
@@ -1045,7 +1134,27 @@ public class Dvector {
 		}
 		return filteredIds;
 	}
-
+	
+//	private boolean trimWindow;
+//	private double trimmedLength;
+	
+	public void trimWindow(double trimmedLength) {
+		System.out.println("Trim windows to a lenght of " + trimmedLength + " s");
+		for (int i = 0; i < obsIDs.length; i++) {
+			BasicID id = obsIDs[i];
+			BasicID synID = synIDs[i];
+			int n = (int) (trimmedLength / id.getSamplingHz());
+			n = n > id.getNpts() ? id.getNpts() : n;
+			double[] data = Arrays.copyOf(id.getData(), n);
+			double[] synData = Arrays.copyOf(synID.getData(), n);
+			obsIDs[i] = new BasicID(id.getWaveformType(), id.getSamplingHz(), id.getStartTime(), n, id.getStation()
+				, id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolute(), data);
+			synIDs[i] = new BasicID(synID.getWaveformType(), synID.getSamplingHz(), synID.getStartTime(), n, synID.getStation()
+					, synID.getGlobalCMTID(), synID.getSacComponent(), synID.getMinPeriod(), synID.getMaxPeriod(), synID.getPhases(), synID.getStartByte(), synID.isConvolute(), synData);
+		}
+		read();
+	}
+	
 	/**
 	 * データを選り分ける 観測波形 理論波形両方ともにあるものだけを採用する 重複があったときには終了
 	 */
@@ -1115,6 +1224,8 @@ public class Dvector {
 		obsIDs = useObsList.toArray(new BasicID[0]);
 		synIDs = useSynList.toArray(new BasicID[0]);
 		
+		weightingVectors = new ArrayRealVector[nTimeWindow];
+		
 		if (!(weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI) || weightingType.equals(WeightingType.FINAL)))
 			weighting = new double[nTimeWindow];
 		else {
@@ -1160,6 +1271,8 @@ public class Dvector {
 			System.out.println("Using user specified weighting function");
 		case FINAL:
 			System.out.println("Using Takeuchi-Kobayashi weighting * reciprocal weighting (final)");
+		case RECIPROCAL_PcP:
+			System.out.println("Using observed reciprocal amplitude as weighting and weighting around PcP");
 		default:
 			break;
 		}

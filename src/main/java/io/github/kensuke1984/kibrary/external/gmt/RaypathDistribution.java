@@ -168,6 +168,7 @@ public class RaypathDistribution implements Operation {
 
 	private Path stationPath;
 	private Path eventPath;
+	private Path eventCSVPath;
 	private Path raypathPath;
 	private Path turningPointPath;
 	private Path psPath;
@@ -181,6 +182,7 @@ public class RaypathDistribution implements Operation {
 		turningPointPath = workPath.resolve("rdTurningPoint" + date + ".inf");
 		psPath = workPath.resolve("rd" + date + ".eps");
 		gmtPath = workPath.resolve("rd" + date + ".sh");
+		eventCSVPath = workPath.resolve("rdEvent" + date + ".csv");
 	}
 
 	private void outputEvent() throws IOException {
@@ -193,6 +195,21 @@ public class RaypathDistribution implements Operation {
 			lines.add(id + " " + latitude + " " + longitude + " " + loc.getR());
 		}
 		Files.write(eventPath, lines);
+	}
+	
+	private void outputEventCSV() throws IOException {
+		List<String> lines = new ArrayList<>();
+		for (GlobalCMTID id : ids) {
+			Location loc = id.getEvent().getCmtLocation();
+			double latitude = loc.getLatitude();
+			double longitude = loc.getLongitude();
+			double depth = 6371. - loc.getR();
+			double mw = id.getEvent().getCmt().getMw();
+			double duration = id.getEvent().getHalfDuration() * 2;
+			longitude = 0 <= longitude ? longitude : longitude + 360;
+			lines.add(id + "," + latitude + "," + longitude + "," + depth + "," + mw + "," + duration);
+		}
+		Files.write(eventCSVPath, lines);
 	}
 
 	private void outputStation() throws IOException {
@@ -212,12 +229,14 @@ public class RaypathDistribution implements Operation {
 				.collect(Collectors.toSet());
 		outputEvent();
 		outputStation();
+		outputEventCSV();
 		switch (drawsPathInt) {
 		case 1:
 			outputRaypath();
 			break;
 		case 2:
 			outputRaypathInside(pierceDepth);
+			outputTurningPoint();
 			break;
 		default:
 			break;
@@ -263,6 +282,11 @@ public class RaypathDistribution implements Operation {
 	}
 	
 	private void outputTurningPoint() throws IOException {
+		Phase phasetmp = Phase.ScS;
+		if (components.size() == 1 && components.contains(SACComponent.Z))
+			phasetmp = Phase.PcP;
+		final Phase phase = phasetmp;
+		
 		List<String> lines = new ArrayList<>();
 		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
@@ -282,7 +306,7 @@ public class RaypathDistribution implements Operation {
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getStation().getPosition();
-					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, Phase.ScS)
+					Info info = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, phase)
 						.get(0);
 					Location turningPoint = info.getTurningPoint();
 					lines.add(String.format("%.2f %.2f %.2f"
@@ -297,6 +321,11 @@ public class RaypathDistribution implements Operation {
 	private void outputRaypathInside(double pierceDepth) throws IOException {
 		List<String> lines = new ArrayList<>();
 		
+		Phase phasetmp = Phase.ScS;
+		if (components.size() == 1 && components.contains(SACComponent.Z))
+			phasetmp = Phase.PcP;
+		final Phase phase = phasetmp;
+		
 		Utilities.eventFolderSet(workPath).stream().flatMap(eventDir -> {
 			try {
 				return eventDir.sacFileSet().stream();
@@ -315,7 +344,7 @@ public class RaypathDistribution implements Operation {
 				.forEach(headerData -> {
 					Location eventLocation = headerData.getEventLocation();
 					HorizontalPosition stationPosition = headerData.getStation().getPosition();
-					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, Phase.ScS);
+					List<Info> infoList = TauPPierceReader.getPierceInfo(eventLocation, stationPosition, model, pierceDepth, phase);
 					Info info = null;
 					if (infoList.size() > 0) {
 						info = infoList.get(0);
