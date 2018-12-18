@@ -29,7 +29,7 @@ public class Profile {
 		Path WorkingDir = Paths.get("");
 		Path timewindowPath = Paths.get("selectedTimewindow.dat");
 		
-		double redvel = 8.4;
+		double relativeSlowness = -1.;
 		
 		try {
 			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
@@ -233,6 +233,32 @@ public class Profile {
 	private static Trace add(Trace trace1, Trace trace2) {
 		int n = Math.min(trace1.getLength(), trace2.getLength());
 		double dt = trace1.getXAt(1) - trace1.getXAt(0);
+		double[] y1 = trace1.getY();
+		double[] y2 = trace2.getY();
+		
+		double[] xs = new double[n];
+		double[] ys = new double[n];
+		for (int i = 0; i < n; i++) {
+			xs[i] = i * dt;
+			ys[i] = y1[i] + y2[i];
+		}
+		
+		return new Trace(xs, ys);
+	}
+	
+	private static Trace addAndPadd(Trace trace1, Trace trace2) {
+		
+		double t0 = Math.min(trace1.getXAt(0), trace2.getXAt(0));
+		double t1 = Math.max(trace1.getXAt(trace1.getLength()), trace2.getXAt(trace2.getLength()));
+		
+		double dt = trace1.getXAt(1) - trace1.getXAt(0);
+		int n = (int) ((t1 - t0) / dt) + 1;
+		
+		if (trace1.getXAt(0) < trace2.getXAt(0)) {
+			
+		}
+		
+		
 		double[] y1 = trace1.getY();
 		double[] y2 = trace2.getY();
 		
