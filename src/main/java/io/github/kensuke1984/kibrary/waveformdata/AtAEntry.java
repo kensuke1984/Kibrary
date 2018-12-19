@@ -1,6 +1,6 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
-import org.omg.CORBA.FREE_MEM;
+//import org.omg.CORBA.FREE_MEM;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
