@@ -23,35 +23,35 @@ import java.util.*;
  * Creates born-waveforms for checkerboard tests
  *
  * @author Kensuke Konishi
- * @version 0.2.1
+ * @version 0.2.1.2
  */
 public class CheckerBoardTest implements Operation {
 
     /**
-     * 観測波形、理論波形の入ったファイル (BINARY)
+     * Path of a {@link BasicIDFile} file (id part)
+     */
+    protected Path waveIDPath;
+    /**
+     * Path of a {@link BasicIDFile} file (data part)
      */
     protected Path waveformPath;
     /**
-     * 求めたい未知数を羅列したファイル (ASCII)
+     * Path for the file ({@link UnknownParameterFile})
      */
     protected Path unknownParameterListPath;
     /**
-     * partialIDの入ったファイル
+     * Path of the partialID
      */
     protected Path partialIDPath;
     /**
-     * partial波形の入ったファイル
+     * Path of the partial data
      */
     protected Path partialWaveformPath;
     protected boolean iterate;
     protected boolean noise;
-    /**
-     * 観測、理論波形のID情報
-     */
-    protected Path waveIDPath;
     protected double noisePower;
     /**
-     * psudoMの元になるファイル
+     * Path of a txt file containing psudoM
      */
     protected Path inputDataPath;
     private ObservationEquation eq;
@@ -65,12 +65,10 @@ public class CheckerBoardTest implements Operation {
         this.property = (Properties) property.clone();
         set();
         read();
-        readIDs();
     }
 
     public CheckerBoardTest(ObservationEquation eq) {
         this.eq = eq;
-        readIDs();
     }
 
     public static void writeDefaultPropertiesFile() throws IOException {
@@ -123,7 +121,7 @@ public class CheckerBoardTest implements Operation {
         if (!property.containsKey("psvsh")) property.setProperty("psvsh", "0");
         if (!property.containsKey("modelName")) property.setProperty("modelName", "");
         if (!property.containsKey("noise")) property.setProperty("noise", "false");
-        if (property.getProperty("noise").equals("true") && property.containsKey("noisePower"))
+        if (property.getProperty("noise").equals("true") && ! property.containsKey("noisePower"))
             throw new RuntimeException("There is no information about 'noisePower'");
     }
 
@@ -174,7 +172,7 @@ public class CheckerBoardTest implements Operation {
      * @param bornVec     for write
      * @throws IOException if any
      */
-    public void output4CheckerBoardTest(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
+    private void output4CheckerBoardTest(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
         // bornVec = dVector.getObsVectors();
         Objects.requireNonNull(bornVec);
 
@@ -200,7 +198,7 @@ public class CheckerBoardTest implements Operation {
      * @param bornVec     {@link RealVector} of born
      * @throws IOException if any
      */
-    public void output4Iterate(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
+    private void output4Iterate(Path outIDPath, Path outDataPath, RealVector bornVec) throws IOException {
         if (bornVec == null) {
             System.err.println("bornVec is not set");
             return;
@@ -269,10 +267,10 @@ public class CheckerBoardTest implements Operation {
 
     @Override
     public void run() throws Exception {
+        readIDs();
         RealVector pseudoM = readPseudoM();
         RealVector pseudoD = computePseudoD(pseudoM);
         RealVector bornVec = pseudoD.add(getSynVector());
-
         String dateStr = Utilities.getTemporaryString();
         Path outIDPath = workPath.resolve("pseudoID" + dateStr + ".dat");
         Path outDataPath = workPath.resolve("pseudo" + dateStr + ".dat");
