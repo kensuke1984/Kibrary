@@ -1,22 +1,22 @@
 // Apply the java plugin to add support for Java
-plugins { id "de.undercouch.download" version "3.4.3" }
-apply plugin: 'java'
-//apply plugin: 'eclipse'
+plugins {
+    id 'java'
+    id "de.undercouch.download" version "3.4.3"
+    id 'application'
+}
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def defaultEncoding = 'UTF-8'
 [compileJava, compileTestJava]*.options*.encoding = defaultEncoding
 
-//def codename = 'sahagin'
-jar.baseName = 'kibrary'
-def kibraryhome = "$System.env.HOME/.Kibrary"
-version = '0.4.4.2'
-task wrapper(type: Wrapper) { gradleVersion = '4.10.2' }
+version = '0.4.4.4'
+mainClassName = 'io.github.kensuke1984.kibrary.About'
 
 repositories {
     mavenCentral()
 }
+
 dependencies {
     compile 'org.apache.commons:commons-math3:+'
     compile 'org.apache.commons:commons-lang3:+'
@@ -30,8 +30,9 @@ dependencies {
 }
 
 // path for jar files.
-def dependJarCopyTo = 'lib'
+//def dependJarCopyTo = 'lib'
 jar {
+    baseName = 'kibrary'
     manifest {
         attributes 'Implementation-Title': 'kibrary', 'Implementation-Version': version
         attributes "Main-Class": "io.github.kensuke1984.kibrary.About"
@@ -40,7 +41,9 @@ jar {
 }
 
 task downloadAndUnzip {
-    doLast {
+    outputs.upToDateWhen { file('src').exists() }
+    doLast { 
+       def master = file('Kibrary-master')
         def downloadedFile = File.createTempFile("kibrary", ".zip")
         download {
             src 'https://github.com/kensuke1984/Kibrary/archive/master.zip'
@@ -48,22 +51,15 @@ task downloadAndUnzip {
         }
         copy {
             from zipTree(downloadedFile)
-            into kibraryhome
+            into file('.')
         }
         delete downloadedFile
+        file('Kibrary-master/src').renameTo(file('src'))
+        delete master
     }
 }
 
-task setupSourceCodes {
-    doLast {
-        def master = file(kibraryhome + '/Kibrary-master')
-        def src = file(kibraryhome + '/src')
-        if (!src.exists()) {
-            tasks.downloadAndUnzip.execute()
-            file(kibraryhome + '/Kibrary-master/src').renameTo(src)
-            delete master
-        }
-    }
+task setupSourceCodes(dependsOn: downloadAndUnzip){
 }
 
 // Delete a folder for jar files
@@ -93,4 +89,5 @@ compileJava {
     dependsOn setupSourceCodes
 }
 
-clean { delete "${kibraryhome}/src" }
+clean { delete "src" }
+
