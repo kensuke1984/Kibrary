@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi
- * @version 0.5.0.1b
+ * @version 0.5.0.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -975,7 +975,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 //            if (Double.isNaN(jeffreys)) throw new RuntimeException("An error on ray parameter "+RAY_PARAMETER);
             return time + jeffreys;
         }
-        return time + simpsonDelta(pp, startR, radii.getEntry(firstIndexForMemory));
+        return time + simpsonT(pp, startR, radii.getEntry(firstIndexForMemory));
 
     }
 
