@@ -2,6 +2,7 @@ package io.github.kensuke1984.anisotime;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.stream.IntStream;
@@ -22,6 +23,19 @@ import io.github.kensuke1984.kibrary.math.LinearEquation;
  *
  */
 public class PolynomialStructure implements VelocityStructure {
+	
+	public static void main(String[] args) {
+//		Path structurePath = Paths.get("/Users/Anselme/Dropbox/Kenji/anisoTimePaper/homogeneousmedia/homo.poly");
+//		try {
+//			io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure dsmStructure = new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(structurePath);
+//			PolynomialStructure structure = new PolynomialStructure(dsmStructure);
+//			
+//			
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		PolynomialStructure structure = new PolynomialStructure();
+	}
 
 	 
 	/**
@@ -58,6 +72,18 @@ public class PolynomialStructure implements VelocityStructure {
 
 	public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
 		STRUCTURE = structure;
+		RADIUS_SUBTRACTION = new PolynomialFunction(new double[] { 0, -earthRadius() });
+	}
+	
+	public PolynomialStructure() {
+		Path structurePath = Paths.get("/Users/Anselme/Dropbox/Kenji/anisoTimePaper/homogeneousmedia/homo.poly");
+		io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure dsmStructure = null;
+		try {
+			dsmStructure = new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(structurePath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		STRUCTURE = dsmStructure;
 		RADIUS_SUBTRACTION = new PolynomialFunction(new double[] { 0, -earthRadius() });
 	}
 

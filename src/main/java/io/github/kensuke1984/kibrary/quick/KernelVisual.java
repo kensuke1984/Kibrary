@@ -31,17 +31,19 @@ public class KernelVisual {
 		
 		Set<GlobalCMTID> idSet = new HashSet<>();
 		Set<String> stationnameSet = new HashSet<>();
-		idSet.add(new GlobalCMTID("201407291046A"));
-		stationnameSet.add("109C");
+//		idSet.add(new GlobalCMTID("200506021056A"));
+//		stationnameSet.add("ISCO");
+		idSet.add(new GlobalCMTID("201704052217A"));
+		stationnameSet.add("H21K");
 		
 		Path dir0 = Paths.get("KernelTemporalVisual");
 		Files.createDirectories(dir0);
 		for (PartialID partial : partials) {
 			//write only particular stations/events
-//			if (!idSet.contains(partial.getGlobalCMTID()))
-//				continue;
-//			if (!stationnameSet.contains(partial.getStation().getStationName()))
-//				continue;
+			if (!idSet.contains(partial.getGlobalCMTID()))
+				continue;
+			if (!stationnameSet.contains(partial.getStation().getStationName()))
+				continue;
 			
 				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))
@@ -72,9 +74,16 @@ public class KernelVisual {
 				double cumulativeSensitivity = 0.;
 					
 				BufferedWriter writer2 = Files.newBufferedWriter(filePath, StandardOpenOption.APPEND);
-				writer2.write(String.format("%s ", partial.getPerturbationLocation()));
+				double lat = partial.getPerturbationLocation().getLatitude();
+				double lon = partial.getPerturbationLocation().getLongitude();
+				if (lon < 0)
+					lon += 360.;
+				double r = partial.getPerturbationLocation().getR();
+//				writer2.write(String.format("%s ", partial.getPerturbationLocation()));
+				writer2.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
 				BufferedWriter writer2_s = Files.newBufferedWriter(filePath_sensitivity, StandardOpenOption.APPEND);
-				writer2_s.write(String.format("%s ", partial.getPerturbationLocation()));
+//				writer2_s.write(String.format("%s ", partial.getPerturbationLocation()));
+				writer2_s.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
 				for (int i = 0; i < data.length; i++) {
 					writer2.write(String.format("%.5e "
 							, data[i]));

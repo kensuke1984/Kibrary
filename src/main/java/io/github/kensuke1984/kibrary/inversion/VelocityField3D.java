@@ -179,7 +179,7 @@ public class VelocityField3D {
 				}
 				int n = unknowns.size();
 //				n = 15;
-				for (int i = 1; i <= n; i++) {
+				for (int i = 1; i <= n; i+=1) {
 					outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
 					Path outpathForCrosssection = inversionResultPath.resolve(inverse.simple() + "/" + "forCrosssection" + inverse.simple() + i + ".txt");
 					Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");

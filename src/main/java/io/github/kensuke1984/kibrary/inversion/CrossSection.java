@@ -39,40 +39,68 @@ public class CrossSection {
 		
 		double dL = 2.;
 		
+		double maxSearchRange = Math.toRadians(5.) * 6371.;
+		maxSearchRange = 250;
+		System.out.println("Maximum search range in vertical direction = " + maxSearchRange + " km");
+		
 		Location[] locations = readWavefieldPoints(file);
 		Location[] finalLocations = locations;
 		double[] values = readWavefieldValues(file);
-		double[] values_zeromean = readWavefieldValues_zeromean(file);
+//		double[] values_zeromean = readWavefieldValues_zeromean(file);
 		double[] rs = readRs(fileR);
 		double[] layers = readLayers(fileR);
+		
+		HorizontalPosition[] extremities = readPosition(positionFile);
+		double lonMin = extremities[0].getLongitude() < extremities[1].getLongitude() ? extremities[0].getLongitude() : extremities[1].getLongitude();
+		double lonMax = extremities[0].getLongitude() > extremities[1].getLongitude() ? extremities[0].getLongitude() : extremities[1].getLongitude();
+		double latMin = extremities[0].getLatitude() < extremities[1].getLatitude() ? extremities[0].getLatitude() : extremities[1].getLatitude();
+		double latMax = extremities[0].getLatitude() > extremities[1].getLatitude() ? extremities[0].getLatitude() : extremities[1].getLatitude();
+//		lonMin -= 25;
+//		lonMax += 25;
+//		latMin -= 25;
+//		latMax += 25;
+		lonMin -= 5;
+		lonMax += 5;
+		latMin -= 5;
+		latMax += 5;
+		
+		System.out.println("Using range (lon1,lon2,lat1,lat2) = " + lonMin + " " + lonMax + " " + latMin + " " + latMax);
+		
 		Map<Location, Double> valueOfLocation = new HashMap<>();
 		for (int i = 0; i < locations.length; i++) {
-			if (valueOfLocation.containsKey(locations[i]))
-				System.out.println(locations[i] + " " + values[i]);
-			valueOfLocation.put(locations[i], values[i]);
+			double lon = locations[i].getLongitude();
+			double lat = locations[i].getLatitude();
+			if (lon >= lonMin && lon <= lonMax && lat >= latMin && lat <= latMax) {
+				if (valueOfLocation.containsKey(locations[i]))
+					System.out.println(locations[i] + " " + values[i]);
+				valueOfLocation.put(locations[i], values[i]);
+			}
 		}
+		
+		locations = valueOfLocation.keySet().toArray(new Location[valueOfLocation.size()]);
+		
+		System.out.println(valueOfLocation.size() + " points");
 //		Map<Location, Double> valueOfLocation = IntStream.range(0, locations.length)
 //                .mapToObj(i -> i)
 //                .collect(Collectors.toMap(i -> finalLocations[i], i -> values[i]));
-		Map<Location, Double> valueOfLocation_zeromean = IntStream.range(0, locations.length)
-                .mapToObj(i -> i)
-                .collect(Collectors.toMap(i -> finalLocations[i], i -> values_zeromean[i]));
+//		Map<Location, Double> valueOfLocation_zeromean = IntStream.range(0, locations.length)
+//                .mapToObj(i -> i)
+//                .collect(Collectors.toMap(i -> finalLocations[i], i -> values_zeromean[i]));
 		
 		if (resampleHorizontal) {
 			valueOfLocation = resampleHorizontal(valueOfLocation, dL);
-			valueOfLocation_zeromean = resampleHorizontal(valueOfLocation_zeromean, dL);
+//			valueOfLocation_zeromean = resampleHorizontal(valueOfLocation_zeromean, dL);
 			locations = valueOfLocation.keySet().stream().collect(Collectors.toSet()).toArray(new Location[0]);
 		}
 		
-		HorizontalPosition[] extremities = readPosition(positionFile);
 		HorizontalPosition startPos = extremities[0];
 		HorizontalPosition endPos = extremities[1];
 		Location centerLocation = startPos.getMidpoint(endPos)
 				.toLocation(Earth.EARTH_RADIUS);
 		double azimuth = centerLocation.getAzimuth(endPos);
 //		double theta = 20. * Math.PI/180.;
-		double theta = centerLocation.getEpicentralDistance(endPos);
-		double deltaTheta = Math.toRadians(.5);
+		double theta = centerLocation.getEpicentralDistance(endPos) + Math.toRadians(0.);
+		double deltaTheta = Math.toRadians(0.5);
 		
 		System.out.println("Theta = " + Math.toDegrees(theta));
 		
@@ -126,7 +154,9 @@ public class CrossSection {
 			for (int i = 0; i < rs.length; i++) {
 				Location location = position.toLocation(rs[i]);
 				Location[] nearPoints 
-					= comp.getNearest4(locations, location);
+					= comp.getNearest4(locations, location, maxSearchRange);
+//					= comp.getNearest(locations, location);
+//				System.out.println(nearPoints[0] + " " + location);
 				
 //				double dL = 5.;
 //				double dR = layers[i];
@@ -146,10 +176,10 @@ public class CrossSection {
 //				nearPoints = comp.get8CellNodes(locations, location, dR, dL);
 				
 				double[] nearPointsValue = new double[nearPoints.length];
-				double[] nearPointsValue_zeromean = new double[nearPoints.length];
+//				double[] nearPointsValue_zeromean = new double[nearPoints.length];
 				for (int j = 0; j < nearPoints.length; j++) {
 					nearPointsValue[j] = valueOfLocation.get(nearPoints[j]);
-					nearPointsValue_zeromean[j] = valueOfLocation_zeromean.get(nearPoints[j]);
+//					nearPointsValue_zeromean[j] = valueOfLocation_zeromean.get(nearPoints[j]);
 				}
 				
 				// Working with only the nearest point to enhance horizontal heterogeneities
@@ -158,8 +188,8 @@ public class CrossSection {
 				
 				double value 
 					= comp.complement(nearPoints, nearPointsValue, location);
-				double value_zeromean 
-					= comp.complement(nearPoints, nearPointsValue_zeromean, location);
+//				double value_zeromean 
+//					= comp.complement(nearPoints, nearPointsValue_zeromean, location);
 				
 				if (Double.isNaN(value)) {
 					System.err.println("CS--->" + location + " " + value);
@@ -182,10 +212,11 @@ public class CrossSection {
 				
 				crossSectionLocations[k * rs.length + i] = location;
 				crossSectionValues[k * rs.length + i] = value;
-				crossSectionValues_zeromean[k * rs.length + i] = value_zeromean;
+//				crossSectionValues_zeromean[k * rs.length + i] = value_zeromean;
 				crossSectionThetaX[k * rs.length + i] = thetaX[k]
 						* 180 / Math.PI;
 			}
+			System.out.println((k+1) + "/" + positions.length);
 		}
 		
 		Path outfile = Paths.get("crosssection-" + positionFile.getFileName().toString().split(".txt")[0] + "-" 
@@ -194,11 +225,15 @@ public class CrossSection {
 			for (int i = 0; i < crossSectionLocations.length; i++) {
 				double r = crossSectionLocations[i].getR();
 				double theta_tmp = crossSectionThetaX[i];
-				writer.write(String.format("%.1f %.0f %.4e %.4e%n"
+//				writer.write(String.format("%.1f %.0f %.4e %.4e%n"
+//						, theta_tmp
+//						, r
+//						, crossSectionValues[i]
+//						, crossSectionValues_zeromean[i]));
+				writer.write(String.format("%.1f %.0f %.4e%n"
 						, theta_tmp
 						, r
-						, crossSectionValues[i]
-						, crossSectionValues_zeromean[i]));
+						, crossSectionValues[i]));
 			}
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);

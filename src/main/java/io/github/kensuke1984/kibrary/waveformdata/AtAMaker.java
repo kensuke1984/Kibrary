@@ -214,7 +214,7 @@ public class AtAMaker implements Operation {
 	
 	public final BasicID[][] basicIDArray;
 	
-	private WaveformDataWriter writer;
+	private WaveformDataWriter[] writers;
 	
 	/* (non-Javadoc)
 	 * @see io.github.kensuke1984.kibrary.Operation#getWorkPath()
@@ -255,8 +255,10 @@ public class AtAMaker implements Operation {
 		if (minFreqs.length != maxFreqs.length)
 			throw new RuntimeException("Error: number of entries for minFreq and maxFreq differ");
 		frequencyRanges = new FrequencyRange[minFreqs.length];
-		for (int i = 0; i < minFreqs.length; i++)
+		for (int i = 0; i < minFreqs.length; i++) {
 			frequencyRanges[i] = new FrequencyRange(minFreqs[i], maxFreqs[i]);
+			System.out.println(frequencyRanges[i]);
+		}
 		
 		//weighting types
 		weightingTypes = Stream.of(property.getProperty("weightingTypes").trim().split("\\s+")).map(type -> WeightingType.valueOf(type))
@@ -423,9 +425,9 @@ public class AtAMaker implements Operation {
 	
 	private Path rootWaveformPath;
 	
-	private Path partialIDPath;
+	private Path[] partialIDPaths;
 	
-	private Path partialPath;
+	private Path[] partialPaths;
 	
 //	private List<PartialID> partialIDs;
 	
@@ -707,8 +709,12 @@ public class AtAMaker implements Operation {
 //		logfile = workPath.resolve("atam" + tempString + ".log");
 //		Files.createFile(logfile);
 		
-		partialPath = workPath.resolve("partial" + tempString + ".dat");
-		partialIDPath = workPath.resolve("partialID" + tempString + ".dat");
+		partialIDPaths = new Path[nFreq];
+		partialPaths = new Path[nFreq];
+		for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+			partialPaths[ifreq] = workPath.resolve("partial_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
+			partialIDPaths[ifreq] = workPath.resolve("partialID_" + frequencyRanges[ifreq] +"_" + tempString + ".dat");
+		}
 		
 		Path outUnknownPath = workPath.resolve("newUnknowns" + tempString + ".inf");
 		Path outOriginalUnknownPath = workPath.resolve("originalUnknowns" + tempString + ".inf");
@@ -798,13 +804,16 @@ public class AtAMaker implements Operation {
 		List<Station> usedStationList = usedStations.stream().collect(Collectors.toList());
 		
 		//--- initialize partials writer
-		double[][] periodRanges = new double[][] { {1./frequencyRanges[0].getMaxFreq(), 1./frequencyRanges[0].getMinFreq()} };
 		Set<Phase> tmpPhases = new HashSet<>();
 		for (Phases ps : usedPhases)
 			ps.toSet().stream().forEach(p -> tmpPhases.add(p));
 		Phase[] phaseArray = tmpPhases.toArray(new Phase[0]);
 		Set<Location> perturbationPoints = Stream.of(newUnknownParameters).map(p -> p.getLocation()).collect(Collectors.toSet());
-		writer = new WaveformDataWriter(partialIDPath, partialPath, usedStations, usedEvents, periodRanges, phaseArray, perturbationPoints);
+		writers = new WaveformDataWriter[frequencyRanges.length];
+		for (int i=0; i < frequencyRanges.length; i++) {
+			double[][] periodRanges = new double[][] { {1./frequencyRanges[i].getMaxFreq(), 1./frequencyRanges[i].getMinFreq()} };
+			writers[i] = new WaveformDataWriter(partialIDPaths[i], partialPaths[i], usedStations, usedEvents, periodRanges, phaseArray, perturbationPoints);
+		}
 		
 		//--- initialize source time functions
 		setSourceTimeFunctions(usedEvents);
@@ -1038,8 +1047,10 @@ public class AtAMaker implements Operation {
 					} // END IF computation flag (compute AtA)
 					
 					// write partials
-					if (computationFlag == 3)
+					if (computationFlag == 3) {
+						System.out.println("Writing partials");
 						fillA(timewindowOrder);
+					}
 					
 					//reset partials
 					for (int i = 0; i < nOriginalUnknown; i++) {
@@ -1068,7 +1079,8 @@ public class AtAMaker implements Operation {
 			}
 		}
 		
-		writer.close();
+		for (int i = 0; i < writers.length; i++)
+			writers[i].close();
 		
 //		if (writeA)
 //			writeA(partialIDPath, partialPath, usedStations, usedEvents);
@@ -1180,7 +1192,7 @@ public class AtAMaker implements Operation {
 											, newUnknownParameters[iunknown].getPartialType(), partiali);
 									
 	//								partialIDs.add(partialID);
-									writer.addPartialID(partialID);
+									writers[ifreq].addPartialID(partialID);
 								}
 								else
 									System.out.println(0);
@@ -1190,7 +1202,8 @@ public class AtAMaker implements Operation {
 				}
 			}
 			
-			writer.flush();
+			for (int iw = 0; iw < writers.length; iw++)
+				writers[iw].flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -1686,8 +1699,10 @@ public class AtAMaker implements Operation {
 			}
 			
 			
-			if (!originalHorizontalPositions.contains(obsPos))
+			if (!originalHorizontalPositions.contains(obsPos)) {
+				System.out.println("Position not contained " + obsPos);
 				return;
+			}
 			
 //			DSMOutput bpSpc = bpMap.get(obsPos);
 			

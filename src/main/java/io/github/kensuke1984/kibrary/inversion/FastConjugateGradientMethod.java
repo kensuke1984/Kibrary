@@ -1,5 +1,7 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -38,6 +40,8 @@ public class FastConjugateGradientMethod extends InverseProblem {
 	private RealMatrix a;
 	
 	private boolean damped;
+	
+	private RealVector conditioner;
 
 	/**
 	 * AtAδm= AtD を解く
@@ -56,6 +60,18 @@ public class FastConjugateGradientMethod extends InverseProblem {
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
 		alpha = new ArrayRealVector(column);
+	}
+	
+	public FastConjugateGradientMethod(RealMatrix a, RealVector atd, boolean damped, RealVector conditioner) {
+		this.ata = null;
+		this.a = a;
+		this.atd = atd;
+		this.damped = damped;
+		int column = atd.getDimension();
+		p = MatrixUtils.createRealMatrix(column, column);
+		ans = MatrixUtils.createRealMatrix(column, column);
+		alpha = new ArrayRealVector(column);
+		this.conditioner = conditioner;
 	}
 
 
@@ -83,7 +99,9 @@ public class FastConjugateGradientMethod extends InverseProblem {
 		RealVector atap = null;
 		if (damped) {
 //			atap = a.transpose().operate(a.operate(p.getColumnVector(0))).add(p.getColumnVector(0)); //ata.operate(p.getColumnVector(0));
-			atap = a.preMultiply(a.operate(p.getColumnVector(0))).add(p.getColumnVector(0));
+			double[] tmp = new double[atd.getDimension()];
+			Arrays.setAll(tmp, i -> p.getColumnVector(0).getEntry(i) * conditioner.getEntry(i) * conditioner.getEntry(i));
+			atap = a.preMultiply(a.operate(p.getColumnVector(0))).add(new ArrayRealVector(tmp));
 		}
 		else {
 //			atap = a.transpose().operate(a.operate(p.getColumnVector(0))); //ata.operate(p.getColumnVector(0));
@@ -95,7 +113,7 @@ public class FastConjugateGradientMethod extends InverseProblem {
 		ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(alpha.getEntry(0)));
 		
 		// ///////
-		int tmpN = 30;
+		int tmpN = 20;
 		for (int i = 1; i < tmpN; i++) {
 			t1 = System.nanoTime();
 			r = r.subtract(atap.mapMultiply(alpha.getEntry(i - 1)));
@@ -108,7 +126,10 @@ public class FastConjugateGradientMethod extends InverseProblem {
 			if (damped) {
 //				atap = MatrixComputation.operate(a.transpose(), MatrixComputation.operate(a, p.getColumnVector(i))).add(p.getColumnVector(i)); 
 //				a.transpose().operate(a.operate(p.getColumnVector(i))).add(p.getColumnVector(i)); //ata.operate(p.getColumnVector(i));
-				atap = a.preMultiply(a.operate(p.getColumnVector(i))).add(p.getColumnVector(i));
+				double[] tmp = new double[atd.getDimension()];
+				final int finali = i;
+				Arrays.setAll(tmp, j -> p.getColumnVector(finali).getEntry(j) * conditioner.getEntry(j) * conditioner.getEntry(j));
+				atap = a.preMultiply(a.operate(p.getColumnVector(i))).add(new ArrayRealVector(tmp));
 			}
 			else {
 //				atap = MatrixComputation.operate(a.transpose(), MatrixComputation.operate(a, p.getColumnVector(i)));

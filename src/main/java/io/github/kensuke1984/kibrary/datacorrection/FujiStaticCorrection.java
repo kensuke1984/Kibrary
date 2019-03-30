@@ -65,7 +65,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
  * 
  */
 public class FujiStaticCorrection implements Operation {
-
+	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(FujiStaticCorrection.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -88,6 +88,8 @@ public class FujiStaticCorrection implements Operation {
 			pw.println("#threshold");
 			pw.println("##double searchRange [s] (10)");
 			pw.println("#searchRange");
+			pw.println("##Use median time (false)");
+			pw.println("#mediantime");
 		}
 		System.out.println(outPath + " is created.");
 	}
@@ -124,6 +126,8 @@ public class FujiStaticCorrection implements Operation {
 
 	private Properties property;
 
+	private boolean mediantime;
+
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
 			property.setProperty("workPath", ".");
@@ -141,6 +145,8 @@ public class FujiStaticCorrection implements Operation {
 			property.setProperty("searchRange", "10");
 		if (!property.containsKey("sacSamplingHz"))
 			property.setProperty("sacSamplingHz", "20");
+		if (!property.containsKey("mediantime"))
+			property.setProperty("mediantime", "false");
 	}
 
 	/**
@@ -167,6 +173,7 @@ public class FujiStaticCorrection implements Operation {
 		sacSamplingHz = Double.parseDouble(property.getProperty("sacSamplingHz"));// TODO
 		searchRange = Double.parseDouble(property.getProperty("searchRange"));
 		threshold = Double.parseDouble(property.getProperty("threshold"));
+		mediantime = Boolean.parseBoolean(property.getProperty("mediantime"));
 	}
 
 	private Set<StaticCorrection> staticCorrectionSet;
@@ -243,6 +250,7 @@ public class FujiStaticCorrection implements Operation {
 					for (TimewindowInformation window : windows)
 						try {
 							double shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
+//							double shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
 							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
 							StaticCorrection t = new StaticCorrection(station, eventID, component,
 									window.getStartTime(), shift, ratio, window.getPhases());
@@ -289,7 +297,7 @@ public class FujiStaticCorrection implements Operation {
 	private void output() throws IOException {
 		StaticCorrectionFile.write(staticCorrectionSet, outPath);
 	}
-
+	
 	/**
 	 * Search the max point of synthetic in the time window for a pair. and then
 	 * search the max value within the search range and same positive and
@@ -332,36 +340,6 @@ public class FujiStaticCorrection implements Operation {
 	 * @param window
 	 * @return value for time shift
 	 */
-	private double computeTimeshiftForBestCorrelation_old(SACData obsSac, SACData synSac, Timewindow window) {
-		double delta = 1 / sacSamplingHz;
-
-		// マーカーが何秒か
-		double startSec = window.getStartTime();
-		double endSec = window.getEndTime();
-
-		// create synthetic timewindow
-		double[] syn = cutSac(synSac, startSec, endSec);
-
-		// which point gives the maximum value
-		int maxPoint = getMaxPoint(syn);
-
-		// startpointから、一番早くしきい値（割合が最大振幅のthreshold）を超える点までのポイント数
-		int endPoint = getEndPoint(syn, maxPoint);
-
-		// recreate synthetic timewindow
-		syn = cutSac(synSac, startSec, startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA));
-
-		// create observed timewindow
-		double obsStartSec = startSec - searchRange;
-		double obsEndSec = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA) + searchRange;
-		double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
-
-		int pointshift = getBestPoint(obs, syn, delta);
-		double timeshift = pointshift * delta;
-		return Precision.round(timeshift, 2);
-
-	}
-	
 	private double computeTimeshiftForBestCorrelation(SACData obsSac, SACData synSac, Timewindow window) {
 		double delta = 1 / sacSamplingHz;
 
@@ -377,10 +355,20 @@ public class FujiStaticCorrection implements Operation {
 
 		// startpointから、一番早くしきい値（割合が最大振幅のthreshold）を超える点までのポイント数
 		int endPoint = getEndPoint(syn, maxPoint);
-		
 		double endtime = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA);
-		startSec = endtime -  10;
-				
+		
+		//test
+//		endPoint = maxPoint;
+//		endtime = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA);
+//		startSec = endtime -  10;
+		
+		if (mediantime) {
+			double medianTime = startSec + (endPoint + maxPoint) / 2. * synSac.getValue(SACHeaderEnum.DELTA);
+	//		System.out.println(medianTime + " " + endtime);
+			endtime = medianTime;
+			startSec = endtime - 15;
+		}
+		
 		// recreate synthetic timewindow
 		syn = cutSac(synSac, startSec, endtime);
 
@@ -389,9 +377,90 @@ public class FujiStaticCorrection implements Operation {
 		double obsEndSec = endtime + searchRange;
 		double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
 
-		int pointshift = getBestPoint(obs, syn, delta);
+		int pointshift = getBestPoint(obs, syn, delta, searchRange);
 		double timeshift = pointshift * delta;
 		return Precision.round(timeshift, 2);
+
+	}
+	
+	private double computeTimeshiftForBestCorrelation_peak(SACData obsSac, SACData synSac, Timewindow window) {
+		double delta = 1 / sacSamplingHz;
+
+		// マーカーが何秒か
+		double startSec = window.getStartTime();
+		double endSec = window.getEndTime();
+
+		// create synthetic timewindow
+		double[] syn = cutSac(synSac, startSec, endSec);
+
+		// which point gives the maximum value
+		int maxPoint = getMaxPoint(syn);
+
+		double endtime = startSec + maxPoint * synSac.getValue(SACHeaderEnum.DELTA) + 5;
+		
+		// recreate synthetic timewindow
+		syn = cutSac(synSac, startSec, endtime);
+
+		// create observed timewindow
+		double obsStartSec = startSec - searchRange;
+		double obsEndSec = endtime + searchRange;
+		double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
+
+		int pointshift = getBestPoint(obs, syn, delta, searchRange);
+		double timeshift = pointshift * delta;
+		return Precision.round(timeshift, 2);
+
+	}
+	
+	private double computeTimeshiftForBestCorrelation_new(SACData obsSac, SACData synSac, Timewindow window) {
+		double delta = 1 / sacSamplingHz;
+
+		// マーカーが何秒か
+		double startSec = window.getStartTime();
+		double endSec = window.getEndTime();
+
+		// create synthetic timewindow
+		double[] syn0 = cutSac(synSac, startSec, endSec);
+
+		// which point gives the maximum value
+		int maxPoint = getMaxPoint(syn0);
+
+		// startpointから、一番早くしきい値（割合が最大振幅のthreshold）を超える点までのポイント数
+		int endPoint = getEndPoint(syn0, maxPoint);
+		
+		//test
+		endPoint = maxPoint;
+		
+		double endtime = startSec + endPoint * synSac.getValue(SACHeaderEnum.DELTA);
+		startSec = endtime -  10;
+				
+		// recreate synthetic timewindow
+		double[] syn = cutSac(synSac, startSec, endtime);
+
+		// create observed timewindow
+		double obsStartSec = startSec - searchRange;
+		double obsEndSec = endtime + searchRange;
+		double[] obs = cutSac(obsSac, obsStartSec, obsEndSec);
+
+		int pointshift = getBestPoint(obs, syn, delta, searchRange);
+		double timeshift = pointshift * delta;
+		
+		double secondSearchRange = 3.;
+		int secondEndPoint = getEndPoint(syn0, maxPoint);
+		double secondEndtime = window.getStartTime() + secondEndPoint * synSac.getValue(SACHeaderEnum.DELTA);
+		startSec = secondEndPoint - 10.;
+		syn = cutSac(synSac, startSec, secondEndtime);
+		
+		double secondObsStartSec = startSec - timeshift - secondSearchRange;
+		double secondObsEndSec = secondEndtime - timeshift + secondSearchRange;
+		obs = cutSac(obsSac, secondObsStartSec, secondObsEndSec);
+		
+		int secondPointshift = getBestPoint(obs, syn, delta, secondSearchRange);
+		double totalTimeshift = timeshift + secondPointshift * delta;
+		
+		System.out.println(timeshift + " " + totalTimeshift);
+		
+		return Precision.round(totalTimeshift, 2);
 
 	}
 	
@@ -418,7 +487,7 @@ public class FujiStaticCorrection implements Operation {
 		for (int i = 0; i < obs.length; i++)
 			System.out.println(i + " " + obs[i]);
 
-		int pointshift = getBestPoint(obs_cut, syn_cut, delta);
+		int pointshift = getBestPoint(obs_cut, syn_cut, delta, searchRange);
 		double timeshift = pointshift * delta;
 		
 		System.out.println(timeshift);
@@ -436,7 +505,7 @@ public class FujiStaticCorrection implements Operation {
 	 * @return the number of points we should shift so that obs(t-shift) and
 	 *         syn(t) are good correlation
 	 */
-	private int getBestPoint(double[] obs, double[] syn, double delta) {
+	private int getBestPoint(double[] obs, double[] syn, double delta, double range) {
 		int shift = 0;
 		double cor = 0;
 
@@ -472,7 +541,7 @@ public class FujiStaticCorrection implements Operation {
 			}
 		}
 		// System.out.println(pointWidth+" "+shift);
-		return (int) (searchRange / delta) - shift;
+		return (int) (range / delta) - shift;
 	}
 
 	/**

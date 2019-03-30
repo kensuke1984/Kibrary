@@ -89,18 +89,18 @@ public class CrossSectionLine {
 	 */
 	protected void setPoints() {
 		int nTheta = (int) Math.round(theta / deltaTheta);
-		HorizontalPosition[] positions = new HorizontalPosition[2 * nTheta+1];
-		thetaX = new double[2*nTheta+1];
-		for(int i=-nTheta;i<nTheta+1;i++){
+		HorizontalPosition[] positions = new HorizontalPosition[2 * nTheta+3];
+		thetaX = new double[2*nTheta+3];
+		for(int i=-nTheta-1;i<nTheta+2;i++){
 			if(i<0){
 				double theta = -i * deltaTheta;
 				XYZ xyz = RThetaPhi.toCartesian(Earth.EARTH_RADIUS, theta, Math.PI);
 				xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
 				xyz = xyz.rotateaboutY(centerLocation.getTheta());
 				xyz = xyz.rotateaboutZ(centerLocation.getPhi());
-				positions[i + nTheta] = xyz.toLocation();
+				positions[i + nTheta + 1] = xyz.toLocation();
 //				System.out.println(xyz.getLocation());
-				thetaX[i+nTheta]= -theta;
+				thetaX[i+nTheta+1]= -theta;
 			}
 			else if(i>=0){
 				double theta = i* deltaTheta;
@@ -108,9 +108,9 @@ public class CrossSectionLine {
 				xyz = xyz.rotateaboutZ(Math.PI - azimuth); //azimuth だけ回転
 				xyz = xyz.rotateaboutY(centerLocation.getTheta());
 				xyz = xyz.rotateaboutZ(centerLocation.getPhi());
-				positions[i + nTheta] = xyz.toLocation();
+				positions[i + nTheta + 1] = xyz.toLocation();
 //				System.out.println(xyz.getLocation());
-				thetaX[i+nTheta]= theta;
+				thetaX[i+nTheta+1]= theta;
 			}
 			
 			this.positions = positions;

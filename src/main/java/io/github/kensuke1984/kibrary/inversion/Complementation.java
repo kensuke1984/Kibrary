@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +156,30 @@ public class Complementation {
 			near4[i] = sortLoc[i];
 		}
 	    return near4;
+	}
+	
+	public Location[] getNearest4(Location[] locations, Location location, double maxSearchRange){
+//		double[] distance = distance(locations, location);
+//		Arrays.sort(distance); 
+		Location[] sortLoc = location.getNearestLocation(locations, maxSearchRange);
+		Location[] near4 = new Location[4];
+		for(int i=0;i<4;i++){
+			near4[i] = sortLoc[i];
+		}
+	    return near4;
+	}
+	
+	public Location[] getNearest(Location[] locations, Location location){
+		double minDistance = Double.MAX_VALUE;
+		Location[] nearest = new Location[1];
+		for (Location loc : locations) {
+			double distance = loc.getDistance(location);
+			if (distance < minDistance) {
+				minDistance = distance;
+				nearest[0] = loc;
+			}
+		}
+		return nearest;
 	}
 	
 	public Location[] get8CellNodes(Location[] locations, Location location, double dR, double dL) {

@@ -108,20 +108,59 @@ public class ObservationEquation {
 		System.out.println("Atd mean norm = " + (atd.getNorm() / ata.getColumnDimension()));
 	}
 	
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
+			boolean time_source, boolean time_receiver, CombinationType combinationType, Map<PartialType
+			, Integer[]> nUnknowns, UnknownParameterWeightType unknownParameterWeightType, Path verticalMappingPath, boolean computeAtA) {
+		if (verticalMappingPath != null) {
+			this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
+			combinationType = CombinationType.VERTICAL_MAPPING;
+			System.out.println("Using vertical mapping " + verticalMappingPath);
+		}
+		this.dVector = dVector;
+		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
+		List<Integer> bouncingOrders = null;
+		if (time_receiver) {
+			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
+					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
+			Collections.sort(bouncingOrders);
+			System.out.print("Bouncing orders (at Earth's surface): ");
+			for (Integer i : bouncingOrders) {
+				System.out.print(i + " ");
+			}
+			System.out.println();
+		}
+		System.out.println("Using combination type " + combinationType);
+		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
+				unknownParameterWeightType);
+		if (computeAtA) {
+			atd = computeAtD(dVector.getD());
+			ata = a.computeAtA();
+			System.out.println("AtA mean trace = " + (ata.getTrace() / ata.getColumnDimension()));
+			System.out.println("Atd mean norm = " + (atd.getNorm() / ata.getColumnDimension()));
+		}
+	}
+	
 	private RealVector m;
 	
 	public void applyConditioner(RealVector m) {
 		this.m = m;
+		int n = getMlength();
 		
-		int n = atd.getDimension();
-		
-		for (int i = 0; i < n; i++)
-			atd.setEntry(i, atd.getEntry(i) * m.getEntry(i));
-		
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				ata.setEntry(i, j, ata.getEntry(i, j) * m.getEntry(i) * m.getEntry(j));
-//				setRowVector(i, ata.getRowVector(i).mapMultiply(m.getEntry(i)));
+		if (ata != null) {
+			for (int i = 0; i < n; i++)
+				atd.setEntry(i, atd.getEntry(i) * m.getEntry(i));
+			
+			for (int i = 0; i < n; i++) {
+				for (int j = 0; j < n; j++) {
+					ata.setEntry(i, j, ata.getEntry(i, j) * m.getEntry(i) * m.getEntry(j));
+	//				setRowVector(i, ata.getRowVector(i).mapMultiply(m.getEntry(i)));
+				}
+			}
+		}
+		else {
+			for (int i = 0; i < n; i++) {
+				a.setColumnVector(i, a.getColumnVector(i).mapMultiply(m.getEntry(i)));
 			}
 		}
 	}
@@ -274,7 +313,7 @@ public class ObservationEquation {
 	}
 	
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector
-			, double cm0, double cmH, double cmV, Path verticalMappingPath) {
+			, double cm0, double cmH, double cmV, Path verticalMappingPath, boolean computeAtA) {
 		CombinationType combinationType = null;
 		if (verticalMappingPath != null) {
 			this.mapping = new ParameterMapping(parameterList.toArray(new UnknownParameter[0]), verticalMappingPath);
@@ -288,16 +327,14 @@ public class ObservationEquation {
 		readA(partialIDs, false, false, null, combinationType, null, null);
 		
 		double AtANormalizedTrace = 0;
-		double count = 0;
 		for (int i = 0; i < this.parameterList.size(); i++) {
-			double norm = a.getColumnVector(i).getNorm();
-			AtANormalizedTrace += norm * norm;
-			count++;
+			double norm = a.getColumnVector(i).dotProduct(a.getColumnVector(i));
+			AtANormalizedTrace += norm;
 		}
-		AtANormalizedTrace /= count;
+		AtANormalizedTrace /= getMlength();
 		System.out.println("AtANormalizedTrace = " + AtANormalizedTrace);
 		
-		double normalization = AtANormalizedTrace * cm0;
+		double normalization = cm0 / AtANormalizedTrace;
 		
 		// model covariance matrix
 		cm = new ModelCovarianceMatrix(parameterList, cmV, cmH, normalization, true);
@@ -317,7 +354,13 @@ public class ObservationEquation {
 		a = b;
 		atd = b.preMultiply(dVector.getD());
 		
-		ata = a.computeAtA().add(identity);
+		if (computeAtA)
+			ata = a.computeAtA().add(identity);
+	}
+	
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector
+			, double cm0, double cmH, double cmV, Path verticalMappingPath) {
+		this(partialIDs, parameterList, dVector, cm0, cmH, cmV, verticalMappingPath, true);
 	}
 	
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector, Matrix ata_prev, RealVector atd_prev) {
@@ -377,9 +420,16 @@ public class ObservationEquation {
 		Objects.requireNonNull(m);
 		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
 		double variance = 0;
-		if (ata != null)
-			variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+		if (ata != null) {
+			if (cm != null) {
+//				System.out.println("variance withouth model covariance term");
+				variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+						+ m.dotProduct(getAtA().operate(m)) - m.dotProduct(m);
+			}
+			else
+				variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
 				+ m.dotProduct(getAtA().operate(m));
+		}
 		else
 			variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
 				+ m.dotProduct(getA().preMultiply(getA().operate(m))) + m.dotProduct(m);
@@ -389,9 +439,16 @@ public class ObservationEquation {
 	public double varianceOf(RealVector m, double residualVariance, double obsNorm) {
 		Objects.requireNonNull(m);
 		double variance = 0;
-		if (ata != null)
-			variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
-				+ m.dotProduct(getAtA().operate(m));
+		if (ata != null) {
+			if (cm != null) {
+//				System.out.println("variance withouth model covariance term");
+				variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
+				+ m.dotProduct(getAtA().operate(m)) - m.dotProduct(m);
+			}
+			else
+				variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
+					+ m.dotProduct(getAtA().operate(m));
+		}
 		else
 			variance = residualVariance * obsNorm - 2 * atd.dotProduct(m)
 				+ m.dotProduct(getA().preMultiply(getA().operate(m)));
@@ -468,10 +525,10 @@ public class ObservationEquation {
 
 			double[] partial = id.getData();
 //			for (int j = 0; j < partial.length; j++) {
-			if (dVector.getWindowNPTS(k) != partial.length) {
+//			if (dVector.getWindowNPTS(k) != partial.length) {
 //				System.out.println("Trim partial ID to " + dVector.getWindowNPTS(k) + " points");
-				partial = Arrays.copyOf(partial, dVector.getWindowNPTS(k));
-			}
+//				partial = Arrays.copyOf(partial, dVector.getWindowNPTS(k));
+//			}
 			for (int j = 0; j < dVector.getWindowNPTS(k); j++) {
 //				a.setEntry(row + j, column, partial[j] * weighting);
 				a.setEntry(row + j, column, partial[j] * weightingVector.getEntry(j));
@@ -1298,6 +1355,7 @@ public class ObservationEquation {
 			case LAMBDA:
 			case KAPPA:
 			case LAMBDA2MU:
+			case Vs:
 				if (location.equals(((Physical3DParameter) parameterList.get(i)).getPointLocation())) {
 					return i;
 				}
@@ -1471,8 +1529,14 @@ public class ObservationEquation {
 			Map<UnknownParameter, Double> sMap = Sensitivity.sensitivityMap(ata, parameterList);
 			List<UnknownParameter> unknownForStructure = parameterList.stream().filter(unknown -> !unknown.getPartialType().isTimePartial())
 					.collect(Collectors.toList());
-			for (UnknownParameter unknown : unknownForStructure)
-				pw.println(unknown.getPartialType() + " " + unknown.getLocation() + " " + sMap.get(unknown));
+			for (UnknownParameter unknown : unknownForStructure) {
+				double lat = unknown.getLocation().getLatitude();
+				double lon = unknown.getLocation().getLongitude();
+				if (lon < 0)
+					lon += 360.;
+				double r = unknown.getLocation().getR();
+				pw.println(unknown.getPartialType() + " " + lat + " " + lon + " " + r + " " + sMap.get(unknown));
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

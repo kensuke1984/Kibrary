@@ -118,7 +118,11 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
 		if (ndk == null)
 			synchronized (this) {
 				if (ndk == null)
-					ndk = GlobalCMTCatalog.getNDK(this);
+					try {
+						ndk = GlobalCMTCatalog.getNDK(this);
+					} catch (RuntimeException e) {
+						System.err.println(e.getMessage());
+					}
 			}
 		return ndk;
 	}

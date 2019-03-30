@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -74,7 +75,7 @@ public class SingularValueDecomposition extends InverseProblem {
 		svdi = new org.apache.commons.math3.linear.SingularValueDecomposition(ata);
 		System.err.println("  done");
 		RealMatrix vt = svdi.getVT();
-
+		
 		// BtB = VtAtAV VtStSV
 		RealMatrix btb = vt.multiply(ata).multiply(vt.transpose());
 		// sometime btb is too small to be LUdecomposed
@@ -98,6 +99,18 @@ public class SingularValueDecomposition extends InverseProblem {
 				ans = ans.add(vi.mapMultiply(p.getEntry(i)));
 			}
 			this.ans.setColumnVector(j, ans);
+		}
+		
+		// output singular values
+		Path outpath = Paths.get("singularValues.txt");
+		try {
+			Files.createFile(outpath);
+			PrintWriter pw = new PrintWriter(outpath.toFile());
+			for (double lambda : svdi.getSingularValues())
+				pw.println(lambda);
+			pw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 
 	}

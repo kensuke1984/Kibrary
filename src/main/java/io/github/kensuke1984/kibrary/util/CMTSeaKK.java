@@ -68,7 +68,7 @@ class CMTSeaKK {
 //				System.out.println(new GlobalCMTID("200506021056A").getEvent().getHalfDuration());
 //				System.exit(0);
 			
-				GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(1976, 1, 1), LocalDate.of(2018, 8, 1));
+				GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(2014, 5, 21), LocalDate.of(2019, 1, 1));
 
 				sea.setLongitudeRange(-115, -75);
 				sea.setLatitudeRange(9, 32);
@@ -77,24 +77,34 @@ class CMTSeaKK {
 //				sea.setLatitudeRange(50, 70);
 //				sea.setDepthRange(80, 750);
 				sea.setMwRange(1., 7.5);
+				
+				sea.setLongitudeRange(165, 195);
+				sea.setLatitudeRange(-35, -5);
+				sea.setDepthRange(250, 750);
+				sea.setMwRange(5.5, 6.7);
 				Set<GlobalCMTID> id = sea.search();
 				
 				System.out.println(id.size());
 				
-				Path outpath = Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/NEW/STRUCTURE/USED/CA_EVENTS/SEISMICITY/CA_seismicity.txt");
+//				Path outpath = Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/CA/NEW/STRUCTURE/USED/CA_EVENTS/SEISMICITY/CA_seismicity.txt");
+				Path outpath = Paths.get("/Users/Anselme/Dropbox/Kenji/FWICPac/events.txt");
 				
 				Files.deleteIfExists(outpath);
 				Files.createFile(outpath);
 				
 				for (GlobalCMTID i : id) {
-//					double distance = i.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(40, -120))
-//							* 180 / Math.PI;
-//					if (distance <= 110 && distance >= 60)
+					double distance_min = i.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(58, -155))
+							* 180 / Math.PI;
+					double distance_max = i.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(69, -155))
+							* 180 / Math.PI;
+					if (distance_min >= 65 && distance_max <= 100)
 						Files.write(outpath, (i.toString() + " "
 								+ i.getEvent().getCmtLocation().getLatitude() + " "
 								+ i.getEvent().getCmtLocation().getLongitude() + " "
 								+ (6371 - i.getEvent().getCmtLocation().getR()) + " "
-								+ i.getEvent().getCmt().getMw() + "\n").getBytes(), StandardOpenOption.APPEND);
+								+ i.getEvent().getCmt().getMw() + " "
+								+ distance_min + " " + distance_max
+								+ "\n").getBytes(), StandardOpenOption.APPEND);
 				}
 
 //				if (id.size() > 1)

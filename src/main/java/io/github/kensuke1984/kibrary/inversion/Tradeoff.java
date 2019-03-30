@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -46,7 +47,7 @@ public class Tradeoff {
 		Path outpath2V = root.resolve("2Vcorrelations-all.txt");
 		
 		int[] npts = new int[] {131072, 262144};
-		double minDistance = 70;
+		double minDistance = 17;
 		double maxDistance = 100;
 		double dR = 50;
 		double dL = 5;
@@ -88,7 +89,14 @@ public class Tradeoff {
 			//using the whole dataset
 //			Dvector dVector = new Dvector(waveforms);
 			
-			Dvector dVector = new Dvector(waveforms, id -> true, WeightingType.RECIPROCAL);
+			Predicate<BasicID> chooser = id -> {
+				double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
+				if (distance < minDistance)
+					return false;
+				return true;
+			};
+			
+			Dvector dVector = new Dvector(waveforms, chooser, WeightingType.RECIPROCAL);
 			System.out.println("Using the whole dataset, #waveforms = " + dVector.getNTimeWindow());
 			ObservationEquation eq = new ObservationEquation(partials
 					, orderedParameterList, dVector, false, false, null, null, null, null);
@@ -97,7 +105,7 @@ public class Tradeoff {
 			
 //			System.out.println("DEBUG1: " + eq.getParameterList().size());
 			
-			double layer1R = 6171.0;
+			double layer1R = 6321.0;
 			double minDeltaR = Double.MAX_VALUE;
 			double tmpLayerR = 0.;
 			for (Double perturbationR : perturbationRs) {

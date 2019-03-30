@@ -11,6 +11,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,12 +33,17 @@ public class WaveformVisual {
 		
 		Path stackDir = Paths.get("stack" + tmpString);
 		Path profileDir = Paths.get("profile" + tmpString);
+		Path mapPath = stackDir.resolve("map");
 		Files.createDirectory(stackDir);
 		Files.createDirectory(profileDir);
+		Files.createDirectory(mapPath);
 		
 		SACComponent[] components = new SACComponent[] {SACComponent.T, SACComponent.R, SACComponent.Z};
 		
 		double dt = 1./ ids[0].getSamplingHz();
+		
+		int dAz = 5;
+		int nAz = 360 / dAz;
 		
 		for (GlobalCMTID event : events) {
 			Path eventDir = stackDir.resolve(event.toString());
@@ -46,8 +53,13 @@ public class WaveformVisual {
 			Files.createDirectory(profileEventDir);
 		
 			for (SACComponent component : components) {
-				double[][] obsStack = new double[120][0];
-				double[][] synStack = new double[120][0];
+				double[][] obsStack = new double[180][0];
+				double[][] synStack = new double[180][0];
+				double[][][] obsAzimuthStack = new double[nAz][180][0];
+				double[][][] synAzimuthStack = new double[nAz][180][0];
+				List<List<Station>> stationAzimuthList = new ArrayList<>();
+				for (int i = 0; i < nAz; i++)
+					stationAzimuthList.add(new ArrayList<>());
 				
 				
 				Path plotProfilePath = profileEventDir.resolve(Paths.get("plot_" + component + ".plt"));
@@ -55,7 +67,7 @@ public class WaveformVisual {
 				pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
 				pwPlot.println("set output \"" + event + "." + component + ".ps\"");
 				pwPlot.println("unset key");
-				pwPlot.println("set yrange [63:102]"); 
+				pwPlot.println("#set yrange [63:102]"); 
 				pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 				pwPlot.println("set ylabel 'Distance (deg)'");
 				pwPlot.println("set size .5,1");
@@ -68,10 +80,21 @@ public class WaveformVisual {
 					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
 					int k = (int) distance;
 					
-					if (id.getWaveformType().equals(WaveformType.OBS))
+					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
+					int kaz = (int) (azimuth / dAz);
+					
+					if (id.getWaveformType().equals(WaveformType.OBS)) {
 						obsStack[k] = add(obsStack[k], id.getData());
-					if (id.getWaveformType().equals(WaveformType.SYN))
+						obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], id.getData());
+						
+						List<Station> tmpList = stationAzimuthList.get(kaz);
+						tmpList.add(id.getStation());
+						stationAzimuthList.set(kaz, tmpList);
+					}
+					if (id.getWaveformType().equals(WaveformType.SYN)) {
 						synStack[k] = add(synStack[k], id.getData());
+						synAzimuthStack[kaz][k] = add(synAzimuthStack[kaz][k], id.getData());
+					}
 					
 					String filename = id.getStation() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
 					Path outpath = profileEventDir.resolve(filename);
@@ -89,13 +112,13 @@ public class WaveformVisual {
 				}
 				pwPlot.close();
 				
-				
+				//full stacks
 				Path plotPath = eventDir.resolve(Paths.get("plot_" + component + ".plt"));
 				pwPlot = new PrintWriter(plotPath.toFile());
 				pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
 				pwPlot.println("set output \"" + event + "." + component + ".ps\"");
 				pwPlot.println("unset key");
-				pwPlot.println("set yrange [63:102]"); 
+				pwPlot.println("#set yrange [63:102]"); 
 				pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 				pwPlot.println("set ylabel 'Distance (deg)'");
 				pwPlot.println("set size .5,1");
@@ -119,6 +142,43 @@ public class WaveformVisual {
 				}
 				
 				pwPlot.close();
+				
+				//azimuth stacks
+				for (int iaz = 0; iaz < nAz; iaz++) {
+					if (stationAzimuthList.get(iaz).size() > 0) {
+						writeGMT(mapPath, event, stationAzimuthList.get(iaz), iaz * dAz);
+					
+						plotPath = eventDir.resolve(Paths.get("plot_az" + (iaz * dAz) + "_" + component + ".plt"));
+						pwPlot = new PrintWriter(plotPath.toFile());
+						pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
+						pwPlot.println("set output \"" + event + ".az" + (iaz * dAz) + "." + component + ".ps\"");
+						pwPlot.println("unset key");
+						pwPlot.println("#set yrange [63:102]"); 
+						pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
+						pwPlot.println("set ylabel 'Distance (deg)'");
+						pwPlot.println("set size .5,1");
+						pwPlot.print("p ");
+					
+						for (int i = 0; i < obsAzimuthStack[iaz].length; i++) {
+							if (obsAzimuthStack[iaz][i].length == 0)
+								continue;
+							
+							double max = new ArrayRealVector(obsAzimuthStack[iaz][i]).getLInfNorm();
+							
+							String filename = i + ".az" + (iaz * dAz) + "." + event.toString() + "." + component + ".txt";
+							Path outpath = eventDir.resolve(filename);
+							PrintWriter pw = new PrintWriter(outpath.toFile());
+							for (int j = 0; j < obsAzimuthStack[iaz][i].length; j++)
+								pw.println((j * dt) + " " + (synAzimuthStack[iaz][i][j] / max) + " " + (obsAzimuthStack[iaz][i][j] / max));
+							pw.close();
+							
+							pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lc rgb 'red',\\");
+							pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lc rgb 'black',\\");
+						}
+						
+						pwPlot.close();
+					}
+				}
 			}
 		}
 	}
@@ -136,5 +196,46 @@ public class WaveformVisual {
 				tmp[i] = y1[i] + y2[i];
 			return tmp;
 		}
+	}
+	
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, double azimuth) throws IOException {
+		Path outpath = rootpath.resolve("plot_map_" + event + "_az" + (int) (azimuth) + ".gmt");
+		String outpathps = "map_" + event + "_az" + (int) (azimuth) + ".ps";
+		PrintWriter pw = new PrintWriter(outpath.toFile());
+		
+		String ss = String.join("\n",
+				"#!/bin/sh"
+				, "outputps=" + outpathps
+				, "gmt set FONT 12p,Helvetica,black"
+				, "gmt set PS_MEDIA 5ix2.5i"
+				, "gmt set MAP_FRAME_WIDTH 2p"
+//				, "gmt pscoast -R-170/-52/-41/75 -JQ270/4.4i -P -G205 -K -Di -X.4i -Y.3i -BWSne -Bx60g30f30 -By60g30f30 > $outputps"
+				, "gmt pscoast -Rg -JW4i -P -G205 -K -Di -X.4i -Y.3i -BWSne -Bx60g30f30 -By60g30f30 > $outputps"
+				, ""
+				);
+		
+		ss += "gmt psxy -Rg -JW4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
+		double evLat = event.getEvent().getCmtLocation().getLatitude();
+		double evLon = event.getEvent().getCmtLocation().getLongitude();
+		for (Station station : stations)
+			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
+		ss += "END\n";
+		
+		ss += "gmt psxy -R -J -Si0.11 -P -Groyalblue -Wthinnest,black -K -O >> $outputps <<END\n";
+		for (Station station : stations)
+			ss += String.format("%.2f %.2f\n", station.getPosition().getLongitude(), station.getPosition().getLatitude());
+		ss += "END\n";
+		
+		ss += "gmt psxy -R -J -P -Sa0.22 -Gred -Wthinnest,black -K -O >> $outputps<<END\n";
+		ss += String.format("%.2f %.2f\n", evLon, evLat);
+		ss += "END\n";
+		
+		ss += "gmt pstext -R -J -P -O >> $outputps <<END\n"
+			 + "END\n"
+			 + "gmt ps2raster $outputps -Tf\n";
+		
+		pw.println(ss);
+		
+		pw.close();
 	}
 }

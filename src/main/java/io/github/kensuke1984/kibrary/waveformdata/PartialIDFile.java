@@ -65,6 +65,7 @@ public final class PartialIDFile {
 		PartialID lastID = ids[ids.length - 1];
 		if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
 			throw new RuntimeException(dataPath + " is invalid for " + idPath);
+		int counter = 0;
 		try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
 			for (int i = 0; i < ids.length; i++) {
 				if (!chooser.test(ids[i])) {
@@ -76,6 +77,11 @@ public final class PartialIDFile {
 				for (int j = 0; j < data.length; j++)
 					data[j] = dis.readDouble();
 				ids[i] = ids[i].setData(data);
+				
+				if (i % (ids.length/10) == 0) {
+					System.out.println(counter*10 + "/100 %");
+					counter++;
+				}
 			}
 		}
 		if (chooser != null)

@@ -277,7 +277,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		Set<Station> synStationSet = new HashSet<>();
 		if (syntheticDataset) {
 //			for (int i = 2; i < 241; i++) {
-			for (int i = 10; i <= 100; i+=1) {
+			for (int i = 1; i <= 170; i+=1) {
 //				double distance = i/2.;
 //				int d1 = (int) (i/2.);
 //				int d2 = (int) ((i/2. - (int) (i/2.)) * 10);
@@ -326,10 +326,16 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 					System.err.println("!Caution there are stations with the same name and different positions in "
 							+ eventDir);
 				Path eventOut = outPath.resolve(eventDir.toString());
-				SyntheticDSMInfo info = new SyntheticDSMInfo(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, tlen, np);
-				Files.createDirectories(eventOut.resolve(header));
-				info.writePSV(eventOut.resolve(header + "_PSV.inf"));
-				info.writeSH(eventOut.resolve(header + "_SH.inf"));
+				
+				if (eventDir.getGlobalCMTID().getEvent() != null) {
+					SyntheticDSMInfo info = new SyntheticDSMInfo(ps, eventDir.getGlobalCMTID().getEvent(), stations, header, tlen, np);
+					Files.createDirectories(eventOut.resolve(header));
+					info.writePSV(eventOut.resolve(header + "_PSV.inf"));
+					info.writeSH(eventOut.resolve(header + "_SH.inf"));
+				}
+				else {
+					System.out.println(eventDir.getGlobalCMTID() + "is not in the catalog");
+				}
 			} catch (Exception e) {
 				System.err.println("Error on " + eventDir);
 				e.printStackTrace();

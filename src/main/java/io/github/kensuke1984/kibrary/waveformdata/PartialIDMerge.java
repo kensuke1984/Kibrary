@@ -18,12 +18,18 @@ class PartialIDMerge {
 
 	public static void main(String[] args) throws IOException {
 		Path workingDir = Paths.get(".");
-		Path root0 = Paths.get(args[0]);
-		Path root1 = Paths.get(args[1]);
-		Path src0ID = root0.resolve("partialID.dat");
-		Path src1ID = root1.resolve("partialID.dat");
-		Path src0Data = root0.resolve("partial.dat");
-		Path src1Data = root1.resolve("partial.dat");
+//		Path root0 = Paths.get(args[0]);
+//		Path root1 = Paths.get(args[1]);
+//		Path src0ID = root0.resolve("partialID.dat");
+//		Path src1ID = root1.resolve("partialID.dat");
+//		Path src0Data = root0.resolve("partial.dat");
+//		Path src1Data = root1.resolve("partial.dat");
+		
+		Path src0ID = Paths.get(args[0]);
+		Path src1ID = Paths.get(args[2]);
+		Path src0Data = Paths.get(args[1]);
+		Path src1Data = Paths.get(args[3]);
+		
 		PartialID[] src0 = PartialIDFile.readPartialIDandDataFile(src0ID, src0Data);
 		PartialID[] src1 = PartialIDFile.readPartialIDandDataFile(src1ID, src1Data);
 		Path idPath = workingDir.resolve("partialID_merged.dat");

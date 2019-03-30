@@ -199,7 +199,7 @@ public class CheckerBoardTest implements Operation {
 
 	private void read() throws IOException {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
-		Dvector dVector = new Dvector(ids, id -> true, WeightingType.IDENTITY);
+		Dvector dVector = new Dvector(ids, id -> true, WeightingType.RECIPROCAL);
 		PartialID[] pids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		eq = new ObservationEquation(pids, parameterList, dVector, false, false, null, null, null, null);
@@ -347,13 +347,17 @@ public class CheckerBoardTest implements Operation {
 		Dvector dVector = eq.getDVector();
 		RealVector[] noiseV = new RealVector[dVector.getNTimeWindow()];
 		int[] pts = dVector.getLengths();
-		ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * 0.08, 2 * Math.PI * 0.05 * 0.005, 4);
+		double minFreq = 0.05;
+		double maxFreq = 0.01;
+		int np = 6;
+		ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * minFreq, 2 * Math.PI * 0.05 * maxFreq, np);
 		for (int i = 0; i < dVector.getNTimeWindow(); i++) {
 			// System.out.println(i);
-			double[] u = RandomNoiseMaker.create(noisePower, 20, 3276.8, 1024).getY();
+			double[] u = RandomNoiseMaker.create(noisePower, 20, 3276.8, 512).getY();
 			u = bpf.applyFilter(u);
 			int startT = (int) dVector.getObsIDs()[i].getStartTime() * 20; // 6*4=20
 			noiseV[i] = new ArrayRealVector(pts[i]);
+//			System.out.println(new ArrayRealVector(u).getLInfNorm());
 			for (int j = 0; j < pts[i]; j++)
 				noiseV[i].setEntry(j, u[j * 20 + startT]);
 		}

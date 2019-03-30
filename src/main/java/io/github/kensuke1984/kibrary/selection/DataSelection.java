@@ -101,9 +101,12 @@ public class DataSelection implements Operation {
 			pw.println("SnScSnPair false");
 			pw.println("##exclude surface wave (false)");
 			pw.println("#excludeSurfaceWave");
+			pw.println("#minDistance");
 		}
 		System.err.println(outPath + " is created.");
 	}
+	
+	private double minDistance;
 
 	private Set<EventFolder> eventDirs;
 
@@ -183,6 +186,8 @@ public class DataSelection implements Operation {
 			property.setProperty("excludeSurfaceWave", "false");
 		if (!property.containsKey("maxStaticShift"))
 			property.setProperty("maxStaticShift", "10.");
+		if (!property.containsKey("minDistance"))
+			property.setProperty("minDistance", "0.");
 	}
 
 	private void set() throws IOException {
@@ -225,6 +230,8 @@ public class DataSelection implements Operation {
 		dataSelectionInfo = new ArrayList<>();
 		
 		maxStaticShift = Double.parseDouble(property.getProperty("maxStaticShift"));
+		
+		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 	}
 
 	private Set<TimewindowInformation> sourceTimewindowInformationSet;
@@ -365,6 +372,10 @@ public class DataSelection implements Operation {
 						System.err.println("Ignoring differing DELTA " + obsName);
 						continue;
 					}
+					
+					double distance = Math.toDegrees(obsSac.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(station.getPosition()));
+					if (distance < minDistance)
+						continue;
 
 					// Pickup a time window of obsName
 					Set<TimewindowInformation> windowInformations = sourceTimewindowInformationSet
@@ -455,9 +466,17 @@ public class DataSelection implements Operation {
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair = (s,
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent() && t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
+					
+	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+					&& (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent()) 
+					&& t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
 
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
+		List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPair_isotropic.test(s, window)).collect(Collectors.toList());
+		if (corrs.size() != 1)
+			throw new RuntimeException("Found no, or more than 1 static correction for window " + window);
+		return corrs.get(0);
 	}
 
 	/**
@@ -514,10 +533,15 @@ public class DataSelection implements Operation {
 		
 		Phases phases = new Phases(window.getPhases());
 		
-		writer.println(stationName + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
+		if (window.getPhases().length == 0) {
+			System.out.println(window);
+		}
+		else { 
+			writer.println(stationName + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
 				+ minRatio + " " + var + " " + cor + " " + SNratio);
 		
-		dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
+			dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
+		}
 		
 		return isok;
 	}

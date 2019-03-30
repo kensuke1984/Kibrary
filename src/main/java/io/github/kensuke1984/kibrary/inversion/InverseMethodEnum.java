@@ -3,6 +3,9 @@
  */
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.util.stream.IntStream;
+
+import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
@@ -66,6 +69,12 @@ public enum InverseMethodEnum {
 			throw new IllegalArgumentException("Invalid name for InverseMethod");
 		}
 	}
+	
+	RealVector conditioner;
+	
+	public void setConditioner(RealVector m) {
+		conditioner = m;
+	}
 
 	InverseProblem getMethod(RealMatrix ata, RealVector atd) {
 		switch (this) {
@@ -76,7 +85,11 @@ public enum InverseMethodEnum {
 		case FAST_CONJUGATE_GRADIENT:
 			return new FastConjugateGradientMethod(ata, atd, false); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
 		case FAST_CONJUGATE_GRADIENT_DAMPED:
-			return new FastConjugateGradientMethod(ata, atd, true); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
+			if (conditioner == null) {
+				conditioner = new ArrayRealVector(atd.getDimension());
+				IntStream.range(0, atd.getDimension()).forEach(i -> conditioner.setEntry(i, 1.));
+			}
+			return new FastConjugateGradientMethod(ata, atd, true, conditioner); //TODO the name should be changed, but "ata" for FastConjugateGradientMethod is actually "a" (ata not needed for CG).
 		case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
 			return new BiConjugateGradientStabilizedMethod(ata, atd);
 		default:

@@ -210,7 +210,7 @@ public final class SpcSAC implements Operation {
 	      	SourceTimeFunction stf = null;
 	      	if (found) {
 	      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
-	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
+//	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
 	      	}
 	      	else
 	      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());

@@ -66,6 +66,7 @@ class Longitude implements Comparable<Longitude> {
 	 */
 	private static boolean checkLongitude(double longitude) {
 		return -180 <= longitude && longitude < 360;
+//		return -360 <= longitude && longitude < 360;
 	}
 
 	@Override

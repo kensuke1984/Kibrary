@@ -118,6 +118,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			property.setProperty("correctionBootstrap", "false");
 		if (!property.containsKey("nSample"))
 			property.setProperty("nSample", "100");
+		if (!property.containsKey("shiftdata"))
+			property.setProperty("shiftdata", "false");
+		if (!property.containsKey("shiftdataValue"))
+			property.setProperty("shiftdataValue", "0.");
+		if (!property.containsKey("minDistance"))
+			property.setProperty("minDistance", "0.");
 	}
 
 	private void set() throws NoSuchFileException {
@@ -150,6 +156,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		
 		correctionBootstrap = Boolean.parseBoolean(property.getProperty("correctionBootstrap"));
 		nSample = correctionBootstrap ? Integer.parseInt(property.getProperty("nSample")) : 1;
+		
+		shiftdata = Boolean.parseBoolean(property.getProperty("shiftdata"));
+		if (shiftdata)
+			shiftdataValue = Double.parseDouble(property.getProperty("shiftdataValue"));
+		
+		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 	}
 	
 	private Random random;
@@ -184,9 +196,18 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("#sacSamplingHz the value will be ignored");
 			pw.println("##double value of sampling Hz in output files (1)");
 			pw.println("#finalSamplingHz");
+			pw.println("##Shift data to simulate error (false)");
+			pw.println("#shiftdata");
+			pw.println("##Data time shift (to test sensitivity to statics errors) (0)");
+			pw.println("#shiftdataValue");
+			pw.println("#minDistance");
 		}
 		System.err.println(outPath + " is created.");
 	}
+
+	private boolean shiftdata;
+	
+	private double shiftdataValue;
 
 	/**
 	 * {@link Path} of a root folder containing observed dataset
@@ -245,6 +266,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private Set<GlobalCMTID> idSet;
 	private Phase[] phases;
 	private double[][] periodRanges;
+	
+	private double minDistance;
 
 	private void readPeriodRanges() {
 		try {
@@ -302,7 +325,15 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
-		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath);
+		
+		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath)
+				.stream().filter(tw -> {
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+					if (distance < minDistance)
+						return false;
+					return true;
+				}).collect(Collectors.toSet());
+		
 		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
 				.collect(Collectors.toSet());
 		idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)
@@ -463,7 +494,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 							System.err.println("There is no static correction information for\\n " + window);
 							continue;
 						}
-
+					
+					if (shiftdata)
+						shift += shiftdataValue;
+					
 					double[] obsData = cutDataSac(obsSac, startTime - shift, npts);
 					double[] synData = cutDataSac(synSac, startTime, npts);
 					double correctionRatio = ratio;
@@ -500,8 +534,23 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
 			
+	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_isotropic = (s,
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+				&& (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent()) 
+				&& t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
+
+	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_record = (s,
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+					&& s.getComponent() == t.getComponent();
+   
+			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-		return staticCorrectionSet.stream().filter(s -> isPair.test(s, window)).findAny().get();
+		List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
+		if (corrs.size() > 1)
+			throw new RuntimeException("Found more than 1 static correction for window " + window);
+		if (corrs.size() == 0)
+			throw new RuntimeException("Found no static correction for window " + window);
+		return corrs.get(0);
 	}
 
 	private double[] cutDataSac(SACData sac, double startTime, int npts) {

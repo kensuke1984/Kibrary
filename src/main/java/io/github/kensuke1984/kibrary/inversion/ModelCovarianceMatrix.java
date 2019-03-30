@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -245,7 +246,7 @@ public class ModelCovarianceMatrix {
 		computeCholeskyDecomposition();
 	}
 	
-	public ModelCovarianceMatrix(List<UnknownParameter> parameters, double v, double h, double normalization, boolean applyRadialWeight) {
+	public ModelCovarianceMatrix(List<UnknownParameter> parameters, double v, double h, double[] normalization, boolean applyRadialWeight) {
 		this.parameters = parameters;
 		this.radii = null;
 		this.layerThickness = null;
@@ -266,18 +267,23 @@ public class ModelCovarianceMatrix {
 				UnknownParameter p = parameters.get(i);
 				double depth = 6371 - p.getLocation().getR();
 				if (depth >= 600)
-					preWeight[i] *= 1.;//1.2248 (for 12.5 s); //sqrt(1.4) // 1.4 is the calculated value but may be too strong. Trying sqrt(1.5) ~ 1.2248
+					preWeight[i] *= 1.2248;//1.2248 (for 12.5 s); //sqrt(1.4) // 1.4 is the calculated value but may be too strong. Trying sqrt(1.5) ~ 1.2248
 			}
 		}
 		//normalize weights
 		double mean = new ArrayRealVector(preWeight).getL1Norm() / preWeight.length;
 		System.out.println("mean = " + mean);
 		for (int i = 0; i < preWeight.length; i++) {
-			preWeight[i] *= normalization / mean;
+//			preWeight[i] *= Math.sqrt(normalization[i]) / mean;
+			preWeight[i] *= Math.sqrt(normalization[i]) / mean / (Math.sqrt(Math.PI) * h);
 		}
 		
 		computeMatrix();
 		computeCholeskyDecomposition();
+	}
+	
+	public ModelCovarianceMatrix(List<UnknownParameter> parameters, double v, double h, double normalization, boolean applyRadialWeight) {
+		this(parameters, v, h, IntStream.range(0, parameters.size()).mapToDouble(i -> normalization).toArray(), applyRadialWeight);
 	}
 	
 	

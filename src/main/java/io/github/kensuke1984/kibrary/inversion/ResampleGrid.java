@@ -84,8 +84,15 @@ public class ResampleGrid {
 			List<UnknownParameter> parameters = parameterstmp.stream().filter(u -> u.getLocation().getR() == r0).collect(Collectors.toList());
 //			List<UnknownParameter> parameters = parameterstmp;
 			
-			double dlon = 5.;
-			double dlat = 5.;
+			double dl = parameterstmp.stream().mapToDouble(p -> Math.abs(p.getLocation().getLatitude() - parameterstmp.get(0).getLocation().getLatitude())).distinct().sorted().toArray()[1];
+			
+//			double dlon = 5.;
+//			double dlat = 5.;
+			
+			double dlat = dl;
+			double dlon = dl;
+			
+			System.out.println("dLat = dLon = " + dl);
 			
 			ResampleGrid sampler2 = new ResampleGrid(parameters, dlat, dlon, 2);
 			List<UnknownParameter> parameters2 = sampler2.getResampledUnkowns();

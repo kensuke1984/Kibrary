@@ -302,43 +302,42 @@ public class InformationFileMaker implements Operation {
 			GlobalCMTData ev;
 			try {
 				ev = ed.getGlobalCMTID().getEvent();
-			} catch (RuntimeException e) {
-				System.err.println(e.getMessage());
-				continue;
-			}
 			
-			// joint CMT inversion
-			if (jointCMT) {
-				int mtEXP = 25;
-				double mw = 1.;
-				MomentTensor[] mts = new MomentTensor[6];
-				mts[0] = new MomentTensor(1., 0., 0., 0., 0., 0., mtEXP, mw);
-				mts[1] = new MomentTensor(0., 1., 0., 0., 0., 0., mtEXP, mw);
-				mts[2] = new MomentTensor(0., 0., 1., 0., 0., 0., mtEXP, mw);
-				mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
-				mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
-				mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
-				
-				for (int i = 0; i < 6; i++) {
-					ev.setCmt(mts[i]);
+				// joint CMT inversion
+				if (jointCMT) {
+					int mtEXP = 25;
+					double mw = 1.;
+					MomentTensor[] mts = new MomentTensor[6];
+					mts[0] = new MomentTensor(1., 0., 0., 0., 0., 0., mtEXP, mw);
+					mts[1] = new MomentTensor(0., 1., 0., 0., 0., 0., mtEXP, mw);
+					mts[2] = new MomentTensor(0., 0., 1., 0., 0., 0., mtEXP, mw);
+					mts[3] = new MomentTensor(0., 0., 0., 1., 0., 0., mtEXP, mw);
+					mts[4] = new MomentTensor(0., 0., 0., 0., 1., 0., mtEXP, mw);
+					mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
+					
+					for (int i = 0; i < 6; i++) {
+						ev.setCmt(mts[i]);
+						FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
+						Path infPath = fpPath.resolve(ev.toString() + "_mt" + i);
+						Files.createDirectories(infPath.resolve(header));
+						fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
+						fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+					}
+				}
+				else {
 					FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-					Path infPath = fpPath.resolve(ev.toString() + "_mt" + i);
+					Path infPath = fpPath.resolve(ev.toString());
 					Files.createDirectories(infPath.resolve(header));
 					fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
 					fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
+					
+					Path catInfPath = fpCatPath.resolve(ev.toString());
+					Files.createDirectories(catInfPath.resolve(header));
+					fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
+					fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
 				}
-			}
-			else {
-				FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
-				Path infPath = fpPath.resolve(ev.toString());
-				Files.createDirectories(infPath.resolve(header));
-				fp.writeSHFP(infPath.resolve(header + "_SH.inf"));
-				fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
-				
-				Path catInfPath = fpCatPath.resolve(ev.toString());
-				Files.createDirectories(catInfPath.resolve(header));
-				fp.writeSHFPCAT(catInfPath.resolve(header + "_SH.inf"), thetamin, thetamax, dtheta);
-				fp.writePSVFPCAT(catInfPath.resolve(header + "_PSV.inf"), thetamin, thetamax, dtheta);
+			} catch (RuntimeException e) {
+				System.err.println(e.getMessage());
 			}
 		}
 

@@ -45,17 +45,18 @@ public class Make3DModel {
 		
 		List<UnknownParameter> unknowns = UnknownParameterFile.read(Paths.get(args[0]));
 		
-//		List<PerturbationPoint> checkerboard = checkerboardCATZ_4deg_4layers(2., unknowns);
-//		Path outpath = Paths.get("checkerboard_4x4_4layers_2per.inf");
+		List<PerturbationPoint> checkerboard_4deg_4layers = checkerboardCATZ_4deg_4layers(2., unknowns);
+		Path outpath_4deg_4layers = Paths.get("checkerboard_4x4_4layers_2per.inf");
 		
-		List<PerturbationPoint> checkerboard = checkerboardCATZ_4deg_8layers(2., unknowns);
-		Path outpath = Paths.get("checkerboard_4x4_8layers_2per.inf");
+		List<PerturbationPoint> checkerboard_4deg_8layers = checkerboardCATZ_4deg_8layers(2., unknowns);
+		Path outpath_4deg_8layers = Paths.get("checkerboard_4x4_8layers_2per.inf");
 		
 //		List<PerturbationPoint> checkerboard = checkerboardCATZ_6deg_4layers(3., unknowns);
 //		Path outpath = Paths.get("checkerboard_6x6_4layers_3per.inf");
 		
 		try {
-			writeModel(checkerboard, outpath);
+			writeModel(checkerboard_4deg_4layers, outpath_4deg_4layers);
+			writeModel(checkerboard_4deg_8layers, outpath_4deg_8layers);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -402,6 +403,16 @@ public class Make3DModel {
 		public Location getLocation() {
 			return location;
 		}
+	}
+	
+	public List<PerturbationPoint> sortForPPM(List<PerturbationPoint> perturbations) {
+		List<PerturbationPoint> sortedList = new ArrayList<>();
+		
+		double[] rs = perturbations.stream().mapToDouble(p -> p.getLocation().getR()).sorted().toArray();
+		double[] lats = perturbations.stream().mapToDouble(p -> p.getLocation().getLatitude()).sorted().toArray();
+		double[] lons = perturbations.stream().mapToDouble(p -> p.getLocation().getLongitude()).sorted().toArray();
+		
+		return sortedList;
 	}
 }
 

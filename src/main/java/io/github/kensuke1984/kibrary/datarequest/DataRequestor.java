@@ -298,7 +298,7 @@ public class DataRequestor implements Operation {
 					return;
 				System.err.println("Sending a request for " + id);
 				m.sendIris();
-				Thread.sleep(30 * 1000);
+				Thread.sleep(3 * 1000);
 			} catch (Exception e) {
 				System.out.println(m.getLabel() + " was not sent");
 				e.printStackTrace();

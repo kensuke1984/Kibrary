@@ -91,14 +91,14 @@ public class Dvector {
 		List<GlobalCMTID> events = idList.stream().map(id -> id.getGlobalCMTID())
 				.distinct().collect(Collectors.toList());
 		
-//		Files.deleteIfExists(Paths.get("eventVariance.inf"));
-//		Files.createFile(Paths.get("eventVariance.inf"));
-//		for (GlobalCMTID event : events) {
-//			BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
-//					.collect(Collectors.toList()).toArray(new BasicID[0]);
-//			Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
-//			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
-//		}
+		Files.deleteIfExists(Paths.get("eventVariance.inf"));
+		Files.createFile(Paths.get("eventVariance.inf"));
+		for (GlobalCMTID event : events) {
+			BasicID[] eventIDs = idList.parallelStream().filter(id -> id.getGlobalCMTID().equals(event))
+					.collect(Collectors.toList()).toArray(new BasicID[0]);
+			Dvector dvector = new Dvector(eventIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
+			Files.write(Paths.get("eventVariance.inf"), (event + " " + dvector.getVariance() + " " + dvector.getNTimeWindow() + "\n").getBytes(), StandardOpenOption.APPEND);
+		}
 		
 		Dvector dvector = new Dvector(basicIDs, chooser, weigthingType, atLeastThreeRecordsPerStation, selectionInfo);
 		
@@ -288,15 +288,31 @@ public class Dvector {
 		this.weightingType = weigthingType;
 		switch (weigthingType) {
 		case RECIPROCAL:
-		case RECIPROCAL_PcP:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData());
-				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 15.) {
 					System.err.println(obs);
 					return 0.;
 				}
+				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
+					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
 				return 1. / obsVec.getLInfNorm(); 
 //						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
+		case RECIPROCAL_PcP:
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData());
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 15.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
+					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
+				double distance = Math.toDegrees(obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()));
+				double a = 3.;
+				double w = (a-1) / (91-67) * (91-distance) + 1.;
+				return 1. / obsVec.getLInfNorm() * w;
 			};
 			break;
 		case RECIPROCAL_COS:
@@ -358,16 +374,22 @@ public class Dvector {
 			this.histogramDistance = new double[][] { {70.0, 1.000}, {75.0, 1.016}, {80.0, 1.179}, {85.0, 1.635}
 			, {90.0, 2.0}, {95.0, 2.0}, {100.0, 1.000} };
 			this.histogramAzimuth = new double[][] { {0.0, 1.000}, {5.0, 1.000}, {310.0, 1.000}, {315.0, 1.267}, {320.0, 1.000}
-				, {325.0, 1.075}, {330.0, 1.281}, {335.0, 1.418}, {340.0, 2.0}, {345.0, 2.0}, {350.0, 2.0}, {355.0, 2.0} };
+				, {325.0, 1.075}, {330.0, 1.281}, {335.0, 1.418}, {340.0, 2.0}, {345.0, 2.0}, {350.0, 2.0}, {355.0, 2.0}, {360.0, 1.0}};
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
 					System.err.println(obs);
 					return 0.;
 				}
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
+				
+				double wtmp = 1.;
+//				if (obs.getSacComponent().equals(SACComponent.Z))
+//					wtmp = 6.;
+				
+				return 1. / obsVec.getLInfNorm()
 						* weightingEpicentralDistanceDpp(obs)
-						* weightingAzimuthDpp(obs);
+						* weightingAzimuthDpp(obs)
+						* wtmp;
 			};
 			break;
 		case RECIPROCAL_AZED_DPP_V2:
@@ -375,9 +397,9 @@ public class Dvector {
 //				, {90.00, 2.000}, {95.00, 2.000}, {100.00, 1.000} };
 //			this.histogramAzimuth = new double[][] { {0.00, 1.000}, {5.00, 1.000}, {310.00, 1.000}, {315.00, 1.270}, {320.00, 1.000}
 //				, {325.00, 1.078}, {330.00, 1.375}, {335.00, 1.411}, {340.00, 2.000}, {345.00, 2.000}, {350.00, 2.000}, {355.00, 2.000} };
-			this.histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
-			this.histogramAzimuth = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
-			, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
+			this.histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157}, {100, 1.157} };
+			this.histogramAzimuth = new double[][] { {0, 1.000}, {5, 1.000}, {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
+			, {345, 1.414}, {350, 1.4}, {355, 1.4},  {360, 1.4} };
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
@@ -404,14 +426,27 @@ public class Dvector {
 		double weight = 1.;
 		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
 		
+		double maxWeight = 2.;
+		
 //		double[][] histogram = new double[][] { {70, 1.}, {75, 1.09}, {80, 1.41}, {85, 2.5}, {90, 2.5}, {95, 2.5}, {100, 1.} };
 		
 //		histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
 //		histogramDistance = new double[][] { {70.0, 1.00}, {75.0, 1.03}, {80.0, 1.39}, {85.0, 2.67}, {90.0, 3.}, {95.0, 3.}, {100.0, 1.} };
 		
-		for (int i = 0; i < histogramDistance.length; i++)
-			if (distance >= histogramDistance[i][0] && distance < histogramDistance[i][0] + 5.)
+		//D" CA joint P-S
+//		if (obs.getSacComponent().equals(SACComponent.T))
+//			histogramDistance = new double[][] { {70.0,1.01},{72.0,1.00},{74.0,1.02},{76.0,1.03},{78.0,1.08},{80.0,1.15},{82.0,1.19}
+//				,{84.0,1.29},{86.0,1.53},{88.0,1.95},{90.0,1.91},{92.0,3.09},{94.0,3.04},{96.0,3.52} };
+//		else if (obs.getSacComponent().equals(SACComponent.Z))
+//			histogramDistance = new double[][] { {64.0,1.59},{66.0,1.06},{68.0,1.00},{70.0,1.05},{72.0,1.07},{74.0,1.09},{76.0,1.12},{78.0,1.14},{80.0,1.24},{82.0,1.31}
+//				,{84.0,1.58},{86.0,1.81},{88.0,2.49},{90.0,2.25},{92.0,3.57},{94.0,3.72},{96.0,7.48} };
+		
+		for (int i = 0; i < histogramDistance.length-1; i++)
+			if (distance >= histogramDistance[i][0] && distance < histogramDistance[i+1][0])
 				weight = histogramDistance[i][1];
+		
+		if (weight > maxWeight)
+			weight = maxWeight;
 		
 		return weight;
 	}
@@ -420,15 +455,31 @@ public class Dvector {
 		double weight = 1.;
 		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
 		
+		double maxWeight = 2.;
+		
 //		histogramAzimuth = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
 //			, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };
 //		histogramAzimuth = new double[][] { {310.0, 1.}, {315.0, 1.605}, {320.0, 1.000}, {325.0, 1.156}
 //			, {330.0, 1.640}, {335.0, 2.012}, {340.0, 3.}, {345.0, 3.}, {350.0, 3.}, {355.0, 3.}, {0.0, 1.}, {5.0, 1.} };
 		
-		for (double[] p : histogramAzimuth) {
-			if (azimuth >= p[0] && azimuth < p[0] + 5.)
-				weight = p[1];
+		//D" CA joint P-S
+//		if (obs.getSacComponent().equals(SACComponent.T))
+//			histogramAzimuth = new double[][] { {0.0,7.89},{2.0,10.59},{4.0,10.59},{6.0,10.59},{314.0,3.35},{316.0,1.41},{318.0,1.23}
+//				,{320.0,1.25},{322.0,1.06},{324.0,1.00},{326.0,1.13},{328.0,1.36},{330.0,1.41},{332.0,1.34},{334.0,1.40},{336.0,1.59},{338.0,1.75}
+//				,{340.0,2.10},{342.0,3.15},{344.0,3.53},{346.0,4.06},{348.0,3.70},{350.0,4.51},{352.0,4.56},{354.0,3.49},{356.0,4.00},{358.0,4.29},{360.0,7.89} };
+//		else if (obs.getSacComponent().equals(SACComponent.Z))
+//			histogramAzimuth = new double[][] { {0.0,5.73},{2.0,9.07},{4.0,10.73},{6.0,15.17},{8.0,19.59},{312.0,33.93},{314.0,4.90}
+//				,{316.0,1.62},{318.0,1.19},{320.0,1.23},{322.0,1.09},{324.0,1.00},{326.0,1.00},{328.0,1.26},{330.0,1.34},{332.0,1.30}
+//				,{334.0,1.37},{336.0,1.39},{338.0,1.52},{340.0,1.88},{342.0,2.76},{344.0,3.48},{346.0,3.03},{348.0,3.10},{350.0,3.43}
+//				,{352.0,3.50},{354.0,2.79},{356.0,3.28},{358.0,3.79},{360.0,5.73} };
+		
+		for (int i = 0; i < histogramAzimuth.length-1; i++) {
+			if (azimuth >= histogramAzimuth[i][0] && azimuth < histogramAzimuth[i+1][0])
+				weight = histogramAzimuth[i][1];
 		}
+		
+		if (weight > maxWeight)
+			weight = maxWeight;
 		
 		return weight;
 	}
@@ -494,7 +545,6 @@ public class Dvector {
 		}
 		
 		double[][] histogram2 = new double[][] { {25., 1.}, {30., 1.}, {35., 3.}, {40., 3.}, {45., 3.}, {50., 2.}, {55., 1.4} };
-		
 		
 		if (phases.equals(new Phases("S")))
 			for (double[] bin : histogram2) {
@@ -882,8 +932,52 @@ public class Dvector {
 		return weight;
 	}
 	
+//	private double[] weightOnset(int iwin, double rearShift) {
+//		int n = obsIDs[iwin].getNpts();
+//		double[] weight = new double[n];
+//		
+//		double t0 = obsIDs[iwin].getStartTime();
+//		double dt = 1. / obsIDs[iwin].getSamplingHz();
+//		
+//		double tau1 = 3.;
+//		double tau2 = 9.;
+//		double delta = 2.;
+//		double a = 1.5;
+//				
+////		double depth = 6371. - obsIDs[iwin].getGlobalCMTID().getEvent().getCmtLocation().getR();
+////		double distance = Math.toDegrees(obsIDs[iwin].getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsIDs[iwin].getStation().getPosition()));
+//		try {
+////			TauP_Time timeTool = new TauP_Time("prem");
+////			timeTool.parsePhaseList("ScS");
+////			timeTool.setSourceDepth(depth);
+////			timeTool.calculate(distance);
+////			double tPcP = timeTool.getArrival(0).getTime();
+//			double tOnset = rearShift;
+//			
+//			double t1 = tOnset - tau1;
+//			double t2 = tOnset + tau2;
+//			
+//			for (int i = 0; i < n; i++) {
+//				double t = t0 + i * dt;
+//				if (t <= t1 - delta || t > t2 + delta)
+//					weight[i] = 1.;
+//				else if (t1 - delta < t && t <= t1)
+//					weight[i] = 1 + a / delta * (t - t1 + delta);
+//				else if (t1 < t && t <= t2)
+//					weight[i] = 1 + a;
+//				else if (t2 < t && t <= t2 + delta)
+//					weight[i] = 1 + a / delta * (t2 - t + delta);
+//			}
+//		} catch (TauModelException e) {
+//			e.printStackTrace();
+//		}
+//		
+//		return weight;
+//	}
+	
 	private void read() {
 		// double t = System.nanoTime();
+		this.npts = 0;
 		int start = 0;
 		Map<Station, Double> stationDenominator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
 		Map<Station, Double> stationNumerator = usedStationSet.stream().collect(Collectors.toMap(s -> s, s -> 0.0));
@@ -1033,15 +1127,15 @@ public class Dvector {
 			}
 			
 			double[] ws = new double[obsVec[i].getDimension()];
-			if (weightingType.equals(WeightingType.RECIPROCAL_PcP)) {
-				ws = weightPcP(i);
-				for (int j = 0; j < ws.length; j++)
-					ws[j] *= weighting[i];
-			}
-			else {
+//			if (weightingType.equals(WeightingType.RECIPROCAL_PcP)) {
+//				ws = weightPcP(i);
+//				for (int j = 0; j < ws.length; j++)
+//					ws[j] *= weighting[i];
+//			}
+//			else {
 				for (int j = 0; j < ws.length; j++)
 					ws[j] = weighting[i];
-			}
+//			}
 			weightingVectors[i] = new ArrayRealVector(ws);
 
 //			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);
@@ -1138,15 +1232,28 @@ public class Dvector {
 //	private boolean trimWindow;
 //	private double trimmedLength;
 	
-	public void trimWindow(double trimmedLength) {
-		System.out.println("Trim windows to a lenght of " + trimmedLength + " s");
+	public void trimWindow(double trimPoint, boolean keepBefore) {
+		System.out.println("Trim windows " + trimPoint + " " + keepBefore);
 		for (int i = 0; i < obsIDs.length; i++) {
 			BasicID id = obsIDs[i];
 			BasicID synID = synIDs[i];
-			int n = (int) (trimmedLength / id.getSamplingHz());
-			n = n > id.getNpts() ? id.getNpts() : n;
-			double[] data = Arrays.copyOf(id.getData(), n);
-			double[] synData = Arrays.copyOf(synID.getData(), n);
+			int nStart = 0;
+			int nEnd = 0;
+			if (keepBefore) {
+				nStart = 0;
+				nEnd = (int) (trimPoint / id.getSamplingHz()) + 1;
+				nEnd = nEnd > id.getNpts() ? id.getNpts() : nEnd;
+			}
+			else {
+				nStart = (int) (trimPoint / id.getSamplingHz());
+				nEnd = id.getNpts();
+			}
+			int n = nEnd - nStart;
+			if (nStart > nEnd) {
+				throw new RuntimeException("Too much trimming");
+			}
+			double[] data = Arrays.copyOfRange(id.getData(), nStart, nEnd);
+			double[] synData = Arrays.copyOfRange(synID.getData(), nStart, nEnd);
 			obsIDs[i] = new BasicID(id.getWaveformType(), id.getSamplingHz(), id.getStartTime(), n, id.getStation()
 				, id.getGlobalCMTID(), id.getSacComponent(), id.getMinPeriod(), id.getMaxPeriod(), id.getPhases(), id.getStartByte(), id.isConvolute(), data);
 			synIDs[i] = new BasicID(synID.getWaveformType(), synID.getSamplingHz(), synID.getStartTime(), n, synID.getStation()

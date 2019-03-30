@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.util;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.util.Precision;
@@ -128,7 +129,17 @@ public class Location extends HorizontalPosition {
 	 */
 	public Location[] getNearestLocation(Location[] locations) {
 		Location[] newLocations = locations.clone();
-		Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
+		Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::getDistance));
+		return newLocations;
+	}
+	
+	public Location[] getNearestLocation(Location[] locations, double maxSearchRange) {
+		Location[] newLocations = Arrays.stream(locations).parallel().filter(loc -> {
+//			System.out.println(loc + " " + this.toString() + " " + this.getDistance(loc));
+			return Math.abs(this.R - loc.getR()) < maxSearchRange;
+		}).collect(Collectors.toList()).toArray(new Location[0]);
+//		System.out.println(newLocations.length);
+		Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::getDistance));
 		return newLocations;
 	}
 	

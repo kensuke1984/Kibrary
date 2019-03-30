@@ -1,18 +1,23 @@
 package io.github.kensuke1984.kibrary.dsminformation;
 
 import io.github.kensuke1984.kibrary.util.Earth;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 
 /**
@@ -180,6 +185,8 @@ public class PolynomialStructure implements Serializable {
 	
 	public static final PolynomialStructure MAK135 = initialMAK135();
 	
+	public static final PolynomialStructure PREM_PRIME = initialPREM_PRIME();
+	
 	/**
 	 * @param structurePath
 	 *            {@link Path} of a
@@ -190,7 +197,7 @@ public class PolynomialStructure implements Serializable {
 	public PolynomialStructure(Path structurePath) throws IOException {
 		readStructureFile(structurePath);
 	}
-
+	
 	/**
 	 * nzoneにしたがって、半径情報や速度情報を初期化する
 	 */
@@ -862,6 +869,20 @@ public class PolynomialStructure implements Serializable {
 		final double[] qKappa = new double[] { 1327.7, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0, 57823.0 };
 		return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
 	}
+	
+	private static PolynomialStructure initialPREM_PRIME() {
+		PolynomialStructure structure = PolynomialStructure.PREM;
+		try {
+			List<String> lines = IOUtils.readLines(
+					PolynomialStructure.class.getClassLoader().getResourceAsStream("PREM_PRIME.poly"),
+					Charset.defaultCharset());
+			structure.readStructureFile(lines);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return structure;
+	}
+	
 
 	/**
 	 * structureLines must not have comment lines and must have only structure
@@ -917,6 +938,11 @@ public class PolynomialStructure implements Serializable {
 	 */
 	private void readStructureFile(Path structurePath) throws IOException {
 		InformationFileReader reader = new InformationFileReader(structurePath);
+		readLines(reader.getNonCommentLines());
+	}
+	
+	public void readStructureFile(List<String> lines) throws IOException {
+		InformationFileReader reader = new InformationFileReader(lines);
 		readLines(reader.getNonCommentLines());
 	}
 

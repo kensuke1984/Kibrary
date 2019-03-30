@@ -21,7 +21,13 @@ class InformationFileReader {
 		this.informationPath = informationPath;
 		read();
 	}
-
+	
+	public InformationFileReader(List<String> lines) {
+		this.informationPath = null;
+		this.lines = lines;
+		linesNum = lines.size();
+	}
+	
 	private void read() throws IOException {
 		lines = Files.readAllLines(informationPath);
 		linesNum = lines.size();

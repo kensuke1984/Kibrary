@@ -301,5 +301,13 @@ public class ParameterMapping {
 		return newLayerWidths;
 	}
 	
+	public int getNoriginal() {
+		return originalUnknowns.length;
+	}
+	
+	public int getNnew() {
+		return unknowns.length;
+	}
+	
 	final double eps = 1e-6;
 }

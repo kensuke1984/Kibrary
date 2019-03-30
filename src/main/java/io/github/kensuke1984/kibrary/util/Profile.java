@@ -56,7 +56,7 @@ public class Profile {
 				Set<SACFileName> sacnames = event.sacFileSet().stream().filter(name -> name.isOBS()).collect(Collectors.toSet());
 				
 				int maxDistance = 120;
-				int nStack = maxDistance * 2;
+				int nStack = maxDistance;
 //				Trace[] synTraces = new Trace[maxDistance];
 				
 				Phases[] phases = eventtimewindows.stream().map(tw -> new Phases(tw.getPhases())).collect(Collectors.toList()).toArray(new Phases[0]);
@@ -84,6 +84,9 @@ public class Profile {
 						
 						if (timewindow.size() == 0)
 							continue;
+						
+						if (timewindow.size() != 1)
+							System.out.println("Warning: found more than one timewindow " + sacname + " : " + timewindow.size());
 						
 						SACData sacdata = sacname.read();
 						String filename = sacname.getStationName() + "." + sacname.getGlobalCMTID() + "." + sacname.getComponent() + ".txt";
@@ -138,7 +141,7 @@ public class Profile {
 	//						pwWindow.close();
 	//					}
 	//					
-						int k = (int) (distance * 2);
+						int k = (int) (distance);
 						if (k >= nStack)
 							continue;
 						obsTraces[k] = obsTraces[k] == null ? obstrace : add(obsTraces[k], obstrace);
@@ -187,12 +190,12 @@ public class Profile {
 						pwTrace.close();
 						
 						// print gnuplot script
-						double distance = i / 2. + .25;
+						double distance = i + .5;
 						double maxObs = obsTraces[i].getYVector().getLInfNorm();
 						if (k < n)
-							pwStack.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs * 6, distance) + "w lines lw .6 lc \"black\",\\");
+							pwStack.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs * 2, distance) + "w lines lw .6 lc \"black\",\\");
 						else
-							pwStack.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs * 6, distance) + "w lines lw .6 lc \"black\"");
+							pwStack.println("\"" + filename + "\" " + String.format("u 1:($2/%.3e+%.2f) ", maxObs * 2, distance) + "w lines lw .6 lc \"black\"");
 					}
 					
 					pwStack.close();
@@ -282,6 +285,7 @@ public class Profile {
 				&& tw.getComponent().equals(component))
 				.collect(Collectors.toList());
 	}
+	
 
 //	private static Trace concat(List<Trace> traces) {
 //		Trace res;

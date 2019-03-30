@@ -5,6 +5,7 @@ import io.github.kensuke1984.kibrary.inversion.HorizontalParameterMapping;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.Location;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -42,7 +43,6 @@ public class CombineParameters {
 			
 			HorizontalParameterMapping mapping = new HorizontalParameterMapping(originalUnknowns, horizontalMappingPath);
 			
-			
 			UnknownParameter[] newUnknowns = mapping.getUnknowns();
 			
 			int nOriginal = mapping.getNoriginal();
@@ -54,8 +54,19 @@ public class CombineParameters {
 			double[][] periodRanges = new double[][] {{partials[0].getMinPeriod(), partials[0].getMaxPeriod()}};
 			Set<Location> perturbationPoints = Stream.of(newUnknowns).parallel().map(u -> u.getLocation()).collect(Collectors.toSet());
 			
-			Phase[] phases = new Phase[] {Phase.ScS, Phase.S};
+//			Phase[] phases = new Phase[] {Phase.ScS, Phase.S};
 //			Phase[] phases = new Phase[] {Phase.PcP, Phase.P};
+			
+			Set<Phase> phaseSet = new HashSet<>();
+			Stream.of(partials).parallel().map(par -> new Phases(par.getPhases())).distinct().forEach(ps -> {
+				for (Phase p : ps.toSet())
+					phaseSet.add(p);
+			});
+			Phase[] phases = phaseSet.toArray(new Phase[phaseSet.size()]);
+			System.out.print("Found phases ");
+			for (Phase p : phases)
+				System.out.print(p + " ");
+			System.out.println();
 			
 			WaveformDataWriter writer = new WaveformDataWriter(outIDPath, outPath, stationSet, globalCMTIDSet, periodRanges, phases, perturbationPoints);
 			

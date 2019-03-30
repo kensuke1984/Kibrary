@@ -94,8 +94,8 @@ public class ExcludeTimewindow {
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
 						.filter(tw ->  {
 							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
-//							if (distance > 30. || distance < 10.)
-//								return false;
+							if (distance > 30. || distance < 17.)
+								return false;
 //							if (distance < 30. || distance > 90.)
 //								return false;
 //							if (!tw.getComponent().equals(SACComponent.Z))
@@ -103,8 +103,13 @@ public class ExcludeTimewindow {
 //							if (distance <= 85 || distance > 95)
 //								return false;
 //							if (distance < 70 || distance > 95)
-							if (distance < 67 || distance > 91)
-								return false;
+//								return false;
+//							if (distance < 67 || distance > 91)
+//								return false;
+//							if (distance < 70 || distance > 100)
+//								return false;
+//							if (tw.getComponent().equals(SACComponent.R))
+//								return false;
 							else 
 								return true;
 						})
@@ -127,7 +132,7 @@ public class ExcludeTimewindow {
 				};
 				
 //				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("201111072235A"))).collect(Collectors.toSet());
-//				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))).collect(Collectors.toSet());
+//				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("200707211534A"))).collect(Collectors.toSet());
 				
 //				newTimewindows = timewindows.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("200506021056A"))
 //						&& tw.getStation().getStationName().equals("ISCO")).collect(Collectors.toSet());

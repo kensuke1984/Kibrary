@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.inversion;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -17,12 +18,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.swing.JOptionPane;
@@ -33,6 +37,8 @@ import org.apache.commons.math3.analysis.integration.RombergIntegrator;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.stat.inference.TTest;
+
+import com.sleepycat.util.RuntimeExceptionWrapper;
 
 
 public class Profile {
@@ -92,11 +98,16 @@ public class Profile {
 			pw1.println("# Event synVariance bornVariance varianceReduction;(syn - born)");
 			pw2.println("# BasicID synVariance bornVariance varanceReduction;(syn - born)");
 			
+			Path outpathEachMisfit = profilePath.resolve("eachMisfit.inf");
+			
 			Path stackRoot = inversionResultPath.resolve("stack/" + method + methodOrder +  "/" + phase);
 			Files.createDirectories(stackRoot);
 			
+			Path mapPath = stackRoot.resolve("map");
+			Files.createDirectory(mapPath);
+			
 			PrintWriter pw4 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("eventVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-			pw4.println("# Event synVariance bornVariance varianceReduction;(syn - born)");
+			pw4.println("# Event synVariance bornVariance varianceReduction(syn - born) lat lon depth Mw");
 			
 			InversionResult ir = new InversionResult(inversionResultPath);
 			List<BasicID> obsList = ir.getBasicIDList().stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
@@ -108,11 +119,10 @@ public class Profile {
 			Map<Station, Double> stationSynVariance = new HashMap<>();
 			Map<Station, Double> stationBornVariance = new HashMap<>();
 			Map<Station, Double> stationObsNorm = new HashMap<>();
-			obsList.parallelStream().forEach(id -> {
-				Station station = id.getStation();
-				stationSynVariance.put(station, 0.);
-				stationBornVariance.put(station, 0.);
-				stationObsNorm.put(station, 0.);
+			obsList.parallelStream().map(id -> id.getStation()).distinct().forEach(station -> {
+				stationSynVariance.put(station, new Double(0));
+				stationBornVariance.put(station, new Double(0));
+				stationObsNorm.put(station, new Double(0));
 			});
 //			for (Station station : ir.stationSet()) {
 //				stationSynVariance.put(station, 0.);
@@ -132,6 +142,8 @@ public class Profile {
 			double[] distanceBornNorm = new double[120];
 			double[] distanceSynNorm = new double[120];
 			
+			String[] varString = new String[] {""};
+			String[] eachMisfitString = new String[] {""};
 			
 			for (GlobalCMTID event : events) {
 				if (oneEvent != null && !event.equals(oneEvent))
@@ -169,9 +181,8 @@ public class Profile {
 					String[] scriptString_R = new String[] {""};
 					String[] scriptString_T = new String[] {""};
 					String[] scriptString_Z = new String[] {""};
-					String[] varString = new String[] {""};
 					
-					tmpObs.parallelStream().forEach(id -> {
+					tmpObs.stream().forEach(id -> {
 //						i.incrementAndGet();
 						try {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
@@ -205,10 +216,18 @@ public class Profile {
 							double tmpBornVariance = bornVector.subtract(obsVector).dotProduct(bornVector.subtract(obsVector));
 							double tmpObsNorm = obsVector.dotProduct(obsVector);
 							
-							double tmpSyn = Math.sqrt(tmpSynVariance / tmpObsNorm);
-							double tmpBorn =  Math.sqrt(tmpBornVariance / tmpObsNorm);
+							double tmpSyn = tmpSynVariance / tmpObsNorm;
+							double tmpBorn =  tmpBornVariance / tmpObsNorm;
 							varString[0] += id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + "\n";
 //							pw2.println(id + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
+							
+							double synCorr = synVector.dotProduct(obsVector) / (synVector.getNorm() * obsVector.getNorm());
+							double bornCorr = bornVector.dotProduct(obsVector) / (bornVector.getNorm() * obsVector.getNorm());
+							double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
+							double bornRatio = bornVector.getLInfNorm() / obsVector.getLInfNorm();
+							eachMisfitString[0] += id.getStation().getStationName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+									+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
+									+ tmpSyn + " " + tmpBorn + " " + synCorr + " " + bornCorr + "\n";
 							
 							synVariance[0] += tmpSynVariance;
 							bornVariance[0] += tmpBornVariance;
@@ -220,12 +239,17 @@ public class Profile {
 							
 							Station sta = id.getStation();
 							try {
-								stationSynVariance.put(sta, stationSynVariance.get(sta) + tmpSynVariance);
-								stationBornVariance.put(sta, stationBornVariance.get(sta) + tmpBornVariance);
-								stationObsNorm.put(sta, stationObsNorm.get(sta) + tmpObsNorm);
+//								tmpSynVariance += stationSynVariance.get(sta);
+//								tmpBornVariance += stationBornVariance.get(sta);
+//								tmpObsNorm += stationObsNorm.get(sta);
+//								
+//								stationSynVariance.put(sta, tmpSynVariance);
+//								stationBornVariance.put(sta, tmpBornVariance);
+//								stationObsNorm.put(sta, tmpObsNorm);
 							} catch (NullPointerException e) {
 								System.err.println(sta + " " + sta.getPosition());
 								e.printStackTrace();
+								System.exit(1);
 							}
 							
 							double tmpSynCorr = synVector.dotProduct(obsVector);
@@ -248,12 +272,10 @@ public class Profile {
 					pw_R.print(scriptString_R[0]);
 					pw_T.print(scriptString_T[0]);
 					pw_Z.print(scriptString_Z[0]);
-					pw2.print(varString[0]);
 					
 					pw_R.close();
 					pw_T.close();
 					pw_Z.close();
-					pw2.close();
 					
 					double tmpSyn = synVariance[0] / obsNorm[0]; //Math.sqrt(synVariance[0] / obsNorm[0]);
 					double tmpBorn =  bornVariance[0] / obsNorm[0]; //Math.sqrt(bornVariance[0] / obsNorm[0]);
@@ -263,13 +285,18 @@ public class Profile {
 					e.printStackTrace();
 				}
 				
-				int m = 280;
-				int l = 36;
+				int m = 140;
+				int dAz = 5;
+				int l = 360 / dAz;
 				
 				RealVector[][] obsVectors = new RealVector[m][l+1];
 				RealVector[][] synVectors = new RealVector[m][l+1];
 				RealVector[][] bornVectors = new RealVector[m][l+1];
 				
+				List<List<Station>> azimuthStationList = new ArrayList<>();
+				
+				for (int i = 0; i < l; i++)
+					azimuthStationList.add(new ArrayList<Station>());
 				
 				Path stackPath = stackRoot.resolve(event.toString());
 				Files.createDirectories(stackPath);
@@ -288,8 +315,8 @@ public class Profile {
 					double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 							* 180. / Math.PI;
 					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
-					int i = (int) (distance * 2);
-					int j = (int) (azimuth / 10);
+					int i = (int) (distance);
+					int j = (int) (azimuth / dAz);
 					
 					obsVectors[i][0] = obsVectors[i][0] == null ? obsVector : add(obsVectors[i][0], obsVector);
 					synVectors[i][0] = synVectors[i][0] == null ? synVector : add(synVectors[i][0], synVector);
@@ -306,10 +333,17 @@ public class Profile {
 					synVariance += tmpSynVariance;
 					bornVariance += tmpBornVariance;
 					obsNorm += tmpObsNorm;
+					
+					List<Station> tmpList = azimuthStationList.get(j);
+					tmpList.add(id.getStation());
+					azimuthStationList.set(j, tmpList);
 				}
-					double tmpSyn = Math.sqrt(synVariance / obsNorm);
-					double tmpBorn =  Math.sqrt(bornVariance / obsNorm);
-					pw4.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn));
+					double tmpSyn = synVariance / obsNorm;
+					double tmpBorn =  bornVariance / obsNorm;
+					double lat = event.getEvent().getCmtLocation().getLatitude();
+					double lon = event.getEvent().getCmtLocation().getLongitude();
+					double depth = 6371. - event.getEvent().getCmtLocation().getR();
+					pw4.println(event + " " + tmpSyn + " " + tmpBorn + " " + (tmpSyn - tmpBorn) + " " + lat + " " + lon + " " + depth + " " + event.getEvent().getCmt().getMw());
 					
 				Path outPlot = stackPath.resolve(event + ".plt");
 				Files.deleteIfExists(outPlot);
@@ -318,7 +352,7 @@ public class Profile {
 					pw.println("set terminal postscript enhanced color font \"Helvetica,14\"");
 					pw.println("set output \"" + event + ".ps\"");
 					pw.println("unset key");
-					pw.println("set yrange [68:87]");
+					pw.println("#set yrange [65:102]");
 					pw.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 					pw.println("set ylabel 'Distance (deg)'");
 					pw.println("set xtics 10");
@@ -354,9 +388,9 @@ public class Profile {
 						e.printStackTrace();
 						}
 						
-						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 1.5, i/2.) + "w lines lw .5 lc \"black\",\\");
-						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 1.5, i/2.) + "w lines lw .5 lc \"red\",\\");
-						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 1.5, i/2.) + "w lines lw .5 lc \"blue\",\\");
+						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lc \"black\",\\");
+						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lc \"red\",\\");
+						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lc \"blue\",\\");
 					}
 					pw.println();
 				} catch (IOException e) {
@@ -370,14 +404,18 @@ public class Profile {
 							pass = false;
 					if (pass)
 						continue;
-					outPlot = stackPath.resolve(event + ".az" + j + ".plt");
+					
+					//write map
+					writeGMT(mapPath, event, azimuthStationList.get(j), j * dAz);
+					
+					outPlot = stackPath.resolve(event + ".az" + (dAz * j) + ".plt");
 					Files.deleteIfExists(outPlot);
 					PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPlot, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
 					
 					pw.println("set terminal postscript enhanced color font \"Helvetica,14\"");
-					pw.println("set output \"" + event + ".az" + j + ".ps\"");
+					pw.println("set output \"" + event + ".az" + (dAz * j) + ".ps\"");
 					pw.println("unset key");
-					pw.println("set yrange [68:87]");
+					pw.println("#set yrange [68:102]");
 					pw.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 					pw.println("set ylabel 'Distance (deg)'");
 					pw.println("set xtics 10");
@@ -388,9 +426,9 @@ public class Profile {
 					for (int i = 0; i < m; i++) {
 						if (obsVectors[i][j+1] == null)
 							continue;
-						Path outObs = stackPath.resolve(String.format("obsStack_%s_%d-%d.az" + j + ".txt", event, i, i+1));
-						Path outSyn = stackPath.resolve(String.format("synStack_%s_%d-%d.az" + j + ".txt", event, i, i+1));
-						Path outBorn = stackPath.resolve(String.format("bornStack_%s_%d-%d.az" + j + ".txt", event, i, i+1));
+						Path outObs = stackPath.resolve(String.format("obsStack_%s_%d-%d.az" +  (dAz * j) + ".txt", event, i, i+1));
+						Path outSyn = stackPath.resolve(String.format("synStack_%s_%d-%d.az" +  (dAz * j) + ".txt", event, i, i+1));
+						Path outBorn = stackPath.resolve(String.format("bornStack_%s_%d-%d.az" + (dAz * j) + ".txt", event, i, i+1));
 						
 						double maxObs = obsVectors[i][j+1].getLInfNorm();
 						
@@ -413,9 +451,9 @@ public class Profile {
 						e.printStackTrace();
 						}
 						
-						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 1.5, i / 2.) + "w lines lw .5 lc \"black\",\\");
-						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 1.5, i / 2.) + "w lines lw .5 lc \"red\",\\");
-						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 1.5, i / 2.) + "w lines lw .5 lc \"blue\",\\");
+						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lc \"black\",\\");
+						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lc \"red\",\\");
+						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lc \"blue\",\\");
 					}
 					pw.println();
 					pw.close();
@@ -427,28 +465,33 @@ public class Profile {
 			pw4.close();
 			
 			// write variance at each station
-			pw1 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("stationVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-			pw1.println("# Station synVariance bornVariance varianceReduction;(syn - born)");
-			
-			for (Station sta : stationObsNorm.keySet()) {
-				try {
-				double bornVariance = stationBornVariance.get(sta) / stationObsNorm.get(sta);
-				double synVariance = stationSynVariance.get(sta) / stationObsNorm.get(sta);
-				pw1.println(sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() 
-						+ " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
-				} catch (NullPointerException e) {
-					System.err.println(sta + " " + sta.getPosition());
-				}
-			}
-			pw1.close();
+//			pw1 = new PrintWriter(Files.newBufferedWriter(stackRoot.resolve("stationVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+//			pw1.println("# Station synVariance bornVariance varianceReduction;(syn - born)");
+//			
+//			for (Station sta : stationObsNorm.keySet()) {
+//				try {
+//				double bornVariance = stationBornVariance.get(sta) / stationObsNorm.get(sta);
+//				double synVariance = stationSynVariance.get(sta) / stationObsNorm.get(sta);
+//				pw1.println(sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() 
+//						+ " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
+//				} catch (NullPointerException e) {
+//					System.err.println(sta + " " + sta.getPosition());
+//				}
+//			}
+//			pw1.close();
 			
 			// write total variance
-			pw2 = new PrintWriter(Files.newBufferedWriter(inversionResultPath.resolve("totalVariance.inf"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-			pw2.println("SynVariance bornVariance varianceReduction;(syn - born)");
+			Path totalvariancePath = inversionResultPath.resolve("totalVariance.inf");
+			boolean firstWrite = false;
+			if (!Files.exists(totalvariancePath))
+				firstWrite = true;
+			pw2 = new PrintWriter(Files.newBufferedWriter(totalvariancePath, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+			if (firstWrite)
+				pw2.println("nCG SynVariance bornVariance varianceReduction;(syn - born)");
 			
 			double bornVariance = totalBornVariance[0] / totalObsNorm[0];
 			double synVariance = totalSynVariance[0] / totalObsNorm[0];
-			pw2.println(synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
+			pw2.println(methodOrder + " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
 			pw2.close();
 			
 			//write variance and correlation for each epicentral distance
@@ -465,6 +508,15 @@ public class Profile {
 				pw3.println(i + " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance) + " " + synCorr + " " + bornCorr);
 			}
 			pw3.close();
+			
+			//write variance and misfit for each timewindow
+			pw2.print(varString[0]);
+			pw2.close();
+			
+			PrintWriter pwEachMisfit = new PrintWriter(Files.newBufferedWriter(outpathEachMisfit, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+			pwEachMisfit.println("station, network, lat, lon, event, component, phase, synRatio, bornRatio, synVar, bornVar, synCC, bornCC");
+			pwEachMisfit.print(eachMisfitString[0]);
+			pwEachMisfit.close();
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -483,5 +535,71 @@ public class Profile {
 					: v1.add(v2.getSubVector(0, v1.getDimension()));
 		
 		return res;
+	}
+	
+private static Trace addAndPadd(Trace trace1, Trace trace2) {
+		double t0 = Math.min(trace1.getXAt(0), trace2.getXAt(0));
+		double t1 = Math.max(trace1.getXAt(trace1.getLength()), trace2.getXAt(trace2.getLength()));
+		
+		double dt = trace1.getXAt(1) - trace1.getXAt(0);
+		int n = (int) ((t1 - t0) / dt) + 1;
+		
+		double[] xs = IntStream.range(0, n).mapToDouble(i -> t0 + i*dt).toArray();
+		double[] ys = new double[n];
+		
+		if (trace1.getXAt(0) < trace2.getXAt(0)) {
+			ys = Arrays.copyOf(trace1.getY(), n);
+			int istartOther = (int) ((trace2.getXAt(0) - trace1.getXAt(0)) / dt);
+			for (int i = istartOther; i < n; i++)
+				ys[i] += trace2.getYAt(i);
+		}
+		else if (trace2.getXAt(0) < trace1.getXAt(0)) {
+			ys = Arrays.copyOf(trace2.getY(), n);
+			int istartOther = (int) ((trace1.getXAt(0) - trace2.getXAt(0)) / dt);
+			for (int i = istartOther; i < n; i++)
+				ys[i] += trace1.getYAt(i);
+		}
+		
+		return new Trace(xs, ys);
+	}
+
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, double azimuth) throws IOException {
+		Path outpath = rootpath.resolve("plot_map_" + event + "_az" + (int) (azimuth) + ".gmt");
+		String outpathps = "map_" + event + "_az" + (int) (azimuth) + ".ps";
+		PrintWriter pw = new PrintWriter(outpath.toFile());
+		
+		String ss = String.join("\n",
+				"#!/bin/sh"
+				, "outputps=" + outpathps
+				, "gmt set FONT 12p,Helvetica,black"
+				, "gmt set PS_MEDIA 5ix4.8i"
+				, "gmt set MAP_FRAME_WIDTH 2p"
+				, "gmt pscoast -R-170/-52/-41/75 -JQ270/4.4i -P -G205 -K -Di -X.4i -Y.3i -BWSne -Bx60g30f30 -By60g30f30 > $outputps"
+				, ""
+				);
+		
+		ss += "gmt psxy -R-170/-52/-41/75 -JQ270/4.4i -Wthinner,red -t0 -K -O >> $outputps <<END\n";
+		double evLat = event.getEvent().getCmtLocation().getLatitude();
+		double evLon = event.getEvent().getCmtLocation().getLongitude();
+		for (Station station : stations)
+			ss += String.format(">\n%.2f %.2f\n%.2f %.2f\n", evLon, evLat, station.getPosition().getLongitude(), station.getPosition().getLatitude());
+		ss += "END\n";
+		
+		ss += "gmt psxy -R -J -Si0.11 -P -Groyalblue -Wthinnest,black -K -O >> $outputps <<END\n";
+		for (Station station : stations)
+			ss += String.format("%.2f %.2f\n", station.getPosition().getLongitude(), station.getPosition().getLatitude());
+		ss += "END\n";
+		
+		ss += "gmt psxy -R -J -P -Sa0.22 -Gred -Wthinnest,black -K -O >> $outputps<<END\n";
+		ss += String.format("%.2f %.2f\n", evLon, evLat);
+		ss += "END\n";
+		
+		ss += "gmt pstext -R -J -P -O >> $outputps <<END\n"
+			 + "END\n"
+			 + "gmt ps2raster $outputps -Tf\n";
+		
+		pw.println(ss);
+		
+		pw.close();
 	}
 }
