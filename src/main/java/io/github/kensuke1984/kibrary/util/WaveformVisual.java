@@ -45,6 +45,9 @@ public class WaveformVisual {
 		int dAz = 5;
 		int nAz = 360 / dAz;
 		
+		int dEd = 5;
+		int nEd = 180 / dEd;
+		
 		for (GlobalCMTID event : events) {
 			Path eventDir = stackDir.resolve(event.toString());
 			Files.createDirectory(eventDir);
@@ -57,9 +60,17 @@ public class WaveformVisual {
 				double[][] synStack = new double[180][0];
 				double[][][] obsAzimuthStack = new double[nAz][180][0];
 				double[][][] synAzimuthStack = new double[nAz][180][0];
+				
+				double[][][] obsAzimuthSectionStack = new double[nEd][360][0];
+				double[][][] synAzimuthSectionStack = new double[nEd][360][0];
+				
 				List<List<Station>> stationAzimuthList = new ArrayList<>();
 				for (int i = 0; i < nAz; i++)
 					stationAzimuthList.add(new ArrayList<>());
+				
+				List<List<Station>> stationDistanceList = new ArrayList<>();
+				for (int i = 0; i < nEd; i++)
+					stationDistanceList.add(new ArrayList<>());
 				
 				
 				Path plotProfilePath = profileEventDir.resolve(Paths.get("plot_" + component + ".plt"));
@@ -73,27 +84,46 @@ public class WaveformVisual {
 				pwPlot.println("set size .5,1");
 				pwPlot.print("p ");
 				
+				String[] azimuthSectionString = new String[nEd];
+				for (int ied = 0; ied < nEd; ied++) {
+					azimuthSectionString[ied] = "set terminal postscript enhanced color font \"Helvetica,12\"\n"
+							+ "set output \"" + event + ".ed" + (int) (ied * dEd) + "." + component + ".ps\"\n"
+							+ "unset key\n"
+							+ "set xlabel 'Time aligned on S-wave arrival (s)'\n"
+							+ "set ylabel 'Azimuth (deg)'\n"
+							+ "set size .5,1\n"
+							+ "p ";
+				}
+				
 				for (BasicID id : ids) {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
 					
 					double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition()));
 					int k = (int) distance;
+					int ked = (int) (distance / dEd);
 					
 					double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(id.getStation().getPosition()));
 					int kaz = (int) (azimuth / dAz);
+					int kazsec = (int) (azimuth);
 					
 					if (id.getWaveformType().equals(WaveformType.OBS)) {
 						obsStack[k] = add(obsStack[k], id.getData());
 						obsAzimuthStack[kaz][k] = add(obsAzimuthStack[kaz][k], id.getData());
+						obsAzimuthSectionStack[ked][kazsec] = add(obsAzimuthSectionStack[ked][kazsec], id.getData());
 						
 						List<Station> tmpList = stationAzimuthList.get(kaz);
 						tmpList.add(id.getStation());
 						stationAzimuthList.set(kaz, tmpList);
+						
+						tmpList = stationDistanceList.get(ked);
+						tmpList.add(id.getStation());
+						stationDistanceList.set(ked, tmpList);
 					}
 					if (id.getWaveformType().equals(WaveformType.SYN)) {
 						synStack[k] = add(synStack[k], id.getData());
 						synAzimuthStack[kaz][k] = add(synAzimuthStack[kaz][k], id.getData());
+						synAzimuthSectionStack[ked][kazsec] = add(synAzimuthSectionStack[ked][kazsec], id.getData());
 					}
 					
 					String filename = id.getStation() + "." + event.toString() + "." + component + "." + id.getWaveformType() + ".txt";
@@ -109,8 +139,21 @@ public class WaveformVisual {
 						pwPlot.println("'" + filename + "' u 0:($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'red',\\");
 					if (id.getWaveformType().equals(WaveformType.OBS))
 						pwPlot.println("'" + filename + "' u 0:($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'black',\\");
+					
+					if (id.getWaveformType().equals(WaveformType.SYN))
+						azimuthSectionString[ked] += "'" + filename + "' u 0:($2/" + max + "+" + azimuth + ") w l lt 1 lw .5 lc rgb 'red',\\\n";
+					if (id.getWaveformType().equals(WaveformType.OBS))
+						azimuthSectionString[ked] += "'" + filename + "' u 0:($2/" + max + "+" + azimuth + ") w l lt 1 lw .5 lc rgb 'black',\\\n";
 				}
 				pwPlot.close();
+				
+				//azimuth profile
+				for (int ied = 0; ied < nEd; ied++) {
+					Path outpath = profileEventDir.resolve(Paths.get("plot_ed" + (int) (ied * dEd) + "." + component + ".plt"));
+					PrintWriter pw = new PrintWriter(outpath.toFile());
+					pw.print(azimuthSectionString[ied]);
+					pw.close();
+				}
 				
 				//full stacks
 				Path plotPath = eventDir.resolve(Paths.get("plot_" + component + ".plt"));
@@ -137,8 +180,8 @@ public class WaveformVisual {
 						pw.println((j * dt) + " " + (synStack[i][j] / max) + " " + (obsStack[i][j] / max));
 					pw.close();
 					
-					pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lc rgb 'red',\\");
-					pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lc rgb 'black',\\");
+					pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lt 1 lc rgb 'red',\\");
+					pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lt 1 lc rgb 'black',\\");
 				}
 				
 				pwPlot.close();
@@ -146,7 +189,7 @@ public class WaveformVisual {
 				//azimuth stacks
 				for (int iaz = 0; iaz < nAz; iaz++) {
 					if (stationAzimuthList.get(iaz).size() > 0) {
-						writeGMT(mapPath, event, stationAzimuthList.get(iaz), iaz * dAz);
+						writeGMT(mapPath, event, stationAzimuthList.get(iaz), "az", (int) (iaz * dAz));
 					
 						plotPath = eventDir.resolve(Paths.get("plot_az" + (iaz * dAz) + "_" + component + ".plt"));
 						pwPlot = new PrintWriter(plotPath.toFile());
@@ -172,13 +215,51 @@ public class WaveformVisual {
 								pw.println((j * dt) + " " + (synAzimuthStack[iaz][i][j] / max) + " " + (obsAzimuthStack[iaz][i][j] / max));
 							pw.close();
 							
-							pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lc rgb 'red',\\");
-							pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lc rgb 'black',\\");
+							pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lt 1 lc rgb 'red',\\");
+							pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lt 1 lc rgb 'black',\\");
 						}
 						
 						pwPlot.close();
 					}
 				}
+				
+				//azimuth-distance stack azimuth profile
+				for (int ied = 0; ied < nEd; ied++) {
+					if (stationDistanceList.get(ied).size() > 0) {
+						writeGMT(mapPath, event, stationDistanceList.get(ied), "ed", (int) (ied * dEd));
+					
+						plotPath = eventDir.resolve(Paths.get("plot_ed" + (ied * dEd) + "_" + component + ".plt"));
+						pwPlot = new PrintWriter(plotPath.toFile());
+						pwPlot.println("set terminal postscript enhanced color font \"Helvetica,12\"");
+						pwPlot.println("set output \"" + event + ".ed" + (ied * dEd) + "." + component + ".ps\"");
+						pwPlot.println("unset key");
+						pwPlot.println("#set yrange [63:102]"); 
+						pwPlot.println("set xlabel 'Time aligned on S-wave arrival (s)'");
+						pwPlot.println("set ylabel 'Azimuth (deg)'");
+						pwPlot.println("set size .5,1");
+						pwPlot.print("p ");
+					
+						for (int i = 0; i < obsAzimuthSectionStack[ied].length; i++) {
+							if (obsAzimuthSectionStack[ied][i].length == 0)
+								continue;
+							
+							double max = new ArrayRealVector(obsAzimuthSectionStack[ied][i]).getLInfNorm();
+							
+							String filename = i + ".ed" + (ied * dEd) + "." + event.toString() + "." + component + ".txt";
+							Path outpath = eventDir.resolve(filename);
+							PrintWriter pw = new PrintWriter(outpath.toFile());
+							for (int j = 0; j < obsAzimuthSectionStack[ied][i].length; j++)
+								pw.println((j * dt) + " " + (synAzimuthSectionStack[ied][i][j] / max) + " " + (obsAzimuthSectionStack[ied][i][j] / max));
+							pw.close();
+							
+							pwPlot.println("'" + filename + "' u 1:($2+" + i + ") w l lt 1 lc rgb 'red',\\");
+							pwPlot.println("'" + filename + "' u 1:($3+" + i + ") w l lt 1 lc rgb 'black',\\");
+						}
+						
+						pwPlot.close();
+					}
+				}
+				
 			}
 		}
 	}
@@ -198,9 +279,9 @@ public class WaveformVisual {
 		}
 	}
 	
-	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, double azimuth) throws IOException {
-		Path outpath = rootpath.resolve("plot_map_" + event + "_az" + (int) (azimuth) + ".gmt");
-		String outpathps = "map_" + event + "_az" + (int) (azimuth) + ".ps";
+	private static void writeGMT(Path rootpath, GlobalCMTID event, List<Station> stations, String name, int id) throws IOException {
+		Path outpath = rootpath.resolve("plot_map_" + event + "_" + name + id + ".gmt");
+		String outpathps = "map_" + event + "_az" + name + id + ".ps";
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		
 		String ss = String.join("\n",

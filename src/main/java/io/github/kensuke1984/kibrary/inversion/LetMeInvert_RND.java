@@ -130,6 +130,9 @@ public class LetMeInvert_RND implements Operation {
 	private UnknownParameterWeightType unknownParameterWeightType;
 	
 	private boolean linaInversion;
+	
+	private GlobalCMTID[] eventArray;
+	private Path eventArrayPath;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -170,6 +173,8 @@ public class LetMeInvert_RND implements Operation {
 			property.setProperty("maxMw", "10.");
 		if (!property.containsKey("linaInversion"))
 			property.setProperty("linaInversion", "false");
+		if (!property.containsKey("eventPerEvent"))
+			property.setProperty("eventPerEvent", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -275,6 +280,12 @@ public class LetMeInvert_RND implements Operation {
 		maxMw = Double.parseDouble(property.getProperty("maxMw"));
 		
 		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
+		
+		eventPerEvent = Boolean.parseBoolean(property.getProperty("eventPerEvent"));
+		if (eventPerEvent) {
+			eventArrayPath = Paths.get(property.getProperty("eventArrayPath"));
+			
+		}
 	}
 
 	/**
@@ -344,6 +355,8 @@ public class LetMeInvert_RND implements Operation {
 			pw.println("#maxMw");
 			pw.println("##Set parameters for inversion for Yamaya et al. CMT paper (false)");
 			pw.println("#linaInversion");
+			pw.println("#eventPerEvent");
+			pw.println("#eventArrayPath");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -366,6 +379,8 @@ public class LetMeInvert_RND implements Operation {
 //	}
 
 	private Path[] outPath;
+	
+	private boolean eventPerEvent;
 
 	private void setEquation() throws IOException {
 		eq = new ObservationEquation[nSample];
@@ -375,10 +390,18 @@ public class LetMeInvert_RND implements Operation {
 		
 		BasicID[][] ids = new BasicID[nSample][];
 		for (int isample = 0; isample < nSample; isample++) {
-			String sampleID = String.format("_RND%04d.dat", isample);
-			Path tmpIDPath = Paths.get(waveformIDPath.toString() + sampleID);
-			Path tmpPath = Paths.get(waveformPath.toString() + sampleID);
-			ids[isample] = BasicIDFile.readBasicIDandDataFile(tmpIDPath, tmpPath);
+			if (eventPerEvent) {
+				String sampleID = "_" + eventArray[isample];
+				Path tmpIDPath = Paths.get(waveformIDPath.toString() + sampleID);
+				Path tmpPath = Paths.get(waveformPath.toString() + sampleID);
+				ids[isample] = BasicIDFile.readBasicIDandDataFile(tmpIDPath, tmpPath);
+			}
+			else {
+				String sampleID = String.format("_RND%04d.dat", isample);
+				Path tmpIDPath = Paths.get(waveformIDPath.toString() + sampleID);
+				Path tmpPath = Paths.get(waveformPath.toString() + sampleID);
+				ids[isample] = BasicIDFile.readBasicIDandDataFile(tmpIDPath, tmpPath);
+			}
 		}
 		
 		// set unknown parameter

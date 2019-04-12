@@ -82,6 +82,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 	
 	boolean correctionBootstrap;
 	private int nSample;
+	private boolean eventPerEvent;
 	
 	/**
 	 * components to be included in the dataset
@@ -118,6 +119,8 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 			property.setProperty("correctionBootstrap", "false");
 		if (!property.containsKey("nSample"))
 			property.setProperty("nSample", "100");
+		if (!property.containsKey("eventPerEvent"))
+			property.setProperty("eventPerEvent", "false");
 	}
 
 	private void set() throws NoSuchFileException {
@@ -147,6 +150,8 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 		// =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
 		sacSamplingHz = 20;
 		finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+		
+		eventPerEvent = Boolean.parseBoolean(property.getProperty("eventPerEvent"));
 		
 		correctionBootstrap = Boolean.parseBoolean(property.getProperty("correctionBootstrap"));
 		nSample = correctionBootstrap ? Integer.parseInt(property.getProperty("nSample")) : 1;
@@ -184,6 +189,7 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 			pw.println("#sacSamplingHz the value will be ignored");
 			pw.println("##double value of sampling Hz in output files (1)");
 			pw.println("#finalSamplingHz");
+			pw.println("#eventPerEvent false");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -311,14 +317,31 @@ public class ObservedSyntheticDatasetMaker_RND implements Operation {
 				.distinct().toArray(Phase[]::new);
 		readPeriodRanges();
 		
+		List<GlobalCMTID> events = eventDirs.stream().map(event -> event.getGlobalCMTID()).collect(Collectors.toList());
+		if (eventPerEvent) {
+			nSample = events.size();
+		}
+		
 		dataWriter = new WaveformDataWriter[nSample];
 		try {
 			for (int isample = 0; isample < nSample; isample++) {
-				System.err.println("Random sample " + isample);
-				Path waveIDPath = workPath.resolve("waveformID" + String.format("_RND%04d", isample) + ".dat");
-				Path waveformPath = workPath.resolve("waveform" + String.format("_RND%04d", isample) + ".dat");
-				dataWriter[isample] = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
-						periodRanges, phases);
+				if (eventPerEvent) {
+					GlobalCMTID thisID = events.get(isample);
+					idSet = idSet.stream().filter(id -> id.equals(thisID)).collect(Collectors.toSet());
+					stationSet = timewindowInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(thisID))
+							.map(TimewindowInformation::getStation).collect(Collectors.toSet());
+					System.err.println("Event sample " + thisID);
+					Path waveIDPath = workPath.resolve("waveformID_" + thisID + ".dat");
+					Path waveformPath = workPath.resolve("waveform_" + thisID + ".dat");
+					dataWriter[isample] = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet, periodRanges, phases);
+				}
+				else {
+					System.err.println("Random sample " + isample);
+					Path waveIDPath = workPath.resolve("waveformID" + String.format("_RND%04d", isample) + ".dat");
+					Path waveformPath = workPath.resolve("waveform" + String.format("_RND%04d", isample) + ".dat");
+					dataWriter[isample] = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
+							periodRanges, phases);
+				}
 			}
 		
 			int n = Runtime.getRuntime().availableProcessors();

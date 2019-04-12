@@ -48,7 +48,7 @@ public class DividePerAzimuth {
 			setRotation();
 			setAzimuthRange();
 			this.workPath = workPath;
-			this.nSlices = 6;
+			this.nSlices = 1;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -66,7 +66,7 @@ public class DividePerAzimuth {
 		else if (args.length == 2) {
 			int nSlices = Integer.parseInt(args[1]);
 			if (nSlices < 1)
-				throw new RuntimeException("nSlices must be (strictly) greater than 1");
+				throw new RuntimeException("nSlices must be >1");
 			dpa = new DividePerAzimuth(infoPath, workPath, nSlices);
 		}
 		else
@@ -77,12 +77,19 @@ public class DividePerAzimuth {
 		Path outpath = Paths.get("azimuthGrid.inf");
 		dpa.writeAzimuthGrid(outpath, 2.);
 		
+//		List<Double> azimuths = new ArrayList<>();
+//		azimuths.add(314.5);
+//		azimuths.add(326.5);
+//		azimuths.add(334.5);
+//		azimuths.add(348.5);
+//		azimuths.add(374.6);
+		
+		
 		List<Double> azimuths = new ArrayList<>();
-		azimuths.add(314.5);
-		azimuths.add(326.5);
-		azimuths.add(334.5);
-		azimuths.add(348.5);
-		azimuths.add(374.6);
+//		azimuths.add(337.716);
+//		azimuths.add(349.716);
+		azimuths.add(329.);
+		azimuths.add(344.);
 		
 		List<Set<TimewindowInformation>> slices = dpa.divide(azimuths);
 		
@@ -91,6 +98,9 @@ public class DividePerAzimuth {
 		
 		//
 		for (Set<TimewindowInformation> infos : slices) {
+			if (infos.size() == 0)
+				continue;
+			
 			double avgLat = 0;
 			double avgLon = 0;
 			for (TimewindowInformation tw : infos) {
@@ -100,7 +110,7 @@ public class DividePerAzimuth {
 			avgLat /= infos.size();
 			avgLon /= infos.size();
 			HorizontalPosition hp = new HorizontalPosition(avgLat, avgLon);
-			System.out.println(dpa.averageEventPosition + " " + hp);
+			System.out.println(dpa.averageEventPosition + " : " + hp);
 		}
 		//
 		
@@ -110,9 +120,11 @@ public class DividePerAzimuth {
 			String name = "";
 			name = originalName + "-s" + i + ".dat";
 			Set<TimewindowInformation> onePart = slices.get(i);
-			Path outputPath = dpa.workPath.resolve(Paths.get(name));
-			System.err.println("Write " + onePart.size() + " timewindows in " + name);
-			TimewindowInformationFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			if (onePart.size() > 0) {
+				Path outputPath = dpa.workPath.resolve(Paths.get(name));
+				System.err.println("Write " + onePart.size() + " timewindows in " + name);
+				TimewindowInformationFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			}
 		}
 	}
 	
@@ -200,24 +212,30 @@ public class DividePerAzimuth {
 	
 	private List<Set<TimewindowInformation>> divide(List<Double> azimuths) {
 		List<Set<TimewindowInformation>> slices = new ArrayList<>();
-		for (int i = 0; i < azimuths.size() - 1; i++)
+		
+		nSlices = azimuths.size() + 1;
+		for (int i = 0; i < nSlices; i++)
 			slices.add(new HashSet<>());
 		
 		info.stream().forEach(tw -> {
 			double azimuth = averageEventPosition.getAzimuth(tw.getStation().getPosition());
 			if (rotate)
-				azimuth = unfold(azimuth) * 180. / Math.PI;
+				azimuth = unfold(azimuth);
+			azimuth *= 180. / Math.PI;
 			int i = 0;
 			for (int j = 0; j < azimuths.size() - 1; j++) {
 				if (azimuth < azimuths.get(j + 1) && azimuth >= azimuths.get(j))
-					i = j;
+					i = j + 1;
 			}
+			if (azimuth < azimuths.get(0))
+				i = 0;
+			if (azimuth > azimuths.get(azimuths.size() - 1))
+				i = azimuths.size();
+			
 			Set<TimewindowInformation> tmp = slices.get(i);
 			tmp.add(tw);
 			slices.set(i, tmp);
 		});
-		
-		nSlices = azimuths.size() - 1;
 		
 		return slices;
 	}
@@ -232,8 +250,8 @@ public class DividePerAzimuth {
 		for (int i = 0; i <= n+1; i++) {
 			double azimuth = azimuthRange[0] * 180 / Math.PI + i * dAz;
 			HorizontalPosition endPosition = averageEventPosition.fromAzimuth(azimuth, 110.);
-			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
-			Files.write(outpath, (averageEventPosition + " " + endPosition + "\n").getBytes(), StandardOpenOption.APPEND);
+//			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
+			Files.write(outpath, (averageEventPosition + " " + endPosition + " " + azimuth + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}
 	
@@ -246,7 +264,7 @@ public class DividePerAzimuth {
 			if (azimuth >= 360.)
 				azimuth = azimuth - 360.;
 			HorizontalPosition endPosition = averageEventPosition.fromAzimuth(azimuth, 90.);
-			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
+//			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
 			Files.write(outpath, (averageEventPosition + " " + endPosition + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}

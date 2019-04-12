@@ -31,6 +31,6 @@
 	<classpathentry kind="lib" path="lib/jcommon-1.0.23.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart-1.0.19.jar"/>
 	<classpathentry kind="lib" path="lib/netcdfAll-4.6.4.jar"/>
-	<classpathentry kind="lib" path="lib/TauP-2.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/TauP-2.4.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
