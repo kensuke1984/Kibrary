@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class selectSameWindow {
 
@@ -22,9 +24,10 @@ public class selectSameWindow {
 		Set<TimewindowInformation> selectedwindow = new HashSet<>();
 		
 		for (TimewindowInformation window : targetwindows) {
-			TimewindowInformation selected = otherwindows.stream().parallel().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
-					&& tw.getStation().equals(window.getStation())).findFirst().get();
-			selectedwindow.add(selected);
+			List<TimewindowInformation> tmplist = otherwindows.stream().parallel().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
+					&& tw.getStation().equals(window.getStation())).collect(Collectors.toList());
+			if (tmplist.size() == 1)
+				selectedwindow.add(tmplist.get(0));
 		}
 		
 		Path outpath = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");

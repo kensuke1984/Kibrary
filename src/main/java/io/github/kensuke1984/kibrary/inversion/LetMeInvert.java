@@ -233,6 +233,8 @@ public class LetMeInvert implements Operation {
 			property.setProperty("checkerboard", "false");
 		if (!property.containsKey("trimWindow"))
 			property.setProperty("trimWindow", "false");
+		if (!property.containsKey("regularizationMuQ"))
+			property.setProperty("regularizationMuQ", "false");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -338,6 +340,7 @@ public class LetMeInvert implements Operation {
 			cmV = Double.parseDouble(property.getProperty("cmV"));
 		}
 		
+		regularizationMuQ = Boolean.parseBoolean(property.getProperty("regularizationMuQ"));
 		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
 		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
@@ -389,6 +392,8 @@ public class LetMeInvert implements Operation {
 	protected double[] alpha;
 
 	private Properties property;
+	
+	private boolean regularizationMuQ;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvert.class.getName() + Utilities.getTemporaryString() + ".properties");
@@ -439,6 +444,8 @@ public class LetMeInvert implements Operation {
 			pw.println("#cmH");
 			pw.println("##double cmV");
 			pw.println("#cmV");
+			pw.println("##boolean regularizationMuQ (false)");
+			pw.println("#regularizationMuQ");
 			pw.println("##double lambdaQ (0.3)");
 			pw.println("#lambdaQ");
 			pw.println("##double lambdaMU (0.03)");
@@ -617,12 +624,12 @@ public class LetMeInvert implements Operation {
 			};
 		}
 		
-//		// Choose only one event
+		// Choose only one event
 //		chooser = id -> {
 //			double distance = id.getGlobalCMTID().getEvent()
 //					.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 //					* 180. / Math.PI;
-//			if (!id.getGlobalCMTID().equals(new GlobalCMTID("200909301903A"))) // 201005241618A 201205280507A 200907120612A 200909301903A
+//			if (!id.getGlobalCMTID().equals(new GlobalCMTID("201206020752A"))) // 201005241618A 201205280507A 200907120612A 200909301903A
 //				return false;
 //			if (distance < minDistance || distance > maxDistance)
 //				return false;
@@ -807,6 +814,11 @@ public class LetMeInvert implements Operation {
 			
 			if (conditioner)
 				applyConditionner();
+			
+			if (regularizationMuQ) {
+				addRegularizationMUQ();
+				addRegularizationSimpleQMU();
+			}
 		}
 		else {
 			Matrix atatmp = new Matrix(parameterList.size(), parameterList.size());
@@ -973,6 +985,47 @@ public class LetMeInvert implements Operation {
 //		}
 		
 		eq.applyConditioner(m);
+	}
+	
+	private void addRegularizationMUQ() {
+		System.out.println("Adding regularization MU Q");
+		List<PartialType> types = new ArrayList<>();
+		types.add(PartialType.PAR2);
+//		types.add(PartialType.PARQ);
+		
+		double norm05 = Math.sqrt(eq.getDiagonalOfAtA().getL1Norm());
+		List<Double> coeffs = new ArrayList<>();
+		coeffs.add(lambdaMU / norm05);
+		coeffs.add(lambdaQ / norm05);
+		
+		RadialSecondOrderDifferentialOperator D2 = new RadialSecondOrderDifferentialOperator(eq.getParameterList(), types, coeffs);
+		eq.addRegularization(D2.getD2TD2());
+	}
+	
+	private void addRegularizationSimpleQMU() {
+		System.out.println("Adding simple regularization Q MU");
+		List<PartialType> types = new ArrayList<>();
+		types.add(PartialType.PAR2);
+//		types.add(PartialType.PARQ);
+		
+		double[][] sensitivity = new double[][] { {3490.0,1.11},{3510.0,0.86},{3530.0,0.58},{3550.0,0.42},{3570.0,0.43},{3590.0,0.50},{3610.0,0.55},{3630.0,0.58},{3650.0,0.61},{3670.0,0.62},{3690.0,0.62},{3710.0,0.61},{3730.0,0.61},{3750.0,0.60},{3770.0,0.59},{3790.0,0.57},{3810.0,0.55},{3830.0,0.53},{3850.0,0.50},{3870.0,0.48},{3890.0,0.47},{3910.0,0.45},{3930.0,0.45},{3950.0,0.44},{3970.0,0.44} };
+		
+		double norm05 = Math.sqrt(eq.getDiagonalOfAtA().getL1Norm());
+		List<Double> coeffs = new ArrayList<>();
+		coeffs.add(lambdaMU / norm05 * 2);
+		coeffs.add(lambdaQ / norm05 * 2);
+		
+		RealMatrix D = MatrixUtils.createRealIdentityMatrix(eq.getMlength());
+		List<UnknownParameter> parameters = eq.getParameterList();
+		for (int i = 0; i < eq.getMlength(); i++) {
+			
+			if (parameters.get(i).getPartialType().equals(PartialType.PAR2))
+				D.multiplyEntry(i, i, coeffs.get(0));
+			else if (parameters.get(i).getPartialType().equals(PartialType.PARQ))
+				D.multiplyEntry(i, i, coeffs.get(1));
+		}
+		
+		eq.addRegularization(D);
 	}
 	
 	private void applyConditionnerAll() {

@@ -18,6 +18,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import edu.sc.seis.TauP.Arrival;
+import edu.sc.seis.TauP.SphericalCoords;
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauP_Time;
+import edu.sc.seis.TauP.TimeDist;
+
 public class DividePerAzimuth {
 	
 	private Set<TimewindowInformation> info;
@@ -25,7 +31,7 @@ public class DividePerAzimuth {
 //	private double averageAzimuth = -1000.0;
 	public double[] azimuthRange;
 	private Path workPath;
-	private boolean rotate = false;
+	private boolean rotate = true;
 	private int nSlices;
 	
 	public DividePerAzimuth(Path timewindowInformationPath, Path workPath, int nSlices) {
@@ -36,6 +42,7 @@ public class DividePerAzimuth {
 			setAzimuthRange();
 			this.workPath = workPath;
 			this.nSlices = nSlices;
+			this.bottomingPointInRegion = new ArrayList<>();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -49,6 +56,7 @@ public class DividePerAzimuth {
 			setAzimuthRange();
 			this.workPath = workPath;
 			this.nSlices = 1;
+			this.bottomingPointInRegion = new ArrayList<>();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -77,6 +85,20 @@ public class DividePerAzimuth {
 		Path outpath = Paths.get("azimuthGrid.inf");
 		dpa.writeAzimuthGrid(outpath, 2.);
 		
+		Path outpathDist = Paths.get("distanceGrid.inf");
+		double dEd = 2;
+		dpa.writeDistanceGrid(outpathDist, dEd);
+		
+		//regions
+		List<Double[]> regions = new ArrayList<>();
+		regions.add(new Double[] {310., 321., 20., 50.});
+		regions.add(new Double[] {321., 338., 20., 33.});
+		regions.add(new Double[] {321., 338., 33., 40.});
+		regions.add(new Double[] {321., 338., 40., 50.});
+		regions.add(new Double[] {338., 347., 20., 26.});
+		regions.add(new Double[] {338., 347., 26., 50.});
+		regions.add(new Double[] {347., 10., 20., 50.});
+		
 //		List<Double> azimuths = new ArrayList<>();
 //		azimuths.add(314.5);
 //		azimuths.add(326.5);
@@ -86,40 +108,69 @@ public class DividePerAzimuth {
 		
 		
 		List<Double> azimuths = new ArrayList<>();
-//		azimuths.add(337.716);
-//		azimuths.add(349.716);
-		azimuths.add(329.);
-		azimuths.add(344.);
+		azimuths.add(321.);
+		azimuths.add(338.);
+		azimuths.add(347.);
 		
-		List<Set<TimewindowInformation>> slices = dpa.divide(azimuths);
-		
+//		List<Set<TimewindowInformation>> slices = dpa.divide(azimuths);
+////		List<Set<TimewindowInformation>> slices = dpa.divide();
+//		
+////		List<Double> azimuths = dpa.getAzimuthList();
+//		
+//		System.out.println(azimuths.size());
 		outpath = Paths.get("azimuthSlices.inf");
 		dpa.writeAzimuthSeparation(outpath, azimuths);
+//		
+//		//
+//		for (Set<TimewindowInformation> infos : slices) {
+//			if (infos.size() == 0)
+//				continue;
+//			
+//			double avgLat = 0;
+//			double avgLon = 0;
+//			for (TimewindowInformation tw : infos) {
+//				avgLat += tw.getStation().getPosition().getLatitude();
+//				avgLon += tw.getStation().getPosition().getLongitude();
+//			}
+//			avgLat /= infos.size();
+//			avgLon /= infos.size();
+//			HorizontalPosition hp = new HorizontalPosition(avgLat, avgLon);
+//			System.out.println(dpa.averageEventPosition + " : " + hp);
+//		}
+		//
 		
-		//
-		for (Set<TimewindowInformation> infos : slices) {
-			if (infos.size() == 0)
-				continue;
-			
-			double avgLat = 0;
-			double avgLon = 0;
-			for (TimewindowInformation tw : infos) {
-				avgLat += tw.getStation().getPosition().getLatitude();
-				avgLon += tw.getStation().getPosition().getLongitude();
-			}
-			avgLat /= infos.size();
-			avgLon /= infos.size();
-			HorizontalPosition hp = new HorizontalPosition(avgLat, avgLon);
-			System.out.println(dpa.averageEventPosition + " : " + hp);
+		List<Set<TimewindowInformation>> windowsInRegion = dpa.divide2D(regions);
+		List<Set<HorizontalPosition>> bottomingPoints = dpa.getBottomingPointInRegion();
+		Path outpathBottom = Paths.get("bottomingPointsRegions.inf");
+		Files.deleteIfExists(outpathBottom);
+		Files.createFile(outpathBottom);
+		String[] colors = new String[] {"purple", "blue", "cyan", "green", "red", "brown", "pink"};
+		for (int i = 0; i < regions.size(); i++) {
+			Set<HorizontalPosition> points = bottomingPoints.get(i);
+			for (HorizontalPosition p : points)
+				Files.write(outpathBottom, (p.getLongitude() + " " + p.getLatitude() + " " + (i) + "\n").getBytes()
+						, StandardOpenOption.APPEND);
 		}
-		//
+		
+//		String originalName = infoPath.getFileName().toString();
+//		originalName = originalName.substring(0, originalName.length() - 4);
+//		for (int i = 0; i < dpa.nSlices; i++) {
+//			String name = "";
+//			name = originalName + "-s" + i + ".dat";
+//			Set<TimewindowInformation> onePart = slices.get(i);
+//			if (onePart.size() > 0) {
+//				Path outputPath = dpa.workPath.resolve(Paths.get(name));
+//				System.err.println("Write " + onePart.size() + " timewindows in " + name);
+//				TimewindowInformationFile.write(onePart, outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+//			}
+//		}
 		
 		String originalName = infoPath.getFileName().toString();
 		originalName = originalName.substring(0, originalName.length() - 4);
-		for (int i = 0; i < dpa.nSlices; i++) {
+		for (int i = 0; i < regions.size(); i++) {
 			String name = "";
 			name = originalName + "-s" + i + ".dat";
-			Set<TimewindowInformation> onePart = slices.get(i);
+			Set<TimewindowInformation> onePart = windowsInRegion.get(i);
 			if (onePart.size() > 0) {
 				Path outputPath = dpa.workPath.resolve(Paths.get(name));
 				System.err.println("Write " + onePart.size() + " timewindows in " + name);
@@ -165,6 +216,8 @@ public class DividePerAzimuth {
 		this.averageEventPosition = new HorizontalPosition(latLon[0], latLon[1]);
 	}
 	
+	private List<Double> azimuthList;
+	
 	private void setAzimuthRange() {
 		azimuthRange = new double[] {Double.MAX_VALUE, Double.MIN_VALUE};
 		
@@ -180,11 +233,29 @@ public class DividePerAzimuth {
 			if (azimuth > azimuthRange[1])
 				azimuthRange[1] = azimuth;
 		});
+		
+		azimuthRange[0] = Math.toRadians(311);
+		azimuthRange[1] = Math.toRadians(363);
+		
+		azimuthList = new ArrayList<>();
+		for (int i = 0; i < nSlices - 1; i++)
+			azimuthList.add(azimuthRange[0] + (i + 1) * (azimuthRange[1] - azimuthRange[0]) / nSlices);
+	}
+	
+	public List<Double> getAzimuthList() {
+		return azimuthList;
 	}
 	
 	private double unfold(double azimuth) {
 		if (0 <= azimuth && azimuth < Math.PI)
 			return azimuth + 2 * Math.PI;
+		else
+			return azimuth;
+	}
+	
+	private double fold(double azimuth) {
+		if (azimuth > 2 * Math.PI)
+			return azimuth - 2 * Math.PI;
 		else
 			return azimuth;
 	}
@@ -206,6 +277,10 @@ public class DividePerAzimuth {
 			tmp.add(tw);
 			slices.set(i, tmp);
 		});
+		
+		azimuthList = new ArrayList<>();
+		for (int i = 0; i < nSlices ; i++)
+			azimuthList.add(Math.toDegrees(azimuthRange[0] + i * (azimuthRange[1] - azimuthRange[0]) / nSlices));
 		
 		return slices;
 	}
@@ -240,6 +315,86 @@ public class DividePerAzimuth {
 		return slices;
 	}
 	
+	private List<Set<HorizontalPosition>> bottomingPointInRegion;
+	
+	private List<Set<TimewindowInformation>> divide2D(List<Double[]> regions) {
+		List<Set<TimewindowInformation>> datasets = new ArrayList<>();
+		
+		int nRegions = regions.size();
+		for (int i = 0; i < nRegions; i++) {
+			datasets.add(new HashSet<>());
+			bottomingPointInRegion.add(new HashSet<>());
+		}
+		
+		try {
+			TauP_Time timetool = new TauP_Time("prem");
+			timetool.parsePhaseList("ScS");
+			
+			for (TimewindowInformation tw : info) {
+				HorizontalPosition evtLoc = tw.getGlobalCMTID().getEvent().getCmtLocation();
+				double azimuth = tw.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(tw.getStation().getPosition());
+				double distance = tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition());
+				
+				//
+				timetool.setSourceDepth(6371. - tw.getGlobalCMTID().getEvent().getCmtLocation().getR());
+				timetool.calculate(distance);
+				Arrival arrivalScS = timetool.getArrival(0);
+				
+				TimeDist[] pierces = arrivalScS.getPierce();
+				double pierceDist = 0;
+				for (TimeDist p : pierces) {
+					if (Math.abs(p.getDepth() - 2891.) < 1) {
+						pierceDist = p.getDistDeg();
+						break;
+					}
+				}
+				
+				distance = pierceDist;
+				
+				distance *= 180 / Math.PI;
+				azimuth *= 180 / Math.PI;
+				
+				double lat = SphericalCoords.latFor( evtLoc.getLatitude(),  evtLoc.getLongitude(), distance, azimuth);
+				double lon = SphericalCoords.lonFor( evtLoc.getLatitude(),  evtLoc.getLongitude(), distance, azimuth);
+				HorizontalPosition bottomingPosition = new HorizontalPosition(lat, lon);
+				
+				azimuth = averageEventPosition.getAzimuth(bottomingPosition);
+				distance = averageEventPosition.getEpicentralDistance(bottomingPosition);
+				
+				if (rotate)
+					azimuth = unfold(azimuth);
+				distance *= 180 / Math.PI;
+				int i = -1;
+				for (int j = 0; j < nRegions; j++) {
+					Double[] reg = regions.get(j);
+					if (azimuth >= unfold(reg[0] * Math.PI / 180.) && azimuth < unfold(reg[1] * Math.PI / 180.) 
+							&& distance >= reg[2] && distance < reg[3]) {
+						i = j;
+						break;
+					}
+				}
+				if (i == -1)
+					continue;
+				
+				Set<TimewindowInformation> tmp = datasets.get(i);
+				tmp.add(tw);
+				datasets.set(i, tmp);
+				
+				Set<HorizontalPosition> tmpBottom = bottomingPointInRegion.get(i);
+				tmpBottom.add(bottomingPosition);
+				bottomingPointInRegion.set(i, tmpBottom);
+			}
+		} catch (TauModelException e) {
+			e.printStackTrace();
+		}
+		
+		return datasets;
+	}
+	
+	public List<Set<HorizontalPosition>> getBottomingPointInRegion() {
+		return bottomingPointInRegion;
+	}
+	
 	private void writeAzimuthGrid(Path outpath, double dAz) throws IOException {
 		System.out.println("Print azimth grid with increment " + dAz);
 		int n = (int) ((azimuthRange[1] - azimuthRange[0]) * 180. / Math.PI / dAz);
@@ -248,10 +403,35 @@ public class DividePerAzimuth {
 		Files.createFile(outpath);
 		
 		for (int i = 0; i <= n+1; i++) {
-			double azimuth = azimuthRange[0] * 180 / Math.PI + i * dAz;
-			HorizontalPosition endPosition = averageEventPosition.fromAzimuth(azimuth, 110.);
-//			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
+			double azimuth = fold(azimuthRange[0] + i * Math.toRadians(dAz));
+			azimuth = Math.toDegrees(azimuth);
+			double lat = SphericalCoords.latFor(averageEventPosition.getLatitude(), averageEventPosition.getLongitude(), 70, azimuth);
+			double lon = SphericalCoords.lonFor(averageEventPosition.getLatitude(), averageEventPosition.getLongitude(), 70, azimuth);
+			HorizontalPosition endPosition = new HorizontalPosition(lat, lon);
+//					averageEventPosition.fromAzimuth(azimuth, 70.);
+			System.out.println(azimuth + " " + (averageEventPosition.getAzimuth(endPosition) * 180 / Math.PI));
 			Files.write(outpath, (averageEventPosition + " " + endPosition + " " + azimuth + "\n").getBytes(), StandardOpenOption.APPEND);
+		}
+	}
+	
+	private void writeDistanceGrid(Path outpath, double dEd) throws IOException {
+//		System.out.println("Print azimth grid with increment " + dAz);
+		int n = (int) ((50 - 10) / dEd); 
+		
+		Files.deleteIfExists(outpath);
+		Files.createFile(outpath);
+		
+		for (int i = 0; i <= n+1; i++) {
+			double distance = 10 + i * dEd;
+			Files.write(outpath, ">\n".getBytes(), StandardOpenOption.APPEND);
+			for (int j = 0; j < 360; j++) {
+				double azimuth = j;
+				double lat = SphericalCoords.latFor(averageEventPosition.getLatitude(), averageEventPosition.getLongitude(), distance, azimuth);
+				double lon = SphericalCoords.lonFor(averageEventPosition.getLatitude(), averageEventPosition.getLongitude(), distance, azimuth);
+				HorizontalPosition endPosition = new HorizontalPosition(lat, lon);
+//				System.out.println(averageEventPosition.getEpicentralDistance(endPosition) * 180 / Math.PI + " " + distance);
+				Files.write(outpath, (endPosition.getLongitude() + " " + endPosition.getLatitude() + "\n").getBytes(), StandardOpenOption.APPEND);
+			}
 		}
 	}
 	

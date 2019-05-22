@@ -45,47 +45,50 @@ public class Profile {
 	public static void main(String[] args) {
 		int methodOrder = Integer.parseInt(args[0]);
 		GlobalCMTID oneEvent = null;
-		if (args.length == 2)
-			oneEvent = new GlobalCMTID(args[1]);
+//		if (args.length == 2)
+//			oneEvent = new GlobalCMTID(args[1]);
 		InverseMethodEnum method = InverseMethodEnum.CONJUGATE_GRADIENT;
-		String inversionResultString = null;
-		Path inversionResultPath = null;
-		try {
-			inversionResultString = JOptionPane.showInputDialog("Inversion result folder?", inversionResultString);
-		} catch (Exception e) {
-			System.out.println("Inversion result folder?");
-			try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
-				inversionResultString = br.readLine().trim();
-				if (!inversionResultString.startsWith("/"))
-					inversionResultString = System.getProperty("user.dir") + "/" + inversionResultString;
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				throw new RuntimeException();
-			}
-		}
-		if (inversionResultString == null || inversionResultString.isEmpty())
-			return;
-		inversionResultPath = Paths.get(inversionResultString);
-		if (!Files.isDirectory(inversionResultPath))
-			throw new RuntimeException("No such directory " + inversionResultPath.toString());
+//		String inversionResultString = null;
+//		Path inversionResultPath = null;
+//		try {
+//			inversionResultString = JOptionPane.showInputDialog("Inversion result folder?", inversionResultString);
+//		} catch (Exception e) {
+//			System.out.println("Inversion result folder?");
+//			try (BufferedReader br = new BufferedReader(
+//					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+//				inversionResultString = br.readLine().trim();
+//				if (!inversionResultString.startsWith("/"))
+//					inversionResultString = System.getProperty("user.dir") + "/" + inversionResultString;
+//			} catch (Exception e2) {
+//				e2.printStackTrace();
+//				throw new RuntimeException();
+//			}
+//		}
+//		if (inversionResultString == null || inversionResultString.isEmpty())
+//			return;
+//		inversionResultPath = Paths.get(inversionResultString);
+//		if (!Files.isDirectory(inversionResultPath))
+//			throw new RuntimeException("No such directory " + inversionResultPath.toString());
+//		
+//		String phaseString = null;
+//		try {
+//			phaseString = JOptionPane.showInputDialog("Phase?", phaseString);
+//		} catch (Exception e) {
+//			System.out.println("Phase?");
+//			try (BufferedReader br = new BufferedReader(
+//					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+//				phaseString = br.readLine().trim();
+//			} catch (Exception e2) {
+//				e2.printStackTrace();
+//				throw new RuntimeException();
+//			}
+//		}
+//		if (phaseString == null || phaseString.isEmpty())
+//			return;
+//		Phase phase = Phase.create(phaseString);
 		
-		String phaseString = null;
-		try {
-			phaseString = JOptionPane.showInputDialog("Phase?", phaseString);
-		} catch (Exception e) {
-			System.out.println("Phase?");
-			try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
-				phaseString = br.readLine().trim();
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				throw new RuntimeException();
-			}
-		}
-		if (phaseString == null || phaseString.isEmpty())
-			return;
-		Phase phase = Phase.create(phaseString);
+		Path inversionResultPath = Paths.get(".");
+		Phase phase = Phase.create(args[1]);
 		
 		try {
 			Path profilePath = inversionResultPath.resolve("profile").resolve(method.name() + methodOrder);
@@ -191,23 +194,23 @@ public class Profile {
 							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 									* 180. / Math.PI;
 							if (id.getSacComponent().equals(SACComponent.R))
-								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"black\",\\\n"
-									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"red\",\\\n"
-									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"blue\",\\\n";
+								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\\n";
 							else if (id.getSacComponent().equals(SACComponent.T))
-							scriptString_T[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"black\",\\\n"
-									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"red\",\\\n"
-									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"blue\",\\\n";
+							scriptString_T[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\\n";
 							else if (id.getSacComponent().equals(SACComponent.Z))
-								scriptString_Z[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"black\",\\\n"
-									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"red\",\\\n"
-									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lc \"blue\",\\\n";
-//							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"black\",\\");
-//							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"red\",\\");
+								scriptString_Z[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\\n";
+//							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\");
+//							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\");
 ////							if (i.get() == n)
-////								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\"");
+////								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"blue\"");
 ////							else
-//								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lc \"blue\",\\");
+//								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\");
 							
 							// output variance
 							RealVector synVector = ir.syntheticOf(id).getYVector();
@@ -388,9 +391,9 @@ public class Profile {
 						e.printStackTrace();
 						}
 						
-						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lc \"black\",\\");
-						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lc \"red\",\\");
-						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lc \"blue\",\\");
+						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lt 1 lc rgb \"black\",\\");
+						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lt 1 lc rgb \"red\",\\");
+						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, (double) i) + "w lines lw .5 lt 1 lc rgb \"blue\",\\");
 					}
 					pw.println();
 				} catch (IOException e) {
@@ -451,9 +454,9 @@ public class Profile {
 						e.printStackTrace();
 						}
 						
-						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lc \"black\",\\");
-						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lc \"red\",\\");
-						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lc \"blue\",\\");
+						pw.println("\"" + outObs.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lt 1 lc rgb \"black\",\\");
+						pw.println("\"" + outSyn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lt 1 lc rgb \"red\",\\");
+						pw.println("\"" + outBorn.getFileName() + "\" " + String.format("u 1:($2/%.3e+%.1f) ", maxObs * 2, i / 1.) + "w lines lw .5 lt 1 lc rgb \"blue\",\\");
 					}
 					pw.println();
 					pw.close();

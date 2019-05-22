@@ -23,10 +23,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
+import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
+import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
+import io.github.kensuke1984.kibrary.inversion.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -83,6 +89,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	boolean correctionBootstrap;
 	private int nSample;
 	
+	private boolean addNoise;
+	
 	/**
 	 * components to be included in the dataset
 	 */
@@ -124,6 +132,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			property.setProperty("shiftdataValue", "0.");
 		if (!property.containsKey("minDistance"))
 			property.setProperty("minDistance", "0.");
+		if (!property.containsKey("addNoise"))
+			property.setProperty("addNoise", "false");
 	}
 
 	private void set() throws NoSuchFileException {
@@ -162,6 +172,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			shiftdataValue = Double.parseDouble(property.getProperty("shiftdataValue"));
 		
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
+		
+		addNoise = Boolean.parseBoolean(property.getProperty("addNoise"));
 	}
 	
 	private Random random;
@@ -201,6 +213,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("##Data time shift (to test sensitivity to statics errors) (0)");
 			pw.println("#shiftdataValue");
 			pw.println("#minDistance");
+			pw.println("#addNoise false");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -498,7 +511,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					if (shiftdata)
 						shift += shiftdataValue;
 					
-					double[] obsData = cutDataSac(obsSac, startTime - shift, npts);
+					double[] obsData = null;
+					if (addNoise)
+						obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
+					else
+						obsData = cutDataSac(obsSac, startTime - shift, npts);
 					double[] synData = cutDataSac(synSac, startTime, npts);
 					double correctionRatio = ratio;
 					
@@ -559,6 +576,33 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		int startPoint = trace.getNearestXIndex(startTime);
 		double[] waveData = trace.getY();
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
+	}
+	
+	private final double noisePower = 1.;
+	
+	private double[] cutDataSacAddNoise(SACData sac, double startTime, int npts) {
+		Trace trace = sac.createTrace();
+		int step = (int) (sacSamplingHz / finalSamplingHz);
+		int startPoint = trace.getNearestXIndex(startTime);
+		double[] waveData = trace.getY();
+		RealVector vector = new ArrayRealVector(IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray());
+		Trace tmp = createNoiseTrace(vector.getLInfNorm());
+		Trace noiseTrace = new Trace(trace.getX(), Arrays.copyOf(tmp.getY(), trace.getLength()));
+//		System.out.println(noiseTrace.getLength() + " " + trace.getLength() + " " + sac.getValue(SACHeaderEnum.NPTS) + " " + sac.getValue(SACHeaderEnum.DELTA));
+		trace = trace.add(noiseTrace);
+		double[] waveDataNoise = trace.getY();
+		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveDataNoise[i * step + startPoint]).toArray();
+	}
+	
+	private Trace createNoiseTrace(double normalize) {
+		double maxFreq = 0.05;
+		double minFreq = 0.01;
+		int np = 6;
+		ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * maxFreq, 2 * Math.PI * 0.05 * minFreq, np);
+		Trace tmp = RandomNoiseMaker.create(1., sacSamplingHz, 3276.8, 512);
+		double[] u = tmp.getY();
+		RealVector uvec = new ArrayRealVector(bpf.applyFilter(u));
+		return new Trace(tmp.getX(), uvec.mapMultiply(noisePower * normalize / uvec.getLInfNorm()).toArray());
 	}
 
 	@Override

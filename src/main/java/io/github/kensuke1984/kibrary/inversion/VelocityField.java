@@ -45,6 +45,7 @@ public class VelocityField {
 		try {
 			inversionResultString = JOptionPane.showInputDialog("Inversion result folder?", inversionResultString);
 			polynomialStructureString = JOptionPane.showInputDialog("Polynomial structure?", polynomialStructureString);
+			partialCombination = JOptionPane.showInputDialog("artial combination (trs | sc | nc)?", partialCombination);
 		} catch (Exception e) {
 			System.out.println("Inversion result folder?");
 			try (BufferedReader br = new BufferedReader(
@@ -60,8 +61,8 @@ public class VelocityField {
 			try (BufferedReader br = new BufferedReader(
 					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
 				polynomialStructureString = br.readLine().trim();
-				if (!polynomialStructureString.startsWith("/"))
-					polynomialStructureStringAbsolute = System.getProperty("user.dir") + "/" + polynomialStructureString;
+//				if (!polynomialStructureString.startsWith("/"))
+//					polynomialStructureStringAbsolute = System.getProperty("user.dir") + "/" + polynomialStructureString;
 			} catch (Exception e2) {
 				e2.printStackTrace();
 				throw new RuntimeException();
@@ -120,7 +121,7 @@ public class VelocityField {
 			break;
 		}
 		if (structure == null) {
-			polynomialStructurePath = Paths.get(polynomialStructureStringAbsolute);
+			polynomialStructurePath = Paths.get(polynomialStructureString);
 			if (!Files.isRegularFile(polynomialStructurePath) || !Files.isReadable(polynomialStructurePath))
 				throw new RuntimeException("Error: no such file " + polynomialStructureStringAbsolute);
 			structure = new PolynomialStructure(polynomialStructurePath);
@@ -184,8 +185,9 @@ public class VelocityField {
 						pw.println("#perturbationR final_Vsh initial_Vsh");
 						if (trs == null) {
 							for (int j = 0; j < velocities.length; j++) {
-								pw.println(velocities[j][2] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
 								pw.println(velocities[j][1] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
+								pw.println(velocities[j][2] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
+//								pw.println((velocities[j][1] - 10.) + " " + velocities[j][0] + zeroVelocities[j][0]);
 								pwIteration.println((6371. - velocities[j][1] - 10.) + " " + structure.getVphAt(velocities[j][1] + 10.) 
 										+ " " + velocities[j][0] + " " + structure.getRhoAt(velocities[j][1] + 10.));
 							}
@@ -193,6 +195,7 @@ public class VelocityField {
 								for (int j = 0; j < Qs.length; j++) {
 										pwQ.println(Qs[j][1] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
 										pwQ.println(Qs[j][2] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
+//										pwQ.println((Qs[j][1] - 10.) +  " " + Qs[j][0] + " " + zeroQs[j][0]);
 								}
 							}
 						}
@@ -267,6 +270,7 @@ public class VelocityField {
 //			}
 			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
 			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
+
 			velocities[i][0] = toVelocity(answerMap.get(m), m.getLocation().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
@@ -374,9 +378,9 @@ public class VelocityField {
 			double a = r1 + i * dr;
 			double b = r1 + (i + 1) * dr;
 			double ab = (a + b) / 2.;
-			double v_a = Math.sqrt( (structure.computeN(a) + dMu) / structure.getRhoAt(a) );
-			double v_ab = Math.sqrt( (structure.computeN(ab) + dMu) / structure.getRhoAt(ab) );
-			double v_b = Math.sqrt( (structure.computeN(b) + dMu) / structure.getRhoAt(b) );
+			double v_a = Math.sqrt( (structure.computeMu(a) + dMu) / structure.getRhoAt(a) );
+			double v_ab = Math.sqrt( (structure.computeMu(ab) + dMu) / structure.getRhoAt(ab) );
+			double v_b = Math.sqrt( (structure.computeMu(b) + dMu) / structure.getRhoAt(b) );
 			res += (b - a) / 6. * (v_a + 4 * v_ab + v_b);
 		}
 		

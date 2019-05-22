@@ -23,6 +23,7 @@ public class MakeCheckerboard {
 //		PolynomialStructure premdpp = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/FWICarib_PS/SYNTHETIC_TEST/ONE_REC/16LAYERS/lmi_2005_rec_kappa/stack/TRUE_MODEL/prem_dpp.poly"));
 		PolynomialStructure prem = PolynomialStructure.PREM;
 		
+		
 //		System.out.println(dMU(0.020487955855501883, 3505, PolynomialStructure.PREM));
 //		System.out.println(dMU(0.02050610666137339, 3555, PolynomialStructure.PREM));
 //		System.out.println(dMU(0.020524058158315792, 3605, PolynomialStructure.PREM));

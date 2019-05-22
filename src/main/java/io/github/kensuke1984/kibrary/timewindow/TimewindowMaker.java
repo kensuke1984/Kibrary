@@ -684,7 +684,7 @@ public class TimewindowMaker implements Operation {
 	}
 	
 	
-	final private static double exRearShift = 3.;
+	final private static double exRearShift = 10.;
 
 	/**
 	 * fix start and end time by delta these time must be (int) * delta

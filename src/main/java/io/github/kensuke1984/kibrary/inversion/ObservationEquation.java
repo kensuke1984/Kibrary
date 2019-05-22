@@ -105,7 +105,7 @@ public class ObservationEquation {
 		atd = computeAtD(dVector.getD());
 		ata = a.computeAtA();
 		System.out.println("AtA mean trace = " + (ata.getTrace() / ata.getColumnDimension()));
-		System.out.println("Atd mean norm = " + (atd.getNorm() / ata.getColumnDimension()));
+		System.out.println("Atd mean norm = " + (atd.getLInfNorm() / ata.getColumnDimension()));
 	}
 	
 	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector,
@@ -163,6 +163,13 @@ public class ObservationEquation {
 				a.setColumnVector(i, a.getColumnVector(i).mapMultiply(m.getEntry(i)));
 			}
 		}
+	}
+	
+	public void addRegularization(RealMatrix D) {
+		if (ata != null)
+			ata = ata.add(D);
+		else
+			throw new RuntimeException("AtA is null");
 	}
 	
 	public RealVector getM() {
@@ -522,6 +529,9 @@ public class ObservationEquation {
 			weighting = dVector.getWeighting(k); // TO CHANGE
 			
 			RealVector weightingVector = dVector.getWeightingVector(k);
+			
+			//only for 1D!!! TO CHANGE
+			weightingVector = weightingVector.mapMultiply(parameterList.get(column).getWeighting());
 
 			double[] partial = id.getData();
 //			for (int j = 0; j < partial.length; j++) {
@@ -1225,7 +1235,7 @@ public class ObservationEquation {
 		}
 		
 		//normalize PARQ
-		double empiricalFactor = .1;
+		double empiricalFactor = .2;
 		meanAColumnNorm = 0;
 		double meanAQNorm = 0;
 		ntmp = 0;

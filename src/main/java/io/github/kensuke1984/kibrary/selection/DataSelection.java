@@ -471,9 +471,13 @@ public class DataSelection implements Operation {
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& (t.getComponent() == SACComponent.R ? s.getComponent() == SACComponent.T : s.getComponent() == t.getComponent()) 
 					&& t.getStartTime() < s.getSynStartTime() + 1.01 && t.getStartTime() > s.getSynStartTime() - 1.01;
+	
+	private BiPredicate<StaticCorrection, TimewindowInformation> isPairRecord = (s,
+			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
+					&& s.getComponent() == t.getComponent();
 
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
-		List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPair_isotropic.test(s, window)).collect(Collectors.toList());
+		List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPairRecord.test(s, window)).collect(Collectors.toList());
 		if (corrs.size() != 1)
 			throw new RuntimeException("Found no, or more than 1 static correction for window " + window);
 		return corrs.get(0);

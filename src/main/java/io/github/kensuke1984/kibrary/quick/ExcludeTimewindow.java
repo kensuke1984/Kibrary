@@ -94,8 +94,8 @@ public class ExcludeTimewindow {
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
 						.filter(tw ->  {
 							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
-							if (distance > 30. || distance < 17.)
-								return false;
+//							if (distance > 30. || distance < 17.)
+//								return false;
 //							if (distance < 30. || distance > 90.)
 //								return false;
 //							if (!tw.getComponent().equals(SACComponent.Z))
@@ -110,6 +110,8 @@ public class ExcludeTimewindow {
 //								return false;
 //							if (tw.getComponent().equals(SACComponent.R))
 //								return false;
+							if (distance < 65)
+								return false;
 							else 
 								return true;
 						})

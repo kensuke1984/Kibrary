@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.quick;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
@@ -33,6 +34,9 @@ public class PartialVisual {
 		}
 		
 		for (PartialID partial : partials) {
+			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211327A")))
+				continue;
+			
 			Location loc = partial.getPerturbationLocation();
 //			Path outpath = Paths.get(String.format("%.1f-%.1f/%s.%s.%s.%.0f.%d.txt", partial.getMinPeriod(), partial.getMaxPeriod()
 //					, partial.getStation().toString(), partial.getGlobalCMTID().toString(), partial.getSacComponent().toString(), loc.getR(), (int) partial.getStartTime()));

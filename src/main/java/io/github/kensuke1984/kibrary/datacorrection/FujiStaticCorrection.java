@@ -251,7 +251,8 @@ public class FujiStaticCorrection implements Operation {
 						try {
 							double shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
 //							double shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
-							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
+//							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
+							double ratio = computeP2PRatio(obsSac, synSac, shift, window);
 							StaticCorrection t = new StaticCorrection(station, eventID, component,
 									window.getStartTime(), shift, ratio, window.getPhases());
 							staticCorrectionSet.add(t);
@@ -329,6 +330,27 @@ public class FujiStaticCorrection implements Operation {
 		double maxObs = maxSyn < 0 ? Arrays.stream(obs).min().getAsDouble() : Arrays.stream(obs).max().getAsDouble();
 
 		return maxObs / maxSyn;
+	}
+	
+	private double computeP2PRatio(SACData obsSac, SACData synSac, double shift, Timewindow window) {
+		double delta = 1 / sacSamplingHz;
+
+		// マーカーが何秒か
+		double startSec = window.getStartTime();
+		double endSec = window.getEndTime();
+
+		// create synthetic timewindow
+		Trace synTrace = synSac.createTrace().cutWindow(startSec, endSec);
+		// which point gives the maximum value
+		double synP2P = synTrace.getMaxValue() - synTrace.getMinValue();
+		int maxPoint = synTrace.getIndexOfPeak()[0];
+
+		// create observed timewindow
+		Trace obsTrace = obsSac.createTrace().cutWindow(startSec - shift + maxPoint * delta - searchRange, 
+				startSec - shift + maxPoint * delta + searchRange);
+		double obsP2P = obsTrace.getMaxValue() - obsTrace.getMinValue();
+
+		return obsP2P / synP2P;
 	}
 
 	/**

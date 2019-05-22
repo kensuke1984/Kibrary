@@ -871,7 +871,7 @@ public class PolynomialStructure implements Serializable {
 	}
 	
 	private static PolynomialStructure initialPREM_PRIME() {
-		PolynomialStructure structure = PolynomialStructure.PREM;
+		PolynomialStructure structure = initialAnisoPREM();
 		try {
 			List<String> lines = IOUtils.readLines(
 					PolynomialStructure.class.getClassLoader().getResourceAsStream("PREM_PRIME.poly"),

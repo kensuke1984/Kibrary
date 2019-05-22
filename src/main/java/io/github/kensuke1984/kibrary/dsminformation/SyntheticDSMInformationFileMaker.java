@@ -24,6 +24,8 @@ import org.apache.commons.io.IOUtils;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -73,7 +75,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			pw.println("##Synthetic Dataset (false)");
 			pw.println("#syntheticDataset");
 			pw.println("##SPECFEM3D_GLOBE test dataset (false)");
-			pw.println("specfemDataset");
+			pw.println("#specfemDataset");
+			pw.println("#timewindowPath");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -95,6 +98,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			property.setProperty("syntheticDataset", "false");
 		if (!property.containsKey("specfemDataset"))
 			property.setProperty("specfemDataset", "false");
+		if (!property.containsKey("timewindowPath"))
+			property.setProperty("timewindowPath", "");
 		// write additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
 	}
@@ -104,6 +109,10 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 	 */
 	private Path workPath;
 
+	private Path timewindowPath;
+	
+	private boolean usewindow;
+	
 	private void set() {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
@@ -120,6 +129,9 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			structurePath = Paths.get("PREM");
 		syntheticDataset = Boolean.parseBoolean(property.getProperty("syntheticDataset"));
 		specfemDataset = Boolean.parseBoolean(property.getProperty("specfemDataset"));
+		
+		usewindow = property.getProperty("timewindowPath") != "";
+		timewindowPath = Paths.get(property.getProperty("timewindowPath"));
 	}
 
 	/**
@@ -179,9 +191,14 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		String modelName = structurePath.toString().trim().toUpperCase();
 		PolynomialStructure ps = null;
 		
+		//use only events in timewindow file
+		if (usewindow) {
+			Set<GlobalCMTID> idInWindow = TimewindowInformationFile.read(timewindowPath).stream().map(tw -> tw.getGlobalCMTID()).collect(Collectors.toSet());
+		}
+		
 		// PREM_3600_RHO_3 : PREM is a 3% rho (density) discontinuity at radius 3600 km
 		if (!modelName.contains("/") && modelName.contains("_")) {
-			System.out.println("Using " + modelName);
+			System.out.println("Using " + modelName + ". Adding perturbations");
 			String[] ss = modelName.split("_");
 			modelName = ss[0];
 			String[] range = ss[1].split("-");

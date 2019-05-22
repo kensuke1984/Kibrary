@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -116,6 +117,7 @@ public final class SpcSAC implements Operation {
 			if (!Files.exists(sourceTimeFunctionPath))
 				throw new RuntimeException(
 						"Source time function folder: " + sourceTimeFunctionPath + " does not exist");
+			System.out.println("Using STF in directory " + sourceTimeFunctionPath);
 		}
 
 		computesPartial = Boolean.parseBoolean(property.getProperty("timePartial"));
@@ -171,9 +173,17 @@ public final class SpcSAC implements Operation {
 	private void readUserSourceTimeFunctions() throws IOException {
 		Set<GlobalCMTID> ids = Utilities.globalCMTIDSet(workPath);
 		userSourceTimeFunctions = new HashMap<>(ids.size());
-		for (GlobalCMTID id : ids)
+		for (GlobalCMTID id : ids) {
+			SourceTimeFunction stf = null;
+			try {
+				stf = SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath.resolve(id + ".stf"));
+			} catch (NoSuchFileException e) {
+				userSourceTimeFunctions.put(id,
+						null);
+			}
 			userSourceTimeFunctions.put(id,
-					SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath.resolve(id + ".stf")));
+					stf);
+		}
 	}
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
@@ -184,7 +194,10 @@ public final class SpcSAC implements Operation {
 		double halfDuration = id.getEvent().getHalfDuration();
 		switch (sourceTimeFunction) {
 		case -1:
-			return userSourceTimeFunctions.get(id);
+			SourceTimeFunction tmp = userSourceTimeFunctions.get(id);
+			if (tmp == null)
+				tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+			return tmp;
 		case 0:
 			return null;
 		case 1:
