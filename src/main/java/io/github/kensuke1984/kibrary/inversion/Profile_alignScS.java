@@ -47,7 +47,8 @@ import edu.sc.seis.TauP.TauP_Time;
 
 public class Profile_alignScS {
 	public static void main(String[] args) throws TauModelException {
-		int methodOrder = Integer.parseInt(args[0]);
+//		int methodOrder = Integer.parseInt(args[0]);
+		int methodOrder = 24;
 		GlobalCMTID oneEvent = null;
 //		if (args.length == 2)
 //			oneEvent = new GlobalCMTID(args[1]);
@@ -91,9 +92,11 @@ public class Profile_alignScS {
 //			return;
 //		Phase phase = Phase.create(phaseString);
 		
-		Path inversionResultPath = Paths.get(".");
+		Path inversionResultPath = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s5/inversion/alpha03/lmi_s5_cMU06_cQ03_cQ10");
 //		Phase phase = Phase.create(args[1]);
 		Phase phase = Phase.ScS;
+		
+		Path inversionResultPathReference = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartialPREM/inversion/lmi_forS5");
 		
 		TauP_Time timetool = new TauP_Time("prem");
 		timetool.parsePhaseList("ScS");
@@ -124,6 +127,8 @@ public class Profile_alignScS {
 			List<BasicID> obsList = ir.getBasicIDList().stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
 				.collect(Collectors.toList());
 			Set<GlobalCMTID> events = ir.idSet();
+			
+			InversionResult irRef = new InversionResult(inversionResultPathReference);
 			
 			double dt = 1. / obsList.get(0).getSamplingHz();
 			
@@ -221,7 +226,15 @@ public class Profile_alignScS {
 //								pw.println("\"" + bornPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($2/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\");
 							
 							// output variance
-							RealVector synVector = ir.syntheticOf(id).getYVector();
+//							RealVector synVector = ir.syntheticOf(id).getYVector();
+							RealVector synVector = null;
+							try {
+								synVector = irRef.syntheticOf(id).getYVector();
+							} catch (IOException e) {
+								System.out.println(id);
+								return;
+							}
+							
 							RealVector obsVector = ir.observedOf(id).getYVector();
 							double tmpSynVariance = synVector.subtract(obsVector).dotProduct(synVector.subtract(obsVector));
 							double tmpBornVariance = bornVector.subtract(obsVector).dotProduct(bornVector.subtract(obsVector));
@@ -322,7 +335,15 @@ public class Profile_alignScS {
 					if (!Stream.of(id.getPhases()).collect(Collectors.toSet()).contains(phase))
 						continue;
 					Trace obsTrace = ir.observedOf(id);
-					Trace synTrace = ir.syntheticOf(id);
+					
+//					Trace synTrace = ir.syntheticOf(id);
+					Trace synTrace = null;
+					try {
+						synTrace = irRef.syntheticOf(id);
+					} catch (IOException e) {
+						continue;
+					}
+					
 					Trace bornTrace = ir.bornOf(id, method, methodOrder);
 					
 					RealVector obsVector = obsTrace.getYVector();
