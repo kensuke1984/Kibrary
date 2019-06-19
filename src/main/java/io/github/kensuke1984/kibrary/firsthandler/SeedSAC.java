@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found in IRIS.
  *
  * @author Kensuke Konishi
- * @version 0.1.8.5
+ * @version 0.1.8.5.1
  */
 class SeedSAC implements Runnable {
 
@@ -339,7 +339,6 @@ class SeedSAC implements Runnable {
 
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPathStream) {
-                System.out.println(sacPath);
                 SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
                 // TODO 00 01 "" duplication detect
@@ -457,7 +456,6 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on pre-processing " + seedFile, e);
         }
-//        System.exit(0);//TODO
 
         try {
             modifySACs();
@@ -465,7 +463,6 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on modifying " + seedFile, e);
         }
-//        System.exit(0); //TODO
 
 
         // Use only BH[12ENZ]
@@ -486,8 +483,6 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on rotating " + seedFile, e);
         }
-//        System.out.println("489"); //TODO
-//        System.exit(0);
 
         // trash
         try {
@@ -496,7 +491,6 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on moving files to the trash box " + seedFile, e);
         }
-//        System.exit(0);
 
         problem = check();
 
