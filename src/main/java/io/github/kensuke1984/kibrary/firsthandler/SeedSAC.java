@@ -11,10 +11,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACUtil;
 import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -29,7 +26,7 @@ import java.util.regex.Matcher;
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found in IRIS.
  *
  * @author Kensuke Konishi
- * @version 0.1.8.4.1
+ * @version 0.1.8.5
  */
 class SeedSAC implements Runnable {
 
@@ -51,7 +48,7 @@ class SeedSAC implements Runnable {
      */
     private boolean cmpMod = true;
     /**
-     * seedfileが梱包するイベントのデータ
+     * GlobalCMTData for the event in the seedfile
      */
     private GlobalCMTData event;
     /**
@@ -67,11 +64,11 @@ class SeedSAC implements Runnable {
      */
     private GlobalCMTID id;
     /**
-     * Minimum epicentral distance of write sac files 震央距離の最小値
+     * [deg] Minimum epicentral distance of SAC files to be output
      */
     private double epicentralDistanceMin = 0;
     /**
-     * Maximum epicentral distance of write sac files 震央距離の最大値
+     * [deg] Maximum epicentral distance of SAC files to be output
      */
     private double epicentralDistanceMax = 180;
 
@@ -99,7 +96,7 @@ class SeedSAC implements Runnable {
     /**
      * seed file to extract
      *
-     * @param seedPath            解凍するseedファイル
+     * @param seedPath            SEED file to extract
      * @param outputDirectoryPath inside this folder, the seed file is extracted. If the folder
      *                            does not exist, it will be created.
      * @param id                  global cmt id
@@ -200,7 +197,7 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * イベントフォルダ内すべてのMODファイルの装置関数をdeconvolutionする。
+     * Deconvolute instrument function for all the MOD files in the event folder.
      * 対応するRESPのevalrespに失敗したMODファイルはNOSPECTRAMODへ
      */
     private void deconvolute() {
@@ -342,6 +339,7 @@ class SeedSAC implements Runnable {
 
         try (DirectoryStream<Path> sacPathStream = Files.newDirectoryStream(eventDir.toPath(), "*.SAC")) {
             for (Path sacPath : sacPathStream) {
+                System.out.println(sacPath);
                 SACModifier sm = new SACModifier(event, sacPath, byPDE);
 
                 // TODO 00 01 "" duplication detect
@@ -373,7 +371,7 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * SacファイルをE, N -> R, Tに回転する
+     * Rotate SACfile (E, N -> R, T)
      * <p>
      * eventDir内のすべての (.E, .N), (.1, .2)ファイルについて.R, .Tに回転する
      * <p>
@@ -429,18 +427,19 @@ class SeedSAC implements Runnable {
     }
 
     public static void main(String[] args) throws IOException {
-        Path root = Paths.get("/home/kensuke/secondDisk/Africa/seeds1/test/");
-        Path out = root.resolve("out");
-        Files.createDirectories(out);
-//        new SeedSAC(root.resolve("032598M.20180208174425.393908.seed"), out).run();
-        new SeedSAC(root.resolve("072097C.20180208174425.81706.seed"), out).run();
+        if (args.length != 1) throw new IllegalArgumentException("It works only for one seed file.");
+        Path seedPath = Paths.get(args[0]);
+        if (!Files.exists(seedPath)) throw new NoSuchFileException(seedPath + " does not exist.");
+        Path out = seedPath.resolveSibling("seedSAC" + Utilities.getTemporaryString());
+        new SeedSAC(seedPath, out).run();
+        System.out.println(seedPath + " is extracted in " + out);
     }
 
     @Override
     public void run() {
         if (!eventDirAlreadyExists) throw new RuntimeException("The condition is no good.");
         System.err.println("Opening " + seedFile + " in " + eventDir.getPath());
-        // run rdseed -q write -fRd
+        // run rdseed -q [output directory] -fRd
         try {
             seedFile.extract(eventDir.toPath());
         } catch (IOException e) {
@@ -458,6 +457,7 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on pre-processing " + seedFile, e);
         }
+//        System.exit(0);//TODO
 
         try {
             modifySACs();
@@ -465,6 +465,7 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on modifying " + seedFile, e);
         }
+//        System.exit(0); //TODO
 
 
         // Use only BH[12ENZ]
@@ -485,6 +486,8 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on rotating " + seedFile, e);
         }
+//        System.out.println("489"); //TODO
+//        System.exit(0);
 
         // trash
         try {
@@ -493,6 +496,7 @@ class SeedSAC implements Runnable {
             e.printStackTrace();
             throw new RuntimeException("Error on moving files to the trash box " + seedFile, e);
         }
+//        System.exit(0);
 
         problem = check();
 
