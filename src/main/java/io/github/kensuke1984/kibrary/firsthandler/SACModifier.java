@@ -13,10 +13,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 /**
- * {@link SeedSAC}内で行うSacの修正
+ * Modification of SAC when running {@link SeedSAC}
  *
  * @author Kensuke Konishi
- * @version 0.1.8.3
+ * @version 0.1.8.4
  */
 class SACModifier {
 
@@ -28,12 +28,14 @@ class SACModifier {
     private final GlobalCMTData EVENT;
     private final Path SAC_PATH;
     private Map<SACHeaderEnum, String> headerMap;
+
     /**
      * extract with PDE (true), CMT (false)
      */
     private final boolean BYPDE;
 
     private final Path MODIFIED_PATH;
+
     /**
      * sac start time when this instance is made
      */
@@ -55,7 +57,7 @@ class SACModifier {
     }
 
     /**
-     * Headerをチェックする CMPINC、khole
+     * Checks of headers CMPINC, khole
      *
      * @return if the header is valid
      */
@@ -69,7 +71,7 @@ class SACModifier {
 
         // check "khole" value
         String khole = headerMap.get(SACHeaderEnum.KHOLE);
-        return khole.isEmpty() || khole.equals("00") || khole.equals("01");
+        return khole.isEmpty() || khole.equals("00") || khole.equals("01") || khole.equals("02");
     }
 
     /**
@@ -129,18 +131,16 @@ class SACModifier {
         long eInMillis = Math.round(e * 1000);
         LocalDateTime eventTime = BYPDE ? EVENT.getPDETime() : EVENT.getCMTTime();
 
-        // sacの読み込み
+        // read sacdata
         double[] sacdata = SACUtil.readSACData(MODIFIED_PATH);
 
         // イベント時刻と合わせる
         // イベント時刻とSAC時刻の差
-        // Sac start time in millisec ー event time in millisec
+        // Sac start time in millisec - event time in millisec
         long timeGapInMillis = eventTime.until(initialSacStartTime, ChronoUnit.MILLIS);
 
-        // もしイベント時刻よりSac時刻がおそい場合
-        // イベント時刻から sacの始まりまでを補完する
-        // if sac startTime is after event time, then interpolate gap.
-        // if the gap is bigger than tapertime then skip
+        // if the sac startTime is after the event time, then interpolate the gap.
+        // if the gap is bigger than tapertime then the SAC file is skipped.
         // if (sacStartTime.after(eventTime)) {
         if (taperTime < timeGapInMillis) {
             System.err.println(MODIFIED_PATH + " starts too late");
@@ -153,19 +153,16 @@ class SACModifier {
             // 時刻差のステップ数
             int gapPoint = (int) (timeGapInMillis / deltaInMillis);
 
-            // taping をかけるポイント数
+            // Number of points for the taper
             int taperPoint = (int) (taperTime / deltaInMillis);
 
-            // taperをかける
+            // taper
             for (int i = 0; i < taperPoint; i++)
-                sacdata[i] *= Math.sin(i / taperPoint * Math.PI / 2.0);
+                sacdata[i] *= Math.sin(i * Math.PI / taperPoint / 2.0);
 
-            // 0で補完する
+            // 0で補完
             double[] neosacdata = new double[sacdata.length + gapPoint];
-            // gapの部分は０で
-            // for (int i = 0; i < gapPoint; i++)
-            // neosacdata[i] = 0;
-            // taperをかけたsacdataをくっつける
+            // gapの部分は0でtaperをかけたsacdataをくっつける
             System.arraycopy(sacdata, 0, neosacdata, gapPoint, neosacdata.length - gapPoint);
 
             int npts = neosacdata.length;
@@ -192,7 +189,6 @@ class SACModifier {
         headerMap.put(SACHeaderEnum.EVDP, Double.toString(6371 - sourceLocation.getR()));
         headerMap.put(SACHeaderEnum.LOVROK, Boolean.toString(true));
         SACUtil.writeSAC(MODIFIED_PATH, headerMap, sacdata);
-
         return true;
     }
 
@@ -203,13 +199,13 @@ class SACModifier {
      */
     boolean checkEpicentralDistance(double min, double max) {
         double epicentralDistance = Double.parseDouble(headerMap.get(SACHeaderEnum.GCARC));
-        return min <= epicentralDistance && max >= epicentralDistance;
+        return min <= epicentralDistance && epicentralDistance <= max;
     }
 
     /**
      * Rebuild by SAC.
      *
-     * @throws IOException          if any
+     * @throws IOException if any
      */
     void rebuild() throws IOException {
 
