@@ -48,7 +48,7 @@ import java.util.stream.IntStream;
  * network in one event</b>
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1
+ * @version 0.2.2.1.1
  */
 public class ObservedSyntheticDatasetMaker implements Operation {
 
@@ -133,7 +133,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
             pw.println("#obsPath");
             pw.println("##Path of a root folder containing synthetic dataset (.)");
             pw.println("#synPath");
-            pw.println("##boolean convolulte (true)");
+            pw.println("##boolean convolute (true)");
             pw.println("#convolute");
             pw.println("##boolean timeCorrection (false)");
             pw.println("#timeCorrection");
@@ -258,7 +258,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
             execs.shutdown();
             while (!execs.isTerminated()) Thread.sleep(1000);
             System.err.println("\rCreating finished.");
-            System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are write.");
+            System.err.println(numberOfPairs.get() + " pairs of observed and synthetic waveforms are wrote.");
         } catch (Exception e) {
             e.printStackTrace();
         }
