@@ -24,7 +24,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
  * @version 0.0.1.3
  *
  */
-public final class FujiConversion {
+public final class VSConversion {
 
 	private PolynomialStructure structure;
 
@@ -32,14 +32,14 @@ public final class FujiConversion {
 	 * @param structure
 	 *            structure
 	 */
-	public FujiConversion(PolynomialStructure structure) {
+	public VSConversion(PolynomialStructure structure) {
 		this.structure = structure == null ? PolynomialStructure.PREM : structure;
 	}
 
 	/**
 	 * Conversion with respect to PREM
 	 */
-	public FujiConversion() {
+	public VSConversion() {
 		this(null);
 	}
 
@@ -62,44 +62,19 @@ public final class FujiConversion {
 		Location sourceLocation = spectrum.getSourceLocation();
 		String sourceID = spectrum.getSourceID();
 		double[] bodyR = spectrum.getBodyR();
-		double domega = 1. / spectrum.tlen() * 2. * Math.PI;
-		double omega0 = 1. * 2. * Math.PI; //Hz
-//		double omega0 = spectrum.tlen(); // TODO
 		for (int i = 0; i < spectrum.nbody(); i++) {
 			double r = bodyR[i];
-			double q = 1 / structure.getQmuAt(r);
-			double mu0 = structure.computeMu(r);
+			double fact = 2. * structure.getRhoAt(r) * structure.getVshAt(r);
 			SpcBody body = spectrum.getSpcBodyList().get(i);
 			SpcBody newBody = new SpcBody(3, np);
 			for (int ip = 0; ip < np + 1; ip++) {
-				Complex[] uQ = new Complex[body.getNumberOfComponent()];
-				double omegaOverOmega0 = (ip + 1) * domega / omega0;
+				Complex[] uIm = new Complex[body.getNumberOfComponent()];
 				for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
 					Complex u = body.getSpcComponent(SACComponent.getComponent(iComponent + 1))
 							.getValueInFrequencyDomain()[ip];
-					
-					
-//					double log = 2 * FastMath.log(omegaOverOmega0) / Math.PI;
-//					double dmudmu0Real = (1 + q * log);
-//					Complex dmudmu0 = Complex.valueOf(dmudmu0Real, dmudmu0Real * q);
-//					Complex dmudq = Complex.valueOf(mu0 * log, mu0 * (1 + 2 * log * q));
-					
-//					partials with respect to large Q
-//					uQ[iComponent] = u.multiply(-q * q).multiply(dmudq).divide(dmudmu0);
-					
-					
-					double log = FastMath.log(omegaOverOmega0);
-					Complex dmudq = new Complex(2. / Math.PI * log, 1.)
-							.multiply(new Complex(1. + q / Math.PI * log, q / 2.))
-							.multiply(mu0);
-					Complex tmp = new Complex(1. + q / Math.PI * log, q / 2.);
-					Complex dmudmu0 = tmp.multiply(tmp);
-					
-					
-//					partials with respect to small q
-					uQ[iComponent] = u.multiply(dmudq).divide(dmudmu0);
+					uIm[iComponent] = u.multiply(fact);
 				}
-				newBody.add(ip, uQ);
+				newBody.add(ip, uIm);
 			}
 			spcBodyList.add(newBody);
 		}
@@ -127,7 +102,7 @@ public final class FujiConversion {
 
 			@Override
 			public SpcFileType getSpcFileType() {
-				return SpcFileType.PARQ;
+				return SpcFileType.PARVS;
 			}
 
 			@Override

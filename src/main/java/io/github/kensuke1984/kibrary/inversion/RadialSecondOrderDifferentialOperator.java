@@ -1,5 +1,9 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,9 +26,20 @@ public class RadialSecondOrderDifferentialOperator {
 	private int[][] indexNonZeroElements;
 	private double[][] valueNonZeroElements;
 	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	public static void main(String[] args) throws IOException {
+		List<UnknownParameter> parameters = UnknownParameterFile.read(Paths.get(
+				"/work/anselme/CA_ANEL_NEW/oneDPartialPREM/checkerboard/inversion/unknowns_PAR2_PARQ.inf"));
+		List<PartialType> types = Arrays.stream(new PartialType[] {PartialType.PAR2, PartialType.PARQ}).collect(Collectors.toList());
+		List<Double> coeffs = Arrays.stream(new Double[] {1., 1.}).collect(Collectors.toList());
+		
+		RadialSecondOrderDifferentialOperator op = new RadialSecondOrderDifferentialOperator(parameters, types, coeffs);
+		RealMatrix dtd = op.getD2TD2();
+		for (int i = 0; i < dtd.getRowDimension(); i++) {
+			for (int j = 0; j < dtd.getColumnDimension(); j++) {
+				System.out.printf("%.0f ", dtd.getEntry(i, j))	;
+			}
+			System.out.println();
+		}
 	}
 	
 	public RadialSecondOrderDifferentialOperator(List<UnknownParameter> parameters, List<PartialType> types, List<Double> coeffs) {
@@ -56,8 +71,11 @@ public class RadialSecondOrderDifferentialOperator {
 //			D2.setEntry(c, c+1, -2*dr2 * coeff);
 //			D2.setEntry(c, c+2, dr2 * coeff);
 			
-			D2.setEntry(c, c, -2*dr2 * coeff);
-			D2.setEntry(c, c+1, dr2 * coeff);
+//			D2.setEntry(c, c, -2*dr2 * coeff);
+//			D2.setEntry(c, c+1, dr2 * coeff);
+			
+			D2.setEntry(c, c, 0.);
+			D2.setEntry(c, c+1, 0.);
 			
 			for (int i = 1; i < m-1; i++) {
 				indexNonZeroElements[i + c] = new int[] {i+c-1, i+c, i+c+1};
@@ -72,8 +90,11 @@ public class RadialSecondOrderDifferentialOperator {
 //			D2.setEntry(c+m-1, m+c-2, -2*dr2 * coeff);
 //			D2.setEntry(c+m-1, m+c-1, dr2 * coeff);
 			
-			D2.setEntry(c+m-1, m+c-2, dr2 * coeff);
-			D2.setEntry(c+m-1, m+c-1, -2*dr2 * coeff);
+//			D2.setEntry(c+m-1, m+c-2, dr2 * coeff);
+//			D2.setEntry(c+m-1, m+c-1, -2*dr2 * coeff);
+			
+			D2.setEntry(c+m-1, m+c-2, 0.);
+			D2.setEntry(c+m-1, m+c-1, 0.);
 			
 			c += m;
 		}

@@ -34,7 +34,7 @@ public class PartialVisual {
 		}
 		
 		for (PartialID partial : partials) {
-			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211327A")))
+			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211534A")) && !partial.getStation().getStationName().equals("G11A"))
 				continue;
 			
 			Location loc = partial.getPerturbationLocation();

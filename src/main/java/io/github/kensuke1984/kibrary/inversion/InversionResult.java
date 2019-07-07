@@ -443,16 +443,16 @@ public class InversionResult {
 	public Trace syntheticOf(BasicID id) throws IOException {
 		Path txtPath = rootPath.resolve("trace/" + getTxtName(id));
 		
-		List<Path> tmplist;
-		try (Stream<Path> stream = Files.list(rootPath.resolve("trace/" + id.getGlobalCMTID()))) {
-			tmplist = stream.filter(p -> {
-				String name = p.getFileName().toString();
-				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
-			}).collect(Collectors.toList());
-		}
-		if (tmplist.size() != 1)
-			System.err.println("Found no or more than 1 trace for " + id);
-		txtPath = tmplist.get(0);
+//		List<Path> tmplist;
+//		try (Stream<Path> stream = Files.list(rootPath.resolve("trace/" + id.getGlobalCMTID()))) {
+//			tmplist = stream.filter(p -> {
+//				String name = p.getFileName().toString();
+//				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+//			}).collect(Collectors.toList());
+//		}
+//		if (tmplist.size() != 1)
+//			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
+//		txtPath = tmplist.get(0);
 		
 		List<String> lines = Files.readAllLines(txtPath);
 		int npts = lines.size() - 1;

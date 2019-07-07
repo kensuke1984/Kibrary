@@ -136,7 +136,7 @@ public class VelocityField {
 			trs = new TriangleRadialSpline(nNewParameter, originalUnknowns);
 		}
 		Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
-		if (partialTypes.contains(PartialType.PAR2) || partialTypes.contains(PartialType.PARQ)) {
+		if (partialTypes.contains(PartialType.PAR2) || partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVS)) {
 			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocityInitialModel" + ".txt");
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
@@ -159,11 +159,21 @@ public class VelocityField {
 					double[][] Qs = null;
 					double[][] zeroQs = null;
 					if (trs == null) {
-						velocities = toVelocity(answerMap, unknowns, structure, 1.);
-						zeroVelocities = toVelocity(zeroMap, unknowns, structure, 1.);
+						if (partialTypes.contains(PartialType.PARVS)) {
+							velocities = toVsFromC1C2(answerMap, unknowns, structure);
+							zeroVelocities = toVsFromC1C2(zeroMap, unknowns, structure);
+						}
+						else {
+							velocities = toVelocity(answerMap, unknowns, structure, 1.);
+							zeroVelocities = toVelocity(zeroMap, unknowns, structure, 1.);
+						}
 						if (partialTypes.contains(PartialType.PARQ)) {
 							Qs = toQ(answerMap, unknowns, structure, amplifyPerturbation);
 							zeroQs = toQ(zeroMap, unknowns, structure, amplifyPerturbation);
+						}
+						else if (partialTypes.contains(PartialType.PARVSIM) ) {
+							Qs = toQFromC1C2(answerMap, unknowns, structure);
+							zeroQs = toQFromC1C2(zeroMap, unknowns, structure);
 						}
 					}
 					else {
@@ -178,7 +188,7 @@ public class VelocityField {
 						PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						PrintWriter pwQ = null;
 						PrintWriter pwIteration = new PrintWriter(Files.newBufferedWriter(outpathIteration, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-						if (partialTypes.contains(PartialType.PARQ)) {
+						if (partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVSIM)) {
 							pwQ = new PrintWriter(Files.newBufferedWriter(outpathQ, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 							pwQ.println("#perturbationR final_Q intial_Q");
 						}
@@ -191,7 +201,7 @@ public class VelocityField {
 								pwIteration.println((6371. - velocities[j][1] - 10.) + " " + structure.getVphAt(velocities[j][1] + 10.) 
 										+ " " + velocities[j][0] + " " + structure.getRhoAt(velocities[j][1] + 10.));
 							}
-							if (partialTypes.contains(PartialType.PARQ)) {
+							if (partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVSIM)) {
 								for (int j = 0; j < Qs.length; j++) {
 										pwQ.println(Qs[j][1] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
 										pwQ.println(Qs[j][2] +  " " + Qs[j][0] + " " + zeroQs[j][0]);
@@ -209,7 +219,7 @@ public class VelocityField {
 						}
 						
 						pw.close();
-						if (partialTypes.contains(PartialType.PARQ))
+						if (partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVSIM))
 							pwQ.close();
 						pwIteration.close();
 					} catch (IOException e) {
@@ -299,6 +309,49 @@ public class VelocityField {
 		return velocities;
 	}
 	
+	private static double[][] toQFromC1C2(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
+		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARVSIM))
+				.collect(Collectors.toList());
+		int n = parameterForStructure.size();
+		double[][] Qs = new double[n][];
+		for (int i = 0; i < n; i++) {
+			Qs[i] = new double[3];
+			UnknownParameter mC2 = parameterForStructure.get(i);
+			UnknownParameter mC1 = parameterOrder.stream()
+					.filter(m -> m.getPartialType().equals(PartialType.PARVS) && m.getLocation().getR() == mC2.getLocation().getR())
+					.findFirst().get();
+			double rmin = 0;
+			double rmax = 0;
+			rmin = mC2.getLocation().getR() - mC2.getWeighting() / 2.;
+			rmax = mC2.getLocation().getR() + mC2.getWeighting() / 2.;
+			Qs[i][0] = getSimpsonQFromC1C2(rmin, rmax, structure, answerMap.get(mC1), answerMap.get(mC2));
+			Qs[i][1] = rmin;
+			Qs[i][2] = rmax;
+		}
+		return Qs;
+	}
+	
+	private static double[][] toVsFromC1C2(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
+		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARVS))
+				.collect(Collectors.toList());
+		int n = parameterForStructure.size();
+		double[][] Qs = new double[n][];
+		for (int i = 0; i < n; i++) {
+			Qs[i] = new double[3];
+			UnknownParameter mC1 = parameterForStructure.get(i);
+			double rmin = 0;
+			double rmax = 0;
+			rmin = mC1.getLocation().getR() - mC1.getWeighting() / 2.;
+			rmax = mC1.getLocation().getR() + mC1.getWeighting() / 2.;
+			Qs[i][0] = getSimpsonVS(rmin, rmax, structure, answerMap.get(mC1));
+			Qs[i][1] = rmin;
+			Qs[i][2] = rmax;
+		}
+		return Qs;
+	}
+	
 	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure structure) {
 		int n = 200;
 		double[][] velocities = new double[n][];
@@ -344,7 +397,7 @@ public class VelocityField {
 		return Qs;
 	}
 	
-	public static double getSimpsonRho (double r1, double r2, PolynomialStructure structure) {
+	public static double getSimpsonRho(double r1, double r2, PolynomialStructure structure) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -398,6 +451,40 @@ public class VelocityField {
 			double Q_a = structure.getQmuAt(a) -1 * structure.getQmuAt(a) * structure.getQmuAt(a) * dq * amplifyPerturbation;
 			double Q_ab = structure.getQmuAt(ab) -1 * structure.getQmuAt(ab) * structure.getQmuAt(ab) * dq * amplifyPerturbation;
 			double Q_b = structure.getQmuAt(b) -1 * structure.getQmuAt(b) * structure.getQmuAt(b) * dq * amplifyPerturbation;
+			res += (b - a) / 6. * (Q_a + 4 * Q_ab + Q_b);
+		}
+		
+		return res / vol;
+	}
+	
+	public static double getSimpsonVS (double r1, double r2, PolynomialStructure structure, double dc1) {
+		double res = 0;
+		double dr = (r2 - r1) / 40.;
+		double vol = r2 - r1;
+		for (int i=0; i < 40; i++) {
+			double a = r1 + i * dr;
+			double b = r1 + (i + 1) * dr;
+			double ab = (a + b) / 2.;
+			double Q_a = structure.getVshAt(a) + dc1;
+			double Q_ab = structure.getVshAt(ab) + dc1;
+			double Q_b = structure.getVshAt(b) + dc1;
+			res += (b - a) / 6. * (Q_a + 4 * Q_ab + Q_b);
+		}
+		
+		return res / vol;
+	}
+	
+	public static double getSimpsonQFromC1C2(double r1, double r2, PolynomialStructure structure, double dc1, double dc2) {
+		double res = 0;
+		double dr = (r2 - r1) / 40.;
+		double vol = r2 - r1;
+		for (int i=0; i < 40; i++) {
+			double a = r1 + i * dr;
+			double b = r1 + (i + 1) * dr;
+			double ab = (a + b) / 2.;
+			double Q_a = structure.getQmuAt(a) * (1 + 2 * dc2 * structure.getQmuAt(a) / structure.getVshAt(a) - dc1 / structure.getVshAt(a));
+			double Q_ab = structure.getQmuAt(ab) * (1 + 2 * dc2 * structure.getQmuAt(ab) / structure.getVshAt(ab) - dc1 / structure.getVshAt(ab));;
+			double Q_b = structure.getQmuAt(b) * (1 + 2 * dc2 * structure.getQmuAt(b) / structure.getVshAt(b) - dc1 / structure.getVshAt(b));;
 			res += (b - a) / 6. * (Q_a + 4 * Q_ab + Q_b);
 		}
 		

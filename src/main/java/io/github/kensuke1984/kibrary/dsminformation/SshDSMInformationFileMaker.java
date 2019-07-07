@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -55,6 +57,8 @@ public class SshDSMInformationFileMaker implements Operation {
 	 * work folder
 	 */
 	private Path workPath;
+	
+	private Path timewindowInformationPath;
 
 	private void set() {
 		checkAndPutDefaults();
@@ -72,6 +76,8 @@ public class SshDSMInformationFileMaker implements Operation {
 			structurePath = Paths.get(property.getProperty("structureFile"));
 		perturbationR = Arrays.stream(property.getProperty("perturbationR").split("\\s+"))
 				.mapToDouble(Double::parseDouble).toArray();
+		
+		timewindowInformationPath = Paths.get(property.getProperty("timewindowInformationPath"));
 	}
 
 	private double[] perturbationR;
@@ -135,6 +141,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			pw.println("#np");
 			pw.println("##Depths for computations, must be defined");
 			pw.println("#perturbationR 3500 3600");
+			pw.println("#timewindowInformationPath");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -146,6 +153,11 @@ public class SshDSMInformationFileMaker implements Operation {
 
 	@Override
 	public void run() throws Exception {
+		Set<TimewindowInformation> tmpwindows = null;
+		if (timewindowInformationPath != null)
+			tmpwindows = TimewindowInformationFile.read(timewindowInformationPath);
+		final Set<TimewindowInformation> timewindows = tmpwindows;
+		
 		Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
 		PolynomialStructure ps = PolynomialStructure.PREM;
 		if (structurePath.toString().trim().toUpperCase().equals("PREM")) {
@@ -174,6 +186,12 @@ public class SshDSMInformationFileMaker implements Operation {
 							return null;
 						}
 					}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
+			
+			//select stations in timewindows
+			if (timewindowInformationPath != null)
+				stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getStation().equals(sta) 
+						&& tw.getGlobalCMTID().equals(eventDir.getGlobalCMTID())).count() == 0);
+			
 			if (stations.isEmpty())
 				continue;
 			int numberOfStation = (int) stations.stream().map(Station::getStationName).count();

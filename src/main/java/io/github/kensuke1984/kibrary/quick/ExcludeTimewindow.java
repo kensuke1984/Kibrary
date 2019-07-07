@@ -35,6 +35,8 @@ public class ExcludeTimewindow {
 //		Path timewindowASCIIFile = Paths.get(args[1]);
 		Path newTimewindowFile = Paths.get("timewindow" + Utilities.getTemporaryString() + ".dat");
 		
+//		Path timewindowFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s/timewindow_PPcP.dat");
+		
 		String tmpS = Utilities.getTemporaryString();
 		Path newTimewindowFile1 = Paths.get("timewindow1_" + tmpS + ".dat");
 		Path newTimewindowFile2 = Paths.get("timewindow2_" + tmpS + ".dat");
@@ -110,7 +112,7 @@ public class ExcludeTimewindow {
 //								return false;
 //							if (tw.getComponent().equals(SACComponent.R))
 //								return false;
-							if (distance < 65)
+							if (distance < 60)
 								return false;
 							else 
 								return true;
@@ -167,7 +169,7 @@ public class ExcludeTimewindow {
 //					.collect(Collectors.toSet());
 //				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
 //				
-//	//			TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 //				
 				
 				
@@ -217,11 +219,27 @@ public class ExcludeTimewindow {
 //						}
 //					}
 //				}
-				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
+//				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 				
 //				TimewindowInformationFile.write(newTimewindows1, newTimewindowFile1);
 //				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile2);
 				
+				//divide one event per azimuth
+//				Set<TimewindowInformation> info1 = new HashSet<>();
+//				Set<TimewindowInformation> info2 = new HashSet<>();
+//				for (TimewindowInformation window : timewindows) {
+//					if (!window.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")))
+//						continue;
+//					double azimuth = Math.toDegrees(window.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(window.getStation().getPosition()));
+//					if (azimuth >= 335 && azimuth < 340)
+//						info1.add(window);
+//					else if (azimuth >= 340 && azimuth < 345)
+//						info2.add(window);
+//				}
+//				Path outwindow1 = Paths.get(timewindowFile.toString().replace(".dat", "_az335.dat"));
+//				Path outwindow2 = Paths.get(timewindowFile.toString().replace(".dat", "_az340.dat"));
+//				TimewindowInformationFile.write(info1, outwindow1);
+//				TimewindowInformationFile.write(info2, outwindow2);
 			}
 		} catch (IOException e) {
 			System.err.format("IOException: %s%n", e);

@@ -29,6 +29,7 @@ import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
@@ -41,6 +42,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -68,7 +70,7 @@ import io.github.kensuke1984.kibrary.util.spc.VSIMConversion;
  * @author Kensuke Konishi
  * 
  */
-public class Partial1DDatasetMaker_v2 implements Operation {
+public class Partial1DEnvelopeMaker implements Operation {
 	private boolean backward;
 
 	private Path psvPath;
@@ -77,9 +79,9 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 	
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
-				.get(Partial1DDatasetMaker_v2.class.getName() + Utilities.getTemporaryString() + ".properties");
+				.get(Partial1DEnvelopeMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
-			pw.println("manhattan Partial1DDatasetMaker");
+			pw.println("manhattan Partial1DEnvelopeMaker");
 			pw.println("##Path of a working directory (.)");
 			pw.println("#workPath");
 			pw.println("##SacComponents to be used(Z R T)");
@@ -89,6 +91,12 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			pw.println("#psvPath");
 			pw.println("##Path of an SH folder (.)");
 			pw.println("#shPath");
+			pw.println("#waveformIDPath");
+			pw.println("#waveformPath");
+			pw.println("#envelopeIDPath");
+			pw.println("#envelopePath");
+			pw.println("#hyIDPath");
+			pw.println("#hyPath");
 			pw.println("##String if it is PREM, spector files are found in [event folder]/PREM (PREM)");
 			pw.println("#modelName");
 			pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
@@ -160,6 +168,18 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 	private int filterNp;
 	
+	private Path waveformIDPath;
+	
+	private Path waveformPath;
+	
+	private Path envelopeIDPath;
+	
+	private Path envelopePath;
+	
+	private Path hyIDPath;
+	
+	private Path hyPath;
+	
 	/**
 	 * parameterのセット
 	 */
@@ -218,6 +238,15 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		if (shPath == null && psvPath == null)
 			throw new RuntimeException("None of psv or sh paths are defined");
+		
+		waveformIDPath = getPath("waveformIDPath");
+		waveformPath = getPath("waveformPath");
+	
+		envelopeIDPath = getPath("envelopeIDPath");
+		envelopePath = getPath("envelopePath");
+		
+		hyIDPath = getPath("hyIDPath");
+		hyPath = getPath("hyPath");
 	}
 
 	/**
@@ -419,7 +448,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		private SourceTimeFunction computeSourceTimeFunction() {
 			GlobalCMTID id = eventDir.getGlobalCMTID();
 			double halfDuration = id.getEvent().getHalfDuration();
-			switch (Partial1DDatasetMaker_v2.this.sourceTimeFunction) {
+			switch (Partial1DEnvelopeMaker.this.sourceTimeFunction) {
 			case -1:
 				return userSourceTimeFunctions.get(id);
 			case 0:
@@ -435,12 +464,24 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 
 		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t, double bodyR,
 				PartialType partialType, double[] periodRange) {
-
+			
+			HilbertTransform hilbert = new HilbertTransform(filteredUt);
+			double[] partialHy = hilbert.getHy();
+			
+			double[] waveformData = findWaveformID(t).getData();
+			double[] envelope = findEnvelopeID(t).getData();
+			double[] waveformHy = findHyID(t).getData();
+			
 			double[] cutU = sampleOutput(filteredUt, t);
+			double[] cutHy = sampleOutput(partialHy, t);
+			
+			double[] cutPartialEnvelope = new double[cutU.length];
+			for (int i = 0; i < cutU.length; i++)
+				cutPartialEnvelope[i] = 1. / envelope[i] * (waveformData[i] * cutU[i] + waveformHy[i] * cutHy[i]);
 			
 			PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
 					periodRange[0], periodRange[1], t.getPhases(), 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
-					cutU);
+					cutPartialEnvelope);
 		
 			try {
 				partialDataWriter.addPartialID(pid);
@@ -448,6 +489,27 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+		
+		private BasicID findWaveformID(TimewindowInformation t) {
+			return Arrays.stream(waveformIDs).filter(id -> id.getStation().equals(t.getStation())
+					&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
+					&& t.getComponent().equals(id.getSacComponent()))
+				.findAny().get();
+		}
+		
+		private BasicID findEnvelopeID(TimewindowInformation t) {
+			return Arrays.stream(envelopeIDs).filter(id -> id.getStation().equals(t.getStation())
+					&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
+					&& t.getComponent().equals(id.getSacComponent()))
+				.findAny().get();
+		}
+		
+		private BasicID findHyID(TimewindowInformation t) {
+			return Arrays.stream(hyIDs).filter(id -> id.getStation().equals(t.getStation())
+					&& id.getGlobalCMTID().equals(t.getGlobalCMTID()) && Math.abs(id.getStartTime() - t.getStartTime()) < 1.
+					&& t.getComponent().equals(id.getSacComponent()))
+				.findAny().get();
 		}
 
 		private void process(DSMOutput spectrum) {
@@ -516,7 +578,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				for (int k = 0; k < spectrum.nbody(); k++) {
 					double bodyR = spectrum.getBodyR()[k];
 					boolean exists = false;
-					for (double r : Partial1DDatasetMaker_v2.this.bodyR)
+					for (double r : Partial1DEnvelopeMaker.this.bodyR)
 						if (Utilities.equalWithinEpsilon(r, bodyR, eps))
 							exists = true;
 					if (!exists)
@@ -535,7 +597,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 					for (int k = 0; k < spectrum.nbody(); k++) {
 						double bodyR = spectrum.getBodyR()[k];
 						boolean exists = false;
-						for (double r : Partial1DDatasetMaker_v2.this.bodyR)
+						for (double r : Partial1DEnvelopeMaker.this.bodyR)
 							if (Utilities.equalWithinEpsilon(r, bodyR, eps))
 								exists = true;
 						if (!exists)
@@ -554,7 +616,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 					for (int k = 0; k < spectrum.nbody(); k++) {
 						double bodyR = spectrum.getBodyR()[k];
 						boolean exists = false;
-						for (double r : Partial1DDatasetMaker_v2.this.bodyR)
+						for (double r : Partial1DEnvelopeMaker.this.bodyR)
 							if (Utilities.equalWithinEpsilon(r, bodyR, eps))
 								exists = true;
 						if (!exists)
@@ -636,7 +698,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 					if (shspectrum.getBodyR()[k] != bodyR)
 						throw new RuntimeException("sh and psv bodyR differ " + shspectrum.getBodyR()[k] + " " + bodyR);
 					boolean exists = false;
-					for (double r : Partial1DDatasetMaker_v2.this.bodyR)
+					for (double r : Partial1DEnvelopeMaker.this.bodyR)
 						if (Utilities.equalWithinEpsilon(r, bodyR, eps))
 							exists = true;
 					if (!exists)
@@ -664,7 +726,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 					for (int k = 0; k < spectrum.nbody(); k++) {
 						double bodyR = spectrum.getBodyR()[k];
 						boolean exists = false;
-						for (double r : Partial1DDatasetMaker_v2.this.bodyR)
+						for (double r : Partial1DEnvelopeMaker.this.bodyR)
 							if (Utilities.equalWithinEpsilon(r, bodyR, eps))
 								exists = true;
 						if (!exists)
@@ -860,7 +922,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		};
 	}
 
-	public Partial1DDatasetMaker_v2(Properties property) throws IOException {
+	public Partial1DEnvelopeMaker(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 	}
@@ -914,7 +976,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		Partial1DDatasetMaker_v2 pdm = new Partial1DDatasetMaker_v2(Property.parse(args));
+		Partial1DEnvelopeMaker pdm = new Partial1DEnvelopeMaker(Property.parse(args));
 
 		if (!Files.exists(pdm.timewindowPath))
 			throw new NoSuchFileException(pdm.timewindowPath.toString());
@@ -937,14 +999,27 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			idSet.forEach(id -> perturbationLocationSet.add(id.getEvent().getCmtLocation()));
 		}
 	}
+	
+	private BasicID[] waveformIDs;
+	
+	private BasicID[] envelopeIDs;
+	
+	private BasicID[] hyIDs;
 
 	@Override
 	public void run() throws IOException {
 		String dateString = Utilities.getTemporaryString();
+		
+		waveformIDs = Arrays.stream(BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath)).filter(id -> id.getWaveformType().equals(WaveformType.SYN))
+				.collect(Collectors.toList()).toArray(new BasicID[0]);
+		envelopeIDs = Arrays.stream(BasicIDFile.readBasicIDandDataFile(envelopeIDPath, envelopePath)).filter(id -> id.getWaveformType().equals(WaveformType.SYN))
+				.collect(Collectors.toList()).toArray(new BasicID[0]);
+		hyIDs = Arrays.stream(BasicIDFile.readBasicIDandDataFile(hyIDPath, hyPath)).filter(id -> id.getWaveformType().equals(WaveformType.SYN))
+				.collect(Collectors.toList()).toArray(new BasicID[0]);
 
 		logPath = workPath.resolve("partial1D" + dateString + ".log");
 
-		System.err.println(Partial1DDatasetMaker_v2.class.getName() + " is going.");
+		System.err.println(Partial1DEnvelopeMaker.class.getName() + " is going.");
 		long startTime = System.nanoTime();
 
 		// pdm.createStreams();
@@ -1051,6 +1126,15 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				for (PartialID par0 : par0list) {
 					Phases phases = new Phases(par0.getPhases());
 					
+					PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
+							&& par.getStation().equals(par0.getStation())
+							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+							&& par.getMinPeriod() == par0.getMinPeriod()
+							&& par.getMaxPeriod() == par0.getMaxPeriod()
+							&& new Phases(par.getPhases()).equals(phases)
+							&& par.getSacComponent().equals(par0.getSacComponent()))
+							.findFirst().get();
+					
 					PartialID par2 = par2list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
 							&& par.getStation().equals(par0.getStation())
 							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
@@ -1061,66 +1145,27 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 							.findFirst().get();
 					
 					double[] data = par0.getData();
-					double[] data1 = new double[data.length];
+					double[] data1 = par1.getData();
 					double[] data2 = par2.getData();
 					
-					if (!par0.getSacComponent().equals(SACComponent.T)) {
-						PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
-								&& par.getStation().equals(par0.getStation())
-								&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
-								&& par.getMinPeriod() == par0.getMinPeriod()
-								&& par.getMaxPeriod() == par0.getMaxPeriod()
-								&& new Phases(par.getPhases()).equals(phases)
-								&& par.getSacComponent().equals(par0.getSacComponent()))
-								.findFirst().get();
-						data1 = par1.getData();
-					}
-					
 					double r = par0.getPerturbationLocation().getR();
-					
-					double mu = structure.computeMu(r);
-					double M = structure.computeLambda(r) + 2 * mu;
-					double rho = structure.getRhoAt(r);
-					
-					double[] dataG = new double[data.length];
-					double[] dataM = data1;
-					double[] dataRho = new double[data.length];
-					double[] dataVp = new double[data.length];
-					double[] dataVs = new double[data.length];
+					double vs2 = structure.getVshAt(r);
+					vs2 *= vs2;
+					double vp2 = structure.getVphAt(r);
+					vp2 *= vp2;
 					
 					for (int i = 0; i < data.length; i++) {
-						dataM[i] = M * data1[i];
-						dataG[i] = mu * (data2[i] - 2 * data1[i]);
-						dataVs[i] = 2 * (dataG[i] - rho * data[i]);
-						dataVp[i] = 2 * (dataM[i] - rho * data[i]);
-						dataRho[i] = dataG[i] + dataM[i] + rho * data[i];
+						data[i] = data[i] + vs2 * data2[i] + 0.5 * (vp2 - vs2) * data1[i];
 					}
 					
-					PartialID partialRho = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+					PartialID partial00 = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
 							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, dataRho);
+							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, data);
 					
-					PartialID partialVp = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
-							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVP, dataVp);
-					
-					PartialID partialVs = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
-							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVS, dataVs);
-					
-					PartialID partialM = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
-							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARM, dataM);
-					
-					PartialID partialG = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
-							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARG, dataG);
-					
-					pdw.addPartialID(partialM);
-					pdw.addPartialID(partialG);
-					pdw.addPartialID(partialRho);
-					pdw.addPartialID(partialVs);
-					pdw.addPartialID(partialVp);
+					pdw.addPartialID(partial00);
+					pdw.addPartialID(par0);
+					pdw.addPartialID(par1);
+					pdw.addPartialID(par2);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -1128,7 +1173,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		}
 		
 		System.err.println();
-		String endLine = Partial1DDatasetMaker_v2.class.getName() + " finished in "
+		String endLine = Partial1DEnvelopeMaker.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime);
 		System.err.println(endLine);
 		writeLog(endLine);

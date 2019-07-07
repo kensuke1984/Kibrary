@@ -287,6 +287,7 @@ public class FujiStaticCorrection implements Operation {
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws Exception {
+//		args = new String[] {"/work/anselme/CA_ANEL_NEW/synthetic_s0_it2/filtered_stf_8-200s/fsc.properties"};
 		FujiStaticCorrection fsc = new FujiStaticCorrection(Property.parse(args));
 		long startTime = System.nanoTime();
 		System.err.println(FujiStaticCorrection.class.getName() + " is going.");
@@ -346,8 +347,10 @@ public class FujiStaticCorrection implements Operation {
 		int maxPoint = synTrace.getIndexOfPeak()[0];
 
 		// create observed timewindow
-		Trace obsTrace = obsSac.createTrace().cutWindow(startSec - shift + maxPoint * delta - searchRange, 
-				startSec - shift + maxPoint * delta + searchRange);
+//		Trace obsTrace = obsSac.createTrace().cutWindow(startSec - shift + maxPoint * delta - searchRange, 
+//				startSec - shift + maxPoint * delta + searchRange);
+		Trace obsTrace = obsSac.createTrace().cutWindow(startSec - shift, 
+				endSec - shift);
 		double obsP2P = obsTrace.getMaxValue() - obsTrace.getMinValue();
 
 		return obsP2P / synP2P;
@@ -386,7 +389,7 @@ public class FujiStaticCorrection implements Operation {
 		
 		if (mediantime) {
 			double medianTime = startSec + (endPoint + maxPoint) / 2. * synSac.getValue(SACHeaderEnum.DELTA);
-	//		System.out.println(medianTime + " " + endtime);
+//			System.out.println(medianTime + " " + endtime);
 			endtime = medianTime;
 			startSec = endtime - 15;
 		}

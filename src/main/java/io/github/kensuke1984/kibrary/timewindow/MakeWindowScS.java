@@ -30,21 +30,27 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class MakeWindowScS {
 
 	public static void main(String[] args) throws IOException, TauModelException {
-		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/syntheticPREM/filtered_stf_12.5-200s");
-		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
-		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0_it1/filtered_stf_12.5-200s");
-		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s5/filtered_stf_12.5-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/syntheticPREM/filtered_stf_12.5-200s");
+//		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
+//		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0_it1/filtered_stf_12.5-200s");
+//		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s5/filtered_stf_12.5-200s");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
 //		Path workdir = Paths.get(".");
 		
-		boolean select = true;
-		double minCorr = 0.5;
-		double maxVariance = 1.2;
-		double maxRatio = 2.;
-		double maxRatio_S = 2.;
+		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_60deg.dat");
+		Set<TimewindowInformation> timewindowsForSelection = TimewindowInformationFile.read(timewindowPath); 
 		
-		double timeBefore = 15.; //30 for Scd
+		boolean select = false;
+		double minCorr = 0.5;
+		double maxVariance = 2.5;
+		double maxRatio = 2.5;
+		double maxRatio_S = 2.5;
+		
+		double timeBefore = 30.; //30 for Scd
 		double timeAfter = 40;
 		double timeBeforesS = 5;
+		
+		double minPeriod = 8.;
 		
 		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workdir);
 		
@@ -52,11 +58,16 @@ public class MakeWindowScS {
 		timetool.parsePhaseList("S, ScS, sS");
 		
 		Set<TimewindowInformation> infoSet = new HashSet<>();
-		Path outpath = workdir.resolve("timewindow" + Utilities.getTemporaryString() + ".dat");
+		Path outpath = workdir.resolve("selectedTimewindow_ScS" + Utilities.getTemporaryString() + ".dat");
+		
+		Set<TimewindowInformation> infoSet_noSelection = new HashSet<>();
+		Path outpath_noSelection = workdir.resolve("timewindow_ScS" + Utilities.getTemporaryString() + ".dat");
 		
 		Set<TimewindowInformation> infoSetS = new HashSet<>();
 		Path outpathS = workdir.resolve("timewindow_S.dat");
 
+		int countIncludeS = 0;
+		
 		for (EventFolder eventFolder : eventFolderSet) {
 			System.out.println(eventFolder);
 			timetool.setSourceDepth(6371. - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR());
@@ -67,6 +78,12 @@ public class MakeWindowScS {
 			
 			for (SACFileName obsName : obsNames) {
 				SACHeaderData obsHeader = obsName.readHeader();
+				
+				if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsHeader.getGlobalCMTID())
+						&& tw.getStation().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
+						.count() == 0)
+					continue;
+				
 				double distance = obsHeader.getValue(SACHeaderEnum.GCARC);
 				timetool.calculate(distance);
 				if (timetool.getNumArrivals() != 3) {
@@ -77,14 +94,14 @@ public class MakeWindowScS {
 				Arrival arrivalsS = timetool.getArrival(2);
 				if (!arrivalS.getPhase().getName().equals("S") || !arrivalScS.getPhase().getName().equals("ScS")
 						|| !arrivalsS.getPhase().getName().equals("sS")) {
-//					System.err.println("Problem computing S or ScS " + obsName.getName());
+					System.err.println("Problem computing S or ScS " + obsName.getName() + " " + obsHeader.getValue(SACHeaderEnum.GCARC));
 					continue;
 				}
 				double timeS = arrivalS.getTime();
 				double timeScS = arrivalScS.getTime();
 				double timesS = arrivalsS.getTime();
 				
-				if (timesS - timeScS < 20)
+				if (timesS - timeScS < minPeriod * 1.6)
 					continue;
 				
 				SACData synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("sc"))).read();
@@ -107,17 +124,20 @@ public class MakeWindowScS {
 				if (endTime > timesS - timeBeforesS)
 					endTime = timesS - timeBeforesS;
 				
-				if (timeEndOfS > timeScS - 5)
+				if (timeEndOfS > timeScS - minPeriod/2.5) {
+					countIncludeS++;
 					continue;
+				}
 				
 				TimewindowInformation timewindow_S = new TimewindowInformation(timeS - 15, timeS + 35,
 						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.S});
 				infoSetS.add(timewindow_S);
 				
-				if (ratio_S > maxRatio_S || ratio_S < 1./maxRatio_S)
-					continue;
+//				if (ratio_S > maxRatio_S || ratio_S < 1./maxRatio_S)
+//					continue;
 				
+				boolean addScS = true;
 				if (select) {
 					Trace synScS = synData.createTrace().cutWindow(startTime, endTime);
 					Trace obsScS = obsData.createTrace().cutWindow(startTime, endTime);
@@ -134,22 +154,23 @@ public class MakeWindowScS {
 							/ obsVector.dotProduct(obsVector);
 					
 					boolean keep = corr >= minCorr && ratio < maxRatio && ratio > 1./maxRatio && variance < maxVariance;
-					if (!keep)
-						continue;
+					addScS = keep;
 				}
 				
 				TimewindowInformation timewindow = new TimewindowInformation(startTime, endTime,
 						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
 						obsName.getComponent(), new Phase[] {Phase.ScS});
-				
-				
-				
-				infoSet.add(timewindow);
+				if (addScS)
+					infoSet.add(timewindow);
+				infoSet_noSelection.add(timewindow);
 			}
 		}
 		
+		System.out.println("Excluded " + countIncludeS + " timewindows that include S phase");
+		
 		TimewindowInformationFile.write(infoSet, outpath);
 		TimewindowInformationFile.write(infoSetS, outpathS);
+		TimewindowInformationFile.write(infoSet_noSelection, outpath_noSelection);
 	}
 
 }

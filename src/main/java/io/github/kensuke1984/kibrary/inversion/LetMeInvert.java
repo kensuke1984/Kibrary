@@ -156,7 +156,7 @@ public class LetMeInvert implements Operation {
 	
 	private double cm0, cmH, cmV;
 	
-	private double lambdaQ, lambdaMU;
+	private double lambdaQ, lambdaMU, gammaQ, gammaMU;
 	
 	private double correlationScaling;
 	
@@ -207,6 +207,10 @@ public class LetMeInvert implements Operation {
 			property.setProperty("lambdaQ", "0.3");
 		if (!property.containsKey("lambdaMU"))
 			property.setProperty("lambdaMU", "0.03");
+		if (!property.containsKey("gammaQ"))
+			property.setProperty("gammaQ", "0.3");
+		if (!property.containsKey("gammaMU"))
+			property.setProperty("gammaMU", "0.03");
 		if (!property.containsKey("correlationScaling"))
 			property.setProperty("correlationScaling", "1.");
 		if (!property.containsKey("minDistance"))
@@ -343,6 +347,8 @@ public class LetMeInvert implements Operation {
 		regularizationMuQ = Boolean.parseBoolean(property.getProperty("regularizationMuQ"));
 		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
 		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
+		gammaQ = Double.valueOf(property.getProperty("gammaQ"));
+		gammaMU = Double.valueOf(property.getProperty("gammaMU"));
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
@@ -450,6 +456,10 @@ public class LetMeInvert implements Operation {
 			pw.println("#lambdaQ");
 			pw.println("##double lambdaMU (0.03)");
 			pw.println("#lambdaMU");
+			pw.println("##double gammaQ (0.3)");
+			pw.println("#gammaQ");
+			pw.println("##double gammaMU (0.03)");
+			pw.println("#gammaMU");
 			pw.println("##double correlationScaling (1.)");
 			pw.println("#correlationScaling");
 			pw.println("##If wish to select distance range: min distance (deg) of the data used in the inversion");
@@ -817,7 +827,6 @@ public class LetMeInvert implements Operation {
 			
 			if (regularizationMuQ) {
 				addRegularizationMUQ();
-				addRegularizationSimpleQMU();
 			}
 		}
 		else {
@@ -990,30 +999,64 @@ public class LetMeInvert implements Operation {
 	private void addRegularizationMUQ() {
 		System.out.println("Adding regularization MU Q");
 		List<PartialType> types = new ArrayList<>();
-		types.add(PartialType.PAR2);
-//		types.add(PartialType.PARQ);
+		Set<PartialType> usedTypes = eq.getParameterList().stream().map(p -> p.getPartialType()).collect(Collectors.toSet());
+		if (usedTypes.contains(PartialType.PAR2))
+			types.add(PartialType.PAR2);
+		if (usedTypes.contains(PartialType.PARQ))
+			types.add(PartialType.PARQ);
 		
-		double norm05 = Math.sqrt(eq.getDiagonalOfAtA().getL1Norm());
+		double normMU = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PAR2))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		double normQ = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		
+		// Second order differential operator
 		List<Double> coeffs = new ArrayList<>();
-		coeffs.add(lambdaMU / norm05);
-		coeffs.add(lambdaQ / norm05);
+		if (usedTypes.contains(PartialType.PAR2))
+			coeffs.add(lambdaMU / normMU);
+		if (usedTypes.contains(PartialType.PARQ))
+			coeffs.add(lambdaQ / normQ);
 		
 		RadialSecondOrderDifferentialOperator D2 = new RadialSecondOrderDifferentialOperator(eq.getParameterList(), types, coeffs);
 		eq.addRegularization(D2.getD2TD2());
+		
+		// Diagonal matrix
+		coeffs = new ArrayList<>();
+		if (usedTypes.contains(PartialType.PAR2))
+			coeffs.add(gammaMU / normMU);
+		if (usedTypes.contains(PartialType.PARQ))
+			coeffs.add(gammaQ / normQ);
+		
+		RealMatrix D = MatrixUtils.createRealIdentityMatrix(eq.getMlength());
+		List<UnknownParameter> parameters = eq.getParameterList();
+		for (int i = 0; i < eq.getMlength(); i++) {
+			if (parameters.get(i).getPartialType().equals(PartialType.PAR2))
+				D.multiplyEntry(i, i, coeffs.get(0));
+			else if (parameters.get(i).getPartialType().equals(PartialType.PARQ))
+				D.multiplyEntry(i, i, coeffs.get(1));
+		}
+		eq.addRegularization(D);
 	}
 	
 	private void addRegularizationSimpleQMU() {
 		System.out.println("Adding simple regularization Q MU");
 		List<PartialType> types = new ArrayList<>();
 		types.add(PartialType.PAR2);
-//		types.add(PartialType.PARQ);
+		types.add(PartialType.PARQ);
 		
 		double[][] sensitivity = new double[][] { {3490.0,1.11},{3510.0,0.86},{3530.0,0.58},{3550.0,0.42},{3570.0,0.43},{3590.0,0.50},{3610.0,0.55},{3630.0,0.58},{3650.0,0.61},{3670.0,0.62},{3690.0,0.62},{3710.0,0.61},{3730.0,0.61},{3750.0,0.60},{3770.0,0.59},{3790.0,0.57},{3810.0,0.55},{3830.0,0.53},{3850.0,0.50},{3870.0,0.48},{3890.0,0.47},{3910.0,0.45},{3930.0,0.45},{3950.0,0.44},{3970.0,0.44} };
 		
-		double norm05 = Math.sqrt(eq.getDiagonalOfAtA().getL1Norm());
+		double normMU = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PAR2))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		double normQ = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
 		List<Double> coeffs = new ArrayList<>();
-		coeffs.add(lambdaMU / norm05 * 2);
-		coeffs.add(lambdaQ / norm05 * 2);
+		coeffs.add(gammaMU / normMU);
+		coeffs.add(gammaQ / normQ);
 		
 		RealMatrix D = MatrixUtils.createRealIdentityMatrix(eq.getMlength());
 		List<UnknownParameter> parameters = eq.getParameterList();

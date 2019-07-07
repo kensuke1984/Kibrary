@@ -33,6 +33,7 @@ import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.inversion.RandomNoiseMaker;
+import io.github.kensuke1984.kibrary.math.HilbertTransform;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -134,6 +135,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			property.setProperty("minDistance", "0.");
 		if (!property.containsKey("addNoise"))
 			property.setProperty("addNoise", "false");
+		if (!property.containsKey("correctMantle"))
+			property.setProperty("correctMantle", "false");
 	}
 
 	private void set() throws NoSuchFileException {
@@ -156,6 +159,10 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			if (!Files.exists(staticCorrectionPath))
 				throw new NoSuchFileException(staticCorrectionPath.toString());
 		}
+		
+		correctMantle = Boolean.parseBoolean(property.getProperty("correctMantle"));
+		if (correctMantle)
+			mantleCorrectionPath = getPath("mantleCorrectionPath");
 
 		convolute = Boolean.parseBoolean(property.getProperty("convolute"));
 
@@ -214,6 +221,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("#shiftdataValue");
 			pw.println("#minDistance");
 			pw.println("#addNoise false");
+			pw.println("#correctMantle false");
+			pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -221,6 +230,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private boolean shiftdata;
 	
 	private double shiftdataValue;
+	
+	private boolean correctMantle;
 
 	/**
 	 * {@link Path} of a root folder containing observed dataset
@@ -242,6 +253,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 */
 	private Path staticCorrectionPath;
 
+	private Path mantleCorrectionPath;
+	
 	/**
 	 * Sacのサンプリングヘルツ （これと異なるSACはスキップ）
 	 */
@@ -269,10 +282,16 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private boolean amplitudeCorrection;
 
 	private Set<StaticCorrection> staticCorrectionSet;
+	
+	private Set<StaticCorrection> mantleCorrectionSet;
 
 	private Set<TimewindowInformation> timewindowInformationSet;
 
 	private WaveformDataWriter dataWriter;
+	
+	private WaveformDataWriter envelopeWriter;
+	
+	private WaveformDataWriter hyWriter;
 
 	private Set<EventFolder> eventDirs;
 	private Set<Station> stationSet;
@@ -335,6 +354,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	public void run() throws Exception {
 		if (timeCorrection || amplitudeCorrection)
 			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionPath);
+		
+		if (correctMantle) {
+			System.out.println("Using mantle corrections");
+			mantleCorrectionSet = StaticCorrectionFile.read(mantleCorrectionPath);
+		}
 
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
@@ -365,9 +389,17 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			String dateStr = Utilities.getTemporaryString();
 			Path waveIDPath = null;
 			Path waveformPath = null;
+			Path envelopeIDPath = null;
+			Path envelopePath = null;
+			Path hyIDPath = null;
+			Path hyPath = null;
 			if (!correctionBootstrap) {
 				waveIDPath = workPath.resolve("waveformID" + dateStr + ".dat");
 				waveformPath = workPath.resolve("waveform" + dateStr + ".dat");
+				envelopeIDPath = workPath.resolve("envelopeID" + dateStr + ".dat");
+				envelopePath = workPath.resolve("envelope" + dateStr + ".dat");
+				hyIDPath = workPath.resolve("hyID" + dateStr + ".dat");
+				hyPath = workPath.resolve("hy" + dateStr + ".dat");
 			}
 			else {
 				waveIDPath = workPath.resolve("waveformID" + String.format("_RND%04d", isample) + ".dat");
@@ -375,12 +407,18 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			}
 			try (WaveformDataWriter bdw = new WaveformDataWriter(waveIDPath, waveformPath, stationSet, idSet,
 					periodRanges, phases)) {
+				envelopeWriter = new WaveformDataWriter(envelopeIDPath, envelopePath, stationSet, idSet,
+						periodRanges, phases);
+				hyWriter = new WaveformDataWriter(hyIDPath, hyPath, stationSet, idSet,
+						periodRanges, phases);
 				dataWriter = bdw;
 				for (EventFolder eventDir : eventDirs)
 					execs.execute(new Worker(eventDir));
 				execs.shutdown();
 				while (!execs.isTerminated())
 					Thread.sleep(1000);
+				envelopeWriter.close();
+				hyWriter.close();
 				System.err.println("\n" + numberOfPairs.get() + " pairs of observed and synthetic waveforms are output.");
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -508,6 +546,19 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 							continue;
 						}
 					
+					if (correctMantle)
+						try {
+							StaticCorrection sc = getMantleCorrection(window);
+							shift += sc.getTimeshift();
+//							if (window.getGlobalCMTID().equals(new GlobalCMTID("200911130727A")) && window.getStation().getStationName().equals("F28A")) {
+//								System.out.println(sc.getTimeshift());
+//								System.out.println(sc);
+//							}
+						} catch (NoSuchElementException e) {
+							System.err.println("There is no mantle correction information for\\n " + window);
+							continue;
+						}
+					
 					if (shiftdata)
 						shift += shiftdataValue;
 					
@@ -517,6 +568,13 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					else
 						obsData = cutDataSac(obsSac, startTime - shift, npts);
 					double[] synData = cutDataSac(synSac, startTime, npts);
+
+					double[] obsEnvelope = cutEnvelopeSac(obsSac, startTime - shift, npts);
+					double[] synEnvelope = cutEnvelopeSac(synSac, startTime, npts);
+					
+					double[] obsHy = cutHySac(obsSac, startTime - shift, npts);
+					double[] synHy = cutHySac(synSac, startTime, npts);
+					
 					double correctionRatio = ratio;
 					
 					Phase[] includePhases = window.getPhases();
@@ -526,9 +584,25 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synData);
 					BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsData);
+					
+					obsEnvelope = Arrays.stream(obsEnvelope).map(d -> d / correctionRatio).toArray();
+					BasicID synEnvelopeID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
+							component, minPeriod, maxPeriod, includePhases, 0, convolute, synEnvelope);
+					BasicID obsEnvelopeID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
+							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsEnvelope);
+					
+					obsHy = Arrays.stream(obsHy).map(d -> d / correctionRatio).toArray();
+					BasicID synHyID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
+							component, minPeriod, maxPeriod, includePhases, 0, convolute, synHy);
+					BasicID obsHyID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
+							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsHy);
 					try {
 						dataWriter.addBasicID(obsID);
 						dataWriter.addBasicID(synID);
+						envelopeWriter.addBasicID(obsEnvelopeID);
+						envelopeWriter.addBasicID(synEnvelopeID);
+						hyWriter.addBasicID(obsHyID);
+						hyWriter.addBasicID(synHyID);
 						numberOfPairs.incrementAndGet();
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -559,7 +633,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private BiPredicate<StaticCorrection, TimewindowInformation> isPair_record = (s,
 			t) -> s.getStation().equals(t.getStation()) && s.getGlobalCMTID().equals(t.getGlobalCMTID())
 					&& s.getComponent() == t.getComponent();
-   
 			
 	private StaticCorrection getStaticCorrection(TimewindowInformation window) {
 		List<StaticCorrection> corrs = staticCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
@@ -569,12 +642,39 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			throw new RuntimeException("Found no static correction for window " + window);
 		return corrs.get(0);
 	}
+	
+	private StaticCorrection getMantleCorrection(TimewindowInformation window) {
+		List<StaticCorrection> corrs = mantleCorrectionSet.stream().filter(s -> isPair_record.test(s, window)).collect(Collectors.toList());
+		if (corrs.size() > 1)
+			throw new RuntimeException("Found more than 1 mantle correction for window " + window);
+		if (corrs.size() == 0)
+			throw new RuntimeException("Found no mantle correction for window " + window);
+		return corrs.get(0);
+	}
 
 	private double[] cutDataSac(SACData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
 		double[] waveData = trace.getY();
+		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
+	}
+	
+	private double[] cutEnvelopeSac(SACData sac, double startTime, int npts) {
+		Trace trace = sac.createTrace();
+		int step = (int) (sacSamplingHz / finalSamplingHz);
+		int startPoint = trace.getNearestXIndex(startTime);
+		HilbertTransform hilbert = new HilbertTransform(trace.getY());
+		double[] waveData = hilbert.getEnvelope();
+		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
+	}
+	
+	private double[] cutHySac(SACData sac, double startTime, int npts) {
+		Trace trace = sac.createTrace();
+		int step = (int) (sacSamplingHz / finalSamplingHz);
+		int startPoint = trace.getNearestXIndex(startTime);
+		HilbertTransform hilbert = new HilbertTransform(trace.getY());
+		double[] waveData = hilbert.getHy();
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
 	}
 	

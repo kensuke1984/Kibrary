@@ -1235,36 +1235,39 @@ public class ObservationEquation {
 		}
 		
 		//normalize PARQ
-		double empiricalFactor = .2;
-		meanAColumnNorm = 0;
-		double meanAQNorm = 0;
-		ntmp = 0;
-		int ntmpQ = 0;
-		for (int j = 0; j < a.getColumnDimension(); j++) {
-			if (parameterList.get(j).getPartialType().isTimePartial())
-				continue;
-			if (parameterList.get(j).getPartialType().equals(PartialType.PARQ)) {
-				meanAQNorm += a.getColumnVector(j).getNorm();
-				ntmpQ++;
-			}
-			else if (parameterList.get(j).getPartialType().equals(PartialType.PAR2)){
-				meanAColumnNorm += a.getColumnVector(j).getNorm();
-				ntmp++;
-			}
-		}
-		meanAColumnNorm /= ntmp;
-		meanAQNorm /= ntmpQ;
-		if (ntmpQ > 0) {
+		if (parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count() > 0
+				&& parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PAR2)).count() > 0) {
+			double empiricalFactor = 1.;
+			meanAColumnNorm = 0;
+			double meanAQNorm = 0;
+			ntmp = 0;
+			int ntmpQ = 0;
 			for (int j = 0; j < a.getColumnDimension(); j++) {
-				if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
+				if (parameterList.get(j).getPartialType().isTimePartial())
 					continue;
-				if (ntmp == 0 || ntmpQ == 0)
-					continue;
-				a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+				if (parameterList.get(j).getPartialType().equals(PartialType.PARQ)) {
+					meanAQNorm += a.getColumnVector(j).getNorm();
+					ntmpQ++;
+				}
+				else if (parameterList.get(j).getPartialType().equals(PartialType.PAR2)){
+					meanAColumnNorm += a.getColumnVector(j).getNorm();
+					ntmp++;
+				}
 			}
-			System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+			meanAColumnNorm /= ntmp;
+			meanAQNorm /= ntmpQ;
+			if (ntmpQ > 0) {
+				for (int j = 0; j < a.getColumnDimension(); j++) {
+					if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
+						continue;
+					if (ntmp == 0 || ntmpQ == 0)
+						continue;
+					a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+				}
+				System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+			}
 		}
-		
+//		
 		//for Sci. Adv. revisions
 //		double sensitivityDpp = 0;
 //		double sensitivityUM = 0;
@@ -1352,6 +1355,12 @@ public class ObservationEquation {
 				break;
 			case PAR1:
 			case PAR2:
+			case PARVS:
+			case PARVSIM:
+			case PARVP:
+			case PARG:
+			case PARM:
+			case PAR00:
 				if (location.getR() == ((Physical1DParameter) parameterList.get(i)).getPerturbationR())
 					return i;
 				break;

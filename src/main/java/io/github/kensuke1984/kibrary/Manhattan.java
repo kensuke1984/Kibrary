@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary;
 
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker_v2;
+import io.github.kensuke1984.kibrary.waveformdata.Partial1DEnvelopeMaker;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
 
 import java.util.Arrays;
@@ -57,7 +58,8 @@ public enum Manhattan {
 	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
 	TimewindowMaker(21, TimewindowMaker.class),//
 	AtAMaker(22, AtAMaker.class),//
-	LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class)//
+	LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class),//
+	Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class)//
 	;
 
 	public static void printList() {

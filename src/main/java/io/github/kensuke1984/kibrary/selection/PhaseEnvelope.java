@@ -332,7 +332,7 @@ public class PhaseEnvelope implements Operation {
 	private double[][][] computePhaseEnvelope(SACFileName obsname, SACFileName synname) {
 		double[][][] phaseEnvelope = new double[3][][];
 		
-		double endtime = 4000.;
+		double endtime = 2000.;
 		double margin = 850.;
 		double starttime = 0;
 		int npts = (int) (tlen * samplingHz);
@@ -349,9 +349,9 @@ public class PhaseEnvelope implements Operation {
 		
 		try {
 			if (endtime + margin > synname.readHeader().getValue(SACHeaderEnum.E))
-				throw new IllegalArgumentException(synname + "end time smaller than the given end time: " + endtime);
+				throw new IllegalArgumentException(synname + " end time smaller than the given end time: " + endtime);
 			if (obsname.readHeader().getValue(SACHeaderEnum.B) > 0)
-				throw new IllegalArgumentException(obsname + "start time > 0: " + obsname.readHeader().getValue(SACHeaderEnum.B));
+				throw new IllegalArgumentException(obsname + " start time > 0: " + obsname.readHeader().getValue(SACHeaderEnum.B));
 			
 			double[] tmpobsdata = obsname.read().createTrace().cutWindow(starttime, endtime + margin).getY();
 			double[] tmpsyndata = synname.read().createTrace().cutWindow(starttime, endtime + margin).getY();
@@ -790,7 +790,7 @@ public class PhaseEnvelope implements Operation {
 	private XYDataset createDataset(Trace syn, Trace obs) {
 		XYSeries synseries = new XYSeries("Synthetics");
 		XYSeries obsseries = new XYSeries("Observed");
-		for (int i = 0; i < 4000; i++) {
+		for (int i = 0; i < 2000; i++) {
 			  synseries.add(i, syn.getYAt(i * (int) samplingHz));
 			  obsseries.add(i, obs.getYAt(i * (int) samplingHz));
 		}
@@ -909,7 +909,7 @@ public class PhaseEnvelope implements Operation {
        plot.setGap(10.0);
        
        BasicStroke stroke = new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {2.0f, 6.0f}, 0.0f);
-       subplot2.addAnnotation(new XYLineAnnotation(0, spcAmpMisfit, 4000*(1+domainAxis.getUpperMargin()), spcAmpMisfit, stroke, Color.GREEN.darker()));
+       subplot2.addAnnotation(new XYLineAnnotation(0, spcAmpMisfit, 2000*(1+domainAxis.getUpperMargin()), spcAmpMisfit, stroke, Color.GREEN.darker()));
        
        if (phases != null) {
 	       for (TauPPhase[] phs : phases) {

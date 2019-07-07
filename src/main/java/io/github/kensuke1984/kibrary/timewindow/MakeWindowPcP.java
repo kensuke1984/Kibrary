@@ -44,6 +44,10 @@ public class MakeWindowPcP {
 	private double maxVariance;
 	private double maxRatio;
 	
+	private double minPeriod;
+	
+	private Set<TimewindowInformation> timewindowsForSelection;
+	
 	public MakeWindowPcP(Path workdir) {
 		this.workdir = workdir;
 		this.infoSet = new HashSet<>();
@@ -52,15 +56,24 @@ public class MakeWindowPcP {
 		timeAfter = 20;
 		timeBeforesS = 5;
 		
-		select = true;
+		select = false;
 		minCorr = 0.0;
 		maxVariance = 2.;
 		maxRatio = 2.;
+		
+		minPeriod = 6.;
+		
+		Path timewindowPath = workdir.resolve("selectedTimewindow_PPcP_60deg_sn4.dat");
+		try {
+			timewindowsForSelection = TimewindowInformationFile.read(timewindowPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void main(String[] args) throws IOException {
-//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/syntheticPREM/filtered_stf_12.5-200s");
-		Path workdir = Paths.get(".");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_6-200s");
+//		Path workdir = Paths.get(".");
 		
 		MakeWindowPcP makewindow = new MakeWindowPcP(workdir);
 		try {
@@ -93,12 +106,20 @@ public class MakeWindowPcP {
 //			for (SACFileName obsName : obsNames) {
 			try {
 			eventFolder.sacFileSet().stream().filter(sfn -> sfn.isOBS() && sfn.getComponent().equals(SACComponent.Z)).forEach(obsName -> {
-				SACHeaderData obsHeader = null;
+				SACHeaderData obsHeadertmp = null;
 				try {
-					obsHeader = obsName.readHeader();
+					obsHeadertmp = obsName.readHeader();
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
+				
+				final SACHeaderData obsHeader = obsHeadertmp;
+				
+				if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsName.getGlobalCMTID())
+						&& tw.getStation().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
+						.count() == 0)
+					return;
+				
 				double distance = obsHeader.getValue(SACHeaderEnum.GCARC);
 				try {
 					timetool.calculate(distance);
@@ -120,7 +141,7 @@ public class MakeWindowPcP {
 				double timeScS = arrivalScS.getTime();
 				double timesS = arrivalsS.getTime();
 				
-				if (timesS - timeScS < 12)
+				if (timesS - timeScS < minPeriod * 1.6)
 					return;
 				
 				SACData synData = null;
@@ -142,7 +163,7 @@ public class MakeWindowPcP {
 				if (endTime > timesS - timeBeforesS)
 					endTime = timesS - timeBeforesS;
 				
-				if (timeEndOfS > timeScS - 2)
+				if (timeEndOfS > timeScS - minPeriod/2.5)
 					return;
 				
 				TimewindowInformation timewindow_P = new TimewindowInformation(timeS - 10, timeS + 20,

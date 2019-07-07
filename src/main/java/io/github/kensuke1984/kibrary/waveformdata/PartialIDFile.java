@@ -78,9 +78,11 @@ public final class PartialIDFile {
 					data[j] = dis.readDouble();
 				ids[i] = ids[i].setData(data);
 				
-				if (i % (ids.length/10) == 0) {
-					System.out.println(counter*10 + "/100 %");
-					counter++;
+				if (ids.length > 10) {
+					if (i % (ids.length/10) == 0) {
+						System.out.println(counter*10 + "/100 %");
+						counter++;
+					}
 				}
 			}
 		}
