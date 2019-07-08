@@ -57,7 +57,7 @@ public enum Manhattan {
 	SyntheticDSMInformationFileMaker(19, SyntheticDSMInformationFileMaker.class), //
 	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
 	TimewindowMaker(21, TimewindowMaker.class),//
-	AtAMaker(22, AtAMaker_old.class),//
+	AtAMaker(22, AtAMaker.class),//
 	LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class),//
 	Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class)//
 	;

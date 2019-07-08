@@ -1430,6 +1430,31 @@ public class AtAMaker implements Operation {
 		return -1;
 	}
 	
+	private int getParameterIndex1D(double radius, PartialType type) {
+		int i = 0;
+		for (UnknownParameter p : originalUnknownParameters) {
+			if (p.getLocation().getR() == radius && p.getPartialType().equals(type))
+				return i;
+			i++;
+		}
+		return -1;
+	}
+	
+	private PartialType to3D(PartialType type1D) {
+		PartialType type3D = null;
+		switch (type1D) {
+		case PAR2:
+			type3D = PartialType.MU;
+			break;
+		case PAR1:
+			type3D = PartialType.LAMBDA;
+			break;
+		default:
+			throw new RuntimeException("PartialType not implemented yet " + type1D);
+		}
+		return type3D;
+	}
+	
 	private final double epsilon = 1e-6;
 	
 	private boolean equalToEpsilon(double d1, double d2) {
@@ -2069,231 +2094,84 @@ public class AtAMaker implements Operation {
 			long t1f = 0;
 			t1i = System.currentTimeMillis();
 			
-			for (int idis = 0; idis < fpnames.size(); idis++) {
+			double distance = Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(station.getPosition()));
+			double azimuth = event.getEvent().getCmtLocation().getAzimuth(station.getPosition());
+			double backazimuth = station.getPosition().getAzimuth(event.getEvent().getCmtLocation());
+			
+			Location bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
+			Location fpSourceLoc = event.getEvent().getCmtLocation();
+			
+			List<Double[]> perturbationPoints = getDistanceAngleGrid(distance, azimuth, backazimuth);
+			
+			for (int ip = 0; ip < perturbationPoints.size(); ip++) {
+			Double[] point = perturbationPoints.get(ip);
+			double phiFP = point[1];
+			double phiBP = point[3];
+			int ifp = point[0].intValue();
+			int ibp = point[2].intValue();
 			try {
 				DSMOutput fpSpc = null;
 				DSMOutput fpSpc_PSV = null;
 				double[] bodyR = null;
 				HorizontalPosition obsPos = null;
 				if (mode.equals("SH")) {
-					fpSpc = fpnames.get(idis).read();
+					fpSpc = fpnames.get(ifp).read();
 					bodyR = fpSpc.getBodyR();
 					obsPos = fpSpc.getObserverPosition();
 				}
 				else if (mode.equals("PSV")) {
-					fpSpc_PSV = fpnames_PSV.get(idis).read();
+					fpSpc_PSV = fpnames_PSV.get(ifp).read();
 					bodyR = fpSpc_PSV.getBodyR();
-					obsPos = fpSpc.getObserverPosition();
+					obsPos = fpSpc_PSV.getObserverPosition();
 				}
 				else if (mode.equals("BOTH")) {
-					fpSpc = fpnames.get(idis).read();
-					fpSpc_PSV = fpnames_PSV.get(idis).read();
+					fpSpc = fpnames.get(ifp).read();
+					fpSpc_PSV = fpnames_PSV.get(ifp).read();
 					bodyR = fpSpc.getBodyR();
 					obsPos = fpSpc.getObserverPosition();
 				}
 				
-				Location bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
-				Location fpSourceLoc = event.getEvent().getCmtLocation();
-				double distanceBP = bpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
-				double distanceFP = fpSourceLoc.getEpicentralDistance(obsPos) * 180. / Math.PI;
-				double phiBP = Math.PI - bpSourceLoc.getAzimuth(obsPos);
-				double phiFP = Math.PI - fpSourceLoc.getAzimuth(obsPos);
-				if (Double.isNaN(phiBP))
-					throw new RuntimeException("PhiBP is NaN " + fpname + " " + station);
-				if (Double.isNaN(phiFP))
-					throw new RuntimeException("PhiFP is NaN " + fpname + " " + station);
-			
-	//			System.out.println("geographic, geodetic distance = " + geocentricDistance + " " + distance);
-				
-				int ipointBP = (int) ((distanceBP - thetamin) / dtheta);
-	//			if (distanceBP < thetamin || distanceBP > thetamax)
-	//				throw new RuntimeException("Error: cannot interpolate BP at epicentral distance " + distanceBP + "(deg)");
-				if (ipointBP < 0) {
-					System.err.println("Warning: BP distance smaller than thetamin " + distanceBP);
-					ipointBP = 0;
-				}
-				else if (ipointBP > bpnames.length - 3) {
-					System.err.println("Warning: BP distance greater than thetamax " + distanceBP);
-					ipointBP = bpnames.length - 3;
-				}
-				
-				if (distanceFP < thetamin || distanceFP > thetamax)
-					throw new RuntimeException("Error: cannot interpolate FP at epicentral distance " + distanceFP + "(deg)");
-				int ipointFP = (int) ((distanceFP - thetamin) / dtheta);
-				
 				SpcFileName bpname1 = null;
-				SpcFileName bpname2 = null;
-				SpcFileName bpname3 = null;
 				SpcFileName bpname1_PSV = null;
-				SpcFileName bpname2_PSV = null;
-				SpcFileName bpname3_PSV = null;
 				
 				if (mode.equals("SH") || mode.equals("BOTH"))
-					bpname1 = bpnames[ipointBP];
+					bpname1 = bpnames[ibp];
 				if (mode.equals("PSV") || mode.equals("BOTH"))
-					bpname1_PSV = bpnames_PSV[ipointBP];
-				if (!quickAndDirty) {
-					if (mode.equals("SH") || mode.equals("BOTH")) {
-						bpname2 = bpnames[ipointBP + 1];
-						bpname3 = bpnames[ipointBP + 2];
-					}
-					if (mode.equals("PSV") || mode.equals("BOTH")) {
-						bpname2_PSV = bpnames_PSV[ipointBP + 1];
-						bpname3_PSV = bpnames_PSV[ipointBP + 2];
-					}
-				}
+					bpname1_PSV = bpnames_PSV[ibp];
 				
 				SpcFileName fpname1 = null;
-				SpcFileName fpname2 = null;
-				SpcFileName fpname3 = null;
 				SpcFileName fpname1_PSV = null;
-				SpcFileName fpname2_PSV = null;
-				SpcFileName fpname3_PSV = null;
-				if (catalogueFP) {
-					if (mode.equals("SH") || mode.equals("BOTH")) {
-						fpname1 = fpnameMap.get(event).get(ipointFP);
-					}
-					if (mode.equals("PSV") || mode.equals("BOTH")) {
-						fpname1_PSV = fpnameMap_PSV.get(event).get(ipointFP);
-					}
-					if (!quickAndDirty) {
-						if (mode.equals("SH") || mode.equals("BOTH")) {
-							fpname2 = fpnameMap.get(event).get(ipointFP + 1);
-							fpname3 = fpnameMap.get(event).get(ipointFP + 2);
-						}
-						if (mode.equals("PSV") || mode.equals("BOTH")) {
-							fpname2_PSV = fpnameMap_PSV.get(event).get(ipointFP + 1);
-							fpname3_PSV = fpnameMap_PSV.get(event).get(ipointFP + 2);
-						}
-					}
+				if (mode.equals("SH") || mode.equals("BOTH")) {
+					fpname1 = fpnameMap.get(event).get(ifp);
 				}
-				
-				double[] dhBP = new double[3];
-				if (!quickAndDirty) {
-					double theta1 = thetamin + ipointBP * dtheta;
-					double theta2 = theta1 + dtheta;
-					double theta3 = theta2 + dtheta;
-					dhBP[0] = (distanceBP - theta1) / dtheta;
-					dhBP[1] = (distanceBP - theta2) / dtheta;
-					dhBP[2] = (distanceBP - theta3) / dtheta;
-				}
-				
-				double[] dhFP = new double[3];
-				if (!quickAndDirty) {
-					double theta1 = thetamin + ipointFP * dtheta;
-					double theta2 = theta1 + dtheta;
-					double theta3 = theta2 + dtheta;
-					dhFP[0] = (distanceFP - theta1) / dtheta;
-					dhFP[1] = (distanceFP - theta2) / dtheta;
-					dhFP[2] = (distanceFP - theta3) / dtheta;
+				if (mode.equals("PSV") || mode.equals("BOTH")) {
+					fpname1_PSV = fpnameMap_PSV.get(event).get(ifp);
 				}
 				
 				DSMOutput bpSpc1 = null;
-				DSMOutput bpSpc2 = null; 
-				DSMOutput bpSpc3 = null;
 				DSMOutput fpSpc1 = null;
-				DSMOutput fpSpc2 = null;
-				DSMOutput fpSpc3 = null;
 				DSMOutput bpSpc1_PSV = null;
-				DSMOutput bpSpc2_PSV = null; 
-				DSMOutput bpSpc3_PSV = null;
 				DSMOutput fpSpc1_PSV = null;
-				DSMOutput fpSpc2_PSV = null;
-				DSMOutput fpSpc3_PSV = null;
-				if (catalogueFP) {
-					if (mode.equals("SH") || mode.equals("BOTH"))
-						bpSpc1 = SpectrumFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, "null");
-					if (mode.equals("PSV") || mode.equals("BOTH"))
-						bpSpc1_PSV = SpectrumFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, "null");
-					if (!quickAndDirty) {
-						if (mode.equals("SH") || mode.equals("BOTH")) {
-							bpSpc2 = SpectrumFile.getInstance(bpname2, phiBP, obsPos, bpSourceLoc, "null");
-							bpSpc3 = SpectrumFile.getInstance(bpname3, phiBP, obsPos, bpSourceLoc, "null");
-						}
-						if (mode.equals("PSV") || mode.equals("BOTH")) {
-							bpSpc2_PSV = SpectrumFile.getInstance(bpname2_PSV, phiBP, obsPos, bpSourceLoc, "null");
-							bpSpc3_PSV = SpectrumFile.getInstance(bpname3_PSV, phiBP, obsPos, bpSourceLoc, "null");
-						}
-					}
-					
-					if (mode.equals("SH") || mode.equals("BOTH"))
-						fpSpc1 = SpectrumFile.getInstance(fpname1, phiFP, obsPos, fpSourceLoc, "null");
-					if (mode.equals("PSV") || mode.equals("BOTH"))
-						fpSpc1_PSV = SpectrumFile.getInstance(fpname1_PSV, phiFP, obsPos, fpSourceLoc, "null");
-					if (!quickAndDirty) {
-						if (mode.equals("SH") || mode.equals("BOTH")) {
-							fpSpc2 = SpectrumFile.getInstance(fpname2, phiFP, obsPos, fpSourceLoc, "null");
-							fpSpc3 = SpectrumFile.getInstance(fpname3, phiFP, obsPos, fpSourceLoc, "null");
-						}
-						if (mode.equals("PSV") || mode.equals("BOTH")) {
-							fpSpc2_PSV = SpectrumFile.getInstance(fpname2_PSV, phiFP, obsPos, fpSourceLoc, "null");
-							fpSpc3_PSV = SpectrumFile.getInstance(fpname3_PSV, phiFP, obsPos, fpSourceLoc, "null");
-						}
-					}
-					
-					bodyR = bpSpc1.getBodyR();
-				}
-				else {
-					if (mode.equals("SH") || mode.equals("BOTH"))
-						bpSpc1 = SpectrumFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, obsName);
-					if (mode.equals("PSV") || mode.equals("BOTH"))
-						bpSpc1_PSV = SpectrumFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, obsName);
-					if (!quickAndDirty) {
-						if (mode.equals("SH") || mode.equals("BOTH")) {
-							bpSpc2 = SpectrumFile.getInstance(bpname2, phiBP, obsPos, bpSourceLoc, obsName);
-							bpSpc3 = SpectrumFile.getInstance(bpname3, phiBP, obsPos, bpSourceLoc, obsName);
-						}
-						if (mode.equals("PSV") || mode.equals("BOTH")) {
-							bpSpc2_PSV = SpectrumFile.getInstance(bpname2_PSV, phiBP, obsPos, bpSourceLoc, obsName);
-							bpSpc3_PSV = SpectrumFile.getInstance(bpname3_PSV, phiBP, obsPos, bpSourceLoc, obsName);
-						}
-					}
-				}
+
+				if (mode.equals("SH") || mode.equals("BOTH"))
+					bpSpc1 = SpectrumFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, "null");
+				if (mode.equals("PSV") || mode.equals("BOTH"))
+					bpSpc1_PSV = SpectrumFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, "null");
 				
-				t1f = System.currentTimeMillis();
-		
-				t1i = System.currentTimeMillis();
+				if (mode.equals("SH") || mode.equals("BOTH"))
+					fpSpc1 = SpectrumFile.getInstance(fpname1, phiFP, obsPos, fpSourceLoc, "null");
+				if (mode.equals("PSV") || mode.equals("BOTH"))
+					fpSpc1_PSV = SpectrumFile.getInstance(fpname1_PSV, phiFP, obsPos, fpSourceLoc, "null");
+				
+				bodyR = bpSpc1.getBodyR();
 				
 				ThreeDPartialMaker threedPartialMaker = null;
-				if (catalogueFP) {
-					if (!quickAndDirty) {
-						if (mode.equals("SH")) {
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc1, fpSpc2, fpSpc3, bpSpc1, bpSpc2, bpSpc3, dhBP, dhFP);
-						}
-						else if (mode.equals("PSV"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc1_PSV, fpSpc2_PSV, fpSpc3_PSV, bpSpc1_PSV, bpSpc2_PSV, bpSpc3_PSV, dhBP, dhFP);
-						else if (mode.equals("BOTH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc1, fpSpc1_PSV, fpSpc2, fpSpc2_PSV, fpSpc3, fpSpc3_PSV, bpSpc1, bpSpc1_PSV,
-									bpSpc2, bpSpc2_PSV, bpSpc3, bpSpc3_PSV, dhBP, dhFP);
-					}
-					else {
-						if (mode.equals("SH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc1, bpSpc1);
-						else if (mode.equals("PSV"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc1_PSV, bpSpc1_PSV);
-						else if (mode.equals("BOTH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc1, fpSpc1_PSV, bpSpc1, bpSpc1_PSV);
-					}
-				}
-				else {
-					if (!quickAndDirty) {
-						if (mode.equals("SH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc, bpSpc1, bpSpc2, bpSpc3, dhBP);
-						else if (mode.equals("PSV"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc_PSV, bpSpc1_PSV, bpSpc2_PSV, bpSpc3_PSV, dhBP);
-						else if (mode.equals("BOTH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc, fpSpc_PSV, bpSpc1, bpSpc1_PSV,
-									bpSpc2, bpSpc2_PSV, bpSpc3, bpSpc3_PSV, dhBP);
-					}
-					else {
-						if (mode.equals("SH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc, bpSpc1);
-						else if (mode.equals("PSV"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc_PSV, bpSpc1_PSV);
-						else if (mode.equals("BOTH"))
-							threedPartialMaker = new ThreeDPartialMaker(fpSpc, fpSpc_PSV, bpSpc1, bpSpc1_PSV);
-					}
-				}
+				if (mode.equals("SH"))
+					threedPartialMaker = new ThreeDPartialMaker(fpSpc1, bpSpc1);
+				else if (mode.equals("PSV"))
+					threedPartialMaker = new ThreeDPartialMaker(fpSpc1_PSV, bpSpc1_PSV);
+				else if (mode.equals("BOTH"))
+					threedPartialMaker = new ThreeDPartialMaker(fpSpc1, fpSpc1_PSV, bpSpc1, bpSpc1_PSV);
 				
 				SourceTimeFunction stf = getSourceTimeFunction(event);
 				if (stf == null)
@@ -2301,14 +2179,13 @@ public class AtAMaker implements Operation {
 				threedPartialMaker.setSourceTimeFunction(stf);
 				
 				for (int ibody = 0; ibody < bodyR.length; ibody++) {
-					Location parameterLoc = obsPos.toLocation(bodyR[ibody]);
-					
 					if (!originalUnkownRadii.contains(bodyR[ibody]))
 						continue;
 					
 					for (int ipar = 0; ipar < partialTypes.length; ipar++) {
 						PartialType type = partialTypes[ipar];
-						int iunknown = getParameterIndex(parameterLoc, type);
+						PartialType type3D = to3D(type);
+						int iunknown = getParameterIndex1D(bodyR[ibody], type);
 						if (iunknown < 0) {
 							continue;
 						}
@@ -2317,7 +2194,7 @@ public class AtAMaker implements Operation {
 						
 						Map<SACComponent, double[]> partialmap = new HashMap<>();
 						for (SACComponent component : components) {
-							double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type);
+							double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type3D);
 							partialmap.put(component, partial);
 						}
 						
@@ -2409,9 +2286,8 @@ public class AtAMaker implements Operation {
 												cutU[k] *= weight * weightUnknown;
 												if (computationFlag != 3)
 													tmpatd += cutU[k] * residual[k];
+												partials[iunknown][iweight][ifreq][windowCounter][k] += cutU[k];
 											}
-											
-											partials[iunknown][iweight][ifreq][windowCounter] = cutU;
 											
 											if (cutU.length == 0) {
 												throw new RuntimeException(Thread.currentThread().getName() + " Unexpected: cutU (partial) has length 0 "
@@ -2453,7 +2329,48 @@ public class AtAMaker implements Operation {
 				
 			}
 		}
-	}
+		
+		private List<Double[]> getDistanceAngleGrid(double distance, double azimuth, double backazimuth) {
+			List<Double[]> points = new ArrayList<>();
+			
+			double demin = thetamin;
+			double demax = (int) ((distance) / dtheta) * dtheta;
+			int nde = (int) ((demax - demin) / dtheta) + 1;
+			
+			for (int ide = 0; ide < nde; ide++) {
+				double de = demin + ide * dtheta;
+				double xe = de / 6371.;
+				double x = distance / 6371.;
+				
+				double dsmin = (int) ((distance - de) / dtheta) * dtheta + 1;
+				double dsmax = (int) ((distance) / dtheta) * dtheta;
+				int nds = (int) ((dsmax - dsmin) / dtheta) + 1;
+				
+				for (int ids = 0; ids < nds ; ids++) {
+					double ds = dsmin + ids * dtheta;
+					int indexDs = (int) ((ds - thetamin + 1e-5) / dtheta);
+					if (ds == de) {
+						Double[] point = new Double[] {new Double(ide), azimuth, new Double(indexDs), backazimuth};
+						points.add(point);
+					}
+					else {
+						double xs = ds / 6371.;
+						double cosphi = (Math.cos(xs) - Math.cos(xe) * Math.cos(x)) / (Math.sin(xe) * Math.sin(x));
+						if (Math.abs(cosphi) <= 1) {
+							double phi = Math.acos(cosphi);
+							double phiSta = Math.asin(Math.sin(xe) / Math.sin(xs) * Math.sin(phi));
+							Double[] point1 = new Double[] {new Double(ide), azimuth - phi, new Double(indexDs), backazimuth + phiSta};
+							Double[] point2 = new Double[] {new Double(ide), azimuth + phi, new Double(indexDs), backazimuth - phiSta};
+							points.add(point1);
+							points.add(point2);
+						}
+					}
+				}
+			}
+			return points;
+		}
+		
+	} // END worker1D
 	
 	public double computeWeight(WeightingType type, BasicID obs, BasicID syn) {
 		double weight = 1.;
