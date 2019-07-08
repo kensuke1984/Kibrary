@@ -26,7 +26,7 @@ import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
-import io.github.kensuke1984.kibrary.waveformdata.AtAMaker;
+import io.github.kensuke1984.kibrary.waveformdata.AtAMaker_old;
 
 /**
  * 
@@ -57,7 +57,7 @@ public enum Manhattan {
 	SyntheticDSMInformationFileMaker(19, SyntheticDSMInformationFileMaker.class), //
 	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
 	TimewindowMaker(21, TimewindowMaker.class),//
-	AtAMaker(22, AtAMaker.class),//
+	AtAMaker(22, AtAMaker_old.class),//
 	LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class),//
 	Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class)//
 	;

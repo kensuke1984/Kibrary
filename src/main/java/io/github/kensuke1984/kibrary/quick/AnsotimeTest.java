@@ -14,7 +14,6 @@ public class AnsotimeTest {
 			io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure dsmStructure = new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(structurePath);
 			PolynomialStructure structure = new PolynomialStructure(dsmStructure);
 			
-			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
