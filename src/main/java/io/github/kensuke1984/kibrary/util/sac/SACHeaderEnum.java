@@ -12,7 +12,7 @@ package io.github.kensuke1984.kibrary.util.sac;
  * (If the name is UNUSED then that variable is not currently being used)
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.1.1.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  * @see <a href=https://ds.iris.edu/files/sac-manual/manual/file_format.html>SAC data format</a>
  */
@@ -63,48 +63,39 @@ public enum SACHeaderEnum {
      */
     T0(0), // 10
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T1(0), // 11
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T2(0), // 12
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T3(0), // 13
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T4(0), // 14
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T5(0), // 15
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T6(0), // 16
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T7(0), // 17
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T8(0), // 18
     /**
-     * User defined time picks or markers, n = 0 - 9 (seconds relative to
-     * reference time).
+     * @see #T0
      */
     T9(0), // 19
     /**
@@ -116,39 +107,39 @@ public enum SACHeaderEnum {
      */
     RESP0(0), // 21
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP1(0), // 22
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP2(0), // 23
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP3(0), // 24
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP4(0), // 25
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP5(0), // 26
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP6(0), // 27
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP7(0), // 28
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP8(0), // 29
     /**
-     * Instrument response parameters, n=0,9. [not currently used]
+     * @see #RESP0
      */
     RESP9(0), // 30
     /**
@@ -160,7 +151,7 @@ public enum SACHeaderEnum {
      */
     STLO(0), // 32
     /**
-     * Station elevation (meters). [not currently used]
+     * Station elevation above sea level (meters). [not currently used]
      */
     STEL(0), // 33
     /**
@@ -190,44 +181,43 @@ public enum SACHeaderEnum {
 
     /**
      * User defined variable storage area, n = 0,9.
-     * (use for filter band0)
+     * (0, 1: for filter band)
      */
     USER0(0), // 40
     /**
-     * User defined variable storage area, n = 0,9.
-     * (use for filter band1)
+     * @see #USER0
      */
     USER1(0), // 41
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER2(0), // 42
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER3(0), // 43
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER4(0), // 44
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER5(0), // 45
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER6(0), // 46
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER7(0), // 47
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER8(0), // 48
     /**
-     * User defined variable storage area, n = 0,9.
+     * @see #USER0
      */
     USER9(0), // 49
 
@@ -375,7 +365,7 @@ public enum SACHeaderEnum {
     /**
      * Type of file [required]: 1 ITIME {Time series file} IRLIM {Spectral
      * file---real and imaginary} IAMPH {Spectral file---amplitude and phase}
-     * IXY {General x versus y data} IXYZ {General XYZ (3-D) file}
+     * IXY {General x versus y dat a} IXYZ {General XYZ (3-D) file}
      */
     IFTYPE(2), // 85
     /**
