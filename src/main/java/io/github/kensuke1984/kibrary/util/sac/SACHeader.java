@@ -7,7 +7,7 @@ import java.io.IOException;
  * <p>This class is <b>IMMUTABLE</b></p>
  *
  * @author Kensuke Konishi
- * @version 2.0.1.1
+ * @version 2.0.1.1.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 class SACHeader implements SACHeaderData, Cloneable {
@@ -22,61 +22,61 @@ class SACHeader implements SACHeaderData, Cloneable {
     private double o = -12345;
     private double a = -12345;
     private double num9 = -12345;
-    // T マーカー
-    private double T0 = -12345;
-    private double T1 = -12345;
-    private double T2 = -12345;
-    private double T3 = -12345;
-    private double T4 = -12345;
-    private double T5 = -12345;
-    private double T6 = -12345;
-    private double T7 = -12345;
-    private double T8 = -12345;
-    private double T9 = -12345;
+    // T marker
+    private double t0 = -12345;
+    private double t1 = -12345;
+    private double t2 = -12345;
+    private double t3 = -12345;
+    private double t4 = -12345;
+    private double t5 = -12345;
+    private double t6 = -12345;
+    private double t7 = -12345;
+    private double t8 = -12345;
+    private double t9 = -12345;
     //
-    private double F = -12345;
-    private double RESP0 = -12345;
-    private double RESP1 = -12345;
-    private double RESP2 = -12345;
-    private double RESP3 = -12345;
-    private double RESP4 = -12345;
-    private double RESP5 = -12345;
-    private double RESP6 = -12345;
-    private double RESP7 = -12345;
-    private double RESP8 = -12345;
-    private double RESP9 = -12345;
+    private double f = -12345;
+    private double resp0 = -12345;
+    private double resp1 = -12345;
+    private double resp2 = -12345;
+    private double resp3 = -12345;
+    private double resp4 = -12345;
+    private double resp5 = -12345;
+    private double resp6 = -12345;
+    private double resp7 = -12345;
+    private double resp8 = -12345;
+    private double resp9 = -12345;
     private double stla = -12345;
     private double stlo = -12345;
-    private double STEL = -12345;
-    private double STDP = -12345;
+    private double stel = -12345;
+    private double stdp = -12345;
     private double evla = -12345;
     private double evlo = -12345;
-    private double EVEL = -12345;
+    private double evel = -12345;
     private double evdp = -12345;
-    private double MAG = -12345;
-    private double USER0 = -12345;
-    private double USER1 = -12345;
-    private double USER2 = -12345;
-    private double USER3 = -12345;
-    private double USER4 = -12345;
-    private double USER5 = -12345;
-    private double USER6 = -12345;
-    private double USER7 = -12345;
-    private double USER8 = -12345;
-    private double USER9 = -12345;
-    private double DIST = -12345;
-    private double AZ = -12345;
-    private double BAZ = -12345;
-    private double GCARC = -12345;
+    private double mag = -12345;
+    private double user0 = -12345;
+    private double user1 = -12345;
+    private double user2 = -12345;
+    private double user3 = -12345;
+    private double user4 = -12345;
+    private double user5 = -12345;
+    private double user6 = -12345;
+    private double user7 = -12345;
+    private double user8 = -12345;
+    private double user9 = -12345;
+    private double dist = -12345;
+    private double az = -12345;
+    private double baz = -12345;
+    private double gcarc = -12345;
     private double num54 = -12345;
     private double num55 = -12345;
-    private double DEPMEN = -12345;
-    private double CMPAZ = -12345;
-    private double CMPINC = -12345;
-    private double XMINIMUM = -12345;
-    private double XMAXIMUM = -12345;
-    private double YMINIMUM = -12345;
-    private double YMAXIMUM = -12345;
+    private double depmen = -12345;
+    private double cmpaz = -12345;
+    private double cmpinc = -12345;
+    private double xminimum = -12345;
+    private double xmaximum = -12345;
+    private double yminimum = -12345;
+    private double ymaximum = -12345;
     private double num63 = -12345;
     private double num64 = -12345;
     private double num65 = -12345;
@@ -94,26 +94,26 @@ class SACHeader implements SACHeaderData, Cloneable {
      * a version of header
      */
     private int nvhdr = 6; // ヘッダーのバージョン
-    private int NORID = -12345;
-    private int NEVID = -12345;
+    private int norid = -12345;
+    private int nevid = -12345;
     private int npts = -12345;
     private int num80 = -12345;
-    private int NWFID = -12345;
+    private int nwfid = -12345;
     private int nxsize = -12345;
-    private int NYSIZE = -12345;
+    private int nysize = -12345;
     private int num84 = -12345;
-    private int IFTYPE = 1; // timeseries
-    private int IDEP = 5; // Unknown
-    private int IZTYPE = -12345;
+    private int iftype = 1; // timeseries
+    private int idep = 5; // Unknown
+    private int iztype = -12345;
     private int num88 = -12345;
-    private int IINST = -12345;
-    private int ISTREG = -12345;
-    private int IEVREG = -12345;
-    private int IEVTYP = -12345;
-    private int IQUAL = -12345;
-    private int ISYNTH = -12345;
-    private int IMAGTYP = -12345;
-    private int IMAGSRC = -12345;
+    private int iinst = -12345;
+    private int istreg = -12345;
+    private int ievreg = -12345;
+    private int ievtyp = -12345;
+    private int iqual = -12345;
+    private int isynth = -12345;
+    private int imagtyp = -12345;
+    private int imagsrc = -12345;
     private int num97 = -12345;
     private int num98 = -12345;
     private int num99 = -12345;
@@ -132,31 +132,31 @@ class SACHeader implements SACHeaderData, Cloneable {
      * a name of station
      */
     private String kstnm = "-12345";
-    private String KEVNM = "-12345";
-    private String KHOLE = "-12345";
-    private String KO = "-12345";
-    private String KA = "-12345";
-    private String KT0 = "-12345";
-    private String KT1 = "-12345";
-    private String KT2 = "-12345";
-    private String KT3 = "-12345";
-    private String KT4 = "-12345";
-    private String KT5 = "-12345";
-    private String KT6 = "-12345";
-    private String KT7 = "-12345";
-    private String KT8 = "-12345";
-    private String KT9 = "-12345";
-    private String KF = "-12345";
-    private String KUSER0 = "-12345";
-    private String KUSER1 = "-12345";
-    private String KUSER2 = "-12345";
-    private String KCMPNM = "-12345";
+    private String kevnm = "-12345";
+    private String khole = "-12345";
+    private String ko = "-12345";
+    private String ka = "-12345";
+    private String kt0 = "-12345";
+    private String kt1 = "-12345";
+    private String kt2 = "-12345";
+    private String kt3 = "-12345";
+    private String kt4 = "-12345";
+    private String kt5 = "-12345";
+    private String kt6 = "-12345";
+    private String kt7 = "-12345";
+    private String kt8 = "-12345";
+    private String kt9 = "-12345";
+    private String kf = "-12345";
+    private String kuser0 = "-12345";
+    private String kuser1 = "-12345";
+    private String kuser2 = "-12345";
+    private String kcmpnm = "-12345";
     /**
      * a name of network
      */
     private String knetwk = "-12345";
-    private String KDATRD = "-12345";
-    private String KINST = "-12345";
+    private String kdatrd = "-12345";
+    private String kinst = "-12345";
 
     /**
      * Header values will be read in SAC named the input sacFileName
@@ -204,59 +204,59 @@ class SACHeader implements SACHeaderData, Cloneable {
             o = toDouble(stream.readFloat());
             a = toDouble(stream.readFloat());
             num9 = toDouble(stream.readFloat());
-            T0 = toDouble(stream.readFloat());
-            T1 = toDouble(stream.readFloat());
-            T2 = toDouble(stream.readFloat());
-            T3 = toDouble(stream.readFloat());
-            T4 = toDouble(stream.readFloat());
-            T5 = toDouble(stream.readFloat());
-            T6 = toDouble(stream.readFloat());
-            T7 = toDouble(stream.readFloat());
-            T8 = toDouble(stream.readFloat());
-            T9 = toDouble(stream.readFloat());
-            F = toDouble(stream.readFloat());
-            RESP0 = toDouble(stream.readFloat());
-            RESP1 = toDouble(stream.readFloat());
-            RESP2 = toDouble(stream.readFloat());
-            RESP3 = toDouble(stream.readFloat());
-            RESP4 = toDouble(stream.readFloat());
-            RESP5 = toDouble(stream.readFloat());
-            RESP6 = toDouble(stream.readFloat());
-            RESP7 = toDouble(stream.readFloat());
-            RESP8 = toDouble(stream.readFloat());
-            RESP9 = toDouble(stream.readFloat());
+            t0 = toDouble(stream.readFloat());
+            t1 = toDouble(stream.readFloat());
+            t2 = toDouble(stream.readFloat());
+            t3 = toDouble(stream.readFloat());
+            t4 = toDouble(stream.readFloat());
+            t5 = toDouble(stream.readFloat());
+            t6 = toDouble(stream.readFloat());
+            t7 = toDouble(stream.readFloat());
+            t8 = toDouble(stream.readFloat());
+            t9 = toDouble(stream.readFloat());
+            f = toDouble(stream.readFloat());
+            resp0 = toDouble(stream.readFloat());
+            resp1 = toDouble(stream.readFloat());
+            resp2 = toDouble(stream.readFloat());
+            resp3 = toDouble(stream.readFloat());
+            resp4 = toDouble(stream.readFloat());
+            resp5 = toDouble(stream.readFloat());
+            resp6 = toDouble(stream.readFloat());
+            resp7 = toDouble(stream.readFloat());
+            resp8 = toDouble(stream.readFloat());
+            resp9 = toDouble(stream.readFloat());
             stla = toDouble(stream.readFloat());
             stlo = toDouble(stream.readFloat());
-            STEL = toDouble(stream.readFloat());
-            STDP = toDouble(stream.readFloat());
+            stel = toDouble(stream.readFloat());
+            stdp = toDouble(stream.readFloat());
             evla = toDouble(stream.readFloat());
             evlo = toDouble(stream.readFloat());
-            EVEL = toDouble(stream.readFloat());
+            evel = toDouble(stream.readFloat());
             evdp = toDouble(stream.readFloat());
-            MAG = toDouble(stream.readFloat());
-            USER0 = toDouble(stream.readFloat());
-            USER1 = toDouble(stream.readFloat());
-            USER2 = toDouble(stream.readFloat());
-            USER3 = toDouble(stream.readFloat());
-            USER4 = toDouble(stream.readFloat());
-            USER5 = toDouble(stream.readFloat());
-            USER6 = toDouble(stream.readFloat());
-            USER7 = toDouble(stream.readFloat());
-            USER8 = toDouble(stream.readFloat());
-            USER9 = toDouble(stream.readFloat());
-            DIST = toDouble(stream.readFloat());
-            AZ = toDouble(stream.readFloat());
-            BAZ = toDouble(stream.readFloat());
-            GCARC = toDouble(stream.readFloat());
+            mag = toDouble(stream.readFloat());
+            user0 = toDouble(stream.readFloat());
+            user1 = toDouble(stream.readFloat());
+            user2 = toDouble(stream.readFloat());
+            user3 = toDouble(stream.readFloat());
+            user4 = toDouble(stream.readFloat());
+            user5 = toDouble(stream.readFloat());
+            user6 = toDouble(stream.readFloat());
+            user7 = toDouble(stream.readFloat());
+            user8 = toDouble(stream.readFloat());
+            user9 = toDouble(stream.readFloat());
+            dist = toDouble(stream.readFloat());
+            az = toDouble(stream.readFloat());
+            baz = toDouble(stream.readFloat());
+            gcarc = toDouble(stream.readFloat());
             num54 = toDouble(stream.readFloat());
             num55 = toDouble(stream.readFloat());
-            DEPMEN = toDouble(stream.readFloat());
-            CMPAZ = toDouble(stream.readFloat());
-            CMPINC = toDouble(stream.readFloat());
-            XMINIMUM = toDouble(stream.readFloat());
-            XMAXIMUM = toDouble(stream.readFloat());
-            YMINIMUM = toDouble(stream.readFloat());
-            YMAXIMUM = toDouble(stream.readFloat());
+            depmen = toDouble(stream.readFloat());
+            cmpaz = toDouble(stream.readFloat());
+            cmpinc = toDouble(stream.readFloat());
+            xminimum = toDouble(stream.readFloat());
+            xmaximum = toDouble(stream.readFloat());
+            yminimum = toDouble(stream.readFloat());
+            ymaximum = toDouble(stream.readFloat());
             num63 = toDouble(stream.readFloat());
             num64 = toDouble(stream.readFloat());
             num65 = toDouble(stream.readFloat());
@@ -271,26 +271,26 @@ class SACHeader implements SACHeaderData, Cloneable {
             nzsec = stream.readInt();
             nzmsec = stream.readInt();
             nvhdr = stream.readInt();
-            NORID = stream.readInt();
-            NEVID = stream.readInt();
+            norid = stream.readInt();
+            nevid = stream.readInt();
             npts = stream.readInt();
             num80 = stream.readInt();
-            NWFID = stream.readInt();
+            nwfid = stream.readInt();
             nxsize = stream.readInt();
-            NYSIZE = stream.readInt();
+            nysize = stream.readInt();
             num84 = stream.readInt();
-            IFTYPE = stream.readInt();
-            IDEP = stream.readInt();
-            IZTYPE = stream.readInt();
+            iftype = stream.readInt();
+            idep = stream.readInt();
+            iztype = stream.readInt();
             num88 = stream.readInt();
-            IINST = stream.readInt();
-            ISTREG = stream.readInt();
-            IEVREG = stream.readInt();
-            IEVTYP = stream.readInt();
-            IQUAL = stream.readInt();
-            ISYNTH = stream.readInt();
-            IMAGTYP = stream.readInt();
-            IMAGSRC = stream.readInt();
+            iinst = stream.readInt();
+            istreg = stream.readInt();
+            ievreg = stream.readInt();
+            ievtyp = stream.readInt();
+            iqual = stream.readInt();
+            isynth = stream.readInt();
+            imagtyp = stream.readInt();
+            imagsrc = stream.readInt();
             num97 = stream.readInt();
             num98 = stream.readInt();
             num99 = stream.readInt();
@@ -305,28 +305,28 @@ class SACHeader implements SACHeaderData, Cloneable {
             lcalda = stream.readSACBoolean();
             num109 = stream.readSACBoolean();
             kstnm = stream.readString(8);
-            KEVNM = stream.readString(16);
-            KHOLE = stream.readString(8);
-            KO = stream.readString(8);
-            KA = stream.readString(8);
-            KT0 = stream.readString(8);
-            KT1 = stream.readString(8);
-            KT2 = stream.readString(8);
-            KT3 = stream.readString(8);
-            KT4 = stream.readString(8);
-            KT5 = stream.readString(8);
-            KT6 = stream.readString(8);
-            KT7 = stream.readString(8);
-            KT8 = stream.readString(8);
-            KT9 = stream.readString(8);
-            KF = stream.readString(8);
-            KUSER0 = stream.readString(8);
-            KUSER1 = stream.readString(8);
-            KUSER2 = stream.readString(8);
-            KCMPNM = stream.readString(8);
+            kevnm = stream.readString(16);
+            khole = stream.readString(8);
+            ko = stream.readString(8);
+            ka = stream.readString(8);
+            kt0 = stream.readString(8);
+            kt1 = stream.readString(8);
+            kt2 = stream.readString(8);
+            kt3 = stream.readString(8);
+            kt4 = stream.readString(8);
+            kt5 = stream.readString(8);
+            kt6 = stream.readString(8);
+            kt7 = stream.readString(8);
+            kt8 = stream.readString(8);
+            kt9 = stream.readString(8);
+            kf = stream.readString(8);
+            kuser0 = stream.readString(8);
+            kuser1 = stream.readString(8);
+            kuser2 = stream.readString(8);
+            kcmpnm = stream.readString(8);
             knetwk = stream.readString(8);
-            KDATRD = stream.readString(8);
-            KINST = stream.readString(8);
+            kdatrd = stream.readString(8);
+            kinst = stream.readString(8);
         }
     }
 
@@ -360,27 +360,27 @@ class SACHeader implements SACHeaderData, Cloneable {
 
         switch (sacHeaderEnum) {
             case IFTYPE:
-                return IFTYPE;
+                return iftype;
             case IDEP:
-                return IDEP;
+                return idep;
             case IZTYPE:
-                return IZTYPE;
+                return iztype;
             case IINST:
-                return IINST;
+                return iinst;
             case ISTREG:
-                return ISTREG;
+                return istreg;
             case IEVREG:
-                return IEVREG;
+                return ievreg;
             case IEVTYP:
-                return IEVTYP;
+                return ievtyp;
             case IQUAL:
-                return IQUAL;
+                return iqual;
             case ISYNTH:
-                return ISYNTH;
+                return isynth;
             case IMAGTYP:
-                return IMAGTYP;
+                return imagtyp;
             case IMAGSRC:
-                return IMAGSRC;
+                return imagsrc;
             // case num88:
             // return num88;
             // case num97:
@@ -431,9 +431,9 @@ class SACHeader implements SACHeaderData, Cloneable {
     }
 
     /**
-     * unused かinternalパラメタ
+     * unused or internal parameter
      *
-     * @param sacHeaderEnum ヘッダー名
+     * @param sacHeaderEnum key for the value
      * @return boolean parameter
      */
     private boolean getSpecialBoolean(SACHeaderEnum sacHeaderEnum) {
@@ -483,9 +483,9 @@ class SACHeader implements SACHeaderData, Cloneable {
     }
 
     /**
-     * unused かinternalパラメタ
+     * unused or internal parameter
      *
-     * @param sacHeaderEnum ヘッダー名
+     * @param sacHeaderEnum key
      * @return value for the sacHeaderEnum
      */
     private int getSpecialInt(SACHeaderEnum sacHeaderEnum) {
@@ -503,8 +503,8 @@ class SACHeader implements SACHeaderData, Cloneable {
     }
 
     /**
-     * @param sacHeaderEnum ヘッダー名（インターナルかunused実数値）
-     * @return インターナル, unused指定の値を返す
+     * @param sacHeaderEnum key）
+     * @return value for the sacHeaderEnum
      */
     private double getSpecialValue(SACHeaderEnum sacHeaderEnum) {
         if (sacHeaderEnum.typeOf() != -1 && sacHeaderEnum.typeOf() != 99)
@@ -560,107 +560,107 @@ class SACHeader implements SACHeaderData, Cloneable {
             case A:
                 return a;
             case T0:
-                return T0;
+                return t0;
             case T1:
-                return T1;
+                return t1;
             case T2:
-                return T2;
+                return t2;
             case T3:
-                return T3;
+                return t3;
             case T4:
-                return T4;
+                return t4;
             case T5:
-                return T5;
+                return t5;
             case T6:
-                return T6;
+                return t6;
             case T7:
-                return T7;
+                return t7;
             case T8:
-                return T8;
+                return t8;
             case T9:
-                return T9;
+                return t9;
             case F:
-                return F;
+                return f;
             case RESP0:
-                return RESP0;
+                return resp0;
             case RESP1:
-                return RESP1;
+                return resp1;
             case RESP2:
-                return RESP2;
+                return resp2;
             case RESP3:
-                return RESP3;
+                return resp3;
             case RESP4:
-                return RESP4;
+                return resp4;
             case RESP5:
-                return RESP5;
+                return resp5;
             case RESP6:
-                return RESP6;
+                return resp6;
             case RESP7:
-                return RESP7;
+                return resp7;
             case RESP8:
-                return RESP8;
+                return resp8;
             case RESP9:
-                return RESP9;
+                return resp9;
             case STLA:
                 return stla;
             case STLO:
                 return stlo;
             case STEL:
-                return STEL;
+                return stel;
             case STDP:
-                return STDP;
+                return stdp;
             case EVLA:
                 return evla;
             case EVLO:
                 return evlo;
             case EVEL:
-                return EVEL;
+                return evel;
             case EVDP:
                 return evdp;
             case MAG:
-                return MAG;
+                return mag;
             case USER0:
-                return USER0;
+                return user0;
             case USER1:
-                return USER1;
+                return user1;
             case USER2:
-                return USER2;
+                return user2;
             case USER3:
-                return USER3;
+                return user3;
             case USER4:
-                return USER4;
+                return user4;
             case USER5:
-                return USER5;
+                return user5;
             case USER6:
-                return USER6;
+                return user6;
             case USER7:
-                return USER7;
+                return user7;
             case USER8:
-                return USER8;
+                return user8;
             case USER9:
-                return USER9;
+                return user9;
             case DIST:
-                return DIST;
+                return dist;
             case AZ:
-                return AZ;
+                return az;
             case BAZ:
-                return BAZ;
+                return baz;
             case GCARC:
-                return GCARC;
+                return gcarc;
             case DEPMEN:
-                return DEPMEN;
+                return depmen;
             case CMPAZ:
-                return CMPAZ;
+                return cmpaz;
             case CMPINC:
-                return CMPINC;
+                return cmpinc;
             case XMINIMUM:
-                return XMINIMUM;
+                return xminimum;
             case XMAXIMUM:
-                return XMAXIMUM;
+                return xmaximum;
             case YMINIMUM:
-                return YMINIMUM;
+                return yminimum;
             case YMAXIMUM:
-                return YMAXIMUM;
+                return ymaximum;
             // case num63:
             // return num63;
             // case num64:
@@ -708,17 +708,17 @@ class SACHeader implements SACHeaderData, Cloneable {
             case NVHDR:
                 return nvhdr;
             case NORID:
-                return NORID;
+                return norid;
             case NEVID:
-                return NEVID;
+                return nevid;
             case NPTS:
                 return npts;
             case NWFID:
-                return NWFID;
+                return nwfid;
             case NXSIZE:
                 return nxsize;
             case NYSIZE:
-                return NYSIZE;
+                return nysize;
             // case num80:
             // return num80;
             // case num84:
@@ -740,70 +740,70 @@ class SACHeader implements SACHeaderData, Cloneable {
                 sh.kstnm = string;
                 return sh;
             case KEVNM:
-                sh.KEVNM = string;
+                sh.kevnm = string;
                 return sh;
             case KHOLE:
-                sh.KHOLE = string;
+                sh.khole = string;
                 return sh;
             case KO:
-                sh.KO = string;
+                sh.ko = string;
                 return sh;
             case KA:
-                sh.KA = string;
+                sh.ka = string;
                 return sh;
             case KT0:
-                sh.KT0 = string;
+                sh.kt0 = string;
                 return sh;
             case KT1:
-                sh.KT1 = string;
+                sh.kt1 = string;
                 return sh;
             case KT2:
-                sh.KT2 = string;
+                sh.kt2 = string;
                 return sh;
             case KT3:
-                sh.KT3 = string;
+                sh.kt3 = string;
                 return sh;
             case KT4:
-                sh.KT4 = string;
+                sh.kt4 = string;
                 return sh;
             case KT5:
-                sh.KT5 = string;
+                sh.kt5 = string;
                 return sh;
             case KT6:
-                sh.KT6 = string;
+                sh.kt6 = string;
                 return sh;
             case KT7:
-                sh.KT7 = string;
+                sh.kt7 = string;
                 return sh;
             case KT8:
-                sh.KT8 = string;
+                sh.kt8 = string;
                 return sh;
             case KT9:
-                sh.KT9 = string;
+                sh.kt9 = string;
                 return sh;
             case KF:
-                sh.KF = string;
+                sh.kf = string;
                 return sh;
             case KUSER0:
-                sh.KUSER0 = string;
+                sh.kuser0 = string;
                 return sh;
             case KUSER1:
-                sh.KUSER1 = string;
+                sh.kuser1 = string;
                 return sh;
             case KUSER2:
-                sh.KUSER2 = string;
+                sh.kuser2 = string;
                 return sh;
             case KCMPNM:
-                sh.KCMPNM = string;
+                sh.kcmpnm = string;
                 return sh;
             case KNETWK:
                 sh.knetwk = string;
                 return sh;
             case KDATRD:
-                sh.KDATRD = string;
+                sh.kdatrd = string;
                 return sh;
             case KINST:
-                sh.KINST = string;
+                sh.kinst = string;
                 return sh;
             default:
                 throw new RuntimeException("Unanticipated happens on " + sacHeaderEnum);
@@ -843,67 +843,67 @@ class SACHeader implements SACHeaderData, Cloneable {
                 sh.a = value;
                 return sh;
             case T0:
-                sh.T0 = value;
+                sh.t0 = value;
                 return sh;
             case T1:
-                sh.T1 = value;
+                sh.t1 = value;
                 return sh;
             case T2:
-                sh.T2 = value;
+                sh.t2 = value;
                 return sh;
             case T3:
-                sh.T3 = value;
+                sh.t3 = value;
                 return sh;
             case T4:
-                sh.T4 = value;
+                sh.t4 = value;
                 return sh;
             case T5:
-                sh.T5 = value;
+                sh.t5 = value;
                 return sh;
             case T6:
-                sh.T6 = value;
+                sh.t6 = value;
                 return sh;
             case T7:
-                sh.T7 = value;
+                sh.t7 = value;
                 return sh;
             case T8:
-                sh.T8 = value;
+                sh.t8 = value;
                 return sh;
             case T9:
-                sh.T9 = value;
+                sh.t9 = value;
                 return sh;
             case F:
-                sh.F = value;
+                sh.f = value;
                 return sh;
             case RESP0:
-                sh.RESP0 = value;
+                sh.resp0 = value;
                 return sh;
             case RESP1:
-                sh.RESP1 = value;
+                sh.resp1 = value;
                 return sh;
             case RESP2:
-                sh.RESP2 = value;
+                sh.resp2 = value;
                 return sh;
             case RESP3:
-                sh.RESP3 = value;
+                sh.resp3 = value;
                 return sh;
             case RESP4:
-                sh.RESP4 = value;
+                sh.resp4 = value;
                 return sh;
             case RESP5:
-                sh.RESP5 = value;
+                sh.resp5 = value;
                 return sh;
             case RESP6:
-                sh.RESP6 = value;
+                sh.resp6 = value;
                 return sh;
             case RESP7:
-                sh.RESP7 = value;
+                sh.resp7 = value;
                 return sh;
             case RESP8:
-                sh.RESP8 = value;
+                sh.resp8 = value;
                 return sh;
             case RESP9:
-                sh.RESP9 = value;
+                sh.resp9 = value;
                 return sh;
             case STLA:
                 sh.stla = value;
@@ -912,10 +912,10 @@ class SACHeader implements SACHeaderData, Cloneable {
                 sh.stlo = value;
                 return sh;
             case STEL:
-                sh.STEL = value;
+                sh.stel = value;
                 return sh;
             case STDP:
-                sh.STDP = value;
+                sh.stdp = value;
                 return sh;
             case EVLA:
                 sh.evla = value;
@@ -924,76 +924,76 @@ class SACHeader implements SACHeaderData, Cloneable {
                 sh.evlo = value;
                 return sh;
             case EVEL:
-                sh.EVEL = value;
+                sh.evel = value;
                 return sh;
             case EVDP:
                 sh.evdp = value;
                 return sh;
             case MAG:
-                sh.MAG = value;
+                sh.mag = value;
                 return sh;
             case USER0:
-                sh.USER0 = value;
+                sh.user0 = value;
                 return sh;
             case USER1:
-                sh.USER1 = value;
+                sh.user1 = value;
                 return sh;
             case USER2:
-                sh.USER2 = value;
+                sh.user2 = value;
                 return sh;
             case USER3:
-                sh.USER3 = value;
+                sh.user3 = value;
                 return sh;
             case USER4:
-                sh.USER4 = value;
+                sh.user4 = value;
                 return sh;
             case USER5:
-                sh.USER5 = value;
+                sh.user5 = value;
                 return sh;
             case USER6:
-                sh.USER6 = value;
+                sh.user6 = value;
                 return sh;
             case USER7:
-                sh.USER7 = value;
+                sh.user7 = value;
                 return sh;
             case USER8:
-                sh.USER8 = value;
+                sh.user8 = value;
                 return sh;
             case USER9:
-                sh.USER9 = value;
+                sh.user9 = value;
                 return sh;
             case DIST:
-                sh.DIST = value;
+                sh.dist = value;
                 return sh;
             case AZ:
-                sh.AZ = value;
+                sh.az = value;
                 return sh;
             case BAZ:
-                sh.BAZ = value;
+                sh.baz = value;
                 return sh;
             case GCARC:
-                sh.GCARC = value;
+                sh.gcarc = value;
                 return sh;
             case DEPMEN:
-                sh.DEPMEN = value;
+                sh.depmen = value;
                 return sh;
             case CMPAZ:
-                sh.CMPAZ = value;
+                sh.cmpaz = value;
                 return sh;
             case CMPINC:
-                sh.CMPINC = value;
+                sh.cmpinc = value;
                 return sh;
             case XMINIMUM:
-                sh.XMINIMUM = value;
+                sh.xminimum = value;
                 return sh;
             case XMAXIMUM:
-                sh.XMAXIMUM = value;
+                sh.xmaximum = value;
                 return sh;
             case YMINIMUM:
-                sh.YMINIMUM = value;
+                sh.yminimum = value;
                 return sh;
             case YMAXIMUM:
-                sh.YMAXIMUM = value;
+                sh.ymaximum = value;
                 return sh;
             // case num63:
             // // return num63;
@@ -1028,37 +1028,37 @@ class SACHeader implements SACHeaderData, Cloneable {
         SACHeader sh = clone();
         switch (sacHeaderEnum) {
             case IFTYPE:
-                sh.IFTYPE = value;
+                sh.iftype = value;
                 return sh;
             case IDEP:
-                sh.IDEP = value;
+                sh.idep = value;
                 return sh;
             case IZTYPE:
-                sh.IZTYPE = value;
+                sh.iztype = value;
                 return sh;
             case IINST:
-                sh.IINST = value;
+                sh.iinst = value;
                 return sh;
             case ISTREG:
-                sh.ISTREG = value;
+                sh.istreg = value;
                 return sh;
             case IEVREG:
-                sh.IEVREG = value;
+                sh.ievreg = value;
                 return sh;
             case IEVTYP:
-                sh.IEVTYP = value;
+                sh.ievtyp = value;
                 return sh;
             case IQUAL:
-                sh.IQUAL = value;
+                sh.iqual = value;
                 return sh;
             case ISYNTH:
-                sh.ISYNTH = value;
+                sh.isynth = value;
                 return sh;
             case IMAGTYP:
-                sh.IMAGTYP = value;
+                sh.imagtyp = value;
                 return sh;
             case IMAGSRC:
-                sh.IMAGSRC = value;
+                sh.imagsrc = value;
                 return sh;
             // case num88:
             // num88 = value;
@@ -1120,22 +1120,22 @@ class SACHeader implements SACHeaderData, Cloneable {
                 sh.nvhdr = value;
                 return sh;
             case NORID:
-                sh.NORID = value;
+                sh.norid = value;
                 return sh;
             case NEVID:
-                sh.NEVID = value;
+                sh.nevid = value;
                 return sh;
             case NPTS:
                 sh.npts = value;
                 return sh;
             case NWFID:
-                sh.NWFID = value;
+                sh.nwfid = value;
                 return sh;
             case NXSIZE:
                 sh.nxsize = value;
                 return sh;
             case NYSIZE:
-                sh.NYSIZE = value;
+                sh.nysize = value;
                 return sh;
 
             default:
@@ -1153,49 +1153,49 @@ class SACHeader implements SACHeaderData, Cloneable {
             case KSTNM:
                 return kstnm;
             case KEVNM:
-                return KEVNM;
+                return kevnm;
             case KHOLE:
-                return KHOLE;
+                return khole;
             case KO:
-                return KO;
+                return ko;
             case KA:
-                return KA;
+                return ka;
             case KT0:
-                return KT0;
+                return kt0;
             case KT1:
-                return KT1;
+                return kt1;
             case KT2:
-                return KT2;
+                return kt2;
             case KT3:
-                return KT3;
+                return kt3;
             case KT4:
-                return KT4;
+                return kt4;
             case KT5:
-                return KT5;
+                return kt5;
             case KT6:
-                return KT6;
+                return kt6;
             case KT7:
-                return KT7;
+                return kt7;
             case KT8:
-                return KT8;
+                return kt8;
             case KT9:
-                return KT9;
+                return kt9;
             case KF:
-                return KF;
+                return kf;
             case KUSER0:
-                return KUSER0;
+                return kuser0;
             case KUSER1:
-                return KUSER1;
+                return kuser1;
             case KUSER2:
-                return KUSER2;
+                return kuser2;
             case KCMPNM:
-                return KCMPNM;
+                return kcmpnm;
             case KNETWK:
                 return knetwk;
             case KDATRD:
-                return KDATRD;
+                return kdatrd;
             case KINST:
-                return KINST;
+                return kinst;
             default:
                 throw new RuntimeException("Unanticipated happens");
         }
