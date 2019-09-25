@@ -96,20 +96,18 @@ public class CheckerBoardTest implements Operation {
 			property.setProperty("workPath", "");
 		if (!property.containsKey("components"))
 			property.setProperty("components", "Z R T");
-		if (!property.containsKey("sourceTimeFunction"))
-			property.setProperty("sourceTimeFunction", "0");
 		if (!property.containsKey("timePartial"))
 			property.setProperty("timePartial", "false");
-		if (!property.containsKey("psvsh"))
-			property.setProperty("psvsh", "0");
 		if (!property.containsKey("modelName"))
 			property.setProperty("modelName", "");
-		if (!property.containsKey("noize"))
-			property.setProperty("noize", "false");
-		if (property.getProperty("noize").equals("true") && property.containsKey("noizePower"))
-			throw new RuntimeException("There is no information about 'noizePower'");
+		if (!property.containsKey("noise"))
+			property.setProperty("noise", "false");
+		if (property.getProperty("noise").equals("true") && !property.containsKey("noisePower"))
+			throw new RuntimeException("There is no information about 'noisePower'");
 		if (!property.containsKey("timeShift"))
 			property.setProperty("timeShift", "false");
+		if (!property.containsKey("iterate"))
+			property.setProperty("iterate", "false");
 		
 	}
 
@@ -321,6 +319,13 @@ public class CheckerBoardTest implements Operation {
 	public RealVector computePseudoD(RealVector pseudoM) {
 		return eq.operate(pseudoM);
 	}
+	
+	public RealVector computePseudoDSecondOrder(RealVector pseudoM) {
+//		RealVector am = eq.operate(pseudoM);
+//		eq.getAtA().operate(pseudoM).
+//		return d;
+		return null;
+	}
 
 	/**
 	 * @param args
@@ -389,10 +394,16 @@ public class CheckerBoardTest implements Operation {
 				System.out.println("Using time shift");
 				output4ChekeBoardTestTimeshifted(outIDPath, outDataPath, bornVec);
 			}
-			else
+			else {
+				System.out.println("No noise no shift");
 				output4ChekeBoardTest(outIDPath, outDataPath, bornVec);
+			}
 		}
-
+		
+//		outIDPath = workPath.resolve("pseudoOrder2ID" + dateStr + ".dat");
+//		outDataPath = workPath.resolve("pseudoOrder2" + dateStr + ".dat");
+//		RealVector bornOrder2Vec = computePseudoDSecondOrder(pseudoM).add(getSynVector());
+//		output4ChekeBoardTest(outIDPath, outDataPath, bornOrder2Vec);
 	}
 
 	@Override

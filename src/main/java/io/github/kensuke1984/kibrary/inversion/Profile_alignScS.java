@@ -47,8 +47,8 @@ import edu.sc.seis.TauP.TauP_Time;
 
 public class Profile_alignScS {
 	public static void main(String[] args) throws TauModelException {
-//		int methodOrder = Integer.parseInt(args[0]);
-		int methodOrder = 1;
+		int methodOrder = Integer.parseInt(args[0]);
+//		int methodOrder = 1;
 		GlobalCMTID oneEvent = null;
 //		if (args.length == 2)
 //			oneEvent = new GlobalCMTID(args[1]);
@@ -92,8 +92,8 @@ public class Profile_alignScS {
 //			return;
 //		Phase phase = Phase.create(phaseString);
 		
-		Path inversionResultPath = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartialPREM/inversion/NEW/lmi_rec_70deg_az335_201205280507A_mantleCorr_Q");
-//		Path inversionResultPath = Paths.get(".");
+//		Path inversionResultPath = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartialPREM/inversion/NEW/lmi_rec_70deg_az335_201205280507A_mantleCorr_Q");
+		Path inversionResultPath = Paths.get(".");
 //		Phase phase = Phase.create(args[1]);
 		Phase phase = Phase.ScS;
 		

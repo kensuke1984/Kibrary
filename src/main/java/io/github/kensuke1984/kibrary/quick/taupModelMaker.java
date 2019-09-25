@@ -18,15 +18,56 @@ public class taupModelMaker {
 	public static void main(String[] args) throws IOException {
 //		PolynomialStructure model = PolynomialStructure.PREM;
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/1D_REFERENCE_MODEL/POLYNOMIALS/tnasna.poly"));
-//		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0_it1/inversion/alpha_03/lmi_s0_cMU06_cQ03_cQ10/poly/s0_it2.poly"));
-		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/PREM_cb360km_Q50.poly"));
+//		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.poly"));
+//		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
+//		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/PREM_Q165_cb160km_vp1p.poly"));
+		PolynomialStructure model = PolynomialStructure.AK135;
 		
-		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0/inversion/alpha_03/lmi_s0_c06_cQ10/poly");
-//		PolynomialStructure model = new PolynomialStructure(Paths.get(args[0]));
-//		int nR = Integer.parseInt(args[0]);
+//		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0/inversion/alpha_03/lmi_s0_c06_cQ10/poly");
+////		PolynomialStructure model = new PolynomialStructure(Paths.get(args[0]));
+////		int nR = Integer.parseInt(args[0]);
 		int nR = 10000;
 		
-//		System.out.println((PolynomialStructure.PREM.getVshAt(6371-2401)));
+		PolynomialStructure prem = PolynomialStructure.PREM;
+		
+//		System.out.println((PolynomialStructure.PREM.getVphAt(3630) - PolynomialStructure.AK135.getVphAt(3630))/ PolynomialStructure.PREM.getVphAt(3630) * 100);
+//		System.exit(0);
+		
+//		System.out.println(prem.getVphAt(3640)*1.01);
+//		System.exit(0);
+		
+//		double r0 = 6371-2550.;
+//		double avg = 0;
+////		for (int i = 0; i < 10000; i++) {
+////			double r = r0 - i / 100.;
+////			if (model.getVshAt(r) >= prem.getVshAt(r)) {
+////				r0 = r;
+////				break;
+////			}
+////		}
+//		r0 = 3794.6;
+//		double r00 = 6371. - 2400.;
+//		System.out.println(r0);
+//		int nr = (int) (r00 - 3480);
+//		for (int i = 0; i < nr; i++) {
+//			double r = r00 - i;
+//			avg += (model.getVshAt(r) - prem.getVshAt(r)) / prem.getVshAt(r);
+//		}
+//		avg /= nr;
+////		System.out.println(avg * 100 * (r00 - 3480) / (r0 - 3480));
+//		System.out.println(avg * 100);
+//		System.out.println((prem.getVshAt(r0-30) * 1.4314450941487382/100 + 11.1671) + " " + (prem.getVshAt(r0-30) * 1.4314450941487382/100 + 6.9254));
+//		
+//		double v1 = prem.getVshAt(r0 + 30.);
+//		double v2 = prem.getVshAt(r0 - 30.) * (1. + 1.4314450941487382/100.);
+//		double alpha = (v2 - v1) / 60. * 6371.;
+//		double v0 = prem.getVshAt(r0+30) + alpha*(r0+30.) / 6371.;
+//		double v22 = 14.081209539169757 - 11.460512512359322*(r0+30.) / 6371.;
+//		System.out.println(v0 + " " + alpha);
+//		System.exit(0);
+		
+//		System.out.println((PolynomialStructure.PREM.getVshAt(6371-2400)));
+//		System.exit(0);
 //		System.out.println((0.1*PolynomialStructure.PREM.getVshAt(3500)*PolynomialStructure.PREM.getVshAt(3500)*PolynomialStructure.PREM.getRhoAt(3500)));
 //		System.out.println((model.getVshAt(3500)));
 //		double[] rs = new double[] {3530., 3630., 3730.};
@@ -153,9 +194,10 @@ public class taupModelMaker {
 		
 //		outputSTD(PolynomialStructure.MAK135, nR, Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES/MAK135.vel"));
 		
-//		outputSTD(model, nR, Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0_it1/inversion/alpha_03/lmi_s0_cMU06_cQ03_cQ10/poly/s5.vel"));
-		outputSTD(model, nR, Paths.get("//work/anselme/POLY/PREM_cb360km_Q50.vel"));
-//		outputSTD(PolynomialStructure.PREM, nR, Paths.get("/Users/Anselme/Dropbox/Kenji/FWICPac/INITIAL_MODEL/PREM.vel"));
+//		outputSTD(model, nR, Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.vel"));
+//		outputSTD(model, nR, Paths.get("/work/anselme/POLY/AK135.vel"));
+		outputSTD(PolynomialStructure.ISO_PREM, 1000, Paths.get("/usr/local/share/TauP-2.4.5/StdModels/PREM_1000.vel"));
+//		outputSTD(PolynomialStructure.PREM, nR, Paths.get("/work/anselme/POLY/PREM.vel"));
 		
 //		outputTauP(model, nR);
 		
@@ -196,7 +238,7 @@ public class taupModelMaker {
 		return String.format("%.3f %.8f %.8f %.8f %.8f %.8f %.1f %.1f%n"
 				,Earth.EARTH_RADIUS - r
 				,model.getVphAt(r)
-				,model.getVphAt(r)
+				,model.getVpvAt(r)
 				,model.getVshAt(r)
 				,model.getVsvAt(r)
 				,model.getRhoAt(r)

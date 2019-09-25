@@ -90,6 +90,8 @@ public class Phases {
 		@Override
 		public String toString() {
 			String s = "";
+			if (length == 0)
+				return s;
 			for (int i = 0; i < length - 1; i++)
 				s += phases[i].toString() + "_";
 			s += phases[length - 1];

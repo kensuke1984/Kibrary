@@ -73,7 +73,7 @@ public class CombineParametersVertically {
 			
 			globalCMTIDSet.stream().forEach(event -> {
 				List<PartialID> eventPartials = Stream.of(partials).filter(par -> par.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-				stationSet.stream().parallel().forEach(station -> {
+				stationSet.stream().forEach(station -> {
 					List<PartialID> stationPartials = eventPartials.stream().filter(par -> par.getStation().equals(station)).collect(Collectors.toList());
 					if (stationPartials.size() > 0) {
 						IntStream.range(0, nNew).parallel().forEach(inew -> {
@@ -85,7 +85,10 @@ public class CombineParametersVertically {
 								UnknownParameter unknown = originalUnknowns[iOriginal];
 								
 //								double weight = unknown.getWeighting();
-								double weight = 1.;
+								
+								//weight in order to keep consistent definition of volume of unknown parameters
+//								System.out.println(iOriginals.length);
+								double weight = 1. / iOriginals.length;
 								
 	//							System.out.println("------\n" + unknown.getLocation());
 	//							stationPartials.stream().forEach(par -> System.out.println(par.getPerturbationLocation()));

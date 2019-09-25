@@ -16,8 +16,6 @@ import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.inversion.Weighting;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
-import io.github.kensuke1984.kibrary.quick.LookAtBPspc;
-import io.github.kensuke1984.kibrary.quick.LookAtFPspc;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
@@ -29,7 +27,6 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
@@ -40,13 +37,10 @@ import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.util.spc.SpectrumFile;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.lang.instrument.Instrumentation;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,8 +56,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -72,21 +64,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.management.RuntimeErrorException;
-
-import opendap.dap.DPrimitive;
-
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.util.FastMath;
 
-import ucar.nc2.ft.point.standard.Table.CoordName;
+import edu.sc.seis.TauP.SphericalCoords;
 
-/**
- * @author Anselme Borgeaud
- *
- */
 public class AtAMaker implements Operation {
 	private Properties property;
 	
@@ -188,6 +173,8 @@ public class AtAMaker implements Operation {
 	
 	private boolean quickAndDirty;
 	
+	private boolean fastCompute;
+	
 	Path verticalMappingFile;
 	Path horizontalMappingFile;
 	
@@ -197,6 +184,7 @@ public class AtAMaker implements Operation {
 	
 	private int workProgressCounter;
 	private int progressStep;
+	private int progressStep1D;
 	
 	private final SpcFileName[] bpnames;
 	private final SpcFileName[] bpnames_PSV;
@@ -210,6 +198,8 @@ public class AtAMaker implements Operation {
 	public final BasicID[][] basicIDArray;
 	
 	private WaveformDataWriter[] writers;
+	
+	private boolean threeD;
 	
 	/* (non-Javadoc)
 	 * @see io.github.kensuke1984.kibrary.Operation#getWorkPath()
@@ -350,37 +340,60 @@ public class AtAMaker implements Operation {
 		
 		numberOfBuffers = Integer.parseInt(property.getProperty("numberOfBuffers"));
 		
-		List<UnknownParameter> targetUnknowns = UnknownParameterFile.read(unknownParameterPath);
-		List<Double> lats = targetUnknowns.stream().map(p -> p.getLocation().getLatitude()).distinct().collect(Collectors.toList());
-		List<Double> lons = targetUnknowns.stream().map(p -> p.getLocation().getLatitude()).distinct().collect(Collectors.toList());
-		Collections.sort(lats);
-		Collections.sort(lons);
-		double dlat = Math.abs(lats.get(1) - lats.get(0));
-		double dlon = Math.abs(lons.get(1) - lons.get(0));
-		System.out.println("Target grid increments lat, lon = " + dlat + ", " + dlon);
-		
-		ResampleGrid sampler = new ResampleGrid(targetUnknowns, dlat, dlon, resamplingRate);
-		originalUnknownParameters = sampler.getResampledUnkowns().toArray(new UnknownParameter[0]);
-		
-		originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
-				.collect(Collectors.toList());
-		
-		originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
-				.collect(Collectors.toSet());
-		
-		if (verticalMappingFile != null) {
-			System.out.println("Using 3-D mapping with resampler" + verticalMappingFile + " " + resamplingRate);
-			threedMapping = new ThreeDParameterMapping(sampler, verticalMappingFile);
-			newUnknownParameters = threedMapping.getNewUnknowns();
-			horizontalMapping = null;
-		}
-		else {
-			System.out.println("No mapping");
-			mapping = new ParameterMapping(originalUnknownParameters);
-			newUnknownParameters = mapping.getUnknowns();
-			horizontalMapping = null;
-			threedMapping = null;
-		}
+			List<UnknownParameter> targetUnknowns = UnknownParameterFile.read(unknownParameterPath);
+			List<Double> lats = targetUnknowns.stream().map(p -> p.getLocation().getLatitude()).distinct().collect(Collectors.toList());
+			List<Double> lons = targetUnknowns.stream().map(p -> p.getLocation().getLatitude()).distinct().collect(Collectors.toList());
+			Collections.sort(lats);
+			Collections.sort(lons);
+			double dlat = Math.abs(lats.get(1) - lats.get(0));
+			double dlon = Math.abs(lons.get(1) - lons.get(0));
+			System.out.println("Target grid increments lat, lon = " + dlat + ", " + dlon);
+			
+			if (resamplingRate > 1) {
+				ResampleGrid sampler = new ResampleGrid(targetUnknowns, dlat, dlon, resamplingRate);
+				originalUnknownParameters = sampler.getResampledUnkowns().toArray(new UnknownParameter[0]);
+				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
+						.collect(Collectors.toList());
+				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
+						.collect(Collectors.toSet());
+				
+				if (verticalMappingFile != null) {
+					throw new RuntimeException("Please set a verticalMappingFile");
+				}
+				System.out.println("Using 3-D mapping with resampler" + verticalMappingFile + " " + resamplingRate);
+				threedMapping = new ThreeDParameterMapping(sampler, verticalMappingFile);
+				newUnknownParameters = threedMapping.getNewUnknowns();
+				horizontalMapping = null;
+			}
+			else if (verticalMappingFile != null && horizontalMappingFile != null) {
+				originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
+				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
+						.collect(Collectors.toList());
+				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
+						.collect(Collectors.toSet());
+				System.out.println("Using 3-D mapping with " + verticalMappingFile + " " + horizontalMappingFile);
+				threedMapping = new ThreeDParameterMapping(horizontalMappingFile, verticalMappingFile, originalUnknownParameters);
+				newUnknownParameters = threedMapping.getNewUnknowns();
+			}
+			else {
+				System.out.println("No mapping");
+				originalUnknownParameters = targetUnknowns.toArray(new UnknownParameter[0]);
+				mapping = new ParameterMapping(originalUnknownParameters);
+				newUnknownParameters = mapping.getUnknowns();
+				horizontalMapping = null;
+				threedMapping = null;
+				originalUnkownRadii = targetUnknowns.stream().map(p -> p.getLocation().getR())
+						.collect(Collectors.toSet());
+				originalHorizontalPositions = Stream.of(originalUnknownParameters).map(p -> p.getLocation().toHorizontalPosition()).distinct()
+						.collect(Collectors.toList());
+			}
+//		else {
+//			originalUnknownParameters = UnknownParameterFile.read(unknownParameterPath).toArray(new UnknownParameter[0]);
+//			newUnknownParameters = originalUnknownParameters;
+//			originalHorizontalPositions = null;
+//			originalUnkownRadii = Arrays.stream(originalUnknownParameters).map(p -> p.getLocation().getR())
+//					.collect(Collectors.toSet());
+//		}
 		
 		nOriginalUnknown = originalUnknownParameters.length;
 		nNewUnknown = newUnknownParameters.length;
@@ -462,7 +475,9 @@ public class AtAMaker implements Operation {
 			pw.println("##Theta- range and sampling for the BP catalog in the format: thetamin thetamax thetasampling. (1. 50. 2e-2)");
 			pw.println("#thetaInfo");
 			pw.println("##Boolean use the closest grid point in the catalogue without interpolation (if the catalogue is dense enough) (false)");
-			pw.println("quickAndDirty");
+			pw.println("#quickAndDirty");
+			pw.println("## Consider only 30 deg distance around raypath (false)");
+			pw.println("#fastCompute");
 			pw.println("##Compute AtA and Atd (1), Atd only (2), or PartialID files (3). (3)");
 			pw.println("#computationFlag");
 			pw.println("##String if it is PREM spector file is in bpdir/PREM (PREM)");
@@ -482,6 +497,8 @@ public class AtAMaker implements Operation {
 			pw.println("#tlen 3276.8");
 			pw.println("##int step of frequency domain DSM parameter np, must be set");
 			pw.println("#np 512");
+			pw.println("##Compute 3D partials: true; Compute 1D partials: false. (true)");
+			pw.println("#threeD");
 			pw.println("#=========================================================");
 			pw.println("#===================== Filter, Sampling ==================");
 			pw.println("##double minimum value of passband (0.005). Can enter multiple values (separated by a space).");
@@ -591,8 +608,12 @@ public class AtAMaker implements Operation {
 			property.setProperty("resamplingRate", "1");
 		if (!property.containsKey("quickAndDirty"))
 			property.setProperty("quickAndDirty", "false");
+		if (!property.containsKey("fastCompute"))
+			property.setProperty("fastCompute", "false");
 		if (!property.containsKey("mode"))
 			property.setProperty("mode", "SH");
+		if (!property.containsKey("threeD"))
+			property.setProperty("threeD", "true");
 	}
 
 	/**
@@ -661,6 +682,10 @@ public class AtAMaker implements Operation {
 		catalogueFP = Boolean.parseBoolean(property.getProperty("catalogueFP"));
 		
 		quickAndDirty = Boolean.parseBoolean(property.getProperty("quickAndDirty"));
+		
+		threeD = Boolean.parseBoolean(property.getProperty("threeD"));
+		
+		fastCompute = Boolean.parseBoolean(property.getProperty("fastCompute"));
 	}
 	
 	
@@ -695,6 +720,9 @@ public class AtAMaker implements Operation {
 	 */
 	@Override
 	public void run() throws IOException {
+		if (fastCompute)
+			System.out.println("Using fast compute mode");
+		
 		setTimewindows();
 		setBandPassFilter();
 //		setUnknownParameters();
@@ -834,6 +862,9 @@ public class AtAMaker implements Operation {
 		progressStep = (int) (originalUnknownParameters.length * nwindowBuffer / 100.);
 		if (progressStep == 0) progressStep = 1;
 		
+		progressStep1D = (int) (nwindowBuffer / 100.);
+		if (progressStep1D == 0) progressStep1D = 1;
+		
 		//--- initialize partials
 		partials = new double[nOriginalUnknown][][][][];
 		for (int i = 0; i < nOriginalUnknown; i++) {
@@ -914,26 +945,60 @@ public class AtAMaker implements Operation {
 					
 	//				System.out.println(currentWindowCounter + " " + iterationCount + " " + nInteration + " " + nwindowBufferLastIteration);
 					
-					if (catalogueFP) {
-						System.out.println("FP catalogue");
-						for (HorizontalPosition position : originalHorizontalPositions) {
-							todo.add(Executors.callable(new FPWorker(position, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+//					if (threeD) {
+						if (catalogueFP) {
+							System.out.println("FP catalogue");
+							for (HorizontalPosition position : originalHorizontalPositions) {
+								if (fastCompute) {
+									Location fpSourceLoc = event.getEvent().getCmtLocation();
+									HorizontalPosition bpSourceLoc = station.getPosition();
+									double distanceFP = fpSourceLoc.getEpicentralDistance(position);
+									double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(position);
+									double d = Math.toDegrees(Math.asin(distanceFP * Math.sin(az)));
+									System.out.println(d);
+									if (d < 10.)
+										todo.add(Executors.callable(new FPWorker(position, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+								}
+								else
+									todo.add(Executors.callable(new FPWorker(position, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+							}
 						}
-					}
-					else {
-						System.out.println("Exact FP");
-						for (int ispc = 0; ispc < fpnames.size(); ispc++) {
-							if (mode.equals("SH"))
-								todo.add(Executors.callable(new FPWorker(fpnames.get(ispc)
-										, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
-							else if (mode.equals("PSV"))
-								todo.add(Executors.callable(new FPWorker(null, fpnames_PSV.get(ispc)
-										, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
-							else if (mode.equals("BOTH"))
-								todo.add(Executors.callable(new FPWorker(fpnames.get(ispc), fpnames_PSV.get(ispc)
-										, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+						else {
+							System.out.println("Exact FP");
+							for (int ispc = 0; ispc < fpnames.size(); ispc++) {
+								if (mode.equals("SH"))
+									todo.add(Executors.callable(new FPWorker(fpnames.get(ispc)
+											, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+								else if (mode.equals("PSV"))
+									todo.add(Executors.callable(new FPWorker(null, fpnames_PSV.get(ispc)
+											, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+								else if (mode.equals("BOTH")) {
+									HorizontalPosition position = fpnames.get(ispc).read().getObserverPosition();
+									if (fastCompute) {
+										Location fpSourceLoc = event.getEvent().getCmtLocation();
+										HorizontalPosition bpSourceLoc = station.getPosition();
+										double distanceFP = fpSourceLoc.getEpicentralDistance(position);
+										double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(position);
+										double d = Math.toDegrees(Math.asin(distanceFP * Math.sin(az)));
+//										System.out.println(d);
+										if (Math.abs(d) < 10.)
+											todo.add(Executors.callable(new FPWorker(fpnames.get(ispc), fpnames_PSV.get(ispc)
+													, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+									}
+									else
+										todo.add(Executors.callable(new FPWorker(fpnames.get(ispc), fpnames_PSV.get(ispc)
+												, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+//									todo.add(Executors.callable(new FPWorker(fpnames.get(ispc), fpnames_PSV.get(ispc)
+//											, station, event, IndicesRecordBasicID, orderedRecordTimewindows, currentWindowCounter)));
+								}
+							}
 						}
-					}
+//					}
+//					else {
+//						todo.add(Executors.callable(
+//								new worker1D(station, event, IndicesRecordBasicID
+//										, orderedRecordTimewindows, currentWindowCounter)));
+//					}
 					
 //					if (orderedRecordTimewindows.size() != 1)
 //						throw new RuntimeException("More than one timewindow");
@@ -1120,7 +1185,57 @@ public class AtAMaker implements Operation {
 					iOriginalUnknowns = mapping.getiNewToOriginal(iunknown);
 				}
 				
-				
+				for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
+					for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+							for (int iwin = 0; iwin < nwindowBuffer; iwin++) {
+								if (partials[0][iweight][ifreq][iwin].length == 0)
+									continue;
+								
+								TimewindowInformation window = timewindows[iwin];
+								Phases phases = new Phases(window.getPhases());
+								Phase[] phaseArray = phases.toSet().toArray(new Phase[0]);
+								
+								int it = partials[0][iweight][ifreq][iwin].length;
+//								int it = (int) (window.getLength() * finalSamplingHz); 
+//								if (it > 0) {
+									double[] partiali = new double[it];
+									for (int iOriginal = 0; iOriginal < iOriginalUnknowns.length; iOriginal++) {
+										if (partials[iOriginalUnknowns[iOriginal]][iweight][ifreq][iwin].length > 0)
+											for (int k = 0; k < it; k++) {
+												partiali[k] += partials[iOriginalUnknowns[iOriginal]][iweight][ifreq][iwin][k];
+											}
+									}
+									
+									PartialType type = newUnknownParameters[iunknown].getPartialType();
+									if (!threeD)
+										type = to1D(type);
+									
+									PartialID partialID = new PartialID(window.getStation(), window.getGlobalCMTID(), window.getComponent()
+											, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
+											, 1./frequencyRanges[ifreq].getMinFreq(), phaseArray, 0, true, newUnknownParameters[iunknown].getLocation()
+											, type, partiali);
+									
+									writers[ifreq].addPartialID(partialID);
+//								}
+//								else
+//									System.out.println(0);
+							}
+					}
+				}
+			}
+			
+			for (int iw = 0; iw < writers.length; iw++)
+				writers[iw].flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Deprecated
+	private void fillA1D(TimewindowInformation[] timewindows) {
+		try {
+			for (int iunknown = 0; iunknown < nNewUnknown; iunknown++) {
 				for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
 					for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
 							for (int iwin = 0; iwin < nwindowBuffer; iwin++) {
@@ -1133,12 +1248,7 @@ public class AtAMaker implements Operation {
 								
 								int it = partials[0][iweight][ifreq][iwin].length;
 								if (it > 0) {
-									double[] partiali = new double[it];
-									for (int iOriginal = 0; iOriginal < iOriginalUnknowns.length; iOriginal++) {
-										for (int k = 0; k < partiali.length; k++) {
-											partiali[k] += partials[iOriginalUnknowns[iOriginal]][iweight][ifreq][iwin][k];
-										}
-									}
+									double[] partiali = partials[iunknown][iweight][ifreq][iwin];
 									
 									PartialID partialID = new PartialID(window.getStation(), window.getGlobalCMTID(), window.getComponent()
 											, finalSamplingHz, window.getStartTime(), it, 1./frequencyRanges[ifreq].getMaxFreq()
@@ -1393,6 +1503,8 @@ public class AtAMaker implements Operation {
 	}
 	
 	private void outputHorizontalPoints(Path outpath, List<HorizontalPosition> horizontalPositions) throws IOException {
+		if (horizontalPositions == null)
+			return;
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outpath.toFile())));
 		for (HorizontalPosition p : horizontalPositions)
 			pw.println(p);
@@ -1403,12 +1515,16 @@ public class AtAMaker implements Operation {
 		PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outpath.toFile())));
 		double[] newRadii = null;
 		double[] newLayerWidths = null;
-		if (horizontalMapping != null) {
-			System.out.println("Not implemented yet");
-		}
-		else if (threedMapping != null) {
+//		if (horizontalMapping != null) {
+//			System.out.println("Not implemented yet");
+//		}
+		if (threedMapping != null) {
 			newRadii = threedMapping.getNewRadii();
 			newLayerWidths = threedMapping.getNewLayerWidths();
+		}
+		else if (mapping == null ) {
+			pw.close();
+			return;
 		}
 		else {
 			newRadii = mapping.getNewRadii();
@@ -1440,19 +1556,19 @@ public class AtAMaker implements Operation {
 		return -1;
 	}
 	
-	private PartialType to3D(PartialType type1D) {
-		PartialType type3D = null;
-		switch (type1D) {
-		case PAR2:
-			type3D = PartialType.MU;
+	private PartialType to1D(PartialType type3D) {
+		PartialType type1D = null;
+		switch (type3D) {
+		case MU:
+			type1D = PartialType.PAR2;
 			break;
-		case PAR1:
-			type3D = PartialType.LAMBDA;
+		case LAMBDA:
+			type1D = PartialType.PAR1;
 			break;
 		default:
-			throw new RuntimeException("PartialType not implemented yet " + type1D);
+			throw new RuntimeException("PartialType not implemented yet " + type3D);
 		}
-		return type3D;
+		return type1D;
 	}
 	
 	private final double epsilon = 1e-6;
@@ -1571,6 +1687,15 @@ public class AtAMaker implements Operation {
 //			System.out.println("phi= " + phi);
 		
 //			System.out.println("geographic, geodetic distance = " + geocentricDistance + " " + distance);
+			
+			
+//			if (fastCompute) {
+//				double a = Math.toRadians(distanceFP);
+//				double az = fpSourceLoc.getAzimuth(bpSourceLoc) - fpSourceLoc.getAzimuth(obsPos);
+//				double d = Math.toDegrees(Math.asin(a * Math.sin(az)));
+//				if (d > 10.)
+//					return;
+//			}
 			
 			int ipointBP = (int) ((distanceBP - thetamin) / dtheta);
 //			if (distanceBP < thetamin || distanceBP > thetamax)
@@ -1911,7 +2036,8 @@ public class AtAMaker implements Operation {
 					
 					Map<SACComponent, double[]> partialmap = new HashMap<>();
 					for (SACComponent component : components) {
-						double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type);
+						double[] partial;
+						partial = threedPartialMaker.createPartialSerial(component, ibody, type);
 						partialmap.put(component, partial);
 					}
 					
@@ -2049,26 +2175,15 @@ public class AtAMaker implements Operation {
 		
 	}
 	
-	public class worker1D implements Runnable {
-		Station station;
-		GlobalCMTID event;
-		List<List<Integer>> IndicesRecordBasicID;
-		private final List<TimewindowInformation> orderedRecordTimewindows;
-		private int windowCounter;
-		
-		public worker1D(Station station, GlobalCMTID event,
-				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
-			this.station = station;
-			this.event = event;
-			this.IndicesRecordBasicID = IndicesRecordBasicID;
-			this.orderedRecordTimewindows = orderedRecordTimewindows;
-			this.windowCounter = windowCounter;
-		}
-		
-//		public FPWorker(SpcFileName fpname, SpcFileName fpname_PSV, Station station, GlobalCMTID event,
-//				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
-//			this.fpname = fpname;
-//			this.fpname_PSV = fpname_PSV;
+//	public class worker1D implements Runnable {
+//		Station station;
+//		GlobalCMTID event;
+//		List<List<Integer>> IndicesRecordBasicID;
+//		private final List<TimewindowInformation> orderedRecordTimewindows;
+//		private int windowCounter;
+//		
+//		public worker1D(Station station, GlobalCMTID event,
+//				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows, int windowCounter) {
 //			this.station = station;
 //			this.event = event;
 //			this.IndicesRecordBasicID = IndicesRecordBasicID;
@@ -2076,301 +2191,381 @@ public class AtAMaker implements Operation {
 //			this.windowCounter = windowCounter;
 //		}
 //		
-//		public FPWorker(HorizontalPosition voxelPosition, Station station, GlobalCMTID event,
-//				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
-//			this.fpname = null;
-//			this.fpname_PSV = null;
-//			this.voxelPosition = voxelPosition;
-//			this.station = station;
-//			this.event = event;
-//			this.IndicesRecordBasicID = IndicesRecordBasicID;
-//			this.orderedRecordTimewindows = orderedRecordTimewindows;
-//			this.windowCounter = windowCounter;
+////		public FPWorker(SpcFileName fpname, SpcFileName fpname_PSV, Station station, GlobalCMTID event,
+////				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
+////			this.fpname = fpname;
+////			this.fpname_PSV = fpname_PSV;
+////			this.station = station;
+////			this.event = event;
+////			this.IndicesRecordBasicID = IndicesRecordBasicID;
+////			this.orderedRecordTimewindows = orderedRecordTimewindows;
+////			this.windowCounter = windowCounter;
+////		}
+////		
+////		public FPWorker(HorizontalPosition voxelPosition, Station station, GlobalCMTID event,
+////				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
+////			this.fpname = null;
+////			this.fpname_PSV = null;
+////			this.voxelPosition = voxelPosition;
+////			this.station = station;
+////			this.event = event;
+////			this.IndicesRecordBasicID = IndicesRecordBasicID;
+////			this.orderedRecordTimewindows = orderedRecordTimewindows;
+////			this.windowCounter = windowCounter;
+////		}
+//		
+//		@Override
+//		public void run() {
+//			long t1i = 0;
+//			long t1f = 0;
+//			t1i = System.currentTimeMillis();
+//			
+//			double distance = Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(station.getPosition()));
+//			double azimuth = event.getEvent().getCmtLocation().getAzimuth(station.getPosition());
+//			double backazimuth = station.getPosition().getAzimuth(event.getEvent().getCmtLocation());
+//			
+//			Location bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
+//			Location fpSourceLoc = event.getEvent().getCmtLocation();
+//			
+//			List<Double[]> perturbationPoints = getDistanceAngleGrid(distance, azimuth, backazimuth);
+//			
+//			double unitSurface = perturbationPoints.get(0)[0];
+//			double deltaUnitSurface = unitSurface / (perturbationPoints.size() - 1);
+//			
+//			Path out = Paths.get("/work/anselme/CA_ANEL_NEW/sh/grid.inf");
+//			try {
+//			PrintWriter pwtmp = new PrintWriter(out.toFile());
+//			for (int i = 1; i < perturbationPoints.size(); i++) {
+//				Double[] point = perturbationPoints.get(i);
+//				double evtDist = point[0] * dtheta + thetamin;
+//				double evtLat = event.getEvent().getCmtLocation().getLatitude();
+//				double evtLon = event.getEvent().getCmtLocation().getLongitude();
+//				double lat = SphericalCoords.latFor(evtLat, evtLon, evtDist, Math.toDegrees(point[1]));
+//				double lon = SphericalCoords.lonFor(evtLat, evtLon, evtDist, Math.toDegrees(point[1]));
+//				
+//				HorizontalPosition pos = new HorizontalPosition(lat, lon);
+//				pwtmp.println(pos);
+//			}
+//			pwtmp.close();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//			
+//			for (int ip = 1; ip < perturbationPoints.size(); ip++) {
+//			System.out.println(ip + "/" + perturbationPoints.size());
+//			Double[] point = perturbationPoints.get(ip);
+//			
+//			double phiBP = Math.PI - point[3];
+//			double phiFP = Math.PI - point[1];
+//			
+//			int ifp = point[0].intValue();
+//			int ibp = point[2].intValue();
+//			try {
+//				DSMOutput fpSpc = null;
+//				DSMOutput fpSpc_PSV = null;
+//				double[] bodyR = null;
+//				HorizontalPosition obsPos = null;
+//				if (mode.equals("SH")) {
+//					fpSpc = fpnames.get(ifp).read();
+//					bodyR = fpSpc.getBodyR();
+//					obsPos = fpSpc.getObserverPosition();
+//				}
+//				else if (mode.equals("PSV")) {
+//					fpSpc_PSV = fpnames_PSV.get(ifp).read();
+//					bodyR = fpSpc_PSV.getBodyR();
+//					obsPos = fpSpc_PSV.getObserverPosition();
+//				}
+//				else if (mode.equals("BOTH")) {
+//					fpSpc = fpnames.get(ifp).read();
+//					fpSpc_PSV = fpnames_PSV.get(ifp).read();
+//					bodyR = fpSpc.getBodyR();
+//					obsPos = fpSpc.getObserverPosition();
+//				}
+//				
+//				SpcFileName bpname1 = null;
+//				SpcFileName bpname1_PSV = null;
+//				
+//				if (mode.equals("SH") || mode.equals("BOTH"))
+//					bpname1 = bpnames[ibp];
+//				if (mode.equals("PSV") || mode.equals("BOTH"))
+//					bpname1_PSV = bpnames_PSV[ibp];
+//				
+//				SpcFileName fpname1 = null;
+//				SpcFileName fpname1_PSV = null;
+//				if (mode.equals("SH") || mode.equals("BOTH")) {
+//					fpname1 = fpnameMap.get(event).get(ifp);
+//				}
+//				if (mode.equals("PSV") || mode.equals("BOTH")) {
+//					fpname1_PSV = fpnameMap_PSV.get(event).get(ifp);
+//				}
+//				
+//				DSMOutput bpSpc1 = null;
+//				DSMOutput fpSpc1 = null;
+//				DSMOutput bpSpc1_PSV = null;
+//				DSMOutput fpSpc1_PSV = null;
+//
+//				if (mode.equals("SH") || mode.equals("BOTH"))
+//					bpSpc1 = SpectrumFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, "null");
+//				if (mode.equals("PSV") || mode.equals("BOTH"))
+//					bpSpc1_PSV = SpectrumFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, "null");
+//				
+//				if (mode.equals("SH") || mode.equals("BOTH"))
+//					fpSpc1 = SpectrumFile.getInstance(fpname1, phiFP, obsPos, fpSourceLoc, "null");
+//				if (mode.equals("PSV") || mode.equals("BOTH"))
+//					fpSpc1_PSV = SpectrumFile.getInstance(fpname1_PSV, phiFP, obsPos, fpSourceLoc, "null");
+//				
+//				bodyR = bpSpc1.getBodyR();
+//				
+//				ThreeDPartialMaker threedPartialMaker = null;
+//				if (mode.equals("SH"))
+//					threedPartialMaker = new ThreeDPartialMaker(fpSpc1, bpSpc1);
+//				else if (mode.equals("PSV"))
+//					threedPartialMaker = new ThreeDPartialMaker(fpSpc1_PSV, bpSpc1_PSV);
+//				else if (mode.equals("BOTH"))
+//					threedPartialMaker = new ThreeDPartialMaker(fpSpc1, fpSpc1_PSV, bpSpc1, bpSpc1_PSV);
+//				
+//				SourceTimeFunction stf = getSourceTimeFunction(event);
+//				if (stf == null)
+//					System.err.println("Null STF");
+//				threedPartialMaker.setSourceTimeFunction(stf);
+//				
+//				for (int ibody = 0; ibody < bodyR.length; ibody++) {
+//					if (!originalUnkownRadii.contains(bodyR[ibody]))
+//						continue;
+//					
+//					for (int ipar = 0; ipar < partialTypes.length; ipar++) {
+//						PartialType type = partialTypes[ipar];
+//						PartialType type3D = to3D(type);
+//						int iunknown = getParameterIndex1D(bodyR[ibody], type);
+//						if (iunknown < 0) {
+//							continue;
+//						}
+//						
+////						double weightUnknown = originalUnknownParameters[iunknown].getWeighting();
+//						double weightUnknown = bodyR[ibody] * bodyR[ibody] * deltaUnitSurface;
+//						
+//						Map<SACComponent, double[]> partialmap = new HashMap<>();
+//						for (SACComponent component : components) {
+//							double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type3D);
+//							partialmap.put(component, partial);
+//						}
+//						
+//						for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
+//							for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
+//								// find syn and obs
+//								double minFreq = frequencyRanges[ifreq].getMinFreq();
+//								double maxFreq = frequencyRanges[ifreq].getMaxFreq();
+//								
+//									for (TimewindowInformation info : orderedRecordTimewindows) {
+//										double[] partial = partialmap.get(info.getComponent());
+//										
+//										Phases phases = new Phases(info.getPhases());
+//										int iphase = phaseMap.get(phases);
+//										
+//										for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
+//											
+//											final int finalIcorr = icorr;
+//											final int finalIfreq = ifreq;
+//											
+//											double[] residual = null;
+//											double weight = 1.;
+//											
+//											if (computationFlag == 1 || computationFlag == 2) {
+//												List<BasicID> obsSynIDs = IndicesRecordBasicID.get(icorr).stream().filter(i -> {
+//														BasicID id = basicIDArray[finalIcorr][i];
+//														return id.getSacComponent().equals(info.getComponent())
+//		//												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
+//														&& new FrequencyRange(1./id.getMaxPeriod(), 1./id.getMinPeriod()).equals(frequencyRanges[finalIfreq])
+//														&& new Phases(id.getPhases()).equals(phases);
+//														}).map(i -> basicIDArray[finalIcorr][i])
+//														.collect(Collectors.toList());
+//												
+//												if (obsSynIDs.size() != 2) {
+//													synchronized (AtAMaker.class) {
+//														obsSynIDs.forEach(System.out::println);
+//														throw new RuntimeException("Unexpected: more, or less than two basicIDs (obs, syn) found (list above)");
+//													}
+//												}
+//												BasicID obsID = obsSynIDs.stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
+//														.findAny().get();
+//												BasicID synID = obsSynIDs.stream().filter(id -> id.getWaveformType().equals(WaveformType.SYN))
+//														.findAny().get();
+//												double[] obsData = obsID.getData();
+//												double[] synData = synID.getData();
+//												residual = new double[obsData.length];
+//												
+//												weight = computeWeight(weightingTypes[iweight], obsID, synID);
+//												
+//												if (Double.isNaN(weight))
+//													throw new RuntimeException("Weight is NaN " + info);
+//												
+//												for (int k = 0; k < obsData.length; k++) {
+//													residual[k] = (obsData[k] - synData[k]) * weight;
+//												}
+//											}
+//										
+//											Complex[] u = cutPartial(partial, info, ifreq);
+//											
+//											u = filter[ifreq].applyFilter(u);
+//											double[] cutU = sampleOutput(u, info, ifreq);
+//											
+//											if (Double.isNaN(new ArrayRealVector(cutU).getLInfNorm()))
+//												throw new RuntimeException("cutU is NaN " + originalUnknownParameters[iunknown] + " " + info);
+//											
+//											//--- write partials (usually for DEBUG)
+//											//--- partials are written before being weighted by volume of voxel or data weighting
+//											if (outPartial) {
+//												String freqString = String.format("%.0f-%.0f", 1./frequencyRanges[ifreq].getMinFreq(),
+//														 1./frequencyRanges[ifreq].getMaxFreq());
+//												Path outpath = outpartialDir.resolve(station.getStationName() + "." 
+//														+ event + "." + info.getComponent() + "." + (int) obsPos.getLatitude()
+//														+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[ibody] + "." + type + "."
+//														+ weightingTypes[iweight] + "." + freqString + "."
+//														+ phases + ".txt");
+//												Files.deleteIfExists(outpath);
+//												Files.createFile(outpath);
+//												double t0 = info.getStartTime();
+//												double dt = 1. / finalSamplingHz;
+//												try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.APPEND))) {
+//													for (int k = 0; k < cutU.length; k++) {
+//														pw.println(String.format("%.6f %.16e", t0 + k*dt, cutU[k]));
+//													}
+//												}
+//											} // END write partials
+//											
+//											double tmpatd = 0;
+//											for (int k = 0; k < cutU.length; k++) {
+//												cutU[k] *= weight * weightUnknown;
+//												if (computationFlag != 3)
+//													tmpatd += cutU[k] * residual[k];
+//											}
+//											
+//											if (partials[iunknown][iweight][ifreq][windowCounter].length == 0)
+//												partials[iunknown][iweight][ifreq][windowCounter] = cutU;
+//											else
+//												for (int k = 0; k < cutU.length; k++)
+//													partials[iunknown][iweight][ifreq][windowCounter][k] += cutU[k];
+//											
+//											if (cutU.length == 0) {
+//												throw new RuntimeException(Thread.currentThread().getName() + " Unexpected: cutU (partial) has length 0 "
+//														+ originalUnknownParameters[iunknown] + " " + weightingTypes[iweight] + " " + frequencyRanges[ifreq]
+//														+ " " + info);
+//											}
+//											 
+//											if (computationFlag != 3) {
+//												double value = atdEntries[iunknown][iweight][ifreq][iphase][icorr].getValue();
+//												value += tmpatd;
+//												
+//												if (Double.isNaN(value))
+//													throw new RuntimeException("Atd value is NaN" + originalUnknownParameters[iunknown] + " " + info);
+//												
+//												atdEntries[iunknown][iweight][ifreq][iphase][icorr].setValue(value);
+//											}
+//										} // END correction type
+//										windowCounter++;
+//									} // END timewindow
+//									windowCounter -= orderedRecordTimewindows.size();
+//	//							} // END SAC component
+//							} // END frequency range
+//						} // END weighting type
+//						
+//					} // partial[ipar] made
+//					
+//					t1f = System.currentTimeMillis();
+//					
+//				} // END bodyR loop 
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			} catch (RuntimeException e) {
+//				Thread t = Thread.currentThread();
+//				t.getUncaughtExceptionHandler().uncaughtException(t, e);
+//			}
+//			}
+////			if ((++workProgressCounter) % progressStep1D == 0) {
+//				System.out.print(".");
+////				workProgressCounter = 0;
+////			}
 //		}
-		
-		@Override
-		public void run() {
-			long t1i = 0;
-			long t1f = 0;
-			t1i = System.currentTimeMillis();
-			
-			double distance = Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(station.getPosition()));
-			double azimuth = event.getEvent().getCmtLocation().getAzimuth(station.getPosition());
-			double backazimuth = station.getPosition().getAzimuth(event.getEvent().getCmtLocation());
-			
-			Location bpSourceLoc = station.getPosition().toLocation(Earth.EARTH_RADIUS);
-			Location fpSourceLoc = event.getEvent().getCmtLocation();
-			
-			List<Double[]> perturbationPoints = getDistanceAngleGrid(distance, azimuth, backazimuth);
-			
-			for (int ip = 0; ip < perturbationPoints.size(); ip++) {
-			Double[] point = perturbationPoints.get(ip);
-			double phiFP = point[1];
-			double phiBP = point[3];
-			int ifp = point[0].intValue();
-			int ibp = point[2].intValue();
-			try {
-				DSMOutput fpSpc = null;
-				DSMOutput fpSpc_PSV = null;
-				double[] bodyR = null;
-				HorizontalPosition obsPos = null;
-				if (mode.equals("SH")) {
-					fpSpc = fpnames.get(ifp).read();
-					bodyR = fpSpc.getBodyR();
-					obsPos = fpSpc.getObserverPosition();
-				}
-				else if (mode.equals("PSV")) {
-					fpSpc_PSV = fpnames_PSV.get(ifp).read();
-					bodyR = fpSpc_PSV.getBodyR();
-					obsPos = fpSpc_PSV.getObserverPosition();
-				}
-				else if (mode.equals("BOTH")) {
-					fpSpc = fpnames.get(ifp).read();
-					fpSpc_PSV = fpnames_PSV.get(ifp).read();
-					bodyR = fpSpc.getBodyR();
-					obsPos = fpSpc.getObserverPosition();
-				}
-				
-				SpcFileName bpname1 = null;
-				SpcFileName bpname1_PSV = null;
-				
-				if (mode.equals("SH") || mode.equals("BOTH"))
-					bpname1 = bpnames[ibp];
-				if (mode.equals("PSV") || mode.equals("BOTH"))
-					bpname1_PSV = bpnames_PSV[ibp];
-				
-				SpcFileName fpname1 = null;
-				SpcFileName fpname1_PSV = null;
-				if (mode.equals("SH") || mode.equals("BOTH")) {
-					fpname1 = fpnameMap.get(event).get(ifp);
-				}
-				if (mode.equals("PSV") || mode.equals("BOTH")) {
-					fpname1_PSV = fpnameMap_PSV.get(event).get(ifp);
-				}
-				
-				DSMOutput bpSpc1 = null;
-				DSMOutput fpSpc1 = null;
-				DSMOutput bpSpc1_PSV = null;
-				DSMOutput fpSpc1_PSV = null;
-
-				if (mode.equals("SH") || mode.equals("BOTH"))
-					bpSpc1 = SpectrumFile.getInstance(bpname1, phiBP, obsPos, bpSourceLoc, "null");
-				if (mode.equals("PSV") || mode.equals("BOTH"))
-					bpSpc1_PSV = SpectrumFile.getInstance(bpname1_PSV, phiBP, obsPos, bpSourceLoc, "null");
-				
-				if (mode.equals("SH") || mode.equals("BOTH"))
-					fpSpc1 = SpectrumFile.getInstance(fpname1, phiFP, obsPos, fpSourceLoc, "null");
-				if (mode.equals("PSV") || mode.equals("BOTH"))
-					fpSpc1_PSV = SpectrumFile.getInstance(fpname1_PSV, phiFP, obsPos, fpSourceLoc, "null");
-				
-				bodyR = bpSpc1.getBodyR();
-				
-				ThreeDPartialMaker threedPartialMaker = null;
-				if (mode.equals("SH"))
-					threedPartialMaker = new ThreeDPartialMaker(fpSpc1, bpSpc1);
-				else if (mode.equals("PSV"))
-					threedPartialMaker = new ThreeDPartialMaker(fpSpc1_PSV, bpSpc1_PSV);
-				else if (mode.equals("BOTH"))
-					threedPartialMaker = new ThreeDPartialMaker(fpSpc1, fpSpc1_PSV, bpSpc1, bpSpc1_PSV);
-				
-				SourceTimeFunction stf = getSourceTimeFunction(event);
-				if (stf == null)
-					System.err.println("Null STF");
-				threedPartialMaker.setSourceTimeFunction(stf);
-				
-				for (int ibody = 0; ibody < bodyR.length; ibody++) {
-					if (!originalUnkownRadii.contains(bodyR[ibody]))
-						continue;
-					
-					for (int ipar = 0; ipar < partialTypes.length; ipar++) {
-						PartialType type = partialTypes[ipar];
-						PartialType type3D = to3D(type);
-						int iunknown = getParameterIndex1D(bodyR[ibody], type);
-						if (iunknown < 0) {
-							continue;
-						}
-						
-						double weightUnknown = originalUnknownParameters[iunknown].getWeighting();
-						
-						Map<SACComponent, double[]> partialmap = new HashMap<>();
-						for (SACComponent component : components) {
-							double[] partial = threedPartialMaker.createPartialSerial(component, ibody, type3D);
-							partialmap.put(component, partial);
-						}
-						
-						for (int iweight = 0; iweight < weightingTypes.length; iweight++) {
-							for (int ifreq = 0; ifreq < frequencyRanges.length; ifreq++) {
-								// find syn and obs
-								double minFreq = frequencyRanges[ifreq].getMinFreq();
-								double maxFreq = frequencyRanges[ifreq].getMaxFreq();
-								
-									for (TimewindowInformation info : orderedRecordTimewindows) {
-										double[] partial = partialmap.get(info.getComponent());
-										
-										Phases phases = new Phases(info.getPhases());
-										int iphase = phaseMap.get(phases);
-										
-										for (int icorr = 0; icorr < correctionTypes.length; icorr++) {
-											
-											final int finalIcorr = icorr;
-											final int finalIfreq = ifreq;
-											
-											double[] residual = null;
-											double weight = 1.;
-											
-											if (computationFlag == 1 || computationFlag == 2) {
-												List<BasicID> obsSynIDs = IndicesRecordBasicID.get(icorr).stream().filter(i -> {
-														BasicID id = basicIDArray[finalIcorr][i];
-														return id.getSacComponent().equals(info.getComponent())
-		//												&& equalToEpsilon(id.getStartTime(), info.getStartTime())
-														&& new FrequencyRange(1./id.getMaxPeriod(), 1./id.getMinPeriod()).equals(frequencyRanges[finalIfreq])
-														&& new Phases(id.getPhases()).equals(phases);
-														}).map(i -> basicIDArray[finalIcorr][i])
-														.collect(Collectors.toList());
-												
-												if (obsSynIDs.size() != 2) {
-													synchronized (AtAMaker.class) {
-														obsSynIDs.forEach(System.out::println);
-														throw new RuntimeException("Unexpected: more, or less than two basicIDs (obs, syn) found (list above)");
-													}
-												}
-												BasicID obsID = obsSynIDs.stream().filter(id -> id.getWaveformType().equals(WaveformType.OBS))
-														.findAny().get();
-												BasicID synID = obsSynIDs.stream().filter(id -> id.getWaveformType().equals(WaveformType.SYN))
-														.findAny().get();
-												double[] obsData = obsID.getData();
-												double[] synData = synID.getData();
-												residual = new double[obsData.length];
-												
-												weight = computeWeight(weightingTypes[iweight], obsID, synID);
-												
-												if (Double.isNaN(weight))
-													throw new RuntimeException("Weight is NaN " + info);
-												
-												for (int k = 0; k < obsData.length; k++) {
-													residual[k] = (obsData[k] - synData[k]) * weight;
-												}
-											}
-										
-											Complex[] u = cutPartial(partial, info, ifreq);
-											
-											u = filter[ifreq].applyFilter(u);
-											double[] cutU = sampleOutput(u, info, ifreq);
-											
-											if (Double.isNaN(new ArrayRealVector(cutU).getLInfNorm()))
-												throw new RuntimeException("cutU is NaN " + originalUnknownParameters[iunknown] + " " + info);
-											
-											//--- write partials (usually for DEBUG)
-											//--- partials are written before being weighted by volume of voxel or data weighting
-											if (outPartial) {
-												String freqString = String.format("%.0f-%.0f", 1./frequencyRanges[ifreq].getMinFreq(),
-														 1./frequencyRanges[ifreq].getMaxFreq());
-												Path outpath = outpartialDir.resolve(station.getStationName() + "." 
-														+ event + "." + info.getComponent() + "." + (int) obsPos.getLatitude()
-														+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[ibody] + "." + type + "."
-														+ weightingTypes[iweight] + "." + freqString + "."
-														+ phases + ".txt");
-												Files.deleteIfExists(outpath);
-												Files.createFile(outpath);
-												double t0 = info.getStartTime();
-												double dt = 1. / finalSamplingHz;
-												try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.APPEND))) {
-													for (int k = 0; k < cutU.length; k++) {
-														pw.println(String.format("%.6f %.16e", t0 + k*dt, cutU[k]));
-													}
-												}
-											} // END write partials
-											
-											double tmpatd = 0;
-											for (int k = 0; k < cutU.length; k++) {
-												cutU[k] *= weight * weightUnknown;
-												if (computationFlag != 3)
-													tmpatd += cutU[k] * residual[k];
-												partials[iunknown][iweight][ifreq][windowCounter][k] += cutU[k];
-											}
-											
-											if (cutU.length == 0) {
-												throw new RuntimeException(Thread.currentThread().getName() + " Unexpected: cutU (partial) has length 0 "
-														+ originalUnknownParameters[iunknown] + " " + weightingTypes[iweight] + " " + frequencyRanges[ifreq]
-														+ " " + info);
-											}
-											 
-											if (computationFlag != 3) {
-												double value = atdEntries[iunknown][iweight][ifreq][iphase][icorr].getValue();
-												value += tmpatd;
-												
-												if (Double.isNaN(value))
-													throw new RuntimeException("Atd value is NaN" + originalUnknownParameters[iunknown] + " " + info);
-												
-												atdEntries[iunknown][iweight][ifreq][iphase][icorr].setValue(value);
-											}
-										} // END correction type
-										windowCounter++;
-									} // END timewindow
-									windowCounter -= orderedRecordTimewindows.size();
-	//							} // END SAC component
-							} // END frequency range
-						} // END weighting type
-						
-					} // partial[ipar] made
-					
-					t1f = System.currentTimeMillis();
-					if ((++workProgressCounter) % progressStep == 0) {
-						System.out.print(".");
-						workProgressCounter = 0;
-					}
-				} // END bodyR loop 
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (RuntimeException e) {
-				Thread t = Thread.currentThread();
-				t.getUncaughtExceptionHandler().uncaughtException(t, e);
-			}
-				
-			}
-		}
-		
-		private List<Double[]> getDistanceAngleGrid(double distance, double azimuth, double backazimuth) {
-			List<Double[]> points = new ArrayList<>();
-			
-			double demin = thetamin;
-			double demax = (int) ((distance) / dtheta) * dtheta;
-			int nde = (int) ((demax - demin) / dtheta) + 1;
-			
-			for (int ide = 0; ide < nde; ide++) {
-				double de = demin + ide * dtheta;
-				double xe = de / 6371.;
-				double x = distance / 6371.;
-				
-				double dsmin = (int) ((distance - de) / dtheta) * dtheta + 1;
-				double dsmax = (int) ((distance) / dtheta) * dtheta;
-				int nds = (int) ((dsmax - dsmin) / dtheta) + 1;
-				
-				for (int ids = 0; ids < nds ; ids++) {
-					double ds = dsmin + ids * dtheta;
-					int indexDs = (int) ((ds - thetamin + 1e-5) / dtheta);
-					if (ds == de) {
-						Double[] point = new Double[] {new Double(ide), azimuth, new Double(indexDs), backazimuth};
-						points.add(point);
-					}
-					else {
-						double xs = ds / 6371.;
-						double cosphi = (Math.cos(xs) - Math.cos(xe) * Math.cos(x)) / (Math.sin(xe) * Math.sin(x));
-						if (Math.abs(cosphi) <= 1) {
-							double phi = Math.acos(cosphi);
-							double phiSta = Math.asin(Math.sin(xe) / Math.sin(xs) * Math.sin(phi));
-							Double[] point1 = new Double[] {new Double(ide), azimuth - phi, new Double(indexDs), backazimuth + phiSta};
-							Double[] point2 = new Double[] {new Double(ide), azimuth + phi, new Double(indexDs), backazimuth - phiSta};
-							points.add(point1);
-							points.add(point2);
-						}
-					}
-				}
-			}
-			return points;
-		}
-		
-	} // END worker1D
+//		
+//		private List<Double[]> getDistanceAngleGrid(double distance, double azimuth, double backazimuth) {
+//			List<Double[]> points = new ArrayList<>();
+//			
+//			double phimax = Math.toRadians(45.);
+//			
+//			double x = distance / 6371.;
+//			
+//			double a = Math.atan((1 - Math.cos(x)) / (Math.sin(x)*Math.cos(phimax)));
+//			double D = Math.asin(Math.sin(x)*Math.sin(phimax) / Math.sin(a));
+//			double unitSurface = 2 * (D + 2 * phimax);
+//			points.add(new Double[] {unitSurface});
+//			
+//			double demin = thetamin;
+//			double demax = (int) ((distance) / dtheta) * dtheta;
+//			int nde = (int) ((demax - demin) / dtheta) + 1;
+//			
+//			for (int ide = 0; ide < nde; ide++) {
+//				double de = demin + ide * dtheta;
+//				double xe = de / 6371.;
+//				
+////				double dsmin = (int) ((distance - de) / dtheta) * dtheta + 1;
+//				double dsmin = thetamin;
+//				double dsmax = (int) ((distance) / dtheta) * dtheta;
+//				int nds = (int) ((dsmax - dsmin) / dtheta) + 1;
+//				
+//				for (int ids = 0; ids < nds ; ids++) {
+//					double ds = dsmin + ids * dtheta;
+//					int indexDs = (int) ((ds - thetamin + 1e-5) / dtheta);
+////					if (ds == de) {
+////						Double[] point = new Double[] {new Double(ide), azimuth, new Double(indexDs), backazimuth};
+////						points.add(point);
+//						
+////						double evtLat = event.getEvent().getCmtLocation().getLatitude();
+////						double evtLon = event.getEvent().getCmtLocation().getLongitude();
+////						double lat = SphericalCoords.latFor(evtLat, evtLon, de, Math.toDegrees(azimuth));
+////						double lon = SphericalCoords.lonFor(evtLat, evtLon, de, Math.toDegrees(azimuth));
+////						
+////						HorizontalPosition pos = new HorizontalPosition(lat, lon);
+////						points.add(pos);
+////					}
+////					else {
+//						double xs = ds / 6371.;
+//						double cosphi = (Math.cos(xs) - Math.cos(xe) * Math.cos(x)) / (Math.sin(xe) * Math.sin(x));
+//						if (Math.abs(cosphi) <= 1) {
+//							double phi = Math.acos(cosphi);
+//							double phiSta = Math.asin(Math.sin(xe) / Math.sin(xs) * Math.sin(phi));
+//							if ((phi > phimax && phi < 180. - phimax) || (phiSta > phimax && phiSta < 180 - phimax))
+//								continue;
+//							
+////							double staLat = station.getPosition().getLatitude();
+////							double staLon = station.getPosition().getLongitude();
+////							double lat = SphericalCoords.latFor(staLat, staLon, ds, Math.toDegrees(backazimuth + phiSta));
+////							double lon = SphericalCoords.lonFor(staLat, staLon, ds, Math.toDegrees(backazimuth + phiSta));
+////							
+////							HorizontalPosition pos2 = event.getEvent().getCmtLocation().fromAzimuth(Math.toDegrees(azimuth - phi), de);
+////							HorizontalPosition pos3 = station.getPosition().fromAzimuth(Math.toDegrees(backazimuth + phiSta), ds);
+////							
+////							HorizontalPosition pos = new HorizontalPosition(lat, lon);
+//////							System.out.println(de + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(pos))
+//////							 + " " + Math.toDegrees(event.getEvent().getCmtLocation().getEpicentralDistance(pos2)));
+////							points.add(pos);
+////							
+//////							System.out.println(ds + " " + Math.toDegrees(station.getPosition().getEpicentralDistance(pos3)));
+////							System.out.println(pos2 + " " + pos3 + " " + pos);
+////							System.out.println();
+//							
+//							
+//							Double[] point1 = new Double[] {new Double(ide), azimuth - phi, new Double(indexDs), backazimuth + phiSta};
+//							Double[] point2 = new Double[] {new Double(ide), azimuth + phi, new Double(indexDs), backazimuth - phiSta};
+//							points.add(point1);
+//							points.add(point2);
+//						}
+////					}
+//				}
+//			}
+//			return points;
+//		}
+//		
+//	} // END worker1D
 	
 	public double computeWeight(WeightingType type, BasicID obs, BasicID syn) {
 		double weight = 1.;

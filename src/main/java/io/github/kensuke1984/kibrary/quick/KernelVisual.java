@@ -40,10 +40,10 @@ public class KernelVisual {
 		Files.createDirectories(dir0);
 		for (PartialID partial : partials) {
 			//write only particular stations/events
-			if (!idSet.contains(partial.getGlobalCMTID()))
-				continue;
-			if (!stationnameSet.contains(partial.getStation().getStationName()))
-				continue;
+//			if (!idSet.contains(partial.getGlobalCMTID()))
+//				continue;
+//			if (!stationnameSet.contains(partial.getStation().getStationName()))
+//				continue;
 			
 				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))

@@ -42,40 +42,51 @@ public class VelocityField {
 		if (args.length == 1) {
 			amplifyPerturbation = Double.parseDouble(args[0]);
 		}
-		try {
-			inversionResultString = JOptionPane.showInputDialog("Inversion result folder?", inversionResultString);
-			polynomialStructureString = JOptionPane.showInputDialog("Polynomial structure?", polynomialStructureString);
-			partialCombination = JOptionPane.showInputDialog("artial combination (trs | sc | nc)?", partialCombination);
-		} catch (Exception e) {
-			System.out.println("Inversion result folder?");
-			try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
-				inversionResultString = br.readLine().trim();
-				if (!inversionResultString.startsWith("/"))
-					inversionResultString = System.getProperty("user.dir") + "/" + inversionResultString;
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				throw new RuntimeException();
-			}
-			System.out.println("Polynomial structure?");
-			try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
-				polynomialStructureString = br.readLine().trim();
-//				if (!polynomialStructureString.startsWith("/"))
-//					polynomialStructureStringAbsolute = System.getProperty("user.dir") + "/" + polynomialStructureString;
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				throw new RuntimeException();
-			}
-			System.out.println("Partial combination (trs | sc | nc)?");
-			try (BufferedReader br = new BufferedReader(
-					new InputStreamReader(new CloseShieldInputStream(System.in)))) {
-				partialCombination = br.readLine().trim();
-				if (!(partialCombination.equals("trs") || partialCombination.equals("sc") || partialCombination.equals("nc")))
-					throw new RuntimeException("Syntax: trs | sc | nc");
-			} catch (Exception e2) {
-				e2.printStackTrace();
-				throw new RuntimeException();
+		if (args.length == 3) {
+			inversionResultString = args[0].trim();
+			if (!inversionResultString.startsWith("/"))
+				inversionResultString = System.getProperty("user.dir") + "/" + inversionResultString;
+			polynomialStructureString = args[1].trim();
+			partialCombination = args[2].trim();
+			if (!(partialCombination.equals("trs") || partialCombination.equals("sc") || partialCombination.equals("nc")))
+				throw new RuntimeException("Syntax: trs | sc | nc");
+		}
+		else {
+			try {
+				inversionResultString = JOptionPane.showInputDialog("Inversion result folder?", inversionResultString);
+				polynomialStructureString = JOptionPane.showInputDialog("Polynomial structure?", polynomialStructureString);
+				partialCombination = JOptionPane.showInputDialog("artial combination (trs | sc | nc)?", partialCombination);
+			} catch (Exception e) {
+				System.out.println("Inversion result folder?");
+				try (BufferedReader br = new BufferedReader(
+						new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+					inversionResultString = br.readLine().trim();
+					if (!inversionResultString.startsWith("/"))
+						inversionResultString = System.getProperty("user.dir") + "/" + inversionResultString;
+				} catch (Exception e2) {
+					e2.printStackTrace();
+					throw new RuntimeException();
+				}
+				System.out.println("Polynomial structure?");
+				try (BufferedReader br = new BufferedReader(
+						new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+					polynomialStructureString = br.readLine().trim();
+	//				if (!polynomialStructureString.startsWith("/"))
+	//					polynomialStructureStringAbsolute = System.getProperty("user.dir") + "/" + polynomialStructureString;
+				} catch (Exception e2) {
+					e2.printStackTrace();
+					throw new RuntimeException();
+				}
+				System.out.println("Partial combination (trs | sc | nc)?");
+				try (BufferedReader br = new BufferedReader(
+						new InputStreamReader(new CloseShieldInputStream(System.in)))) {
+					partialCombination = br.readLine().trim();
+					if (!(partialCombination.equals("trs") || partialCombination.equals("sc") || partialCombination.equals("nc")))
+						throw new RuntimeException("Syntax: trs | sc | nc");
+				} catch (Exception e2) {
+					e2.printStackTrace();
+					throw new RuntimeException();
+				}
 			}
 		}
 		if (inversionResultString == null || inversionResultString.isEmpty())
@@ -136,7 +147,8 @@ public class VelocityField {
 			trs = new TriangleRadialSpline(nNewParameter, originalUnknowns);
 		}
 		Set<PartialType> partialTypes = unknowns.stream().map(UnknownParameter::getPartialType).collect(Collectors.toSet());
-		if (partialTypes.contains(PartialType.PAR2) || partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVS)) {
+		if (partialTypes.contains(PartialType.PAR2) || partialTypes.contains(PartialType.PAR1) || partialTypes.contains(PartialType.PARQ) 
+				|| partialTypes.contains(PartialType.PARVS) || partialTypes.contains(PartialType.PARVP)) {
 			for (InverseMethodEnum inverse : ir.getInverseMethods()) {
 				Path outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocityInitialModel" + ".txt");
 				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
@@ -149,6 +161,7 @@ public class VelocityField {
 				int n = unknowns.size();
 				for (int i = 1; i <= n; i++) {
 					outpath = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + ".txt");
+					Path outpathVp = inversionResultPath.resolve(inverse.simple() + "/" + "vp" + inverse.simple() + i + ".txt");
 					Path outpathIteration = inversionResultPath.resolve(inverse.simple() + "/" + "velocity" + inverse.simple() + i + "_iteration.txt");
 					Path outpathQ = inversionResultPath.resolve(inverse.simple() + "/" + "Q" + inverse.simple() + i + ".txt");
 					Map<UnknownParameter, Double> answerMap = ir.answerMapOf(inverse, i);
@@ -158,10 +171,15 @@ public class VelocityField {
 					double[][] zeroVelocities = null;
 					double[][] Qs = null;
 					double[][] zeroQs = null;
+					double[][] vps = null;
 					if (trs == null) {
 						if (partialTypes.contains(PartialType.PARVS)) {
-							velocities = toVsFromC1C2(answerMap, unknowns, structure);
-							zeroVelocities = toVsFromC1C2(zeroMap, unknowns, structure);
+							velocities = toVs(answerMap, unknowns, structure);
+							zeroVelocities = toVs(zeroMap, unknowns, structure);
+						}
+						else if (partialTypes.contains(PartialType.PARVP)) {
+							velocities = toVp(answerMap, unknowns, structure);
+							zeroVelocities = toVp(zeroMap, unknowns, structure);
 						}
 						else {
 							velocities = toVelocity(answerMap, unknowns, structure, 1.);
@@ -175,6 +193,9 @@ public class VelocityField {
 							Qs = toQFromC1C2(answerMap, unknowns, structure);
 							zeroQs = toQFromC1C2(zeroMap, unknowns, structure);
 						}
+						if (partialTypes.contains(PartialType.PAR1)) {
+							vps = toVp(answerMap, unknowns, structure, 1.);
+						}
 					}
 					else {
 						velocities = toVelocity(answerMap, trs, structure);
@@ -186,6 +207,7 @@ public class VelocityField {
 					}
 					try {
 						PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+						PrintWriter pwVp = new PrintWriter(Files.newBufferedWriter(outpathVp, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						PrintWriter pwQ = null;
 						PrintWriter pwIteration = new PrintWriter(Files.newBufferedWriter(outpathIteration, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 						if (partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVSIM)) {
@@ -193,13 +215,23 @@ public class VelocityField {
 							pwQ.println("#perturbationR final_Q intial_Q");
 						}
 						pw.println("#perturbationR final_Vsh initial_Vsh");
+						pwVp.println("#perturbationR final_Vsh initial_Vsh");
 						if (trs == null) {
+							if (velocities != null)
 							for (int j = 0; j < velocities.length; j++) {
 								pw.println(velocities[j][1] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
 								pw.println(velocities[j][2] +  " " + velocities[j][0] + " " + zeroVelocities[j][0]);
 //								pw.println((velocities[j][1] - 10.) + " " + velocities[j][0] + zeroVelocities[j][0]);
-								pwIteration.println((6371. - velocities[j][1] - 10.) + " " + structure.getVphAt(velocities[j][1] + 10.) 
-										+ " " + velocities[j][0] + " " + structure.getRhoAt(velocities[j][1] + 10.));
+								pwIteration.println((6371. - velocities[j][1] - 20.) + " " + structure.getVphAt(velocities[j][1] + 20.) 
+										+ " " + velocities[j][0] + " " + structure.getRhoAt(velocities[j][1] + 20.));
+							}
+							if (vps != null)
+							for (int j = 0; j < vps.length; j++) {
+								pwVp.println(vps[j][1] +  " " + vps[j][0] + " " + vps[j][0]);
+								pwVp.println(vps[j][2] +  " " + vps[j][0] + " " + vps[j][0]);
+//								pw.println((velocities[j][1] - 10.) + " " + velocities[j][0] + zeroVelocities[j][0]);
+								pwIteration.println((6371. - vps[j][1] - 10.) + " " + structure.getVphAt(vps[j][1] + 10.) 
+										+ " " + vps[j][0] + " " + structure.getRhoAt(vps[j][1] + 10.));
 							}
 							if (partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVSIM)) {
 								for (int j = 0; j < Qs.length; j++) {
@@ -222,6 +254,7 @@ public class VelocityField {
 						if (partialTypes.contains(PartialType.PARQ) || partialTypes.contains(PartialType.PARVSIM))
 							pwQ.close();
 						pwIteration.close();
+						pwVp.close();
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -282,6 +315,29 @@ public class VelocityField {
 			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
 
 			velocities[i][0] = toVelocity(answerMap.get(m), m.getLocation().getR(), rmin, rmax, structure, amplifyPerturbation);
+			velocities[i][1] = rmin;
+			velocities[i][2] = rmax;
+		}
+		return velocities;
+	}
+	
+	private static double[][] toVp(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure
+			, double amplifyPerturbation) {
+		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.PAR1))
+				.collect(Collectors.toList());
+		int n = parameterForStructure.size();
+		double[][] velocities = new double[n][];
+		for (int i = 0; i < n; i++) {
+			velocities[i] = new double[3];
+			UnknownParameter m = parameterForStructure.get(i);
+			double rmin = 0;
+			double rmax = 0;
+//			
+			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
+			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
+
+			velocities[i][0] = toVp(answerMap.get(m), m.getLocation().getR(), rmin, rmax, structure, amplifyPerturbation);
 			velocities[i][1] = rmin;
 			velocities[i][2] = rmax;
 		}
@@ -352,6 +408,46 @@ public class VelocityField {
 		return Qs;
 	}
 	
+	private static double[][] toVs(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
+		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARVS))
+				.collect(Collectors.toList());
+		int n = parameterForStructure.size();
+		double[][] Vs = new double[n][];
+		for (int i = 0; i < n; i++) {
+			Vs[i] = new double[3];
+			UnknownParameter m = parameterForStructure.get(i);
+			double rmin = 0;
+			double rmax = 0;
+			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
+			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
+			Vs[i][0] = getSimpsonVS(rmin, rmax, structure, answerMap.get(m));
+			Vs[i][1] = rmin;
+			Vs[i][2] = rmax;
+		}
+		return Vs;
+	}
+	
+	private static double[][] toVp(Map<UnknownParameter, Double> answerMap, List<UnknownParameter> parameterOrder, PolynomialStructure structure) {
+		List<UnknownParameter> parameterForStructure = parameterOrder.stream()
+				.filter(unknown -> unknown.getPartialType().equals(PartialType.PARVP))
+				.collect(Collectors.toList());
+		int n = parameterForStructure.size();
+		double[][] Vs = new double[n][];
+		for (int i = 0; i < n; i++) {
+			Vs[i] = new double[3];
+			UnknownParameter m = parameterForStructure.get(i);
+			double rmin = 0;
+			double rmax = 0;
+			rmin = m.getLocation().getR() - m.getWeighting() / 2.;
+			rmax = m.getLocation().getR() + m.getWeighting() / 2.;
+			Vs[i][0] = getSimpsonVP(rmin, rmax, structure, answerMap.get(m));
+			Vs[i][1] = rmin;
+			Vs[i][2] = rmax;
+		}
+		return Vs;
+	}
+	
 	private static double[][] toVelocity(Map<UnknownParameter, Double> answerMap, TriangleRadialSpline trs, PolynomialStructure structure) {
 		int n = 200;
 		double[][] velocities = new double[n][];
@@ -373,6 +469,11 @@ public class VelocityField {
 	private static double toVelocity(double deltaMu, double r, double rmin, double rmax, PolynomialStructure structure,
 			double amplifyPerturbation) {
 		return getSimpsonVsh(rmin, rmax, structure, deltaMu * amplifyPerturbation);
+	}
+	
+	private static double toVp(double dM, double r, double rmin, double rmax, PolynomialStructure structure,
+			double amplifyPerturbation) {
+		return getSimpsonVph(rmin, rmax, structure, dM * amplifyPerturbation);
 	}
 	
 	private static double toQ(double dq, double r, double rmin, double rmax, PolynomialStructure structure,
@@ -440,6 +541,23 @@ public class VelocityField {
 		return res / vol;
 	}
 	
+	public static double getSimpsonVph(double r1, double r2, PolynomialStructure structure, double dM) {
+		double res = 0;
+		double dr = (r2 - r1) / 40.;
+		double vol = r2 - r1;
+		for (int i=0; i < 40; i++) {
+			double a = r1 + i * dr;
+			double b = r1 + (i + 1) * dr;
+			double ab = (a + b) / 2.;
+			double v_a = Math.sqrt( (structure.computeLambda(a) + 2 * structure.computeMu(a) + dM) / structure.getRhoAt(a) );
+			double v_ab = Math.sqrt( (structure.computeLambda(ab) + 2 * structure.computeMu(ab) + dM) / structure.getRhoAt(ab) );
+			double v_b = Math.sqrt( (structure.computeLambda(b) + 2 * structure.computeMu(b) + dM) / structure.getRhoAt(b) );
+			res += (b - a) / 6. * (v_a + 4 * v_ab + v_b);
+		}
+		
+		return res / vol;
+	}
+	
 	public static double getSimpsonQ (double r1, double r2, PolynomialStructure structure, double dq, double amplifyPerturbation) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
@@ -457,7 +575,7 @@ public class VelocityField {
 		return res / vol;
 	}
 	
-	public static double getSimpsonVS (double r1, double r2, PolynomialStructure structure, double dc1) {
+	public static double getSimpsonVS(double r1, double r2, PolynomialStructure structure, double dVs) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -465,9 +583,26 @@ public class VelocityField {
 			double a = r1 + i * dr;
 			double b = r1 + (i + 1) * dr;
 			double ab = (a + b) / 2.;
-			double Q_a = structure.getVshAt(a) + dc1;
-			double Q_ab = structure.getVshAt(ab) + dc1;
-			double Q_b = structure.getVshAt(b) + dc1;
+			double Q_a = structure.getVshAt(a) * (1 + dVs);
+			double Q_ab = structure.getVshAt(ab) * (1 + dVs);
+			double Q_b = structure.getVshAt(b) * (1 + dVs);
+			res += (b - a) / 6. * (Q_a + 4 * Q_ab + Q_b);
+		}
+		
+		return res / vol;
+	}
+	
+	public static double getSimpsonVP(double r1, double r2, PolynomialStructure structure, double dVp) {
+		double res = 0;
+		double dr = (r2 - r1) / 40.;
+		double vol = r2 - r1;
+		for (int i=0; i < 40; i++) {
+			double a = r1 + i * dr;
+			double b = r1 + (i + 1) * dr;
+			double ab = (a + b) / 2.;
+			double Q_a = structure.getVphAt(a) * (1 + dVp);
+			double Q_ab = structure.getVphAt(ab) * (1 + dVp);
+			double Q_b = structure.getVphAt(b) * (1 + dVp);
 			res += (b - a) / 6. * (Q_a + 4 * Q_ab + Q_b);
 		}
 		

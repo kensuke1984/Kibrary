@@ -1113,64 +1113,96 @@ public class Partial1DEnvelopeMaker implements Operation {
 		}
 		
 		// computing PAR00
-		if (par00) {
-			PartialID[] partials = PartialIDFile.readPartialIDandDataFile(idPath, datasetPath);
-			List<PartialID> par0list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR0)).collect(Collectors.toList());
-			List<PartialID> par1list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR1)).collect(Collectors.toList());
-			List<PartialID> par2list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR2)).collect(Collectors.toList());
-			
-			Path idPath00 = workPath.resolve("partial001DID" + dateString + ".dat");
-			Path datasetPath00 = workPath.resolve("partial001D" + dateString + ".dat");
-			try (WaveformDataWriter pdw = new WaveformDataWriter(idPath00, datasetPath00, stationSet, idSet, periodRanges,
-					phases, perturbationLocationSet)) {
-				for (PartialID par0 : par0list) {
-					Phases phases = new Phases(par0.getPhases());
+				if (par00) {
+					PartialID[] partials = PartialIDFile.readPartialIDandDataFile(idPath, datasetPath);
+					List<PartialID> par0list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR0)).collect(Collectors.toList());
+					List<PartialID> par1list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR1)).collect(Collectors.toList());
+					List<PartialID> par2list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR2)).collect(Collectors.toList());
 					
-					PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
-							&& par.getStation().equals(par0.getStation())
-							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
-							&& par.getMinPeriod() == par0.getMinPeriod()
-							&& par.getMaxPeriod() == par0.getMaxPeriod()
-							&& new Phases(par.getPhases()).equals(phases)
-							&& par.getSacComponent().equals(par0.getSacComponent()))
-							.findFirst().get();
-					
-					PartialID par2 = par2list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
-							&& par.getStation().equals(par0.getStation())
-							&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
-							&& par.getMinPeriod() == par0.getMinPeriod()
-							&& par.getMaxPeriod() == par0.getMaxPeriod()
-							&& new Phases(par.getPhases()).equals(phases)
-							&& par.getSacComponent().equals(par0.getSacComponent()))
-							.findFirst().get();
-					
-					double[] data = par0.getData();
-					double[] data1 = par1.getData();
-					double[] data2 = par2.getData();
-					
-					double r = par0.getPerturbationLocation().getR();
-					double vs2 = structure.getVshAt(r);
-					vs2 *= vs2;
-					double vp2 = structure.getVphAt(r);
-					vp2 *= vp2;
-					
-					for (int i = 0; i < data.length; i++) {
-						data[i] = data[i] + vs2 * data2[i] + 0.5 * (vp2 - vs2) * data1[i];
+					Path idPath00 = workPath.resolve("partial001DID" + dateString + ".dat");
+					Path datasetPath00 = workPath.resolve("partial001D" + dateString + ".dat");
+					try (WaveformDataWriter pdw = new WaveformDataWriter(idPath00, datasetPath00, stationSet, idSet, periodRanges,
+							phases, perturbationLocationSet)) {
+						for (PartialID par0 : par0list) {
+							Phases phases = new Phases(par0.getPhases());
+							
+							PartialID par2 = par2list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
+									&& par.getStation().equals(par0.getStation())
+									&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+									&& par.getMinPeriod() == par0.getMinPeriod()
+									&& par.getMaxPeriod() == par0.getMaxPeriod()
+									&& new Phases(par.getPhases()).equals(phases)
+									&& par.getSacComponent().equals(par0.getSacComponent()))
+									.findFirst().get();
+							
+							double[] data = par0.getData();
+							double[] data1 = new double[data.length];
+							double[] data2 = par2.getData();
+							
+							if (!par0.getSacComponent().equals(SACComponent.T)) {
+								PartialID par1 = par1list.parallelStream().filter(par -> par.getGlobalCMTID().equals(par0.getGlobalCMTID())
+										&& par.getStation().equals(par0.getStation())
+										&& par.getPerturbationLocation().equals(par0.getPerturbationLocation())
+										&& par.getMinPeriod() == par0.getMinPeriod()
+										&& par.getMaxPeriod() == par0.getMaxPeriod()
+										&& new Phases(par.getPhases()).equals(phases)
+										&& par.getSacComponent().equals(par0.getSacComponent()))
+										.findFirst().get();
+								data1 = par1.getData();
+							}
+							
+							double r = par0.getPerturbationLocation().getR();
+							
+							double mu = structure.computeMu(r);
+							double M = structure.computeLambda(r) + 2 * mu;
+							double rho = structure.getRhoAt(r);
+							
+							double[] dataG = new double[data.length];
+							double[] dataM = data1;
+							double[] dataRho = new double[data.length];
+							double[] dataVp = new double[data.length];
+							double[] dataVs = new double[data.length];
+							
+							for (int i = 0; i < data.length; i++) {
+								dataM[i] = M * data1[i];
+								dataG[i] = mu * (data2[i] - 2 * data1[i]);
+//								dataVs[i] = 2 * (dataG[i] - rho * data[i]);
+//								dataVp[i] = 2 * (dataM[i] - rho * data[i]);
+								dataVs[i] = 2 * dataG[i];
+								dataVp[i] = 2 * dataM[i];
+								dataRho[i] = dataG[i] + dataM[i] + rho * data[i];
+							}
+							
+							PartialID partialRho = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+									, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
+									, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, dataRho);
+							
+							PartialID partialVp = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+									, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
+									, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVP, dataVp);
+							
+							PartialID partialVs = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+									, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
+									, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARVS, dataVs);
+							
+							PartialID partialM = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+									, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
+									, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARM, dataM);
+							
+							PartialID partialG = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
+									, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
+									, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PARG, dataG);
+							
+							pdw.addPartialID(partialM);
+							pdw.addPartialID(partialG);
+							pdw.addPartialID(partialRho);
+							pdw.addPartialID(partialVs);
+							pdw.addPartialID(partialVp);
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
 					}
-					
-					PartialID partial00 = new PartialID(par0.getStation(), par0.getGlobalCMTID(), par0.getSacComponent()
-							, par0.getSamplingHz(), par0.getStartTime(), par0.getNpts(), par0.getMinPeriod(), par0.getMaxPeriod()
-							, par0.getPhases(), par0.getStartByte(), par0.isConvolute(), par0.getPerturbationLocation(), PartialType.PAR00, data);
-					
-					pdw.addPartialID(partial00);
-					pdw.addPartialID(par0);
-					pdw.addPartialID(par1);
-					pdw.addPartialID(par2);
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
 		
 		System.err.println();
 		String endLine = Partial1DEnvelopeMaker.class.getName() + " finished in "

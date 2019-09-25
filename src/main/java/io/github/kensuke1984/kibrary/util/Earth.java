@@ -156,6 +156,8 @@ public final class Earth {
 	 * 第一扁平率 1/298.25
 	 */
 	public final static double FLATTENING = 1 / 298.25;
+//	public final static double FLATTENING = 0.;
+	
 
 	/**
 	 * tire profile 第三扁平率
@@ -234,11 +236,11 @@ public final class Earth {
 	}
 	
 	public static double getGeographicalAzimuth(HorizontalPosition eq, HorizontalPosition station) {
-		double e = eq.getTheta();
-		double s = station.getTheta();
+		double e = (90. - eq.getLatitude()) * Math.PI / 180.;
+		double s = (90. - station.getLatitude()) * Math.PI / 180.;
 		// System.out.println("eq:"+e+" station: "+s);
 		double deltaPhi = -eq.getPhi() + station.getPhi();
-		double delta = getEpicentralDistance(eq, station);
+		double delta = getGeographicalDistance(eq, station);
 		double cos = (FastMath.cos(s) * FastMath.sin(e) - FastMath.sin(s) * FastMath.cos(e) * FastMath.cos(deltaPhi))
 				/ FastMath.sin(delta);
 		if (1 < cos)

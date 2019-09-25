@@ -81,6 +81,11 @@ public class Location extends HorizontalPosition {
 		return RThetaPhi.toCartesian(R, getTheta(), getPhi());
 	}
 	
+	public XYZ toXYZGeographical() {
+		double theta = Math.toRadians(90. - getLatitude());
+		return RThetaPhi.toCartesian(R, theta, getPhi());
+	}
+	
 	public HorizontalPosition toHorizontalPosition() {
 		return new HorizontalPosition(getLatitude(), getLongitude());
 	}
@@ -92,6 +97,10 @@ public class Location extends HorizontalPosition {
 	 */
 	public double getDistance(Location location) {
 		return location.toXYZ().getDistance(toXYZ());
+	}
+	
+	public double getDistanceGeographical(Location location) {
+		return location.toXYZGeographical().getDistance(toXYZGeographical());
 	}
 	
 	@Override

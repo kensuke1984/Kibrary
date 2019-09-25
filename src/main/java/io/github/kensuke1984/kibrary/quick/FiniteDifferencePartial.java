@@ -3,6 +3,8 @@ package io.github.kensuke1984.kibrary.quick;
 import io.github.kensuke1984.kibrary.inversion.Dvector;
 import io.github.kensuke1984.kibrary.inversion.WeightingType;
 import io.github.kensuke1984.kibrary.util.Phases;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 
@@ -15,6 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.function.Predicate;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+
 
 public class FiniteDifferencePartial {
 
@@ -25,6 +29,7 @@ public class FiniteDifferencePartial {
 		if (args.length == 3)
 			dm = Double.parseDouble(args[2]);
 			
+		String dirCurves = "/work/anselme/TOPO/ETH/synthetics/timecurves";
 		
 		try {
 			Path dir0 = Paths.get("finiteDifferencePartial");
@@ -38,6 +43,22 @@ public class FiniteDifferencePartial {
 			BasicID[] obsIds = dVector.getObsIDs();
 			BasicID[] synIds = dVector.getSynIDs();
 			
+			int daz = 45;
+			int naz = 360 / daz;
+			String[][] azimuthPlotString = new String[naz][3];
+			GlobalCMTID event = new GlobalCMTID("200602021248A"); 
+			for (int iaz = 0; iaz < naz; iaz++)
+				for (int ic = 1; ic <= 3; ic++) {
+					azimuthPlotString[iaz][ic-1] = "set terminal postscript enhanced color font \"Helvetica,12\"\n"
+						+ "set output \"" + event + ".az" + (int) (iaz * daz) + "." + SACComponent.getComponent(ic) + ".ps\"\n"
+						+ "set xrange [0:3545]\n"
+						+ "set key t rm\n"
+						+ "set xlabel 'Time aligned on S-wave arrival (s)'\n"
+						+ "set ylabel 'Distance (deg)'\n"
+						+ "set size 1,1\n"
+						+ "p ";
+				}
+			
 			for (int i = 0; i < obsIds.length; i++) {
 				Phases phases = new Phases(obsIds[i].getPhases());
 				Path dir1 = dir0.resolve(phases.toString());
@@ -45,7 +66,8 @@ public class FiniteDifferencePartial {
 					Files.createDirectories(dir1);
 				
 				String endstring = obsIds[i].isConvolute() ? "sc" : "s";
-				String outfile = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
+				String outname = obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "...par." + phases +"." + obsIds[i].getSacComponent() + endstring;
+				String outfile = dir1 + "/" + outname;
 				String outfile2 = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent() + endstring;
 				String outfile3 = dir1 + "/" + obsIds[i].getStation() + "." + obsIds[i].getGlobalCMTID() + "." + phases +"." + obsIds[i].getSacComponent();
 				
@@ -66,12 +88,49 @@ public class FiniteDifferencePartial {
 				pw.close();
 				pw2.close();
 				pw3.close();
+				
+				int iaz = (int) (Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obsIds[i].getStation().getPosition()))
+						/ daz);
+				int icomp = obsIds[i].getSacComponent().valueOf();
+				double max = new ArrayRealVector(obs).subtract(new ArrayRealVector(syn)).getLInfNorm() * 0.167;
+				double distance = Math.toDegrees(obsIds[i].getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obsIds[i].getStation().getPosition()));
+				azimuthPlotString[iaz][icomp-1] += String.format("'%s' u 1:($2/%.4e+%.3f) w l lc rgb 'black' lt 1 lw .5 noti,\\\n", outname, max, distance);
 			}
+			
+			for (int iaz = 0; iaz < naz; iaz++)
+				for (int ic = 1; ic <= 3; ic++) {
+					Path outpath = dir0.resolve("plot_az" + (iaz*daz) + "_" + SACComponent.getComponent(ic) + ".plt");
+					azimuthPlotString[iaz][ic-1] += traveltimeCurves(SACComponent.getComponent(ic), dirCurves);
+					PrintWriter pw = new PrintWriter(outpath.toFile());
+					pw.println(azimuthPlotString[iaz][ic-1]);
+					pw.close();
+				}
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
 	}
-
+	
+	private static String traveltimeCurves(SACComponent component, String dir) {
+		String[] colors = new String[] {"magenta", "brown", "red", "orange", "gold", "green", "cyan", "blue", "purple"};
+		String s = "";
+		if (component.equals(SACComponent.T)) {
+			String[] phases = new String[] {"ScS", "ScSScS", "ScSScSScS", "sScS", "sScSScS", "sScSScSScS", "Sdiff"};
+			for (int i = 0; i < phases.length; i++)
+				s += String.format("'%s/%s.txt' u 2:1 w l lt 1 lw 1 lc rgb '%s' ti '%s',\\\n", dir, phases[i], colors[i%colors.length], phases[i]);
+		}
+		if (component.equals(SACComponent.Z)) {
+			String[] phases = new String[] {"PcP", "pPcP", "PcS", "ScP", "sScP", "PKP", "PKKP", "PKKKP", "PKKKKP", "Pdiff", "PcPPcP", "PcPPcPPcP", "PKPPKP", "PKiKP", "ScSScP", "sScSScP", "SKP"};
+			for (int i = 0; i < phases.length; i++)
+				s += String.format("'%s/%s.txt' u 2:1 w l lt 1 lw 1 lc rgb '%s' ti '%s',\\\n", dir, phases[i], colors[i%colors.length], phases[i]);
+		}
+		if (component.equals(SACComponent.R)) {
+			String[] phases = new String[] {"ScS", "sScS", "SKS", "SKKS", "SKKKS", "sSKS", "sSKKS", "PcS", "Sdiff"};
+			for (int i = 0; i < phases.length; i++)
+				s += String.format("'%s/%s.txt' u 2:1 w l lt 1 lw 1 lc rgb '%s' ti '%s',\\\n", dir, phases[i], colors[i%colors.length], phases[i]);
+		}
+		return s;
+	}
+	
 }

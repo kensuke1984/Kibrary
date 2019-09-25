@@ -34,11 +34,20 @@ public class MakeWindowScS {
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0_it1/filtered_stf_12.5-200s");
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s5/filtered_stf_12.5-200s");
-		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_nostf_6-200s");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster4/synthetic_sw_it1/filtered_nostf_12.5-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/synthetic_cl4s0_it1/filtered_nostf_8-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/synthetic_cl3s0_it1/filtered_nostf_6-200s");
 //		Path workdir = Paths.get(".");
 		
 		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_60deg.dat");
+//		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_70deg.dat");
 		Set<TimewindowInformation> timewindowsForSelection = TimewindowInformationFile.read(timewindowPath); 
+//		timewindowsForSelection = null;
+		
+		boolean convolved = false;
+		
+		boolean extendedDistanceRange = true;
 		
 		boolean select = false;
 		double minCorr = 0.5;
@@ -50,7 +59,7 @@ public class MakeWindowScS {
 		double timeAfter = 40;
 		double timeBeforesS = 5;
 		
-		double minPeriod = 8.;
+		double minPeriod = 12.5;
 		
 		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workdir);
 		
@@ -59,6 +68,12 @@ public class MakeWindowScS {
 		
 		Set<TimewindowInformation> infoSet = new HashSet<>();
 		Path outpath = workdir.resolve("selectedTimewindow_ScS" + Utilities.getTemporaryString() + ".dat");
+		
+		Set<TimewindowInformation> infoSetScStight = new HashSet<>();
+		Path outpathTight = workdir.resolve("selectedTimewindow_ScStight" + Utilities.getTemporaryString() + ".dat");
+		
+		Set<TimewindowInformation> infoSetScd = new HashSet<>();
+		Path outpathScd = workdir.resolve("selectedTimewindow_Scd" + Utilities.getTemporaryString() + ".dat");
 		
 		Set<TimewindowInformation> infoSet_noSelection = new HashSet<>();
 		Path outpath_noSelection = workdir.resolve("timewindow_ScS" + Utilities.getTemporaryString() + ".dat");
@@ -79,10 +94,12 @@ public class MakeWindowScS {
 			for (SACFileName obsName : obsNames) {
 				SACHeaderData obsHeader = obsName.readHeader();
 				
+				if (timewindowsForSelection != null) {
 				if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsHeader.getGlobalCMTID())
 						&& tw.getStation().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
 						.count() == 0)
 					continue;
+				}
 				
 				double distance = obsHeader.getValue(SACHeaderEnum.GCARC);
 				timetool.calculate(distance);
@@ -104,9 +121,14 @@ public class MakeWindowScS {
 				if (timesS - timeScS < minPeriod * 1.6)
 					continue;
 				
-				SACData synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("sc"))).read();
+				SACData synData = null;
+				if (!convolved)
+					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("s"))).read();
+				else
+					synData = new SACFileName(Paths.get(obsName.getAbsolutePath().concat("sc"))).read();
 				Trace synTrace = synData.createTrace().cutWindow(timeS - 15, timeS + 40);
 				double deltaTimeP2P = Math.abs(synTrace.getXforMaxValue() - synTrace.getXforMinValue());
+				double timeFirstPeak = synTrace.getXforMaxValue() < synTrace.getXforMinValue() ? synTrace.getXforMaxValue() : synTrace.getXforMinValue();
 				double timeLatePeak = synTrace.getXforMaxValue() > synTrace.getXforMinValue() ? synTrace.getXforMaxValue() : synTrace.getXforMinValue();
 				double timeEndOfS = timeLatePeak + deltaTimeP2P * 0.9;
 				
@@ -119,14 +141,38 @@ public class MakeWindowScS {
 				double startTime = timeScS - timeBefore;
 				double endTime = timeScS + timeAfter;
 				
+				double startTimeTight = timeScS - 5;
+				
+				double endTimeScd = timeScS - 2;
+				
 				if (startTime < timeEndOfS)
 					startTime = timeEndOfS;
+				if (startTimeTight < timeEndOfS)
+					startTimeTight = timeEndOfS;
 				if (endTime > timesS - timeBeforesS)
 					endTime = timesS - timeBeforesS;
 				
-				if (timeEndOfS > timeScS - minPeriod/2.5) {
-					countIncludeS++;
-					continue;
+				if (extendedDistanceRange) {
+					double startTime0 = timeScS - timeBefore;
+					double startTime1 = timeScS - 3.;
+					if (startTime0 >= timeEndOfS)
+						startTime = startTime0;
+					else if (startTime0 < timeEndOfS && startTime1 >= timeEndOfS)
+						startTime = timeEndOfS;
+					else if (startTime1 < timeEndOfS && startTime1 >= timeFirstPeak)
+						startTime = startTime1;
+					else if (timeScS >= timeFirstPeak)
+						startTime = timeFirstPeak;
+					else {
+						countIncludeS++;
+						continue;
+					}
+				}
+				else {
+					if (timeEndOfS > timeScS - minPeriod/2.5) {
+						countIncludeS++;
+						continue;
+					}
 				}
 				
 				TimewindowInformation timewindow_S = new TimewindowInformation(timeS - 15, timeS + 35,
@@ -162,6 +208,21 @@ public class MakeWindowScS {
 						obsName.getComponent(), new Phase[] {Phase.ScS});
 				if (addScS)
 					infoSet.add(timewindow);
+				
+				if (startTime < endTimeScd) {
+					TimewindowInformation timewindowScd = new TimewindowInformation(startTime, endTimeScd,
+							obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+							obsName.getComponent(), new Phase[] {Phase.ScS});
+					if (addScS)
+						infoSetScd.add(timewindowScd);
+				}
+				
+				TimewindowInformation timewindowTight = new TimewindowInformation(startTimeTight, endTime,
+						obsHeader.getStation(), obsHeader.getGlobalCMTID(),
+						obsName.getComponent(), new Phase[] {Phase.ScS});
+				if (addScS)
+					infoSetScStight.add(timewindowTight);
+				
 				infoSet_noSelection.add(timewindow);
 			}
 		}
@@ -171,6 +232,8 @@ public class MakeWindowScS {
 		TimewindowInformationFile.write(infoSet, outpath);
 		TimewindowInformationFile.write(infoSetS, outpathS);
 		TimewindowInformationFile.write(infoSet_noSelection, outpath_noSelection);
+		TimewindowInformationFile.write(infoSetScd, outpathScd);
+		TimewindowInformationFile.write(infoSetScStight, outpathTight);
 	}
 
 }

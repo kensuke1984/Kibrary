@@ -124,6 +124,14 @@ public class TimewindowInformation extends Timewindow {
 	public Phase[] getPhases() {
 		return phases;
 	}
+	
+	public double getAzimuthDegree() {
+		return Math.toDegrees(id.getEvent().getCmtLocation().getAzimuth(station.getPosition()));
+	}
+	
+	public double getDistanceDegree() {
+		return Math.toDegrees(id.getEvent().getCmtLocation().getEpicentralDistance(station.getPosition()));
+	}
 
 	@Override
 	public String toString() {

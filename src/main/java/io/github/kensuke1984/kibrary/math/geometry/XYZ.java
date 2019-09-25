@@ -110,6 +110,14 @@ public class XYZ extends XY {
 		return toSphericalCoordinate(x, y, z);
 	}
 	
+	public XYZ add(XYZ other) {
+		return new XYZ(x + other.x, y + other.y, z + other.z);
+	}
+	
+	public XYZ getMidPoint(XYZ other) {
+		return new XYZ((x + other.x)/2., (y + other.y)/2., (z + other.z)/2.);
+	}
+	
 	public RealVector toRealVector() {
 		return new ArrayRealVector(new double[] {x, y, z});
 	}

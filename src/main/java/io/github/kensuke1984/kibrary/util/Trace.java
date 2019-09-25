@@ -306,7 +306,7 @@ public class Trace {
                 cor += Y[i + j] * trace.Y[j];
                 y2 += Y[i + j] * Y[i + j];
             }
-            cor /= y2 * compY2;
+            cor /= Math.sqrt(y2) * compY2;
             if (corMax < cor) {
                 shift = X[i] - trace.X[0];
                 corMax = cor;

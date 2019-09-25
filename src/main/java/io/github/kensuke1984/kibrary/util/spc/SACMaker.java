@@ -617,6 +617,68 @@ public class SACMaker implements Runnable {
 		}
 		return isOK;
 	}
+	
+	public static boolean check2(DSMOutput spc1, DSMOutput spc2) {
+		boolean isOK = true;
+//		if (spc1.nbody() != spc2.nbody()) {
+//			System.err
+//					.println("Numbers of bodies (nbody) are different. fp, bp: " + spc1.nbody() + " ," + spc2.nbody());
+//			isOK = false;
+//		}
+
+		if (!spc1.getSourceID().equals(spc2.getSourceID())) {
+			System.err.println("Source names are different " + spc1.getSourceID() + " " + spc2.getSourceID());
+			isOK = false;
+		}
+
+//		if (!spc1.getObserverID().equals(spc2.getObserverID())) {
+//			System.err.println("Station names are different " + spc1.getObserverID() + " " + spc2.getObserverID());
+//			isOK = false;
+//		}
+		
+		if (!spc1.getObserverName().equals(spc2.getObserverName())) {
+			System.err.println("Station names are different " + spc1.getObserverName() + " " + spc2.getObserverName());
+			isOK = false;
+		}
+		
+		if (!spc1.getObserverNetwork().equals(spc2.getObserverNetwork())) {
+			System.err.println("Network names are different " + spc1.getObserverNetwork() + " " + spc2.getObserverNetwork());
+			isOK = false;
+		}
+
+//		if (isOK) {
+//			if (!Arrays.equals(spc1.getBodyR(), spc2.getBodyR()))
+//				isOK = false;
+//
+//			if (!isOK) {
+//				System.err.println("the depths are invalid(different) as below  fp : bp");
+//				for (int i = 0; i < spc1.nbody(); i++)
+//					System.err.println(spc1.getBodyR()[i] + " : " + spc2.getBodyR()[i]);
+//			}
+//		}
+//		if (spc1.np() != spc2.np()) {
+//			System.err.println("nps are different. fp, bp: " + spc1.np() + ", " + spc2.np());
+//			isOK = false;
+//		}
+
+		// double tlen
+		if (spc1.tlen() != spc2.tlen()) {
+			System.err.println("tlens are different. fp, bp: " + spc1.tlen() + " ," + spc2.tlen());
+			isOK = false;
+		}
+
+		if (!spc1.getSourceLocation().equals(spc2.getSourceLocation())) {
+			System.err.println("locations of sources of input spcfiles are different");
+			System.err.println(spc1.getSourceLocation() + " " + spc2.getSourceLocation());
+			isOK = false;
+		}
+
+		if (!spc1.getObserverPosition().equals(spc2.getObserverPosition())) {
+			System.err.println("locations of stations of input spcfiles are different");
+			isOK = false;
+		}
+		return isOK;
+	}
 
 	/**
 	 * Creates and outputs synthetic SAC files of Z R T from input spectrums

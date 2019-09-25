@@ -69,6 +69,7 @@ import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
+import io.github.kensuke1984.kibrary.util.EventCluster;
 import io.github.kensuke1984.kibrary.util.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
@@ -156,7 +157,7 @@ public class LetMeInvert implements Operation {
 	
 	private double cm0, cmH, cmV;
 	
-	private double lambdaQ, lambdaMU, gammaQ, gammaMU;
+	private double lambdaQ, lambdaMU, gammaQ, gammaMU, lambda00, gamma00, lambdaVp, gammaVp;
 	
 	private double correlationScaling;
 	
@@ -347,8 +348,12 @@ public class LetMeInvert implements Operation {
 		regularizationMuQ = Boolean.parseBoolean(property.getProperty("regularizationMuQ"));
 		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
 		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
+		lambda00 = Double.valueOf(property.getProperty("lambda00"));
+		lambdaVp = Double.valueOf(property.getProperty("lambdaVp"));
 		gammaQ = Double.valueOf(property.getProperty("gammaQ"));
 		gammaMU = Double.valueOf(property.getProperty("gammaMU"));
+		gamma00 = Double.valueOf(property.getProperty("gamma00"));
+		gammaVp = Double.valueOf(property.getProperty("gammaVp"));
 		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
@@ -389,6 +394,13 @@ public class LetMeInvert implements Operation {
 		if (trimWindow) {
 			trimPoint = Double.parseDouble(property.getProperty("trimPoint"));
 			keepBefore = Boolean.parseBoolean(property.getProperty("keepBefore"));
+		}
+		
+		if (property.containsKey("eventClusterPath")) {
+			eventClusterPath = Paths.get(property.getProperty("eventClusterPath"));
+			clusterIndex = Integer.parseInt(property.getProperty("clusterIndex"));
+			azimuthIndex = Integer.parseInt(property.getProperty("azimuthIndex"));
+			System.out.println("Using cluster file with clusterIndex=" + clusterIndex + " and azimuthIndex=" + azimuthIndex);
 		}
 	}
 
@@ -535,9 +547,19 @@ public class LetMeInvert implements Operation {
 	
 	private boolean assumeRratio;
 	
+	private List<EventCluster> clusters;
+	
+	private Path eventClusterPath;
+	
+	private int azimuthIndex;
+	
+	private int clusterIndex;
+	
 	private void setEquation() throws IOException {
-		
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		
+		if (eventClusterPath != null)
+			clusters = EventCluster.readClusterFile(eventClusterPath);
 		
 		// set unknown parameter
 		System.err.println("setting up unknown parameter set");
@@ -616,6 +638,42 @@ public class LetMeInvert implements Operation {
 				return true;
 			};
 		}
+		else if (eventClusterPath != null) {
+			List<EventCluster> thisCluster = clusters.stream().filter(c -> c.getIndex() == clusterIndex).collect(Collectors.toList());
+			
+			if (azimuthIndex > thisCluster.get(0).getAzimuthSlices().size()) {
+				System.out.println("No azimuth slice " + azimuthIndex + " for cluster " + clusterIndex);
+				System.exit(0);
+			}
+			
+			double[] azimuthRange = thisCluster.get(0).getAzimuthBound(azimuthIndex);
+			
+			Set<GlobalCMTID> thisClusterIDs = thisCluster.stream().map(c -> c.getID()).collect(Collectors.toSet());
+			HorizontalPosition centerPosition = thisCluster.get(0).getCenterPosition();
+			
+			System.out.println(azimuthRange[0] + " " + azimuthRange[1]);
+			
+			chooser = id -> {
+				double azimuth = centerPosition.getAzimuth(id.getStation().getPosition())
+						* 180. / Math.PI;
+				if (!(thisClusterIDs.contains(id.getGlobalCMTID()) && azimuth >= azimuthRange[0] && azimuth <= azimuthRange[1]))
+					return false;
+				
+				double distance = id.getGlobalCMTID().getEvent()
+						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
+						* 180. / Math.PI;
+				if (distance < minDistance || distance > maxDistance)
+					return false;
+				double mw = id.getGlobalCMTID().getEvent()
+						.getCmt().getMw();
+				if (mw < minMw || mw > maxMw) {
+					System.out.println(mw);
+					return false;
+				}
+				
+				return true;
+			};
+		}
 		else {
 			System.out.println("DEBUG1: " + minDistance + " " + maxDistance + " " + minMw + " " + maxMw);
 			chooser = id -> {
@@ -662,6 +720,7 @@ public class LetMeInvert implements Operation {
 		case RECIPROCAL:
 		case RECIPROCAL_PcP:
 		case RECIPROCAL_COS:
+		case RECIPROCAL_CC:
 //			System.out.println(selectionInfo.size());
 //			System.out.println(selectionInfo.get(0).getTimewindow());
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
@@ -826,7 +885,7 @@ public class LetMeInvert implements Operation {
 				applyConditionner();
 			
 			if (regularizationMuQ) {
-				addRegularizationMUQ();
+				addRegularizationVSQ();
 			}
 		}
 		else {
@@ -1037,6 +1096,107 @@ public class LetMeInvert implements Operation {
 			else if (parameters.get(i).getPartialType().equals(PartialType.PARQ))
 				D.multiplyEntry(i, i, coeffs.get(1));
 		}
+		eq.addRegularization(D);
+	}
+	
+	private void addRegularizationVSQ() {
+		System.out.println("Adding regularization VS Q");
+		List<PartialType> types = new ArrayList<>();
+		Map<PartialType, Integer> indexMap = new HashMap<>();
+		Set<PartialType> usedTypes = eq.getParameterList().stream().map(p -> p.getPartialType()).collect(Collectors.toSet());
+		int count = 0;
+		if (usedTypes.contains(PartialType.PARVS)) {
+			types.add(PartialType.PARVS);
+			indexMap.put(PartialType.PARVS, count);
+			count++;
+		}
+		if (usedTypes.contains(PartialType.PARQ)) {
+			types.add(PartialType.PARQ);
+			indexMap.put(PartialType.PARQ, count);
+			count++;
+		}
+		if (usedTypes.contains(PartialType.PAR00)) {
+			types.add(PartialType.PAR00);
+			indexMap.put(PartialType.PAR00, count);
+			count++;
+		}
+		if (usedTypes.contains(PartialType.PARVP)) {
+			types.add(PartialType.PARVP);
+			indexMap.put(PartialType.PARVP, count);
+			count++;
+		}
+		
+		double normMU = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARVS))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		double normQ = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		double norm00 = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PAR00))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		double normVP = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
+				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARVP))
+				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		
+		// Second order differential operator
+		List<Double> coeffs = new ArrayList<>();
+		if (usedTypes.contains(PartialType.PARVS))
+			coeffs.add(lambdaMU * normMU);
+//			coeffs.add(lambdaMU / normMU);
+		if (usedTypes.contains(PartialType.PARQ))
+			coeffs.add(lambdaQ * normQ);
+		if(usedTypes.contains(PartialType.PAR00))
+			coeffs.add(lambda00 * norm00);
+		if(usedTypes.contains(PartialType.PARVP))
+			coeffs.add(lambdaVp * normVP);
+		
+		RadialSecondOrderDifferentialOperator D2 = new RadialSecondOrderDifferentialOperator(eq.getParameterList(), types, coeffs);
+		eq.addRegularization(D2.getD2TD2());
+		
+		// Diagonal matrix
+		coeffs = new ArrayList<>();
+		if (usedTypes.contains(PartialType.PARVS))
+			coeffs.add(gammaMU * normMU);
+//			coeffs.add(gammaMU / normMU);
+		if (usedTypes.contains(PartialType.PARQ))
+			coeffs.add(gammaQ * normQ);
+		if(usedTypes.contains(PartialType.PAR00))
+			coeffs.add(gamma00 * norm00);
+		if(usedTypes.contains(PartialType.PARVP))
+			coeffs.add(gammaVp * normVP);
+		
+		RealMatrix D = MatrixUtils.createRealIdentityMatrix(eq.getMlength());
+		List<UnknownParameter> parameters = eq.getParameterList();
+		for (int i = 0; i < eq.getMlength(); i++) {
+			if (parameters.get(i).getPartialType().equals(PartialType.PARVS)) {
+				int index = indexMap.get(PartialType.PARVS);
+				D.multiplyEntry(i, i, coeffs.get(index) * coeffs.get(index));
+			}
+			else if (parameters.get(i).getPartialType().equals(PartialType.PARQ)) {
+				int index = indexMap.get(PartialType.PARQ);
+				D.multiplyEntry(i, i, coeffs.get(index) * coeffs.get(index));
+			}
+			else if (parameters.get(i).getPartialType().equals(PartialType.PAR00)) {
+				int index = indexMap.get(PartialType.PAR00);
+				D.multiplyEntry(i, i, coeffs.get(index) * coeffs.get(index));
+			}
+			else if (parameters.get(i).getPartialType().equals(PartialType.PARVP)) {
+				int index = indexMap.get(PartialType.PARVP);
+				D.multiplyEntry(i, i, coeffs.get(index) * coeffs.get(index));
+			}
+		}
+		
+		PartialType tmptype = eq.getParameterList().get(0).getPartialType();
+		for (int i = 1; i < eq.getMlength(); i++) {
+			if (!tmptype.equals(eq.getParameterList().get(i).getPartialType())) {
+				D.multiplyEntry(i - 1, i - 1, 25.);
+				System.out.println(i + " " + tmptype + " " + eq.getParameterList().get(i).getPartialType());
+				tmptype = eq.getParameterList().get(i).getPartialType();
+			}
+		}
+		D.multiplyEntry(eq.getMlength()-1, eq.getMlength()-1, 25.);
+
 		eq.addRegularization(D);
 	}
 	
@@ -1532,7 +1692,16 @@ public class LetMeInvert implements Operation {
 							solve(outPath.resolve(method.simple()), method.getMethod(eq.getA(), eq.getAtD()));
 						}
 					}
+					else if (method == InverseMethodEnum.NONLINEAR_CONJUGATE_GRADIENT) {
+//						eq.applyCombiner(3);
+						solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getA(), eq.getDVector().getObs(), eq.getDVector().getSyn()));
+					}
+					else if (method == InverseMethodEnum.CONSTRAINED_CONJUGATE_GRADIENT) {
+						RealMatrix h = ConstrainedConjugateGradientMethod.projectorRectangle(eq.getMlength(), 2);
+						solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD(), h));
+					}
 					else {
+//						eq.applyCombiner2(2);
 						solve(outPath.resolve(method.simple()), method.getMethod(eq.getAtA(), eq.getAtD()));
 					}
 				}

@@ -170,7 +170,7 @@ public class SCARDEC {
 		}
 	}
 
-	private static final URL SCARDEC_ROOT_PATH = SCARDEC.class.getClassLoader().getResource("scardec_20141231.zip");
+	private static final URL SCARDEC_ROOT_PATH = SCARDEC.class.getClassLoader().getResource("scardec20161115.zip");
 
 	private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
@@ -244,7 +244,7 @@ public class SCARDEC {
 			return new SCARDEC(id, loc, m0, mw, strike1, dip1, rake1, strike2, dip2, rake2, averageSTF, optimalSTF);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("Exception in reading the SCARDEC archive.");
+			throw new RuntimeException("Exception in reading the SCARDEC archive. " + id);
 		}
 	}
 
@@ -303,6 +303,10 @@ public class SCARDEC {
 	 */
 	public SourceTimeFunction getOptimalSTF(int np, double tlen) {
 		return getSTF(false, np, tlen);
+	}
+	
+	public Trace getTimeDomainOptimalSTF() {
+		return OPTIMAL_MOMENT_RATE_FUNCTION;
 	}
 
 	private SourceTimeFunction getSTF(boolean average, int np, double tlen) {

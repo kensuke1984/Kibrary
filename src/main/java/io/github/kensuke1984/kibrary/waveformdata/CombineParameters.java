@@ -84,6 +84,7 @@ public class CombineParameters {
 								UnknownParameter unknown = originalUnknowns[iOriginal];
 								
 //								double weight = unknown.getWeighting();
+								
 								double weight = 1.;
 								
 	//							System.out.println("------\n" + unknown.getLocation());

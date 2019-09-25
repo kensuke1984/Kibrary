@@ -20,6 +20,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,12 +158,19 @@ public class Profile_alignPcP {
 			String[] varString = new String[] {""};
 			String[] eachMisfitString = new String[] {""};
 			
+			Comparator<BasicID> compareByDistance = (BasicID o1, BasicID o2) -> {
+				double d1 = o1.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o1.getStation().getPosition());
+				double d2 = o2.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(o2.getStation().getPosition());
+            	return Double.compare(d1, d2);
+				};
+			
 			for (GlobalCMTID event : events) {
 				if (oneEvent != null && !event.equals(oneEvent))
 					continue;
 				System.out.println(event);
 				
 				List<BasicID> tmpObs = obsList.stream().filter(id -> id.getGlobalCMTID().equals(event)).collect(Collectors.toList());
+				Collections.sort(tmpObs, compareByDistance);
 				
 				Path outpath_R = inversionResultPath.resolve(profilePath.resolve(event.toString() + "_R.plt"));
 				Path outpath_T = inversionResultPath.resolve(profilePath.resolve(event.toString() + "_T.plt"));
@@ -193,6 +202,7 @@ public class Profile_alignPcP {
 					String[] scriptString_T = new String[] {""};
 					String[] scriptString_Z = new String[] {""};
 					
+					AtomicInteger counter = new AtomicInteger();
 					tmpObs.stream().forEach(id -> {
 //						i.incrementAndGet();
 						try {
@@ -201,18 +211,20 @@ public class Profile_alignPcP {
 							String name = ir.getTxtName(id);
 							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 									* 180. / Math.PI;
+							double ypos = counter.getAndIncrement() * 6.;
+							double norm = maxObs /= 3.;
 							if (id.getSacComponent().equals(SACComponent.R))
-								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
-									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\\n"
-									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\\n";
+								scriptString_R[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"blue\",\\\n";
 							else if (id.getSacComponent().equals(SACComponent.T))
-							scriptString_T[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
-									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\\n"
-									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\\n";
+							scriptString_T[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"blue\",\\\n";
 							else if (id.getSacComponent().equals(SACComponent.Z))
-								scriptString_Z[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\\n"
-									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\\n"
-									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", maxObs, distance) + "w lines lt 1 lc rgb \"blue\",\\\n";
+								scriptString_Z[0] += "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($3/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"black\",\\\n"
+									+ "\"" + obsPath + "/" + name + "\" " + String.format("u 0:($4/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"red\",\\\n"
+									+ "\"" + bornPath + "/" + name + "\" " + String.format("u 0:($2/%.3e+%.2f) ", norm, ypos) + "w lines lt 1 lc rgb \"blue\",\\\n";
 //							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($1-8.4*%.2f):($3/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"black\",\\");
 //							pw.println("\"" + obsPath + "/" + name + "\" " + String.format("u ($2-8.4*%.2f):($4/%.3e+%.2f) ", distance, maxObs, distance) + "w lines lt 1 lc rgb \"red\",\\");
 ////							if (i.get() == n)

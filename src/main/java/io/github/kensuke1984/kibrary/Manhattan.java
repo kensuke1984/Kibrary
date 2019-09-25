@@ -2,7 +2,7 @@ package io.github.kensuke1984.kibrary;
 
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker_v2;
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DEnvelopeMaker;
-import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
+import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker_v2;
 
 import java.util.Arrays;
 
@@ -26,9 +26,11 @@ import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
-import io.github.kensuke1984.kibrary.waveformdata.AtAMaker_old;
+import io.github.kensuke1984.kibrary.waveformdata.AtAMaker;
 
 /**
+ * ls
+ * 
  * 
  * The list of names of manhattan (operation)
  * 
@@ -46,7 +48,7 @@ public enum Manhattan {
 	LetMeInvert(8, LetMeInvert.class), //
 	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
 	Partial1DDatasetMaker(10, Partial1DDatasetMaker_v2.class), //
-	PartialDatasetMaker(11, PartialDatasetMaker.class), //
+	PartialDatasetMaker(11, PartialDatasetMaker_v2.class), //
 	PhaseEnvelope(12, PhaseEnvelope.class), //
 	RaypathDistribution(13, RaypathDistribution.class), //
 	Result(14, Result.class), //

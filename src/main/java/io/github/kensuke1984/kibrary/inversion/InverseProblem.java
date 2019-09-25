@@ -47,8 +47,10 @@ public abstract class InverseProblem {
 	 * @return the number of unknown parameters
 	 */
 	public int getParN() {
-//		return ata.getColumnDimension();
-		return atd.getDimension();
+		if (ata != null)
+			return ata.getColumnDimension();
+		else
+			return atd.getDimension();
 	}
 
 	/**

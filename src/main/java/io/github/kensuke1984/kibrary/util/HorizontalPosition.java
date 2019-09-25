@@ -81,7 +81,11 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 	public double getAzimuth(HorizontalPosition position) {
 		return Earth.getAzimuth(this, position);
 	}
-
+	
+	public double getGeographicalAzimuth(HorizontalPosition position) {
+		return Earth.getGeographicalAzimuth(this, position);
+	}
+	
 	/**
 	 * @param position
 	 *            {@link HorizontalPosition} to compute back azimuth with

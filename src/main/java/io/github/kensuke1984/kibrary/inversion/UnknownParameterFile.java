@@ -83,6 +83,7 @@ public class UnknownParameterFile {
 				case PARG:
 				case PARM:
 				case PAR00:
+				case PAR1:
 					unknown = new Physical1DParameter(type, Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
 					pars.add(unknown);
 					break;

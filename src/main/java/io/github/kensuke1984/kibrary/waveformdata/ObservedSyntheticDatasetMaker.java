@@ -304,7 +304,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private void readPeriodRanges() {
 		try {
 			List<double[]> ranges = new ArrayList<>();
-			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
+			
+			Set<SACFileName> sacfilenames = Utilities.sacFileNameSet(obsPath).stream().limit(20).collect(Collectors.toSet());
+			
+//			for (SACFileName name : Utilities.sacFileNameSet(obsPath)) {
+			for (SACFileName name : sacfilenames) {
 				if (!name.isOBS())
 					continue;
 				SACHeaderData header = name.readHeader();
@@ -352,6 +356,9 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 	@Override
 	public void run() throws Exception {
+		if (20 % finalSamplingHz != 0)
+			throw new RuntimeException("Must choose a finalSamplingHz that divides 20");
+		
 		if (timeCorrection || amplitudeCorrection)
 			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionPath);
 		
@@ -371,13 +378,17 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					return true;
 				}).collect(Collectors.toSet());
 		
-		stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
+		stationSet = timewindowInformationSet.stream().map(TimewindowInformation::getStation)
 				.collect(Collectors.toSet());
-		idSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getGlobalCMTID)
+		idSet = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
 				.collect(Collectors.toSet());
-		phases = timewindowInformationSet.parallelStream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+		phases = timewindowInformationSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
 				.distinct().toArray(Phase[]::new);
+		
 		readPeriodRanges();
+		
+		//TODO
+//		periodRanges = new double[][] { {12.5, 200.} };
 		
 		for (int isample = 0; isample < nSample; isample++) {
 			if (correctionBootstrap)

@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import javax.management.RuntimeErrorException;
 
+import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
@@ -163,6 +164,47 @@ public class ObservationEquation {
 				a.setColumnVector(i, a.getColumnVector(i).mapMultiply(m.getEntry(i)));
 			}
 		}
+	}
+	
+	public void applyCombiner(int nCombine) {
+		int dim = ata.getColumnDimension();
+		RealMatrix c = new Array2DRowRealMatrix(dim, dim);
+		int n = dim / nCombine;
+//		int nCRemain = dim - n;
+		for (int i = 0; i < n - 1; i++) {
+			int itmp = i * nCombine;
+			for (int ic = 0; ic < nCombine; ic++)
+				c.setEntry(itmp+ic, itmp, 1.);
+		}
+//		for (int ic = 0; ic < nCRemain; ic++)
+//			c.setEntry(dim -  + ic, nCRemain, 1.);
+		
+		a = a.multiply(c);
+		ata = ata.multiply(c).transpose().multiply(c);
+		atd = c.transpose().operate(atd);
+	}
+	
+	public void applyCombiner2(int nCombine) {
+		int dim = ata.getColumnDimension();
+		RealMatrix c = new Array2DRowRealMatrix(dim, dim);
+		int n = dim / nCombine;
+		int nCRemain = dim - n * nCombine;
+		System.out.println(dim + " " + n + " " + nCRemain);
+		for (int i = 0; i < n; i++) {
+			int itmp = i * nCombine;
+			for (int ic = 0; ic < nCombine-1; ic++) {
+				c.setEntry(itmp+ic, itmp, 1.);
+				c.setEntry(itmp+ic, itmp+ic+1, -1.);
+			}
+		}
+		for (int i = dim - nCRemain; i < dim; i++) {
+			System.out.println(i);
+			c.setEntry(i, i, 1e4);
+		}
+//		for (int ic = 0; ic < nCRemain; ic++)
+//			c.setEntry(dim -  + ic, nCRemain, 1.);
+		
+		ata = ata.add(c.transpose().multiply(c).scalarMultiply(1e6));
 	}
 	
 	public void addRegularization(RealMatrix D) {
@@ -1266,6 +1308,73 @@ public class ObservationEquation {
 				}
 				System.out.println("PAR2 / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
 			}
+		}
+		
+		if (parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count() > 0
+				&& parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
+			double empiricalFactor = 1.;
+			meanAColumnNorm = 0;
+			double meanAQNorm = 0;
+			ntmp = 0;
+			int ntmpQ = 0;
+			for (int j = 0; j < a.getColumnDimension(); j++) {
+				if (parameterList.get(j).getPartialType().isTimePartial())
+					continue;
+				if (parameterList.get(j).getPartialType().equals(PartialType.PARQ)) {
+					meanAQNorm += a.getColumnVector(j).getNorm();
+					ntmpQ++;
+				}
+				else if (parameterList.get(j).getPartialType().equals(PartialType.PARVS)){
+					meanAColumnNorm += a.getColumnVector(j).getNorm();
+					ntmp++;
+				}
+			}
+			meanAColumnNorm /= ntmp;
+			meanAQNorm /= ntmpQ;
+			if (ntmpQ > 0) {
+				for (int j = 0; j < a.getColumnDimension(); j++) {
+					if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
+						continue;
+					if (ntmp == 0 || ntmpQ == 0)
+						continue;
+					a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+				}
+				System.out.println("PARVS / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+			}
+		}
+			
+			//normalize PAR00
+			if (parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count() > 0
+					&& parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
+				double empiricalFactor = 1.;
+				meanAColumnNorm = 0;
+				double meanAQNorm = 0;
+				ntmp = 0;
+				int ntmpQ = 0;
+				for (int j = 0; j < a.getColumnDimension(); j++) {
+					if (parameterList.get(j).getPartialType().isTimePartial())
+						continue;
+					if (parameterList.get(j).getPartialType().equals(PartialType.PAR00)) {
+						meanAQNorm += a.getColumnVector(j).getNorm();
+						ntmpQ++;
+					}
+					else if (parameterList.get(j).getPartialType().equals(PartialType.PARVS)){
+						meanAColumnNorm += a.getColumnVector(j).getNorm();
+						ntmp++;
+					}
+				}
+				meanAColumnNorm /= ntmp;
+				meanAQNorm /= ntmpQ;
+				if (ntmpQ > 0) {
+					for (int j = 0; j < a.getColumnDimension(); j++) {
+						if (!parameterList.get(j).getPartialType().equals(PartialType.PAR00))
+							continue;
+						if (ntmp == 0 || ntmpQ == 0)
+							continue;
+						a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+					}
+					System.out.println("PARVS / PAR00 = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+				}
 		}
 //		
 		//for Sci. Adv. revisions

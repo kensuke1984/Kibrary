@@ -77,7 +77,10 @@ public class SshDSMInformationFileMaker implements Operation {
 		perturbationR = Arrays.stream(property.getProperty("perturbationR").split("\\s+"))
 				.mapToDouble(Double::parseDouble).toArray();
 		
-		timewindowInformationPath = Paths.get(property.getProperty("timewindowInformationPath"));
+		if (property.containsKey("timewindowInformationPath"))
+			timewindowInformationPath = Paths.get(property.getProperty("timewindowInformationPath"));
+		else
+			timewindowInformationPath = null;
 	}
 
 	private double[] perturbationR;

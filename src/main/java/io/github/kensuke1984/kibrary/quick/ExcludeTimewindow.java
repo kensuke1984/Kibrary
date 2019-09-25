@@ -41,12 +41,19 @@ public class ExcludeTimewindow {
 		Path newTimewindowFile1 = Paths.get("timewindow1_" + tmpS + ".dat");
 		Path newTimewindowFile2 = Paths.get("timewindow2_" + tmpS + ".dat");
 		
-		Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
-				,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
-				,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
-				,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
-				,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
-				,"201208020938A","201203050746A","200512232147A"})
+//		Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"201104170158A","200911141944A","201409241116A","200809031125A"
+//				,"200707211327A","200808262100A","201009130715A","201106080306A","200608250044A","201509281528A","201205280507A"
+//				,"200503211223A","201111221848A","200511091133A","201005241618A","200810122055A","200705251747A","201502111857A"
+//				,"201206020752A","201502021049A","200506021056A","200511171926A","201101010956A","200707120523A","201109021347A"
+//				,"200711180540A","201302221201A","200609220232A","200907120612A","201211221307A","200707211534A","200611130126A"
+//				,"201208020938A","201203050746A","200512232147A"})
+//				.map(GlobalCMTID::new)
+//				.collect(Collectors.toSet());
+		
+		Set<GlobalCMTID> wellDefinedEvent = Stream.of(new String[] {"200809031125A","200909301903A","200911141944A",
+				"201005241618A","201111221848A","201205280507A","201206020752A","201502111857A","201409241116A",
+				"201104170158A","201307022004A","201509281528A","201007261731A","200707211534A","201203050746A",
+				"201302221201A","200909301903A"})
 				.map(GlobalCMTID::new)
 				.collect(Collectors.toSet());
 		
@@ -112,12 +119,48 @@ public class ExcludeTimewindow {
 //								return false;
 //							if (tw.getComponent().equals(SACComponent.R))
 //								return false;
-							if (distance < 60)
+							if (distance < 70)
 								return false;
+//							if (distance < 65)
+//								return false;
 							else 
 								return true;
 						})
-//						.filter(tw -> !tw.getGlobalCMTID().equals(new GlobalCMTID("201102251307A")))
+//						.filter(tw -> !tw.getGlobalCMTID().toString().startsWith("2016") && !tw.getGlobalCMTID().toString().startsWith("2017"))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200610232100A")) && tw.getStation().getStationName().equals("ISCO")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201306081225A")) && tw.getStation().getStationName().equals("E39A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201405140338A")) && tw.getStation().getStationName().equals("D46A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201405140338A")) && tw.getStation().getStationName().equals("Y12C")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("V49A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200911141944A")) && tw.getStation().getStationName().equals("X22A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("121A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("Y22E")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("Y22D")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201005241618A")) && tw.getStation().getStationName().equals("HUMO")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201005241618A")) && tw.getStation().getStationName().equals("FACU")))
+						
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("I43A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("H43A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("I42A")))
+						
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("K22A")))
+						
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K39A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J40A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J41A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K40A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J39A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K38A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L38A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L37A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L36A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("M36A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("T21A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("U20A")))
+						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("TUC")))
+						
+						
+//						.filter(tw -> tw.getStation().getStationName().equals("L41A"))
 //						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI >= 18.)
 //						.filter(tw -> !excludedStations.contains(tw.getStation().getStationName() + "_" + tw.getStation().getNetwork()) )
 						.collect(Collectors.toSet());
@@ -125,15 +168,19 @@ public class ExcludeTimewindow {
 //						.filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("201508050913A")) && tw.getStation().getStationName().equals("K56A"))
 //						.collect(Collectors.toSet());
 				
-				Predicate<HorizontalPosition> chooser = pos -> {
-					if (pos.getLatitude() <= 49 && pos.getLongitude() <= -120.5)
-						return true;
-					if (pos.getLatitude() <= 43.5 && pos.getLongitude() <= -116)
-						return true;
-					if (pos.getLatitude() <= 57.5 && pos.getLongitude() <= -126)
-						return true;
-					return false;
-				};
+				
+//				newTimewindows = timewindows.stream().filter(tw -> wellDefinedEvent.contains(tw.getGlobalCMTID()))
+//						.collect(Collectors.toSet());
+				
+//				Predicate<HorizontalPosition> chooser = pos -> {
+//					if (pos.getLatitude() <= 49 && pos.getLongitude() <= -120.5)
+//						return true;
+//					if (pos.getLatitude() <= 43.5 && pos.getLongitude() <= -116)
+//						return true;
+//					if (pos.getLatitude() <= 57.5 && pos.getLongitude() <= -126)
+//						return true;
+//					return false;
+//				};
 				
 //				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("201111072235A"))).collect(Collectors.toSet());
 //				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID().equals(new GlobalCMTID("200707211534A"))).collect(Collectors.toSet());
@@ -144,15 +191,15 @@ public class ExcludeTimewindow {
 //				newTimewindows = timewindows.parallelStream().filter(tw -> tw.getComponent().equals(SACComponent.Z) && new Phases(tw.getPhases()).equals(new Phases("P")))
 //						.collect(Collectors.toSet());
 				
-				Set<TimewindowInformation> newTimewindows1 = timewindows.parallelStream()
-						.filter(tw -> {
-							return chooser.test(tw.getStation().getPosition());
-						}).collect(Collectors.toSet());
-				
-				Set<TimewindowInformation> newTimewindows2 = timewindows.parallelStream()
-						.filter(tw -> {
-							return !chooser.test(tw.getStation().getPosition());
-						}).collect(Collectors.toSet());
+//				Set<TimewindowInformation> newTimewindows1 = timewindows.parallelStream()
+//						.filter(tw -> {
+//							return chooser.test(tw.getStation().getPosition());
+//						}).collect(Collectors.toSet());
+//				
+//				Set<TimewindowInformation> newTimewindows2 = timewindows.parallelStream()
+//						.filter(tw -> {
+//							return !chooser.test(tw.getStation().getPosition());
+//						}).collect(Collectors.toSet());
 //				
 //				Map<GlobalCMTID, Integer> nWindowEventMap = new HashMap<>();
 //				for (TimewindowInformation timewindow : newTimewindows) {
@@ -171,7 +218,6 @@ public class ExcludeTimewindow {
 //				
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 //				
-				
 				
 //				Map<GlobalCMTID, Integer> nTransverseMap = new HashMap<>();
 //				for (TimewindowInformation timewindow : timewindows) {

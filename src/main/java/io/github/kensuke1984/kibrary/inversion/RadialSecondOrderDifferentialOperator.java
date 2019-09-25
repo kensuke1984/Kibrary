@@ -96,6 +96,9 @@ public class RadialSecondOrderDifferentialOperator {
 			D2.setEntry(c+m-1, m+c-2, 0.);
 			D2.setEntry(c+m-1, m+c-1, 0.);
 			
+			D2.setEntry(c+m-1, c+m-2, -1*dr2*coeff*5);
+			D2.setEntry(c+m-1, c+m-1, 1*dr2*coeff*5);
+			
 			c += m;
 		}
 	}

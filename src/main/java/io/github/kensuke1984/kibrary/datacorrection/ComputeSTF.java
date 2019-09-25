@@ -33,11 +33,13 @@ public class ComputeSTF {
 		
 		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/syntheticPREM/filtered_4-200s");
 		
-		Path stfPath = workdir.resolve("stf_np1024");
+		Path stfPath = workdir.resolve("stf_np256");
 		
+		int np = 256;
 //		int np = 512;
-		int np = 1024;
-		double tlen = 3276.8;
+//		int np = 1024;
+//		double tlen = 3276.8;
+		double tlen = 1638.4;
 		int samplingHz = 20;
 		
 		double minDistance = 30.;

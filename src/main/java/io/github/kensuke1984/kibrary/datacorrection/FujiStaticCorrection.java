@@ -249,8 +249,11 @@ public class FujiStaticCorrection implements Operation {
 				if (windows != null && windows.size() != 0)
 					for (TimewindowInformation window : windows)
 						try {
-							double shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
-//							double shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
+							double shift = 0;
+							if (!mediantime)
+								shift = computeTimeshiftForBestCorrelation(obsSac, synSac, window);
+							else
+								shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
 //							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
 							double ratio = computeP2PRatio(obsSac, synSac, shift, window);
 							StaticCorrection t = new StaticCorrection(station, eventID, component,
@@ -421,7 +424,7 @@ public class FujiStaticCorrection implements Operation {
 		// which point gives the maximum value
 		int maxPoint = getMaxPoint(syn);
 
-		double endtime = startSec + maxPoint * synSac.getValue(SACHeaderEnum.DELTA) + 5;
+		double endtime = startSec + maxPoint * synSac.getValue(SACHeaderEnum.DELTA);
 		
 		// recreate synthetic timewindow
 		syn = cutSac(synSac, startSec, endtime);

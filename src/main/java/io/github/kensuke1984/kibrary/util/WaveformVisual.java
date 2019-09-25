@@ -42,7 +42,7 @@ public class WaveformVisual {
 		
 		double dt = 1./ ids[0].getSamplingHz();
 		
-		int dAz = 5;
+		int dAz = 30;
 		int nAz = 360 / dAz;
 		
 		int dEd = 5;
@@ -95,6 +95,17 @@ public class WaveformVisual {
 							+ "p ";
 				}
 				
+				String[] distanceSectionString = new String[nAz];
+				for (int iaz = 0; iaz < nAz; iaz++) {
+					distanceSectionString[iaz] = "set terminal postscript enhanced color font \"Helvetica,12\"\n"
+							+ "set output \"" + event + ".az" + (int) (iaz * dAz) + "." + component + ".ps\"\n"
+							+ "unset key\n"
+							+ "set xlabel 'Time aligned on S-wave arrival (s)'\n"
+							+ "set ylabel 'Distance (deg)'\n"
+							+ "set size .5,1\n"
+							+ "p ";
+				}
+				
 				for (BasicID id : ids) {
 					if (!id.getGlobalCMTID().equals(event) || id.getSacComponent() != component)
 						continue;
@@ -136,14 +147,19 @@ public class WaveformVisual {
 					
 					double max = trace.getYVector().getLInfNorm();
 					if (id.getWaveformType().equals(WaveformType.SYN))
-						pwPlot.println("'" + filename + "' u 0:($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'red',\\");
+						pwPlot.println("'" + filename + "' u ($0*" + dt + "):($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'red',\\");
 					if (id.getWaveformType().equals(WaveformType.OBS))
-						pwPlot.println("'" + filename + "' u 0:($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'black',\\");
+						pwPlot.println("'" + filename + "' u ($0*" + dt + "):($2/" + max + "+" + distance + ") w l lw .5 lc rgb 'black',\\");
 					
 					if (id.getWaveformType().equals(WaveformType.SYN))
-						azimuthSectionString[ked] += "'" + filename + "' u 0:($2/" + max + "+" + azimuth + ") w l lt 1 lw .5 lc rgb 'red',\\\n";
+						azimuthSectionString[ked] += "'" + filename + "' u ($0*" + dt + "):($2/" + max + "+" + azimuth + ") w l lt 1 lw .5 lc rgb 'red',\\\n";
 					if (id.getWaveformType().equals(WaveformType.OBS))
-						azimuthSectionString[ked] += "'" + filename + "' u 0:($2/" + max + "+" + azimuth + ") w l lt 1 lw .5 lc rgb 'black',\\\n";
+						azimuthSectionString[ked] += "'" + filename + "' u ($0*" + dt + "):($2/" + max + "+" + azimuth + ") w l lt 1 lw .5 lc rgb 'black',\\\n";
+					
+					if (id.getWaveformType().equals(WaveformType.SYN))
+						distanceSectionString[kaz] += "'" + filename + "' u ($0*" + dt + "):($2/" + max + "+" + distance + ") w l lt 1 lw .5 lc rgb 'red',\\\n";
+					if (id.getWaveformType().equals(WaveformType.OBS))
+						distanceSectionString[kaz] += "'" + filename + "' u ($0*" + dt + "):($2/" + max + "+" + distance + ") w l lt 1 lw .5 lc rgb 'black',\\\n";
 				}
 				pwPlot.close();
 				
@@ -152,6 +168,14 @@ public class WaveformVisual {
 					Path outpath = profileEventDir.resolve(Paths.get("plot_ed" + (int) (ied * dEd) + "." + component + ".plt"));
 					PrintWriter pw = new PrintWriter(outpath.toFile());
 					pw.print(azimuthSectionString[ied]);
+					pw.close();
+				}
+				
+				//distance profile
+				for (int iaz = 0; iaz < nAz; iaz++) {
+					Path outpath = profileEventDir.resolve(Paths.get("plot_az" + (int) (iaz * dAz) + "." + component + ".plt"));
+					PrintWriter pw = new PrintWriter(outpath.toFile());
+					pw.print(distanceSectionString[iaz]);
 					pw.close();
 				}
 				

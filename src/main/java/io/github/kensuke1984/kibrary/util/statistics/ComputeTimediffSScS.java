@@ -5,8 +5,11 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.commons.math3.stat.descriptive.moment.Kurtosis;
 
 import edu.sc.seis.TauP.Arrival;
 import edu.sc.seis.TauP.SeismicPhase;
@@ -14,8 +17,11 @@ import edu.sc.seis.TauP.SphericalCoords;
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
 import edu.sc.seis.TauP.TimeDist;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
+import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.EventCluster;
 import io.github.kensuke1984.kibrary.util.EventFolder;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -28,8 +34,18 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 public class ComputeTimediffSScS {
 
 	public static void main(String[] args) throws IOException, TauModelException {
-		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/syntheticPREM/filtered_stf_12.5-200s");
-		Path timewindowPath = workdir.resolve("selectedTimewindow_ScScutS-v2_cc05.dat");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
+		Path timewindowPath = workdir.resolve("selectedTimewindow_ScS_70deg.dat");
+		
+		Path clusterfilePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-v2.inf");
+		
+		List<EventCluster> clusters = EventCluster.readClusterFile(clusterfilePath);
+		
+		Path mantleCorrectionFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s/mantleCorrection_S-ScS_semucb.dat");
+		
+		Set<StaticCorrection> mantleCorrections = StaticCorrectionFile.read(mantleCorrectionFile);
+		
+//		mantleCorrections = null;
 		
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
 //		timewindowPath = workdir.resolve("selectedTimewindow_ScScutS_cc05.dat");
@@ -37,9 +53,9 @@ public class ComputeTimediffSScS {
 //		Path timewindowPath = Paths.get(args[0]);
 		
 		double minCorrScS = 0.5;
-		double maxVarScS = 0.6;
+		double maxVarScS = 0.8;
 		
-		Path outpath = workdir.resolve("differential_ScScutS_cc05.txt");
+		Path outpath = workdir.resolve("differential_semucb_cluster-v2.txt");
 		Files.deleteIfExists(outpath);
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		
@@ -48,11 +64,11 @@ public class ComputeTimediffSScS {
 			Files.createDirectory(outdir);
 		
 		int np = 512;
-		double tlen = 3276.8;
+		double tlen = 1638.4;
 		double samplingHz = 20;
 		
 		double minDistance = 30.;
-		double maxDistance = 85.;
+		double maxDistance = 100.;
 		
 		Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath).stream()
 			.filter(tw -> {
@@ -74,6 +90,8 @@ public class ComputeTimediffSScS {
 		for (EventFolder eventFolder : eventFolderSet) {
 			System.out.println(eventFolder.getGlobalCMTID());
 			
+			int index = clusters.stream().filter(c -> c.getID().equals(eventFolder.getGlobalCMTID())).findFirst().get().getIndex();
+			
 			Path eventPath = outdir.resolve(eventFolder.getGlobalCMTID().toString());
 			if (!Files.exists(eventPath))
 				Files.createDirectory(eventPath);
@@ -83,6 +101,13 @@ public class ComputeTimediffSScS {
 			Set<TimewindowInformation> thisWindows = timewindows.stream()
 					.filter(tw -> tw.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))
 					.collect(Collectors.toSet());
+			
+			Set<StaticCorrection> thisCorrections = null;
+			if (mantleCorrections != null)
+				thisCorrections = mantleCorrections.stream()
+					.filter(c -> c.getGlobalCMTID().equals(eventFolder.getGlobalCMTID()))
+					.collect(Collectors.toSet());
+			
 			Set<SACFileName> obsNames = eventFolder.sacFileSet();
 			obsNames.removeIf(sfn -> !sfn.isOBS());
 			obsNames.removeIf(obsName -> 
@@ -284,9 +309,18 @@ public class ComputeTimediffSScS {
 						.dotProduct(tmpObsScS.getYVector().subtract(templateScS.getYVector()))
 						/ tmpObsScS.getYVector().dotProduct(tmpObsScS.getYVector());
 				
+				SACData tmpsac = obsSacs[i];
+				double corrShift = 0;
+				if (mantleCorrections != null) {
+					StaticCorrection mantleCorr = thisCorrections.stream().filter(c -> c.getStation().equals(tmpsac.getStation()))
+						.findFirst().get();
+					corrShift = mantleCorr.getTimeshift();
+				}
+				double deltaTSScSCorr = deltaTSScS - corrShift;
+				
 				if (correlation > minCorrScS && var < maxVarScS)
 					pw.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getStation() + " " + 
-						midPoint.getLatitude() + " " + midPoint.getLongitude() + " " + deltaTSScS + " " + ratioSScS + " " + widthSratio);
+						midPoint.getLatitude() + " " + midPoint.getLongitude() + " " + deltaTSScS + " " + deltaTSScSCorr + " " + ratioSScS + " " + widthSratio + " " + "index_" + index);
 //				System.out.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getStation() + " " + deltaTSScS + " " + correlation + " " + var);
 			}
 			pw.flush();

@@ -300,6 +300,19 @@ public class Dvector {
 //						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 			break;
+		case RECIPROCAL_CC:
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData());
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 15.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
+					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
+				return 1. / obsVec.getLInfNorm() * weightingCC(obs, syn); 
+//						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
 		case RECIPROCAL_PcP:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData());
@@ -424,6 +437,17 @@ public class Dvector {
 		
 		sort();
 		read();
+	}
+	
+	private double weightingCC(BasicID obs, BasicID syn) {
+		RealVector obsVec = new ArrayRealVector(obs.getData());
+		RealVector synVec =  new ArrayRealVector(syn.getData());
+		double cc = synVec.dotProduct(obsVec) / synVec.getNorm() / obsVec.getNorm();
+		if (Double.isNaN(cc))
+			throw new RuntimeException("CC is NaN for " + obs);
+		double tmp = (1. + cc) / 2.;
+		return tmp;
+//		return tmp * tmp;
 	}
 	
 	private double weightingEpicentralDistanceDpp(BasicID obs) {
@@ -1095,6 +1119,7 @@ public class Dvector {
 			case RECIPROCAL_PcP:
 			case RECIPROCAL:
 			case RECIPROCAL_COS:
+			case RECIPROCAL_CC:
 				if (info != null) {
 					System.err.println("Using Signal-to-Noise ratio from the data selection information file");
 					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
@@ -1367,6 +1392,9 @@ public class Dvector {
 			break;
 		case RECIPROCAL:
 			System.out.println("Using observed reciprocal amplitude as weighting");
+			break;
+		case RECIPROCAL_CC:
+			System.out.println("Using observed reciprocal amplitude and cc as weighting");
 			break;
 		case RECIPROCAL_AZED:
 			System.out.println("Using observed reciprocal amplitude as weighting and applying azimuthal and epicentral distance weighting");
