@@ -216,6 +216,10 @@ public class ExcludeTimewindow {
 //					.collect(Collectors.toSet());
 //				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
 //				
+				newTimewindows = timewindows.stream().limit(100).collect(Collectors.toSet());
+				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID()
+					.equals(new GlobalCMTID("200707211327A"))).collect(Collectors.toSet());
+				
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 //				
 				
