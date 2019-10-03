@@ -30,8 +30,8 @@ import java.util.stream.IntStream;
  * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
- * @author Kensuke Konishi
- * @version 0.3.13b
+ * @author Kensuke Konishi, Anselme Borgeaud
+ * @version 0.3.14
  */
 final class ANISOtimeCLI {
 
@@ -39,6 +39,7 @@ final class ANISOtimeCLI {
      * Options
      */
     private final static Options options = new Options();
+
     /**
      * Help Formatter
      */
