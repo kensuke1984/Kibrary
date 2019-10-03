@@ -2,7 +2,6 @@ package io.github.kensuke1984.anisotime;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Utilities;
-
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -24,8 +23,7 @@ import java.util.function.BinaryOperator;
  * automatically is stored.
  * <p>
  *
- *
- * @author Kensuke Konishi
+ * @author Kensuke Konishi, Anselme Borgeaud
  * @version 0.1.1
  */
 public class RaypathCatalog implements Serializable {
@@ -439,9 +437,11 @@ public class RaypathCatalog implements Serializable {
      * @param supplement          creates a supplement Raypath
      * @return true if any Raypath added
      */
-    private boolean supplementRaypathsFor(BiPredicate<Raypath, Raypath> sufficientCondition, BinaryOperator<Raypath> supplement) {
+    private boolean supplementRaypathsFor(BiPredicate<Raypath, Raypath> sufficientCondition,
+                                          BinaryOperator<Raypath> supplement) {
         List<Raypath> supplementList = new ArrayList<>();
-        for (Raypath raypath = raypathList.first(); raypath != raypathList.last(); raypath = raypathList.higher(raypath)) {
+        for (Raypath raypath = raypathList.first(); raypath != raypathList.last();
+             raypath = raypathList.higher(raypath)) {
             Raypath higher = raypathList.higher(raypath);
             if (sufficientCondition.test(raypath, higher)) continue;
             supplementList.add(supplement.apply(raypath, higher));
@@ -476,10 +476,10 @@ public class RaypathCatalog implements Serializable {
         //PcP wave 1 deg
         BiPredicate<Raypath, Raypath> pcpCondition = simplePredicate(Phase.PcP, radian1);
         while (supplementRaypathsFor(pcpCondition, centerRayparameterRaypath)) ;
-//PKP wave 1 deg
+        //PKP wave 1 deg
         BiPredicate<Raypath, Raypath> pkpCondition = simplePredicate(Phase.PKP, radian1);
         while (supplementRaypathsFor(pkpCondition, centerRayparameterRaypath)) ;
-//PKIKP wave 1 deg
+        //PKIKP wave 1 deg
         BiPredicate<Raypath, Raypath> pkikpCondition = simplePredicate(Phase.PKIKP, radian1);
         while (supplementRaypathsFor(pkikpCondition, centerRayparameterRaypath)) ;
         //S wave 1 deg
@@ -488,7 +488,7 @@ public class RaypathCatalog implements Serializable {
         //ScS wave 1 deg
         BiPredicate<Raypath, Raypath> scsCondition = simplePredicate(Phase.ScS, radian1);
         while (supplementRaypathsFor(scsCondition, centerRayparameterRaypath)) ;
-//SKS wave 1 deg
+        //SKS wave 1 deg
         BiPredicate<Raypath, Raypath> sksCondition = simplePredicate(Phase.SKS, radian1);
         while (supplementRaypathsFor(sksCondition, centerRayparameterRaypath)) ;
 
@@ -780,7 +780,7 @@ public class RaypathCatalog implements Serializable {
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(pTime.toList()));
         return pf.value(targetDelta);
     }
-    
+
     /**
      * The returning travel time is computed by the input raypath0 and the 2 raypaths with the closest larger and smaller rayparameters.
      *
@@ -792,7 +792,7 @@ public class RaypathCatalog implements Serializable {
      * @return travel time for the targetDelta [s]
      */
     double rayParameterByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
-                                             boolean relativeAngle, Raypath raypath0) {
+                                               boolean relativeAngle, Raypath raypath0) {
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
@@ -802,13 +802,13 @@ public class RaypathCatalog implements Serializable {
         Raypath higher = raypathList.higher(raypath0);
         double lowerDelta = lower.computeDelta(eventR, targetPhase);
         double higherDelta = higher.computeDelta(eventR, targetPhase);
-        
+
         if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
         if (relativeAngle) {
             lowerDelta = toRelativeAngle(lowerDelta);
             higherDelta = toRelativeAngle(higherDelta);
         }
-        
+
         WeightedObservedPoints distOfP = new WeightedObservedPoints();
         distOfP.add(delta0, raypath0.getRayParameter());
         distOfP.add(lowerDelta, lower.getRayParameter());
@@ -816,7 +816,7 @@ public class RaypathCatalog implements Serializable {
         PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(distOfP.toList()));
         return pf.value(targetDelta);
-        
+
     }
 
 }
