@@ -217,6 +217,27 @@ public class PolynomialStructure implements Serializable {
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
 
     }
+    
+    /**
+     *Homogeneous earth structure used for test purposes
+     */
+    private static PolynomialStructure homogeneous() {
+        int nzone = 3;
+        double[] rmin = new double[]{0, 1221.5, 3480.0};
+        double[] rmax = new double[]{1212.5, 3480.0, 6371};
+        double[][] rho = new double[][]{{0.0,1.0,0.0,0.0}, {0.0,1.0,0.0,0.0}, {0.0,1.0,0.0,0.0}};
+        double[][] vpv = new double[][]{{0.0,11.48,0.0,0.0},{0.0,9.49,0.0,0.0},{0.0,11.28,0.0,0.0}};
+        double[][] vph = new double[][]{{0.0,11.15,0.0,0.0},{0.0,9.21,0.0,0.0},{0.0,10.95,0.0,0.0}};
+        double[][] vsv = new double[][]{{0.0,3.69,0.0,0.0},{0.0,0.0,0.0,0.0},{0.0,6.12,0.0,0.0}};
+        double[][] vsh = new double[][]{{0.0,3.59,0.0,0.0},{0.0,0.0,0.0,0.0},{0.0,5.94,0.0,0.0}};
+        double[][] eta =
+                new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}}; // ok
+        double[] qMu = new double[]{84.6, -1, 600}; // ok
+        double[] qKappa =
+                new double[]{1327.7, 57823, 57823}; // OK
+        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+
+    }
 
     /**
      * change String line from coefficients a + bx + cx**2 >>>>> a b c 0

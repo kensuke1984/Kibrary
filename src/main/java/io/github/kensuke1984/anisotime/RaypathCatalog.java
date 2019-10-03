@@ -733,32 +733,14 @@ public class RaypathCatalog implements Serializable {
             higherDelta = toRelativeAngle(higherDelta);
         }
         
-//        WeightedObservedPoints distOfP = new WeightedObservedPoints();
-//        distOfP.add(delta0, raypath0.getRayParameter());
-//        distOfP.add(lowerDelta, lower.getRayParameter());
-//        distOfP.add(higherDelta, higher.getRayParameter());
-//        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
-//        PolynomialFunction pf = new PolynomialFunction(fitter.fit(distOfP.toList()));
-//        return pf.value(targetDelta);
+        WeightedObservedPoints distOfP = new WeightedObservedPoints();
+        distOfP.add(delta0, raypath0.getRayParameter());
+        distOfP.add(lowerDelta, lower.getRayParameter());
+        distOfP.add(higherDelta, higher.getRayParameter());
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
+        PolynomialFunction pf = new PolynomialFunction(fitter.fit(distOfP.toList()));
+        return pf.value(targetDelta);
         
-        double[] deltas = new double[] {lowerDelta, delta0, higherDelta};
-        double[] ps = new double[] {lower.getRayParameter(), raypath0.getRayParameter(), higher.getRayParameter()};
-        return threePointInterpolation(targetDelta, deltas, ps);
     }
-    
-    public static double threePointInterpolation(double x, double[] xi, double[] yi) {
-    	double[] h = new double[3];
-    	for (int i = 0; i < 3; i++)
-    		h[i] = x - xi[i];
-    	double h01 = xi[1] - xi[0];
-    	double h02 = xi[2] - xi[0];
-    	double h12 = xi[2] - xi[1];
-    	
-		double phi0 = h[1] * h[2] / (h01 * h02); 
-		double phi1 = -h[0] * h[2] / (h01 * h12);
-		double phi2 = h[0] * h[1] / (h02 * h12);
-		
-		return yi[0] * phi0 + yi[1] * phi1 + yi[2] * phi2;
-	}
 
 }
