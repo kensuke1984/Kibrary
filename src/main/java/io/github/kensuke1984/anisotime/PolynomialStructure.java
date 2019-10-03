@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 /**
  * Polynomial structure.
  *
- * @author Kensuke Konishi
+ * @author Kensuke Konishi, Anselme Borgeaud
  * @version 0.0.10
  */
 public class PolynomialStructure implements VelocityStructure {
@@ -40,9 +40,10 @@ public class PolynomialStructure implements VelocityStructure {
     public static final PolynomialStructure HOMOGEN =
             new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.HOMOGEN);
     /**
-     * Serialization identifier 2016/8/23
+     * 2019/10/3
      */
-    private static final long serialVersionUID = -5415364557337661053L;
+    private static final long serialVersionUID = 7747142704068993188L;
+
     private final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
     /*
      * -radius x this is only for computations for bouncing points.
