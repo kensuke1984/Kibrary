@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * </dl>
  * P and S after transmission strictly are downward, and p and s are upward.
  * @author Kensuke Konishi
- * @version 0.1.9
+ * @version 0.1.9.1
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -109,6 +109,7 @@ public class Phase {
     public static final Phase SKS = create("SKS");
     public static final Phase SKiKS = create("SKiKS");
     public static final Phase SKIKS = create("SKIKS");
+    public static final Phase SKJKS = create("SKJKS");
 
     /**
      * If this is P-SV(true) or SH(false).
