@@ -207,9 +207,9 @@ p -> P のgapを狭める
             throw new RuntimeException("In the relative angle mode, a value for the option -deg must be 180 or less.");
 
         double interval = Double.parseDouble(cmd.getOptionValue("dR", "10")); //TODO dR is not working.
-
-        rayParameter = Double.parseDouble(cmd.getOptionValue("p", "NaN"));
-
+        
+        double rayParameterDegree = Double.parseDouble(cmd.getOptionValue("p", "NaN"));
+        rayParameter = rayParameterDegree * 180. / Math.PI;
     }
 
     /**
@@ -344,9 +344,10 @@ p -> P のgapを狭める
                         System.err.println(targetPhase + " does not exist.");
                         continue;
                     }
-                    printLine(targetPhase, System.out, decimalPlaces, rayParameter, delta, time);
+                    double rayParameterDegree = rayParameter * Math.PI / 180.;
+                    printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
-                            outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameter, delta, time,
+                            outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameterDegree, delta, time,
                             eventR);
                 }
                 return;
@@ -436,14 +437,23 @@ p -> P のgapを狭める
         }
         delta0 = Math.toDegrees(delta0);
         if (0 < targetDelta) {
-            double time1 = catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
-                    relativeAngleMode, raypath);
+//            double time1 = catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
+//                    relativeAngleMode, raypath);
+        	double p1 = catalog.rayParameterByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
+        			relativeAngleMode, raypath);
+        	Raypath raypath1 = new Raypath(p1, raypath.getStructure());
+        	raypath1.compute();
+        	double time1 = raypath1.computeT(eventR, targetPhase);
+        	double delta1 = Math.toDegrees(raypath1.computeDelta(eventR, targetPhase));
             if (!Double.isNaN(time1)) {
                 time0 = time1;
-                delta0 = targetDelta;
+//                delta0 = targetDelta;
+                delta0 = delta1;
+                p0 = p1;
             }
         }
-        printLine(targetPhase, out, decimalPlaces, p0, delta0, time0);
+        double p0Degree = p0 / 180. * Math.PI;
+        printLine(targetPhase, out, decimalPlaces, p0Degree, delta0, time0);
         return new double[]{delta0, time0};
     }
 

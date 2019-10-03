@@ -2,6 +2,7 @@ package io.github.kensuke1984.anisotime;
 
 import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Utilities;
+
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
@@ -778,6 +779,44 @@ public class RaypathCatalog implements Serializable {
         PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(pTime.toList()));
         return pf.value(targetDelta);
+    }
+    
+    /**
+     * The returning travel time is computed by the input raypath0 and the 2 raypaths with the closest larger and smaller rayparameters.
+     *
+     * @param targetPhase   to look for
+     * @param eventR        [km] radius of the source
+     * @param targetDelta   [rad]
+     * @param relativeAngle if the targetDelta is a relative value.
+     * @param raypath0      source of raypath
+     * @return travel time for the targetDelta [s]
+     */
+    double rayParameterByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
+                                             boolean relativeAngle, Raypath raypath0) {
+        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
+                "When you search paths for a relative angle, a targetDelta must be pi or less.");
+
+        double delta0 = raypath0.computeDelta(eventR, targetPhase);
+        Raypath lower = raypathList.lower(raypath0);
+        Raypath higher = raypathList.higher(raypath0);
+        double lowerDelta = lower.computeDelta(eventR, targetPhase);
+        double higherDelta = higher.computeDelta(eventR, targetPhase);
+        
+        if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
+        if (relativeAngle) {
+            lowerDelta = toRelativeAngle(lowerDelta);
+            higherDelta = toRelativeAngle(higherDelta);
+        }
+        
+        WeightedObservedPoints distOfP = new WeightedObservedPoints();
+        distOfP.add(delta0, raypath0.getRayParameter());
+        distOfP.add(lowerDelta, lower.getRayParameter());
+        distOfP.add(higherDelta, higher.getRayParameter());
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
+        PolynomialFunction pf = new PolynomialFunction(fitter.fit(distOfP.toList()));
+        return pf.value(targetDelta);
+        
     }
 
 }

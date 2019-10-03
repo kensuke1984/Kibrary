@@ -66,6 +66,10 @@ public class PolynomialStructure implements Serializable {
      */
     public static final PolynomialStructure AK135 = initialAK135();
     /**
+     * Homogeneous earth structure used for test purposes
+     */
+    public static final PolynomialStructure HOMOGEN = homogeneous();
+    /**
      * 2016/8/24
      */
     private static final long serialVersionUID = -5147029504840598303L;
@@ -217,6 +221,25 @@ public class PolynomialStructure implements Serializable {
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
 
     }
+    
+    /**
+     *Homogeneous earth structure used for test purposes
+     */
+    private static PolynomialStructure homogeneous() {
+        int nzone = 3;
+        double[] rmin = new double[]{0, 1221.5, 3480.0};
+        double[] rmax = new double[]{1221.5, 3480.0, 6371};
+        double[][] rho = new double[][]{{10.0,0.0,0.0,0.0}, {10.0,0.0,0.0,0.0}, {10.0,0.0,0.0,0.0}};
+        double[][] vpv = new double[][]{{0,17.,0.0,0.0},{0,17.,0.0,0.0},{0,17.,0.0,0.0}};
+        double[][] vph = new double[][]{{0,17.51,0.0,0.0},{0,17.51,0.0,0.0},{0,17.51,0.0,0.0}};
+        double[][] vsv = new double[][]{{0,10.,0.0,0.0},{0,10.,0.0,0.0},{0,10.,0.0,0.0}};
+        double[][] vsh = new double[][]{{0,10.3,0.0,0.0},{0,10.3,0.0,0.0},{0,10.3,0.0,0.0}};
+        double[][] eta = new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}}; // ok
+        double[] qMu = new double[]{84.6, -1, 600}; // ok
+        double[] qKappa = new double[]{1327.7, 57823, 57823}; // OK
+        return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+    }
+    
 
     /**
      * change String line from coefficients a + bx + cx**2 >>>>> a b c 0

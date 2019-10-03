@@ -70,7 +70,7 @@ public class ComputationalMesh implements Serializable {
      * @param outerCoreInterval [km] interval in the outer-core
      * @param mantleInterval    [km] interval in the mantle
      */
-    ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
+    public ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                       double mantleInterval, double integralThreshold) {
         if (innerCoreInterval < eps || outerCoreInterval < eps || mantleInterval < eps)
             throw new RuntimeException("Intervals are too small.");
