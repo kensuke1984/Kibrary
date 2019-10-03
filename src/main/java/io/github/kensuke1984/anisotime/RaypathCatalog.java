@@ -12,7 +12,7 @@ import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.function.BiFunction;
+import java.util.function.*;
 
 /**
  * Raypath catalogue for one model
@@ -410,28 +410,94 @@ public class RaypathCatalog implements Serializable {
         double p_Pdiff = pDiff.getRayParameter();
         double p_SVdiff = svDiff.getRayParameter();
         double p_SHdiff = shDiff.getRayParameter();
+        //simply add raypaths
         for (double p = DELTA_P; p < pMax; p += DELTA_P) {
             Raypath candidatePath = new Raypath(p, WOODHOUSE, MESH);
             candidatePath.compute();
             raypathList.add(candidatePath);
-
-//            if (p < p_Pdiff && p_Pdiff < nextP) {
-//                closeDiff(pDiff);
-//                nextP = raypathList.last().getRayParameter() + DELTA_P;
-//            } else if (p < p_SVdiff && p_SVdiff < nextP) {
-//                closeDiff(svDiff);
-//                nextP = raypathList.last().getRayParameter() + DELTA_P;
-//            } else if (p < p_SHdiff && p_SHdiff < nextP) {
-//                closeDiff(shDiff);
-//                nextP = raypathList.last().getRayParameter() + DELTA_P;
-//            }
         }
         raypathList.add(pDiff);
         raypathList.add(svDiff);
         raypathList.add(shDiff);
 
+        supplementRaypaths();
+
         System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
     }
+
+    private boolean supplementRaypathsFor(BiPredicate<Raypath, Raypath> sufficientCondition,
+                                          BinaryOperator<Raypath> supplement) {
+        List<Raypath> supplementList = new ArrayList<>();
+        for (Raypath raypath = raypathList.first(); raypath != raypathList.last(); raypath = raypathList.higher(raypath)) {
+            Raypath higher = raypathList.higher(raypath);
+            if (sufficientCondition.test(raypath, higher))
+                continue;
+            supplementList.add(supplement.apply(raypath, higher));
+        }
+        supplementList.forEach(Raypath::compute);
+        return raypathList.addAll(supplementList);
+    }
+
+    /**
+     * If any of Raypaths has NaN for Phase 'p', the condition becomes true.
+     *
+     * @param phase  to be checked.
+     * @param dDelta [rad] If the gap of deltas (epicentral distance) of Raypaths are equal to or less than this value,
+     *               the condition becomes true
+     */
+    private BiPredicate<Raypath, Raypath> simplePredicate(Phase phase, double dDelta) {
+        double r = getStructure().earthRadius();
+        return (r1, r2) -> !(Math.abs(r1.computeDelta(r, phase) - r2.computeDelta(r, phase)) > dDelta);
+
+    }
+
+    private void supplementRaypaths() {
+        double radian1 = Math.toRadians(1); //TODO
+        double eventR = getStructure().earthRadius();
+
+        BinaryOperator<Raypath> centerRayparameterRaypath = (r1, r2) -> new Raypath(
+                (r1.getRayParameter() + r2.getRayParameter()) / 2, WOODHOUSE, MESH);
+
+        //P wave 1 deg
+        BiPredicate<Raypath, Raypath> pCondition = simplePredicate(Phase.P, radian1);
+        while (
+                supplementRaypathsFor(pCondition, centerRayparameterRaypath)) ;
+        //PcP wave 1 deg
+        BiPredicate<Raypath, Raypath> pcpCondition = simplePredicate(Phase.PcP, radian1);
+        while(supplementRaypathsFor(pcpCondition, centerRayparameterRaypath));
+//PKP wave 1 deg
+        BiPredicate<Raypath, Raypath> pkpCondition = simplePredicate(Phase.PKP, radian1);
+        while(supplementRaypathsFor(pkpCondition, centerRayparameterRaypath));
+//PKIKP wave 1 deg
+        BiPredicate<Raypath, Raypath> pkikpCondition = simplePredicate(Phase.PKIKP, radian1);
+        while(      supplementRaypathsFor(pkikpCondition, centerRayparameterRaypath));
+        //S wave 1 deg
+        BiPredicate<Raypath, Raypath> sCondition = simplePredicate(Phase.S, radian1);
+        while(        supplementRaypathsFor(sCondition, centerRayparameterRaypath));
+        //ScS wave 1 deg
+        BiPredicate<Raypath, Raypath> scsCondition = simplePredicate(Phase.ScS, radian1);
+        while(        supplementRaypathsFor(scsCondition, centerRayparameterRaypath));
+//SKS wave 1 deg
+        BiPredicate<Raypath, Raypath> sksCondition = simplePredicate(Phase.SKS, radian1);
+        while(        supplementRaypathsFor(sksCondition, centerRayparameterRaypath));
+
+        //SKIKS wave 1 deg TODO
+        BiPredicate<Raypath, Raypath> skiksCondition = simplePredicate(Phase.SKIKS, radian1);
+        while(        supplementRaypathsFor(skiksCondition, centerRayparameterRaypath));
+
+    }
+
+    void tmp_create() {
+        create();
+        supplementRaypaths();
+//        supplementRaypathsFor((ae, a) -> true);
+    }
+
+    static RaypathCatalog tmp_getInstance() {
+        return new RaypathCatalog(VelocityStructure.iprem(), ComputationalMesh.simple(VelocityStructure.iprem()),
+                Math.toRadians(1));
+    }
+
 
     private void closeDiff(Raypath diffPath) {
         double diffP = diffPath.getRayParameter();
