@@ -35,6 +35,11 @@ public class PolynomialStructure implements VelocityStructure {
     public static final PolynomialStructure AK135 =
             new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.AK135);
     /**
+     * Homogeneous structure used for test purposes
+     */
+    public static final PolynomialStructure HOMOGEN =
+            new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.HOMOGEN);
+    /**
      * Serialization identifier 2016/8/23
      */
     private static final long serialVersionUID = -5415364557337661053L;
