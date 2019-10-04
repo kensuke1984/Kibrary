@@ -1,7 +1,7 @@
 // Apply the java plugin to add support for Java
 plugins {
     id 'java'
-    id "de.undercouch.download" version "3.4.3"
+    id "de.undercouch.download" version "4.0.0"
     id 'application'
 }
 sourceCompatibility = 1.8
@@ -10,7 +10,7 @@ targetCompatibility = 1.8
 def defaultEncoding = 'UTF-8'
 [compileJava, compileTestJava]*.options*.encoding = defaultEncoding
 
-version = '0.4.4.4'
+version = '0.4.5'
 mainClassName = 'io.github.kensuke1984.kibrary.About'
 
 repositories {
@@ -30,7 +30,7 @@ dependencies {
 }
 
 // path for jar files.
-//def dependJarCopyTo = 'lib'
+def dependJarCopyTo = 'lib'
 jar {
     baseName = 'kibrary'
     manifest {
@@ -80,8 +80,9 @@ task getDependJar(dependsOn: delDependJar) {
             }
         }
         println "----- Downloaded these jar files -----"
-        FileCollection copyFiles = files { file(dependJarCopyTo).listFiles() }
-        copyFiles.each {File file -> println file.name}
+//        FileCollection copyFiles = files { file(dependJarCopyTo).listFiles() }
+//        copyFiles.each {File file -> println file.name}
+        files { file(dependJarCopyTo).listFiles() }.each {file -> println file.name}
     } 
 }
 
