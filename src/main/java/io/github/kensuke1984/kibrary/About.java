@@ -22,10 +22,14 @@ import java.util.logging.Logger;
  */
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
-    public static final String CODENAME = "Pixie";
-    public static final String VERSION = "0.4.4.4";
-    private static final long serialVersionUID = -2485772755944862822L;
+    public static final String CODENAME = "Titan";
+    public static final String VERSION = "0.4.5";
     private static final String line;
+
+    /**
+     * 2019/10/4
+     */
+    private static final long serialVersionUID = -6801711795568108430L;
 
     static {
         try {
@@ -46,7 +50,7 @@ public final class About extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         try {
             for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
