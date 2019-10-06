@@ -20,17 +20,27 @@ public class taupModelMaker {
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/1D_REFERENCE_MODEL/POLYNOMIALS/tnasna.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
-//		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/PREM_Q165_cb160km_vp1p.poly"));
-		PolynomialStructure model = PolynomialStructure.AK135;
+		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/PREM_Q165_cb160km_vs1p_Q212.poly"));
+//		PolynomialStructure model = PolynomialStructure.AK135;
 		
 //		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0/inversion/alpha_03/lmi_s0_c06_cQ10/poly");
 ////		PolynomialStructure model = new PolynomialStructure(Paths.get(args[0]));
 ////		int nR = Integer.parseInt(args[0]);
-		int nR = 10000;
+		int nR = 10000000;
 		
 		PolynomialStructure prem = PolynomialStructure.PREM;
 		
-//		System.out.println((PolynomialStructure.PREM.getVphAt(3630) - PolynomialStructure.AK135.getVphAt(3630))/ PolynomialStructure.PREM.getVphAt(3630) * 100);
+		double f = 1.03;
+		
+//		System.out.println(f*(3480*prem.getVshAt(6345.) - 6345*prem.getVshAt(3480.))/(-6345 + 3480) + " " + (-prem.getVshAt(6345.) + prem.getVshAt(3480.))/(3480-6345)*6371);
+//		System.out.println(f*(1221.5*prem.getVshAt(3479.9) - 3479.9*prem.getVshAt(1221.5))/(-3479.9 + 1221.5) + " " + (-prem.getVshAt(3479.9) + prem.getVshAt(1221.5))/(1221.5-3479.9)*6371);
+//		System.out.println(f*(0*prem.getVshAt(1221.4) - 1221.4*prem.getVshAt(0.))/(-1221.4 + 0) + " " + (-prem.getVshAt(1221.4) + prem.getVshAt(0.))/(0-1221.4)*6371);
+//		
+//		System.out.println(f*(3480*prem.getVphAt(6345.) - 6345*prem.getVphAt(3480.))/(-6345 + 3480) + " " + (-prem.getVphAt(6345.) + prem.getVphAt(3480.))/(3480-6345)*6371);
+//		System.out.println(f*(1221.5*prem.getVphAt(3479.9) - 3479.9*prem.getVphAt(1221.5))/(-3479.9 + 1221.5) + " " + (-prem.getVphAt(3479.9) + prem.getVphAt(1221.5))/(1221.5-3479.9)*6371);
+//		System.out.println(f*(0*prem.getVphAt(1221.4) - 1221.4*prem.getVphAt(0.))/(-1221.4 + 0) + " " + (-prem.getVphAt(1221.4) + prem.getVphAt(0.))/(0-1221.4)*6371);
+//		
+////		System.out.println((PolynomialStructure.PREM.getVphAt(3630) - PolynomialStructure.AK135.getVphAt(3630))/ PolynomialStructure.PREM.getVphAt(3630) * 100);
 //		System.exit(0);
 		
 //		System.out.println(prem.getVphAt(3640)*1.01);
@@ -196,8 +206,8 @@ public class taupModelMaker {
 		
 //		outputSTD(model, nR, Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.vel"));
 //		outputSTD(model, nR, Paths.get("/work/anselme/POLY/AK135.vel"));
-		outputSTD(PolynomialStructure.ISO_PREM, 1000, Paths.get("/usr/local/share/TauP-2.4.5/StdModels/PREM_1000.vel"));
-//		outputSTD(PolynomialStructure.PREM, nR, Paths.get("/work/anselme/POLY/PREM.vel"));
+//		outputSTD(PolynomialStructure.ISO_PREM, 1000, Paths.get("/usr/local/share/TauP-2.4.5/StdModels/PREM_1000.vel"));
+		outputSTD(PolynomialStructure.PREM, nR, Paths.get("/work/anselme/POLY/PREM.vel"));
 		
 //		outputTauP(model, nR);
 		
@@ -312,6 +322,34 @@ public class taupModelMaker {
 			}
 		}
 	}
+	
+//	public static void outputSTD(PolynomialStructure model, int nR, Path outpath, double rmin, double rmax) throws IOException {
+//		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+//			for (int i = 0; i <= nR; i++) {
+//				double dr = rEarth.EARTH_RADIUS / nR;
+//				double r = Earth.EARTH_RADIUS - i * dr;
+//				double depth = Earth.EARTH_RADIUS - r;
+//				int izone = model.getiZoneOf(r);
+//				if (r > 0) {
+//					if (izone != model.getiZoneOf(r - dr)) {
+//						if (Math.abs(model.getVshAt(r) - model.getVshAt(r - dr)) > 0.05) {
+//							double rZone = model.getRMinOf(izone);
+//							pw.print(stdline(model, r));
+//							pw.print(stdline(model, rZone));
+//							pw.println("#DISCONTINUITY AT " + rZone + " km");
+//							pw.print(stdline(model, rZone - .00001));
+//						}
+//						else
+//							pw.print(stdline(model, r));
+//					}
+//					else 
+//						pw.print(stdline(model, r));
+//				}
+//				else
+//					pw.print(stdline(model, r));
+//			}
+//		}
+//	}
 	
 	public static void outputAxiSEM(PolynomialStructure model, int nR) {
 		int iDisc = 1;

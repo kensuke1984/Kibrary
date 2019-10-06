@@ -4,6 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 
@@ -26,14 +27,15 @@ class PartialIDMerge {
 //		Path src1Data = root1.resolve("partial.dat");
 		
 		Path src0ID = Paths.get(args[0]);
-		Path src1ID = Paths.get(args[2]);
 		Path src0Data = Paths.get(args[1]);
+		Path src1ID = Paths.get(args[2]);
 		Path src1Data = Paths.get(args[3]);
 		
 		PartialID[] src0 = PartialIDFile.readPartialIDandDataFile(src0ID, src0Data);
 		PartialID[] src1 = PartialIDFile.readPartialIDandDataFile(src1ID, src1Data);
-		Path idPath = workingDir.resolve("partialID_merged.dat");
-		Path dataPath = workingDir.resolve("partial_merged.dat");
+		String tmpstr = Utilities.getTemporaryString();
+		Path idPath = workingDir.resolve("partialID" + tmpstr + ".dat");
+		Path dataPath = workingDir.resolve("partial" + tmpstr + ".dat");
 		
 		Set<Location> perturbationPoints = new HashSet<>();
 		Set<Station> stationSet = new HashSet<>();
