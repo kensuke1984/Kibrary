@@ -10,7 +10,7 @@ import java.util.Arrays;
  * TIME
  *
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.1
  */
 public enum PartialType {
 
@@ -29,7 +29,7 @@ public enum PartialType {
     }
 
     public boolean is3D() {
-        return 8 < value;
+        return value < 8;
     }
 
     public int getValue() {
