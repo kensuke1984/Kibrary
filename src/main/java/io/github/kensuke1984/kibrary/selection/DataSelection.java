@@ -469,9 +469,8 @@ public class DataSelection implements Operation {
 		double maxRatio = Precision.round(synMax / obsMax, 2);
 		double minRatio = Precision.round(synMin / obsMin, 2);
 		double absRatio = (-synMin < synMax ? synMax : -synMin) / (-obsMin < obsMax ? obsMax : -obsMin);
-		double epiDistance = id.getEvent().getCmtLocation()
-				.getEpicentralDistance(synSAC.getStation().getPosition())*180/Math.PI; 
-		epiDistance = Math.round(epiDistance * 100) / 100.0;
+		double distance = synSAC.getEventLocation().getEpicentralDistance(synSAC.getStation().getPosition())*180/Math.PI;
+		distance = Math.round(distance * 100) / 100.0;
 		var /= obs2;
 		cor /= Math.sqrt(obs2 * syn2);
 
@@ -486,7 +485,7 @@ public class DataSelection implements Operation {
 		boolean isok = !(ratio < minRatio || minRatio < 1 / ratio || ratio < maxRatio || maxRatio < 1 / ratio
 				|| ratio < absRatio || absRatio < 1 / ratio || cor < minCorrelation || maxCorrelation < cor
 				|| var < minVariance || maxVariance < var
-				|| epiDistance > maxDistance || epiDistance < minDistance
+				|| distance > maxDistance || distance < minDistance
 				|| SNratio < minSNratio
 				|| Double.isNaN(absRatio) || Double.isNaN(maxRatio) 
 				|| Double.isNaN(minRatio) || Double.isNaN(var) 
@@ -496,7 +495,7 @@ public class DataSelection implements Operation {
 		Phases phases = new Phases(window.getPhases());
 		
 		writer.println(stationName + " " + id + " " + component + " " + phases + " " + isok + " " + absRatio + " " + maxRatio + " "
-				+ minRatio + " " + var + " " + cor + " " + SNratio + " "+ epiDistance);
+				+ minRatio + " " + var + " " + cor + " " + SNratio + " "+ distance);
 		
 		dataSelectionInfo.add(new DataSelectionInformation(window, var, cor, maxRatio, minRatio, absRatio, SNratio));
 		

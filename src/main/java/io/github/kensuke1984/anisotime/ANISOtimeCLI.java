@@ -428,6 +428,8 @@ final class ANISOtimeCLI {
             case "iprem":
             case "iPREM":
                 return PolynomialStructure.ISO_PREM;
+            case "iasp91":
+//            	return PolynomialStructure.IASP91;
             default:
                 modelPath = Paths.get(cmd.getOptionValue("mod"));
         }

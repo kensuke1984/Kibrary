@@ -324,7 +324,7 @@ public class VelocityField {
 	 *            unknown file (MU lat lon radius volume)
 	 * @return
 	 */
-	static Location[] readPartialLocation(Path parPath) {
+	public static Location[] readPartialLocation(Path parPath) {
 //		System.out.println(parPath);
 		try {
 			return Files.readAllLines(parPath).stream()

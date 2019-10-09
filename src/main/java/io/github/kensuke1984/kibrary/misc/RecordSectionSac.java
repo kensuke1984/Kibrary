@@ -91,7 +91,7 @@ public class RecordSectionSac {
 				
 				gmtString[0] += GMTMap.psCoast("-Gbeige") + "\n";
 				
-				Path outpathscript = Paths.get(dir.getAbsolutePath(), "profile.plt");
+				Path outpathscript = Paths.get(dir.getAbsolutePath(), "profile_obs.plt");
 				Path outpathgmtmap = Paths.get(dir.getAbsolutePath(), "makemap.sh");
 				Path outpathscriptstack = Paths.get(dir.getAbsolutePath(), "stackprofile.plt");
 				try {
@@ -106,7 +106,8 @@ public class RecordSectionSac {
 					e.printStackTrace();
 				}
 				
-				SACExtension[] components = new SACExtension[] {SACExtension.Tsc, SACExtension.Rsc, SACExtension.Zsc};
+//				SACExtension[] components = new SACExtension[] {SACExtension.Tsc, SACExtension.Rsc, SACExtension.Zsc};
+				SACExtension[] components = new SACExtension[] {SACExtension.T, SACExtension.R, SACExtension.Z};
 //				components.
 				List<SACFileName> sacfilenames = readDir(dir, components);
 				sacfilenames.stream()
@@ -169,6 +170,12 @@ public class RecordSectionSac {
 												distanceOfMaxR[0] = sacdata.getValue(SACHeaderEnum.GCARC);
 											}
 										}
+										else if (sacfilename.getComponent().equals(SACComponent.Z)) {
+											if (sacdata.getValue(SACHeaderEnum.GCARC) < distanceOfMaxR[0]) {
+												maxR[0] = max;
+												distanceOfMaxR[0] = sacdata.getValue(SACHeaderEnum.GCARC);
+											}
+										}
 										
 										if (isStack){
 										int index = (int) (sacdata.getValue(SACHeaderEnum.GCARC) / distanceIncrement);
@@ -193,6 +200,16 @@ public class RecordSectionSac {
 												}
 											}
 										}
+										else if (sacfilename.getComponent().equals(SACComponent.Z)) {
+											if (stacksR[index] == null) {
+												stacksR[index] = new ArrayRealVector(trace.getYVector().mapDivide(max));
+											}
+											else {
+												for (int i=0; i < Math.min(stacksR[index].getDimension(), trace.getLength()); i++) {
+													stacksR[index].addToEntry(i, trace.getY()[i] / max);
+												}
+											}
+										}
 										}
 									});
 //									System.out.println(stacksT.length); //TODO
@@ -200,8 +217,10 @@ public class RecordSectionSac {
 									String color;
 									if (sacfilename.getComponent().equals(SACComponent.T))
 										color = "black";
-									else
+									else if (sacfilename.getComponent().equals(SACComponent.R))
 										color = "red";
+									else //(sacfilename.getComponent().equals(SACComponent.Z))
+										color = "navy";
 									
 									Files.write(outpathscript, ("\'"
 											+ outpath.toString()

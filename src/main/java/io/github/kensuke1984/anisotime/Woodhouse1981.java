@@ -74,7 +74,7 @@ class Woodhouse1981 implements Serializable {
     public VelocityStructure getStructure() {
         return STRUCTURE;
     }
-
+   
     /**
      * @param rayParameter to compute for
      * @param r            [km]
@@ -83,6 +83,7 @@ class Woodhouse1981 implements Serializable {
      * http://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
      * 1981</a>
      */
+    
     double computeQDelta(PhasePart pp, double rayParameter, double r) {
         double r2 = r * r;
         switch (pp) {
@@ -112,6 +113,7 @@ class Woodhouse1981 implements Serializable {
      * @param r            [km]
      * @return Q<sub>T</sub> for P
      */
+    /**
     double computeQT(PhasePart pp, double rayParameter, double r) {
         switch (pp) {
             case K:
@@ -139,6 +141,37 @@ class Woodhouse1981 implements Serializable {
                 throw new RuntimeException("souteigai");
         }
     }
+    */
+    
+    /**
+     * @param pp           target phase
+     * @param rayParameter to compute for
+     * @param r            [km]
+     * Compute traaveltime using phase velocity.
+     * @return Q<sub>T</sub> for pp
+     */
+    
+    double computeQT(PhasePart pp, double rayParameter, double r) {
+        switch (pp) {
+            case K:
+                double v = Math.sqrt(STRUCTURE.getA(r) / STRUCTURE.getRho(r));
+                double sin = rayParameter * v / r;
+                double cos = Math.sqrt(1 - sin * sin);
+                return 1 / v / cos;
+            case P:
+            case I:
+            	return computeQTau(pp, rayParameter, r) + rayParameter * rayParameter / r / r / computeQTau(pp, rayParameter, r);
+            case SH:
+            case JH:
+            	return computeQTau(pp, rayParameter, r) + rayParameter * rayParameter / computeQTau(pp, rayParameter, r) / r / r;
+            case SV:
+            case JV:
+            	return computeQTau(pp, rayParameter, r) + rayParameter * rayParameter / r / r / computeQTau(pp, rayParameter, r);
+            default:
+                throw new RuntimeException("souteigai");
+        }
+    }
+    
 
     /**
      * q<sub>&tau;</sub>= (s<sub>1</sub>-s<sub>3</sub>p<sup>2</sup>/r

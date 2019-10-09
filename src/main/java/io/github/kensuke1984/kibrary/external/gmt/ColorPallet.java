@@ -32,9 +32,12 @@ public interface ColorPallet {
 			throw new IllegalArgumentException("Usage: [output file name] (Option min value) [max value of range]");
 		Path path = Paths.get(args[0]);
 		if (2 < args.length)
+//			brbg(Double.parseDouble(args[1]), Double.parseDouble(args[2])).output(path,
+//					StandardOpenOption.CREATE_NEW);
 			oobayashi(Double.parseDouble(args[1]), Double.parseDouble(args[2])).output(path,
 					StandardOpenOption.CREATE_NEW);
 		else
+//			brbg(Double.parseDouble(args[1])).output(path, StandardOpenOption.CREATE_NEW);
 			oobayashi(Double.parseDouble(args[1])).output(path, StandardOpenOption.CREATE_NEW);
 	}
 
@@ -99,7 +102,7 @@ public interface ColorPallet {
 						String rgbPart = " " + rgb[i][0] + " " + rgb[i][1] + "  " + rgb[i][2] + " ";
 						pw.println(start + rgbPart + end + rgbPart);
 					}
-					pw.println("B\t 255\t 255\t 255\nF\t 255\t 255\t 255\nN\t 255\t 255\t 255");
+					pw.println("B\t 129\t 14\t 30\nF\t 17\t 46\t 85\nN\t 255\t 255\t 255");
 				}
 
 			}
@@ -117,6 +120,51 @@ public interface ColorPallet {
 	 */
 	static ColorPallet oobayashi(double max) {
 		return oobayashi(-max, max);
+	}
+	
+	static ColorPallet brbg(double min, double max) {
+		if (max <= min)
+			throw new IllegalArgumentException("Input values are invalid");
+		// -red blue+
+		ColorPallet brbg = new ColorPallet() {
+			private final int[][] rgb = { { 140, 81, 10 }, { 191, 129, 45 }, { 223, 194, 125 }, { 246, 232, 195 },
+					{ 255, 255, 255 }, { 199, 234, 229 }, { 128, 205, 193 }, { 53, 151, 143 }, { 1, 102, 94 }, };
+
+			@Override
+			public String toRGB(double value) {
+				double range = max - min;
+				for (int i = 0; i < 9; i++) {
+					double start = min + i / 9.0 * range;
+					double end = min + (i + 1.0) / 9.0 * range;
+					if (start <= value && value < end)
+						return rgb[i][0] + "/" + rgb[i][1] + "/" + rgb[i][2];
+					// System.out.println(cpt[i]);
+				}
+				throw new IllegalArgumentException("Input value: " + value + " is out of range.");
+			}
+
+			@Override
+			public void output(Path outPath, OpenOption... options) throws IOException {
+				try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+					// -red blue+
+					double range = max - min;
+					for (int i = 0; i < 9; i++) {
+						double start = min + i / 9.0 * range;
+						double end = min + (i + 1.0) / 9.0 * range;
+						String rgbPart = " " + rgb[i][0] + " " + rgb[i][1] + "  " + rgb[i][2] + " ";
+						pw.println(start + rgbPart + end + rgbPart);
+					}
+					pw.println("B\t 255\t 255\t 255\nF\t 255\t 255\t 255\nN\t 255\t 255\t 255");
+				}
+
+			}
+		};
+
+		return brbg;
+	}
+	
+	static ColorPallet brbg (double max) {
+		return brbg(-max, max);
 	}
 
 }

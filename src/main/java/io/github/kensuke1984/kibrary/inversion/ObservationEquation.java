@@ -73,8 +73,7 @@ public class ObservationEquation {
 			System.out.println();
 		}
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, nUnknowns, nNewParameter);
-		atd = computeAtD(dVector.getD());
-		
+		atd = computeAtD(dVector.getD());		
 	}
 	
 	private List<UnknownParameter> originalParameterList;
@@ -151,9 +150,9 @@ public class ObservationEquation {
 		
 		// partialDataFile.readWaveform();
 		long t = System.nanoTime();
-		AtomicInteger count = new AtomicInteger();
-		AtomicInteger count_TIMEPARTIAL_SOURCE = new AtomicInteger();
-		AtomicInteger count_TIMEPARTIAL_RECEIVER = new AtomicInteger();
+		AtomicInteger count = new AtomicInteger(0);
+		AtomicInteger count_TIMEPARTIAL_SOURCE = new AtomicInteger(0);
+		AtomicInteger count_TIMEPARTIAL_RECEIVER = new AtomicInteger(0);
 		
 		int n = 0;
 		if (time_receiver)
@@ -194,7 +193,18 @@ public class ObservationEquation {
 			//count errorが出た時はcount.get()してみる
 //			System.out.println(count.get()+" " + id.getPartialType().name()+" "+id.getPartialType().isTimePartial());
 		});
-		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * (numberOfParameterForSturcture + n) ){
+		if ( count.get() + count_TIMEPARTIAL_RECEIVER.get() + count_TIMEPARTIAL_SOURCE.get() != dVector.getNTimeWindow() * nn ) {
+			System.out.println("Printing BasicIDs that are not in the partialID set...");
+			Set<id_station> idStationSet 
+				= Stream.of(ids).map(id -> new id_station(id.getGlobalCMTID(), id.getStation()))
+					.distinct().collect(Collectors.toSet());
+			Stream.of(dVector.getObsIDs()).forEach(id -> {
+				id_station idStation = new id_station(id.getGlobalCMTID(), id.getStation());
+				if (!idStationSet.contains(idStation)) {
+					System.out.println(id);
+					System.out.println(idStationSet.size()+""+dVector.getObsIDs().length);
+				}
+			});
 			throw new RuntimeException("Input partials are not enough: " + " " + count.get() + " + " +
 					count_TIMEPARTIAL_RECEIVER.get() + " + " + count_TIMEPARTIAL_SOURCE.get() + " != " +
 					dVector.getNTimeWindow() + " * (" + numberOfParameterForSturcture + " + "+ n +" )");  
@@ -317,7 +327,7 @@ public class ObservationEquation {
 				List<Integer> bouncingOrders = Arrays.stream(phases).map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
 				Collections.sort(bouncingOrders);
 				int lowestBouncingOrder = bouncingOrders.get(0);
-				if (station.equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation() ) &&
+				if (station.getName().equals( ((TimeReceiverSideParameter) parameterList.get(i)).getStation().getName() ) && //20190404 test
 						((TimeReceiverSideParameter) parameterList.get(i)).getBouncingOrder() == lowestBouncingOrder)
 					return i;
 				break;
@@ -471,6 +481,42 @@ public class ObservationEquation {
 	 */
 	public RealVector operate(RealVector m) {
 		return a.operate(m);
+	}
+	
+	private class id_station {
+		private GlobalCMTID id;
+		private Station station;
+		
+		public id_station(GlobalCMTID id, Station station) {
+			this.id = id;
+			this.station = station;
+		}
+		
+		@Override
+		public boolean equals(Object obj) {
+			   if (obj == null) {
+			        return false;
+			    }
+			    if (!id_station.class.isAssignableFrom(obj.getClass())) {
+			        return false;
+			    }
+			    final id_station other = (id_station) obj;
+			    if ((this.id == null) ? (other.id != null) : !this.id.equals(other.id)) {
+			        return false;
+			    }
+			    if ((this.station == null) ? (other.station != null) : !this.station.equals(other.station)) {
+			        return false;
+			    }
+			    return true;
+		}
+		
+		@Override
+		public int hashCode() {
+		    int hash = 3;
+		    hash = 53 * hash + (this.id != null ? this.id.hashCode() : 0);
+		    hash = 53 * hash + (this.station != null ? this.station.hashCode() : 0);
+		    return hash;
+		}
 	}
 
 }

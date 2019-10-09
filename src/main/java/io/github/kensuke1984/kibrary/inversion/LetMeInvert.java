@@ -284,6 +284,12 @@ public class LetMeInvert implements Operation {
 		case RECIPROCALEACHTRANSVERSE:
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
 			break;
+		case RECIPROCAL_AZED_DPP:
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
+			break;
+		case RECIPROCAL_AZED_DPP_v2:
+			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation);
+			break;
 		case TAKEUCHIKOBAYASHI:
 			dVector = new Dvector(ids, chooser, WeightingType.IDENTITY, atLeastThreeRecordsPerStation);
 //			System.out.println(dVector.getObs().getLInfNorm() + " " + dVector.getSyn().getLInfNorm());
@@ -466,20 +472,20 @@ public class LetMeInvert implements Operation {
 							Files.newBufferedWriter(plotPath4, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
 				if (i < (d.getNTimeWindow() - 1)) {
-					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
-					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\", \\");
+					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") noti\"" + obsIDs[i].getStation() + "\", \\");
+					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") noti\"" + obsIDs[i].getStation() + "\", \\");
 					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" noti\"" + obsIDs[i].getStation() + "\", \\");
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\", \\");
+							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" noti\"" + obsIDs[i].getStation() + "\", \\");
 				} else {
 
-					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
-					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") ti\"" + obsIDs[i].getStation() + "\"");
+					plotO.println("\"" + name + "\" u 1:($3+" + gcarc + ") noti\"" + obsIDs[i].getStation() + "\"");
+					plotS.println("\"" + name + "\" u 2:($4+" + gcarc + ") noti\"" + obsIDs[i].getStation() + "\"");
 					plotW.println("\"" + name + "\" u 2:($3+" + gcarc + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+							+ "\" u 2:($4+" + gcarc + ") lc rgb \"blue\" noti\"" + obsIDs[i].getStation() + "\"");
 					plotWa.println("\"" + name + "\" u 2:($3+" + azimuth + ") lc rgb \"red\" noti ,  \"" + name
-							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" ti\"" + obsIDs[i].getStation() + "\"");
+							+ "\" u 2:($4+" + azimuth + ") lc rgb \"blue\" noti\"" + obsIDs[i].getStation() + "\"");
 				}
 //				double maxObs = obsVec[i].getLInfNorm();
 				double obsStart = obsIDs[i].getStartTime();

@@ -1,4 +1,11 @@
-package vtk;
+package io.github.kensuke1984.kibrary.vtk;
+
+import vtk.vtkActor;
+import vtk.vtkCylinderSource;
+import vtk.vtkPolyDataMapper;
+import vtk.vtkRenderWindow;
+import vtk.vtkRenderWindowInteractor;
+import vtk.vtkRenderer;
 
 // Then we define our class.
 public class Cylinder {

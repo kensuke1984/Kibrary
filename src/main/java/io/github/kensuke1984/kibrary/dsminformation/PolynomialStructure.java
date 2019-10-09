@@ -135,6 +135,11 @@ public class PolynomialStructure implements Serializable {
 	 * AK135 by Kennett <i>et al</i>. (1995)
 	 */
 	public static final PolynomialStructure AK135 = initialAK135();
+	
+	/**
+	 * IASP91 by Kennett <i>et al</i>. (1995)
+	 */
+	public static final PolynomialStructure IASP91 = initialIASP91();
 
 	/**
 	 * @param structurePath
@@ -585,11 +590,16 @@ public class PolynomialStructure implements Serializable {
 	 * standard iasp91 (Kennett and Engdahl, 1991) It has no density model, TODO
 	 * should use PREM??
 	 */
-	private void initialIASP91() {
-		nzone = 11;
-		rmin = new double[] { 0, 1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351 };
-		rmax = new double[] { 1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371 };
-
+	private static PolynomialStructure initialIASP91() {
+		final int nzone = 11;
+		final double[] rmin = new double[] { 0, 1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351 };
+		final double[] rmax = new double[] { 1217.1, 3482, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371 };
+		
+		final double[][] rho = new double[][] { { 13.0885, 0, -8.8381, 0 }, { 12.5815, -1.2638, -3.6426, -5.5281 },
+			{ 7.9565, -6.4761, 5.5283, -3.0807 }, { 7.9565, -6.4761, 5.5283, -3.0807 },
+			{ 7.9565, -6.4761, 5.5283, -3.0807 }, { 5.3197, -1.4836, 0, 0 }, { 11.2494, -8.0298, 0, 0 },
+			{ 7.1089, -3.8045, 0, 0 }, { 2.691, 0.6924, 0, 0 }, { 2.691, 0.6924, 0, 0 }, { 2.9, 0, 0, 0 },
+			{ 2.6, 0, 0, 0 }, };
 		//
 		double[][] vpv = new double[][] { { 11.24094, 0, -4.09689, 0 }, { 10.03904, 3.75665, -13.67046, 0 },
 				{ 14.49470, -1.47089, 0, 0 }, { 25.1486, -41.1538, 51.9932, -26.6083 }, { 25.96984, -16.93412, 0, 0 },
@@ -614,6 +624,11 @@ public class PolynomialStructure implements Serializable {
 		double[][] eta = new double[][] { { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
 				{ 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 }, { 1, 0, 0, 0 },
 				{ 1, 0, 0, 0 }, };
+				
+		final double[] qMu = new double[] { 84.6, -1, 312, 312, 312, 143, 143, 80, 600, 600, 600, }; // ok
+		final double[] qKappa = new double[] { 1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,
+						57823, }; // OK
+		return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
 	}
 
 	/**

@@ -176,6 +176,67 @@ public class Trace {
 
         return cx.dotProduct(new LUDecomposition(matrix).getSolver().solve(bb));
     }
+    
+    public int[] robustPeakFinder() {
+		int lag = 300;
+		double threshold = 3.5;
+		double influence = 0.5;
+		
+		double[] signals = new double[getLength()];
+		double[] filteredY = new double[getLength()];
+		double[] avgFilter = new double[getLength()];
+		double[] stdFilter = new double[getLength()];
+		
+		for (int i = 0; i < lag; i++)
+			filteredY[i] = Y[i];
+		avgFilter[lag - 1] = mean(Y_VECTOR.getSubVector(0, lag).toArray());
+		stdFilter[lag - 1] = std(Y_VECTOR.getSubVector(0, lag).toArray());
+		
+		for (int i = lag; i < Y.length; i++) {
+//			System.out.println(y[i] + " " + Math.abs(y[i] - avgFilter[i-1]) + " " + threshold * stdFilter[i-1]);
+			 if (Math.abs(Y[i] - avgFilter[i-1]) > threshold * stdFilter[i-1]) {
+			    if (Y[i] > avgFilter[i-1])
+			    	signals[i] = 1;
+			    else
+			      signals[i] = -1;
+			    filteredY[i] = influence * Y[i] + (1-influence) * filteredY[i-1];
+			 }
+			 else {
+			    signals[i] = 0;
+			    filteredY[i] = Y[i];
+			 }
+			 double[] cutFiltered = Arrays.copyOfRange(filteredY, i - lag, i + 1);
+			 avgFilter[i] = mean(cutFiltered);
+			 stdFilter[i] = std(cutFiltered);
+		}
+		
+		List<Integer> indicesList = new ArrayList<>();
+		for (int i = 0; i < signals.length - 1; i++) {
+			if (signals[i] == 0 && Math.abs(signals[i + 1]) == 1)
+				indicesList.add(i + 1);
+		}
+		
+		int[] indices = new int[indicesList.size()];
+		for (int i = 0; i < indices.length; i++)
+			indices[i] = indicesList.get(i);
+		
+		return indices; 
+	}
+    
+    private static double mean(double[] y) {
+		double sum = 0;
+		for (double yy : y)
+			sum += yy;
+		return sum / y.length;
+	}
+	
+	private static double std(double[] y) {
+		double std = 0;
+		double mean = mean(y);
+		for (double yy : y)
+			std += (yy - mean) * (yy - mean);
+		return Math.sqrt(std / y.length);
+	}
 
     /**
      * @param target value of x to look for the nearest x value to

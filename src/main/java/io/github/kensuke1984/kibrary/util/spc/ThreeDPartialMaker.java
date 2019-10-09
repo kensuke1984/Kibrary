@@ -40,11 +40,21 @@ public class ThreeDPartialMaker {
 	 * forward propagation
 	 */
 	private DSMOutput fp;
+	private DSMOutput fp2;
+	private DSMOutput fp3;
 
 	/**
 	 * back propagation
 	 */
 	private DSMOutput bp;
+	private DSMOutput bp2;
+	private DSMOutput bp3;
+	
+	/**
+	 * distances for interpolation
+	 */
+	double[] dh;
+	double[] dhFP;
 
 	/**
 	 * SACファイルにするときのサンプリング値 デフォルト20Hz
@@ -83,6 +93,42 @@ public class ThreeDPartialMaker {
 		ignoreBodyR.forEach(System.out::println);
 		this.fp = fp;
 		this.bp = bp;
+		findLsmooth();
+		setAngles();
+	}
+	
+	public ThreeDPartialMaker(DSMOutput fpSH, DSMOutput fpPSV, DSMOutput bpSH, DSMOutput bpPSV) {
+		ignoreBodyR = new HashSet<>();
+		
+		this.fp = fpPSV;
+		this.bp = bpPSV;
+		
+//		System.out.println(fpSH.getSpcFileName() + " " + fpPSV.getSpcFileName() + " " + bpSH.getSpcFileName() + " " + bpPSV.getSpcFileName());
+		
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		
+		for (int i = 0; i < fpPSV.nbody(); i++) {
+			SpcBody body = fpSH.getSpcBodyList().get(i).copy();
+			this.fp.getSpcBodyList().get(i).addBody(body);
+		}
+		
+//		System.out.println(fp.getSpcBodyList().get(0).getSpcComponents()[8].getValueInFrequencyDomain()[10]);
+		
+		for (int i = 0; i < bpPSV.nbody(); i++) {
+			SpcBody body = bpSH.getSpcBodyList().get(i).copy();
+			this.bp.getSpcBodyList().get(i).addBody(body);
+		}
+//		System.out.println("PSV and SH added");
+		
+		if (!isGoodPairPermissive(fp, bp)) //isGoodPair
+			throw new RuntimeException("An input pair of forward and backward propagation is invalid.");
+		ignoreBodyR.forEach(System.out::println);
+		
+		this.bp2 = null;
+		this.bp3 = null;
+		this.fp2 = null;
+		this.fp3 = null;
+		this.dh = null;
 		findLsmooth();
 		setAngles();
 	}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package sensitivity;
+package io.github.kensuke1984.kibrary.sensitivity;
 
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -37,33 +37,9 @@ public class KernelVisual {
 		
 		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
-//		Path dir0 = Paths.get("partialVisual");
-//		Files.createDirectories(dir0);
-//		
-//		for (PartialID partial : partials) {
-//			Path dirPath = dir0.resolve(partial.getStation().getStationName());
-//			if (!Files.exists(dirPath))
-//				Files.createDirectories(dirPath);
-//			Path filePath = dirPath.resolve(new Phases(partial.getPhases()).toString() + "_sensi.txt");
-//			if (!Files.exists(filePath))
-//				Files.createFile(filePath);
-			
-//			if (partial.getStation().getStationName().equals("X040")) {
-//				if (partial.getPerturbationLocation().getLongitude() == 40.0) {
-//					double distance = partial.getStation().getPosition().getEpicentralDistance(partial.getGlobalCMTID().getEvent().getCmtLocation())
-//					 * 180 / Math.PI;
-//					System.out.println(distance + " " + partial.getPerturbationLocation() + " " + new ArrayRealVector(partial.getData()).getMaxValue());
-//				}
-//			}
-//			else
-//				continue;
-			
-//			double s = new ArrayRealVector(partial.getData()).getNorm();
-//			Files.write(filePath, (partial.getPerturbationLocation().toString() + " " + s + "\n").getBytes(), StandardOpenOption.APPEND);
-//		}
-		
 		PartialID[] partials_MU = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.MU)).collect(Collectors.toList()).toArray(new PartialID[0]);
-		PartialID[] partials_LAMBDA = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.LAMBDA)).collect(Collectors.toList()).toArray(new PartialID[0]);
+		PartialID[] partials_L = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.L)).collect(Collectors.toList()).toArray(new PartialID[0]);
+		PartialID[] partials_N = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.N)).collect(Collectors.toList()).toArray(new PartialID[0]);
 		
 		Set<GlobalCMTID> idSet = new HashSet<>();
 		Set<String> stationnameSet = new HashSet<>();
@@ -73,15 +49,19 @@ public class KernelVisual {
 		Path dir0 = Paths.get("KernelTemporalVisual");
 		Files.createDirectories(dir0);
 		for (PartialID partial : partials_MU) {
-			//write only particular stations/events
-//			if (!idSet.contains(partial.getGlobalCMTID()))
-//				continue;
-//			if (!stationnameSet.contains(partial.getStation().getStationName()))
-//				continue;
 			
-			PartialID partial_LAMBDA = null;
-			if (partials_LAMBDA.length == partials_MU.length)
-				partial_LAMBDA = Stream.of(partials_LAMBDA).filter(par -> par.getGlobalCMTID().equals(partial.getGlobalCMTID())
+			PartialID partial_L = null;
+			PartialID partial_N = null;
+			if (partials_L.length == partials_MU.length)
+				partial_L = Stream.of(partials_L).filter(par -> par.getGlobalCMTID().equals(partial.getGlobalCMTID())
+					&& par.getStation().equals(partial.getStation())
+								&& par.getPerturbationLocation().equals(partial.getPerturbationLocation())
+								&& par.getMinPeriod() == partial.getMinPeriod()
+								&& par.getSacComponent().equals(partial.getSacComponent())
+								&& new Phases(par.getPhases()).equals(new Phases(partial.getPhases()))
+					).findFirst().get();
+			if (partials_N.length == partials_MU.length)
+				partial_N = Stream.of(partials_N).filter(par -> par.getGlobalCMTID().equals(partial.getGlobalCMTID())
 					&& par.getStation().equals(partial.getStation())
 								&& par.getPerturbationLocation().equals(partial.getPerturbationLocation())
 								&& par.getMinPeriod() == partial.getMinPeriod()
@@ -102,28 +82,21 @@ public class KernelVisual {
 					Files.createDirectories(dir3);
 				
 				double[] data_MU = partial.getData();
-				double[] data_LAMBDAMU = null;
-				double[] data_LAMBDA = null;
-				if (partial_LAMBDA != null) {
-					data_LAMBDAMU = partial.getData();
-					data_LAMBDA = partial_LAMBDA.getData();
-				}
-				
-				if (partial_LAMBDA != null) {
-					for (int i = 0; i < data_LAMBDAMU.length; i++)
-						data_LAMBDAMU[i] += 2 * data_LAMBDA[i];
-				}
+				double[] data_L = partial_L.getData();
+				double[] data_N = partial_N.getData();
 				
 				double t0 = partial.getStartTime();
 				
 				Path filePath = null;
-				Path filePath_LAMBDA = null;
-				if (partial_LAMBDA != null) {
+				Path filePath_L = null;
+				Path filePath_N = null;
+				
+				if (partial_L != null) {
 					filePath = dir3.resolve(new Phases(partial.getPhases()).toString()
-						+ "_" + "LAMBDA2MU" + "_" + partial.getSacComponent()
+						+ "_" + "L" + "_" + partial.getSacComponent()
 						+ String.format("_kernelTemporal_snapshots_t0%d.txt", (int) t0));
-					filePath_LAMBDA = dir3.resolve(new Phases(partial.getPhases()).toString()
-							+ "_" + "LAMBDA" + "_" + partial.getSacComponent()
+					filePath_N = dir3.resolve(new Phases(partial.getPhases()).toString()
+							+ "_" + "N" + "_" + partial.getSacComponent()
 							+ String.format("_kernelTemporal_snapshots_t0%d.txt", (int) t0));
 				}
 				Path filePath_MU = dir3.resolve(new Phases(partial.getPhases()).toString()
@@ -135,13 +108,14 @@ public class KernelVisual {
 				
 				
 				Path filePath_sensitivity = null;
-				Path filePath_LAMBDA_sensitivity = null;
-				if (partial_LAMBDA != null) {
+				Path filePath_L_sensitivity = null;
+				Path filePath_N_sensitivity = null;
+				if (partial_L != null) {
 					filePath_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
-						+ "_" + "LAMBDA2MU" + "_" + partial.getSacComponent()
+						+ "_" + "L" + "_" + partial.getSacComponent()
 						+ String.format("_sensitivityTemporal_snapshots_t0%d.txt", (int) t0));
-					filePath_LAMBDA_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
-							+ "_" + "LAMBDA" + "_" + partial.getSacComponent()
+					filePath_N_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
+							+ "_" + "N" + "_" + partial.getSacComponent()
 							+ String.format("_sensitivityTemporal_snapshots_t0%d.txt", (int) t0));
 				}
 				Path filePath_MU_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
@@ -153,36 +127,39 @@ public class KernelVisual {
 				
 				double cumulativeSensitivity = 0.;
 				double cumulativeSensitivity_MU = 0.;
-				double cumulativeSensitivity_LAMBDA = 0.;
+				double cumulativeSensitivity_L = 0.;
+				double cumulativeSensitivity_N = 0.;
 				
-				if (partial_LAMBDA != null) {
+				if (partial_L != null) {
 					if (!Files.exists(filePath))
 						Files.createFile(filePath);
-					if (!Files.exists(filePath_LAMBDA))
-						Files.createFile(filePath_LAMBDA);
+					if (!Files.exists(filePath_L))
+						Files.createFile(filePath_L);
+					if (!Files.exists(filePath_N))
+						Files.createFile(filePath_N);
 				
 					BufferedWriter writer = Files.newBufferedWriter(filePath, StandardOpenOption.APPEND);
 					writer.write(String.format("%s ", partial.getPerturbationLocation()));
 					BufferedWriter writer_s = Files.newBufferedWriter(filePath_sensitivity, StandardOpenOption.APPEND);
 					writer_s.write(String.format("%s ", partial.getPerturbationLocation()));
-					for (int i = 0; i < data_LAMBDAMU.length; i++) {
+					for (int i = 0; i < data_L.length; i++) {
 						writer.write(String.format("%.5e "
-								, data_LAMBDAMU[i]));
+								, data_L[i]));
 						
-						cumulativeSensitivity += data_LAMBDAMU[i] * data_LAMBDAMU[i];
+						cumulativeSensitivity += data_L[i] * data_L[i];
 						writer_s.write(String.format("%.5e ", Math.sqrt(cumulativeSensitivity) / (i+1)));
 					}
 					
-					BufferedWriter writer3 = Files.newBufferedWriter(filePath_LAMBDA, StandardOpenOption.APPEND);
+					BufferedWriter writer3 = Files.newBufferedWriter(filePath_N, StandardOpenOption.APPEND);
 					writer3.write(String.format("%s ", partial.getPerturbationLocation()));
-					BufferedWriter writer3_s = Files.newBufferedWriter(filePath_LAMBDA_sensitivity, StandardOpenOption.APPEND);
+					BufferedWriter writer3_s = Files.newBufferedWriter(filePath_N_sensitivity, StandardOpenOption.APPEND);
 					writer3_s.write(String.format("%s ", partial.getPerturbationLocation()));
-					for (int i = 0; i < data_LAMBDA.length; i++) {
+					for (int i = 0; i < data_N.length; i++) {
 						writer3.write(String.format("%.5e "
-								, data_LAMBDA[i]));
+								, data_N[i]));
 						
-						cumulativeSensitivity_LAMBDA += data_LAMBDA[i] * data_LAMBDA[i];
-						writer3_s.write(String.format("%.5e ", Math.sqrt(cumulativeSensitivity_LAMBDA) / (i+1)));
+						cumulativeSensitivity_N += data_N[i] * data_N[i];
+						writer3_s.write(String.format("%.5e ", Math.sqrt(cumulativeSensitivity_N) / (i+1)));
 					}
 					
 					writer.newLine();
@@ -210,13 +187,6 @@ public class KernelVisual {
 				writer2.close();
 				writer2_s.newLine();
 				writer2_s.close();
-				
-//					String t = String.format("%04d", (int) (t0 + i));
-//					Path filePath = dir3.resolve(new Phases(partial.getPhases()).toString() + "_kernelTemporal_snapshot" + t + ".txt");
-//					if (!Files.exists(filePath))
-//						Files.createFile(filePath);
-//					Files.write(filePath, (partial.getPerturbationLocation().toString() + " " + data[i] + "\n").getBytes(), StandardOpenOption.APPEND);
-//			}
 		}
 	}
 }

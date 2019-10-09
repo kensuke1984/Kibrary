@@ -1,7 +1,7 @@
 /**
  * 
  */
-package vtk;
+package io.github.kensuke1984.kibrary.vtk;
 
 import java.io.File;
 import java.nio.file.Path;

@@ -90,7 +90,7 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
  * 
  * @author Kensuke Konishi
  */
-public class PartialDataseMakerMaster implements Operation {
+public class PartialDatasetMakerMaster implements Operation {
 
 	private Set<SACComponent> components;
 
@@ -249,8 +249,10 @@ public class PartialDataseMakerMaster implements Operation {
 //				perturbationRs[i] = perturbationLocations[i].getR();
 			
 			String stationName = bp.getSourceID();
-			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
+			if (station.getPosition().toLocation(0).getDistance(bp.getSourceLocation()) > 0.5)
 				throw new RuntimeException("There may be a station with the same name but other networks.");
+//			if (!station.getPosition().toLocation(0).equals(bp.getSourceLocation()))
+//				throw new RuntimeException("There may be a station with the same name but other networks.");
 
 			if (bp.tlen() != tlen || bp.np() != np)
 				throw new RuntimeException("BP for " + station + " has invalid tlen or np.");
@@ -510,13 +512,13 @@ private class WorkerTimePartial implements Runnable {
 
 	private Set<GlobalCMTID> touchedSet = new HashSet<>();
 
-	public PartialDataseMakerMaster(Properties property) throws IOException {
+	public PartialDatasetMakerMaster(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
-		Path outPath = Paths.get(PartialDatasetMaker.class.getName() + Utilities.getTemporaryString() + ".properties");
+		Path outPath = Paths.get(PartialDatasetMakerMaster.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
 			pw.println("manhattan PartialDatasetMaker");
 			pw.println("##Path of a working folder (.)");
@@ -633,7 +635,7 @@ private class WorkerTimePartial implements Runnable {
 	}
 
 	private void setLog() throws IOException {
-		synchronized (PartialDatasetMaker.class) {
+		synchronized (PartialDatasetMakerMaster.class) {
 			do {
 				dateString = Utilities.getTemporaryString();
 				logPath = workPath.resolve("pdm" + dateString + ".log");
@@ -768,7 +770,7 @@ private class WorkerTimePartial implements Runnable {
 				continue;
 
 			// bpModelFolder内 spectorfile
-			Set<SpcFileName> bpFiles = Utilities.collectSpcFileName(bpModelPath);
+			Set<SpcFileName> bpFiles = Utilities.collectSHSpcFileName(bpModelPath);
 			System.out.println(bpFiles.size() + " bpfiles are found");
 
 			// stationに対するタイムウインドウが存在するfp内のmodelフォルダ
@@ -782,12 +784,12 @@ private class WorkerTimePartial implements Runnable {
 				fpPathList = collectFP_jointCMT(idSet);
 			}
 			
-			
+			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 			int donebp = 0;
 			// bpフォルダ内の各bpファイルに対して
 			for (SpcFileName bpname : bpFiles) {
 				// create ThreadPool
-				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
+//				ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 				System.out.println("Working for " + bpname.getName() + " " + ++donebp + "/" + bpFiles.size());
 				// 摂動点の名前
 				DSMOutput bp = bpname.read();
@@ -823,6 +825,7 @@ private class WorkerTimePartial implements Runnable {
 //						execs.execute(pc);
 //					}
 //				}
+			}
 				execs.shutdown();
 				while (!execs.isTerminated()) {
 					try {
@@ -833,8 +836,7 @@ private class WorkerTimePartial implements Runnable {
 				}
 				partialDataWriter.flush();
 				System.out.println();
-			}
-			writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
+				writeLog(+bpnum++ + "th " + bp0000Path + " was done ");
 		}
 		terminate();
 	}
@@ -869,7 +871,7 @@ private class WorkerTimePartial implements Runnable {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final List<String> stfcat = readSTFCatalogue("LSTF1.stfcat");
+	private List<String> stfcat;// = readSTFCatalogue("LSTF1.stfcat");
 
 	private void setSourceTimeFunctions() throws IOException {
 		if (sourceTimeFunction == 0)
@@ -890,6 +892,12 @@ private class WorkerTimePartial implements Runnable {
 				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 				break;
 			case 3:
+				try {
+					stfcat = readSTFCatalogue("LSTF1.stfcat");
+				} catch (IOException e) {
+					// TODO 自動生成された catch ブロック
+					e.printStackTrace();
+				}
 				double halfDuration1 = 0.;
 	        	double halfDuration2 = 0.;
 		      	for (String str : stfcat) {
@@ -938,12 +946,12 @@ private class WorkerTimePartial implements Runnable {
 	 *            [parameter file name]
 	 */
 	public static void main(String[] args) throws IOException {
-		PartialDatasetMaker pdm = new PartialDatasetMaker(Property.parse(args));
+		PartialDatasetMakerMaster pdm = new PartialDatasetMakerMaster(Property.parse(args));
 		long startTime = System.nanoTime();
 
-		System.err.println(PartialDatasetMaker.class.getName() + " is going..");
+		System.err.println(PartialDatasetMakerMaster.class.getName() + " is going..");
 		pdm.run();
-		System.err.println(PartialDatasetMaker.class.getName() + " finished in "
+		System.err.println(PartialDatasetMakerMaster.class.getName() + " finished in "
 				+ Utilities.toTimeString(System.nanoTime() - startTime));
 	}
 

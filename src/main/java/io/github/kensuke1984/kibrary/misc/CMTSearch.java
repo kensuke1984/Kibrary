@@ -41,8 +41,8 @@ class CMTSearch {
 					String[] parts = s.split(",");
 					double stLat = Double.parseDouble(parts[1]);
 					double stLon = Double.parseDouble(parts[2]);
-//				  System.out.println(stLat+" "+stLon);
-				  GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(2016, 1, 18), LocalDate.of(2017, 9, 30));	//年月日の指定
+				  System.out.println(stLat+" "+stLon);
+				  GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(2017, 10, 1), LocalDate.of(2019, 1, 31));	//年月日の指定
 				  
 				  String title = "TONGA FIJI";
 				  sea.setLatitudeRange(-40, -10);	//緯度範囲の指定
@@ -70,17 +70,10 @@ class CMTSearch {
 						double edDeg = FastMath.toDegrees(i.getEvent().getCmtLocation()
 										.getEpicentralDistance(new HorizontalPosition(20, 80)));
 						double mw = i.getEvent().getCmt().getMw();
-						System.out.printf("%s %.2f %.2f %.2f %.2f %s %s %.1f\n", i, lat, lon, depth, gcarc, ymd, hms, mw);
+//						System.out.printf("%s %.2f %.2f %.2f %.2f %s %s %.1f\n", i, lat, lon, depth, gcarc, ymd, hms, mw);
 //					}	
 //				  /**
 						try{
-							//ファイルを開く=PrintWriterオブジェクトを作成する
-//							PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter("/Users/Yuki/Desktop/forIndianData/eventList.txt")));	//"/mnt/melonpan/suzuki/HAWAII/RAW/obs//NewGCMTdir.txt"
-//							pw.printf("%s %.2f %.2f %.2f %.2f %s %s\n", i, lat, lon, depth, gcarc, ymd, hms);
-//							pw.close();
-//							Files.write(outPath,
-//									String.format("%s %.2f %.2f %.2f %.2f %s %s %.1f\n", i, lat, lon, depth, edDeg, ymd, hms, mw).getBytes(), 
-//									StandardOpenOption.APPEND);
 							Files.write(outPath,
 									String.format("%s %s/%s/%s %s:%s:%s %.2f %.2f %.2f %.1f %s\n",
 											i,
@@ -101,24 +94,11 @@ class CMTSearch {
 			  br.close();	//ファイルを閉じる
 			  
 			}
-		
 				 catch (FileNotFoundException erroe) {
 					System.out.println("ファイルを開けません");
 				} catch (IOException error) {
 					System.out.println("データを読み出せません");
 				}
-			  
-//			  if(s.charAt(0)==0){
-//			  String year = "200" + s.charAt(1);
-  		
-
-			
-//			System.out.println(i);
-//		System.exit(0);
-//		Event e = id[0].getEvent();
-//  	System.out.println(6371-e.getCmtLocation().getR());
-//		System.out.println(e.getCMTTime());
-	
 		}	
 		
 	}

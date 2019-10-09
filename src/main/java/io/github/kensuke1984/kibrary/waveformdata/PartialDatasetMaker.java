@@ -225,6 +225,15 @@ public class PartialDatasetMaker implements Operation {
 			primeFPname = primeFPFile;
 			secondaryFPname = secondaryFPFile;
 			id = new GlobalCMTID(primeFPname.getSourceID());
+			if (!checkPair(primeBP, secondaryBP))
+				throw new RuntimeException("SH and PSV bp files are not a pair" + primeBP + " " + secondaryBP);
+		}
+		
+		private boolean checkPair(DSMOutput bp1, DSMOutput bp2) {
+			boolean res = true;
+			if (!bp1.getObserverPosition().equals(bp2.getObserverPosition()))
+				res = false;
+			return res;
 		}
 
 		/**

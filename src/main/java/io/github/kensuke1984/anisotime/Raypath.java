@@ -883,6 +883,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         return jeffreysMethod1(toX(pp, modifiedR), rToY.apply(modifiedR), rToY.apply(rEnd));
     }
 
+    /**
+     * Compute T; for turningR &le; r &le; rEnd by a device of Jeffreys and Jeffreys
+     *
+     * @param pp   to compute &Delta; for
+     * @param rEnd [km]
+     * @return T; for radius range between turningR and rEnd.
+     */
     private double jeffreysT(PhasePart pp, double rEnd) {
         double turningR = turningRMap.get(pp);
         if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps) return 0;

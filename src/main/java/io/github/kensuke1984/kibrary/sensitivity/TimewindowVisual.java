@@ -1,4 +1,4 @@
-package sensitivity;
+package io.github.kensuke1984.kibrary.sensitivity;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;

@@ -42,7 +42,7 @@ public class Station implements Comparable<Station> {
         return sacHeaderData.getSACString(SACHeaderEnum.KNETWK).equals("-12345") ?
                 new Station(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
-                                sacHeaderData.getValue(SACHeaderEnum.STLO)), "DSM") :
+                        		sacHeaderData.getValue(SACHeaderEnum.STLO)), "DSM") :
                 new Station(sacHeaderData.getSACString(SACHeaderEnum.KSTNM).trim(),
                         new HorizontalPosition(sacHeaderData.getValue(SACHeaderEnum.STLA),
                                 sacHeaderData.getValue(SACHeaderEnum.STLO)),

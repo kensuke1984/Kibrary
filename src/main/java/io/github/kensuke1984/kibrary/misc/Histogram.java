@@ -18,6 +18,7 @@ import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 
 public class Histogram {
 	
@@ -45,18 +46,23 @@ public class Histogram {
 		try (Stream<BasicID> idStream = Stream.of(basicIDs);) {
 			idStream.filter(id -> id.getWaveformType().equals(WaveformType.SYN))
 			.filter(id -> { 
-				System.out.println(id);
+//				System.out.println(id);
 				if (stationSet.stream().filter(sta -> sta.equals(id.getStation())).count() == 0)
 					System.out.println("Error: station " + id.getStation().getName() 
 							+ " " + id.getStation().getNetwork() + " not found"+" "+ id.getGlobalCMTID());
 //				if (id.getStation().getNetwork() == "TA45")
 //					System.out.println(id.getGlobalCMTID());
-				double distance = id.getGlobalCMTID().getEvent().getCmtLocation().
+//				double distance = id.getGlobalCMTID().getEvent().getCmtLocation().
+//						getEpicentralDistance(stationSet.stream()
+//								.filter(sta -> sta.equals(id.getStation()))
+//								.filter(sta -> sta.equals(id.getStation()))
+//								.findAny().get().getPosition())*180/Math.PI;
+				double distance = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().
 						getEpicentralDistance(stationSet.stream()
 								.filter(sta -> sta.equals(id.getStation()))
 								.filter(sta -> sta.equals(id.getStation()))
-								.findAny().get().getPosition())*180/Math.PI;
-				System.out.println(distance);
+								.findAny().get().getPosition()));
+				System.out.println(id+" "+distance);
 				if (distance < minED)
 					return false;
 				else if (distance > maxED)
@@ -122,7 +128,7 @@ public class Histogram {
 		BasicID[] basicIDs = BasicIDFile.readBasicIDFile(srcID);
 		Set<Station> stationSet = StationInformationFile.read(Paths.get(args[1]));
 		Path outPath = Paths.get(args[2]);
-		Histogram histogram = new Histogram(basicIDs, stationSet, 5, true, 60., 105.);
+		Histogram histogram = new Histogram(basicIDs, stationSet, 5, false, 60., 105.);
 		
 		histogram.printHistogram(outPath);
 	}

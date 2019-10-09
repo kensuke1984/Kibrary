@@ -1,7 +1,7 @@
 /**
  * 
  */
-package sensitivity;
+package io.github.kensuke1984.kibrary.sensitivity;
 
 import java.io.IOException;
 import java.nio.file.Paths;

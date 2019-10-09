@@ -54,6 +54,13 @@ public interface VelocityStructure extends Serializable {
 	static VelocityStructure ak135() {
 		return PolynomialStructure.AK135;
 	}
+	
+	/**
+	 * @return IASP91 by Kennett, Engdahl & Buland (1995)
+	 */
+//	static VelocityStructure iasp91() {
+//		return PolynomialStructure.IASP91;
+//	}
 
 	/**
 	 * @param r

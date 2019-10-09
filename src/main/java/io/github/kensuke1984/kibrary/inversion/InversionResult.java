@@ -292,7 +292,8 @@ public class InversionResult {
 		IntStream.range(0, npts).forEach(j -> {
 			String[] parts = lines.get(j + 1).split("\\s+");
 			x[j] = Double.parseDouble(parts[0]);
-			y[j] = Double.parseDouble(parts[parN + 1]);
+//			y[j] = Double.parseDouble(parts[parN + 1]);
+			y[j] = Double.parseDouble(parts[parN + 1]) * 100;
 		});
 		return new Trace(x, y);
 	}

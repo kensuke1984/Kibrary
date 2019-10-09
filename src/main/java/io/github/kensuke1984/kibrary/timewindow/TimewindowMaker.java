@@ -193,6 +193,7 @@ public class TimewindowMaker implements Operation {
 				eventDir.sacFileSet().stream().filter(sfn -> sfn.isOBS() && components.contains(sfn.getComponent()))
 						.forEach(sfn -> {
 					try {
+//						System.out.println(sfn.toString());
 						makeTimeWindow(sfn);
 					} catch (Exception e) {
 						e.printStackTrace();

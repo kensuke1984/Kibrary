@@ -1,7 +1,7 @@
 /**
  * 
  */
-package sensitivity;
+package io.github.kensuke1984.kibrary.sensitivity;
 
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;

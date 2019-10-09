@@ -57,9 +57,11 @@ public class AzimuthHistogram {
 				if (stationSet.stream().filter(sta -> sta.equals(id.getStation())).count() == 0)
 					System.out.println("Error: station " + id.getStation().getName() 
 							+ " " + id.getStation().getNetwork() + " not found");
-				double azimuth = id.getGlobalCMTID().getEvent().getCmtLocation().
-						getAzimuth(stationSet.stream().filter(sta -> sta.equals(id.getStation())).findAny().get().getPosition())
-						*180/Math.PI;
+//				double azimuth = id.getGlobalCMTID().getEvent().getCmtLocation().
+//						getAzimuth(stationSet.stream().filter(sta -> sta.equals(id.getStation())).findAny().get().getPosition())
+//						*180/Math.PI;
+				double azimuth = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().
+						getAzimuth(stationSet.stream().filter(sta -> sta.equals(id.getStation())).findAny().get().getPosition()));
 				System.out.println(stationSet.stream().filter(sta -> sta.equals(id.getStation())).findAny().get().getPosition()+" "+id.getGlobalCMTID().getEvent().getCmtLocation()+" "+azimuth);
 				if (azimuth < minAZ)
 					return false;
@@ -94,13 +96,18 @@ public class AzimuthHistogram {
 					HorizontalPosition staLoc = station.getPosition();
 					double az = 0;
 					if (centered) {
-						az = (new Location(this.averageLoc.getLatitude(),
+//						az = (new Location(this.averageLoc.getLatitude(),
+//								id.getGlobalCMTID().getEvent().getCmtLocation().getLongitude(),
+//								id.getGlobalCMTID().getEvent().getCmtLocation().getR()))
+//								.getAzimuth(staLoc)*180/Math.PI;
+						az = Math.toDegrees((new Location(this.averageLoc.getLatitude(),
 								id.getGlobalCMTID().getEvent().getCmtLocation().getLongitude(),
 								id.getGlobalCMTID().getEvent().getCmtLocation().getR()))
-								.getAzimuth(staLoc)*180/Math.PI;
+								.getAzimuth(staLoc));
 					}
 					else
-						az = id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(staLoc)*180/Math.PI;
+//						az = id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(staLoc)*180/Math.PI;
+						az = Math.toDegrees(id.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(staLoc));
 					this.numberOfRecords[(int) (az / interval)]++;
 					this.mean += (int) (az / interval);
 					}

@@ -24,6 +24,7 @@ import ucar.nc2.dt.RadialDatasetSweep.Sweep;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
@@ -62,7 +63,8 @@ public class Dvector {
 	 * @return if the ids are same （理論波形と観測波形は違うけど＾＾＠）
 	 */
 	private static boolean isPair(BasicID id0, BasicID id1) {
-		return id0.getStation().equals(id1.getStation()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
+		//20190404 test for just name or station
+		return id0.getStation().getName().equals(id1.getStation().getName()) && id0.getGlobalCMTID().equals(id1.getGlobalCMTID())
 				&& id0.getSacComponent() == id1.getSacComponent() && id0.getNpts() == id1.getNpts()
 				&& id0.getSamplingHz() == id1.getSamplingHz() && Math.abs(id0.getStartTime() - id1.getStartTime()) < 20
 				&& id0.getMaxPeriod() == id1.getMaxPeriod() && id0.getMinPeriod() == id1.getMinPeriod();
@@ -164,6 +166,9 @@ public class Dvector {
 	private double[] lowerUpperMantleWeighting;
 	
 	private WeightingType weightingType;
+	
+	private double[][] histogramDistance;
+	private double[][] histogramAzimuth;
 
 	/**
 	 * Use all waveforms in the IDs Weighting factor is reciprocal of maximum
@@ -195,16 +200,57 @@ public class Dvector {
 		this.weightingType = weigthingType;
 		switch (weigthingType) {
 		case RECIPROCAL:
-			this.weightingFunction = (obs, syn) -> {
-				
+			this.weightingFunction = (obs, syn) -> {				
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
 				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 			break;
 		case RECIPROCALEACHTRANSVERSE:
 			this.weightingFunction = (obs, syn) -> {
+				BasicID obsp = Arrays.stream(basicIDs)
+						.filter(idp -> idp.getGlobalCMTID().equals(obs.getGlobalCMTID()))
+						.filter(idp -> idp.getStation().getName().equals(obs.getStation().getName()))
+						.filter(idp -> idp.getWaveformType().equals(obs.getWaveformType()))
+//						.filter(idp -> idp.getPhases().equals(obs.getPhases()))
+//						.filter(idp -> idp.getNpts() == obs.getNpts())
+						.filter(idp -> idp.getSacComponent().equals(SACComponent.T))
+						.findFirst().get();
+				RealVector obspVec = new ArrayRealVector(obsp.getData(), false);
+				return 1. / Math.max(Math.abs(obspVec.getMinValue()), Math.abs(obspVec.getMaxValue()));
+			};
+			break;
+		case RECIPROCAL_AZED_DPP:
+			this.histogramDistance = new double[][] { {65, 1.32193813429}, {70, 0.805900034459}, {75, 0.539860763044}, 
+				{80, 0.495289671974}, {85, 0.696058392182}, {90, 1.74789739537}, {95, 1.39305560868} };
+			this.histogramAzimuth = new double[][] { {5, 0.615091690708}, {10, 1.1105183025}, {15, 1.02841962063}, 
+				{20, 1.14241045068}, {25, 1.85106037142}, {30, 1.28433847888}, {35, 0.530375383377}, {40, 0.356888432655}, 
+				{45, 0.345676498939}, {50, 0.413749706744}, {55, 1.36660823904}, {60, 1.95486282443} };
+			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
-				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				return 1. / Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()))
+						* weightingEpicentralDistanceDpp(obs)
+						* weightingAzimuthDpp(obs);
+			};
+			break;
+		case RECIPROCAL_AZED_DPP_v2:
+			this.histogramDistance = new double[][] { {65, 1.32193813429}, {70, 0.805900034459}, {75, 0.539860763044}, 
+				{80, 0.495289671974}, {85, 0.696058392182}, {90, 1.74789739537}, {95, 1.39305560868} };
+			this.histogramAzimuth = new double[][] { {5, 0.615091690708}, {10, 1.1105183025}, {15, 1.02841962063}, 
+				{20, 1.14241045068}, {25, 1.85106037142}, {30, 1.28433847888}, {35, 0.530375383377}, {40, 0.356888432655}, 
+				{45, 0.345676498939}, {50, 0.413749706744}, {55, 1.36660823904}, {60, 1.95486282443} };
+			this.weightingFunction = (obs, syn) -> {
+//				RealVector obsVec = new ArrayRealVector(obs.getData(), false);
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 10.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				return 1.
+						* weightingEpicentralDistanceDpp(obs)
+						* weightingAzimuthDpp(obs);
 			};
 			break;
 		case IDENTITY:
@@ -216,6 +262,29 @@ public class Dvector {
 		
 		sort();
 		read();
+	}
+	
+	private double weightingEpicentralDistanceDpp(BasicID obs) {
+		double weight = 1.;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+		for (int i = 0; i < histogramDistance.length; i++)
+			if (distance >= histogramDistance[i][0] && distance < histogramDistance[i][0] + 5.)
+				weight = histogramDistance[i][1];
+		
+		return weight;
+	}
+	
+	public double weightingAzimuthDpp(BasicID obs) {
+		double weight = 1.;
+		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+		for (double[] p : histogramAzimuth) {
+			if (azimuth >= p[0] && azimuth < p[0] + 5.)
+				weight = p[1];
+		}
+		
+		return weight;
 	}
 	
 	public Dvector(BasicID[] basicIDs, Predicate<BasicID> chooser, WeightingType weigthingType) {

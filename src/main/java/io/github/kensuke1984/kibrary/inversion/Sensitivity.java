@@ -1,18 +1,17 @@
 package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
 import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 //import io.github.kensuke1984.kibrary.VelocityField;
@@ -22,18 +21,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.management.RuntimeErrorException;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
+
 public class Sensitivity {
+	
+	private static double[][] histogramDistance;
+	private static double[][] histogramAzimuth;
 	
 	public static void main(String[] args) throws IOException {
 //		if (args.length != 8) {
@@ -79,7 +83,38 @@ public class Sensitivity {
 //							return 0;
 //						}
 						else {
-							return weightingReciprocalAmplitude(obs, syn);
+							if (obs.getSacComponent().equals(SACComponent.T) 
+									&& syn.getSacComponent().equals(SACComponent.T) )
+								return weightingReciprocalAmplitude(obs, syn);
+							else {//if (obs.getSacComponent().equals(SACComponent.R)) {
+								/**
+								BasicID obsp = Arrays.stream(basicIDs)
+										.filter(idp -> idp.getGlobalCMTID().equals(obs.getGlobalCMTID()))
+										.filter(idp -> idp.getStation().getName().equals(obs.getStation().getName()))
+										.filter(idp -> idp.getWaveformType().equals(obs.getWaveformType()))
+										.filter(idp -> idp.getPhases().equals(obs.getPhases()))
+										.filter(idp -> idp.getNpts() == obs.getNpts())
+										.filter(idp -> idp.getSacComponent().equals(SACComponent.T))
+										.findFirst().get();
+								BasicID synp = Arrays.stream(basicIDs)
+										.filter(idp -> idp.getGlobalCMTID().equals(syn.getGlobalCMTID()))
+										.filter(idp -> idp.getStation().getName().equals(obs.getStation().getName()))
+										.filter(idp -> idp.getWaveformType().equals(syn.getWaveformType()))
+										.filter(idp -> idp.getPhases().equals(syn.getPhases()))
+										.filter(idp -> idp.getNpts() == syn.getNpts())
+										.filter(idp -> idp.getSacComponent().equals(SACComponent.T))
+										.findAny().get();
+								**/
+								BasicID obsp = Arrays.stream(basicIDs)
+										.filter(idp -> idp.getGlobalCMTID().equals(obs.getGlobalCMTID()))
+										.findFirst().get();
+								BasicID synp = Arrays.stream(basicIDs)
+										.filter(idp -> idp.getGlobalCMTID().equals(syn.getGlobalCMTID()))
+										.findFirst().get();
+								System.out.print(obsp.toString()+"\n"+synp.toString());
+								return weightingReciprocalAmplitude(obsp, synp);
+//								return weightingEpicentralDistanceDpp(obs) * weightingAzimuthDpp(obs);
+							}
 						}
 					});
 			
@@ -119,6 +154,39 @@ public class Sensitivity {
 		final double obsMax = Math.abs(obsVec.getMaxValue());
 		final double obsMin = Math.abs(obsVec.getMinValue());
 		weight = 1 / Math.max(obsMin, obsMax);
+		return weight;
+	}
+	
+	public static double weightingReciprocalAmplitudeOfTransverse(BasicID obs, BasicID syn) {
+		double weight = 1.;
+		RealVector obsVec = new ArrayRealVector(obs.getData());
+		final double obsMax = Math.abs(obsVec.getMaxValue());
+		final double obsMin = Math.abs(obsVec.getMinValue());
+		weight = 1 / Math.max(obsMin, obsMax);
+		return weight;
+	}
+	
+	private static double weightingEpicentralDistanceDpp(BasicID obs) {
+		double weight = 1.;
+		double distance = obs.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(obs.getStation().getPosition()) * 180. / Math.PI;		
+		histogramDistance = new double[][] { {70, 0.741}, {75, 0.777}, {80, 0.938}, {85, 1.187}, {90, 1.200}, {95, 1.157} };
+		
+		for (int i = 0; i < histogramDistance.length; i++)
+			if (distance >= histogramDistance[i][0] && distance < histogramDistance[i][0] + 5.)
+				weight = histogramDistance[i][1];		
+		return weight;
+	}
+	
+	private static double weightingAzimuthDpp(BasicID obs) {
+		double weight = 1.;
+		double azimuth = obs.getGlobalCMTID().getEvent().getCmtLocation().getAzimuth(obs.getStation().getPosition()) * 180. / Math.PI;
+		
+		histogramAzimuth = new double[][] { {310, 1.000}, {315, 0.642}, {320, 0.426}, {325, 0.538}, {330, 0.769}, {335, 0.939}, {340, 1.556}
+											, {345, 1.414}, {350, 1.4}, {355, 1.4}, {0, 1.000}, {5, 1.000} };		
+		for (double[] p : histogramAzimuth) {
+			if (azimuth >= p[0] && azimuth < p[0] + 5.)
+				weight = p[1];
+		}		
 		return weight;
 	}
 	

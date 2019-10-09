@@ -1,7 +1,7 @@
 /**
  * 
  */
-package manhattan.specfem;
+package io.github.kensuke1984.kibrary.specfem;
 
 import io.github.kensuke1984.kibrary.datacorrection.MomentTensor;
 import io.github.kensuke1984.kibrary.util.Earth;
@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import org.apache.commons.math3.util.Precision;
 
 /**
  * @version 0.0.1

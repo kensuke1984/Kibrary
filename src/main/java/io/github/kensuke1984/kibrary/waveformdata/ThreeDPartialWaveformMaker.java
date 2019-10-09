@@ -6,33 +6,24 @@ package io.github.kensuke1984.kibrary.waveformdata;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.math3.complex.Complex;
 
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
-import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
-import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.SACUtil;
-import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
 import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunction;
-import io.github.kensuke1984.kibrary.external.SAC;
 import io.github.kensuke1984.kibrary.inversion.PerturbationPoint;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
@@ -54,12 +45,10 @@ import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 public class ThreeDPartialWaveformMaker {
 
 	private static ButterworthFilter filter;
-	private static Path perturbFilePath;
 //	private static Set<Station> stationSet;
 	private static Set<GlobalCMTID> idSet;
 //	private static double[][] periodRanges;
 	private static PerturbationPoint perturbationPoints;
-	private static Set<Location> perturbationLocationSet;
 //	private static Phase[] phases;
 	private static File horizontalPointFile;
 	private static File perturbationPointFile;
@@ -75,7 +64,7 @@ public class ThreeDPartialWaveformMaker {
 			System.err.println("usage: globalCMTID, station name,  SH or PSV, partial type, component, "
 					+ "home directry path, horizontal Point File, perturbation point file");
 
-		double fmax = 0.125;
+		double fmax = 0.05;
 		double fmin = 0.005;
 		filter = new BandPassFilter(fmax * 2 * Math.PI / 20, fmin * 2 * Math.PI / 20, 4);
 		GlobalCMTID gcmtid = new GlobalCMTID(args[0]);	// global CMT ID
@@ -179,6 +168,7 @@ public class ThreeDPartialWaveformMaker {
 		}	
 	}
 	
+	/**
 	private void readPerturbationLocations() throws IOException {
 		try (Stream<String> lines = Files.lines(perturbFilePath)) {		
 			perturbationLocationSet = lines.map(line -> line.split("\\s+"))
@@ -187,6 +177,7 @@ public class ThreeDPartialWaveformMaker {
 					.collect(Collectors.toSet());
 		}
 	}
+	**/
 	
 	/**
 	private static void output(Path outPath, Path bpPath1, Path fpPath1, Path bpPath2, Path fpPath2, Path parPath, PartialType parType, SACComponent component) {

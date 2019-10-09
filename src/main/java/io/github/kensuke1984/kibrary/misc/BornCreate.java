@@ -53,7 +53,7 @@ public class BornCreate {
 		try {
 			Path irpath = Paths.get(args[3]);
 			InversionResult ir = new InversionResult(irpath);
-			List<UnknownParameter> unknownp = UnknownParameterFile.read(irpath.resolve("unknown.inf"));
+			List<UnknownParameter> unknownp = UnknownParameterFile.read(irpath.resolve("unknownParameterOrder.inf"));
 			Set<TimewindowInformation> timewindows = TimewindowInformationFile.read(timewindowPath);
 
 			File corFile = new File(outDir, "Correlation_"+ime.toString()+".inf");

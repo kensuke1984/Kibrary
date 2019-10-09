@@ -1,7 +1,7 @@
 /**
  * 
  */
-package manhattan.specfem;
+package io.github.kensuke1984.kibrary.specfem;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;

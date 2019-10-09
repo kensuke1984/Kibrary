@@ -1,7 +1,7 @@
 /**
  * 
  */
-package sensitivity;
+package io.github.kensuke1984.kibrary.sensitivity;
 
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package sensitivity;
+package io.github.kensuke1984.kibrary.sensitivity;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -13,7 +13,7 @@ import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-//import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
+import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
 
 /**
  * @version 0.0.1
@@ -21,7 +21,7 @@ import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
  * @author Yuki
  *
  */
-public class LookAtSYNspc {
+public class LookAt1DPartialspc {
 	public static void main(String[] args) throws IOException {
 		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
 		DSMOutput dsmOutput = spcName.read();

@@ -29,6 +29,7 @@ import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -414,6 +415,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				maxPeriod = obsSac.getValue(SACHeaderEnum.USER1) == -12345 ? 0 : obsSac.getValue(SACHeaderEnum.USER1);
 				
 				Station station = obsSac.getStation();
+//				Station station = synSac.getStation();
+//				Station station = new Station(synFileName.getStationName(), new HorizontalPosition(synSac.getValue(SACHeaderEnum.STLA), synSac.getValue(SACHeaderEnum.STLO)), synSac.getSACString(SACHeaderEnum.KNETWK));
 
 				for (TimewindowInformation window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
@@ -436,11 +439,15 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					
 					Phase[] includePhases = window.getPhases();
 //					System.out.println(minPeriod+" "+maxPeriod);
+					
 					obsData = Arrays.stream(obsData).map(d -> d / correctionRatio).toArray();
 					BasicID synID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, npts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synData);
 					BasicID obsID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, npts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsData);
+					System.out.println(station.getName()+" "+station.getPosition());
+					System.out.println(obsID.toString());
+					System.out.println(synID.toString());
 					try {
 						dataWriter.addBasicID(obsID);
 						dataWriter.addBasicID(synID);

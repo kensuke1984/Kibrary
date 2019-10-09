@@ -201,7 +201,7 @@ public final class PartialIDFile {
 		Path outPath = Paths.get(header + ".station");
 		if (Files.exists(outPath))
 			return;
-		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct()
+		List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct().sorted()
 				.map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition())
 				.collect(Collectors.toList());
 		Files.write(outPath, lines);
