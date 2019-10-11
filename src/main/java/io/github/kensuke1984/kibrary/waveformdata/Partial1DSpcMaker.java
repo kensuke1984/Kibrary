@@ -127,6 +127,8 @@ public class Partial1DSpcMaker implements Operation {
 			pw.println("#timePartialPath");
 			pw.println("##Polynomial structure file (leave blank if PREM)");
 			pw.println("#ps");
+			pw.println("lowFreq ");
+			pw.println("highFreq ");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -177,6 +179,10 @@ public class Partial1DSpcMaker implements Operation {
 	private Path imFyIDPath;
 	
 	private Path imFyPath;
+	
+	double highFreq;
+	
+	double lowFreq;
 	
 	/**
 	 * parameterのセット
@@ -242,6 +248,9 @@ public class Partial1DSpcMaker implements Operation {
 		
 		imFyIDPath = getPath("imFyIDPath");
 		imFyPath = getPath("imFyPath");
+		
+		highFreq = Double.parseDouble(property.getProperty("highFreq"));
+		lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
 	}
 
 	/**
@@ -457,12 +466,8 @@ public class Partial1DSpcMaker implements Operation {
 			}
 		}
 		
-		private final double fStart = 0.;
-		
-		private final double fEnd = 0.2;
-		
 		private int finalFreqSamplingHz = 8;
-
+		
 		private void cutAndWrite(Station station, double[] filteredUt, TimewindowInformation t, double bodyR,
 				PartialType partialType, double[] periodRange) {
 			
@@ -478,12 +483,14 @@ public class Partial1DSpcMaker implements Operation {
 				ampSquared[i] = imFy[i] * imFy[i] + reFy[i] * reFy[i];
 			
 			double df = fourier.getFreqIncrement(partialSamplingHz);
-			if (fEnd > partialSamplingHz)
-				throw new RuntimeException("fEnd must be <= sacSamplingHz");
-			int fnpts = (int) ((fEnd - fStart) / df);
 			
-			double[] cutPartialReFy = IntStream.range(0, fnpts).parallel().mapToDouble(i -> partialReFy[i]).toArray();
-			double[] cutPartialImFy = IntStream.range(0, fnpts).parallel().mapToDouble(i -> partialImFy[i]).toArray();
+			if (highFreq > partialSamplingHz)
+				throw new RuntimeException("f1 must be <= sacSamplingHz");
+			int iStart = (int) (lowFreq / df) - 1;
+			int fnpts = (int) ((highFreq - lowFreq) / df);
+			
+			double[] cutPartialReFy = IntStream.range(0, fnpts).parallel().mapToDouble(i -> partialReFy[i + iStart]).toArray();
+			double[] cutPartialImFy = IntStream.range(0, fnpts).parallel().mapToDouble(i -> partialImFy[i + iStart]).toArray();
 			
 			double[] cutPartialSpcAmp = new double[cutPartialReFy.length];
 			

@@ -167,8 +167,8 @@ public class Profile {
 							"unset key",
 							"set xlabel 'Time aligned on S-wave arrival (s)'",
 							"set ylabel 'Distance (deg)'",
-							"set xtics 10",
-							"set ytics 5",
+							"#set xtics 10",
+							"#set ytics 5",
 							"set size .5,1",
 							"p ");
 					pw_R.print(header);
@@ -358,8 +358,8 @@ public class Profile {
 					pw.println("#set yrange [65:102]");
 					pw.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 					pw.println("set ylabel 'Distance (deg)'");
-					pw.println("set xtics 10");
-					pw.println("set ytics 5");
+					pw.println("#set xtics 10");
+					pw.println("#set ytics 5");
 					pw.println("set size .5,1");
 					pw.print("p ");
 					
@@ -421,8 +421,8 @@ public class Profile {
 					pw.println("#set yrange [68:102]");
 					pw.println("set xlabel 'Time aligned on S-wave arrival (s)'");
 					pw.println("set ylabel 'Distance (deg)'");
-					pw.println("set xtics 10");
-					pw.println("set ytics 5");
+					pw.println("#set xtics 10");
+					pw.println("#set ytics 5");
 					pw.println("set size .5,1");
 					pw.print("p ");
 					

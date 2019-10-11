@@ -288,6 +288,7 @@ public class Dvector {
 		this.weightingType = weigthingType;
 		switch (weigthingType) {
 		case RECIPROCAL:
+		case RECIPROCAL_FREQ:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData());
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 15.) {
@@ -1120,6 +1121,7 @@ public class Dvector {
 			case RECIPROCAL:
 			case RECIPROCAL_COS:
 			case RECIPROCAL_CC:
+			case RECIPROCAL_FREQ:
 				if (info != null) {
 					System.err.println("Using Signal-to-Noise ratio from the data selection information file");
 					weighting[i] = weightingFunction.applyAsDouble(obsIDs[i], synIDs[i]) * info.getSNratio(); //* periodTotalW.get(obsIDs[i].getMinPeriod());
@@ -1167,6 +1169,13 @@ public class Dvector {
 				for (int j = 0; j < ws.length; j++)
 					ws[j] = weighting[i];
 //			}
+			double maxDiff = new ArrayRealVector(obsIDs[i].getData()).subtract(new ArrayRealVector(synIDs[i].getData())).getLInfNorm();
+			if (weightingType.equals(WeightingType.RECIPROCAL_FREQ)) {
+				for (int j = 0; j < ws.length; j++) {
+					ws[j] /= Math.abs(obsIDs[i].getData()[j] - synIDs[i].getData()[j]) + maxDiff/10.;
+				}
+			}
+			
 			weightingVectors[i] = new ArrayRealVector(ws);
 
 //			obsVec[i] = obsVec[i].mapMultiply(weighting[i]);

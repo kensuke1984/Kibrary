@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleBiFunction;
 import java.util.stream.Collectors;
@@ -180,6 +181,14 @@ public class LetMeInvert implements Operation {
 	private boolean checkerboard;
 	
 	private Path checkerboardPerturbationPath;
+	
+	Path spcAmpPath;
+	
+	Path spcAmpIDPath;
+	
+	Path partialSpcPath;
+	
+	Path partialSpcIDPath;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -402,6 +411,16 @@ public class LetMeInvert implements Operation {
 			azimuthIndex = Integer.parseInt(property.getProperty("azimuthIndex"));
 			System.out.println("Using cluster file with clusterIndex=" + clusterIndex + " and azimuthIndex=" + azimuthIndex);
 		}
+		
+		try {
+			partialSpcPath = getPath("partialSpcPath");
+			partialSpcIDPath = getPath("partialSpcIDPath");
+		
+			spcAmpPath = getPath("spcAmpPath");
+			spcAmpIDPath = getPath("spcAmpIDPath");
+		} catch (Exception e) {
+			
+		}
 	}
 
 	/**
@@ -426,10 +445,18 @@ public class LetMeInvert implements Operation {
 			pw.println("#waveformIDPath waveID.dat");
 			pw.println("##Path of a waveform file, must be set");
 			pw.println("#waveformPath waveform.dat");
+			pw.println("##Path of a spcAmpID file");
+			pw.println("#spcAmpIDPath ");
+			pw.println("##Path of a spcAmp file");
+			pw.println("#spcAmpPath ");
 			pw.println("##Path of a partial id file, must be set");
 			pw.println("#partialIDPath partialID.dat");
 			pw.println("##Path of a partial waveform file must be set");
 			pw.println("#partialPath partial.dat");
+			pw.println("##Path of a partial spc id file");
+			pw.println("#partialSpcIDPath ");
+			pw.println("##Path of a partial spc waveform file");
+			pw.println("#partialSpcPath ");
 			pw.println("##Path of a unknown parameter list file, must be set");
 			pw.println("#unknownParameterListPath unknowns.inf");
 			pw.println("##Path of a station information file, must be set");
@@ -558,6 +585,10 @@ public class LetMeInvert implements Operation {
 	private void setEquation() throws IOException {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
 		
+		BasicID[] spcIds = null;
+		if (spcAmpIDPath != null)
+			spcIds = BasicIDFile.readBasicIDandDataFile(spcAmpIDPath, spcAmpPath);
+		
 		if (eventClusterPath != null)
 			clusters = EventCluster.readClusterFile(eventClusterPath);
 		
@@ -671,6 +702,10 @@ public class LetMeInvert implements Operation {
 					return false;
 				}
 				
+				//TODO
+				if (id.getStation().getStationName().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")))
+					return false;
+				
 				return true;
 			};
 		}
@@ -709,6 +744,7 @@ public class LetMeInvert implements Operation {
 		System.err.println("Creating D vector");
 		System.err.println("Going with weghting " + weightingType);
 		Dvector dVector =  null;
+		Dvector dVectorSpc = null;
 		boolean atLeastThreeRecordsPerStation = time_receiver || time_source;
 		double[] weighting = null;
 		List<UnknownParameter> parameterForStructure = new ArrayList<>();
@@ -721,9 +757,12 @@ public class LetMeInvert implements Operation {
 		case RECIPROCAL_PcP:
 		case RECIPROCAL_COS:
 		case RECIPROCAL_CC:
+		case RECIPROCAL_FREQ:
 //			System.out.println(selectionInfo.size());
 //			System.out.println(selectionInfo.get(0).getTimewindow());
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
+			if (spcIds != null)
+				dVectorSpc = new Dvector(spcIds, chooser, WeightingType.RECIPROCAL_FREQ, atLeastThreeRecordsPerStation, selectionInfo);
 			break;
 		case RECIPROCAL_AZED:
 			dVector = new Dvector(ids, chooser, weightingType, atLeastThreeRecordsPerStation, selectionInfo);
@@ -865,6 +904,10 @@ public class LetMeInvert implements Operation {
 			// read all partial IDs
 			PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 			
+			PartialID[] partialSpcIDs = null;
+			if (spcIds != null)
+				partialSpcIDs = PartialIDFile.readPartialIDandDataFile(partialSpcIDPath, partialSpcPath);
+			
 			if (modelCovariance) {
 	//			eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, nUnknowns, lambdaMU, lambdaQ, correlationScaling, verticalMapping);
 				if (inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT) || inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED))
@@ -876,9 +919,20 @@ public class LetMeInvert implements Operation {
 				if (inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT) || inverseMethods.contains(InverseMethodEnum.FAST_CONJUGATE_GRADIENT_DAMPED))
 					eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
 							unknownParameterWeightType, verticalMapping, false);
-				else
-					eq = new ObservationEquation(partialIDs, parameterList, dVector, time_source, time_receiver, combinationType, nUnknowns,
-						unknownParameterWeightType, verticalMapping);
+				else {
+					eq = new ObservationEquation(partialIDs, parameterList, dVector);
+					
+					if (spcIds != null) {
+						System.out.println("Add spc equation");
+						ObservationEquation eqSpc = new ObservationEquation(partialSpcIDs, parameterList, dVectorSpc);
+						double d = eq.getDiagonalOfAtA().getL1Norm();
+						double dSpc = eqSpc.getDiagonalOfAtA().getL1Norm();
+//						d = eq.getAtD().getL1Norm();
+//						dSpc = eqSpc.getAtD().getL1Norm();
+						System.out.println("d/dSpc=" + (d/dSpc));
+						eq = eq.add(eqSpc.scalarMultiply(d / dSpc));
+					}
+				}
 			}
 			
 			if (conditioner)

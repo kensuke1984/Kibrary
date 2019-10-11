@@ -36,6 +36,7 @@ import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.inversion.RandomNoiseMaker;
 import io.github.kensuke1984.kibrary.math.FourierTransform;
 import io.github.kensuke1984.kibrary.math.HilbertTransform;
+import io.github.kensuke1984.kibrary.math.Interpolation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.EventFolder;
@@ -50,6 +51,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import math.Interpolate;
 
 /**
  * 
@@ -183,9 +185,21 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		
 		addNoise = Boolean.parseBoolean(property.getProperty("addNoise"));
+		
+		if (property.containsKey("timewindowRefPath")) {
+			timewindowRefPath = getPath("timewindowRefPath");
+		}
+		lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
+		highFreq = Double.parseDouble(property.getProperty("highFreq"));
 	}
 	
+	double lowFreq;
+	
+	double highFreq;
+	
 	private Random random;
+	
+	Path timewindowRefPath;
 
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths
@@ -210,6 +224,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("#nSample 100");
 			pw.println("##Path of a timewindow information file, must be defined");
 			pw.println("#timewindowPath timewindow.dat");
+			pw.println("##Path of a timewindow information file for a reference phase use to correct spectral amplitude, can be ignored");
+			pw.println("#timewindowRefPath ");
 			pw.println("##Path of a static correction file, ");
 			pw.println("##if any of the corrections are true, the path must be defined");
 			pw.println("#staticCorrectionPath staticCorrection.dat");
@@ -288,6 +304,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private Set<StaticCorrection> mantleCorrectionSet;
 
 	private Set<TimewindowInformation> timewindowInformationSet;
+	
+	private Set<TimewindowInformation> timewindowRefInformationSet;
 
 	private WaveformDataWriter dataWriter;
 	
@@ -379,6 +397,15 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		eventDirs = Utilities.eventFolderSet(obsPath);
 		
 		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath)
+				.stream().filter(tw -> {
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+					if (distance < minDistance)
+						return false;
+					return true;
+				}).collect(Collectors.toSet());
+		
+		if (timewindowRefPath != null)
+			timewindowRefInformationSet = TimewindowInformationFile.read(timewindowRefPath)
 				.stream().filter(tw -> {
 					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
 					if (distance < minDistance)
@@ -606,6 +633,22 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					if (shiftdata)
 						shift += shiftdataValue;
 					
+					TimewindowInformation windowRef = null;
+					int nptsRef = 0;
+					if (timewindowRefInformationSet != null) {
+						List<TimewindowInformation> tmpwindows = timewindowRefInformationSet.stream().filter(tw -> tw.getGlobalCMTID().equals(window.getGlobalCMTID())
+								&& tw.getStation().equals(window.getStation())
+								&& tw.getComponent().equals(window.getComponent())).collect(Collectors.toList());
+						if (tmpwindows.size() != 1) {
+							System.err.println("Reference timewindow does not exist " + window);
+							continue;
+						}
+						else 
+							windowRef = tmpwindows.get(0); 
+						
+						nptsRef = (int) ((windowRef.getEndTime() - windowRef.getStartTime()) * finalSamplingHz);
+					}
+					
 					double[] obsData = null;
 					if (addNoise)
 						obsData = cutDataSacAddNoise(obsSac, startTime - shift, npts);
@@ -619,8 +662,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double[] obsHy = cutHySac(obsSac, startTime - shift, npts);
 					double[] synHy = cutHySac(synSac, startTime, npts);
 					
-					double[] obsSpcAmp = cutSpcAmpSac(obsSac, startTime - shift, npts);
-					double[] synSpcAmp = cutSpcAmpSac(synSac, startTime, npts);
+					Trace obsSpcAmpTrace = cutSpcAmpSac(obsSac, startTime - shift, npts);
+					Trace synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
 					
 					Complex[] obsFy = cutSpcFySac(obsSac, startTime - shift, npts);
 					Complex[] synFy = cutSpcFySac(synSac, startTime, npts);
@@ -630,6 +673,23 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					
 					double[] obsSpcIm = Arrays.stream(obsFy).mapToDouble(Complex::getImaginary).toArray();
 					double[] synSpcIm = Arrays.stream(synFy).mapToDouble(Complex::getImaginary).toArray();
+					
+					double[] obsSpcAmp = null;
+					double[] synSpcAmp = null;
+					
+					Trace refObsSpcAmpTrace = null;
+					Trace refSynSpcAmpTrace = null;
+					if (windowRef != null) {
+						refObsSpcAmpTrace = cutSpcAmpSac(obsSac, windowRef.getStartTime(), nptsRef);
+						refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
+						
+						obsSpcAmp = correctSpcAmp(obsSpcAmpTrace, refObsSpcAmpTrace);
+						synSpcAmp = correctSpcAmp(synSpcAmpTrace, refSynSpcAmpTrace);
+					}
+					else {
+						obsSpcAmp = obsSpcAmpTrace.getY();
+						synSpcAmp = synSpcAmpTrace.getY();
+					}
 					
 					//debug
 //					Path outpath = Paths.get("tmp.dat");
@@ -665,19 +725,16 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					
 					int fnpts = synSpcAmp.length;
 					
-					obsSpcAmp = Arrays.stream(obsSpcAmp).map(d -> d - Math.log(correctionRatio)).toArray();
 					BasicID synSpcAmpID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synSpcAmp);
 					BasicID obsSpcAmpID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsSpcAmp);
 					
-					obsSpcRe = Arrays.stream(obsSpcRe).map(d -> d / correctionRatio).toArray();
 					BasicID synSpcReID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synSpcRe);
 					BasicID obsSpcReID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, obsSpcRe);
 					
-					obsSpcIm = Arrays.stream(obsSpcIm).map(d -> d / correctionRatio).toArray();
 					BasicID synSpcImID = new BasicID(WaveformType.SYN, finalSamplingHz, startTime, fnpts, station, id,
 							component, minPeriod, maxPeriod, includePhases, 0, convolute, synSpcIm);
 					BasicID obsSpcImID = new BasicID(WaveformType.OBS, finalSamplingHz, startTime - shift, fnpts, station, id,
@@ -771,24 +828,43 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveData[i * step + startPoint]).toArray();
 	}
 	
-	private final double fStart = 0.;
-	
-	private final double fEnd = 0.2;
-	
 	private int finalFreqSamplingHz = 8;
 	
-	private double[] cutSpcAmpSac(SACData sac, double startTime, int npts) {
+	private Trace cutSpcAmpSac(SACData sac, double startTime, int npts) {
 		Trace trace = sac.createTrace();
 		int step = (int) (sacSamplingHz / finalSamplingHz);
 		int startPoint = trace.getNearestXIndex(startTime);
 		double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
 		FourierTransform fourier = new FourierTransform(cutY, finalFreqSamplingHz);
 		double df = fourier.getFreqIncrement(sacSamplingHz);
-		if (fEnd > sacSamplingHz)
+		if (highFreq > sacSamplingHz)
 			throw new RuntimeException("f1 must be <= sacSamplingHz");
-		int fnpts = (int) ((fEnd - fStart) / df);
+		int iStart = (int) (lowFreq / df) - 1;
+		int fnpts = (int) ((highFreq - lowFreq) / df);
 		double[] spcAmp = fourier.getLogA();
-		return IntStream.range(0, fnpts).parallel().mapToDouble(i -> spcAmp[i]).toArray();
+		return new Trace(IntStream.range(0, fnpts).mapToDouble(i -> (i + iStart) * df).toArray(),
+			IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
+	}
+	
+	private double[] correctSpcAmp(Trace spcAmp, Trace refSpcAmp) {
+		double[] spcAmpCorr = new double[spcAmp.getLength()];
+		for (int i = 0; i < spcAmp.getLength(); i++) {
+			double x = spcAmp.getXAt(i);
+			int j0 = refSpcAmp.getNearestXIndex(x);
+			int j1;
+			if (j0 == 0) {
+				j1 = 1;
+			}
+			else if (j0 == refSpcAmp.getLength() - 1) {
+				j1 = refSpcAmp.getLength() - 2;
+			}
+			else
+				j1 = refSpcAmp.getXAt(j0) < x ? j0 + 1 : j0 - 1;
+			double refSpcAmpAti = Interpolation.linear(x, new double[] {refSpcAmp.getXAt(j0), refSpcAmp.getXAt(j1)}
+				, new double[] {refSpcAmp.getYAt(j0), refSpcAmp.getYAt(j1)});
+			spcAmpCorr[i] = spcAmp.getYAt(i) - refSpcAmpAti;
+		}
+		return spcAmpCorr;
 	}
 	
 	private Complex[] cutSpcFySac(SACData sac, double startTime, int npts) {
@@ -798,11 +874,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
 		FourierTransform fourier = new FourierTransform(cutY, finalFreqSamplingHz);
 		double df = fourier.getFreqIncrement(sacSamplingHz);
-		if (fEnd > sacSamplingHz)
+		if (highFreq > sacSamplingHz)
 			throw new RuntimeException("f1 must be <= sacSamplingHz");
-		int fnpts = (int) ((fEnd - fStart) / df);
+		int iStart = (int) (lowFreq / df) - 1;
+		int fnpts = (int) ((highFreq - lowFreq) / df);
 		Complex[] Fy = fourier.getFy();
-		return IntStream.range(0, fnpts).parallel().mapToObj(i -> Fy[i])
+		return IntStream.range(0, fnpts).parallel().mapToObj(i -> Fy[i + iStart])
 				.collect(Collectors.toList()).toArray(new Complex[0]);
 	}
 	

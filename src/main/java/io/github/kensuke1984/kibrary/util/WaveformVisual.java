@@ -42,7 +42,7 @@ public class WaveformVisual {
 		
 		double dt = 1./ ids[0].getSamplingHz();
 		
-		int dAz = 30;
+		int dAz = 5;
 		int nAz = 360 / dAz;
 		
 		int dEd = 5;

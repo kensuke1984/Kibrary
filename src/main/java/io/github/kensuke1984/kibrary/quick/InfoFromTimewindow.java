@@ -56,7 +56,7 @@ public class InfoFromTimewindow {
 			double depth = 6371 - id.getEvent().getCmtLocation().getR();
 			double mw = id.getEvent().getCmt().getMw();
 			double duration = id.getEvent().getHalfDuration() * 2;
-			Files.write(eventFile, (id + " " + depth + " " + mw + " " + duration + "\n").getBytes(), StandardOpenOption.APPEND);
+			Files.write(eventFile, (id + " " + id.getEvent().getCmtLocation() + " " + mw + " " + duration + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}
 

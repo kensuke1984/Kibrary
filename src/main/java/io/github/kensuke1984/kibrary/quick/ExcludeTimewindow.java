@@ -119,10 +119,10 @@ public class ExcludeTimewindow {
 //								return false;
 //							if (tw.getComponent().equals(SACComponent.R))
 //								return false;
-							if (distance < 70)
-								return false;
-//							if (distance < 65)
+//							if (distance < 70)
 //								return false;
+							if (distance < 65)
+								return false;
 							else 
 								return true;
 						})
@@ -131,33 +131,33 @@ public class ExcludeTimewindow {
 //						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201306081225A")) && tw.getStation().getStationName().equals("E39A")))
 //						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201405140338A")) && tw.getStation().getStationName().equals("D46A")))
 //						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201405140338A")) && tw.getStation().getStationName().equals("Y12C")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("V49A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200911141944A")) && tw.getStation().getStationName().equals("X22A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("121A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("Y22E")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("Y22D")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201005241618A")) && tw.getStation().getStationName().equals("HUMO")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201005241618A")) && tw.getStation().getStationName().equals("FACU")))
-						
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("I43A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("H43A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("I42A")))
-						
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("K22A")))
-						
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K39A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J40A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J41A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K40A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J39A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K38A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L38A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L37A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L36A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("M36A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("T21A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("U20A")))
-						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("TUC")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("V49A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200911141944A")) && tw.getStation().getStationName().equals("X22A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("121A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("Y22E")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("Y22D")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201005241618A")) && tw.getStation().getStationName().equals("HUMO")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201005241618A")) && tw.getStation().getStationName().equals("FACU")))
+//						
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("I43A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("H43A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("I42A")))
+//						
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201206020752A")) && tw.getStation().getStationName().equals("K22A")))
+//						
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K39A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J40A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J41A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K40A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("J39A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("K38A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L38A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L37A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("L36A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("M36A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("T21A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("U20A")))
+//						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("TUC")))
 						
 						
 //						.filter(tw -> tw.getStation().getStationName().equals("L41A"))
@@ -216,9 +216,9 @@ public class ExcludeTimewindow {
 //					.collect(Collectors.toSet());
 //				TimewindowInformationFile.write(newTimewindows2, newTimewindowFile);
 //				
-				newTimewindows = timewindows.stream().limit(100).collect(Collectors.toSet());
-				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID()
-					.equals(new GlobalCMTID("200707211327A"))).collect(Collectors.toSet());
+//				newTimewindows = timewindows.stream().limit(1).collect(Collectors.toSet());
+//				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID()
+//					.equals(new GlobalCMTID("201205280507A"))).collect(Collectors.toSet());
 				
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 //				

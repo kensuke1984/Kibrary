@@ -18,8 +18,8 @@ class BasicIDMerge {
 	public static void main(String[] args) throws IOException, IllegalArgumentException {
 		Path workingDir = Paths.get(".");
 		Path src0ID = Paths.get(args[0]);
-		Path src1ID = Paths.get(args[1]);
-		Path src0Data = Paths.get(args[2]);
+		Path src0Data = Paths.get(args[1]);
+		Path src1ID = Paths.get(args[2]);
 		Path src1Data = Paths.get(args[3]);
 		BasicID[] src0 = BasicIDFile.readBasicIDandDataFile(src0ID, src0Data);
 		BasicID[] src1 = BasicIDFile.readBasicIDandDataFile(src1ID, src1Data);

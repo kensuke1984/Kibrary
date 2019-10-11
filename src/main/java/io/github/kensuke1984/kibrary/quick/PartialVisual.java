@@ -36,8 +36,8 @@ public class PartialVisual {
 		for (PartialID partial : partials) {
 //			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && !partial.getStation().getStationName().equals("P46A"))
 //				continue;
-			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211327A")))
-				continue;
+//			if (!partial.getGlobalCMTID().equals(new GlobalCMTID("200707211327A")))
+//				continue;
 			
 			Location loc = partial.getPerturbationLocation();
 //			Path outpath = Paths.get(String.format("%.1f-%.1f/%s.%s.%s.%.0f.%d.txt", partial.getMinPeriod(), partial.getMaxPeriod()

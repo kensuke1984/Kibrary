@@ -218,7 +218,9 @@ public final class TimewindowInformationFile {
 			byte[][] bytes = new byte[nwindow][oneWindowByte];
 			for (int i = 0; i < nwindow; i++)
 				dis.read(bytes[i]);
-			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs, phases))
+//			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).parallel().map(b -> create(b, stations, cmtIDs, phases))
+//					.collect(Collectors.toSet());
+			Set<TimewindowInformation> infoSet = Arrays.stream(bytes).map(b -> create(b, stations, cmtIDs, phases))
 					.collect(Collectors.toSet());
 			System.err.println(
 					infoSet.size() + " timewindow data were found in " + Utilities.toTimeString(System.nanoTime() - t));

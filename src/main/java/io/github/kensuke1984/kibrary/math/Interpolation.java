@@ -17,4 +17,7 @@ public class Interpolation {
 			return yi[0] * phi0 + yi[1] * phi1 + yi[2] * phi2;
 		}
 	 
+	 public static double linear(double x, double[] xi, double[] yi) {
+		 return yi[0] + (yi[1] - yi[0]) * (x - xi[0]) / (xi[1] - xi[0]);
+	 }
 }

@@ -70,6 +70,10 @@ public class ObservationEquation {
 		this.cm = null;
 	}
 	
+	public ObservationEquation(PartialID[] partialIDs, List<UnknownParameter> parameterList, Dvector dVector) {
+		this(partialIDs, parameterList, dVector, false, false, null, null, null, null);
+	}
+	
 	/**
 	 * @param partialIDs
 	 *            for equation must contain waveform
@@ -140,6 +144,20 @@ public class ObservationEquation {
 			System.out.println("AtA mean trace = " + (ata.getTrace() / ata.getColumnDimension()));
 			System.out.println("Atd mean norm = " + (atd.getNorm() / ata.getColumnDimension()));
 		}
+	}
+	
+	public ObservationEquation add(ObservationEquation equation) {
+		RealMatrix atatmp = ata.add(equation.getAtA());
+		RealVector atdtmp = atd.add(equation.getAtD());
+		
+		return new ObservationEquation(atatmp, atdtmp, parameterList, dVector, a);
+	}
+	
+	public ObservationEquation scalarMultiply(double d) {
+		RealMatrix atatmp = ata.scalarMultiply(d);
+		RealVector atdtmp = atd.mapMultiply(d);
+		ObservationEquation eq = new ObservationEquation(atatmp, atdtmp, parameterList, dVector, a);
+		return eq;
 	}
 	
 	private RealVector m;
@@ -430,6 +448,16 @@ public class ObservationEquation {
 	
 		this.ata = ata;
 		this.atd = atd;
+	}
+	
+	public ObservationEquation(RealMatrix ata, RealVector atd, List<UnknownParameter> parameterList, Dvector dVector, Matrix a) {
+		this.dVector = dVector;
+		this.parameterList = parameterList;
+		this.originalParameterList = parameterList;
+	
+		this.ata = ata;
+		this.atd = atd;
+		this.a = a;
 	}
 	
 	private List<UnknownParameter> originalParameterList;
