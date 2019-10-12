@@ -35,20 +35,21 @@ public class MakeWindowScS {
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0_it1/filtered_stf_12.5-200s");
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s5/filtered_stf_12.5-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_nostf_6-200s");
-		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/synthetic_cl3s0_it1/filtered_nostf_8-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/synthetic_cl3s0_it1/filtered_nostf_8-200s");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticLVZ_CA/filtered_stf_8-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster4/synthetic_sw_it1/filtered_nostf_12.5-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/synthetic_cl4s0_it1/filtered_nostf_8-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/synthetic_cl3s0_it1/filtered_nostf_6-200s");
 //		Path workdir = Paths.get(".");
 		
-		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_65deg.dat");
+		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_60deg.dat");
 //		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_70deg.dat");
 //		Path timewindowPath = workdir.resolve("timewindow_SScS_60deg.dat");
 		Set<TimewindowInformation> timewindowsForSelection = TimewindowInformationFile.read(timewindowPath); 
 //		timewindowsForSelection = null;
 		
-		boolean convolved = false;
+		boolean convolved = true;
 		
 		boolean extendedDistanceRange = true;
 		
@@ -96,14 +97,14 @@ public class MakeWindowScS {
 			obsNames.removeIf(sfn -> !sfn.getComponent().equals(SACComponent.T));
 			
 			for (SACFileName obsName : obsNames) {
-				SACHeaderData obsHeader = obsName.readHeader();
-				
 				if (timewindowsForSelection != null) {
-				if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsHeader.getGlobalCMTID())
-						&& tw.getStation().equals(obsHeader.getStation()) && tw.getComponent().equals(obsName.getComponent()))
-						.count() == 0)
-					continue;
+					if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsName.getGlobalCMTID())
+							&& tw.getStation().getStationName().equals(obsName.getStationName()) && tw.getComponent().equals(obsName.getComponent()))
+							.count() == 0)
+						continue;
 				}
+				
+				SACHeaderData obsHeader = obsName.readHeader();
 				
 				double distance = obsHeader.getValue(SACHeaderEnum.GCARC);
 				timetool.calculate(distance);

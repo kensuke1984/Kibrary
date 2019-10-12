@@ -126,8 +126,8 @@ public class DataRequestor implements Operation {
 			property.setProperty("upperLatitude", "90");
 		if (!property.containsKey("lowerLongitude"))
 			property.setProperty("lowerLongitude", "-180");
-		if (!property.containsKey("upperLonitude"))
-			property.setProperty("upperLonitude", "180");
+		if (!property.containsKey("upperLongitude"))
+			property.setProperty("upperLongitude", "180");
 		if (!property.containsKey("lowerMw"))
 			property.setProperty("lowerMw", "5.5");
 		if (!property.containsKey("upperMw"))

@@ -134,6 +134,36 @@ public class Trace {
 
         return compare.length < base.length ? bestShift : -bestShift;
     }
+    
+    public static int findBestShiftParallel(double[] base, double[] compare) {
+        double[] shorter;
+        double[] longer;
+        if (base.length == compare.length) return 0;
+        if (base.length < compare.length) {
+            shorter = base;
+            longer = compare;
+        } else {
+            shorter = compare;
+            longer = base;
+        }
+        int gap = longer.length - shorter.length;
+        int bestShift = 0;
+        double bestCorrelation = 0;
+//        IntStream.range(0, gap + 1).parallel()
+        for (int shift = 0; shift < gap + 1; shift++) {
+            double[] partY = new double[shorter.length];
+            System.arraycopy(longer, shift, partY, 0, shorter.length);
+            RealVector partYVec = new ArrayRealVector(partY);
+            RealVector shorterVec = new ArrayRealVector(shorter);
+            double correlation = partYVec.dotProduct(shorterVec) / partYVec.getNorm() / shorterVec.getNorm();
+            if (bestCorrelation < correlation) {
+                bestCorrelation = correlation;
+                bestShift = shift;
+            }
+        }
+
+        return compare.length < base.length ? bestShift : -bestShift;
+    }
 
     /**
      * @param i index for <i>x</i> [0, length -1]

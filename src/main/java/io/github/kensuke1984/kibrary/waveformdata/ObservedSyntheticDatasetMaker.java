@@ -52,6 +52,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import math.Interpolate;
+import ucar.nc2.stream.NcStreamProto.Range;
 
 /**
  * 
@@ -349,7 +350,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				if (!exists)
 					ranges.add(range);
 			}
-			periodRanges = ranges.toArray(new double[0][]);
+			if (ranges.size() == 1 && ranges.get(0)[0] == -12345 && ranges.get(0)[1] == -12345)
+				periodRanges = new double[][] {{0, 0}};
+			else
+				periodRanges = ranges.toArray(new double[0][]);
+			System.out.println(periodRanges[0][0] + " " + periodRanges[0][1]);
 		} catch (Exception e) {
 			throw new RuntimeException("Error in reading period ranges from SAC files.");
 		}

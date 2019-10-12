@@ -703,7 +703,9 @@ public class LetMeInvert implements Operation {
 				}
 				
 				//TODO
-				if (id.getStation().getStationName().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")))
+				if (id.getStation().getStationName().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getStation().getStationName().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
+				)
 					return false;
 				
 				return true;
@@ -930,7 +932,7 @@ public class LetMeInvert implements Operation {
 //						d = eq.getAtD().getL1Norm();
 //						dSpc = eqSpc.getAtD().getL1Norm();
 						System.out.println("d/dSpc=" + (d/dSpc));
-						eq = eq.add(eqSpc.scalarMultiply(d / dSpc));
+						eq = eq.add(eqSpc.scalarMultiply(3*d / dSpc));
 					}
 				}
 			}
