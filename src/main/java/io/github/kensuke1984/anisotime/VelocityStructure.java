@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.9.1
+ * @version 0.0.9.2
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -197,7 +197,17 @@ public interface VelocityStructure extends Serializable {
     double earthRadius();
 
     /**
-     * @return Array of radii [km] for additional boundaries.
+     * TODO
+     * When layered structures have boundaries which are in particular
+     * not related to CMB, ICB and so on.., the values from this method may be useful
+     * for generating a mesh ({@link ComputationalMesh}. Even when the input structure
+     * is not layered but you want to arbitrary add layers. (e.g. the boundaries of MTZ)
+     * @return array of radii [km]. Values of the boundaries for layers.
+     * It is NOT the depth but radius from the center.
+     * The values should be in order (small to large values) and
+     * later changes to the array should not affect the velocity structure,
+     * in other words, changes in the returning array must not result in changes
+     * of their original values.
      */
     default double[] additionalBoundaries() {
         return new double[]{earthRadius() - 660, earthRadius() - 410};
