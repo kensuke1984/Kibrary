@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi
- * @version 0.5.0.2b
+ * @version 0.5.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2018/1/11
+     * 2019/10/23
      */
-    private static final long serialVersionUID = -2975226939956748423L;
+    private static final long serialVersionUID = 2542440168279585827L;
 
 
     private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
@@ -339,13 +339,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             if (Double.isNaN(turningRMap.get(pp))) return;
             int index = MESH.getNextIndexOf(turningRMap.get(pp), pp.whichPartition());
             RealVector mesh = MESH.getMesh(pp.whichPartition());
-            double boundary = mesh.getEntry(index);
+            double boundary = turningRMap.get(pp);
             while (++index < mesh.getDimension()) {
                 double next = mesh.getEntry(index);
                 double q = WOODHOUSE.computeQT(pp, RAY_PARAMETER, boundary);
                 double qNext = WOODHOUSE.computeQT(pp, RAY_PARAMETER, next);
                 double ratio = q < qNext ? q / qNext : qNext / q;
-                if (MESH.INTEGRAL_THRESHOLD < ratio) break;
+                if (MESH.INTEGRAL_THRESHOLD < ratio && ComputationalMesh.eps < (next - boundary)) break;
                 boundary = next;
             }
             jeffreysBoundaryMap.put(pp, boundary);
@@ -803,6 +803,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param pp   to compute &Delta; for
      * @param rEnd [km]
      * @return &Delta; for radius range between turningR and rEnd.
+     * rEnd is in many cases jeffreys boundary.
      */
     private double jeffreysDelta(PhasePart pp, double rEnd) {
         double turningR = turningRMap.get(pp);
@@ -851,7 +852,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * This method computes &Delta; by precomputed values. The startR and endR
+     * This method computes &Delta; with precomputed values. The startR and endR
      * must be in the section (inner-core, outer-core or mantle). If the endR
      *
      * @param pp     to compute
@@ -880,8 +881,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
         int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
+
         // the case where the integral interval is inside the jeffrey interval TODO
         if (turningR < endR && endR <= jeffreysBoundary) return jeffreysDelta(pp, endR) - jeffreysDelta(pp, startR);
+
         // the case where integral interval is shorter than mesh grid
         if (endIndexForMemory < firstIndexForMemory) {
             if (turningR < startR && startR <= jeffreysBoundary) {
@@ -892,9 +895,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             }
             return simpsonDelta(pp, startR, endR);
         }
+
         double nextREnd = radii.getEntry(endIndexForMemory);
         //outside the nextREnd, if it is inside the jeffreys region, outside the region.
-        double delta = simpsonDelta(pp, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
+        double delta = simpsonDelta(pp, Math.max(nextREnd, jeffreysBoundary), endR);
         if (dThetaMap != null) {
             double[] theta = dThetaMap.get(pp);
             for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
@@ -905,6 +909,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 delta += simpsonDelta(pp, radii.getEntry(i), radii.getEntry(i + 1));
             }
         }
+
         //the case where startR is inside the jeffreys interval.
         if (turningR <= startR && startR < jeffreysBoundary) {
             double jeffreys = jeffreysDelta - jeffreysDelta(pp, startR);
@@ -958,7 +963,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         }
         double nextREnd = radii.getEntry(endIndexForMemory);
         //outside the nextREnd, if it is inside the jeffreys region, outside the region.
-        double time = simpsonT(pp, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
+        double time = simpsonT(pp, Math.max(nextREnd, jeffreysBoundary), endR);
         if (dTMap != null) {
             double[] t = dTMap.get(pp);
             for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
