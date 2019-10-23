@@ -18,7 +18,7 @@ import java.util.stream.DoubleStream;
  * TODO Automesh by QDelta ?
  *
  * @author Kensuke Konishi
- * @version 0.0.3
+ * @version 0.0.3.2
  */
 public class ComputationalMesh implements Serializable {
 
@@ -27,10 +27,12 @@ public class ComputationalMesh implements Serializable {
      * the boundaries by eps. The value is 1e-7
      */
     static final double eps = 1e-7;
-//    /**
-//     * 2017/4/17 TODO
-//     */
-//    private static final long serialVersionUID = 6288675010169012591L;
+
+    /**
+     * 2019/10/23
+     */
+    private static final long serialVersionUID = -2489108180471761917L;
+
     /**
      * Threshold for the integration. This value (ratio) must be positive and
      * less than 1. If it is a, the difference between two Q<sub>T</sub> at
@@ -71,7 +73,7 @@ public class ComputationalMesh implements Serializable {
      * @param mantleInterval    [km] interval in the mantle
      */
     public ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
-                      double mantleInterval, double integralThreshold) {
+                             double mantleInterval, double integralThreshold) {
         if (innerCoreInterval < eps || outerCoreInterval < eps || mantleInterval < eps)
             throw new RuntimeException("Intervals are too small.");
         if (1 <= integralThreshold || integralThreshold <= 0)
@@ -81,7 +83,38 @@ public class ComputationalMesh implements Serializable {
     }
 
     /**
+     * @param i        index of the mesh to be refined
+     * @param n        the i th mesh is divided into n parts. (2 &lt; n)
+     * @param original arrays to be remeshed
+     * @return remeshed array
+     */
+    private static double[] remesh(int i, int n, double[] original) {
+        if (original.length < 2 || i < 0 || n < 2 || original.length - 2 < i)
+            throw new RuntimeException("Something wrong.");
+        double[] remeshed = new double[original.length + n - 1];
+        System.arraycopy(original, 0, remeshed, 0, i + 1);
+        System.arraycopy(original, i + 1, remeshed, i + n, original.length - i - 1);
+        double delta = (original[i + 1] - original[i]) / n;
+        for (int j = 1; j < n; j++)
+            remeshed[i + j] = original[i] + delta * j;
+        return remeshed;
+    }
+
+    /**
+     * The first and last parts are divided by 1/10 of the interval.
+     *
+     * @param points original
+     * @return remeshed array
+     */
+    private static double[] considerEdges(double[] points) {
+        if (points.length < 2) throw new RuntimeException();
+        double[] remeshed = remesh(0, 10, points);
+        return points.length == 2 ? remeshed : remesh(remeshed.length - 2, 10, remeshed);
+    }
+
+    /**
      * Interval of integration startR to endR is divided by deltaR
+     * start and end values are shifted by eps/3.
      *
      * @param startR [km]
      * @param endR   [km]
@@ -93,8 +126,8 @@ public class ComputationalMesh implements Serializable {
         double[] x = new double[n + 1];
         for (int i = 1; i < n; i++)
             x[i] = startR + i * deltaR;
-        x[0] = startR + eps;
-        x[n] = endR - eps;
+        x[0] = startR + eps / 3;
+        x[n] = endR - eps / 3;
         return x;
     }
 
@@ -119,26 +152,39 @@ public class ComputationalMesh implements Serializable {
         }
     }
 
-    @Deprecated
+
+    /**
+     * Basically, creates a mesh with the input intervals, except boundaries in the structure.
+     * Around the boundary, the intervals are to be 10 % of their originals.
+     *
+     * @param structure         velocity structure
+     * @param innerCoreInterval [km] interval of the mesh in the inner-core
+     * @param outerCoreInterval [km] interval of the mesh in the outer-core
+     * @param mantleInterval    [km] interval of the mesh in the mantle
+     */
     private void createSimpleMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                                   double mantleInterval) {
-        double[] mantleBoundaries = DoubleStream.concat(DoubleStream.of(structure.coreMantleBoundary(), structure.earthRadius()),
-                Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.coreMantleBoundary() < b)).sorted().toArray();
-        double[] outerCoreBoundaries = DoubleStream.concat(DoubleStream.of(structure.coreMantleBoundary(), structure.innerCoreBoundary()),
-                Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.innerCoreBoundary() < b && b < structure.coreMantleBoundary()))
+        double[] mantleBoundaries = DoubleStream
+                .concat(DoubleStream.of(structure.coreMantleBoundary(), structure.earthRadius()),
+                        Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.coreMantleBoundary() < b))
+                .sorted().toArray();
+        double[] outerCoreBoundaries = DoubleStream
+                .concat(DoubleStream.of(structure.coreMantleBoundary(), structure.innerCoreBoundary()),
+                        Arrays.stream(structure.additionalBoundaries())
+                                .filter(b -> structure.innerCoreBoundary() < b && b < structure.coreMantleBoundary()))
                 .sorted().toArray();
         double[] innerCoreBoundaries = DoubleStream.concat(DoubleStream.of(0, structure.innerCoreBoundary()),
                 Arrays.stream(structure.additionalBoundaries()).filter(b -> b < structure.innerCoreBoundary())).sorted()
                 .toArray();
         double[][] mantles = new double[mantleBoundaries.length - 1][];
         for (int i = 0; i < mantles.length; i++)
-            mantles[i] = point(mantleBoundaries[i], mantleBoundaries[i + 1], mantleInterval);
+            mantles[i] = considerEdges(point(mantleBoundaries[i], mantleBoundaries[i + 1], mantleInterval));
         double[][] outerCores = new double[outerCoreBoundaries.length - 1][];
         for (int i = 0; i < outerCores.length; i++)
-            outerCores[i] = point(outerCoreBoundaries[i], outerCoreBoundaries[i + 1], outerCoreInterval);
+            outerCores[i] = considerEdges(point(outerCoreBoundaries[i], outerCoreBoundaries[i + 1], outerCoreInterval));
         double[][] innerCores = new double[innerCoreBoundaries.length - 1][];
         for (int i = 0; i < innerCores.length; i++)
-            innerCores[i] = point(innerCoreBoundaries[i], innerCoreBoundaries[i + 1], innerCoreInterval);
+            innerCores[i] = considerEdges(point(innerCoreBoundaries[i], innerCoreBoundaries[i + 1], innerCoreInterval));
 
         mantleMesh = RealVector.unmodifiableRealVector(new ArrayRealVector(
                 Arrays.stream(mantles).flatMapToDouble(Arrays::stream).distinct().sorted().toArray(), false));
@@ -187,8 +233,7 @@ public class ComputationalMesh implements Serializable {
      * @param r         [km] must be [min, max(+{@link #eps})] of the partition.
      * @param partition in which the r is found
      * @return index of maximum r<sub>i</sub> (r<sub>i</sub> &le; r) in the
-     * mesh. If the mesh includes r, it returns the index of r
-     * <sub>i</sub> (= r).<br>
+     * mesh. If the mesh includes r, it returns the index of r<sub>i</sub> (= r).<br>
      * Note that the return value is the index in certain partition
      * mesh.
      */
