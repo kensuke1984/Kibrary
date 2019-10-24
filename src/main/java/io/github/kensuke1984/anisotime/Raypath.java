@@ -898,7 +898,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
         double nextREnd = radii.getEntry(endIndexForMemory);
         //outside the nextREnd, if it is inside the jeffreys region, outside the region.
-        double delta = simpsonDelta(pp, Math.max(nextREnd, jeffreysBoundary), endR);
+        double tmpStartR = Double.isNaN(jeffreysBoundary) ? nextREnd : Math.max(nextREnd, jeffreysBoundary);
+        double delta = simpsonDelta(pp, tmpStartR, endR);
         if (dThetaMap != null) {
             double[] theta = dThetaMap.get(pp);
             for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
@@ -963,7 +964,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         }
         double nextREnd = radii.getEntry(endIndexForMemory);
         //outside the nextREnd, if it is inside the jeffreys region, outside the region.
-        double time = simpsonT(pp, Math.max(nextREnd, jeffreysBoundary), endR);
+        double tmpStartR = Double.isNaN(jeffreysBoundary) ? nextREnd : Math.max(nextREnd, jeffreysBoundary);
+        double time = simpsonT(pp, tmpStartR, endR);
         if (dTMap != null) {
             double[] t = dTMap.get(pp);
             for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
