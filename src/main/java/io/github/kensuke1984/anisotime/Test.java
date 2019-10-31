@@ -12,5 +12,18 @@ public class Test {
 		double t = raypath.computeT(6371., Phase.S);
 		System.out.println(rayParameterDegree + " " + delta + " " + t);
 	}
+	
+	public static void problem1() {
+		double eventR = 6371. - 0;
+		ComputationalMesh mesh = ComputationalMesh.simple(VelocityStructure.iprem());
+		for (int i = 0; i < 600; i++) {
+//			double rayParameter = Math.toDegrees(15.68 - i*0.00016);
+			double rayParameter = Math.toDegrees(8.74 - i *0.0001);
+			Raypath raypath = new Raypath(rayParameter, VelocityStructure.iprem(), mesh);
+			raypath.compute();
+			System.out.println(Math.toRadians(rayParameter) + " " + Math.toDegrees(raypath.computeDelta(eventR, Phase.S))+ " " + (raypath.getTurningR(PhasePart.SH))
+					+ " ");
+		}
+	}
 
 }
