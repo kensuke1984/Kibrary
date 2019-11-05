@@ -18,7 +18,7 @@ import java.util.stream.DoubleStream;
  * TODO Automesh by QDelta ?
  *
  * @author Kensuke Konishi
- * @version 0.0.3.2
+ * @version 0.0.3.2.1
  */
 public class ComputationalMesh implements Serializable {
 
@@ -26,7 +26,7 @@ public class ComputationalMesh implements Serializable {
      * when integrate values on boundaries, use the value at point very close to
      * the boundaries by eps. The value is 1e-7
      */
-    static final double eps = 1e-7;
+    static final double EPS = 1e-7;
 
     /**
      * 2019/10/23
@@ -74,7 +74,7 @@ public class ComputationalMesh implements Serializable {
      */
     public ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                              double mantleInterval, double integralThreshold) {
-        if (innerCoreInterval < eps || outerCoreInterval < eps || mantleInterval < eps)
+        if (innerCoreInterval < EPS || outerCoreInterval < EPS || mantleInterval < EPS)
             throw new RuntimeException("Intervals are too small.");
         if (1 <= integralThreshold || integralThreshold <= 0)
             throw new RuntimeException("Integral threshold must be (0,1). " + integralThreshold);
@@ -126,8 +126,8 @@ public class ComputationalMesh implements Serializable {
         double[] x = new double[n + 1];
         for (int i = 1; i < n; i++)
             x[i] = startR + i * deltaR;
-        x[0] = startR + eps / 3;
-        x[n] = endR - eps / 3;
+        x[0] = startR + EPS / 3;
+        x[n] = endR - EPS / 3;
         return x;
     }
 
@@ -230,7 +230,7 @@ public class ComputationalMesh implements Serializable {
     }
 
     /**
-     * @param r         [km] must be [min, max(+{@link #eps})] of the partition.
+     * @param r         [km] must be [min, max(+{@link #EPS})] of the partition.
      * @param partition in which the r is found
      * @return index of maximum r<sub>i</sub> (r<sub>i</sub> &le; r) in the
      * mesh. If the mesh includes r, it returns the index of r<sub>i</sub> (= r).<br>
@@ -239,7 +239,7 @@ public class ComputationalMesh implements Serializable {
      */
     int getNextIndexOf(double r, Partition partition) {
         RealVector mesh = getMesh(partition);
-        if (r < mesh.getEntry(0) - eps || mesh.getEntry(mesh.getDimension() - 1) + eps < r)
+        if (r < mesh.getEntry(0) - EPS || mesh.getEntry(mesh.getDimension() - 1) + EPS < r)
             throw new IllegalArgumentException("Input " + r + " is out of " + partition);
         if (r <= mesh.getEntry(0)) return 0;
         for (int i = 1; i < mesh.getDimension(); i++)
