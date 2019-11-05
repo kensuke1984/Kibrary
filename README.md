@@ -22,10 +22,10 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
  % brew cask install java
 ```
 
-Binary release of Kibrary is prepared. [here](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=0)
+Download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1).
+If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
 
-If you would like to have source files, the process written above is a way.
-If the environment is fine, execute [this](https://kensuke1984.github.io/bin/install.sh).
+If you would like to have source files, execute [this](https://kensuke1984.github.io/bin/install.sh).
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
  % curl -s https://kensuke1984.github.io/bin/install.sh | /bin/sh -s
@@ -39,7 +39,9 @@ It installs Kibrary under HOME directory. In order to setup environment like PAT
  % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
 ```  
 
-If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), the download may fail. In that case, you must update it, otherwise you can download the binary release of Kibrary. 
+If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
+the download may fail. In that case, you must update it, 
+otherwise you can download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1). 
 
 
 ## Build by yourself
@@ -63,12 +65,12 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 ## Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
-Last updated Jul 26, 2016
+Last updated Nov 5, 2019
 
 
 [release-image]:https://img.shields.io/badge/release-Pixie-pink.svg
 [release]:https://en.wikipedia.org/wiki/Pixie
-[version-image]:https://img.shields.io/badge/version-0.4.4-yellow.svg
+[version-image]:https://img.shields.io/badge/version-0.4.5-yellow.svg
 
 [alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: https://www.apache.org/licenses/LICENSE-2.0
