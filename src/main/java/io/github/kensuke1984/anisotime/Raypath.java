@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.1.1b
+ * @version 0.5.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -101,12 +101,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private transient Map<PhasePart, Double> turningRMap;
 
     /**
-     * &Delta; of phase parts. Each part is only half way, not including election, bouncing.
+     * &Delta; [rad] of phase parts. Each part is only half way, not including election, bouncing.
      */
     private transient Map<PhasePart, Double> deltaMap;
 
     /**
-     * T of phase parts
+     * T [s] (travel time) of phase parts
      */
     private transient Map<PhasePart, Double> timeMap;
 
@@ -282,7 +282,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param stream to be read
      * @throws ClassNotFoundException if happens
      * @throws IOException            if any
-     * @serialData &Delta; and T
+     * @serialData &Delta; and T (travel time)
      */
     private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
         stream.defaultReadObject();
@@ -319,7 +319,74 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * TODO Range is from the turning point to a radius which is good enough for
+     * @param rstart [km]
+     * @param rend   [km]
+     * @return if [rstart, rend] contains any boundaries in VelocityStructure.
+     */
+    private double[] boundariesIn(double rstart, double rend) {
+        return Arrays.stream(getStructure().additionalBoundaries()).filter(r -> rstart <= r && r <= rend).toArray();
+    }
+
+    /**
+     * @param pp     target phase
+     * @param rStart [km]
+     * @param rEnd   [km]
+     * @return the number of layers to have enough mesh where any neighbors are similar (according to {@link ComputationalMesh#EPS})
+     */
+    private int computeMeshInRange(PhasePart pp, double rStart, double rEnd) {
+        int n = 1;
+        for (; ; ++n) {
+            double deltaR = (rEnd - rStart) / n;
+            boolean closeEnough = true;
+            for (int i = 0; i < n && closeEnough; i++) {
+                double r0 = rStart + deltaR * i;
+                double r1 = rStart + deltaR * (i + 1);
+                double q0 = WOODHOUSE.computeQT(pp, RAY_PARAMETER, r0);
+                double q1 = WOODHOUSE.computeQT(pp, RAY_PARAMETER, r1);
+                double ratio = q0 < q1 ? q0 / q1 : q1 / q0;
+                closeEnough = MESH.INTEGRAL_THRESHOLD < ratio;
+            }
+            if (closeEnough) break;
+        }
+        return n;
+    }
+
+    /**
+     * @param pp     phase part for computation
+     * @param rstart [km]
+     * @param rend   [km]
+     * @return [rad] &Delta; for startR &le; r &le; endR
+     */
+    private double simpsonDeltaInJeffreysRange(PhasePart pp, double rstart, double rend) {
+        if (rend <= rstart || rstart < turningRMap.get(pp) || jeffreysBoundaryMap.get(pp) < rend)
+            throw new IllegalArgumentException("Illegal usage: (rstart, rend)=(" + rstart + ", " + rend + ").");
+        int n = computeMeshInRange(pp, rstart, rend);
+        double sum = 0;
+        double deltaR = (rend - rstart) / n;
+        for (int i = 0; i < n; i++)
+            sum += simpsonDelta(pp, rstart + i * deltaR, rstart + (i + 1) * deltaR);
+        return sum;
+    }
+
+    /**
+     * @param pp     phase part for computation
+     * @param rstart [km]
+     * @param rend   [km]
+     * @return [s] T (travel time) for startR &le; r &le; endR
+     */
+    private double simpsonTInJeffreysRange(PhasePart pp, double rstart, double rend) {
+        if (rend <= rstart || rstart < turningRMap.get(pp) || jeffreysBoundaryMap.get(pp) < rend)
+            throw new IllegalArgumentException("Illegal usage");
+        int n = computeMeshInRange(pp, rstart, rend);
+        double sum = 0;
+        double deltaR = (rend - rstart) / n;
+        for (int i = 0; i < n; i++)
+            sum += simpsonT(pp, rstart + i * deltaR, rstart + (i + 1) * deltaR);
+        return sum;
+    }
+
+    /**
+     * Range is from the turning point to a radius which is good enough for
      * a given mesh threshold ({@link ComputationalMesh#INTEGRAL_THRESHOLD}).
      * <p>
      * Each boundary is one of the radius set in {@link #MESH}.
@@ -345,18 +412,18 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 double q = WOODHOUSE.computeQT(pp, RAY_PARAMETER, boundary);
                 double qNext = WOODHOUSE.computeQT(pp, RAY_PARAMETER, next);
                 double ratio = q < qNext ? q / qNext : qNext / q;
-                if (MESH.INTEGRAL_THRESHOLD < ratio && ComputationalMesh.eps < (next - boundary)) break;
+                if (MESH.INTEGRAL_THRESHOLD < ratio && ComputationalMesh.EPS < (next - boundary)) break;
                 boundary = next;
             }
             jeffreysBoundaryMap.put(pp, boundary);
-            jeffreysDeltaMap.put(pp, jeffreysDelta(pp, boundary));
-            jeffreysTMap.put(pp, jeffreysT(pp, boundary));
+            jeffreysDeltaMap.put(pp, computeJeffreysDelta(pp));
+            jeffreysTMap.put(pp, computeJeffreysT(pp));
         };
         Arrays.stream(PhasePart.values()).forEach(compute);
     }
 
     /**
-     * Computes T (travel time) for the mantle, outer-core and inner-core. It
+     * Computes T [s] (travel time) for the mantle, outer-core and inner-core. It
      * also computes transient arrays of &delta;&Delta; and &delta;T.
      */
     private void computeT() {
@@ -406,7 +473,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * @param eventR [km] radius of the event
      * @param part   part of path
-     * @return [rad] delta for the part
+     * @return [rad] &Delta; for the part
      */
     private double computeDelta(double eventR, GeneralPart part) {
         PhasePart phase = part.getPhase();
@@ -472,7 +539,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * @param eventR [km] radius of the event
      * @param part   part of path
-     * @return [s] travel time for the part
+     * @return [s] T (travel time) for the part
      */
     private double computeT(double eventR, GeneralPart part) {
         PhasePart phase = part.getPhase();
@@ -540,7 +607,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * @param eventR [km] radius at the event
      * @param part   to compute for
-     * @return [rad] delta for the part
+     * @return [rad] &Delta; for the part
      */
     private double computeDelta(double eventR, PathPart part) {
         if (part.isDiffraction()) return ((Diffracted) part).getAngle();
@@ -551,7 +618,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * @param eventR [km] radius at the event
      * @param part   to compute for
-     * @return [s] travel time for the part
+     * @return [s] T (travel time) for the part
      */
     private double computeT(double eventR, PathPart part) {
         if (part.isDiffraction()) {
@@ -604,7 +671,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      *
      * @param eventR [km] must be in the mantle
      * @param phase  Seismic {@link Phase}
-     * @return [s] travel time for the phase
+     * @return [s] T (travel time) for the phase
      */
     public double computeT(double eventR, Phase phase) {
         if (!isComputed) throw new RuntimeException("Not computed yet.");
@@ -642,25 +709,25 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double cmbR = getStructure().coreMantleBoundary();
         double earthR = getStructure().earthRadius();
         double icbR = getStructure().innerCoreBoundary();
-        if (Math.abs(nextR - turningRMap.get(pp)) < ComputationalMesh.eps)
-            nextR = turningRMap.get(pp) + ComputationalMesh.eps;
+        if (Math.abs(nextR - turningRMap.get(pp)) < ComputationalMesh.EPS)
+            nextR = turningRMap.get(pp) + ComputationalMesh.EPS;
         else if (Math.abs(nextR - icbR) < permissibleGapForDiff)
-            nextR = icbR + ComputationalMesh.eps * (nextR < icbR ? -1 : 1);
+            nextR = icbR + ComputationalMesh.EPS * (nextR < icbR ? -1 : 1);
         else if (Math.abs(nextR - cmbR) < permissibleGapForDiff)
-            nextR = cmbR + ComputationalMesh.eps * (nextR < cmbR ? -1 : 1);
-        else if (Math.abs(nextR - earthR) < permissibleGapForDiff) nextR = earthR - ComputationalMesh.eps;
-        else if (nextR < permissibleGapForDiff) nextR = ComputationalMesh.eps;
+            nextR = cmbR + ComputationalMesh.EPS * (nextR < cmbR ? -1 : 1);
+        else if (Math.abs(nextR - earthR) < permissibleGapForDiff) nextR = earthR - ComputationalMesh.EPS;
+        else if (nextR < permissibleGapForDiff) nextR = ComputationalMesh.EPS;
 
         if (Math.abs(beforeR - icbR) < permissibleGapForDiff)
             beforeR = icbR + permissibleGapForDiff * (nextR < icbR ? -1 : 1);
         else if (Math.abs(beforeR - cmbR) < permissibleGapForDiff)
             beforeR = cmbR + permissibleGapForDiff * (nextR < cmbR ? -1 : 1);
-        else if (Math.abs(beforeR - earthR) < permissibleGapForDiff) beforeR = earthR - ComputationalMesh.eps;
+        else if (Math.abs(beforeR - earthR) < permissibleGapForDiff) beforeR = earthR - ComputationalMesh.EPS;
 
         double smallerR = Math.min(beforeR, nextR);
         double biggerR = Math.max(beforeR, nextR);
         double theta = computeDelta(pp, smallerR, biggerR);
-        if (beforeR <= ComputationalMesh.eps) theta += Math.toRadians(180);
+        if (beforeR <= ComputationalMesh.EPS) theta += Math.toRadians(180);
         double time = computeT(pp, smallerR, biggerR);
         rList.add(nextR);
         thetaList.add(theta + thetaList.getLast());
@@ -723,8 +790,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 GeneralPart g = (GeneralPart) part;
                 PhasePart pp = g.getPhase();
                 Partition partition = g.getPhase().whichPartition();
-                double startR = getROf(!g.isDownward(), eventR, g) + (g.isDownward() ? -1 : 1) * ComputationalMesh.eps;
-                double endR = getROf(g.isDownward(), eventR, g) + (g.isDownward() ? 1 : -1) * ComputationalMesh.eps;
+                double startR = getROf(!g.isDownward(), eventR, g) + (g.isDownward() ? -1 : 1) * ComputationalMesh.EPS;
+                double endR = getROf(g.isDownward(), eventR, g) + (g.isDownward() ? 1 : -1) * ComputationalMesh.EPS;
                 int startIndex = MESH.getNextIndexOf(startR, partition);
                 int endIndex = MESH.getNextIndexOf(endR, partition);
                 if (!g.isDownward()) startIndex++;
@@ -798,16 +865,60 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
+     * Compute &Delta; in a Jeffreys radius range by a device of Jeffreys and Jeffreys.
+     * In case when the range contains velocity boundaries, use the device for only the depth range
+     * from the turningR to the lowermost boundary and compute values by the Simpson's rule for other depths.
+     *
+     * @param pp to compute &Delta; for
+     * @return [rad] &Delta; for Jeffreys radius range.
+     */
+    private double computeJeffreysDelta(PhasePart pp) {
+        double jeffBoundary = jeffreysBoundaryMap.get(pp);
+        double turningR = getTurningR(pp);
+        double[] boundaries = boundariesIn(turningR, jeffBoundary - ComputationalMesh.EPS);
+        if (boundaries.length == 0) return jeffreysDelta(pp, jeffBoundary - ComputationalMesh.EPS);
+        double jeff0 = jeffreysDelta(pp, boundaries[0] - ComputationalMesh.EPS);
+        double simpson = simpsonDeltaInJeffreysRange(pp, boundaries[boundaries.length - 1] + ComputationalMesh.EPS,
+                jeffBoundary - ComputationalMesh.EPS);
+        for (int i = 0; i < boundaries.length - 1; i++)
+            simpson += simpsonDeltaInJeffreysRange(pp, boundaries[i] + ComputationalMesh.EPS,
+                    boundaries[i + 1] - ComputationalMesh.EPS);
+        return jeff0 + simpson;
+    }
+
+    /**
+     * Compute &Delta; in a Jeffreys radius range by a device of Jeffreys and Jeffreys.
+     * In case when the range contains velocity boundaries, use the device for only the depth range
+     * from the turningR to the lowermost boundary and compute values by the Simpson's rule for other depths.
+     *
+     * @param pp to compute T for
+     * @return [s] T (travel time) for Jeffreys radius range.
+     */
+    private double computeJeffreysT(PhasePart pp) {
+        double jeffBoundary = jeffreysBoundaryMap.get(pp);
+        double turningR = getTurningR(pp);
+        double[] boundaries = boundariesIn(turningR, jeffBoundary - ComputationalMesh.EPS);
+        if (boundaries.length == 0) return jeffreysT(pp, jeffBoundary - ComputationalMesh.EPS);
+        double jeff0 = jeffreysT(pp, boundaries[0] - ComputationalMesh.EPS);
+        double simpson = simpsonTInJeffreysRange(pp, boundaries[boundaries.length - 1] + ComputationalMesh.EPS,
+                jeffBoundary - ComputationalMesh.EPS);
+        for (int i = 0; i < boundaries.length - 1; i++)
+            simpson += simpsonTInJeffreysRange(pp, boundaries[i] + ComputationalMesh.EPS,
+                    boundaries[i + 1] - ComputationalMesh.EPS);
+        return jeff0 + simpson;
+    }
+
+    /**
      * Compute &Delta; for turningR &le; r &le; rEnd by a device of Jeffreys and Jeffreys
      *
      * @param pp   to compute &Delta; for
      * @param rEnd [km]
-     * @return &Delta; for radius range between turningR and rEnd.
+     * @return [rad] &Delta; for radius range between turningR and rEnd.
      * rEnd is in many cases jeffreys boundary.
      */
     private double jeffreysDelta(PhasePart pp, double rEnd) {
         double turningR = turningRMap.get(pp);
-        if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps) return 0;
+        if (Math.abs(rEnd - turningR) <= ComputationalMesh.EPS) return 0;
         DoubleFunction<Double> rToY = r -> WOODHOUSE.computeQDelta(pp, RAY_PARAMETER, r) * drdx(pp, r);
         double rCenter = (rEnd + turningR) / 2;
         double modifiedR = rCenter + (toX(pp, rEnd) / 2 - toX(pp, rCenter)) * drdx(pp, rCenter);
@@ -815,9 +926,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         return jeffreysMethod1(toX(pp, modifiedR), rToY.apply(modifiedR), rToY.apply(rEnd));
     }
 
+    /**
+     * Compute T (travel time) for turningR &le; r &le; rEnd by a device of Jeffreys and Jeffreys
+     *
+     * @param pp   to compute &Delta; for
+     * @param rEnd [km]
+     * @return [s] T (travel time) for radius range between turningR and rEnd.
+     * rEnd is in many cases jeffreys boundary.
+     */
     private double jeffreysT(PhasePart pp, double rEnd) {
         double turningR = turningRMap.get(pp);
-        if (Math.abs(rEnd - turningR) <= ComputationalMesh.eps) return 0;
+        if (Math.abs(rEnd - turningR) <= ComputationalMesh.EPS) return 0;
         DoubleFunction<Double> rToY = r -> WOODHOUSE.computeQT(pp, RAY_PARAMETER, r) * drdx(pp, r);
         double rCenter = (rEnd + turningR) / 2;
         double modifiedR = rCenter + (toX(pp, rEnd) / 2 - toX(pp, rCenter)) * drdx(pp, rCenter);
@@ -848,7 +967,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     private double drdx(PhasePart pp, double r) {
-        return ComputationalMesh.eps / (toX(pp, r + ComputationalMesh.eps) - toX(pp, r));
+        return ComputationalMesh.EPS / (toX(pp, r) - toX(pp, r - ComputationalMesh.EPS));
     }
 
     /**
@@ -858,17 +977,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param pp     to compute
      * @param startR [km] must be a positive number
      * @param endR   [km] must be a positive number
-     * @return &Delta; for rStart &le; r &le; rEnd
+     * @return [rad] &Delta; for rStart &le; r &le; rEnd
      */
     private double computeDelta(PhasePart pp, double startR, double endR) {
         if (Double.isNaN(startR + endR) || startR < 0 || endR < 0)
             throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
-        if (Math.abs(endR - startR) < ComputationalMesh.eps) return 0;
+        if (Math.abs(endR - startR) < ComputationalMesh.EPS) return 0;
         Partition partition = pp.whichPartition();
         RealVector radii = MESH.getMesh(partition);
         double minR = radii.getEntry(0);
         double maxR = radii.getEntry(radii.getDimension() - 1);
-        if (startR < minR - ComputationalMesh.eps || endR < startR || maxR + ComputationalMesh.eps < endR)
+        if (startR < minR - ComputationalMesh.EPS || endR < startR || maxR + ComputationalMesh.EPS < endR)
             throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
         double turningR = getTurningR(pp);
         //Integral interval contains a singular(bounce) point.
@@ -925,17 +1044,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      *
      * @param startR [km] start value of integration
      * @param endR   [km] end value of integration
-     * @return [s] travel time for startR &le; r &le; endR
+     * @return [s] T (travel time) for startR &le; r &le; endR
      */
     private double computeT(PhasePart pp, double startR, double endR) {
         if (Double.isNaN(startR + endR) || startR < 0 || endR < 0)
             throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
-        if (endR - startR < ComputationalMesh.eps) return 0;
+        if (endR - startR < ComputationalMesh.EPS) return 0;
         Partition partition = pp.whichPartition();
         RealVector radii = MESH.getMesh(partition);
         double minR = radii.getEntry(0);
         double maxR = radii.getEntry(radii.getDimension() - 1);
-        if (startR < minR - ComputationalMesh.eps || endR < startR || maxR + ComputationalMesh.eps < endR)
+        if (startR < minR - ComputationalMesh.EPS || endR < startR || maxR + ComputationalMesh.EPS < endR)
             throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
         double turningR = getTurningR(pp);
         //Integral interval contains a singular(bounce) point.
@@ -1078,7 +1197,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param pp     target phase
      * @param startR [km]
      * @param endR   [km]
-     * @return [s] travel time for startR &le; r &le; endR
+     * @return [s] T (travel time) for startR &le; r &le; endR
      * @see Integrand#bySimpsonRule(double, double, double, double)
      */
     private double simpsonT(PhasePart pp, double startR, double endR) {
@@ -1091,7 +1210,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * Computes diffraction on a boundary at r. The velocity is considered as
-     * the one at r &pm; {@link ComputationalMesh#eps}
+     * the one at r &pm; {@link ComputationalMesh#EPS}
      *
      * @param pp              phase part for the diffraction
      * @param boundaryR       [km]
@@ -1103,12 +1222,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @throws RuntimeException If the structure has no boundary at the input boundaryR.
      */
     private double computeTAlongBoundary(PhasePart pp, double boundaryR, double deltaOnBoundary, boolean shallower) {
-        if (ComputationalMesh.eps < Math.abs(getStructure().coreMantleBoundary() - boundaryR) &&
-                ComputationalMesh.eps < Math.abs(getStructure().innerCoreBoundary() - boundaryR) &&
+        if (ComputationalMesh.EPS < Math.abs(getStructure().coreMantleBoundary() - boundaryR) &&
+                ComputationalMesh.EPS < Math.abs(getStructure().innerCoreBoundary() - boundaryR) &&
                 Arrays.stream(WOODHOUSE.getStructure().additionalBoundaries())
-                        .allMatch(b -> ComputationalMesh.eps < Math.abs(b - boundaryR)))
+                        .allMatch(b -> ComputationalMesh.EPS < Math.abs(b - boundaryR)))
             throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
-        double r = boundaryR + (shallower ? ComputationalMesh.eps : -ComputationalMesh.eps);
+        double r = boundaryR + (shallower ? ComputationalMesh.EPS : -ComputationalMesh.EPS);
         double s = boundaryR * deltaOnBoundary;
         double numerator;
         switch (pp) {
