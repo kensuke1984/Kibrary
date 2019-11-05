@@ -22,8 +22,9 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
  % brew cask install java
 ```
 
-Binary release of Kibrary can be found [here](https://www.dropbox.com/sh/iwki3nss7fb1rl1/AACPEKq3efHRNFAlB1bS5bgya?dl=0), however, installation following as below is recommended.
+Binary release of Kibrary is prepared. [here](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=0)
 
+If you would like to have source files, the process written above is a way.
 If the environment is fine, execute [this](https://kensuke1984.github.io/bin/install.sh).
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
