@@ -23,13 +23,13 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
     public static final String CODENAME = "Titan";
-    public static final String VERSION = "0.4.5.1";
+    public static final String VERSION = "0.4.5.2";
     private static final String line;
 
     /**
      * 2019/11/5
      */
-    private static final long serialVersionUID = -2868733789899853475L;
+    private static final long serialVersionUID = -4275797408023091452L;
 
     static {
         try {
