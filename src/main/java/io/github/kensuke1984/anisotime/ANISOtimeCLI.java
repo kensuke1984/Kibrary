@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
  * @author Kensuke Konishi, Anselme Borgeaud
  * @version 0.3.14
  */
-final class ANISOtimeCLI {
+public final class ANISOtimeCLI {
 
     /**
      * Options
@@ -87,7 +87,7 @@ final class ANISOtimeCLI {
      * @param args arguments
      * @throws ParseException if any
      */
-    private ANISOtimeCLI(String[] args) throws ParseException {
+    public ANISOtimeCLI(String[] args) throws ParseException {
         cmd = new DefaultParser().parse(options, args);
         INPUT = Arrays.stream(args).collect(Collectors.joining(" "));
     }
