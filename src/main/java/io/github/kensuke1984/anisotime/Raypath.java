@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.2b
+ * @version 0.5.2.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -61,7 +61,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * 2019/11/5
      */
-    private static final long serialVersionUID = 585909185923624646L;
+    private static final long serialVersionUID = 4439486735353755625L;
 
 
     private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
@@ -324,7 +324,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return if [rstart, rend] contains any boundaries in VelocityStructure.
      */
     private double[] boundariesIn(double rstart, double rend) {
-        return Arrays.stream(getStructure().additionalBoundaries()).filter(r -> rstart <= r && r <= rend).toArray();
+        return Arrays.stream(getStructure().additionalBoundaries()).filter(r -> rstart < r && r < rend).toArray();
     }
 
     /**
@@ -345,6 +345,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 double q1 = WOODHOUSE.computeQT(pp, RAY_PARAMETER, r1);
                 double ratio = q0 < q1 ? q0 / q1 : q1 / q0;
                 closeEnough = MESH.INTEGRAL_THRESHOLD < ratio;
+                if (Double.isNaN(ratio)) return 0;
             }
             if (closeEnough) break;
         }
@@ -361,6 +362,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (rend <= rstart || rstart < turningRMap.get(pp) || jeffreysBoundaryMap.get(pp) < rend)
             throw new IllegalArgumentException("Illegal usage: (rstart, rend)=(" + rstart + ", " + rend + ").");
         int n = computeMeshInRange(pp, rstart, rend);
+        if (n == 0) return Double.NaN;
         double sum = 0;
         double deltaR = (rend - rstart) / n;
         for (int i = 0; i < n; i++)
@@ -378,6 +380,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (rend <= rstart || rstart < turningRMap.get(pp) || jeffreysBoundaryMap.get(pp) < rend)
             throw new IllegalArgumentException("Illegal usage");
         int n = computeMeshInRange(pp, rstart, rend);
+        if (n == 0) return Double.NaN;
         double sum = 0;
         double deltaR = (rend - rstart) / n;
         for (int i = 0; i < n; i++)
