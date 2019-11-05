@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2019/10/23
+     * 2019/11/5
      */
-    private static final long serialVersionUID = 2542440168279585827L;
+    private static final long serialVersionUID = 585909185923624646L;
 
 
     private final double RAY_PARAMETER; // ray parameter p = (r * sin(t) )/ v(r)
