@@ -334,9 +334,9 @@ public class RaypathCatalog implements Serializable {
      */
     private void computeDiffraction() {
         VelocityStructure structure = WOODHOUSE.getStructure();
-        double cmb = structure.coreMantleBoundary() + ComputationalMesh.eps;
+        double cmb = structure.coreMantleBoundary() + ComputationalMesh.EPS;
         double rho = structure.getRho(cmb);
-        double icb = structure.innerCoreBoundary() + ComputationalMesh.eps;
+        double icb = structure.innerCoreBoundary() + ComputationalMesh.EPS;
         double p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
         double p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
         double p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
