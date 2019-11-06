@@ -464,7 +464,7 @@ public class RaypathCatalog implements Serializable {
     }
 
     private void supplementRaypaths() {
-        double radian1 = Math.toRadians(1); //TODO
+        double radian1 = Math.toRadians(.6); //TODO
         double eventR = getStructure().earthRadius();
 
         BinaryOperator<Raypath> centerRayparameterRaypath =
@@ -653,7 +653,7 @@ public class RaypathCatalog implements Serializable {
             if (relativeAngle) delta = toRelativeAngle(delta);
             deltaP.add(delta, raypath.getRayParameter());
         }
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaP.toList()));
         Raypath ray = new Raypath(pf.value(targetDelta), WOODHOUSE, MESH);
         ray.compute();
