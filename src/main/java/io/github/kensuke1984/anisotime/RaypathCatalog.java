@@ -24,13 +24,13 @@ import java.util.function.BinaryOperator;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.1
+ * @version 0.1.2.0
  */
 public class RaypathCatalog implements Serializable {
     /**
-     * 2019/10/3
+     * 2019/11/6
      */
-    private static final long serialVersionUID = 3822898217586532912L;
+    private static final long serialVersionUID = 2474751195018821018L;
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -70,19 +70,23 @@ public class RaypathCatalog implements Serializable {
         computeCatalogue(structure, mesh, dDelta);
     }
 
+    /**
+     * Default value of {@link #D_DELTA}
+     */
+    private static final double DEFAULT_D_DELTA = Math.toRadians(0.1);
 
     /**
-     * Catalog for PREM. &delta;&Delta; = 1. Mesh is simple.
+     * Catalog for PREM. &delta;&Delta; = {@link #DEFAULT_D_DELTA}. Mesh is simple.
      */
     public final static RaypathCatalog PREM;
     /**
-     * Catalog for the isotropic PREM. &delta;&Delta; = 1. Mesh is simple.
+     * Catalog for the isotropic PREM. &delta;&Delta; = {@link #DEFAULT_D_DELTA}. Mesh is simple.
      */
     public final static RaypathCatalog ISO_PREM;
     /**
-     * Catalog for AK135. &delta;&Delta; = 1. Mesh is simple.
+     * Catalog for AK135. &delta;&Delta; = {@link #DEFAULT_D_DELTA}. Mesh is simple.
      */
-    final static RaypathCatalog AK135;
+    private final static RaypathCatalog AK135;
     private static final Path share = Environment.KIBRARY_HOME.resolve("share");
 
     static {
@@ -97,7 +101,7 @@ public class RaypathCatalog implements Serializable {
                     } catch (ClassNotFoundException | IOException ice) {
                         System.err.println("Creating a catalog for " + model +
                                 " (due to out of date). This computation is done only once.");
-                        (cat = new RaypathCatalog(v, simple, Math.toRadians(1))).create();
+                        (cat = new RaypathCatalog(v, simple, DEFAULT_D_DELTA)).create();
                         try {
                             cat.write(p);
                         } catch (IOException e) {
@@ -106,7 +110,7 @@ public class RaypathCatalog implements Serializable {
                     }
                 } else {
                     System.err.println("Creating a catalog for " + model + ". This computation is done only once.");
-                    (cat = new RaypathCatalog(v, simple, Math.toRadians(1))).create();
+                    (cat = new RaypathCatalog(v, simple, DEFAULT_D_DELTA)).create();
                     try {
                         cat.write(p);
                     } catch (IOException e) {
@@ -129,7 +133,7 @@ public class RaypathCatalog implements Serializable {
      * satisfying {@link #D_DELTA} are not found within this value, a catalogue
      * does not have a denser ray parameter than the value.
      */
-    final double MINIMUM_DELTA_P = 0.01;
+    private static final double MINIMUM_DELTA_P = 1e-3;
     /**
      * Woodhouse formula with certain velocity structure
      */
@@ -150,7 +154,7 @@ public class RaypathCatalog implements Serializable {
      * have &Delta; satisfying {@link #D_DELTA}, another value (2.5, 1.25) is
      * used instantly.
      */
-    private final double DELTA_P = 5;
+    private static final double DELTA_P = 5;
     /**
      * List of stored raypaths. Ordered by each ray parameter p.
      */
@@ -459,56 +463,41 @@ public class RaypathCatalog implements Serializable {
      */
     private BiPredicate<Raypath, Raypath> simplePredicate(Phase phase, double dDelta) {
         double r = getStructure().earthRadius();
-        return (r1, r2) -> !(Math.abs(r1.computeDelta(r, phase) - r2.computeDelta(r, phase)) > dDelta);
-
+        return (r1, r2) -> Math.abs(r1.getRayParameter() - r2.getRayParameter()) < MINIMUM_DELTA_P ||
+                !(Math.abs(r1.computeDelta(r, phase) - r2.computeDelta(r, phase)) > dDelta);
     }
 
     private void supplementRaypaths() {
-        double radian1 = Math.toRadians(.6); //TODO
         double eventR = getStructure().earthRadius();
 
         BinaryOperator<Raypath> centerRayparameterRaypath =
                 (r1, r2) -> new Raypath((r1.getRayParameter() + r2.getRayParameter()) / 2, WOODHOUSE, MESH);
-
         //P wave 1 deg
-        BiPredicate<Raypath, Raypath> pCondition = simplePredicate(Phase.P, radian1);
+        BiPredicate<Raypath, Raypath> pCondition = simplePredicate(Phase.P, D_DELTA);
         while (supplementRaypathsFor(pCondition, centerRayparameterRaypath)) ;
         //PcP wave 1 deg
-        BiPredicate<Raypath, Raypath> pcpCondition = simplePredicate(Phase.PcP, radian1);
+        BiPredicate<Raypath, Raypath> pcpCondition = simplePredicate(Phase.PcP, D_DELTA);
         while (supplementRaypathsFor(pcpCondition, centerRayparameterRaypath)) ;
         //PKP wave 1 deg
-        BiPredicate<Raypath, Raypath> pkpCondition = simplePredicate(Phase.PKP, radian1);
+        BiPredicate<Raypath, Raypath> pkpCondition = simplePredicate(Phase.PKP, D_DELTA);
         while (supplementRaypathsFor(pkpCondition, centerRayparameterRaypath)) ;
         //PKIKP wave 1 deg
-        BiPredicate<Raypath, Raypath> pkikpCondition = simplePredicate(Phase.PKIKP, radian1);
+        BiPredicate<Raypath, Raypath> pkikpCondition = simplePredicate(Phase.PKIKP, D_DELTA);
         while (supplementRaypathsFor(pkikpCondition, centerRayparameterRaypath)) ;
         //S wave 1 deg
-        BiPredicate<Raypath, Raypath> sCondition = simplePredicate(Phase.S, radian1);
+        BiPredicate<Raypath, Raypath> sCondition = simplePredicate(Phase.S, D_DELTA);
         while (supplementRaypathsFor(sCondition, centerRayparameterRaypath)) ;
         //ScS wave 1 deg
-        BiPredicate<Raypath, Raypath> scsCondition = simplePredicate(Phase.ScS, radian1);
+        BiPredicate<Raypath, Raypath> scsCondition = simplePredicate(Phase.ScS, D_DELTA);
         while (supplementRaypathsFor(scsCondition, centerRayparameterRaypath)) ;
         //SKS wave 1 deg
-        BiPredicate<Raypath, Raypath> sksCondition = simplePredicate(Phase.SKS, radian1);
+        BiPredicate<Raypath, Raypath> sksCondition = simplePredicate(Phase.SKS, D_DELTA);
         while (supplementRaypathsFor(sksCondition, centerRayparameterRaypath)) ;
-
         //SKIKS wave 1 deg TODO
-        BiPredicate<Raypath, Raypath> skiksCondition = simplePredicate(Phase.SKIKS, radian1);
+        BiPredicate<Raypath, Raypath> skiksCondition = simplePredicate(Phase.SKIKS, D_DELTA);
         while (supplementRaypathsFor(skiksCondition, centerRayparameterRaypath)) ;
 
     }
-
-    void tmp_create() {
-        create();
-        supplementRaypaths();
-//        supplementRaypathsFor((ae, a) -> true);
-    }
-
-    static RaypathCatalog tmp_getInstance() {
-        return new RaypathCatalog(VelocityStructure.iprem(), ComputationalMesh.simple(VelocityStructure.iprem()),
-                Math.toRadians(1));
-    }
-
 
     private void closeDiff(Raypath diffPath) {
         double diffP = diffPath.getRayParameter();
@@ -634,7 +623,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * Assume that there is a regression curve f(&Delta;) = p(ray parameter) for
      * the small range. The function f is assumed to be a polynomial function.
-     * The degree of the function is 1.<S>depends on the number of the input raypaths.</S>
+     * The degree of the function is 1. <S>depends on the number of the input raypaths.</S>
      *
      * @param targetPhase   target phase
      * @param eventR        [km] radius of event
@@ -681,12 +670,12 @@ public class RaypathCatalog implements Serializable {
     public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
-        Raypath[] raypaths = getRaypaths();
-//        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" + TODO
-//                Precision.round(Math.toDegrees(targetDelta), 4));
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
+        Raypath[] raypaths = getRaypaths();
+//        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" + TODO
+//                Precision.round(Math.toDegrees(targetDelta), 4));
         List<Raypath> pathList = new ArrayList<>();
         for (int i = 0; i < raypaths.length - 1; i++) {
             Raypath rayI = raypaths[i];
@@ -816,7 +805,6 @@ public class RaypathCatalog implements Serializable {
         PolynomialCurveFitter fitter = PolynomialCurveFitter.create(2);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(distOfP.toList()));
         return pf.value(targetDelta);
-
     }
 
 }
