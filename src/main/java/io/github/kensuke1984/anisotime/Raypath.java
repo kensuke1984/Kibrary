@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.2.1b
+ * @version 0.5.2.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -131,14 +131,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * ray parameter p the source is on the surface PREM structure
      *
-     * @param rayParameter a ray parameter
+     * @param rayParameter [s/rad] ray parameter P
      */
     public Raypath(double rayParameter) {
         this(rayParameter, PolynomialStructure.PREM);
     }
 
     /**
-     * @param rayParameter ray parameter P
+     * @param rayParameter [s/rad] ray parameter P
      * @param structure    {@link VelocityStructure}
      */
     public Raypath(double rayParameter, VelocityStructure structure) {
@@ -146,7 +146,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * @param rayParameter ray parameter P
+     * @param rayParameter [s/rad] ray parameter P
      * @param structure    {@link VelocityStructure}
      * @param mesh         {@link ComputationalMesh}
      */
@@ -155,7 +155,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * @param rayParameter ray parameter P
+     * @param rayParameter [s/rad] ray parameter P
      * @param woodhouse    {@link Woodhouse1981}
      * @param mesh         {@link ComputationalMesh}
      */
