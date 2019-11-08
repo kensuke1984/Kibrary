@@ -26,12 +26,10 @@ import java.util.stream.IntStream;
  * TODO customize for catalog ddelta dR
  * <p>
  * <p>
- * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
- * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14
+ * @version 0.3.14.1
  */
 final class ANISOtimeCLI {
 
@@ -152,7 +150,7 @@ final class ANISOtimeCLI {
         options.addOption("dec", true, "Number of decimal places.");
         options.addOption("p", true, "Ray parameter [s/deg]");
         options.addOption("dR", true, "Integral interval [km] (default:10)");
-        options.addOption("dD", true, "Parameter for a catalog creation (\u03b4\u0394).");
+        options.addOption("dD", true, "Parameter \u03b4\u0394 [deg] for a catalog creation. (default:0.1");
         options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
         options.addOption("rs", "record-section", true,
                 "start, end (,interval) [deg]\n Computes a table of a record section for the range.");
@@ -163,7 +161,7 @@ final class ANISOtimeCLI {
      * Sets parameters according to the input arguments.
      */
     private void setParameters() {
-        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "1")));
+        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "0.1")));
 
         decimalPlaces = Integer.parseInt(cmd.getOptionValue("dec", "2"));
         if (decimalPlaces < 0)
@@ -208,7 +206,7 @@ final class ANISOtimeCLI {
         double interval = Double.parseDouble(cmd.getOptionValue("dR", "10")); //TODO dR is not working.
 
         double rayParameterDegree = Double.parseDouble(cmd.getOptionValue("p", "NaN"));
-        rayParameter = rayParameterDegree * 180. / Math.PI;
+        rayParameter = Math.toDegrees(rayParameterDegree);
     }
 
     /**
@@ -431,7 +429,7 @@ final class ANISOtimeCLI {
         double delta0 = raypath.computeDelta(eventR, targetPhase);
         double time0 = raypath.computeT(eventR, targetPhase);
         if (Double.isNaN(delta0) || Double.isNaN(time0)) {
-            System.out.println(p0);
+//            System.out.println(p0);
             return new double[]{Double.NaN, Double.NaN};
         }
         delta0 = Math.toDegrees(delta0);
