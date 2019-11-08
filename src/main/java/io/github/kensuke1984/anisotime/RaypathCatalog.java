@@ -24,13 +24,13 @@ import java.util.function.BinaryOperator;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.2.0
+ * @version 0.1.3
  */
 public class RaypathCatalog implements Serializable {
     /**
-     * 2019/11/6
+     * 2019/11/8
      */
-    private static final long serialVersionUID = 2474751195018821018L;
+    private static final long serialVersionUID = -3471315863167958192L;
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -129,7 +129,7 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * Minimum value of &delta;p (ray parameter). Even if similar raypaths
+     * Minimum value of &delta;p [s/rad] (ray parameter). Even if similar raypaths
      * satisfying {@link #D_DELTA} are not found within this value, a catalogue
      * does not have a denser ray parameter than the value.
      */
@@ -150,7 +150,7 @@ public class RaypathCatalog implements Serializable {
      */
     private final double D_DELTA;
     /**
-     * Standard &delta;p (ray parameter). In case the &delta;p is too big to
+     * Standard &delta;p [s/rad] (ray parameter). In case the &delta;p is too big to
      * have &Delta; satisfying {@link #D_DELTA}, another value (2.5, 1.25) is
      * used instantly.
      */
@@ -333,11 +333,61 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * TODO boundaries Computes ray parameters of diffraction phases (Pdiff and
-     * Sdiff).
+     * Add raypaths which has a turningR at the input turningR.
+     * All {@link PhasePart} are considered.
+     *
+     * @param turningR [km] turning R (not depth) must be inside the Earth and must not be a boundary.
+     */
+    private void addRaypathWithTurningR(double turningR) {
+        VelocityStructure structure = getStructure();
+        double rho = structure.getRho(turningR);
+        //turning R is in the outer-core.
+        if (structure.innerCoreBoundary() < turningR && turningR < structure.coreMantleBoundary()) {
+            double pK = turningR * Math.sqrt(rho / structure.getA(turningR));
+            Raypath raypathK = new Raypath(pK, WOODHOUSE, MESH);
+            computeANDadd(raypathK);
+        } else {// turning R is in the inner-core or mantle.
+            double pP = turningR * Math.sqrt(rho / structure.getA(turningR));
+            double pSV = turningR * Math.sqrt(rho / structure.getL(turningR));
+            double pSH = turningR * Math.sqrt(rho / structure.getN(turningR));
+            Raypath raypathP = new Raypath(pP, WOODHOUSE, MESH);
+            Raypath raypathSV = new Raypath(pSV, WOODHOUSE, MESH);
+            Raypath raypathSH = new Raypath(pSH, WOODHOUSE, MESH);
+            computeANDadd(raypathP);
+            computeANDadd(raypathSV);
+            computeANDadd(raypathSH);
+        }
+    }
+
+    /**
+     * @param raypath to compute and add in {@link #raypathList}
+     */
+    private void computeANDadd(Raypath raypath) {
+        raypath.compute();
+        raypathList.add(raypath);
+    }
+
+    /**
+     * Computes raypaths with bounce points which are at additional boundaries &plusmn {@link ComputationalMesh#EPS};
+     */
+    private void computeBranchEdges() {
+        VelocityStructure structure = getStructure();
+        double[] boundaries = structure.additionalBoundaries();
+        addRaypathWithTurningR(structure.earthRadius() - ComputationalMesh.EPS);
+        addRaypathWithTurningR(ComputationalMesh.EPS);
+        for (double boundary : boundaries) {
+            double plusR = boundary + ComputationalMesh.EPS;
+            double minusR = boundary - ComputationalMesh.EPS;
+            addRaypathWithTurningR(plusR);
+            addRaypathWithTurningR(minusR);
+        }
+    }
+
+    /**
+     * Computes ray parameters of diffraction phases (Pdiff and Sdiff).
      */
     private void computeDiffraction() {
-        VelocityStructure structure = WOODHOUSE.getStructure();
+        VelocityStructure structure = getStructure();
         double cmb = structure.coreMantleBoundary() + ComputationalMesh.EPS;
         double rho = structure.getRho(cmb);
         double icb = structure.innerCoreBoundary() + ComputationalMesh.EPS;
@@ -419,7 +469,7 @@ public class RaypathCatalog implements Serializable {
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         firstPath.compute();
         raypathList.add(firstPath);
-
+        computeBranchEdges();
         //simply add raypaths
         for (double p = DELTA_P; p < pMax; p += DELTA_P) {
             Raypath candidatePath = new Raypath(p, WOODHOUSE, MESH);
@@ -631,7 +681,7 @@ public class RaypathCatalog implements Serializable {
      * @param relativeAngle if the targetDelta is a relative value.
      * @param raypaths      Polynomial interpolation is done with these. All the raypaths
      *                      must be computed.
-     * @return travel time [s] for the target Delta estimated by the polynomial
+     * @return Raypath for the target Delta estimated by the polynomial
      * interpolation with the raypaths.
      */
     private Raypath interpolateRaypath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle,
@@ -771,14 +821,15 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * The returning travel time is computed by the input raypath0 and the 2 raypaths with the closest larger and smaller rayparameters.
+     * The returning ray parameter is computed by the input raypath0 and the 2 raypaths
+     * with the closest larger and smaller ray parameters.
      *
      * @param targetPhase   to look for
      * @param eventR        [km] radius of the source
      * @param targetDelta   [rad]
      * @param relativeAngle if the targetDelta is a relative value.
      * @param raypath0      source of raypath
-     * @return travel time for the targetDelta [s]
+     * @return ray parameter [s/rad] by interpolation
      */
     double rayParameterByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
                                                boolean relativeAngle, Raypath raypath0) {
@@ -791,7 +842,6 @@ public class RaypathCatalog implements Serializable {
         Raypath higher = raypathList.higher(raypath0);
         double lowerDelta = lower.computeDelta(eventR, targetPhase);
         double higherDelta = higher.computeDelta(eventR, targetPhase);
-
         if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
         if (relativeAngle) {
             lowerDelta = toRelativeAngle(lowerDelta);
