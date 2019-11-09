@@ -6,12 +6,44 @@ import java.io.Serializable;
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.9.2
+ * @version 0.0.10
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
  */
 public interface VelocityStructure extends Serializable {
+
+    /**
+     * @param r [km]
+     * @return [km/s] vpv
+     */
+    default double computeVpv(double r) {
+        return Math.sqrt(getC(r) / getRho(r));
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vph
+     */
+    default double computeVph(double r) {
+        return Math.sqrt(getA(r) / getRho(r));
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vsv
+     */
+    default double computeVsv(double r) {
+        return Math.sqrt(getL(r) / getRho(r));
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vsh
+     */
+    default double computeVsh(double r) {
+        return Math.sqrt(getN(r) / getRho(r));
+    }
 
     /**
      * @return Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -202,6 +234,7 @@ public interface VelocityStructure extends Serializable {
      * not related to CMB, ICB and so on.., the values from this method may be useful
      * for generating a mesh ({@link ComputationalMesh}. Even when the input structure
      * is not layered but you want to arbitrary add layers. (e.g. the boundaries of MTZ)
+     *
      * @return array of radii [km]. Values of the boundaries for layers.
      * It is NOT the depth but radius from the center.
      * The values should be in order (small to large values) and
