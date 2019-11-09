@@ -2,13 +2,12 @@ package io.github.kensuke1984.anisotime;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.stream.DoubleStream;
 
 /**
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.11
+ * @version 0.0.11.1
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -253,23 +252,22 @@ public interface VelocityStructure extends Serializable {
      * @return [km] radii array of boundaries in the mantle. including the CMB and surface.
      */
     default double[] boundariesInMantle() {
-        return DoubleStream
-                .concat(DoubleStream.of(coreMantleBoundary(), earthRadius()), Arrays.stream(velocityBoundaries()))
-                .filter(r -> coreMantleBoundary() <= r).distinct().toArray();
+        return Arrays.stream(velocityBoundaries()).filter(r -> coreMantleBoundary() <= r).toArray();
     }
 
     /**
      * @return [km] radii array of boundaries in the mantle. including the CMB and ICB.
      */
     default double[] boundariesInOuterCore() {
-        return null;
+        return Arrays.stream(velocityBoundaries()).filter(r -> innerCoreBoundary() <= r && r <= coreMantleBoundary())
+                .toArray();
     }
 
     /**
      * @return [km] radii array of boundaries in the inner-core. including the center (0) and ICB.
      */
     default double[] boundariesInInnerCore() {
-        return null;
+        return Arrays.stream(velocityBoundaries()).filter(r -> r <= innerCoreBoundary()).toArray();
     }
 
     /**
