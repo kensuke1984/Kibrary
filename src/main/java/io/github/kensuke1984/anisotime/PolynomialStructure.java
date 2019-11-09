@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.stream.IntStream;
 
 /**
  * Polynomial structure.
+ * Outer-core must have a value of Q<sub>&mu;</sub> =-1
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.0.10.2
+ * @version 0.0.10.3
  */
 public class PolynomialStructure implements VelocityStructure {
 
@@ -41,7 +43,7 @@ public class PolynomialStructure implements VelocityStructure {
     /**
      * 2019/11/9
      */
-    private static final long serialVersionUID = -247740073015527700L;
+    private static final long serialVersionUID = 3585094774865301836L;
 
     private final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
     /*
@@ -111,12 +113,15 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double innerCoreBoundary() {
-        return 1221.5; // TODO
+        return STRUCTURE.getRMinOf(
+                IntStream.range(0, STRUCTURE.getNzone()).filter(i -> STRUCTURE.getQMuOf(i) < 0).min().getAsInt());
     }
 
     @Override
     public double coreMantleBoundary() {
-        return STRUCTURE.getRMinOf(STRUCTURE.getCoreZone());
+        return STRUCTURE.getRMaxOf(
+                IntStream.range(0, STRUCTURE.getNzone()).filter(i -> STRUCTURE.getQMuOf(i) < 0).max().getAsInt());
+
     }
 
     @Override
