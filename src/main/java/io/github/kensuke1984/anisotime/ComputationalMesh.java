@@ -8,17 +8,15 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.stream.DoubleStream;
 
 /**
- * Radius interval for integration. TODO
+ * Radius interval for integration.
  * <p>
  * This class is <b>IMMUTABLE</b>.
  * <p>
- * TODO Automesh by QDelta ?
  *
  * @author Kensuke Konishi
- * @version 0.0.3.2.1
+ * @version 0.0.4
  */
 public class ComputationalMesh implements Serializable {
 
@@ -29,18 +27,10 @@ public class ComputationalMesh implements Serializable {
     static final double EPS = 1e-7;
 
     /**
-     * 2019/10/23
+     * 2019/11/9
      */
-    private static final long serialVersionUID = -2489108180471761917L;
+    private static final long serialVersionUID = -2606996576121179707L;
 
-    /**
-     * Threshold for the integration. This value (ratio) must be positive and
-     * less than 1. If it is a, the difference between two Q<sub>T</sub> at
-     * adjacent points must be with in a. a &lt; Q<sub>T</sub> (i)/Q<sub>T</sub>
-     * (i+1) &lt; 1/a
-     * TODO for meshing
-     */
-    final double INTEGRAL_THRESHOLD;
 
     /**
      * Mesh for the inner-core [0, inner-core boundary] [km]
@@ -73,12 +63,9 @@ public class ComputationalMesh implements Serializable {
      * @param mantleInterval    [km] interval in the mantle
      */
     public ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
-                             double mantleInterval, double integralThreshold) {
+                             double mantleInterval) {
         if (innerCoreInterval < EPS || outerCoreInterval < EPS || mantleInterval < EPS)
             throw new RuntimeException("Intervals are too small.");
-        if (1 <= integralThreshold || integralThreshold <= 0)
-            throw new RuntimeException("Integral threshold must be (0,1). " + integralThreshold);
-        INTEGRAL_THRESHOLD = integralThreshold;
         createSimpleMesh(structure, innerCoreInterval, outerCoreInterval, mantleInterval);
     }
 
@@ -132,7 +119,7 @@ public class ComputationalMesh implements Serializable {
     }
 
     public static ComputationalMesh simple(VelocityStructure structure) {
-        return new ComputationalMesh(structure, 1, 1, 1, 0.9);
+        return new ComputationalMesh(structure, 1, 1, 1);
     }
 
     /**
@@ -164,18 +151,9 @@ public class ComputationalMesh implements Serializable {
      */
     private void createSimpleMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                                   double mantleInterval) {
-        double[] mantleBoundaries = DoubleStream
-                .concat(DoubleStream.of(structure.coreMantleBoundary(), structure.earthRadius()),
-                        Arrays.stream(structure.additionalBoundaries()).filter(b -> structure.coreMantleBoundary() < b))
-                .sorted().toArray();
-        double[] outerCoreBoundaries = DoubleStream
-                .concat(DoubleStream.of(structure.coreMantleBoundary(), structure.innerCoreBoundary()),
-                        Arrays.stream(structure.additionalBoundaries())
-                                .filter(b -> structure.innerCoreBoundary() < b && b < structure.coreMantleBoundary()))
-                .sorted().toArray();
-        double[] innerCoreBoundaries = DoubleStream.concat(DoubleStream.of(0, structure.innerCoreBoundary()),
-                Arrays.stream(structure.additionalBoundaries()).filter(b -> b < structure.innerCoreBoundary())).sorted()
-                .toArray();
+        double[] mantleBoundaries = structure.boundariesInMantle();
+        double[] outerCoreBoundaries = structure.boundariesInOuterCore();
+        double[] innerCoreBoundaries = structure.boundariesInInnerCore();
         double[][] mantles = new double[mantleBoundaries.length - 1][];
         for (int i = 0; i < mantles.length; i++)
             mantles[i] = considerEdges(point(mantleBoundaries[i], mantleBoundaries[i + 1], mantleInterval));
@@ -216,7 +194,6 @@ public class ComputationalMesh implements Serializable {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         ComputationalMesh other = (ComputationalMesh) obj;
-        if (Double.compare(INTEGRAL_THRESHOLD, other.INTEGRAL_THRESHOLD) != 0) return false;
         if (innerCoreMesh == null) {
             if (other.innerCoreMesh != null) return false;
         } else if (!Arrays.equals(innerCoreMesh.toArray(), other.innerCoreMesh.toArray())) return false;
