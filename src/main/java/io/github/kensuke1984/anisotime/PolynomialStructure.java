@@ -9,13 +9,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.stream.IntStream;
 
 /**
  * Polynomial structure.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.0.10
+ * @version 0.0.10.1
  */
 public class PolynomialStructure implements VelocityStructure {
 
@@ -40,9 +39,9 @@ public class PolynomialStructure implements VelocityStructure {
     public static final PolynomialStructure HOMOGEN =
             new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.HOMOGEN);
     /**
-     * 2019/10/3
+     * 2019/11/9
      */
-    private static final long serialVersionUID = 7747142704068993188L;
+    private static final long serialVersionUID = -7549854031982584395L;
 
     private final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
     /*
@@ -121,8 +120,12 @@ public class PolynomialStructure implements VelocityStructure {
     }
 
     @Override
-    public double[] additionalBoundaries() {
-        return IntStream.range(1, STRUCTURE.getNzone()).mapToDouble(STRUCTURE::getRMinOf).toArray();
+    public double[] velocityBoundaries() {
+        double[] boundaries = new double[STRUCTURE.getNzone()];
+        for (int i = 0; i < boundaries.length - 1; i++)
+            boundaries[i] = STRUCTURE.getRMinOf(i);
+        boundaries[boundaries.length - 1] = earthRadius();
+        return boundaries;
     }
 
     @Override
