@@ -41,7 +41,7 @@ public class PolynomialStructure implements VelocityStructure {
     /**
      * 2019/11/9
      */
-    private static final long serialVersionUID = -7549854031982584395L;
+    private static final long serialVersionUID = -247740073015527700L;
 
     private final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
     /*
