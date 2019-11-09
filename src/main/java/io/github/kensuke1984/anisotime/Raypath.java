@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.3.1b
+ * @version 0.5.3.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -327,7 +327,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return if [startR, endR] contains any boundaries in VelocityStructure.
      */
     private double[] boundariesIn(double startR, double endR) {
-        return Arrays.stream(getStructure().additionalBoundaries()).filter(r -> startR < r && r < endR).toArray();
+        return Arrays.stream(getStructure().velocityBoundaries()).filter(r -> startR < r && r < endR).toArray();
     }
 
     /**
@@ -348,7 +348,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 double q0 = dXdr.applyAsDouble(r0);
                 double q1 = dXdr.applyAsDouble(r1);
                 double ratio = q0 < q1 ? q0 / q1 : q1 / q0;
-                closeEnough = MESH.INTEGRAL_THRESHOLD < ratio;
+                closeEnough = INTEGRAL_THRESHOLD < ratio;
                 if (Double.isNaN(ratio)) return 0;
             }
             if (closeEnough) break;
@@ -378,7 +378,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * Range is from the turning point to a radius which is good enough for
-     * a given mesh threshold ({@link ComputationalMesh#INTEGRAL_THRESHOLD}).
+     * a given mesh threshold ({@link #INTEGRAL_THRESHOLD}).
      * <p>
      * Each boundary is one of the radius set in {@link #MESH}.
      */
@@ -392,7 +392,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             jeffreysDeltaMap.put(pp, Double.NaN);
             jeffreysTMap.put(pp, Double.NaN);
         });
-
         Consumer<PhasePart> compute = pp -> {
             if (Double.isNaN(turningRMap.get(pp))) return;
             int index = MESH.getNextIndexOf(turningRMap.get(pp), pp.whichPartition());
@@ -403,7 +402,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 double q = WOODHOUSE.computeQT(pp, RAY_PARAMETER, boundary);
                 double qNext = WOODHOUSE.computeQT(pp, RAY_PARAMETER, next);
                 double ratio = q < qNext ? q / qNext : qNext / q;
-                if (MESH.INTEGRAL_THRESHOLD < ratio && ComputationalMesh.EPS < (next - boundary)) break;
+                if (INTEGRAL_THRESHOLD < ratio && ComputationalMesh.EPS < (next - boundary)) break;
                 boundary = next;
             }
             jeffreysBoundaryMap.put(pp, boundary);
@@ -1159,9 +1158,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double c = dXdr.applyAsDouble(endR);
         if (Double.isNaN(a + c)) return 0;
         double ratio = a < c ? a / c : c / a;
-        if (MESH.INTEGRAL_THRESHOLD < ratio) return bySimpsonRule(a, b, c, deltaX);
+        if (INTEGRAL_THRESHOLD < ratio) return bySimpsonRule(a, b, c, deltaX);
         return simpsonInCriticalRange(dXdr, startR, endR);
     }
+
+    /**
+     * Threshold for the integration. This value (ratio) must be positive and
+     * less than 1. If it is a, the difference between two Q<sub>T</sub> at
+     * adjacent points must be with in a. a &lt; Q<sub>T</sub> (i)/Q<sub>T</sub>
+     * (i+1) &lt; 1/a
+     */
+    private static final double INTEGRAL_THRESHOLD = 0.9;
 
     /**
      * Computes diffraction on a boundary at r. The velocity is considered as
@@ -1179,7 +1186,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private double computeTAlongBoundary(PhasePart pp, double boundaryR, double deltaOnBoundary, boolean shallower) {
         if (ComputationalMesh.EPS < Math.abs(getStructure().coreMantleBoundary() - boundaryR) &&
                 ComputationalMesh.EPS < Math.abs(getStructure().innerCoreBoundary() - boundaryR) &&
-                Arrays.stream(getStructure().additionalBoundaries())
+                Arrays.stream(getStructure().velocityBoundaries())
                         .allMatch(b -> ComputationalMesh.EPS < Math.abs(b - boundaryR)))
             throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
         double r = boundaryR + (shallower ? ComputationalMesh.EPS : -ComputationalMesh.EPS);
