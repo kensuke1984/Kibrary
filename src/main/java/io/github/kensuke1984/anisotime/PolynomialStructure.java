@@ -14,7 +14,7 @@ import java.util.Comparator;
  * Polynomial structure.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.0.10.1
+ * @version 0.0.10.2
  */
 public class PolynomialStructure implements VelocityStructure {
 
@@ -121,7 +121,7 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double[] velocityBoundaries() {
-        double[] boundaries = new double[STRUCTURE.getNzone()];
+        double[] boundaries = new double[STRUCTURE.getNzone() + 1];
         for (int i = 0; i < boundaries.length - 1; i++)
             boundaries[i] = STRUCTURE.getRMinOf(i);
         boundaries[boundaries.length - 1] = earthRadius();
