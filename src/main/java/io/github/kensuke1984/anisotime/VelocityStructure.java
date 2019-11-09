@@ -1,12 +1,14 @@
 package io.github.kensuke1984.anisotime;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.DoubleStream;
 
 /**
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.10
+ * @version 0.0.11
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -229,21 +231,45 @@ public interface VelocityStructure extends Serializable {
     double earthRadius();
 
     /**
-     * TODO
      * When layered structures have boundaries which are in particular
      * not related to CMB, ICB and so on.., the values from this method may be useful
      * for generating a mesh ({@link ComputationalMesh}. Even when the input structure
      * is not layered but you want to arbitrary add layers. (e.g. the boundaries of MTZ)
+     * the center (r=0), ICB, CMB and the surface must be included.
      *
      * @return array of radii [km]. Values of the boundaries for layers.
+     * Velocity changes at boundaries.
      * It is NOT the depth but radius from the center.
-     * The values should be in order (small to large values) and
+     * The values must be in order (small to large values) and
      * later changes to the array should not affect the velocity structure,
      * in other words, changes in the returning array must not result in changes
      * of their original values.
      */
-    default double[] additionalBoundaries() {
-        return new double[]{earthRadius() - 660, earthRadius() - 410};
+    default double[] velocityBoundaries() {
+        return new double[]{0, innerCoreBoundary(), coreMantleBoundary(), earthRadius()};
+    }
+
+    /**
+     * @return [km] radii array of boundaries in the mantle. including the CMB and surface.
+     */
+    default double[] boundariesInMantle() {
+        return DoubleStream
+                .concat(DoubleStream.of(coreMantleBoundary(), earthRadius()), Arrays.stream(velocityBoundaries()))
+                .filter(r -> coreMantleBoundary() <= r).distinct().toArray();
+    }
+
+    /**
+     * @return [km] radii array of boundaries in the mantle. including the CMB and ICB.
+     */
+    default double[] boundariesInOuterCore() {
+        return null;
+    }
+
+    /**
+     * @return [km] radii array of boundaries in the inner-core. including the center (0) and ICB.
+     */
+    default double[] boundariesInInnerCore() {
+        return null;
     }
 
     /**
