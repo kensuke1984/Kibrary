@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6
+ * @version 0.2.6.2
  */
 public class PolynomialStructure implements Serializable {
     /**
@@ -162,7 +162,7 @@ public class PolynomialStructure implements Serializable {
                 new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0}, {1, 0, 0, 0}, {3.3687, -2.4778, 0, 0}, {3.3687, -2.4778, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0},};
-        double[] qMu = new double[]{84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
+        double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
@@ -335,7 +335,6 @@ public class PolynomialStructure implements Serializable {
     }
 
     /**
-     * 半径boundariesのところに境界を作る（層を一つ増やす）
      * Add boundaries at the input radii.
      * if there is already a boundary at r then nothing will be done.
      *
