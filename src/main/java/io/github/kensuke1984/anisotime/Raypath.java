@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.3.3b
+ * @version 0.5.3.4b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -979,7 +979,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             }
             return simpson(qDelta, startR, endR);
         }
-
         double nextREnd = radii.getEntry(endIndexForMemory);
         //outside the nextREnd, if it is inside the jeffreys region, outside the region.
         double delta = simpson(qDelta, nextREnd < jeffreysBoundary ? jeffreysBoundary : nextREnd, endR);
@@ -1085,6 +1084,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             dThetaMap.put(pp, dTheta);
             return new Thread(() -> {
                 double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
+                if (RAY_PARAMETER == 0) {
+                    deltaMap.put(pp, 0d);
+                    return;
+                }
                 for (int i = 0; i < dTheta.length; i++) {
                     if (mesh.getEntry(i) < jeffreysBoundary) continue;
                     dTheta[i] = simpson(r -> WOODHOUSE.computeQDelta(pp, RAY_PARAMETER, r), mesh.getEntry(i),
