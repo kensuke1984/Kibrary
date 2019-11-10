@@ -5,7 +5,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
-import org.apache.commons.math3.util.Precision;
 
 import java.io.*;
 import java.nio.file.*;
@@ -24,9 +23,10 @@ import java.util.function.DoubleUnaryOperator;
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
  * <p>
+ * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.4
+ * @version 0.1.4.1
  */
 public class RaypathCatalog implements Serializable {
     /**
