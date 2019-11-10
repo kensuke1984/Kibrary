@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.3.2b
+ * @version 0.5.3.3b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -474,6 +474,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         boolean outerIsBoundary = PassPoint.isBoundary(outer) ||
                 (outer == PassPoint.SEISMIC_SOURCE && eventR == getStructure().earthRadius());
         double turningR = getTurningR(phase);
+        if (innerIsBoundary && !Double.isNaN(turningR)) return Double.NaN;
         if (outerIsBoundary) if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR)))
             return deltaMap.get(phase);
         double innerR;
@@ -538,12 +539,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         PassPoint inner = part.getInnerPoint();
         PassPoint outer = part.getOuterPoint();
         boolean innerIsBoundary = PassPoint.isBoundary(inner);
-        boolean outerIsBoundary = PassPoint.isBoundary(outer);
-
-
-        double time = timeMap.get(phase);
-        if (innerIsBoundary && outerIsBoundary) return time;
+        boolean outerIsBoundary = PassPoint.isBoundary(outer) ||
+                (outer == PassPoint.SEISMIC_SOURCE && eventR == getStructure().earthRadius());
         double turningR = getTurningR(phase);
+        if (innerIsBoundary && !Double.isNaN(turningR)) return Double.NaN;
+        if (outerIsBoundary) if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR)))
+            return timeMap.get(phase);
         double innerR;
         switch (inner) {
             case OTHER:
