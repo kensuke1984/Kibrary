@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.2
+ * @version 0.5.3.3b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2017/11/19
+     * 2019/11/20
      */
-    private static final long serialVersionUID = -2138740611342857870L;
+    private static final long serialVersionUID = 1291377907780504241L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -316,7 +316,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private RaypathCatalog getCatalog() {
-        return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
+        return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure),
+                RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
     }
 
     private void runEpicentralDistanceMode() {
