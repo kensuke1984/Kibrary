@@ -26,13 +26,13 @@ import java.util.function.DoubleUnaryOperator;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.4.1
+ * @version 0.1.4.2
  */
 public class RaypathCatalog implements Serializable {
     /**
-     * 2019/11/10
+     * 2019/11/20
      */
-    private static final long serialVersionUID = 3969893596562401570L;
+    private static final long serialVersionUID = 6971463963735925367L;
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -74,7 +74,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * Default value of {@link #MAXIMUM_D_DELTA}
      */
-    private static final double DEFAULT_MAXIMUM_D_DELTA = Math.toRadians(0.1);
+    static final double DEFAULT_MAXIMUM_D_DELTA = Math.toRadians(0.1);
 
     /**
      * Catalog for PREM. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
