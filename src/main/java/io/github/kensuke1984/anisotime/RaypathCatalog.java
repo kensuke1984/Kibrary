@@ -312,12 +312,9 @@ public class RaypathCatalog implements Serializable {
         double p_Pdiff = cmb * Math.sqrt(rho / structure.getA(cmb));
         double p_SVdiff = cmb * Math.sqrt(rho / structure.getL(cmb));
         double p_SHdiff = cmb * Math.sqrt(rho / structure.getN(cmb));
-        (pDiff = new Raypath(p_Pdiff, WOODHOUSE, MESH)).compute();
-        (svDiff = new Raypath(p_SVdiff, WOODHOUSE, MESH)).compute();
-        (shDiff = new Raypath(p_SHdiff, WOODHOUSE, MESH)).compute();
-        raypathList.add(pDiff);
-        raypathList.add(svDiff);
-        raypathList.add(shDiff);
+        pDiff = new Raypath(p_Pdiff, WOODHOUSE, MESH);
+        svDiff = new Raypath(p_SVdiff, WOODHOUSE, MESH);
+        shDiff = new Raypath(p_SHdiff, WOODHOUSE, MESH);
         computeANDadd(pDiff);
         computeANDadd(svDiff);
         computeANDadd(shDiff);
