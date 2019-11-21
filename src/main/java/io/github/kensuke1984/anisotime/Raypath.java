@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.3.4b
+ * @version 0.5.4b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -60,9 +60,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2019/11/9
+     * 2019/11/21
      */
-    private static final long serialVersionUID = 6351894640553682399L;
+    private static final long serialVersionUID = -4934978300489138737L;
 
     /**
      * ray parameter [s/rad] dt/d&Delta;
@@ -687,7 +687,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * rList must not be empty. &Delta; and T is computed for range rStart &le;
-     * r &le; nextR. rStart is the last entry of rList. (The $Delta; + the last
+     * r &le; nextR. rStart is the last entry of the rList. (The $Delta; + the last
      * entry of thetaList) is added to the thetaList. T is same. The nextR and
      * the last entry of rList must be in a same partition.
      *
@@ -710,7 +710,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             nextR = cmbR + ComputationalMesh.EPS * (nextR < cmbR ? -1 : 1);
         else if (Math.abs(nextR - earthR) < permissibleGapForDiff) nextR = earthR - ComputationalMesh.EPS;
         else if (nextR < permissibleGapForDiff) nextR = ComputationalMesh.EPS;
-
         if (Math.abs(beforeR - icbR) < permissibleGapForDiff)
             beforeR = icbR + permissibleGapForDiff * (nextR < icbR ? -1 : 1);
         else if (Math.abs(beforeR - cmbR) < permissibleGapForDiff)
@@ -789,8 +788,25 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 int endIndex = MESH.getNextIndexOf(endR, partition);
                 if (!g.isDownward()) startIndex++;
                 RealVector mesh = MESH.getMesh(partition);
+                double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
                 for (int j = startIndex; j != endIndex; ) {
                     double r = mesh.getEntry(j);
+                    //when the path reaches the jeffreys boundary.
+                    if (r <= jeffreysBoundary) {
+                        if (g.isDownward()) {
+                            addRThetaTime(jeffreysBoundary, pp, rList, thetaList, tList);
+                            rList.add(endR);
+                            thetaList.add(thetaList.getLast() + jeffreysDeltaMap.get(pp));
+                            tList.add(tList.getLast() + jeffreysTMap.get(pp));
+                            break;
+                        } else {
+                            while (r < jeffreysBoundary) r = mesh.getEntry(j++);
+                            rList.add(jeffreysBoundary + ComputationalMesh.EPS);
+                            thetaList.add(thetaList.getLast() + jeffreysDeltaMap.get(pp));
+                            tList.add(tList.getLast() + jeffreysTMap.get(pp));
+                            if (j == endIndex) break;
+                        }
+                    }
                     addRThetaTime(r, pp, rList, thetaList, tList);
                     if (g.isDownward()) j--;
                     else j++;
