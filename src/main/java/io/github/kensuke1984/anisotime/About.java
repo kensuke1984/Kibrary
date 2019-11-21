@@ -12,15 +12,15 @@ import static javax.swing.UIManager.*;
  * Information about ANISOtime package.
  *
  * @author Kensuke Konishi
- * @version 0.0.3.1.1
+ * @version 0.0.3.2
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
  */
 final class About extends javax.swing.JFrame {
 
     /**
-     * 2016/12/3
+     * 2019/11/21
      */
-    private static final long serialVersionUID = 776525631440857483L;
+    private static final long serialVersionUID = 1987478866667550198L;
     private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
             ") Copyright \u00a9 2015 Kensuke Konishi\n\n" +
             "Licensed under the Apache License, Version 2.0 (the \"License\")\n" +

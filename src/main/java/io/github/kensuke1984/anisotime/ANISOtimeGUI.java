@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.3b
+ * @version 0.5.3.4b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2019/11/20
+     * 2019/11/21
      */
-    private static final long serialVersionUID = 1291377907780504241L;
+    private static final long serialVersionUID = -2563164719813359905L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -148,7 +148,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
         jPanelParameter = new ParameterInputPanel(this);
         JButton buttonCompute = new JButton("Compute");
-        JButton buttonShow = new JButton("Save");
+        JButton buttonSave = new JButton("Save");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         MenuBar jMenuBar1 = new MenuBar(this);
@@ -156,7 +156,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
         buttonCompute.addActionListener(this::buttonComputeActionPerformed);
 
-        buttonShow.addActionListener(this::buttonSavePerformed);
+        buttonSave.addActionListener(this::buttonSavePerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -166,14 +166,14 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                                 layout.createParallelGroup(Alignment.LEADING).addGroup(layout.createSequentialGroup())
                                         .addComponent(jPanelParameter, GroupLayout.PREFERRED_SIZE, 300,
                                                 Short.MAX_VALUE))).addGroup(layout.createSequentialGroup().addGroup(
-                                layout.createSequentialGroup().addComponent(buttonCompute).addComponent(buttonShow)))
+                                layout.createSequentialGroup().addComponent(buttonCompute).addComponent(buttonSave)))
                         .addComponent(resultWindow)).addContainerGap()));
         layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(
                 layout.createSequentialGroup().addContainerGap()
                         .addComponent(jPanelParameter, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
                                 GroupLayout.PREFERRED_SIZE).addGroup(
                         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(buttonCompute).addComponent(buttonShow))
+                                .addComponent(buttonCompute).addComponent(buttonSave))
                         .addComponent(resultWindow, 100, 100, 100).addContainerGap()));
         pack();
         setLocation(getX() - getWidth() / 2, getY() - getHeight() / 2);
