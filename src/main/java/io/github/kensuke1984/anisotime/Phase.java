@@ -18,8 +18,9 @@ import java.util.regex.Pattern;
  * <p>
  * ???PdiffXX and ???SdiffXX can be used. XX is positive double XX is
  * diffractionAngle diff must be the last part.
+ * HOGEdiff is actually a bouncing wave at &plusmn; &epsilon; of a boundary
  * <p>
- * Diffraction can only happen at the final part.  TODO
+ * Diffraction can only happen at the final part.  TODO arbitrary
  * <p>
  * Numbers in a name.
  * </p>
@@ -37,10 +38,12 @@ import java.util.regex.Pattern;
  * <dd>under construction</dd>
  * </dl>
  * P and S after transmission strictly are downward, and p and s are upward.
+ *
  * @author Kensuke Konishi
- * @version 0.1.9.1
- * <p>
+ * @version 0.1.10
+ *
  * TODO P2PPcP no exist but exist
+ *
  */
 public class Phase {
 
@@ -329,15 +332,18 @@ public class Phase {
                                 partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.CMB, outerPoint));
                                 partList.add(nextChar == 'c' ? Located.REFLECTION_C : Located.CMB_PENETRATION);
                                 continue;
-                            case 'd'://TODO
-                                partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.CMB, outerPoint));
+                            case 'd'://TODO  Passpoint may be another point (not CMB)
+                                partList.add(
+                                        new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
                                 String angle = readAngle(i + 1);
                                 i += 4 + angle.length();
+                                //TODO arbitrary depth?
                                 partList.add(LocatedDiffracted.createCMBDiffraction(true, PS,
                                         Math.toRadians(angle.isEmpty() ? 0 : Double.parseDouble(angle))));
                                 if (i + 1 < EXPANDED_NAME.length()) throw new IllegalArgumentException(
                                         "ANISOtime now cannot handle complex diffraction wave");
-                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.CMB, PassPoint.EARTH_SURFACE));
+                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                        PassPoint.EARTH_SURFACE));
                                 continue;
                             default:
                                 throw new RuntimeException("Problem around P");
