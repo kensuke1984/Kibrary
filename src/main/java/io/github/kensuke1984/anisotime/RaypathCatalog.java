@@ -26,7 +26,7 @@ import java.util.function.DoubleUnaryOperator;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.4.2
+ * @version 0.1.4.3
  */
 public class RaypathCatalog implements Serializable {
     /**
