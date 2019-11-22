@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * P and S after transmission strictly are downward, and p and s are upward.
  *
  * @author Kensuke Konishi
- * @version 0.1.10.2
+ * @version 0.1.10.2.1
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -152,9 +152,8 @@ public class Phase {
     private static String simplify(String phaseName) {
         String simple = phaseName;
         //*diff???? -> *diff
-        Pattern compile = Pattern.compile("diff\\d+");
+        Pattern compile = Pattern.compile("diff[\\d|\\.]+");
         simple = compile.matcher(simple).replaceAll("diff");
-        System.out.println(simple+" "+phaseName);
         return simple;
     }
 
