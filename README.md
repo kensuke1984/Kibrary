@@ -16,6 +16,8 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check. 
  
+You can download from [Oracle](https://www.oracle.com/technetwork/java/javase/downloads/index.html),
+while you might want to manage by something like [sdkman](https://sdkman.io/).
 If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you can have the latest Java as below.
 ```bash
  % brew update
