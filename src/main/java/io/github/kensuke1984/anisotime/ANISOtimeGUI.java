@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.4b
+ * @version 0.5.3.5b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -365,7 +365,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
             double travelTime = raypath.computeT(eventR, phase);
             if (Double.isNaN(epicentralDistance)) continue;
-            String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
+            String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
             double depth = raypath.getStructure().earthRadius() - eventR;
             if (delta == null) {
                 added = true;
