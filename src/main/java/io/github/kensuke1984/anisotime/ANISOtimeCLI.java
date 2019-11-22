@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14.3.1
+ * @version 0.3.14.4
  */
 final class ANISOtimeCLI {
 
@@ -364,9 +364,9 @@ final class ANISOtimeCLI {
                     double deltaOnBoundary =
                             Math.toDegrees(targetDelta - raypaths[0].computeDelta(eventR, targetPhase));
                     if (deltaOnBoundary < 0) {
-                        System.err.println("Sdiff would have longer distance than " +
-                                Precision.round(Math.toDegrees(raypath.computeDelta(eventR, targetPhase)), 3) +
-                                " (Your input:" + Precision.round(Math.toDegrees(targetDelta), 3) + ")");
+                        System.err.println(targetPhase + " would have longer distance than " + Precision
+                                .round(Math.toDegrees(raypath.computeDelta(eventR, targetPhase)), decimalPlaces) +
+                                " (Your input:" + Precision.round(Math.toDegrees(targetDelta), decimalPlaces) + ")");
                         continue;
                     }
                     targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
