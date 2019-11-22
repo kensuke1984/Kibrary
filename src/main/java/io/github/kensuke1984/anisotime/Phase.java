@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  * P and S after transmission strictly are downward, and p and s are upward.
  *
  * @author Kensuke Konishi
- * @version 0.1.10.1
+ * @version 0.1.10.2
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -128,6 +128,10 @@ public class Phase {
      * name for parsing e.g. SKKKKKS
      */
     private final String EXPANDED_NAME;
+    /**
+     * nome for displaying (Sdiff for Sdiff??)
+     */
+    private final String DISPLAY_NAME;
 
 
     private PathPart[] passParts;
@@ -140,10 +144,19 @@ public class Phase {
     private Phase(String phaseName, String expandedName, boolean psv) {
         PHASENAME = phaseName;
         EXPANDED_NAME = expandedName;
+        DISPLAY_NAME = simplify(phaseName);
         PSV = psv;
         countParts();
     }
 
+    private static String simplify(String phaseName) {
+        String simple = phaseName;
+        //*diff???? -> *diff
+        Pattern compile = Pattern.compile("diff\\d+");
+        simple = compile.matcher(simple).replaceAll("diff");
+        System.out.println(simple+" "+phaseName);
+        return simple;
+    }
 
     /**
      * Input names must follow some rules.
@@ -680,14 +693,21 @@ public class Phase {
         return EXPANDED_NAME.contains("diff");
     }
 
-
     void printInformation() {
         System.out.println(PHASENAME);
         Arrays.stream(passParts).forEach(System.out::println);
     }
 
+    String getPHASENAME() {
+        return PHASENAME;
+    }
+
+    String getDISPLAY_NAME() {
+        return DISPLAY_NAME;
+    }
+
     @Override
     public String toString() {
-        return PHASENAME;
+        return PHASENAME; //TODO -> DISPLAY_NAME
     }
 }
