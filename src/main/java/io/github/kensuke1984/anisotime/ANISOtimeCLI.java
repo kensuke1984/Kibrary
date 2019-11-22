@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14.2
+ * @version 0.3.14.3
  */
 final class ANISOtimeCLI {
 
@@ -355,7 +355,7 @@ final class ANISOtimeCLI {
             for (Phase targetPhase : targetPhases) {
                 Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta, relativeAngleMode);
                 if (raypaths.length == 0) {
-                    System.err.println("No raypaths satisfying the input condition");
+                    System.err.println("No raypaths satisfying the input condition :" + targetPhase);
                     continue;
                 }
 
