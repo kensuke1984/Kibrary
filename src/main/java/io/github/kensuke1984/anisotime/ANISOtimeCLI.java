@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14.3
+ * @version 0.3.14.3.1
  */
 final class ANISOtimeCLI {
 
@@ -197,7 +197,7 @@ final class ANISOtimeCLI {
                         .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
         else targetPhases =
                 new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS, Phase.SKiKS,
-                        Phase.SKJKS, Phase.Sdiff};
+                        Phase.SKIKS, Phase.Sdiff};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
