@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.4b
+ * @version 0.5.4.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -60,9 +60,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2019/11/21
+     * 2019/11/22
      */
-    private static final long serialVersionUID = -4934978300489138737L;
+    private static final long serialVersionUID = 603018722315274283L;
 
     /**
      * ray parameter [s/rad] dt/d&Delta;
@@ -1176,7 +1176,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double a = dXdr.applyAsDouble(startR);
         double b = dXdr.applyAsDouble(startR + 0.5 * deltaX);
         double c = dXdr.applyAsDouble(endR);
-        if (Double.isNaN(a + c)) return 0;
+        if (Double.isNaN(a + c)) return Double.isNaN(b) ? Double.NaN : 0; //TODO
         double ratio = a < c ? a / c : c / a;
         if (INTEGRAL_THRESHOLD < ratio) return bySimpsonRule(a, b, c, deltaX);
         return simpsonInCriticalRange(dXdr, startR, endR);
