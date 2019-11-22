@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14.1
+ * @version 0.3.14.2
  */
 final class ANISOtimeCLI {
 
@@ -195,7 +195,9 @@ final class ANISOtimeCLI {
         if (cmd.hasOption("ph")) targetPhases =
                 Arrays.stream(cmd.getOptionValues("ph")).flatMap(arg -> Arrays.stream(arg.split(",")))
                         .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
-        else targetPhases = new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.S, Phase.ScS, Phase.SKiKS};
+        else targetPhases =
+                new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS, Phase.SKiKS,
+                        Phase.SKJKS, Phase.Sdiff};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
@@ -365,14 +367,14 @@ final class ANISOtimeCLI {
                         System.err.println("Sdiff would have longer distance than " +
                                 Precision.round(Math.toDegrees(raypath.computeDelta(eventR, targetPhase)), 3) +
                                 " (Your input:" + Precision.round(Math.toDegrees(targetDelta), 3) + ")");
-                        return;
+                        continue;
                     }
                     targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
                     double[] results = printResults(-1, raypath, targetPhase, System.out);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
                             outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, raypath.getRayParameter(),
                             targetDelta, results[1], eventR);
-                    return;
+                    continue;
                 }
                 int j = 0;
                 for (Raypath raypath : raypaths) {
