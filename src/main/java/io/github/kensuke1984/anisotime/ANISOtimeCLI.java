@@ -415,8 +415,10 @@ final class ANISOtimeCLI {
      * @param values       according to {@link #showFlag}, the values are shown. ray parameter, delta, time
      */
     private void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
-        out.println(phase + " " + IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
-                .mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i])).collect(Collectors.joining(" ")));
+        out.println(phase.getDISPLAY_NAME() + " " +
+                IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
+                        .mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i]))
+                        .collect(Collectors.joining(" ")));
     }
 
     /**
@@ -430,14 +432,10 @@ final class ANISOtimeCLI {
         double p0 = raypath.getRayParameter();
         double delta0 = raypath.computeDelta(eventR, targetPhase);
         double time0 = raypath.computeT(eventR, targetPhase);
-        if (Double.isNaN(delta0) || Double.isNaN(time0)) {
-//            System.out.println(p0);
-            return new double[]{Double.NaN, Double.NaN};
-        }
+        if (Double.isNaN(delta0) || Double.isNaN(time0)) return new double[]{Double.NaN, Double.NaN};
+
         delta0 = Math.toDegrees(delta0);
         if (0 < targetDelta) {
-//            double time1 = catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
-//                    relativeAngleMode, raypath);
             double p1 = catalog.rayParameterByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
                     relativeAngleMode, raypath);
             Raypath raypath1 = new Raypath(p1, raypath.getStructure());
@@ -446,7 +444,6 @@ final class ANISOtimeCLI {
             double delta1 = Math.toDegrees(raypath1.computeDelta(eventR, targetPhase));
             if (!Double.isNaN(time1)) {
                 time0 = time1;
-//                delta0 = targetDelta;
                 delta0 = delta1;
                 p0 = p1;
             }
