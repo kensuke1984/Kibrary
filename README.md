@@ -68,8 +68,8 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 Last updated Nov 5, 2019
 
 
-[release-image]:https://img.shields.io/badge/release-Pixie-pink.svg
-[release]:https://en.wikipedia.org/wiki/Pixie
+[release-image]:https://img.shields.io/badge/release-Titan-pink.svg
+[release]:https://en.wikipedia.org/wiki/Titan_(mythology)
 [version-image]:https://img.shields.io/badge/version-0.4.5-yellow.svg
 
 [alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
