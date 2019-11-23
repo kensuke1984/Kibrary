@@ -7,6 +7,10 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
 import java.io.*;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +20,8 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.BinaryOperator;
 import java.util.function.DoubleUnaryOperator;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Raypath catalogue for one model
@@ -26,13 +32,42 @@ import java.util.function.DoubleUnaryOperator;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.4.3
+ * @version 0.1.5
  */
 public class RaypathCatalog implements Serializable {
     /**
      * 2019/11/20
      */
     private static final long serialVersionUID = 6971463963735925367L;
+
+    private static Path downloadCatalogZip() throws IOException {
+        Path zipPath = Files.createTempFile("piac", ".zip");
+        URL website = new URL("https://www.dropbox.com/s/dadsqhe47wnfe2k/piac.zip?dl=1");
+        ReadableByteChannel rbc = Channels.newChannel(website.openStream());
+        try (FileOutputStream fos = new FileOutputStream(zipPath.toFile())) {
+            try (FileChannel channel = fos.getChannel()) {
+                channel.transferFrom(rbc, 0, Long.MAX_VALUE);
+            }
+        }
+        return zipPath;
+    }
+
+    private static void extractInShare() throws IOException {
+        Files.createDirectories(share);
+        Path zipPath = downloadCatalogZip();
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                Path outPath = share.resolve(entry.getName());
+                try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
+                        Files.newOutputStream(outPath))) {
+                    byte[] buf = new byte[1024];
+                    int size = 0;
+                    while ((size = zis.read(buf)) != -1) bufferedOutputStream.write(buf, 0, size);
+                }
+            }
+        }
+    }
 
     /**
      * Creates a catalog for a model file (model file, or prem, iprem, ak135).
@@ -91,6 +126,12 @@ public class RaypathCatalog implements Serializable {
     private static final Path share = Environment.KIBRARY_HOME.resolve("share");
 
     static {
+        if (!Files.exists(share)) try {
+            extractInShare();
+        } catch (IOException e) {
+            System.err.println("Could not download catalog files from internet");
+
+        }
         try {
             BiFunction<Path, VelocityStructure, RaypathCatalog> getCatalogue = (p, v) -> {
                 RaypathCatalog cat;
