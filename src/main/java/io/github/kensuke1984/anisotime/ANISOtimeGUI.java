@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.5b
+ * @version 0.5.3.6b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2019/11/21
+     * 2019/11/23
      */
-    private static final long serialVersionUID = -2563164719813359905L;
+    private static final long serialVersionUID = -7854966996076335692L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -328,20 +328,24 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         for (Phase phase : phaseSet) {
             Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance, false);
             for (Raypath raypath : raypaths) {
+                if (!phase.isDiffracted()) {
+                    raypathList.add(raypath);
+                    phaseList.add(phase);
+                    continue;
+                }
+                double deltaOnBoundary = Math.toDegrees(epicentralDistance - raypath.computeDelta(eventR, phase));
+                if (deltaOnBoundary < 0) {
+                    System.err.println(phase + " would have longer distance than " +
+                            Math.toDegrees(raypath.computeDelta(eventR, phase)) + " (Your input:" +
+                            Math.toDegrees(epicentralDistance) + ")");
+                    continue;
+                }
                 raypathList.add(raypath);
-                phaseList.add(phase);
+                phaseList.add(Phase.create(phase.toString() + deltaOnBoundary));
             }
         }
-        for (int i = 0; i < phaseList.size(); i++) {
-            Phase phase = phaseList.get(i);
-            if (!phase.isDiffracted()) continue;
-            Raypath raypath = raypathList.get(i);
-            double delta = raypath.computeDelta(eventR, phase);
-            double dDelta = Math.toDegrees(epicentralDistance - delta);
-            phaseList.set(i, Phase.create(phase.toString() + dDelta));
-        }
+
         int n = raypathList.size();
-        // System.out.println("Whats done is done");
         double[] delta = new double[n];
         Arrays.fill(delta, epicentralDistance);
         showResult(delta, raypathList, phaseList);
