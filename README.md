@@ -16,6 +16,8 @@ You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is 
 If you are not sure about the version you have, 
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check. 
  
+You can download from [Oracle](https://www.oracle.com/technetwork/java/javase/downloads/index.html),
+while you might want to manage by something like [sdkman](https://sdkman.io/).
 If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you can have the latest Java as below.
 ```bash
  % brew update
@@ -68,8 +70,8 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 Last updated Nov 5, 2019
 
 
-[release-image]:https://img.shields.io/badge/release-Pixie-pink.svg
-[release]:https://en.wikipedia.org/wiki/Pixie
+[release-image]:https://img.shields.io/badge/release-Titan-pink.svg
+[release]:https://en.wikipedia.org/wiki/Titan_(mythology)
 [version-image]:https://img.shields.io/badge/version-0.4.5-yellow.svg
 
 [alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
