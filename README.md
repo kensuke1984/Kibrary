@@ -43,7 +43,7 @@ If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/softw
 If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
 the download may fail. In that case, you must update it, 
 
-If you want to clean install, use ```/bin/sh -s -- -f``` instead of ```/bin/sh -s```.
+If you want to clean install, use ```/bin/sh $kins -f``` instead of ```/bin/sh $kins```.
 Java Development Kit is required for compiling Kibrary. 
 
 otherwise you can download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1). 
