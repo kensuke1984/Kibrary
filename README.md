@@ -29,7 +29,7 @@ If you do not agree with [the terms and conditions](#copyright-and-licence), do 
 
 
 
-### Build by yourself
+ <i>Build by yourself</i>
 
 If you just want to use Kibrary, just install as [above](#installation).
 If you would like to have source files, execute [this](https://kensuke1984.github.io/bin/install.sh).
