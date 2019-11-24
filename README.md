@@ -36,9 +36,9 @@ If you would like to have source files, execute [this](https://kensuke1984.githu
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
 #If you have curl installed 
- % kins=$(mktemp) && curl -s -o $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm $kins
+ % kins=$(mktemp) && curl -s -o $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm -f $kins
 #else if wget is installed, try
- % kins=$(mktemp) && wget -q -O $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm $kins
+ % kins=$(mktemp) && wget -q -O $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm -f $kins
 ```
 If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
 the download may fail. In that case, you must update it, 
