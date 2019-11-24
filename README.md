@@ -35,17 +35,18 @@ If you just want to use Kibrary, just install as [above](#installation).
 If you would like to have source files, execute [this](https://kensuke1984.github.io/bin/install.sh).
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
- % curl -s https://kensuke1984.github.io/bin/install.sh && /bin/sh ./install.sh
-#If curl is not installed, try
- % wget -q -O - https://kensuke1984.github.io/bin/install.sh && /bin/sh ./install.sh
+#If you have curl installed 
+ % kins=$(mktemp) && curl -s -o $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm $kins
+#else if wget is installed, try
+ % kins=$(mktemp) && wget -q -O $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm $kins
 ```
+If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
+the download may fail. In that case, you must update it, 
+
 If you want to clean install, use ```/bin/sh -s -- -f``` instead of ```/bin/sh -s```.
 Java Development Kit is required for compiling Kibrary. 
 
-If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
-the download may fail. In that case, you must update it, 
 otherwise you can download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1). 
-
 
 The necessary/bundled libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
