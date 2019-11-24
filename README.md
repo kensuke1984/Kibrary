@@ -27,30 +27,27 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
 Download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1).
 If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
 
+
+
+### Build by yourself
+
+If you just want to use Kibrary, just install as [above](#installation).
 If you would like to have source files, execute [this](https://kensuke1984.github.io/bin/install.sh).
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
- % curl -s https://kensuke1984.github.io/bin/install.sh | /bin/sh -s
+ % curl -s https://kensuke1984.github.io/bin/install.sh && /bin/sh ./install.sh
 #If curl is not installed, try
- % wget -q -O - https://kensuke1984.github.io/bin/install.sh | /bin/sh -s
+ % wget -q -O - https://kensuke1984.github.io/bin/install.sh && /bin/sh ./install.sh
 ```
 If you want to clean install, use ```/bin/sh -s -- -f``` instead of ```/bin/sh -s```.
-
-It installs Kibrary under HOME directory. In order to setup environment like PATH, execute a script like below:
-```bash
- % . ~/.Kibrary/bin/init_bash.sh || . ~/.Kibrary/bin/init_tcsh.sh
-```  
+Java Development Kit is required for compiling Kibrary. 
 
 If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
 the download may fail. In that case, you must update it, 
 otherwise you can download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1). 
 
 
-## Build by yourself
-If you just want to use Kibrary, just install as [above](#installation).
-However if you want to modify source codes and build by yourself,
-you have to care about dependencies by yourself.  
-The necessary libraries are  
+The necessary/bundled libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
 [*Apache Commons LANG*][lang], [*Apache Commons MATH*][math], [*Apache Commons NET*][net],
 [*Epsgraphics*][eps], [*javax.mail*][mail].  
