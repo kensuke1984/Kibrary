@@ -12,7 +12,7 @@ It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([
 
 ## <a name="installation">Installation
  
- <i><b><a name ="java">Java environment</b></i>
+ <i><b><a name ="java">Java environment</a></b></i>
  
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
