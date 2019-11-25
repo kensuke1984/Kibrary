@@ -30,7 +30,7 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
  <i><b>Executable jar file</b></i>
  
 Most general users just need the jar file (and [Java](#java)).
-Download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1).
+Download the [binary release of Kibrary][kibrary].
 If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
 
 
@@ -52,7 +52,7 @@ the download may fail. In that case, you must update it,
 If you want to clean install, use ```/bin/sh $kins -f``` instead of ```/bin/sh $kins```.
 Java Development Kit is required for compiling Kibrary. 
 
-otherwise you can download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1). 
+otherwise you can download the [binary release of Kibrary][kibrary]. 
 
 The necessary/bundled libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
@@ -84,7 +84,9 @@ Last updated Nov 5, 2019
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
 
-[ANISOtime]:http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
+[ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
+
+[kibrary]: https://bit.ly/37wxazr
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
