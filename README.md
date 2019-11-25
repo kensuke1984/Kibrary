@@ -11,6 +11,9 @@ It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([
 
 
 ## <a name="installation">Installation
+ 
+ <i>Java</i>
+ 
 Kibrary currently runs on *Java SE Runtime Environment 8*.
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
 If you are not sure about the version you have, 
@@ -23,6 +26,8 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
  % brew update
  % brew cask install java
 ```
+
+ <i>Executable jar file</i>
 
 Download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1).
 If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
