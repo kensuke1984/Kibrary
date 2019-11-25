@@ -28,6 +28,7 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
 ```
 
  <i><b>Executable jar file</b></i>
+ 
 Most general users just need the jar file (and [Java](#java)).
 Download the [binary release of Kibrary](https://www.dropbox.com/s/utep6ep1l1bxe3d/kibrary-0.4.5.jar?dl=1).
 If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
