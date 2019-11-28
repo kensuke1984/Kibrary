@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -23,9 +24,29 @@ import java.util.stream.IntStream;
  * TODO sorted
  *
  * @author Kensuke Konishi
- * @version 0.1.3.0.2
+ * @version 0.1.4
  */
 public class Trace {
+
+    /**
+     * fit X, Y in this to  y<sub>j</sub> = &sum;<sub>i</sub> (a<sub>i</sub> f<sub>i</sub> (x<sub>j</sub>))
+     * by the least-square method.
+     *
+     * @param operators functions f<sub>i</sub>(x)
+     * @return a<sub>i</sub>
+     */
+    public double[] fit(DoubleUnaryOperator... operators) {
+        int n = operators.length;
+        if (X.length < n + 1) throw new IllegalArgumentException("Too many operators input.");
+        if (n == 0) throw new IllegalArgumentException("Invalid use");
+        RealMatrix matrix = new Array2DRowRealMatrix(getLength(), n); // {a_ij} fj(xi)
+        for (int i = 0; i < matrix.getRowDimension(); i++)
+            for (int j = 0; j < matrix.getColumnDimension(); j++)
+                matrix.setEntry(i, j, operators[j].applyAsDouble(X[i]));
+        RealVector bb = matrix.transpose().operate(new ArrayRealVector(Y, false));
+        matrix = matrix.transpose().multiply(matrix);
+        return new LUDecomposition(matrix).getSolver().solve(bb).toArray();
+    }
 
     private final double[] X;
     private final double[] Y;
@@ -460,9 +481,8 @@ public class Trace {
      */
     public void write(Path path, OpenOption... options) throws IOException {
         List<String> outLines = new ArrayList<>(X.length);
-        for (int i = 0; i < X.length; i++) {
+        for (int i = 0; i < X.length; i++)
             outLines.add(X[i] + " " + Y[i]);
-        }
         Files.write(path, outLines, options);
     }
 
