@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14.4
+ * @version 0.3.14.5
  */
 final class ANISOtimeCLI {
 
@@ -317,7 +317,7 @@ final class ANISOtimeCLI {
     private void run() {
         try {
             if (checkArgumentOption()) throw new RuntimeException("Input arguments have problems.");
-            if (hasConflict()) return;
+            hasConflict();
 
             setParameters();
 
@@ -494,67 +494,40 @@ final class ANISOtimeCLI {
 
     /**
      * check if there are conflicts
-     *
-     * @return true if there are some conflicts
      */
-    private boolean hasConflict() {
+    private void hasConflict() {
+        if (cmd.hasOption("absolute") && cmd.hasOption("relative"))
+            throw new IllegalArgumentException("Only one of either --absolute or --relative can be chosen.");
 
-        if (cmd.hasOption("absolute") && cmd.hasOption("relative")) {
-            System.err.println("Only one of either --absolute or --relative can be chosen.");
-            return true;
-        }
-
-
-        if (cmd.hasOption("h") && 1 < cmd.getOptionValues("h").length) {
-            System.err.println("Option -h (depth) can have only one value [km].");
-            return true;
-        }
+        if (cmd.hasOption("h") && 1 < cmd.getOptionValues("h").length)
+            throw new IllegalArgumentException("Option -h (depth) can have only one value [km].");
 
         if (cmd.hasOption("SH")) {
-            boolean out = false;
-            if (cmd.hasOption("SV")) {
-                System.err.println("Only one of either -SV or -SH can be chosen.");
-                out = true;
-            }
-
+            if (cmd.hasOption("SV")) throw new IllegalArgumentException("Only one of either -SV or -SH can be chosen.");
             if (cmd.hasOption("ph")) {
                 String phase = cmd.getOptionValue("ph");
-                if (phase.contains("P") || phase.contains("p") || phase.contains("K")) {
-                    System.err.println(phase + " should be P-SV mode.");
-                    out = true;
-                }
+                if (phase.contains("P") || phase.contains("p") || phase.contains("K"))
+                    throw new IllegalArgumentException(phase + " should be P-SV mode.");
             }
-
-            if (out) return true;
         }
 
-        if (cmd.hasOption("p") && cmd.hasOption("deg")) {
-            System.err.println("You can not use both option -p and -deg simultaneously.");
-            return true;
-        }
+        if (cmd.hasOption("p") && cmd.hasOption("deg"))
+            throw new IllegalArgumentException("You can not use both option -p and -deg simultaneously.");
 
         if (cmd.hasOption("rs")) {
-            if (cmd.hasOption("p") || cmd.hasOption("deg")) {
-                System.err.println("When you compute record sections, neither option -p nor -deg can be specified.");
-                return true;
-            }
-            if (!cmd.hasOption("ph")) {
-                System.err.println("When you compute record sections, -ph must be specified.");
-                return true;
-            }
-            if (cmd.hasOption("eps")) {
-                System.err.println("When you compute record sctions, -eps can not be set.");
-            }
-        } else if (cmd.hasOption("o") && !cmd.hasOption("eps")) {
-            System.err.println("-o can be set, only when you compute record sections or make ray path figures.");
-            return true;
-        }
+            if (cmd.hasOption("p") || cmd.hasOption("deg")) throw new IllegalArgumentException(
+                    "When you compute record sections, neither option -p nor -deg can be specified.");
 
-        if (cmd.hasOption("rc") && cmd.hasOption("mod")) {
-            System.err.println("When you read a catalog, you cannot specify a velocity model.");
-            return true;
-        }
+            if (!cmd.hasOption("ph"))
+                throw new IllegalArgumentException("When you compute record sections, -ph must be specified.");
 
-        return false;
+            if (cmd.hasOption("eps"))
+                throw new IllegalArgumentException("When you compute record sctions, -eps can not be set.");
+        } else if (cmd.hasOption("o") && !cmd.hasOption("eps")) throw new IllegalArgumentException(
+                "-o can be set, only when you compute record sections or make ray path figures.");
+
+        if (cmd.hasOption("rc") && cmd.hasOption("mod"))
+            throw new IllegalArgumentException("When you read a catalog, you cannot specify a velocity model.");
+
     }
 }
