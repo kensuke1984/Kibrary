@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 
 /**
@@ -16,7 +18,7 @@ import java.util.stream.IntStream;
  * Outer-core must have a value of Q<sub>&mu;</sub> =-1
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.0.10.3
+ * @version 0.1.0
  */
 public class PolynomialStructure implements VelocityStructure {
 
@@ -54,7 +56,35 @@ public class PolynomialStructure implements VelocityStructure {
     public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
         STRUCTURE = structure;
         RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
+        checkBoundaries();
     }
+
+    private void checkBoundaries() {
+        rMinIndexOfDBoundary =
+                IntStream.range(1, STRUCTURE.getNzone()).filter(i -> isDBoundary(STRUCTURE.getRMinOf(i))).toArray();
+    }
+
+    /**
+     * @param r radius to be checked
+     * @return if the layer is D boundary.
+     */
+    private boolean isDBoundary(double r) {
+        double rPlus = r + D_BOUNDARY_ZONE;
+        double rMinus = r - D_BOUNDARY_ZONE;
+        double criterion = 1 - MAXIMUM_RATIO_OF_D_BOUNDARY / 100;
+        ToDoubleFunction<DoubleUnaryOperator> toRatio = compute -> {
+            double ratio = compute.applyAsDouble(rPlus) / compute.applyAsDouble(rMinus);
+            return ratio < 1 ? ratio : 1 / ratio;
+        };
+        return !(toRatio.applyAsDouble(this::getA) < criterion || toRatio.applyAsDouble(this::getC) < criterion ||
+                toRatio.applyAsDouble(this::getF) < criterion || toRatio.applyAsDouble(this::getL) < criterion ||
+                toRatio.applyAsDouble(this::getN) < criterion || toRatio.applyAsDouble(this::getRho) < criterion);
+    }
+
+    /**
+     * index of D-Boundary for rmin
+     */
+    private int[] rMinIndexOfDBoundary;
 
     public PolynomialStructure(Path path) throws IOException {
         this(new io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure(path));
