@@ -7,12 +7,26 @@ import java.util.Arrays;
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.11.1
+ * @version 0.1.0
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
  */
 public interface VelocityStructure extends Serializable {
+
+    /**
+     * [%] (must be a positive number)
+     * If all values (ACFLN&rho;) at a boundary &plusmn; {@link #D_BOUNDARY_ZONE} has smaller gap in ratio than this value,
+     * the boundary is regarded as the D boundary.
+     */
+    double MAXIMUM_RATIO_OF_D_BOUNDARY = 1e-2;
+
+    /**
+     * Radius close to a D boundary by this value,
+     * the value at the radius will be modified.
+     */
+    double D_BOUNDARY_ZONE = 1e-4;
+
 
     /**
      * @param r [km]
