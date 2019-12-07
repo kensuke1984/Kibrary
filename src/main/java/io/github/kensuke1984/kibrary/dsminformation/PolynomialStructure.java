@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.7
+ * @version 0.2.8
  */
 public class PolynomialStructure implements Serializable {
     /**
@@ -55,7 +55,6 @@ public class PolynomialStructure implements Serializable {
         }
 
     }
-
 
     /**
      * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -624,6 +623,14 @@ public class PolynomialStructure implements Serializable {
      */
     public double getRhoAt(double r) {
         return rho[zoneOf(r)].value(toX(r));
+    }
+
+    /**
+     * @param izone index of a zone
+     * @return polynomial function for &rho; of the zone
+     */
+    public PolynomialFunction getRhoOf(int izone) {
+        return rho[izone];
     }
 
     /**
