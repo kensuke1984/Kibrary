@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 
@@ -18,9 +19,24 @@ import java.util.stream.IntStream;
  * Outer-core must have a value of Q<sub>&mu;</sub> =-1
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class PolynomialStructure implements VelocityStructure {
+
+    /**
+     * @param r       [km] target radius
+     * @param compute formulation for variable
+     * @return the value at r. if the r is in D boundary range. the value is modified.
+     */
+    private double checkRInBoundaryAndSmooth(double r, DoubleUnaryOperator compute) {
+        if (indexOfDBoundaryZone(r) < 0) return compute.applyAsDouble(r);
+        double boundary = STRUCTURE.getRMinOf(STRUCTURE.zoneOf(r));
+        double rLower = boundary - VelocityStructure.D_BOUNDARY_ZONE;
+        double rUpper = boundary + VelocityStructure.D_BOUNDARY_ZONE;
+        double vLower = compute.applyAsDouble(rLower);
+        return vLower + (compute.applyAsDouble(rUpper) - vLower) / (rUpper - rLower) * (r - rLower);
+    }
+
 
     /**
      * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -65,6 +81,15 @@ public class PolynomialStructure implements VelocityStructure {
     }
 
     /**
+     * @param r [km] target radius
+     * @return if the target radius is in a D boundary zone, returns the index (rmin) of the boundary, otherwise -1.
+     */
+    private int indexOfDBoundaryZone(double r) {
+        return Arrays.stream(rMinIndexOfDBoundary).filter(i -> STRUCTURE.getRMinOf(i) - D_BOUNDARY_ZONE <= r &&
+                r <= STRUCTURE.getRMinOf(i) + D_BOUNDARY_ZONE).findAny().orElse(-1);
+    }
+
+    /**
      * @param r radius to be checked
      * @return if the layer is D boundary.
      */
@@ -76,9 +101,14 @@ public class PolynomialStructure implements VelocityStructure {
             double ratio = compute.applyAsDouble(rPlus) / compute.applyAsDouble(rMinus);
             return ratio < 1 ? ratio : 1 / ratio;
         };
-        return !(toRatio.applyAsDouble(this::getA) < criterion || toRatio.applyAsDouble(this::getC) < criterion ||
-                toRatio.applyAsDouble(this::getF) < criterion || toRatio.applyAsDouble(this::getL) < criterion ||
-                toRatio.applyAsDouble(this::getN) < criterion || toRatio.applyAsDouble(this::getRho) < criterion);
+        Function<TransverselyIsotropicParameter, DoubleUnaryOperator> getOperater =
+                ti -> a -> STRUCTURE.getTransverselyIsotropicValue(ti, a);
+        return !(toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.A)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.C)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.F)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.L)) < criterion ||
+                toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.N)) < criterion ||
+                toRatio.applyAsDouble(STRUCTURE::getRhoAt) < criterion);
     }
 
     /**
@@ -254,27 +284,32 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double getA(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.A, r);
+        return checkRInBoundaryAndSmooth(r,
+                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.A, a));
     }
 
     @Override
     public double getC(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.C, r);
+        return checkRInBoundaryAndSmooth(r,
+                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.C, a));
     }
 
     @Override
     public double getF(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.F, r);
+        return checkRInBoundaryAndSmooth(r,
+                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.F, a));
     }
 
     @Override
     public double getL(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.L, r);
+        return checkRInBoundaryAndSmooth(r,
+                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.L, a));
     }
 
     @Override
     public double getN(double r) {
-        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.N, r);
+        return checkRInBoundaryAndSmooth(r,
+                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.N, a));
     }
 
 }
