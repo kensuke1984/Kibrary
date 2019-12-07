@@ -27,13 +27,14 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6.3
+ * @version 0.2.7
  */
 public class PolynomialStructure implements Serializable {
     /**
-     * 2019/10/3
+     * 2019/12/7
      */
-    private static final long serialVersionUID = 1301735196105813616L;
+//    private static final long serialVersionUID = 1301735196105813616L;
+    private static final long serialVersionUID = 1350404622577105338L;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Usage: model file.");
@@ -496,7 +497,40 @@ public class PolynomialStructure implements Serializable {
 
     /**
      * @param izone              index of the target zone
-     * @param polynomialFunction replace the function for Vsv in the ith zone to it
+     * @param polynomialFunction replace the function for &rho; in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setRho(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.rho[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>pv</sub> in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setVpv(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.vpv[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>ph</sub> in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setVph(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.vph[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>sv</sub> in the ith zone to it
      * @return new structure
      */
     public PolynomialStructure setVsv(int izone, PolynomialFunction polynomialFunction) {
@@ -507,7 +541,7 @@ public class PolynomialStructure implements Serializable {
 
     /**
      * @param izone              index of the target zone
-     * @param polynomialFunction replace the function for Vsh in the ith zone to it
+     * @param polynomialFunction replace the function for V<sub>sh</sub> in the ith zone to it
      * @return new structure
      */
     public PolynomialStructure setVsh(int izone, PolynomialFunction polynomialFunction) {
@@ -518,7 +552,19 @@ public class PolynomialStructure implements Serializable {
 
     /**
      * @param izone              index of the target zone
-     * @param polynomialFunction replace the function for Vsv and Vsh in the ith zone to it
+     * @param polynomialFunction replace the function for V<sub>pv</sub> and V<sub>ph</sub> in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setVp(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.vph[izone] = polynomialFunction;
+        str.vpv[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>sv</sub> and V<sub>sh</sub> in the ith zone to it
      * @return new structure
      */
     public PolynomialStructure setVs(int izone, PolynomialFunction polynomialFunction) {
