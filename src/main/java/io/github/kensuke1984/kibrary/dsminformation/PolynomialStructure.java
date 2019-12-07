@@ -11,6 +11,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -27,7 +29,7 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.8
+ * @version 0.2.9
  */
 public class PolynomialStructure implements Serializable {
     /**
@@ -53,7 +55,6 @@ public class PolynomialStructure implements Serializable {
             Utilities.println(r1, getRhoAt(r1), getVpvAt(r1), getVphAt(r1), getVsvAt(r1), getVshAt(r1), getEtaAt(r1),
                     getQmuAt(r1), getQkappaAt(r1));
         }
-
     }
 
     /**
@@ -218,7 +219,6 @@ public class PolynomialStructure implements Serializable {
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,}; // OK
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-
     }
 
     /**
@@ -239,6 +239,36 @@ public class PolynomialStructure implements Serializable {
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
+    /**
+     * i-th layer is merged to (i-1)th layer.
+     * in other words, ith boundary is gone.
+     * values in the i-th layer becomes those of the (i-1)th layer.
+     * So far you can not merge a layer beneath CMB.
+     *
+     * @param i index of a layer which disappears after the merge
+     * @return slimmed Structure
+     */
+    public PolynomialStructure mergeLayer(int i) {
+        if (i <= coreZone) throw new IllegalArgumentException("Cannot merge layers in the core.");
+        if (nzone - 2 < i) throw new IllegalArgumentException("Input i must be less than " + (nzone - 1));
+        UnaryOperator<double[]> one =
+                old -> IntStream.range(0, nzone).filter(j -> j != i).mapToDouble(j -> old[j]).toArray();
+        Function<PolynomialFunction[], double[][]> two =
+                old -> IntStream.range(0, nzone).filter(j -> j != i).mapToObj(j -> old[j].getCoefficients())
+                        .toArray(double[][]::new);
+        double[] rmin = one.apply(this.rmin);
+        double[] rmax = one.apply(this.rmax);
+        rmax[i - 1] = this.rmax[i];
+        double[][] rho = two.apply(this.rho);
+        double[][] vpv = two.apply(this.vpv);
+        double[][] vph = two.apply(this.vph);
+        double[][] vsv = two.apply(this.vsv);
+        double[][] vsh = two.apply(this.vsh);
+        double[][] eta = two.apply(this.eta);
+        double[] qMu = one.apply(this.qMu);
+        double[] qKappa = one.apply(this.qKappa);
+        return set(nzone - 1, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+    }
 
     /**
      * change String line from coefficients a + bx + cx**2 >>>>> a b c 0
