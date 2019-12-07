@@ -27,7 +27,7 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6.2
+ * @version 0.2.6.3
  */
 public class PolynomialStructure implements Serializable {
     /**
@@ -494,18 +494,33 @@ public class PolynomialStructure implements Serializable {
         return r / rmax[nzone - 1];
     }
 
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for Vsv in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setVsv(int izone, PolynomialFunction polynomialFunction) {
         PolynomialStructure str = deepCopy();
         str.vsv[izone] = polynomialFunction;
         return str;
     }
 
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for Vsh in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setVsh(int izone, PolynomialFunction polynomialFunction) {
         PolynomialStructure str = deepCopy();
         str.vsh[izone] = polynomialFunction;
         return str;
     }
 
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for Vsv and Vsh in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setVs(int izone, PolynomialFunction polynomialFunction) {
         PolynomialStructure str = deepCopy();
         str.vsh[izone] = polynomialFunction;
@@ -513,6 +528,11 @@ public class PolynomialStructure implements Serializable {
         return str;
     }
 
+    /**
+     * @param izone index of the target zone
+     * @param qMu   replace q<sub>&mu;</sub> in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setQMu(int izone, double qMu) {
         PolynomialStructure str = deepCopy();
         str.qMu[izone] = qMu;
