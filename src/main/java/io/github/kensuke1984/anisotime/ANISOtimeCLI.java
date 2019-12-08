@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14.5
+ * @version 0.3.15
  */
 final class ANISOtimeCLI {
 
@@ -66,7 +66,7 @@ final class ANISOtimeCLI {
     /**
      * [rad]
      */
-    private double dDelta;
+    private double dDelta = 0.1;
     /**
      * [s/rad] dT/d&Delta;
      */
@@ -150,7 +150,7 @@ final class ANISOtimeCLI {
         options.addOption("dec", true, "Number of decimal places.");
         options.addOption("p", true, "Ray parameter [s/deg]");
         options.addOption("dR", true, "Integral interval [km] (default:10)");
-        options.addOption("dD", true, "Parameter \u03b4\u0394 [deg] for a catalog creation. (default:0.1");
+//        options.addOption("dD", true, "Parameter \u03b4\u0394 [deg] for a catalog creation. (default:0.1");
         options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
         options.addOption("rs", "record-section", true,
                 "start, end (,interval) [deg]\n Computes a table of a record section for the range.");
@@ -161,7 +161,7 @@ final class ANISOtimeCLI {
      * Sets parameters according to the input arguments.
      */
     private void setParameters() {
-        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "0.1")));
+//        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "0.1")));
 
         decimalPlaces = Integer.parseInt(cmd.getOptionValue("dec", "2"));
         if (decimalPlaces < 0)
@@ -187,9 +187,15 @@ final class ANISOtimeCLI {
             if (!cmd.hasOption("mod")) throw new RuntimeException("You must specify a velocity model(e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
+            // Default PREM ISOPREM AK135
+            if (structure.equals(PolynomialStructure.PREM)) catalog = RaypathCatalog.prem();
+            else if (structure.equals(PolynomialStructure.ISO_PREM)) catalog = RaypathCatalog.iprem();
+            else if (structure.equals(PolynomialStructure.AK135)) catalog = RaypathCatalog.ak135();
             // option TODO
-            ComputationalMesh mesh = ComputationalMesh.simple(structure);
-            catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
+            else {
+                ComputationalMesh mesh = ComputationalMesh.simple(structure);
+                catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
+            }
         }
 
         if (cmd.hasOption("ph")) targetPhases =
