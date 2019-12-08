@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.5b
+ * @version 0.5.5.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -399,8 +399,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         while (0.01 < rToX.applyAsDouble(boundary)) {
             boundary = (boundary + turningR) / 2;
         }
-//        System.out.println(pp + " x " + WOODHOUSE.computeQTau(pp, RAY_PARAMETER, boundary));
-        System.out.println(pp + "turn" + turningR + " jeffr " + boundary);
         return boundary;
     }
 
