@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
 
@@ -19,24 +20,9 @@ import java.util.stream.IntStream;
  * Outer-core must have a value of Q<sub>&mu;</sub> =-1
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.1
+ * @version 0.1.2
  */
 public class PolynomialStructure implements VelocityStructure {
-
-    /**
-     * @param r       [km] target radius
-     * @param compute formulation for variable
-     * @return the value at r. if the r is in D boundary range. the value is modified.
-     */
-    private double checkRInBoundaryAndSmooth(double r, DoubleUnaryOperator compute) {
-        if (indexOfDBoundaryZone(r) < 0) return compute.applyAsDouble(r);
-        double boundary = STRUCTURE.getRMinOf(STRUCTURE.zoneOf(r));
-        double rLower = boundary - VelocityStructure.D_BOUNDARY_ZONE;
-        double rUpper = boundary + VelocityStructure.D_BOUNDARY_ZONE;
-        double vLower = compute.applyAsDouble(rLower);
-        return vLower + (compute.applyAsDouble(rUpper) - vLower) / (rUpper - rLower) * (r - rLower);
-    }
-
 
     /**
      * Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -59,9 +45,9 @@ public class PolynomialStructure implements VelocityStructure {
     public static final PolynomialStructure HOMOGEN =
             new PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure.HOMOGEN);
     /**
-     * 2019/11/9
+     * 2019/12/7
      */
-    private static final long serialVersionUID = 3585094774865301836L;
+    private static final long serialVersionUID = -7292410325252292009L;
 
     private final io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure STRUCTURE;
     /*
@@ -70,45 +56,96 @@ public class PolynomialStructure implements VelocityStructure {
     private final PolynomialFunction RADIUS_SUBTRACTION;
 
     public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
-        STRUCTURE = structure;
+        STRUCTURE = checkBoundaries(structure);
         RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
-        checkBoundaries();
     }
 
-    private void checkBoundaries() {
-        rMinIndexOfDBoundary =
-                IntStream.range(1, STRUCTURE.getNzone()).filter(i -> isDBoundary(STRUCTURE.getRMinOf(i))).toArray();
+    private io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure checkBoundaries(
+            io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
+        double[] dBoundaries = IntStream.range(1, structure.getNzone()).mapToDouble(structure::getRMinOf)
+                .filter(r -> isDBoundary(r, structure)).toArray();
+        io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure newStructure = structure;
+        double earthRadius = structure.getRMaxOf(structure.getNzone() - 1);
+        for (double boundary : dBoundaries) {
+            newStructure = newStructure.addBoundaries(boundary - D_BOUNDARY_ZONE, boundary + D_BOUNDARY_ZONE);
+            newStructure = newStructure.mergeLayer(newStructure.zoneOf(boundary));
+            int izone = newStructure.zoneOf(boundary);
+            //rho
+            newStructure = newStructure.setRho(izone,
+                    computeReplacement(boundary, earthRadius, newStructure.getRhoOf(izone),
+                            newStructure.getRhoOf(izone + 1)));
+            //Vpv
+            newStructure = newStructure.setVpv(izone,
+                    computeReplacement(boundary, earthRadius, newStructure.getVpvOf(izone),
+                            newStructure.getVpvOf(izone)));
+            //Vph
+            newStructure = newStructure.setVph(izone,
+                    computeReplacement(boundary, earthRadius, newStructure.getVphOf(izone - 1),
+                            newStructure.getVphOf(izone)));
+            //Vsv
+            newStructure = newStructure.setVsv(izone,
+                    computeReplacement(boundary, earthRadius, newStructure.getVsvOf(izone - 1),
+                            newStructure.getVsvOf(izone)));
+            //Vsh
+            newStructure = newStructure.setVsh(izone,
+                    computeReplacement(boundary, earthRadius, newStructure.getVshOf(izone),
+                            newStructure.getVshOf(izone + 1)));
+        }
+        return newStructure;
     }
 
     /**
-     * @param r [km] target radius
-     * @return if the target radius is in a D boundary zone, returns the index (rmin) of the boundary, otherwise -1.
+     * TODO
+     *
+     * @param boundary      [km] radius of boundary
+     * @param earthRadius   [km] earth radius
+     * @param lowerFunction polynomial function at the layer beneath the boundary
+     * @param upperFunction polynomial function at the layer above the boundary
+     * @return function to be replaced with the upper one
      */
-    private int indexOfDBoundaryZone(double r) {
-        return Arrays.stream(rMinIndexOfDBoundary).filter(i -> STRUCTURE.getRMinOf(i) - D_BOUNDARY_ZONE <= r &&
-                r <= STRUCTURE.getRMinOf(i) + D_BOUNDARY_ZONE).findAny().orElse(-1);
+    private PolynomialFunction computeReplacement(double boundary, double earthRadius, PolynomialFunction lowerFunction,
+                                                  PolynomialFunction upperFunction) {
+        double xLower = (boundary - D_BOUNDARY_ZONE) / earthRadius;
+        double xBoundary = boundary / earthRadius;
+        double boundaryValue = lowerFunction.value(xBoundary);
+        double lowerValue = lowerFunction.value(xLower);
+        double xUpper = (boundary + D_BOUNDARY_ZONE) / earthRadius;
+        double upperValue = upperFunction.value(xUpper);
+        double a = (upperValue - lowerValue) / (xUpper - xLower);
+        double b = upperValue - a * xUpper;
+        return new PolynomialFunction(new double[]{b, a});
     }
 
     /**
-     * @param r radius to be checked
-     * @return if the layer is D boundary.
+     * @param r         radius to be checked
+     * @param structure structure to be checked
+     * @return if the boundary is D boundary.
+     * If the functions and values(velocities and density) in the upper and lower boundaries are identical, false returns.
      */
-    private boolean isDBoundary(double r) {
-        double rPlus = r + D_BOUNDARY_ZONE;
-        double rMinus = r - D_BOUNDARY_ZONE;
+    private static boolean isDBoundary(double r,
+                                       io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
+        double rPlus = r + ComputationalMesh.EPS;
+        double rMinus = r - ComputationalMesh.EPS;
+        int upperZone = structure.zoneOf(rPlus);
+        int lowerZone = structure.zoneOf(rMinus);
+        Function<IntFunction<PolynomialFunction>, Boolean> compare =
+                ic -> ic.apply(upperZone).equals(ic.apply(lowerZone));
+        if (compare.apply(structure::getVphOf) && compare.apply(structure::getVpvOf) &&
+                compare.apply(structure::getVshOf) && compare.apply(structure::getVsvOf) &&
+                compare.apply(structure::getRhoOf)) return false;
         double criterion = 1 - MAXIMUM_RATIO_OF_D_BOUNDARY / 100;
         ToDoubleFunction<DoubleUnaryOperator> toRatio = compute -> {
             double ratio = compute.applyAsDouble(rPlus) / compute.applyAsDouble(rMinus);
             return ratio < 1 ? ratio : 1 / ratio;
         };
         Function<TransverselyIsotropicParameter, DoubleUnaryOperator> getOperater =
-                ti -> a -> STRUCTURE.getTransverselyIsotropicValue(ti, a);
+                ti -> a -> structure.getTransverselyIsotropicValue(ti, a);
         return !(toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.A)) < criterion ||
                 toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.C)) < criterion ||
                 toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.F)) < criterion ||
                 toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.L)) < criterion ||
                 toRatio.applyAsDouble(getOperater.apply(TransverselyIsotropicParameter.N)) < criterion ||
-                toRatio.applyAsDouble(STRUCTURE::getRhoAt) < criterion);
+                toRatio.applyAsDouble(structure::getRhoAt) < criterion);
     }
 
     /**
@@ -284,32 +321,27 @@ public class PolynomialStructure implements VelocityStructure {
 
     @Override
     public double getA(double r) {
-        return checkRInBoundaryAndSmooth(r,
-                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.A, a));
+        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.A, r);
     }
 
     @Override
     public double getC(double r) {
-        return checkRInBoundaryAndSmooth(r,
-                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.C, a));
+        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.C, r);
     }
 
     @Override
     public double getF(double r) {
-        return checkRInBoundaryAndSmooth(r,
-                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.F, a));
+        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.F, r);
     }
 
     @Override
     public double getL(double r) {
-        return checkRInBoundaryAndSmooth(r,
-                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.L, a));
+        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.L, r);
     }
 
     @Override
     public double getN(double r) {
-        return checkRInBoundaryAndSmooth(r,
-                a -> STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.N, a));
+        return STRUCTURE.getTransverselyIsotropicValue(TransverselyIsotropicParameter.N, r);
     }
 
 }
