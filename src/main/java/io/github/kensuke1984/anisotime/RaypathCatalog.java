@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.6
+ * @version 0.1.6.1
  */
 public class RaypathCatalog implements Serializable {
     void debug() {
@@ -308,13 +308,13 @@ public class RaypathCatalog implements Serializable {
                     RaypathCatalog c;
                     switch (p.getFileName().toString()) {
                         case "iprem.cat":
-                            c = ISO_PREM;
+                            c = iprem();
                             break;
                         case "prem.cat":
-                            c = PREM;
+                            c = prem();
                             break;
                         case "ak135.cat":
-                            c = AK135;
+                            c = ak135();
                             break;
                         default:
                             c = read(p);
