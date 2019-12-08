@@ -160,6 +160,7 @@ class Woodhouse1981 implements Serializable {
         double r2 = r * r;
         switch (pp) {
             case P:
+            case K:
             case I:
                 return Math.sqrt(computeS1(r) - computeS3(r) * rayParameter * rayParameter / r2 -
                         computeR(rayParameter, r));
@@ -171,9 +172,8 @@ class Woodhouse1981 implements Serializable {
             case JV:
                 return Math.sqrt(computeS1(r) - computeS3(r) * rayParameter * rayParameter / r2 +
                         computeR(rayParameter, r));
-            case K:
             default:
-                throw new RuntimeException("Unexpected");
+                throw new RuntimeException(pp + " is Unexpected");
         }
     }
 
@@ -194,6 +194,7 @@ class Woodhouse1981 implements Serializable {
 
     /**
      * Copies cash for s1-s5
+     *
      * @param woodhouse source map
      */
     private void copyCache(Woodhouse1981 woodhouse) {
