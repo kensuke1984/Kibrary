@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.6.1
+ * @version 0.1.6.2
  */
 public class RaypathCatalog implements Serializable {
     void debug() {
@@ -146,7 +146,7 @@ public class RaypathCatalog implements Serializable {
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
                     System.err.println(
-                            "Creating a catalog for PREM (due to out of date). This computation is done only once.");
+                            "failed. \nCreating a catalog for PREM (due to out of date). This computation is done only once.");
                     VelocityStructure v = VelocityStructure.prem();
                     PREM = new RaypathCatalog(v, ComputationalMesh.simple(v), DEFAULT_MAXIMUM_D_DELTA);
                     PREM.create();
@@ -175,7 +175,7 @@ public class RaypathCatalog implements Serializable {
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
                     System.err.println(
-                            "Creating a catalog for ISO_PREM (due to out of date). This computation is done only once.");
+                            "failed. \nCreating a catalog for ISO_PREM (due to out of date). This computation is done only once.");
                     VelocityStructure v = VelocityStructure.iprem();
                     ISO_PREM = new RaypathCatalog(v, ComputationalMesh.simple(v), DEFAULT_MAXIMUM_D_DELTA);
                     ISO_PREM.create();
@@ -204,7 +204,7 @@ public class RaypathCatalog implements Serializable {
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
                     System.err.println(
-                            "Creating a catalog for AK135 (due to out of date). This computation is done only once.");
+                            "failed. \nCreating a catalog for AK135 (due to out of date). This computation is done only once.");
                     VelocityStructure v = VelocityStructure.ak135();
                     AK135 = new RaypathCatalog(v, ComputationalMesh.simple(v), DEFAULT_MAXIMUM_D_DELTA);
                     AK135.create();
