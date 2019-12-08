@@ -131,6 +131,21 @@ public class RaypathCatalog implements Serializable {
     private static RaypathCatalog AK135;
     private static final Path share = Environment.KIBRARY_HOME.resolve("share");
 
+    /**
+     * @param out       path to output a catalog
+     * @param structure velocity structure
+     * @return catalog
+     */
+    private static RaypathCatalog createAndWrite(Path out, VelocityStructure structure) {
+        RaypathCatalog c = new RaypathCatalog(structure, ComputationalMesh.simple(structure), DEFAULT_MAXIMUM_D_DELTA);
+        c.create();
+        try {
+            c.write(out);
+        } catch (IOException e1) {
+            System.err.println("PREM catalog cannot be saved.");
+        }
+        return c;
+    }
 
     /**
      * @return the default catalog for the anisotropic PREM.
@@ -139,23 +154,16 @@ public class RaypathCatalog implements Serializable {
         if (Objects.isNull(PREM)) synchronized (LOCK_PREM) {
             if (Objects.isNull(PREM)) {
                 Path p = share.resolve("prem.cat");
-                try {
+                if (Files.exists(p)) try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for PREM...");
                     PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
-                    System.err.println(
-                            "failed. \nCreating a catalog for PREM (due to out of date). This computation is done only once.");
-                    VelocityStructure v = VelocityStructure.prem();
-                    PREM = new RaypathCatalog(v, ComputationalMesh.simple(v), DEFAULT_MAXIMUM_D_DELTA);
-                    PREM.create();
-                    try {
-                        PREM.write(p);
-                    } catch (IOException e1) {
-                        System.err.println("PREM catalog cannot be saved.");
-                    }
+                    System.err.println("failed. \nCreating a catalog for PREM (due to out of date).");
+                    PREM = createAndWrite(p, VelocityStructure.prem());
                 }
+                else PREM = createAndWrite(p, VelocityStructure.prem());
             }
         }
         return PREM;
@@ -176,14 +184,7 @@ public class RaypathCatalog implements Serializable {
                 } catch (ClassNotFoundException | IOException e) {
                     System.err.println(
                             "failed. \nCreating a catalog for ISO_PREM (due to out of date). This computation is done only once.");
-                    VelocityStructure v = VelocityStructure.iprem();
-                    ISO_PREM = new RaypathCatalog(v, ComputationalMesh.simple(v), DEFAULT_MAXIMUM_D_DELTA);
-                    ISO_PREM.create();
-                    try {
-                        ISO_PREM.write(p);
-                    } catch (IOException e1) {
-                        System.err.println("ISO_PREM catalog cannot be saved.");
-                    }
+                    ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
                 }
             }
         }
@@ -205,14 +206,7 @@ public class RaypathCatalog implements Serializable {
                 } catch (ClassNotFoundException | IOException e) {
                     System.err.println(
                             "failed. \nCreating a catalog for AK135 (due to out of date). This computation is done only once.");
-                    VelocityStructure v = VelocityStructure.ak135();
-                    AK135 = new RaypathCatalog(v, ComputationalMesh.simple(v), DEFAULT_MAXIMUM_D_DELTA);
-                    AK135.create();
-                    try {
-                        AK135.write(p);
-                    } catch (IOException e1) {
-                        System.err.println("AK135 catalog cannot be saved.");
-                    }
+                    AK135 = createAndWrite(p, VelocityStructure.ak135());
                 }
             }
         }
@@ -697,12 +691,16 @@ public class RaypathCatalog implements Serializable {
         List<Double[]> edgeList = computeRaypameterEdge(phase);
         BinaryOperator<Raypath> centerRayparameterRaypath =
                 (r1, r2) -> new Raypath((r1.getRayParameter() + r2.getRayParameter()) / 2, WOODHOUSE, MESH);
+        System.out.println("Creating a catalog of the phase " + phase);
+        long t = System.nanoTime();
         for (Double[] edges : edgeList) {
             double startP = Math.min(edges[0], edges[1]);
             double endP = Math.max(edges[0], edges[1]);
             Set<Raypath> catalogPart = catalogInBranch(phase, startP, endP);
             raypathList.addAll(catalogPart);
         }
+        System.out.println(
+                "A catalog of the phase " + phase + " is created in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
     /**
