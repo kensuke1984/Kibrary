@@ -552,16 +552,16 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return [s] T (travel time) for the part
      */
     private double computeT(double eventR, GeneralPart part) {
-        PhasePart phase = part.getPhase();
+        PhasePart pp = part.getPhase();
         PassPoint inner = part.getInnerPoint();
         PassPoint outer = part.getOuterPoint();
         boolean innerIsBoundary = PassPoint.isBoundary(inner);
         boolean outerIsBoundary = PassPoint.isBoundary(outer) ||
                 (outer == PassPoint.SEISMIC_SOURCE && eventR == getStructure().earthRadius());
-        double turningR = getTurningR(phase);
+        double turningR = getTurningR(pp);
         if (innerIsBoundary && !Double.isNaN(turningR)) return Double.NaN;
-        if (outerIsBoundary) if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR)))
-            return timeMap.get(phase);
+        if (outerIsBoundary)
+            if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR))) return timeMap.get(pp);
         double innerR;
         switch (inner) {
             case OTHER:
@@ -610,7 +610,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 throw new RuntimeException("soteigai");
         }
         if (outerR < innerR) return Double.NaN;
-        return computeT(phase, innerR, outerR);
+        return computeT(pp, innerR, outerR);
     }
 
 
@@ -1111,10 +1111,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             dThetaMap.put(pp, dTheta);
             return new Thread(() -> {
                 double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
-                if (RAY_PARAMETER == 0) {
-                    deltaMap.put(pp, 0d);
-                    return;
-                }
+
                 for (int i = 0; i < dTheta.length; i++) {
                     if (mesh.getEntry(i) < jeffreysBoundary) continue;
                     dTheta[i] = simpson(r -> WOODHOUSE.computeQDelta(pp, RAY_PARAMETER, r), mesh.getEntry(i),
@@ -1124,7 +1121,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 double startR = Double.isNaN(turningR) ? mesh.getEntry(0) : turningR;
                 //TODO diffraction
                 deltaMap.put(pp, computeDelta(pp, startR, mesh.getEntry(dTheta.length)));
-
+                if (RAY_PARAMETER == 0 && (pp == PhasePart.I || pp == PhasePart.JV)) {
+                    deltaMap.put(pp, Math.PI / 2);
+                    dTheta[0] = Math.PI / 2;
+                }
             });
         };
 
@@ -1148,6 +1148,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         turningRMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
         if (RAY_PARAMETER == 0) {
             Arrays.stream(PhasePart.values()).forEach(pp -> turningRMap.put(pp, Double.NaN));
+            turningRMap.put(PhasePart.I, 0d);
+            turningRMap.put(PhasePart.JV, 0d);
             return;
         }
         Arrays.stream(PhasePart.values())
@@ -1168,8 +1170,20 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                         Precision.round(timeMap.get(pp), 3)));
     }
 
+    /**
+     * @param pp target phase part
+     * @return [km] radius of turning point
+     */
     public double getTurningR(PhasePart pp) {
         return turningRMap.get(pp);
+    }
+
+    /**
+     * @param pp target phase part
+     * @return [km] radius of the Jeffreys boundary
+     */
+    double getJeffreysBoundary(PhasePart pp) {
+        return jeffreysBoundaryMap.get(pp);
     }
 
     /**
@@ -1191,6 +1205,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (Double.isNaN(a + c)) return Double.isNaN(b) ? Double.NaN : 0; //TODO
         double ratio = a < c ? a / c : c / a;
         if (INTEGRAL_THRESHOLD < ratio) return bySimpsonRule(a, b, c, deltaX);
+        if (a + b + c == 0) return 0;
         return simpsonInCriticalRange(dXdr, startR, endR);
     }
 
