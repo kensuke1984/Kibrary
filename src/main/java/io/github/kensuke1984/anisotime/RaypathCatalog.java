@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.6.2
+ * @version 0.1.7
  */
 public class RaypathCatalog implements Serializable {
     void debug() {
@@ -142,7 +142,7 @@ public class RaypathCatalog implements Serializable {
         try {
             c.write(out);
         } catch (IOException e1) {
-            System.err.println("PREM catalog cannot be saved.");
+            System.err.println("Catalog cannot be saved.");
         }
         return c;
     }
@@ -160,7 +160,7 @@ public class RaypathCatalog implements Serializable {
                     PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
-                    System.err.println("failed. \nCreating a catalog for PREM (due to out of date).");
+                    System.err.println("failed.\nCreating a catalog for PREM.");
                     PREM = createAndWrite(p, VelocityStructure.prem());
                 }
                 else PREM = createAndWrite(p, VelocityStructure.prem());
@@ -175,15 +175,14 @@ public class RaypathCatalog implements Serializable {
     public static RaypathCatalog iprem() {
         if (Objects.isNull(ISO_PREM)) synchronized (LOCK_ISO_PREM) {
             if (Objects.isNull(ISO_PREM)) {
-                Path p = share.resolve("prem.cat");
+                Path p = share.resolve("iprem.cat");
                 try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for ISO_PREM...");
                     ISO_PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
-                    System.err.println(
-                            "failed. \nCreating a catalog for ISO_PREM (due to out of date). This computation is done only once.");
+                    System.err.println("failed.\nCreating a catalog for ISO_PREM.");
                     ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
                 }
             }
@@ -197,15 +196,14 @@ public class RaypathCatalog implements Serializable {
     public static RaypathCatalog ak135() {
         if (Objects.isNull(AK135)) synchronized (LOCK_AK135) {
             if (Objects.isNull(AK135)) {
-                Path p = share.resolve("prem.cat");
+                Path p = share.resolve("ak135.cat");
                 try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for AK135...");
                     AK135 = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
-                    System.err.println(
-                            "failed. \nCreating a catalog for AK135 (due to out of date). This computation is done only once.");
+                    System.err.println("failed.\nCreating a catalog for AK135.");
                     AK135 = createAndWrite(p, VelocityStructure.ak135());
                 }
             }
@@ -221,7 +219,7 @@ public class RaypathCatalog implements Serializable {
         if (!Files.exists(share)) try {
             extractInShare();
         } catch (IOException e) {
-            System.err.println("Could not download catalog files from internet. ");
+            System.err.println("Could not download catalog files from internet.");
         }
     }
 
@@ -689,9 +687,7 @@ public class RaypathCatalog implements Serializable {
      */
     private void catalogOf(Phase phase) {
         List<Double[]> edgeList = computeRaypameterEdge(phase);
-        BinaryOperator<Raypath> centerRayparameterRaypath =
-                (r1, r2) -> new Raypath((r1.getRayParameter() + r2.getRayParameter()) / 2, WOODHOUSE, MESH);
-        System.out.println("Creating a catalog of the phase " + phase);
+        System.err.println("Creating a catalog for " + phase);
         long t = System.nanoTime();
         for (Double[] edges : edgeList) {
             double startP = Math.min(edges[0], edges[1]);
@@ -699,8 +695,7 @@ public class RaypathCatalog implements Serializable {
             Set<Raypath> catalogPart = catalogInBranch(phase, startP, endP);
             raypathList.addAll(catalogPart);
         }
-        System.out.println(
-                "A catalog of the phase " + phase + " is created in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println("Catalog for " + phase + " is created in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
     /**
