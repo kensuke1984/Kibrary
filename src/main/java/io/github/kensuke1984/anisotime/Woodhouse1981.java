@@ -265,5 +265,4 @@ class Woodhouse1981 implements Serializable {
                 x -> 0.5 * STRUCTURE.getRho(x) / STRUCTURE.getC(x) * (1 + STRUCTURE.getA(x) / STRUCTURE.getL(x)) -
                         computeS1(x) * computeS3(x));
     }
-
 }

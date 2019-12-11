@@ -37,9 +37,9 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * 2019/12/8
+     * 2019/12/11
      */
-    private static final long serialVersionUID = 8095752019665934984L;
+    private static final long serialVersionUID = 1599553944974473298L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
