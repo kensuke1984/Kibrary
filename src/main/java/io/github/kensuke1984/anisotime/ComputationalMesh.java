@@ -16,7 +16,7 @@ import java.util.Arrays;
  * <p>
  *
  * @author Kensuke Konishi
- * @version 0.0.4
+ * @version 0.0.4.1
  */
 public class ComputationalMesh implements Serializable {
 
@@ -216,6 +216,8 @@ public class ComputationalMesh implements Serializable {
      */
     int getNextIndexOf(double r, Partition partition) {
         RealVector mesh = getMesh(partition);
+        if (Double.isNaN(r))
+            throw new IllegalArgumentException("Input r is NAN.");
         if (r < mesh.getEntry(0) - EPS || mesh.getEntry(mesh.getDimension() - 1) + EPS < r)
             throw new IllegalArgumentException("Input " + r + " is out of " + partition);
         if (r <= mesh.getEntry(0)) return 0;
