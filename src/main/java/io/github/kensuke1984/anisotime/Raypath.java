@@ -50,7 +50,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.5.1b
+ * @version 0.5.6b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -60,9 +60,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2019/12/8
+     * 2019/12/11
      */
-    private static final long serialVersionUID = 5967290975955360181L;
+    private static final long serialVersionUID = 980044715762112090L;
 
     /**
      * ray parameter [s/rad] dt/d&Delta;
@@ -396,9 +396,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             boundary = next;
         }
         DoubleUnaryOperator rToX = r -> WOODHOUSE.computeQTau(pp, RAY_PARAMETER, r);
-        while (0.01 < rToX.applyAsDouble(boundary)) {
-            boundary = (boundary + turningR) / 2;
-        }
+        while (0.01 < rToX.applyAsDouble(boundary)) boundary = (boundary + turningR) / 2;
         return boundary;
     }
 
@@ -991,8 +989,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         startR = Math.max(startR, minR);
         endR = Math.min(endR, maxR);
         double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
+        // the value <= jeffreysBoundary
+        double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
+                radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
         double jeffreysDelta = jeffreysDeltaMap.get(pp);
+        //index of the mesh point next to startR  (startR < mesh[firstindex])
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
+        //index of the mesh point next to endR  (endR <= mesh[firstindex])
         int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
 
         DoubleUnaryOperator qDelta = r -> WOODHOUSE.computeQDelta(pp, RAY_PARAMETER, r);
@@ -1024,9 +1027,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 delta += simpson(qDelta, radii.getEntry(i), radii.getEntry(i + 1));
             }
         }
+        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary) delta +=
+                simpson(qDelta, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return delta + simpson(qDelta, startR, radii.getEntry(firstIndexForMemory));
-        delta += simpson(qDelta, jeffreysBoundary, radii.getEntry(firstIndexForMemory));
         double jeffreys = jeffreysDelta - jeffreys(qDelta, pp, startR);
         return delta + jeffreys;
     }
@@ -1058,10 +1062,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         endR = Math.min(endR, maxR);
 
         double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
+        // the value <= jeffreysBoundary
+        double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
+                radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
         double jeffreysT = jeffreysTMap.get(pp);
+        //index of the mesh point next to startR  (startR < mesh[firstindex])
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
+        //index of the mesh point next to endR  (endR <= mesh[endindex])
         int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
-
         DoubleUnaryOperator qT = r -> WOODHOUSE.computeQT(pp, RAY_PARAMETER, r);
 
         // the case where the integral interval is inside the jeffrey interval TODO
@@ -1089,9 +1097,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 time += simpson(qT, radii.getEntry(i), radii.getEntry(i + 1));
             }
         }
+        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary)
+            time += simpson(qT, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return time + simpson(qT, startR, radii.getEntry(firstIndexForMemory));
-        time += simpson(qT, jeffreysBoundary, radii.getEntry(firstIndexForMemory));
         double jeffreys = jeffreysT - jeffreys(qT, pp, startR);
         return time + jeffreys;
     }
