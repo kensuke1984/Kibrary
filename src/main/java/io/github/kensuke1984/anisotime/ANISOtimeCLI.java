@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.15
+ * @version 0.3.15.1
  */
 final class ANISOtimeCLI {
 
@@ -191,7 +191,7 @@ final class ANISOtimeCLI {
             if (structure.equals(PolynomialStructure.PREM)) catalog = RaypathCatalog.prem();
             else if (structure.equals(PolynomialStructure.ISO_PREM)) catalog = RaypathCatalog.iprem();
             else if (structure.equals(PolynomialStructure.AK135)) catalog = RaypathCatalog.ak135();
-            // option TODO
+                // option TODO
             else {
                 ComputationalMesh mesh = ComputationalMesh.simple(structure);
                 catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
@@ -201,7 +201,9 @@ final class ANISOtimeCLI {
         if (cmd.hasOption("ph")) targetPhases =
                 Arrays.stream(cmd.getOptionValues("ph")).flatMap(arg -> Arrays.stream(arg.split(",")))
                         .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
-        else targetPhases =
+        else targetPhases = cmd.hasOption("SV") ?
+                new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.SV, Phase.SVcS,
+                        Phase.create("SKiKS", true), Phase.create("SKIKS", true), Phase.SVdiff} :
                 new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS, Phase.SKiKS,
                         Phase.SKIKS, Phase.Sdiff};
 
