@@ -2,12 +2,14 @@ package io.github.kensuke1984.anisotime;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
 
 /**
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.2
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -18,6 +20,7 @@ public interface VelocityStructure extends Serializable {
      * [%] (must be a positive number)
      * If all values (ACFLN&rho;) at a boundary and boundary + {@link ComputationalMesh#EPS} has smaller gap in ratio than this value,
      * the boundary is regarded as the D boundary.
+     * If this value is 1 [%], ratio of values (smaller/larger) must be in 99-100 % at continuous point.
      */
     double MAXIMUM_RATIO_OF_D_BOUNDARY = 1e-2;
 
@@ -27,6 +30,25 @@ public interface VelocityStructure extends Serializable {
      * the value at the radius will be modified.
      */
     double D_BOUNDARY_ZONE = 0.5;
+
+    /**
+     * @param r [km] target radius
+     * @return if there is a jump at r. Any of the values (ACFLN&rho;) at r&plusmn;&epsilon;
+     * has larger ratio gap than {@link #MAXIMUM_RATIO_OF_D_BOUNDARY},
+     * this method returns true.
+     */
+    default boolean isJump(double r) {
+        if (r < 0 || earthRadius() < r) throw new IllegalArgumentException("Input r " + r + " is not correct.");
+        else if (r < ComputationalMesh.EPS || earthRadius() - ComputationalMesh.EPS < r) return false;
+        Function<DoubleUnaryOperator, Boolean> checker = getter -> {
+            double ratio =
+                    getter.applyAsDouble(r + ComputationalMesh.EPS) / getter.applyAsDouble(r - ComputationalMesh.EPS);
+            if (1 < ratio) ratio = 1 / ratio;
+            return ratio < 1 - MAXIMUM_RATIO_OF_D_BOUNDARY / 100;
+        };
+        return checker.apply(this::getA) || checker.apply(this::getC) || checker.apply(this::getF) ||
+                checker.apply(this::getL) || checker.apply(this::getN) || checker.apply(this::getRho);
+    }
 
     /**
      * @param r [km]
