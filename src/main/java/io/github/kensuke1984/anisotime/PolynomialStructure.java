@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
  * Outer-core must have a value of Q<sub>&mu;</sub> =-1
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.2
+ * @version 0.1.2.1
  */
 public class PolynomialStructure implements VelocityStructure {
 
@@ -77,15 +77,15 @@ public class PolynomialStructure implements VelocityStructure {
             //Vpv
             newStructure = newStructure.setVpv(izone,
                     computeReplacement(boundary, earthRadius, newStructure.getVpvOf(izone),
-                            newStructure.getVpvOf(izone)));
+                            newStructure.getVpvOf(izone + 1)));
             //Vph
             newStructure = newStructure.setVph(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getVphOf(izone - 1),
-                            newStructure.getVphOf(izone)));
+                    computeReplacement(boundary, earthRadius, newStructure.getVphOf(izone),
+                            newStructure.getVphOf(izone + 1)));
             //Vsv
             newStructure = newStructure.setVsv(izone,
-                    computeReplacement(boundary, earthRadius, newStructure.getVsvOf(izone - 1),
-                            newStructure.getVsvOf(izone)));
+                    computeReplacement(boundary, earthRadius, newStructure.getVsvOf(izone),
+                            newStructure.getVsvOf(izone + 1)));
             //Vsh
             newStructure = newStructure.setVsh(izone,
                     computeReplacement(boundary, earthRadius, newStructure.getVshOf(izone),
@@ -171,10 +171,8 @@ public class PolynomialStructure implements VelocityStructure {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         PolynomialStructure other = (PolynomialStructure) obj;
-        if (STRUCTURE == null) {
-            if (other.STRUCTURE != null) return false;
-        } else if (!STRUCTURE.equals(other.STRUCTURE)) return false;
-        return true;
+        if (STRUCTURE == null) return other.STRUCTURE == null;
+        else return STRUCTURE.equals(other.STRUCTURE);
     }
 
     /**
