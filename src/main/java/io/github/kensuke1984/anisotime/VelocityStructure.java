@@ -9,7 +9,7 @@ import java.util.function.Function;
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.2.1
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -46,6 +46,8 @@ public interface VelocityStructure extends Serializable {
             if (1 < ratio) ratio = 1 / ratio;
             return ratio < 1 - MAXIMUM_RATIO_OF_D_BOUNDARY / 100;
         };
+        System.out.println(checker.apply(this::getA) +" "+ checker.apply(this::getC) +" "+ checker.apply(this::getF) +" "+
+                checker.apply(this::getL) +" "+ checker.apply(this::getN) +" "+ checker.apply(this::getRho));
         return checker.apply(this::getA) || checker.apply(this::getC) || checker.apply(this::getF) ||
                 checker.apply(this::getL) || checker.apply(this::getN) || checker.apply(this::getRho);
     }
