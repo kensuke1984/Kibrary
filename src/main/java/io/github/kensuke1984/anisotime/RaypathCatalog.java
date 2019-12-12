@@ -29,7 +29,7 @@ import java.util.zip.ZipInputStream;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.7
+ * @version 0.1.7.1
  */
 public class RaypathCatalog implements Serializable {
     void debug() {
@@ -37,9 +37,9 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * 2019/12/11
+     * 2019/12/12
      */
-    private static final long serialVersionUID = 1599553944974473298L;
+    private static final long serialVersionUID = 8672432747661582661L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -294,33 +294,9 @@ public class RaypathCatalog implements Serializable {
      * @return Catalogue for the input structure
      */
     public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
-        try (DirectoryStream<Path> catalogStream = Files.newDirectoryStream(share, "*.cat")) {
-            for (Path p : catalogStream)
-                try {
-                    RaypathCatalog c;
-                    switch (p.getFileName().toString()) {
-                        case "iprem.cat":
-                            c = iprem();
-                            break;
-                        case "prem.cat":
-                            c = prem();
-                            break;
-                        case "ak135.cat":
-                            c = ak135();
-                            break;
-                        default:
-                            c = read(p);
-                    }
-                    if (c.getStructure().equals(structure) && c.MESH.equals(mesh) && c.MAXIMUM_D_DELTA == dDelta) {
-//                        System.err.println("Catalog is found. " + p);
-                        return c;
-                    }
-                } catch (InvalidClassException ice) {
-                    System.err.println(p + " may be out of date.");
-                }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        if (structure.equals(VelocityStructure.prem())) return prem();
+        else if (structure.equals(VelocityStructure.iprem())) return iprem();
+        else if (structure.equals(VelocityStructure.ak135())) return ak135();
         RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
         cat.create();
         try {
