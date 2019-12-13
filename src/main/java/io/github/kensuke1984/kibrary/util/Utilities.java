@@ -18,10 +18,11 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.CopyOption;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -40,11 +41,27 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.5
+ * @version 0.1.6
  */
 public final class Utilities {
 
     private Utilities() {
+    }
+
+    /**
+     * @param url       URL of the file to download
+     * @param outPath   path of the downloaded files
+     * @param overwrite if this is false and the file of outPath exists, the download is cancelled.
+     * @throws IOException if any
+     */
+    public static void download(URL url, Path outPath, boolean overwrite) throws IOException {
+        if (!overwrite && Files.exists(outPath)) throw new FileAlreadyExistsException(outPath + " already exists.");
+        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+        try (FileOutputStream fos = new FileOutputStream(outPath.toFile())) {
+            try (FileChannel channel = fos.getChannel()) {
+                channel.transferFrom(rbc, 0, Long.MAX_VALUE);
+            }
+        }
     }
 
     /**
@@ -58,8 +75,7 @@ public final class Utilities {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 Path outPath = outRoot.resolve(entry.getName());
-                if (Files.exists(outPath))
-                    throw new FileAlreadyExistsException(outPath+" already exists.");
+                if (Files.exists(outPath)) throw new FileAlreadyExistsException(outPath + " already exists.");
                 try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
                         Files.newOutputStream(outPath))) {
                     if (IOUtils.copy(zis, bufferedOutputStream) < 0)
