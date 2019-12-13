@@ -5,6 +5,7 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
@@ -14,12 +15,11 @@ import org.apache.commons.math3.util.FastMath;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.CopyOption;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -32,17 +32,41 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Utilities for a workpath containing event folders which have SAC files. also
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @version 0.1.5
  */
 public final class Utilities {
 
     private Utilities() {
+    }
+
+    /**
+     * Extract a zipfile into outRoot
+     *
+     * @param zipPath path of a zip file to extract
+     * @param outRoot path of a target path (folder)
+     */
+    public static void extractZip(Path zipPath, Path outRoot) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                Path outPath = outRoot.resolve(entry.getName());
+                if (Files.exists(outPath))
+                    throw new FileAlreadyExistsException(outPath+" already exists.");
+                try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
+                        Files.newOutputStream(outPath))) {
+                    if (IOUtils.copy(zis, bufferedOutputStream) < 0)
+                        throw new RuntimeException("Zip file could not be extracted without errors.");
+                }
+            }
+        }
     }
 
     /**
@@ -82,11 +106,9 @@ public final class Utilities {
     }
 
     /**
-     * 独立データn, 自由度kに対してAICを計算する
-     *
      * @param variance variance
-     * @param n        独立データ数
-     * @param k        自由度
+     * @param n        Number of independent data
+     * @param k        Degree of freedom
      * @return aic
      */
     public static double computeAIC(double variance, int n, int k) {
@@ -119,8 +141,6 @@ public final class Utilities {
     }
 
     /**
-     * 引数ディレクトリ内のGlobalCMTIDに準ずるイベントフォルダ群<br>
-     *
      * @param path Path of a folder containing event folders.
      * @return Set of {@link EventFolder} in the workPath
      * @throws IOException if an I/O error occurs
@@ -186,7 +206,7 @@ public final class Utilities {
      */
     public static void moveSacfile(Path path, Predicate<SACFileName> predicate)
             throws IOException, InterruptedException {
-        String directoryName = "movedSacfiles" + getTemporaryString();
+        String directoryName = "movedSACFiles" + getTemporaryString();
         // System.out.println(directoryName);
         Consumer<EventFolder> moveProcess = eventDirectory -> {
             try {
