@@ -9,7 +9,7 @@ import java.util.*;
  * The class is calculator of the formulation in Woodhouse (1981).
  *
  * @author Kensuke Konishi
- * @version 0.0.3.3
+ * @version 0.0.4
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -17,9 +17,9 @@ import java.util.*;
 class Woodhouse1981 implements Serializable {
 
     /**
-     * 2016/8/30
+     * 2019/12/13
      */
-    private static final long serialVersionUID = 7537069912723992175L;
+    private static final long serialVersionUID = 911668633353233290L;
     private final static Set<Woodhouse1981> WOODHOUSE_CACHE = Collections.synchronizedSet(new HashSet<>());
 
     static {
@@ -92,7 +92,7 @@ class Woodhouse1981 implements Serializable {
                 return rayParameter / r2 / computeQTau(pp, rayParameter, r) * (computeS3(r) -
                         (computeS4(r) * rayParameter * rayParameter / r2 + computeS5(r)) / computeR(rayParameter, r));
             case SH:
-            case JH:
+//            case JH:
                 return rayParameter * STRUCTURE.getN(r) / STRUCTURE.getL(r) / computeQTau(pp, rayParameter, r) / r2;
             case K:
                 double v = Math.sqrt(STRUCTURE.getA(r) / STRUCTURE.getRho(r));
@@ -128,7 +128,7 @@ class Woodhouse1981 implements Serializable {
                         computeQTau(pp, rayParameter, r);
             }
             case SH:
-            case JH:
+//            case JH:
                 return STRUCTURE.getRho(r) / STRUCTURE.getL(r) / computeQTau(pp, rayParameter, r);
             case SV:
             case JV:
@@ -165,7 +165,7 @@ class Woodhouse1981 implements Serializable {
                 return Math.sqrt(computeS1(r) - computeS3(r) * rayParameter * rayParameter / r2 -
                         computeR(rayParameter, r));
             case SH:
-            case JH:
+//            case JH:
                 double L = STRUCTURE.getL(r);
                 return Math.sqrt(STRUCTURE.getRho(r) / L - STRUCTURE.getN(r) * rayParameter * rayParameter / L / r2);
             case SV:

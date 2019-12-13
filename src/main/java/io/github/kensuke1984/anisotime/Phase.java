@@ -1,5 +1,6 @@
 package io.github.kensuke1984.anisotime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +45,7 @@ import java.util.regex.Pattern;
  * <p>
  * TODO P2PPcP no exist but exist
  */
-public class Phase {
+public class Phase implements Serializable {
 
     // no use letters
     private static final Pattern others = Pattern.compile("[a-zA-Z&&[^cdfipsvIJKPS]]|[\\W&&[^.^]]");
@@ -240,8 +241,7 @@ public class Phase {
             }
             int end = i + 1;
             double nextDepth = start == end ? Double.NaN : Double.parseDouble(EXPANDED_NAME.substring(start, end));
-            PassPoint innerPoint;
-            PassPoint outerPoint;
+            PassPoint innerPoint, outerPoint;
             switch (currentChar) {
                 case 'c':
                 case 'i':
