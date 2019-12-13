@@ -44,13 +44,14 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * K: P(K) wave in the outer-core<br>
  * I: P(I) wave in the inner-core<br>
  * JV,JH: SV, SH(J) wave in the inner-core<br>
+ * No more JH
  * <p>
  * TODO when the path partially exists. I have to change drastically the structure of dealing with layers each layer has a phase or not
  * <p>
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.6b
+ * @version 0.5.7b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -950,7 +951,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             case SV:
             case JV:
             case SH:
-            case JH:
+//            case JH:
                 return Math.pow(WOODHOUSE.computeQTau(pp, RAY_PARAMETER, r), 2);
             case K:
                 return 1 -
@@ -1254,7 +1255,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             case P:
                 numerator = getStructure().getA(r);
                 break;
-            case JH:
+//            case JH:
             case SH:
                 numerator = getStructure().getN(r);
                 break;

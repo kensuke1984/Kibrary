@@ -2,18 +2,18 @@ package io.github.kensuke1984.anisotime;
 
 /**
  * P, SV, SH, K, I, JV and JH
- *
+ * <p>
  * Each phase means half path, not including reflection nor bouncing.
- *
+ * No more JH
  * @author Kensuke Konishi
- * @version 0.0.1.2
+ * @version 0.0.2
  */
 public enum PhasePart {
     P, // P in the mantle
     SV, SH, // S in the mantle
     K, // P in tht outer-core
     I, // P in the inner-core
-    JV, JH // S in the inner-core
+    JV//, JH // S in the inner-core
     ;
 
     /**
@@ -26,11 +26,11 @@ public enum PhasePart {
             case SH:
                 return Partition.MANTLE;
             case I:
-            case JH:
             case JV:
                 return Partition.INNERCORE;
             case K:
                 return Partition.OUTERCORE;
+//            case JH:
             default:
                 throw new RuntimeException("unexPecTed");
         }
@@ -53,11 +53,9 @@ public enum PhasePart {
                 return 16;
             case JV:
                 return 32;
-            case JH:
-                return 64;
+//            case JH:
             default:
                 throw new RuntimeException("unexPecTed");
         }
     }
-
 }

@@ -1,12 +1,14 @@
 package io.github.kensuke1984.anisotime;
 
+import java.io.Serializable;
+
 /**
  * Describes a part of path.
  *
  * @author Kensuke Konishi
  * @version 0.0.1
  */
-interface PathPart {
+interface PathPart extends Serializable {
     /**
      * @return if it is emission of propagation.
      */

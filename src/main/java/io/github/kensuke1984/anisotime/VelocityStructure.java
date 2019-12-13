@@ -9,7 +9,7 @@ import java.util.function.Function;
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.1.2.3
+ * @version 0.1.3
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -114,8 +114,8 @@ public interface VelocityStructure extends Serializable {
                 return iTurningR(rayParameter);
             case JV:
                 return jvTurningR(rayParameter);
-            case JH:
-                return jhTurningR(rayParameter);
+//            case JH:
+//                return jhTurningR(rayParameter);
             case K:
                 return kTurningR(rayParameter);
             case P:
