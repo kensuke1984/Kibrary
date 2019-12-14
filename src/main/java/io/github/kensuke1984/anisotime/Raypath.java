@@ -51,7 +51,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.7b
+ * @version 0.5.8b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -61,9 +61,23 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2019/12/11
+     * 2019/12/14
      */
-    private static final long serialVersionUID = 980044715762112090L;
+    private static final long serialVersionUID = 1664510533107590696L;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Raypath raypath = (Raypath) o;
+        return Double.compare(raypath.RAY_PARAMETER, RAY_PARAMETER) == 0 &&
+                Objects.equals(WOODHOUSE, raypath.WOODHOUSE) && Objects.equals(MESH, raypath.MESH);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(RAY_PARAMETER);
+    }
 
     /**
      * ray parameter [s/rad] dt/d&Delta;
