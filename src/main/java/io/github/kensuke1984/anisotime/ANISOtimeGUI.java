@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.6b
+ * @version 0.5.4b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -365,7 +365,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         boolean added = false;
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
-            Phase phase = phaseList.get(i);
+            Phase phase = getCatalog().getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
             double travelTime = raypath.computeT(eventR, phase);
             if (Double.isNaN(epicentralDistance)) continue;
