@@ -28,7 +28,7 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1
+ * @version 0.2.1.1
  */
 public class RaypathCatalog implements Serializable {
 
@@ -397,7 +397,7 @@ public class RaypathCatalog implements Serializable {
      * such as PvXXP (XX should be a boundary in the velocity structure.)
      *
      * @author Kensuke Konishi
-     * @version 0.0.2
+     * @version 0.0.2.1
      */
     private class ReflectionCatalog implements Serializable {
         /**
@@ -429,8 +429,18 @@ public class RaypathCatalog implements Serializable {
             else return null;
         }
 
+        /**
+         * TODO
+         * @param targetPhase target phase
+         * @param eventR [km] event radius
+         * @param targetDelta [rad] target &Delta;
+         * @param relativeAngle if this is relative angle
+         * @return raypaths with the &Delta; never returns null. but Raypath[0]
+         */
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
             Phase actualPhase = toReflection(targetPhase);
+            if (Objects.isNull(actualPhase))
+                return new Raypath[0];
             return RaypathCatalog.this
                     .searchPath(actualPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
