@@ -1,6 +1,5 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.math3.linear.RealVector;
@@ -20,14 +19,27 @@ import java.util.zip.ZipInputStream;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.1
+ * @version 0.0.1.1
  */
 class RaypathCatalogTest {
-    private static void catalogCheck() {
-//        RaypathCatalog isoPrem = RaypathCatalog.iprem();
+    private static void catalogCheck() throws IOException, ParseException {
+//        List<String> strings =
+//                Files.readAllLines(Paths.get("/home/kensuke/workspace/kibrary/anisotime/until_PKIKP.txt"));
+//
+//        List<Raypath> collect =
+//                strings.stream().mapToDouble(Double::parseDouble).mapToObj(Raypath::new).collect(Collectors.toList());
         RaypathCatalog prem = RaypathCatalog.prem();
+        Raypath[] raypaths = prem.searchPath(Phase.P, 6371, Math.toRadians(30), false);
+        for (Raypath raypath : raypaths) {
+            System.out.println(Math.toDegrees(
+                    raypath.computeDelta(6371,Phase.P)));
+        }
+        String line = "-deg 30 -mod prem -ph S";
+        ANISOtimeCLI.main(line.split("\\s"));
+        System.exit(0);
+        RaypathCatalog isoPrem = RaypathCatalog.iprem();
 
-//        RaypathCatalog ak135 = RaypathCatalog.ak135();
+        RaypathCatalog ak135 = RaypathCatalog.ak135();
 //        System.out.println(isoPrem.getRaypaths().length);
 //        System.out.println(prem.getRaypaths().length);
 //        System.out.println(ak135.getRaypaths().length);
@@ -127,6 +139,8 @@ class RaypathCatalogTest {
         }
     }
 
+    private RaypathCatalogTest() {
+    }
 
     private static void singlePKIKP() {
         Raypath raypath1 = new Raypath(0.13468189275132417, VelocityStructure.prem());
@@ -196,10 +210,6 @@ class RaypathCatalogTest {
         }
     }
 
-    private static void catalogDev() {
-        RaypathCatalog.prem().debug();
-    }
-
     private static void test1986() {
 //        Raypath raypath = new Raypath(1986.2500000312498);
         Raypath raypath = new Raypath(1379.0292530838485);
@@ -210,16 +220,22 @@ class RaypathCatalogTest {
 
     private static void check220() {
         PolynomialStructure structure = PolynomialStructure.PREM;
-        //p 1324.5332586419352
-        //p 1386.527397038334
-        final Phase phase = Phase.create("Sv220.0S");
-        double pstart = 1324.5332586419352;
-        double pend = 1600.527397038334;
+//        RaypathCatalog catalog = RaypathCatalog.prem();
+
+
+        Phase phasev = Phase.create("Pv220P");
+        Phase phase = Phase.create("P");
+        double pstart = 700;
+        double pend = 800;
         double pdelta = 1;
         for (double p = pstart; p < pend; p += pdelta) {
             Raypath raypath = new Raypath(p);
             raypath.compute();
-            System.out.println(p + " " + raypath.getTurningR(PhasePart.SH) + " " + raypath.computeDelta(6371, Phase.S));
+            double pDelta = Math.toDegrees(raypath.computeDelta(6371, phase));
+            double pvdelta = Math.toDegrees(raypath.computeDelta(6371, phasev));
+            if (Double.isNaN(pDelta)) pDelta = 0;
+            if (Double.isNaN(pvdelta)) pvdelta = 0;
+            System.out.println(p + " " + raypath.getTurningR(PhasePart.P) + " " + pDelta + " " + pvdelta);
         }
     }
 
@@ -337,9 +353,43 @@ inrange
         polynomialStructure.writePSV(Paths.get("/tmp/hoge.txt"));
     }
 
+    private static void sh220() {
+        double pstart = 1324.5332586419352;
+        double pend = 1386.527397038334;
+//        pend = 1500;
+        Phase s = Phase.S;
+        Phase s220 = Phase.create("Sv220S");
+        for (double p = pstart; p < pend; p += 1) {
+            Raypath raypath = new Raypath(p);
+            raypath.compute();
+            double sDelta = Math.toDegrees(raypath.computeDelta(6371, s));
+            double s220Delta = Math.toDegrees(raypath.computeDelta(6371, s220));
+            System.out.println(p + " " + sDelta + " " + s220Delta + " " + raypath.getTurningR(PhasePart.SH));
+        }
+
+
+    }
+
+    private static void noScheck() {
+//        1379.029253094265 1386.527397038334
+        double pstart = 1379.029253094265;
+        double pend = 1386.527397038334;
+        for (double p = pstart; p < pend; p += 0.1) {
+            Raypath raypath = new Raypath(p);
+            raypath.compute();
+            double sDelta = Math.toDegrees(raypath.computeDelta(6371, Phase.S));
+            System.out.println(p + " " + sDelta + " " + raypath.getTurningR(PhasePart.SH));
+
+        }
+    }
+private static void kennetFig2(){
+//        Raypath raypath = new Raypath(100)
+}
+
+
     public static void main(String[] args) throws IOException, ParseException {
 //        recordSection();
-
+//kennetFig2();
 //        single10();
 //        catalog1();
 //        single1();
@@ -355,9 +405,11 @@ inrange
 //                catalogOut();
 //        diffBack();
         catalogCheck();
+//        sh220();
 //manyPKIKP();
 //        singlePKIKP();
 //        singleP();
+//        noScheck();
         System.exit(0);
 //        pTriple();
 //showBoundaries();
@@ -415,14 +467,18 @@ inrange
     private static void catalogOut() throws IOException {
         Raypath[] raypaths = RaypathCatalog.prem().getRaypaths();
 
-        Phase phase = Phase.S;
-        Path out = Paths.get("/home/kensuke/workspace/kibrary/anisotime/catalog/1208/s_PREM.txt");
+        Phase phase = Phase.P;
+        PhasePart pp = PhasePart.P;
+        Phase pv = Phase.create("Pv220P");
+        Path out = Paths.get("/home/kensuke/workspace/kibrary/anisotime/kennet/test.txt");
         List<String> lines = new ArrayList<>();
         for (Raypath raypath : raypaths) {
             double delta = Math.toDegrees(raypath.computeDelta(6371, phase));
-
-            String line = raypath.getRayParameter() + " " + delta;
-            if (Double.isNaN(delta)) line = "# " + line;
+            double time = raypath.computeT(6371, phase);
+            double deltaV = Math.toDegrees(raypath.computeDelta(6371, pv));
+            double timeV = raypath.computeT(6371, pv);
+            String line = raypath.getRayParameter() + " " + delta + " "+time+" " + deltaV+" "+timeV;
+//            if (Double.isNaN(delta)) line = "# " + line;
             lines.add(line);
         }
         Files.write(out, lines);
