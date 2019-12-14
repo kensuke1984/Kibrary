@@ -16,9 +16,9 @@ import java.util.logging.Logger;
  */
 final class ANISOtime {
 
-    static final String CODENAME = "Limsa";
+    static final String CODENAME = "Little Ala Mhigo";
 
-    static final String VERSION = "1.3.3.1b";
+    static final String VERSION = "1.3.4b";
 
     private ANISOtime() {
     }
