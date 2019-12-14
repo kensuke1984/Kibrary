@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.15.1
+ * @version 0.3.16
  */
 final class ANISOtimeCLI {
 
@@ -386,7 +386,9 @@ final class ANISOtimeCLI {
                 }
                 int j = 0;
                 for (Raypath raypath : raypaths) {
-                    double[] results = printResults(Math.toDegrees(targetDelta), raypath, targetPhase, System.out);
+                    Phase actualPhase =
+                            catalog.getActualTargetPhase(raypath, targetPhase, eventR, targetDelta, relativeAngleMode);
+                    double[] results = printResults(Math.toDegrees(targetDelta), raypath, actualPhase, System.out);
                     if (cmd.hasOption("eps")) if (raypaths.length == 1)
                         createEPS(raypath.createPanel(eventR, targetPhase),
                                 outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,

@@ -7,23 +7,20 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.util.Precision;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
-import java.util.function.BinaryOperator;
-import java.util.function.DoubleUnaryOperator;
+import java.util.function.*;
 
 /**
- * Raypath catalogue for one model
+ * Raypath catalog for one model
  * <p>
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
@@ -31,24 +28,19 @@ import java.util.function.DoubleUnaryOperator;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.0
+ * @version 0.2.1
  */
 public class RaypathCatalog implements Serializable {
 
     /**
-     * 2019/12/13
+     * 2019/12/14
      */
-    private static final long serialVersionUID = 2731352264204216347L;
+    private static final long serialVersionUID = 7914660708878732704L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
         URL website = new URL("https://bit.ly/2rnhOMS");
-        ReadableByteChannel rbc = Channels.newChannel(website.openStream());
-        try (FileOutputStream fos = new FileOutputStream(zipPath.toFile())) {
-            try (FileChannel channel = fos.getChannel()) {
-                channel.transferFrom(rbc, 0, Long.MAX_VALUE);
-            }
-        }
+        Utilities.download(website, zipPath, true);
         return zipPath;
     }
 
@@ -405,16 +397,17 @@ public class RaypathCatalog implements Serializable {
      * such as PvXXP (XX should be a boundary in the velocity structure.)
      *
      * @author Kensuke Konishi
-     * @version 0.0.1
+     * @version 0.0.2
      */
-    private static class ReflectionCatalog implements Serializable {
+    private class ReflectionCatalog implements Serializable {
         /**
-         * 2019/12/13
+         * 2019/12/14
          */
-        private static final long serialVersionUID = -1126914710406809558L;
+        private static final long serialVersionUID = 4693509606977355530L;
         private final double BOUNDARY_R;
         private final PhasePart PP;
         private final Set<Raypath> CATALOG;
+        private final String DEPTH;
 
         private ReflectionCatalog(double boundaryR, PhasePart pp, Set<Raypath> raypathSet) {
             if (raypathSet.isEmpty()) CATALOG = Collections.emptySet();
@@ -424,19 +417,34 @@ public class RaypathCatalog implements Serializable {
             }
             BOUNDARY_R = boundaryR;
             PP = pp;
+            double depth = Precision.round(6371 - boundaryR, 4);
+            DEPTH = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
+                    String.valueOf(depth);
         }
 
+        private Phase toReflection(Phase base) {
+            if (base.equals(Phase.P)) return Phase.create("Pv" + DEPTH + "P");
+            if (base.equals(Phase.SV)) return Phase.create("Sv" + DEPTH + "S", true);
+            if (base.equals(Phase.S)) return Phase.create("Sv" + DEPTH + "S");
+            else return null;
+        }
+
+        private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+            Phase actualPhase = toReflection(targetPhase);
+            return RaypathCatalog.this
+                    .searchPath(actualPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
+        }
     }
 
     /**
      * @author Kensuke Konishi
-     * @version 0.0.1
+     * @version 0.0.2
      */
-    private static class BounceCatalog implements Serializable {
+    private class BounceCatalog implements Serializable {
         /**
-         * 2019/12/13
+         * 2019/12/14
          */
-        private static final long serialVersionUID = -1375251277498031144L;
+        private static final long serialVersionUID = 2751959869982741790L;
         private final Phase RERERENCE_PHASE;
         private final Set<Raypath> CATALOG;
 
@@ -447,6 +455,11 @@ public class RaypathCatalog implements Serializable {
                 CATALOG = new TreeSet<>();
                 CATALOG.addAll(raypathSet);
             }
+        }
+
+        private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+            return RaypathCatalog.this
+                    .searchPath(targetPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
     }
 
@@ -649,7 +662,7 @@ public class RaypathCatalog implements Serializable {
             bounceCatalogs.add(new BounceCatalog(phase, catalogPart));
             raypathList.addAll(catalogPart);
         }
-        System.err.print(" .. done in " + Utilities.toTimeString(System.nanoTime() - t)+"\r");
+        System.err.print(" .. done in " + Utilities.toTimeString(System.nanoTime() - t) + "\r");
     }
 
     /**
@@ -698,7 +711,7 @@ public class RaypathCatalog implements Serializable {
                 else if (pMax < pEndR) edges.add(new Double[]{pStartR, pMax});
                 else edges.add(new Double[]{pStartR, pEndR});
             }
-            //case: reflecting waves
+            //case: reflecting waves TODO ->reflection
         } else if (phase == Phase.PcP || phase == Phase.ScS) {
             double v = phase == Phase.PcP ? getStructure().computeVph(cmb) :
                     phase.isPSV() ? getStructure().computeVsv(cmb) : getStructure().computeVsh(cmb);
@@ -793,13 +806,73 @@ public class RaypathCatalog implements Serializable {
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
-        Raypath[] raypaths = getRaypaths();
+        Set<Raypath> candidates = new HashSet<>();
+        for (BounceCatalog bounceCatalog : bounceCatalogs)
+            candidates.addAll(Arrays.asList(bounceCatalog.searchPath(targetPhase, eventR, targetDelta, relativeAngle)));
+        for (ReflectionCatalog reflectionCatalog : reflectionCatalogs)
+            candidates.addAll(Arrays
+                    .asList(reflectionCatalog.searchPath(targetPhase, eventR, targetDelta, relativeAngle)));
+        return candidates.toArray(new Raypath[0]);
+    }
+
+    /**
+     * If the input raypath doesn't have targetDelta for the input phase,
+     * try reflecting wave at velocity jump and if the delta is close enough to targetDelta
+     * This method returns an actual phase which gives delta (delta-target) &lt; {@link RaypathCatalog#MAXIMUM_D_DELTA}
+     *
+     * @param raypath       check phase with this raypath
+     * @param targetPhase   basic Phase such as P, S, ...
+     * @param eventR
+     * @param targetDelta   [rad] target delta.
+     * @param relativeAngle if the delta is relative angle
+     * @return actual {@link Phase} to obtain the targetDelta, such as PvXXP for base P
+     */
+    public Phase getActualTargetPhase(Raypath raypath, Phase targetPhase, double eventR, double targetDelta,
+                                      boolean relativeAngle) {
+        if (Math.abs(raypath.computeDelta(eventR, targetPhase) - targetDelta) < MAXIMUM_D_DELTA) return targetPhase;
+        VelocityStructure structure = getStructure();
+        if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S)) {
+            DoubleFunction<Phase> toPhase = radius -> {
+                double depth = Precision.round(structure.earthRadius() - radius, 2);
+                String xx = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
+                        String.valueOf(depth);
+                if (targetPhase.equals(Phase.P)) return Phase.create("Pv" + xx + "P");
+                else if (targetPhase.equals(Phase.SV)) return Phase.create("Sv" + xx + "S", true);
+                else return Phase.create("Sv" + xx + "S");
+            };
+            return Arrays.stream(structure.boundariesInMantle()).mapToObj(toPhase).filter(p -> Math.abs(
+                    relativeAngle ? raypath.computeDelta(eventR, p) :
+                            toRelativeAngle(raypath.computeDelta(eventR, p)) - targetDelta) < MAXIMUM_D_DELTA).findAny()
+                    .get();
+        }
+        throw new RuntimeException("UNIKUSYOEJU");
+    }
+
+
+    /**
+     * Search raypaths in the referenceRaypaths
+     *
+     * @param targetPhase       target phase
+     * @param eventR            [km] event radius
+     * @param targetDelta       [rad] target &Delta;
+     * @param relativeAngle     if the input targetDelta is a relative angle.
+     * @param referenceRaypaths search in this list
+     * @return Arrays of Raypaths which epicentral distances are close to the targetDelta.
+     * Never returns null. zero length array is possible.
+     */
+    private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle,
+                                 Raypath[] referenceRaypaths) {
+        if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
+                (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
+        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
+                "When you search paths for a relative angle, a targetDelta must be pi or less.");
 //        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" + TODO
 //                Precision.round(Math.toDegrees(targetDelta), 4));
         List<Raypath> pathList = new ArrayList<>();
-        for (int i = 0; i < raypaths.length - 1; i++) {
-            Raypath rayI = raypaths[i];
-            Raypath rayP = raypaths[i + 1];
+        for (int i = 0; i < referenceRaypaths.length - 1; i++) {
+            Raypath rayI = referenceRaypaths[i];
+            Raypath rayP = referenceRaypaths[i + 1];
             double deltaI = rayI.computeDelta(eventR, targetPhase);
             double deltaP = rayP.computeDelta(eventR, targetPhase);
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
