@@ -28,7 +28,7 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.3
+ * @version 0.2.1.4
  */
 public class RaypathCatalog implements Serializable {
 
@@ -423,6 +423,8 @@ public class RaypathCatalog implements Serializable {
         }
 
         private Phase toReflection(Phase base) {
+            if (BOUNDARY_R<=getStructure().coreMantleBoundary())
+                return base; //TODO such as PKXXKP
             if (base.equals(Phase.P)) return Phase.create("Pv" + DEPTH + "P");
             if (base.equals(Phase.SV)) return Phase.create("Sv" + DEPTH + "S", true);
             if (base.equals(Phase.S)) return Phase.create("Sv" + DEPTH + "S");
