@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.4
+ * @version 0.2.1.5
  */
 public class RaypathCatalog implements Serializable {
 
     /**
      * 2019/12/15
      */
-    private static final long serialVersionUID = -3617123428670012851L;
+    private static final long serialVersionUID = -656615885607641150L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -909,10 +909,10 @@ public class RaypathCatalog implements Serializable {
                 double depth = Precision.round(structure.earthRadius() - radius, 2);
                 String xx = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
                         String.valueOf(depth);
-                if (targetPhase.equals(Phase.P)) return Phase.create("pPv" + xx + "P");
+                if (targetPhase.equals(Phase.P)) return Phase.create("Pv" + xx + "P");
                 else if (targetPhase.equals(Phase.pP)) return Phase.create("pPv" + xx + "P");
-                else if (targetPhase.equals(Phase.S)) return Phase.create("sSv" + xx + "S");
-                else if (targetPhase.equals(Phase.SV)) return Phase.create("sSv" + xx + "S", true);
+                else if (targetPhase.equals(Phase.S)) return Phase.create("Sv" + xx + "S");
+                else if (targetPhase.equals(Phase.SV)) return Phase.create("Sv" + xx + "S", true);
                 else if (targetPhase.equals(Phase.sSV)) return Phase.create("sSv" + xx + "S", true);
                 else return Phase.create("sSv" + xx + "S");
             };
