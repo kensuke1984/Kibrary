@@ -28,7 +28,7 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.5
+ * @version 0.2.1.5.1
  */
 public class RaypathCatalog implements Serializable {
 
@@ -526,7 +526,7 @@ public class RaypathCatalog implements Serializable {
                 bounceCatalogs.add(new BounceCatalog(targetPhase, computeRaypaths(targetPhase, edges[0], edges[1])));
         }
         System.err
-                .print("Creating catalogs for bouncing waves done in " + Utilities.toTimeString(System.nanoTime() - t));
+                .println("\rCreating catalogs for bouncing waves done in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
     /**
