@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.1
+ * @version 0.2.1.2
  */
 public class RaypathCatalog implements Serializable {
 
     /**
-     * 2019/12/14
+     * 2019/12/15
      */
-    private static final long serialVersionUID = 7914660708878732704L;
+    private static final long serialVersionUID = 4893754919036609142L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -426,21 +426,37 @@ public class RaypathCatalog implements Serializable {
             if (base.equals(Phase.P)) return Phase.create("Pv" + DEPTH + "P");
             if (base.equals(Phase.SV)) return Phase.create("Sv" + DEPTH + "S", true);
             if (base.equals(Phase.S)) return Phase.create("Sv" + DEPTH + "S");
-            else return null;
+            else return base;
         }
 
         /**
          * TODO
+         *
          * @param targetPhase target phase
-         * @param eventR [km] event radius
-         * @param targetDelta [rad] target &Delta;
+         * @return if a search should skip the input targetPhase.
+         */
+        private boolean shouldSkip(Phase targetPhase) {
+            if (PP == PhasePart.SH && targetPhase.isPSV()) return true;
+            if ((targetPhase.toString().contains("p") || targetPhase.toString().contains("P")) &&
+                    (targetPhase.toString().contains("s") || targetPhase.toString().contains("S"))) return false;
+            if (getStructure().coreMantleBoundary() <= BOUNDARY_R && targetPhase.toString().contains("K")) return true;
+            if (getStructure().innerCoreBoundary() <= BOUNDARY_R &&
+                    (targetPhase.toString().contains("I") || targetPhase.toString().contains("J"))) return true;
+
+            return targetPhase.equals(Phase.PKP) || targetPhase.equals(Phase.SKS) ||
+                    targetPhase.toString().contains("I") || targetPhase.toString().contains("J");
+        }
+
+        /**
+         * @param targetPhase   target phase
+         * @param eventR        [km] event radius
+         * @param targetDelta   [rad] target &Delta;
          * @param relativeAngle if this is relative angle
          * @return raypaths with the &Delta; never returns null. but Raypath[0]
          */
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+            if (shouldSkip(targetPhase)) return new Raypath[0];
             Phase actualPhase = toReflection(targetPhase);
-            if (Objects.isNull(actualPhase))
-                return new Raypath[0];
             return RaypathCatalog.this
                     .searchPath(actualPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -467,7 +483,19 @@ public class RaypathCatalog implements Serializable {
             }
         }
 
+        /**
+         * TODO
+         *
+         * @param targetPhase target phase
+         * @return if a search should skip the input targetPhase.
+         */
+        private boolean shouldSkip(Phase targetPhase) {
+            return targetPhase.equals(Phase.PcP) || targetPhase.equals(Phase.SVcS) || targetPhase.equals(Phase.ScS) ||
+                    targetPhase.equals(Phase.PKiKP) || targetPhase.equals(Phase.SKiKS);
+        }
+
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+            if (shouldSkip(targetPhase)) return new Raypath[0];
             return RaypathCatalog.this
                     .searchPath(targetPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -483,8 +511,25 @@ public class RaypathCatalog implements Serializable {
     private final Set<ReflectionCatalog> reflectionCatalogs = new HashSet<>();
 
     /**
-     * Reflection waves such as PvXXXP. XXX should be one of the velocity boundaries in the structure.
-     * TODO so far P and S.
+     * Bounce waves P, S, PKP, PKIKP... Each catalog has raypaths which bounce in a same layer in the structure.
+     */
+    private void catalogOfBounceWaves() {
+        Phase[] targetPhases = new Phase[]{Phase.P, Phase.S, Phase.SV, Phase.PKP, Phase.SKS, Phase.PKIKP, Phase.SKIKS};
+        long t = System.nanoTime();
+        for (Phase targetPhase : targetPhases) {
+            List<Double[]> edgeList = computeRaypameterEdge(targetPhase);
+            System.err.print("\rCreating a catalog for " + targetPhase);
+            for (Double[] edges : edgeList)
+                bounceCatalogs.add(new BounceCatalog(targetPhase, computeRaypaths(targetPhase, edges[0], edges[1])));
+        }
+        System.err
+                .print("Creating catalogs for bouncing waves done in " + Utilities.toTimeString(System.nanoTime() - t));
+    }
+
+    /**
+     * Reflection waves PcP, ScS(SV/SH), PvXXXP and SvXXXP(SV/SH).
+     * XXX should be one of the velocity boundaries in the structure.
+     * TODO waves reflecting beneath CMB i.e. XXX is inside the core.
      */
     private void catalogOfReflections() {
         //mantle
@@ -492,9 +537,8 @@ public class RaypathCatalog implements Serializable {
         DoubleUnaryOperator calcVp = getStructure()::computeVph;
         DoubleUnaryOperator calcVsv = getStructure()::computeVsv;
         DoubleUnaryOperator calcVsh = getStructure()::computeVsh;
-
-
-        for (double mantleBoundary : mantleBoundaries) {
+        long t = System.nanoTime();
+        if (false) for (double mantleBoundary : mantleBoundaries) {
             if (mantleBoundary == getStructure().coreMantleBoundary() || !getStructure().isJump(mantleBoundary))
                 continue;
             System.err.print("Creating a catalog for the boundary at " + mantleBoundary);
@@ -511,9 +555,29 @@ public class RaypathCatalog implements Serializable {
             //SH
             reflectionCatalogs.add(new ReflectionCatalog(mantleBoundary, PhasePart.SH,
                     computeReflectingRaypaths(mantleBoundary, Phase.create("Sv" + depthString + "S"), calcVsh)));
-            System.err.print(" done.\r");
+            System.err.print("\r");
         }
-        //outercore innercore TODO
+        //inside outercore innercore TODO
+
+        //CMB PcP and ScS
+        double cmb = getStructure().coreMantleBoundary();
+        double lowerMostMantle = cmb + ComputationalMesh.EPS;
+        double pPcP = lowerMostMantle / getStructure().computeVph(lowerMostMantle);
+        double pSVcS = lowerMostMantle / getStructure().computeVsv(lowerMostMantle);
+        double pScS = lowerMostMantle / getStructure().computeVsh(lowerMostMantle);
+        System.err.print("Creating a catalog for CMB");
+        reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.P, computeRaypaths(Phase.PcP, 0, pPcP)));
+        reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.SV, computeRaypaths(Phase.SVcS, 0, pSVcS)));
+        reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.SH, computeRaypaths(Phase.ScS, 0, pScS)));
+        //ICB PKiKP SKiKS
+        System.err.print("\rCreating a catalog for ICB");
+        double icb = getStructure().innerCoreBoundary();
+        double loweMostOutercore = icb + ComputationalMesh.EPS;
+        double pPKiKP = loweMostOutercore / getStructure().computeVph(loweMostOutercore);
+        reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.PKiKP, 0, pPKiKP)));
+        reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.SKiKS, 0, pPKiKP)));
+        System.err
+                .println("\rCatalogs for boundaries are computed in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
     /**
@@ -548,10 +612,6 @@ public class RaypathCatalog implements Serializable {
         return adjustRaypathRange(phase, Math.min(pLower, pUpper), Math.max(pLower, pUpper));
     }
 
-    private static final Set<Phase> REFERENCE_PHASES = new HashSet<>(
-            Arrays.asList(Phase.P, Phase.S, Phase.SV, Phase.PcP, Phase.ScS, Phase.PKP, Phase.SKS, Phase.PKIKP,
-                    Phase.PKiKP, Phase.SKIKS, Phase.SKiKS));
-
     /**
      * TODO
      * Creates a catalogue.
@@ -564,7 +624,7 @@ public class RaypathCatalog implements Serializable {
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         computeANDadd(firstPath);
         catalogOfReflections();
-        REFERENCE_PHASES.forEach(this::catalogOf);
+        catalogOfBounceWaves();
 
         computeDiffraction();
 
@@ -648,32 +708,30 @@ public class RaypathCatalog implements Serializable {
             }
             supplementList.forEach(Raypath::compute);
         } while (catalog.addAll(supplementList));
+        raypathList.addAll(catalog);
         return catalog;
     }
 
     /**
-     * Creates catalogs for a target phase.
-     * Each catalog has raypaths which bounce in a same layer.
+     * Computes rayParameters with rayparameters between input 2 values.
+     * The range is set [min of them, max of them].
      *
-     * @param phase target phase
+     * @param targetPhase   target phase
+     * @param rayParameter1 min/maximum of the range
+     * @param rayParameter2 min/maximum of the range
+     * @return Raypaths with a rayparameter range, which have $Delta;s for the input targetPhase.
+     * The &Delta;s satisfy the condition of {@link #MAXIMUM_D_DELTA}. Never returns null, but emptySet.
      */
-    private void catalogOf(Phase phase) {
-        List<Double[]> edgeList = computeRaypameterEdge(phase);
-        System.err.print("Creating a catalog for " + phase);
-        long t = System.nanoTime();
-        for (Double[] edges : edgeList) {
-            double startP = Math.min(edges[0], edges[1]);
-            double endP = Math.max(edges[0], edges[1]);
-            Raypath[] edgeRaypaths = adjustRaypathRange(phase, startP, endP);
-            if (Objects.isNull(edgeRaypaths[0]) && Objects.isNull(edgeRaypaths[1])) continue;
-            else if (Objects.isNull(edgeRaypaths[0]) || Objects.isNull(edgeRaypaths[1]))
-                throw new RuntimeException("UNEXPECTED " + phase + " in " + startP + " " + endP);
-            Set<Raypath> catalogPart = catalogInBranch(phase, edgeRaypaths[0], edgeRaypaths[1]);
-            bounceCatalogs.add(new BounceCatalog(phase, catalogPart));
-            raypathList.addAll(catalogPart);
-        }
-        System.err.print(" .. done in " + Utilities.toTimeString(System.nanoTime() - t) + "\r");
+    private Set<Raypath> computeRaypaths(Phase targetPhase, double rayParameter1, double rayParameter2) {
+        double startP = Math.min(rayParameter1, rayParameter2);
+        double endP = Math.max(rayParameter1, rayParameter2);
+        Raypath[] edgeRaypaths = adjustRaypathRange(targetPhase, startP, endP);
+        if (Objects.isNull(edgeRaypaths[0]) && Objects.isNull(edgeRaypaths[1])) return Collections.emptySet();
+        else if (Objects.isNull(edgeRaypaths[0]) || Objects.isNull(edgeRaypaths[1]))
+            throw new RuntimeException("UNEXPECTED " + targetPhase + " in " + startP + " " + endP);
+        return catalogInBranch(targetPhase, edgeRaypaths[0], edgeRaypaths[1]);
     }
+
 
     /**
      * @param phase target {@link Phase}
