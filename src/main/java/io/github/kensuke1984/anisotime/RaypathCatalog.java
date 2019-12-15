@@ -423,11 +423,13 @@ public class RaypathCatalog implements Serializable {
         }
 
         private Phase toReflection(Phase base) {
-            if (BOUNDARY_R<=getStructure().coreMantleBoundary())
-                return base; //TODO such as PKXXKP
+            if (BOUNDARY_R <= getStructure().coreMantleBoundary()) return base; //TODO such as PKXXKP
             if (base.equals(Phase.P)) return Phase.create("Pv" + DEPTH + "P");
+            if (base.equals(Phase.pP)) return Phase.create("pPv" + DEPTH + "P");
             if (base.equals(Phase.SV)) return Phase.create("Sv" + DEPTH + "S", true);
+            if (base.equals(Phase.sSV)) return Phase.create("sSv" + DEPTH + "S", true);
             if (base.equals(Phase.S)) return Phase.create("Sv" + DEPTH + "S");
+            if (base.equals(Phase.sS)) return Phase.create("sSv" + DEPTH + "S");
             else return base;
         }
 
@@ -492,8 +494,7 @@ public class RaypathCatalog implements Serializable {
          * @return if a search should skip the input targetPhase.
          */
         private boolean shouldSkip(Phase targetPhase) {
-            return targetPhase.equals(Phase.PcP) || targetPhase.equals(Phase.SVcS) || targetPhase.equals(Phase.ScS) ||
-                    targetPhase.equals(Phase.PKiKP) || targetPhase.equals(Phase.SKiKS);
+            return targetPhase.toString().contains("c") || targetPhase.toString().contains("i");
         }
 
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
@@ -889,6 +890,7 @@ public class RaypathCatalog implements Serializable {
      * If the input raypath doesn't have targetDelta for the input phase,
      * try reflecting wave at velocity jump and if the delta is close enough to targetDelta
      * This method returns an actual phase which gives delta (delta-target) &lt; {@link RaypathCatalog#MAXIMUM_D_DELTA}
+     * TODO currently only major phases
      *
      * @param raypath       check phase with this raypath
      * @param targetPhase   basic Phase such as P, S, ...
@@ -901,21 +903,25 @@ public class RaypathCatalog implements Serializable {
                                       boolean relativeAngle) {
         if (Math.abs(raypath.computeDelta(eventR, targetPhase) - targetDelta) < MAXIMUM_D_DELTA) return targetPhase;
         VelocityStructure structure = getStructure();
-        if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S)) {
+        if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S) ||
+                targetPhase.equals(Phase.pP) || targetPhase.equals(Phase.sSV) || targetPhase.equals(Phase.sS)) {
             DoubleFunction<Phase> toPhase = radius -> {
                 double depth = Precision.round(structure.earthRadius() - radius, 2);
                 String xx = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
                         String.valueOf(depth);
-                if (targetPhase.equals(Phase.P)) return Phase.create("Pv" + xx + "P");
-                else if (targetPhase.equals(Phase.SV)) return Phase.create("Sv" + xx + "S", true);
-                else return Phase.create("Sv" + xx + "S");
+                if (targetPhase.equals(Phase.P)) return Phase.create("pPv" + xx + "P");
+                else if (targetPhase.equals(Phase.pP)) return Phase.create("pPv" + xx + "P");
+                else if (targetPhase.equals(Phase.S)) return Phase.create("sSv" + xx + "S");
+                else if (targetPhase.equals(Phase.SV)) return Phase.create("sSv" + xx + "S", true);
+                else if (targetPhase.equals(Phase.sSV)) return Phase.create("sSv" + xx + "S", true);
+                else return Phase.create("sSv" + xx + "S");
             };
             return Arrays.stream(structure.boundariesInMantle()).mapToObj(toPhase).filter(p -> Math.abs(
                     relativeAngle ? raypath.computeDelta(eventR, p) :
                             toRelativeAngle(raypath.computeDelta(eventR, p)) - targetDelta) < MAXIMUM_D_DELTA).findAny()
                     .get();
         }
-        throw new RuntimeException("UNIKUSYOEJU");
+        throw new RuntimeException("UNIKUSYOEJU " + targetPhase);
     }
 
 
