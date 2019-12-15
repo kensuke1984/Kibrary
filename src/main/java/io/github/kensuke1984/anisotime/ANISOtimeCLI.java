@@ -26,12 +26,10 @@ import java.util.stream.IntStream;
  * TODO customize for catalog ddelta dR
  * <p>
  * <p>
- * TODO taup_time -mod prem -h 515 -deg 17.37 -ph S
- * TODO anisotime -rc iprem0.99.cat -h 571 -ph P -dec 5 --time -deg 87.6
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.14
+ * @version 0.3.16
  */
 public final class ANISOtimeCLI {
 
@@ -68,7 +66,10 @@ public final class ANISOtimeCLI {
     /**
      * [rad]
      */
-    private double dDelta;
+    private double dDelta = 0.1;
+    /**
+     * [s/rad] dT/d&Delta;
+     */
     private double rayParameter;
     /**
      * Number of decimal places. Default:2
@@ -97,11 +98,6 @@ public final class ANISOtimeCLI {
      * @throws ParseException if any
      */
     public static void main(String[] args) throws ParseException {
-//        args = "-mod prem -h 571.3 -ph S24p -deg 30".split("\\s+");
-        /*
-/Users/kensuke/Dropbox/Geller/anisoTimePaper/fig4paper/prem_elastic.pdf
-p -> P のgapを狭める
-         */
         if (args.length == 0) {
             About.main(null);
             return;
@@ -134,10 +130,10 @@ p -> P のgapを狭める
         options.addOption("SV", false, "Computes travel time for SV. (default:SH)");
         options.addOption("SH", false, "Computes travel time for SH. (default:SH)");
         options.addOption("help", "Shows this message. This option has the highest priority.");
-        options.addOption("eps", false, "Outputs path figure.");
-        options.addOption(null, "rayp", false, "Shows ray parameters");
-        options.addOption(null, "time", false, "Shows travel times");
-        options.addOption(null, "delta", false, "Shows epicentral distances");
+        options.addOption("eps", false, "Outputs path figures.");
+        options.addOption(null, "rayp", false, "Shows ray parameters.");
+        options.addOption(null, "time", false, "Shows travel times.");
+        options.addOption(null, "delta", false, "Shows epicentral distances.");
         options.addOption("v", "version", false,
                 "Shows information of the tool. This option has the 2nd highest priority.");
         options.addOption("s", "send", false,
@@ -152,12 +148,12 @@ p -> P のgapを狭める
         options.addOption("ph", "phase", true, "Seismic phase (default:P,PCP,PKiKP,S,ScS,SKiKS)");
         options.addOption("mod", true, "Structure (default:prem)");
         options.addOption("dec", true, "Number of decimal places.");
-        options.addOption("p", true, "Ray parameter");
+        options.addOption("p", true, "Ray parameter [s/deg]");
         options.addOption("dR", true, "Integral interval [km] (default:10)");
-        options.addOption("dD", true, "Parameter for a catalog creation (\u03b4\u0394).");
+//        options.addOption("dD", true, "Parameter \u03b4\u0394 [deg] for a catalog creation. (default:0.1");
         options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
         options.addOption("rs", "record-section", true,
-                "start,end(,interval) [deg]\n Computes a table of a record section for the range.");
+                "start, end (,interval) [deg]\n Computes a table of a record section for the range.");
         options.addOption("o", true, "Directory for ray path figures or file name for record sections.");
     }
 
@@ -165,7 +161,7 @@ p -> P のgapを狭める
      * Sets parameters according to the input arguments.
      */
     private void setParameters() {
-        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "1")));
+//        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "0.1")));
 
         decimalPlaces = Integer.parseInt(cmd.getOptionValue("dec", "2"));
         if (decimalPlaces < 0)
@@ -191,15 +187,25 @@ p -> P のgapを狭める
             if (!cmd.hasOption("mod")) throw new RuntimeException("You must specify a velocity model(e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
-            // option TODO
-            ComputationalMesh mesh = ComputationalMesh.simple(structure);
-            catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
+            // Default PREM ISOPREM AK135
+            if (structure.equals(PolynomialStructure.PREM)) catalog = RaypathCatalog.prem();
+            else if (structure.equals(PolynomialStructure.ISO_PREM)) catalog = RaypathCatalog.iprem();
+            else if (structure.equals(PolynomialStructure.AK135)) catalog = RaypathCatalog.ak135();
+                // option TODO
+            else {
+                ComputationalMesh mesh = ComputationalMesh.simple(structure);
+                catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
+            }
         }
 
         if (cmd.hasOption("ph")) targetPhases =
                 Arrays.stream(cmd.getOptionValues("ph")).flatMap(arg -> Arrays.stream(arg.split(",")))
                         .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
-        else targetPhases = new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.S, Phase.ScS, Phase.SKiKS};
+        else targetPhases = cmd.hasOption("SV") ?
+                new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.SV, Phase.SVcS,
+                        Phase.create("SKiKS", true), Phase.create("SKIKS", true), Phase.SVdiff} :
+                new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS, Phase.SKiKS,
+                        Phase.SKIKS, Phase.Sdiff};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
@@ -208,9 +214,9 @@ p -> P のgapを狭める
             throw new RuntimeException("In the relative angle mode, a value for the option -deg must be 180 or less.");
 
         double interval = Double.parseDouble(cmd.getOptionValue("dR", "10")); //TODO dR is not working.
-        
+
         double rayParameterDegree = Double.parseDouble(cmd.getOptionValue("p", "NaN"));
-        rayParameter = rayParameterDegree * 180. / Math.PI;
+        rayParameter = Math.toDegrees(rayParameterDegree);
     }
 
     /**
@@ -319,7 +325,7 @@ p -> P のgapを狭める
     private void run() {
         try {
             if (checkArgumentOption()) throw new RuntimeException("Input arguments have problems.");
-            if (hasConflict()) return;
+            hasConflict();
 
             setParameters();
 
@@ -345,11 +351,11 @@ p -> P のgapを狭める
                         System.err.println(targetPhase + " does not exist.");
                         continue;
                     }
-                    double rayParameterDegree = rayParameter * Math.PI / 180.;
+                    double rayParameterDegree = Math.toRadians(rayParameter);
                     printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
-                            outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameterDegree, delta, time,
-                            eventR);
+                            outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameterDegree, delta,
+                            time, eventR);
                 }
                 return;
             }
@@ -357,7 +363,7 @@ p -> P のgapを狭める
             for (Phase targetPhase : targetPhases) {
                 Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta, relativeAngleMode);
                 if (raypaths.length == 0) {
-                    System.err.println("No raypaths satisfying the input condition");
+                    System.err.println("No raypaths satisfying the input condition :" + targetPhase);
                     continue;
                 }
 
@@ -366,21 +372,23 @@ p -> P のgapを狭める
                     double deltaOnBoundary =
                             Math.toDegrees(targetDelta - raypaths[0].computeDelta(eventR, targetPhase));
                     if (deltaOnBoundary < 0) {
-                        System.err.println("Sdiff would have longer distance than " +
-                                Precision.round(Math.toDegrees(raypath.computeDelta(eventR, targetPhase)), 3) +
-                                " (Your input:" + Precision.round(Math.toDegrees(targetDelta), 3) + ")");
-                        return;
+                        System.err.println(targetPhase + " would have longer distance than " + Precision
+                                .round(Math.toDegrees(raypath.computeDelta(eventR, targetPhase)), decimalPlaces) +
+                                " (Your input:" + Precision.round(Math.toDegrees(targetDelta), decimalPlaces) + ")");
+                        continue;
                     }
                     targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
                     double[] results = printResults(-1, raypath, targetPhase, System.out);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
                             outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, raypath.getRayParameter(),
                             targetDelta, results[1], eventR);
-                    return;
+                    continue;
                 }
                 int j = 0;
                 for (Raypath raypath : raypaths) {
-                    double[] results = printResults(Math.toDegrees(targetDelta), raypath, targetPhase, System.out);
+                    Phase actualPhase =
+                            catalog.getActualTargetPhase(raypath, targetPhase, eventR, targetDelta, relativeAngleMode);
+                    double[] results = printResults(Math.toDegrees(targetDelta), raypath, actualPhase, System.out);
                     if (cmd.hasOption("eps")) if (raypaths.length == 1)
                         createEPS(raypath.createPanel(eventR, targetPhase),
                                 outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,
@@ -417,8 +425,10 @@ p -> P のgapを狭める
      * @param values       according to {@link #showFlag}, the values are shown. ray parameter, delta, time
      */
     private void printLine(Phase phase, PrintStream out, int decimalPlace, double... values) {
-        out.println(phase + " " + IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
-                .mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i])).collect(Collectors.joining(" ")));
+        out.println(phase.getDISPLAY_NAME() + " " +
+                IntStream.range(0, values.length).filter(i -> (1 << i & showFlag) != 0)
+                        .mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i]))
+                        .collect(Collectors.joining(" ")));
     }
 
     /**
@@ -432,28 +442,23 @@ p -> P のgapを狭める
         double p0 = raypath.getRayParameter();
         double delta0 = raypath.computeDelta(eventR, targetPhase);
         double time0 = raypath.computeT(eventR, targetPhase);
-        if (Double.isNaN(delta0) || Double.isNaN(time0)) {
-            System.out.println(p0);
-            return new double[]{Double.NaN, Double.NaN};
-        }
+        if (Double.isNaN(delta0) || Double.isNaN(time0)) return new double[]{Double.NaN, Double.NaN};
+
         delta0 = Math.toDegrees(delta0);
         if (0 < targetDelta) {
-//            double time1 = catalog.travelTimeByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
-//                    relativeAngleMode, raypath);
-        	double p1 = catalog.rayParameterByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
-        			relativeAngleMode, raypath);
-        	Raypath raypath1 = new Raypath(p1, raypath.getStructure());
-        	raypath1.compute();
-        	double time1 = raypath1.computeT(eventR, targetPhase);
-        	double delta1 = Math.toDegrees(raypath1.computeDelta(eventR, targetPhase));
+            double p1 = catalog.rayParameterByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
+                    relativeAngleMode, raypath);
+            Raypath raypath1 = new Raypath(p1, raypath.getStructure());
+            raypath1.compute();
+            double time1 = raypath1.computeT(eventR, targetPhase);
+            double delta1 = Math.toDegrees(raypath1.computeDelta(eventR, targetPhase));
             if (!Double.isNaN(time1)) {
                 time0 = time1;
-//                delta0 = targetDelta;
                 delta0 = delta1;
                 p0 = p1;
             }
         }
-        double p0Degree = p0 / 180. * Math.PI;
+        double p0Degree = Math.toRadians(p0);
         printLine(targetPhase, out, decimalPlaces, p0Degree, delta0, time0);
         return new double[]{delta0, time0};
     }
@@ -499,67 +504,40 @@ p -> P のgapを狭める
 
     /**
      * check if there are conflicts
-     *
-     * @return true if there are some conflicts
      */
-    private boolean hasConflict() {
+    private void hasConflict() {
+        if (cmd.hasOption("absolute") && cmd.hasOption("relative"))
+            throw new IllegalArgumentException("Only one of either --absolute or --relative can be chosen.");
 
-        if (cmd.hasOption("absolute") && cmd.hasOption("relative")) {
-            System.err.println("Only one of either --absolute or --relative can be chosen.");
-            return true;
-        }
-
-
-        if (cmd.hasOption("h") && 1 < cmd.getOptionValues("h").length) {
-            System.err.println("Option -h (depth) can have only one value [km].");
-            return true;
-        }
+        if (cmd.hasOption("h") && 1 < cmd.getOptionValues("h").length)
+            throw new IllegalArgumentException("Option -h (depth) can have only one value [km].");
 
         if (cmd.hasOption("SH")) {
-            boolean out = false;
-            if (cmd.hasOption("SV")) {
-                System.err.println("Only one of either -SV or -SH can be chosen.");
-                out = true;
-            }
-
+            if (cmd.hasOption("SV")) throw new IllegalArgumentException("Only one of either -SV or -SH can be chosen.");
             if (cmd.hasOption("ph")) {
                 String phase = cmd.getOptionValue("ph");
-                if (phase.contains("P") || phase.contains("p") || phase.contains("K")) {
-                    System.err.println(phase + " should be P-SV mode.");
-                    out = true;
-                }
+                if (phase.contains("P") || phase.contains("p") || phase.contains("K"))
+                    throw new IllegalArgumentException(phase + " should be P-SV mode.");
             }
-
-            if (out) return true;
         }
 
-        if (cmd.hasOption("p") && cmd.hasOption("deg")) {
-            System.err.println("You can not use both option -p and -deg simultaneously.");
-            return true;
-        }
+        if (cmd.hasOption("p") && cmd.hasOption("deg"))
+            throw new IllegalArgumentException("You can not use both option -p and -deg simultaneously.");
 
         if (cmd.hasOption("rs")) {
-            if (cmd.hasOption("p") || cmd.hasOption("deg")) {
-                System.err.println("When you compute record sections, neither option -p nor -deg can be specified.");
-                return true;
-            }
-            if (!cmd.hasOption("ph")) {
-                System.err.println("When you compute record sections, -ph must be specified.");
-                return true;
-            }
-            if (cmd.hasOption("eps")) {
-                System.err.println("When you compute record sctions, -eps can not be set.");
-            }
-        } else if (cmd.hasOption("o") && !cmd.hasOption("eps")) {
-            System.err.println("-o can be set, only when you compute record sections or make ray path figures.");
-            return true;
-        }
+            if (cmd.hasOption("p") || cmd.hasOption("deg")) throw new IllegalArgumentException(
+                    "When you compute record sections, neither option -p nor -deg can be specified.");
 
-        if (cmd.hasOption("rc") && cmd.hasOption("mod")) {
-            System.err.println("When you read a catalog, you cannot specify a velocity model.");
-            return true;
-        }
+            if (!cmd.hasOption("ph"))
+                throw new IllegalArgumentException("When you compute record sections, -ph must be specified.");
 
-        return false;
+            if (cmd.hasOption("eps"))
+                throw new IllegalArgumentException("When you compute record sctions, -eps can not be set.");
+        } else if (cmd.hasOption("o") && !cmd.hasOption("eps")) throw new IllegalArgumentException(
+                "-o can be set, only when you compute record sections or make ray path figures.");
+
+        if (cmd.hasOption("rc") && cmd.hasOption("mod"))
+            throw new IllegalArgumentException("When you read a catalog, you cannot specify a velocity model.");
+
     }
 }

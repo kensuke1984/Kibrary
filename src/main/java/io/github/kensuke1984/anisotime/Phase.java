@@ -1,5 +1,6 @@
 package io.github.kensuke1984.anisotime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,8 +19,9 @@ import java.util.regex.Pattern;
  * <p>
  * ???PdiffXX and ???SdiffXX can be used. XX is positive double XX is
  * diffractionAngle diff must be the last part.
+ * HOGEdiff is actually a bouncing wave at &plusmn; &epsilon; of a boundary
  * <p>
- * Diffraction can only happen at the final part.  TODO
+ * Diffraction can only happen at the final part.  TODO arbitrary
  * <p>
  * Numbers in a name.
  * </p>
@@ -37,12 +39,13 @@ import java.util.regex.Pattern;
  * <dd>under construction</dd>
  * </dl>
  * P and S after transmission strictly are downward, and p and s are upward.
+ *
  * @author Kensuke Konishi
- * @version 0.1.9.1
+ * @version 0.1.10.2.1
  * <p>
  * TODO P2PPcP no exist but exist
  */
-public class Phase {
+public class Phase implements Serializable {
 
     // no use letters
     private static final Pattern others = Pattern.compile("[a-zA-Z&&[^cdfipsvIJKPS]]|[\\W&&[^.^]]");
@@ -101,6 +104,7 @@ public class Phase {
     public static final Phase PKP = create("PKP");
     public static final Phase PKiKP = create("PKiKP");
     public static final Phase PKIKP = create("PKIKP");
+    public static final Phase Pdiff = create("Pdiff");
     public static final Phase s = create("s");
     public static final Phase S = create("S");
     public static final Phase SV = create("S", true);
@@ -110,6 +114,8 @@ public class Phase {
     public static final Phase SKiKS = create("SKiKS");
     public static final Phase SKIKS = create("SKIKS");
     public static final Phase SKJKS = create("SKJKS");
+    public static final Phase Sdiff = create("Sdiff");
+    public static final Phase SVdiff = create("Sdiff", true);
 
     /**
      * If this is P-SV(true) or SH(false).
@@ -123,6 +129,10 @@ public class Phase {
      * name for parsing e.g. SKKKKKS
      */
     private final String EXPANDED_NAME;
+    /**
+     * nome for displaying (Sdiff for Sdiff??)
+     */
+    private final String DISPLAY_NAME;
 
 
     private PathPart[] passParts;
@@ -135,10 +145,18 @@ public class Phase {
     private Phase(String phaseName, String expandedName, boolean psv) {
         PHASENAME = phaseName;
         EXPANDED_NAME = expandedName;
+        DISPLAY_NAME = simplify(phaseName);
         PSV = psv;
         countParts();
     }
 
+    private static String simplify(String phaseName) {
+        String simple = phaseName;
+        //*diff???? -> *diff
+        Pattern compile = Pattern.compile("diff[\\d|\\.]+");
+        simple = compile.matcher(simple).replaceAll("diff");
+        return simple;
+    }
 
     /**
      * Input names must follow some rules.
@@ -223,8 +241,7 @@ public class Phase {
             }
             int end = i + 1;
             double nextDepth = start == end ? Double.NaN : Double.parseDouble(EXPANDED_NAME.substring(start, end));
-            PassPoint innerPoint;
-            PassPoint outerPoint;
+            PassPoint innerPoint, outerPoint;
             switch (currentChar) {
                 case 'c':
                 case 'i':
@@ -329,15 +346,18 @@ public class Phase {
                                 partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.CMB, outerPoint));
                                 partList.add(nextChar == 'c' ? Located.REFLECTION_C : Located.CMB_PENETRATION);
                                 continue;
-                            case 'd'://TODO
-                                partList.add(new GeneralPart(PS, true, 0, outerDepth, PassPoint.CMB, outerPoint));
+                            case 'd'://TODO  Passpoint may be another point (not CMB)
+                                partList.add(
+                                        new GeneralPart(PS, true, 0, outerDepth, PassPoint.BOUNCE_POINT, outerPoint));
                                 String angle = readAngle(i + 1);
                                 i += 4 + angle.length();
+                                //TODO arbitrary depth?
                                 partList.add(LocatedDiffracted.createCMBDiffraction(true, PS,
                                         Math.toRadians(angle.isEmpty() ? 0 : Double.parseDouble(angle))));
                                 if (i + 1 < EXPANDED_NAME.length()) throw new IllegalArgumentException(
                                         "ANISOtime now cannot handle complex diffraction wave");
-                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.CMB, PassPoint.EARTH_SURFACE));
+                                partList.add(new GeneralPart(PS, false, 0, 0, PassPoint.BOUNCE_POINT,
+                                        PassPoint.EARTH_SURFACE));
                                 continue;
                             default:
                                 throw new RuntimeException("Problem around P");
@@ -672,14 +692,21 @@ public class Phase {
         return EXPANDED_NAME.contains("diff");
     }
 
-
     void printInformation() {
         System.out.println(PHASENAME);
         Arrays.stream(passParts).forEach(System.out::println);
     }
 
+    String getPHASENAME() {
+        return PHASENAME;
+    }
+
+    String getDISPLAY_NAME() {
+        return DISPLAY_NAME;
+    }
+
     @Override
     public String toString() {
-        return PHASENAME;
+        return PHASENAME; //TODO -> DISPLAY_NAME
     }
 }

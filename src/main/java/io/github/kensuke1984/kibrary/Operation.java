@@ -3,9 +3,7 @@ package io.github.kensuke1984.kibrary;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.lang3.EnumUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,7 +14,7 @@ import java.util.Properties;
  * Main procedures in Kibrary
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1
+ * @version 0.0.6
  */
 public interface Operation {
 
@@ -30,8 +28,9 @@ public interface Operation {
             }
             if (list.isEmpty()) throw new NoSuchFileException("No property file is found");
             System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            return list.get(Integer.parseInt(reader.readLine()) - 1);
+            String input = Utilities.readInputLine();
+            if (input.isEmpty()) System.exit(9);
+            return list.get(Integer.parseInt(input) - 1);
         }
     }
 
@@ -44,7 +43,9 @@ public interface Operation {
         if (args.length == 0) {
             Manhattan.printList();
             System.out.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
-            args = new String[]{Manhattan.valueOf(Integer.parseInt(Utilities.readInputLine())).toString()};
+            String input = Utilities.readInputLine();
+            if (input.isEmpty()) System.exit(1);
+            args = new String[]{Manhattan.valueOf(Integer.parseInt(input)).toString()};
         }
 
         if (args[0].equals("-l")) {
