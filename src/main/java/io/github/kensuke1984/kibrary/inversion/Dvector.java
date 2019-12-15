@@ -288,7 +288,6 @@ public class Dvector {
 		this.weightingType = weigthingType;
 		switch (weigthingType) {
 		case RECIPROCAL:
-		case RECIPROCAL_FREQ:
 			this.weightingFunction = (obs, syn) -> {
 				RealVector obsVec = new ArrayRealVector(obs.getData());
 				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 15.) {
@@ -298,6 +297,25 @@ public class Dvector {
 				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
 					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
 				return 1. / obsVec.getLInfNorm(); 
+//						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
+			};
+			break;
+		case RECIPROCAL_FREQ:
+			this.weightingFunction = (obs, syn) -> {
+				RealVector obsVec = new ArrayRealVector(obs.getData());
+				RealVector synVec = new ArrayRealVector(syn.getData());
+				if (Math.abs(obs.getStartTime() - syn.getStartTime()) >= 15.) {
+					System.err.println(obs);
+					return 0.;
+				}
+				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
+					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
+				double weight = 2./ Math.abs(obsVec.getMaxValue() - obsVec.getMinValue()); ;
+//				RealVector residualVec = obsVec.subtract(synVec);
+//				weight /= Math.pow(residualVec.dotProduct(residualVec) / (weight*weight), 0.25);
+				return weight;
+//				return 1.;
+//						1./ Math.exp(obsVec.getMaxValue());
 //						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 			break;
@@ -693,7 +711,36 @@ public class Dvector {
 			WeightingType weightingType, double[] weighting) {
 		this(basicIDs, chooser, weightingType, weighting, false);
 	}
-
+	
+	public Dvector() {
+		
+	}
+	
+	@Override
+	public Dvector clone() {
+		Dvector dvector = new Dvector();
+		dvector.dVec = dVec.clone();
+		dvector.ids = ids.clone();
+		dvector.chooser = chooser;
+		dvector.startPoints = startPoints.clone();
+		dvector.dNorm = dNorm;
+		dvector.variance = variance;
+		dvector.eventVariance = eventVariance;
+		dvector.stationVariance = stationVariance;
+		dvector.nTimeWindow = nTimeWindow;
+		dvector.npts = npts;
+		dvector.obsNorm = obsNorm;
+		dvector.obsVec = obsVec.clone();
+		dvector.obsIDs = obsIDs.clone();
+		dvector.synIDs = synIDs.clone();
+		dvector.synVec = synVec.clone();
+		dvector.weighting = weighting.clone();
+		dvector.weightingVectors = weightingVectors.clone();
+		dvector.weightingFunction = weightingFunction;
+		dvector.obsNormSquare = obsNormSquare;
+		return dvector;
+	}
+	
 	/**
 	 * vectorsがtimewindowの数とそれぞれの要素数を守っていないとerror
 	 * 
@@ -915,6 +962,8 @@ public class Dvector {
 	 * |obs|
 	 */
 	private double obsNorm;
+	
+	private double variance_;
 
 	/**
 	 * |obs-syn|
@@ -1169,12 +1218,14 @@ public class Dvector {
 				for (int j = 0; j < ws.length; j++)
 					ws[j] = weighting[i];
 //			}
-			double maxDiff = new ArrayRealVector(obsIDs[i].getData()).subtract(new ArrayRealVector(synIDs[i].getData())).getLInfNorm();
-			if (weightingType.equals(WeightingType.RECIPROCAL_FREQ)) {
-				for (int j = 0; j < ws.length; j++) {
-					ws[j] /= Math.abs(obsIDs[i].getData()[j] - synIDs[i].getData()[j]) + maxDiff/10.;
-				}
-			}
+//			double maxDiff = new ArrayRealVector(obsIDs[i].getData()).subtract(new ArrayRealVector(synIDs[i].getData())).getLInfNorm();
+//			double v = new ArrayRealVector(obsIDs[i].getData()).subtract(new ArrayRealVector(synIDs[i].getData())).getNorm()
+//					/ new ArrayRealVector(obsIDs[i].getData()).getNorm();
+//			if (weightingType.equals(WeightingType.RECIPROCAL_FREQ)) {
+//				for (int j = 0; j < ws.length; j++) {
+//					ws[j] /= Math.abs(obsIDs[i].getData()[j] - synIDs[i].getData()[j]) + maxDiff/2.;
+//				}
+//			}
 			
 			weightingVectors[i] = new ArrayRealVector(ws);
 
@@ -1208,8 +1259,15 @@ public class Dvector {
 				.collect(Collectors.toMap(id -> id, id -> eventNumerator.get(id) / eventDenominator.get(id)));
 		dNorm = Math.sqrt(variance);
 		variance /= obs2;
+		obsNormSquare = obs2;
 		obsNorm = Math.sqrt(obs2);
 		System.err.println("Vector D was created. The variance is " + variance + ". The number of points is " + npts);
+	}
+	
+	private double obsNormSquare;
+	
+	public double getObsNormSquare() {
+		return obsNormSquare;
 	}
 
 	/**
@@ -1217,6 +1275,18 @@ public class Dvector {
 	 */
 	public double getVariance() {
 		return variance;
+	}
+	
+	public void setVariance(double variance) {
+		this.variance = variance;
+	}
+	
+	public void setDNorm(double dNorm) {
+		this.dNorm = dNorm;
+	}
+	
+	public void setObsNormSquare(double obs2) {
+		this.obsNormSquare = obs2;
 	}
 	
 	public RealVector getMask(GlobalCMTID id) {

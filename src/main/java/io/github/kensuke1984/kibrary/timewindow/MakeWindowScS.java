@@ -34,18 +34,20 @@ public class MakeWindowScS {
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0_it1/filtered_stf_12.5-200s");
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s5/filtered_stf_12.5-200s");
-//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_nostf_6-200s");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/synthetic_cl3s0_it1/filtered_nostf_8-200s");
-		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticLVZ_CA/filtered_stf_8-200s");
-//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster4/synthetic_sw_it1/filtered_nostf_12.5-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/syntheticLVZ_CA_2/filtered_nostf_8-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/synthetic_cl3s0_it2/filtered_nostf_12.5-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster4/synthetic_sw_it1/filtered_nostf_8-200s");
+//		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_FAR_SLAB/filtered_12.5-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/synthetic_cl4s0_it1/filtered_nostf_8-200s");
 //		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/synthetic_cl3s0_it1/filtered_nostf_6-200s");
 //		Path workdir = Paths.get(".");
 		
 		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_60deg.dat");
-//		Path timewindowPath = workdir.resolve("selectedTimewindow_SScS_70deg.dat");
-//		Path timewindowPath = workdir.resolve("timewindow_SScS_60deg.dat");
+//		Path timewindowPath = workdir.resolve("selectedTimewindow_ScS_65deg_201205281150A.dat");
+//		Path timewindowPath = workdir.resolve("timewindow_S_60deg.dat");
 		Set<TimewindowInformation> timewindowsForSelection = TimewindowInformationFile.read(timewindowPath); 
 //		timewindowsForSelection = null;
 		
@@ -60,11 +62,11 @@ public class MakeWindowScS {
 		double maxRatio_S = 2.5;
 		
 		double timeBefore = 30.; //30 for Scd
-//		timeBefore = 10; // 10 for spectral amplitudes
-		double timeAfter = 40;
+		timeBefore = 10; // 10 for spectral amplitudes
+		double timeAfter = 40; //40
 		double timeBeforesS = 5;
 		
-		double minPeriod = 8;
+		double minPeriod = 8.;
 		
 		Set<EventFolder> eventFolderSet = Utilities.eventFolderSet(workdir);
 		
@@ -182,6 +184,8 @@ public class MakeWindowScS {
 				
 				double endTimeS = timeS + 25;
 				double startTimeS = timeS - 25;
+//				double endTimeS = timeS + 30;
+//				double startTimeS = timeS - 10;
 				if (timeS + 25 > timeScS) {
 					double tmpTime = timeS + 25 - timeScS;
 					endTimeS -= tmpTime;

@@ -20,15 +20,20 @@ public class taupModelMaker {
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/Users/Anselme/Dropbox/Kenji/UPPER_MANTLE/1D_REFERENCE_MODEL/POLYNOMIALS/tnasna.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.poly"));
 //		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
-		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/lvz_ca_2.poly"));
+		PolynomialStructure model = new PolynomialStructure(Paths.get("/work/anselme/POLY/cbvspm1pQ212_it0.poly"));
 //		PolynomialStructure model = PolynomialStructure.AK135;
 		
 //		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/oneDPartial_s0/inversion/alpha_03/lmi_s0_c06_cQ10/poly");
 ////		PolynomialStructure model = new PolynomialStructure(Paths.get(args[0]));
 ////		int nR = Integer.parseInt(args[0]);
-		int nR = 1000;
+		int nR = 5000;
 		
 		PolynomialStructure prem = PolynomialStructure.PREM;
+		
+//		model = PolynomialStructure.ISO_PREM;
+		
+//		System.out.println(prem.getVshAt(6371-2431)*1);
+//		System.exit(0);
 		
 		double f = 1.03;
 		
@@ -43,7 +48,7 @@ public class taupModelMaker {
 ////		System.out.println((PolynomialStructure.PREM.getVphAt(3630) - PolynomialStructure.AK135.getVphAt(3630))/ PolynomialStructure.PREM.getVphAt(3630) * 100);
 //		System.exit(0);
 		
-//		System.out.println(prem.getVshAt(6371-2431));
+//		System.out.println(prem.getVshAt(6371. - 2431.0));
 //		System.exit(0);
 		
 //		double r0 = 6371-2550.;
@@ -205,9 +210,9 @@ public class taupModelMaker {
 //		outputSTD(PolynomialStructure.MAK135, nR, Paths.get("/Users/Anselme/Dropbox/Kenji/JOINTMODELLING_Oba/VELFILES/MAK135.vel"));
 		
 //		outputSTD(model, nR, Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster34/oneDPartial_cl4s0_it1/inversion/40km/mantleCorr/ampCorr/lmi_78_vs_cl4_az0_l007_g0_semucb/poly/cl4az0_it2.vel"));
-//		outputSTD(model, nR, Paths.get("/work/anselme/POLY/AK135.vel"));
+		outputSTD(model, nR, Paths.get("/work/anselme/POLY/ISO_PREM.vel"));
 //		outputSTD(PolynomialStructure.ISO_PREM, 1000, Paths.get("/usr/local/share/TauP-2.4.5/StdModels/PREM_1000.vel"));
-		outputSTD(model, nR, Paths.get("/work/anselme/POLY/lvz_ca_2.vel"));
+//		outputSTD(model, nR, Paths.get("/work/anselme/POLY/cbvspm1pQ212_it0.vel"));
 		
 //		outputTauP(model, nR);
 		

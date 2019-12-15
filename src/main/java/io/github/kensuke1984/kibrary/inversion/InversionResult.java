@@ -431,7 +431,7 @@ public class InversionResult {
 		return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "." + basicIDList.indexOf(id) + ".txt";
 	}
-
+	
 	/**
 	 * @param id
 	 *            ID of the order in vector (This ID must be in the list by
@@ -453,6 +453,32 @@ public class InversionResult {
 //		if (tmplist.size() != 1)
 //			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
 //		txtPath = tmplist.get(0);
+		
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[1]);
+			y[j] = Double.parseDouble(parts[3]);
+		});
+		return new Trace(x, y);
+	}
+	
+	public Trace syntheticOf_noorder(BasicID id) throws IOException {
+		List<Path> tmplist;
+		try (Stream<Path> stream = Files.list(rootPath.resolve("trace/" + id.getGlobalCMTID()))) {
+			tmplist = stream.filter(p -> {
+				String name = p.getFileName().toString();
+				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+			}).collect(Collectors.toList());
+		}
+		if (tmplist.size() != 1) {
+			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
+			return null;
+		}
+		Path txtPath = tmplist.get(0);
 		
 		List<String> lines = Files.readAllLines(txtPath);
 		int npts = lines.size() - 1;

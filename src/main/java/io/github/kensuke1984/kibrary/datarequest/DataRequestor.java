@@ -68,7 +68,9 @@ public class DataRequestor implements Operation {
 	 * not radius but distance from the surface
 	 */
 	private double upperDepth;
-
+	
+	private boolean dataless;
+	
 	/**
 	 * @param args
 	 *            Request Mode: [parameter file name]
@@ -142,6 +144,8 @@ public class DataRequestor implements Operation {
 			throw new RuntimeException("No information about the head adjustment");
 		if (!property.containsKey("send"))
 			property.setProperty("send", "false");
+		if (!property.containsKey("dataless"))
+			property.setProperty("dataless", "false");
 	}
 
 	private boolean send;
@@ -170,6 +174,8 @@ public class DataRequestor implements Operation {
 		footAdjustment = Integer.parseInt(property.getProperty("footAdjustment"));
 		send = Boolean.parseBoolean(property.getProperty("send"));
 		eventsFromFile = property.containsKey("eventsFromFile") ? Paths.get(property.getProperty("eventsFromFile")) : null;
+		
+		dataless = Boolean.parseBoolean(property.getProperty("dataless"));
 	}
 
 	private Properties property;
@@ -296,8 +302,14 @@ public class DataRequestor implements Operation {
 				output(m);
 				if (!send)
 					return;
-				System.err.println("Sending a request for " + id);
-				m.sendIris();
+				if (dataless) {
+					System.err.println("Sending a dataless request for " + id);
+					m.sendIrisDataless();
+				}
+				else {
+					System.err.println("Sending a request for " + id);
+					m.sendIris();
+				}
 				Thread.sleep(3 * 1000);
 			} catch (Exception e) {
 				System.out.println(m.getLabel() + " was not sent");

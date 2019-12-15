@@ -24,6 +24,7 @@ public class BreakFastMail {
 
 	private static final String IRIS_EMAIL = "breq_fast@iris.washington.edu";
 	private static final String OHP_EMAIL = "breq-fast@ocean.eri.u-tokyo.ac.jp";
+	private static final String IRIS_DATALESS_EMAIL = "DATALESS@iris.washington.edu";
 
 	private String name;
 	private String institute;
@@ -46,7 +47,7 @@ public class BreakFastMail {
 	/**
 	 * password of the gmail account.
 	 */
-	private static String password = "nvtaldfxlwighvax";
+	private static String password = "gkmbqmcxxosngras";
 
 	/**
 	 * @return リクエストメールに書くべきヘッダー部分
@@ -71,6 +72,10 @@ public class BreakFastMail {
 	void sendIris() throws Exception {
 		sendIris(getLines());
 	}
+	
+	void sendIrisDataless() throws Exception {
+		sendIrisDataless(getLines());
+	}
 
 	private static String getPassword() throws InterruptedException {
 		if (password != null)
@@ -78,7 +83,7 @@ public class BreakFastMail {
 		else if (!GraphicsEnvironment.isHeadless()) {
 			password = PasswordInput.createAndShowGUI().getPassword();
 		} else {
-			password = String.copyValueOf(System.console().readPassword("Password for timeseries.request@gmail.com"));
+			password = String.copyValueOf(System.console().readPassword("Password for aborgeaud@gmail.com"));
 		}
 		return password;
 	}
@@ -88,12 +93,26 @@ public class BreakFastMail {
 		email.setHostName("smtp.googlemail.com");
 		email.setSmtpPort(465);
 		getPassword();
-		email.setAuthenticator(new DefaultAuthenticator("timeseries.request@gmail.com", password));
+		email.setAuthenticator(new DefaultAuthenticator("aborgeaud@gmail.com", password));
 		email.setSSLOnConnect(true);
-		email.setFrom("timeseries.request@gmail.com");
+		email.setFrom("aborgeaud@gmail.com");
 		email.setSubject("Request" + Utilities.getTemporaryString());
 		email.setMsg(String.join("\n", lines));
 		email.addTo(IRIS_EMAIL);
+		email.send();
+	}
+	
+	private static void sendIrisDataless(String[] lines) throws Exception {
+		Email email = new SimpleEmail();
+		email.setHostName("smtp.googlemail.com");
+		email.setSmtpPort(465);
+		getPassword();
+		email.setAuthenticator(new DefaultAuthenticator("aborgeaud@gmail.com", password));
+		email.setSSLOnConnect(true);
+		email.setFrom("aborgeaud@gmail.com");
+		email.setSubject("Request" + Utilities.getTemporaryString());
+		email.setMsg(String.join("\n", lines));
+		email.addTo(IRIS_DATALESS_EMAIL);
 		email.send();
 	}
 

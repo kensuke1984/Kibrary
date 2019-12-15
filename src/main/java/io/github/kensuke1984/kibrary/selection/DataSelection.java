@@ -394,6 +394,8 @@ public class DataSelection implements Operation {
 					
 					Set<TimewindowInformation> tmpGoodWindows = new HashSet<>();
 					for (TimewindowInformation window : windowInformations) {
+						if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10)
+							continue;
 						double shift = 0.;
 						if (!staticCorrectionSet.isEmpty()) {
 							StaticCorrection foundShift = getStaticCorrection(window);

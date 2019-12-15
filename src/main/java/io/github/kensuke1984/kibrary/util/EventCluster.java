@@ -6,8 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -15,6 +19,8 @@ import java.util.stream.Collectors;
 import edu.sc.seis.TauP.SphericalCoords;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
 
 public class EventCluster {
 	
@@ -47,17 +53,35 @@ public class EventCluster {
 //		List<EventCluster> clusters = cluster(ids, 3.);
 		
 		List<EventCluster> clusters = readClusterFile(
-				Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-3deg.inf"));
+				Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf"));
 //		List<EventCluster> clusters = readClusterFile(
 //				Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_6-200s/map/cluster_pcp.inf"));
 		
 		clusters.stream().forEach(c -> System.out.println(c));
 		
-		Path outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/azimuthSeparation_cluster-3deg.inf");
+		Path outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/azimuthSeparation_cluster-6deg.inf");
 //		Path outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_6-200s/map/azimuthSeparation_cluster_pcp.inf");
 		writeAzimuthSeparation(clusters, outpath);
 		
-		
+		Path waveformIDPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/waveformID_ScS_ext_70deg_semucbCorr_ampCorr_4hz.dat");
+		BasicID[] waveformIDs = BasicIDFile.readBasicIDFile(waveformIDPath);
+		Map<Station, Set<Integer>> stationClusterMap = new HashMap<>();
+		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getStation(), new HashSet<>()));
+		Arrays.stream(waveformIDs).forEach(id -> {
+			int index = clusters.stream().filter(c -> c.getID().equals(id.getGlobalCMTID())).findFirst().get().getIndex();
+			Set<Integer> tmpset = stationClusterMap.get(id.getStation());
+			tmpset.add(index);
+			stationClusterMap.replace(id.getStation(), tmpset);
+		});
+		outpath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/stationCluster.inf");
+		PrintWriter pw = new PrintWriter(outpath.toFile());
+		for (Station sta : stationClusterMap.keySet()) {
+			String istring = "";
+			for (int i : stationClusterMap.get(sta))
+				istring += i + " ";
+			pw.println(sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
+		}
+		pw.close();
 	}
 	
 	public static List<EventCluster> readClusterFile(Path file) throws IOException {
@@ -206,10 +230,16 @@ public class EventCluster {
 					for (double az : cluster.getAzimuthSlices()) {
 						double lat = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), 100., az);
 						double lon = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 100., az);
+						double lat65 = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), 60./2., az);
+						double lon65 = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 60./2., az);
+						double lat85 = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), 85./2., az);
+						double lon85 = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 85./2., az);
 						HorizontalPosition pos1 = new HorizontalPosition(lat, lon);
-						pw.println(">cluster_" + cluster.getIndex());
-						pw.println(pos0.getLongitude() + " " + pos0.getLatitude() + " " + "cluster_" + cluster.getIndex());
-						pw.println(pos1.getLongitude() + " " + pos1.getLatitude() + " " + "cluster_" + cluster.getIndex());
+						pw.println("> > > >cluster_" + cluster.getIndex());
+						pw.println(pos0.getLongitude() + " " + pos0.getLatitude() + " " +
+							lon65 + " " + lat65 + " " + "cluster_" + cluster.getIndex());
+						pw.println(pos1.getLongitude() + " " + pos1.getLatitude() + " " +
+							lon85 + " " + lat85 + " " + "cluster_" + cluster.getIndex());
 					}
 					continue;
 				}

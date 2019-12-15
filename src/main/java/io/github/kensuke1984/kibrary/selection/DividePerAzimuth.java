@@ -91,13 +91,16 @@ public class DividePerAzimuth {
 		
 		//regions
 		List<Double[]> regions = new ArrayList<>();
-		regions.add(new Double[] {310., 321., 20., 50.});
-		regions.add(new Double[] {321., 338., 20., 33.});
-		regions.add(new Double[] {321., 338., 33., 40.});
-		regions.add(new Double[] {321., 338., 40., 50.});
-		regions.add(new Double[] {338., 347., 20., 26.});
-		regions.add(new Double[] {338., 347., 26., 50.});
-		regions.add(new Double[] {347., 10., 20., 50.});
+//		regions.add(new Double[] {310., 321., 20., 50.});
+//		regions.add(new Double[] {321., 338., 20., 33.});
+//		regions.add(new Double[] {321., 338., 33., 40.});
+//		regions.add(new Double[] {321., 338., 40., 50.});
+//		regions.add(new Double[] {338., 347., 20., 26.});
+//		regions.add(new Double[] {338., 347., 26., 50.});
+//		regions.add(new Double[] {347., 10., 20., 50.});
+		
+		
+
 		
 //		List<Double> azimuths = new ArrayList<>();
 //		azimuths.add(314.5);

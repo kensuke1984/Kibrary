@@ -119,9 +119,11 @@ public class ExcludeTimewindow {
 //								return false;
 //							if (tw.getComponent().equals(SACComponent.R))
 //								return false;
+//							if (distance > 80)
+//								return false;
 //							if (distance < 70)
 //								return false;
-							if (distance < 65)
+							if (distance < 60)
 								return false;
 							else 
 								return true;

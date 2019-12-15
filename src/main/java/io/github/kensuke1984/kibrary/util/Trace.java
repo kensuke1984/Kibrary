@@ -345,6 +345,32 @@ public class Trace {
         return shift;
     }
     
+    /**
+     * Assume the interval of x is same as that of this.
+     *
+     * @param trace which length must be shorter than this.
+     * @return the shift value x0 in x direction for best correlation.
+     */
+    public double findBestShiftParallel(Trace trace) {
+        int gapLength = X.length - trace.getLength();
+        if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");
+        double compY2 = trace.Y_VECTOR.getNorm();
+        double[] shifts = new double[gapLength + 1];
+        double[] cors = new double[gapLength + 1];
+        IntStream.range(0, gapLength + 1).parallel().forEach(i -> {
+            double cor = 0;
+            double y2 = 0;
+            for (int j = 0; j < trace.getLength(); j++) {
+                cor += Y[i + j] * trace.Y[j];
+                y2 += Y[i + j] * Y[i + j];
+            }
+            cor /= Math.sqrt(y2) * compY2;
+            shifts[i] = X[i] - trace.X[0];
+            cors[i] = cor;
+        });
+        return shifts[new ArrayRealVector(cors).getMaxIndex()];
+    }
+    
     public double findBestShiftConsiderAmplitude(Trace trace) {
         int gapLength = X.length - trace.getLength();
         if (gapLength <= 0) throw new IllegalArgumentException("Input trace must be shorter.");

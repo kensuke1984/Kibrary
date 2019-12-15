@@ -149,16 +149,23 @@ public class ObservationEquation {
 	public ObservationEquation add(ObservationEquation equation) {
 		RealMatrix atatmp = ata.add(equation.getAtA());
 		RealVector atdtmp = atd.add(equation.getAtD());
+		dVector.setVariance(dVector.getVariance() + equation.getDVector().getVariance());
+		dVector.setObsNormSquare(dVector.getObsNormSquare() + equation.getDVector().getObsNormSquare());
 		
 		return new ObservationEquation(atatmp, atdtmp, parameterList, dVector, a);
 	}
 	
 	public ObservationEquation scalarMultiply(double d) {
+		mul = d;
 		RealMatrix atatmp = ata.scalarMultiply(d);
 		RealVector atdtmp = atd.mapMultiply(d);
+		dVector.setVariance(dVector.getVariance() * d);
+		dVector.setObsNormSquare(dVector.getObsNormSquare() * d);
 		ObservationEquation eq = new ObservationEquation(atatmp, atdtmp, parameterList, dVector, a);
 		return eq;
 	}
+	
+	private double mul;
 	
 	private RealVector m;
 	
@@ -495,7 +502,9 @@ public class ObservationEquation {
 	 */
 	public double varianceOf(RealVector m) {
 		Objects.requireNonNull(m);
-		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
+//		double obs2 = dVector.getObsNorm() * dVector.getObsNorm();
+		double obs2 = dVector.getObsNormSquare();
+		double var0 = dVector.getVariance() * obs2;
 		double variance = 0;
 		if (ata != null) {
 			if (cm != null) {
@@ -503,9 +512,12 @@ public class ObservationEquation {
 				variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
 						+ m.dotProduct(getAtA().operate(m)) - m.dotProduct(m);
 			}
-			else
-				variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
-				+ m.dotProduct(getAtA().operate(m));
+			else {
+//				variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
+//				+ m.dotProduct(getAtA().operate(m));
+				variance = var0 - 2 * atd.dotProduct(m)
+						+ m.dotProduct(getAtA().operate(m));
+			}
 		}
 		else
 			variance = dVector.getDNorm() * dVector.getDNorm() - 2 * atd.dotProduct(m)
@@ -609,6 +621,12 @@ public class ObservationEquation {
 //				System.out.println("Trim partial ID to " + dVector.getWindowNPTS(k) + " points");
 //				partial = Arrays.copyOf(partial, dVector.getWindowNPTS(k));
 //			}
+			
+			double max = new ArrayRealVector(partial).getLInfNorm();
+			if (Double.isNaN(max)) System.out.println("NaN " + id);
+			
+			if (partial.length != dVector.getWindowNPTS(k))
+				throw new RuntimeException("Partial length does not match window length");
 			for (int j = 0; j < dVector.getWindowNPTS(k); j++) {
 //				a.setEntry(row + j, column, partial[j] * weighting);
 				a.setEntry(row + j, column, partial[j] * weightingVector.getEntry(j));
@@ -1307,7 +1325,7 @@ public class ObservationEquation {
 		//normalize PARQ
 		if (parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count() > 0
 				&& parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PAR2)).count() > 0) {
-			double empiricalFactor = 1.;
+			double empiricalFactor = 1.5;
 			meanAColumnNorm = 0;
 			double meanAQNorm = 0;
 			ntmp = 0;
@@ -1340,7 +1358,7 @@ public class ObservationEquation {
 		
 		if (parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count() > 0
 				&& parameterList.stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count() > 0) {
-			double empiricalFactor = 1.;
+			double empiricalFactor = 1.5;
 			meanAColumnNorm = 0;
 			double meanAQNorm = 0;
 			ntmp = 0;
@@ -1523,7 +1541,7 @@ public class ObservationEquation {
 		return -1;
 	}
 
-	public RealMatrix getA() {
+	public Matrix getA() {
 		return a;
 	}
 
@@ -1799,5 +1817,24 @@ public class ObservationEquation {
 		if (ata == null)
 			throw new RuntimeException("Cannot set checkerboard since ata=null");
 		atd = ata.operate(checkeboardPerturbationVector);
+	}
+	
+	public ObservationEquation setTypeToZero(PartialType type) {
+		ObservationEquation eq = new ObservationEquation(ata, atd, parameterList, dVector, a);
+		for (int i = 0; i < parameterList.size(); i++) {
+			if (parameterList.get(i).getPartialType().equals(type))
+				atd.setEntry(i, 0.);
+		}
+		for (int i = 0; i < parameterList.size(); i++) {
+			for (int j = 0; j < parameterList.size(); j++) {
+				if (parameterList.get(i).getPartialType().equals(type) || parameterList.get(j).getPartialType().equals(type))
+					ata.setEntry(i, j, 0.);
+			}
+		}
+		return eq;
+	}
+	
+	public void setVariance(double variance) {
+		dVector.setVariance(variance);
 	}
 }

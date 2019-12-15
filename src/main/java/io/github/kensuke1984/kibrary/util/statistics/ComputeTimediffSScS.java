@@ -35,9 +35,9 @@ public class ComputeTimediffSScS {
 
 	public static void main(String[] args) throws IOException, TauModelException {
 		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
-		Path timewindowPath = workdir.resolve("selectedTimewindow_ScS_70deg.dat");
+		Path timewindowPath = workdir.resolve("selectedTimewindow_ScS_60deg.dat");
 		
-		Path clusterfilePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-v2.inf");
+		Path clusterfilePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
 		
 		List<EventCluster> clusters = EventCluster.readClusterFile(clusterfilePath);
 		
@@ -45,7 +45,7 @@ public class ComputeTimediffSScS {
 		
 		Set<StaticCorrection> mantleCorrections = StaticCorrectionFile.read(mantleCorrectionFile);
 		
-//		mantleCorrections = null;
+		mantleCorrections = null;
 		
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
 //		timewindowPath = workdir.resolve("selectedTimewindow_ScScutS_cc05.dat");
@@ -55,7 +55,7 @@ public class ComputeTimediffSScS {
 		double minCorrScS = 0.5;
 		double maxVarScS = 0.8;
 		
-		Path outpath = workdir.resolve("differential_semucb_cluster-v2.txt");
+		Path outpath = workdir.resolve("differential_cluster.txt");
 		Files.deleteIfExists(outpath);
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		

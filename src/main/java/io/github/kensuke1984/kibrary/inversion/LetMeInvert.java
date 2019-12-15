@@ -189,6 +189,8 @@ public class LetMeInvert implements Operation {
 	Path partialSpcPath;
 	
 	Path partialSpcIDPath;
+	
+	private double scale_freq_ata;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -249,6 +251,8 @@ public class LetMeInvert implements Operation {
 			property.setProperty("trimWindow", "false");
 		if (!property.containsKey("regularizationMuQ"))
 			property.setProperty("regularizationMuQ", "false");
+		if (!property.containsKey("scale_freq_ata"))
+			property.setProperty("scale_freq_ata", "1.");
 		
 		// additional unused info
 		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
@@ -407,9 +411,9 @@ public class LetMeInvert implements Operation {
 		
 		if (property.containsKey("eventClusterPath")) {
 			eventClusterPath = Paths.get(property.getProperty("eventClusterPath"));
-			clusterIndex = Integer.parseInt(property.getProperty("clusterIndex"));
-			azimuthIndex = Integer.parseInt(property.getProperty("azimuthIndex"));
-			System.out.println("Using cluster file with clusterIndex=" + clusterIndex + " and azimuthIndex=" + azimuthIndex);
+			clusterIndex = Arrays.stream(property.getProperty("clusterIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
+			azimuthIndex = Arrays.stream(property.getProperty("azimuthIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
+			System.out.println("Using cluster file with clusterIndex=" + clusterIndex[0] + " and azimuthIndex=" + azimuthIndex[0]);
 		}
 		
 		try {
@@ -421,6 +425,10 @@ public class LetMeInvert implements Operation {
 		} catch (Exception e) {
 			
 		}
+		
+		scale_freq_ata = Double.parseDouble(property.getProperty("scale_freq_ata"));
+		
+		dataErrorMap = null;
 	}
 
 	/**
@@ -578,9 +586,11 @@ public class LetMeInvert implements Operation {
 	
 	private Path eventClusterPath;
 	
-	private int azimuthIndex;
+	private int[] azimuthIndex;
 	
-	private int clusterIndex;
+	private int[] clusterIndex;
+	
+	private ObservationEquation eqA, eqB;
 	
 	private void setEquation() throws IOException {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
@@ -670,26 +680,41 @@ public class LetMeInvert implements Operation {
 			};
 		}
 		else if (eventClusterPath != null) {
-			List<EventCluster> thisCluster = clusters.stream().filter(c -> c.getIndex() == clusterIndex).collect(Collectors.toList());
-			
-			if (azimuthIndex > thisCluster.get(0).getAzimuthSlices().size()) {
-				System.out.println("No azimuth slice " + azimuthIndex + " for cluster " + clusterIndex);
-				System.exit(0);
+			List<List<EventCluster>> thisCluster = new ArrayList<>();
+			for (int i = 0; i < clusterIndex.length; i++) {
+				final int ifinal = i;
+				thisCluster.add(clusters.stream().filter(c -> c.getIndex() == clusterIndex[ifinal]
+						).collect(Collectors.toList()));
 			}
 			
-			double[] azimuthRange = thisCluster.get(0).getAzimuthBound(azimuthIndex);
+//			for (int azindex : azimuthIndex)
+//				if (azindex > thisCluster.get(0).getAzimuthSlices().size()) {
+//					System.out.println("No azimuth slice " + azimuthIndex + " for cluster " + clusterIndex);
+//					System.exit(0);
+//				}
 			
-			Set<GlobalCMTID> thisClusterIDs = thisCluster.stream().map(c -> c.getID()).collect(Collectors.toSet());
-			HorizontalPosition centerPosition = thisCluster.get(0).getCenterPosition();
 			
-			System.out.println(azimuthRange[0] + " " + azimuthRange[1]);
+			double[][] azimuthRange = new double[clusterIndex.length][2];
+			List<Set<GlobalCMTID>> thisClusterIDs = new ArrayList<>();
+			HorizontalPosition[] centerPosition = new HorizontalPosition[clusterIndex.length];
+			for (int i = 0; i < clusterIndex.length; i++) {
+				azimuthRange[i] = thisCluster.get(i).get(0).getAzimuthBound(azimuthIndex[i]);
+				thisClusterIDs.add(thisCluster.get(i).stream().map(c -> c.getID()).collect(Collectors.toSet()));
+				centerPosition[i] = thisCluster.get(i).get(0).getCenterPosition();
+			}
+			
+//			System.out.println(azimuthRange[0] + " " + azimuthRange[1]);
 			
 			chooser = id -> {
-				double azimuth = centerPosition.getAzimuth(id.getStation().getPosition())
-						* 180. / Math.PI;
-				if (!(thisClusterIDs.contains(id.getGlobalCMTID()) && azimuth >= azimuthRange[0] && azimuth <= azimuthRange[1]))
+				boolean clusterKeep = false;
+				for (int i = 0; i < clusterIndex.length; i++) {
+					double azimuth = centerPosition[i].getAzimuth(id.getStation().getPosition())
+							* 180. / Math.PI;
+					if (thisClusterIDs.get(i).contains(id.getGlobalCMTID()) && azimuth >= azimuthRange[i][0] && azimuth <= azimuthRange[i][1])
+						clusterKeep = true;
+				}
+				if (!clusterKeep)
 					return false;
-				
 				double distance = id.getGlobalCMTID().getEvent()
 						.getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 						* 180. / Math.PI;
@@ -705,6 +730,97 @@ public class LetMeInvert implements Operation {
 				//TODO
 				if (id.getStation().getStationName().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
 					|| id.getStation().getStationName().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
+					|| id.getGlobalCMTID().equals(new GlobalCMTID("201608041415A"))
+					|| id.getGlobalCMTID().equals(new GlobalCMTID("201702181210A"))
+					|| id.getStation().getStationName().equals("MONP2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("RRX") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("BC3") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("TPNV") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("VOG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("TPFO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("E39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getStationName().equals("F43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getStationName().equals("E47A") && id.getGlobalCMTID().equals(new GlobalCMTID("201404180746A"))
+					|| id.getStation().getStationName().equals("G42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getStationName().equals("E45A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getStationName().equals("COWI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("SFIN") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getStationName().equals("P43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getStationName().equals("SUSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("KSCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("ECSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("LBNH") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("PKME") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("GLMI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("LONY") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("M50A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getStationName().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getStationName().equals("Q44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getStationName().equals("K35A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+					|| id.getStation().getStationName().equals("SS67") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getStationName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					
+					|| id.getStation().getStationName().equals("SM28") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					
+					|| id.getStation().getStationName().equals("RSSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("MDND") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("BOZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("BW06") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("K22A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
+					|| id.getStation().getStationName().equals("WUAZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("SRU") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("R11A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("DUG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("CMB") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("NEE2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("GSC") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getStationName().equals("GMR") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					
+//					
+//					|| id.getStation().getStationName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+//					|| id.getStation().getStationName().equals("SM17") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("SS78") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getStationName().equals("SN62") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getStationName().equals("SS65") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("L40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("R42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("M37A") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
+//					|| id.getStation().getStationName().equals("LB18") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("MG05") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("Q40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
+//					|| id.getStation().getStationName().equals("SS68") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					
+//					|| id.getStation().getStationName().equals("N40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("Q46A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("MG03") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("K40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("R41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getStationName().equals("S41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("SCIA") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getStationName().equals("CCM") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getStationName().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
+//					|| id.getStation().getStationName().equals("P39B") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getStationName().equals("L36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+//					|| id.getStation().getStationName().equals("R44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("SM41") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getStationName().equals("SS76") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getStationName().equals("SS78") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getStationName().equals("H39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getStationName().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("MG07") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getStationName().equals("LD18") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getStationName().equals("I40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+//					|| id.getStation().getStationName().equals("K41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+
+					
+//					|| !id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
 				)
 					return false;
 				
@@ -924,15 +1040,44 @@ public class LetMeInvert implements Operation {
 				else {
 					eq = new ObservationEquation(partialIDs, parameterList, dVector);
 					
+					eqA = new ObservationEquation(partialIDs, parameterList, dVector.clone());
+					
+//					dataErrorMap = new HashMap<PartialType, Double>();
+//					dataErrorMap.put(PartialType.PARVS, dVector.getVariance());
+					
 					if (spcIds != null) {
 						System.out.println("Add spc equation");
 						ObservationEquation eqSpc = new ObservationEquation(partialSpcIDs, parameterList, dVectorSpc);
+						eqB = new ObservationEquation(partialSpcIDs, parameterList, dVectorSpc.clone());
+						
+//						eq = eq.setTypeToZero(PartialType.PARQ);
+						
+//						double d = eq.getDiagonalOfAtA().getLInfNorm();
+//						double dSpc = eqSpc.getDiagonalOfAtA().getLInfNorm();
 						double d = eq.getDiagonalOfAtA().getL1Norm();
 						double dSpc = eqSpc.getDiagonalOfAtA().getL1Norm();
 //						d = eq.getAtD().getL1Norm();
 //						dSpc = eqSpc.getAtD().getL1Norm();
+						
 						System.out.println("d/dSpc=" + (d/dSpc));
-						eq = eq.add(eqSpc.scalarMultiply(3*d / dSpc));
+						
+//						RealMatrix atatmp = eq.getAtA().copy();
+//						atatmp = atatmp.add(eqSpc.getAtA().scalarMultiply(scale_freq_ata * d / dSpc));
+//						RealVector atdtmp = eq.getAtD().copy();
+//						atdtmp = atdtmp.add(eqSpc.getAtD().mapMultiply(scale_freq_ata * d / dSpc));
+//						eq = new ObservationEquation(atatmp, atdtmp, parameterList, dVector, eq.getA());
+						
+						mul = scale_freq_ata * d / dSpc;
+						
+						eqSpc = eqSpc.scalarMultiply(mul);
+						
+						eq = eq.add(eqSpc);
+//						eq.setVariance(eqA.getDVector().getVariance() + eqB.getDVector().getVariance());
+						
+//						dataErrorMap.put(PartialType.PARQ, dVectorSpc.getVariance());
+						
+//						for (PartialType type : dataErrorMap.keySet())
+//							System.out.println(type + " data error = " + dataErrorMap.get(type));
 					}
 				}
 			}
@@ -943,6 +1088,14 @@ public class LetMeInvert implements Operation {
 			if (regularizationMuQ) {
 				addRegularizationVSQ();
 			}
+			
+			if (eqA != null && eqB != null) {
+				System.out.println("eqA variance = " + eqA.getDVector().getVariance());
+				System.out.println("eqB variance = " + eqB.getDVector().getVariance());
+				System.out.println("eqA obs2 = " + eqA.getDVector().getObsNormSquare());
+				System.out.println("eqB obs2 = " + eqB.getDVector().getObsNormSquare());
+			}
+			
 		}
 		else {
 			Matrix atatmp = new Matrix(parameterList.size(), parameterList.size());
@@ -1063,6 +1216,8 @@ public class LetMeInvert implements Operation {
 //		System.exit(0);
 	}
 	
+	private double mul;
+	
 	private void applyConditionner() {
 		RealVector m = new ArrayRealVector(eq.getMlength());
 		
@@ -1155,6 +1310,8 @@ public class LetMeInvert implements Operation {
 		eq.addRegularization(D);
 	}
 	
+	private Map<PartialType, Double> dataErrorMap;
+	
 	private void addRegularizationVSQ() {
 		System.out.println("Adding regularization VS Q");
 		List<PartialType> types = new ArrayList<>();
@@ -1182,41 +1339,64 @@ public class LetMeInvert implements Operation {
 			count++;
 		}
 		
-		double normMU = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
-				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARVS))
-				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-		double normQ = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
-				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
-				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-		double norm00 = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
-				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PAR00))
-				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-		double normVP = Math.sqrt(new ArrayRealVector(IntStream.range(0, eq.getMlength())
-				.filter(i -> eq.getParameterList().get(i).getPartialType().equals(PartialType.PARVP))
-				.mapToDouble(i -> eq.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+		double normMU = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PARVS))
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count();
+		double normQ = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count();
+		double norm00 = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PAR00))
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count();
+		double normVP = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PARVP))
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
+//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PARVP)).count();
+		
+		System.out.printf("Regularization: norm_vs=%.3e, norm_q=%.3e\n", normMU, normQ);
 		
 		// Second order differential operator
 		List<Double> coeffs = new ArrayList<>();
-		if (usedTypes.contains(PartialType.PARVS))
-			coeffs.add(lambdaMU * normMU);
-//			coeffs.add(lambdaMU / normMU);
-		if (usedTypes.contains(PartialType.PARQ))
-			coeffs.add(lambdaQ * normQ);
+		if (usedTypes.contains(PartialType.PARVS)) {
+			double coeff = lambdaMU * normMU;
+			if (dataErrorMap != null)
+				coeff *= dataErrorMap.get(PartialType.PARVS);
+			coeffs.add(coeff);
+		}
+		if (usedTypes.contains(PartialType.PARQ)) {
+			double coeff = lambdaQ * normQ;
+			if (dataErrorMap != null)
+				coeff *= dataErrorMap.get(PartialType.PARQ);
+			coeffs.add(coeff);
+		}
 		if(usedTypes.contains(PartialType.PAR00))
 			coeffs.add(lambda00 * norm00);
 		if(usedTypes.contains(PartialType.PARVP))
 			coeffs.add(lambdaVp * normVP);
 		
 		RadialSecondOrderDifferentialOperator D2 = new RadialSecondOrderDifferentialOperator(eq.getParameterList(), types, coeffs);
-		eq.addRegularization(D2.getD2TD2());
+		RealMatrix D2tD2 = D2.getD2TD2();
+		eq.addRegularization(D2tD2);
+//		eqA.addRegularization(D2tD2);
+//		eqB.addRegularization(D2tD2);
 		
 		// Diagonal matrix
 		coeffs = new ArrayList<>();
-		if (usedTypes.contains(PartialType.PARVS))
-			coeffs.add(gammaMU * normMU);
-//			coeffs.add(gammaMU / normMU);
-		if (usedTypes.contains(PartialType.PARQ))
-			coeffs.add(gammaQ * normQ);
+		if (usedTypes.contains(PartialType.PARVS)) {
+			double coeff = gammaMU * normMU;
+			if (dataErrorMap != null)
+				coeff *= dataErrorMap.get(PartialType.PARVS);
+			coeffs.add(coeff);
+		}
+		if (usedTypes.contains(PartialType.PARQ)) {
+			double coeff = gammaQ * normQ;
+			if (dataErrorMap != null)
+				coeff *= dataErrorMap.get(PartialType.PARQ);
+			coeffs.add(coeff);
+		}
 		if(usedTypes.contains(PartialType.PAR00))
 			coeffs.add(gamma00 * norm00);
 		if(usedTypes.contains(PartialType.PARVP))
@@ -1246,14 +1426,16 @@ public class LetMeInvert implements Operation {
 		PartialType tmptype = eq.getParameterList().get(0).getPartialType();
 		for (int i = 1; i < eq.getMlength(); i++) {
 			if (!tmptype.equals(eq.getParameterList().get(i).getPartialType())) {
-				D.multiplyEntry(i - 1, i - 1, 25.);
+				D.multiplyEntry(i - 1, i - 1, 9.);
 				System.out.println(i + " " + tmptype + " " + eq.getParameterList().get(i).getPartialType());
 				tmptype = eq.getParameterList().get(i).getPartialType();
 			}
 		}
-		D.multiplyEntry(eq.getMlength()-1, eq.getMlength()-1, 25.);
-
+		D.multiplyEntry(eq.getMlength()-1, eq.getMlength()-1, 9.);
+		
 		eq.addRegularization(D);
+//		eqA.addRegularization(D);
+//		eqB.addRegularization(D);
 	}
 	
 	private void addRegularizationSimpleQMU() {
@@ -1773,6 +1955,7 @@ public class LetMeInvert implements Operation {
 		Files.createDirectories(outPath);
 		outVariance(outPath, inverseProblem);
 		outVariancePerEvents(outPath, inverseProblem);
+		outLcurveEntry(inverseProblem);
 		
 		inverseProblem.outputAnsX(outPath);
 		
@@ -1866,11 +2049,21 @@ public class LetMeInvert implements Operation {
 		if (Files.exists(out))
 			throw new FileAlreadyExistsException(out.toString());
 		double[] variance = new double[eq.getMlength() + 1];
-		variance[0] = eq.getDVector().getVariance();
+		if (eqA != null && eqB != null)
+			variance[0] = 2. / (1 + mul) * (eqA.getDVector().getVariance() + eqB.getDVector().getVariance());
+		else
+			variance[0] = eq.getDVector().getVariance();
 		int tmpN = eq.getMlength();
 //		for (int i = 0; i < eq.getMlength(); i++)
-		for (int i = 0; i < tmpN; i++)
-			variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+		if (eqA != null && eqB != null) {
+			for (int i = 0; i < tmpN; i++)
+				variance[i + 1] =  2. / (1 + mul) * (eqA.varianceOf(inverse.getANS().getColumnVector(i)) 
+					+ eqB.varianceOf(inverse.getANS().getColumnVector(i)));
+		}
+		else {
+			for (int i = 0; i < tmpN; i++)
+				variance[i + 1] = eq.varianceOf(inverse.getANS().getColumnVector(i));
+		}
 		writeDat(out, variance);
 		if (alpha == null)
 			return;
@@ -1880,6 +2073,41 @@ public class LetMeInvert implements Operation {
 			writeDat(out, aic);
 		}
 		writeDat(outPath.resolve("aic.inf"), alpha);
+	}
+	
+	private void outLcurveEntry(InverseProblem inverse) throws IOException {
+//		if (eqA == null || eqB == null)
+//			return;
+		System.out.println("Outputting L-curve entry");
+		Path out = outPath.resolve("lcurve.txt");
+		if (Files.exists(out))
+			throw new FileAlreadyExistsException(out.toString());
+		int m = inverse.getParN();
+		
+		double varA = 0;
+		double varB = 0;
+		double varA0 = 0;
+		double varB0 = 0;
+		
+		if (eqA != null) {
+			varA = eqA.varianceOf(inverse.getANS().getColumnVector(m - 1));
+			varA0 = eqA.getDVector().getVariance();
+		}
+		if (eqB != null) {
+			varB = eqB.varianceOf(inverse.getANS().getColumnVector(m - 1));
+			varB0 = eqB.getDVector().getVariance();
+		}
+		double var = eq.varianceOf(inverse.getANS().getColumnVector(m - 1));
+		double solutionQLinfNorm = inverse.getANS().getColumnVector(m - 1).getSubVector(m/2, m/2).getLInfNorm();
+		double solutionQL2Norm = inverse.getANS().getColumnVector(m - 1).getSubVector(m/2, m/2).getNorm();
+		double solutionVLinfNorm = inverse.getANS().getColumnVector(m - 1).getSubVector(0, m/2).getLInfNorm();
+		double solutionVL2Norm = inverse.getANS().getColumnVector(m - 1).getSubVector(0, m/2).getNorm();
+		try (PrintWriter pw = new PrintWriter(out.toFile())) {
+			pw.println("#varA varB var L2_deltaQ Linf_deltaQ L2_deltaV Linf_deltaV");
+			pw.print(varA + " " + varB + " " + var + " " + solutionQL2Norm + " " + solutionQLinfNorm + " " + solutionVL2Norm + " " + solutionVLinfNorm + " " + varA0 + " " + varB0);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void outVariancePerEvents(Path outPath, InverseProblem inverse) throws IOException {
@@ -2040,5 +2268,5 @@ public class LetMeInvert implements Operation {
 	public Properties getProperties() {
 		return (Properties) property.clone();
 	}
-
+	
 }

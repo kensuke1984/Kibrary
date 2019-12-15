@@ -11,7 +11,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -26,6 +28,7 @@ import io.github.kensuke1984.kibrary.external.TauPPierceReader.Info;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.EventCluster;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -68,6 +71,7 @@ public class RaypathDistribution implements Operation {
 			pw.println("#timeWindowInformationPath");
 			pw.println("#model");
 			pw.println("#pierceDepth");
+			pw.println("#eventClusterPath");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -110,6 +114,8 @@ public class RaypathDistribution implements Operation {
 		pierceDepth = Double.parseDouble(property.getProperty("pierceDepth"));
 		
 		model = property.getProperty("model");
+		
+		eventClusterPath = getPath("eventClusterPath");
 	}
 
 	private Properties property;
@@ -127,6 +133,8 @@ public class RaypathDistribution implements Operation {
 	private String model;
 	
 	private double pierceDepth;
+	
+	Path eventClusterPath;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -173,6 +181,8 @@ public class RaypathDistribution implements Operation {
 	private Path turningPointPath;
 	private Path psPath;
 	private Path gmtPath;
+	
+	Map<GlobalCMTID, Integer> eventClusterMap;
 
 	private void setName() {
 		String date = Utilities.getTemporaryString();
@@ -227,6 +237,10 @@ public class RaypathDistribution implements Operation {
 		else
 			ids = timeWindowInformationFile.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
+		
+		eventClusterMap = new HashMap<GlobalCMTID, Integer>();
+		EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
+		
 		outputEvent();
 		outputStation();
 		outputEventCSV();
@@ -350,11 +364,12 @@ public class RaypathDistribution implements Operation {
 						info = infoList.get(0);
 						Location enterPoint = info.getEnterPoint();
 						Location leavePoint = info.getLeavePoint();
-						lines.add(String.format("%.2f %.2f %.2f %.2f"
+						lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
 							, enterPoint.getLatitude()
 							, enterPoint.getLongitude()
 							, leavePoint.getLatitude()
 							, leavePoint.getLongitude()
+							, eventClusterMap.get(headerData.getGlobalCMTID())
 							));
 					}
 				});

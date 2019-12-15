@@ -231,6 +231,7 @@ public class WaveformVisual {
 								continue;
 							
 							double max = new ArrayRealVector(obsAzimuthStack[iaz][i]).getLInfNorm();
+							max = new ArrayRealVector(synAzimuthStack[iaz][i]).getLInfNorm();
 							
 							String filename = i + ".az" + (iaz * dAz) + "." + event.toString() + "." + component + ".txt";
 							Path outpath = eventDir.resolve(filename);

@@ -9,8 +9,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.Random;
@@ -31,6 +33,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
+import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.inversion.RandomNoiseMaker;
@@ -186,6 +189,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		minDistance = Double.parseDouble(property.getProperty("minDistance"));
 		
 		addNoise = Boolean.parseBoolean(property.getProperty("addNoise"));
+		if (addNoise)
+			System.out.println("Adding noise");
 		
 		if (property.containsKey("timewindowRefPath")) {
 			timewindowRefPath = getPath("timewindowRefPath");
@@ -327,6 +332,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	private double[][] periodRanges;
 	
 	private double minDistance;
+	
+	private Map<GlobalCMTID, Double> amplitudeCorrEventMap;
 
 	private void readPeriodRanges() {
 		try {
@@ -390,8 +397,34 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		if (20 % finalSamplingHz != 0)
 			throw new RuntimeException("Must choose a finalSamplingHz that divides 20");
 		
-		if (timeCorrection || amplitudeCorrection)
-			staticCorrectionSet = StaticCorrectionFile.read(staticCorrectionPath);
+		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath)
+				.stream().filter(tw -> {
+					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
+					if (distance < minDistance)
+						return false;
+					return true;
+				}).collect(Collectors.toSet());
+		
+		if (timeCorrection || amplitudeCorrection) {
+			Set<StaticCorrection> tmpset = StaticCorrectionFile.read(staticCorrectionPath);
+			staticCorrectionSet = tmpset.stream()
+					.filter(c -> timewindowInformationSet.parallelStream()
+							.map(t -> isPair_record.test(c, t)).distinct().collect(Collectors.toSet()).contains(true))
+					.collect(Collectors.toSet());
+			
+			//average amplitude correction
+			amplitudeCorrEventMap = new HashMap<>();
+			for (GlobalCMTID event : staticCorrectionSet.stream().map(s -> s.getGlobalCMTID()).collect(Collectors.toSet())) {
+				double avgCorr = 0;
+				Set<StaticCorrection> eventCorrs = staticCorrectionSet.stream()
+						.filter(s -> s.getGlobalCMTID().equals(event)).collect(Collectors.toSet());
+				for (StaticCorrection corr : eventCorrs)
+					avgCorr += corr.getAmplitudeRatio();
+				avgCorr /= eventCorrs.size();
+				amplitudeCorrEventMap.put(event, avgCorr);
+//				System.out.println(avgCorr + " " + eventCorrs.size());
+			}
+		}
 		
 		if (correctMantle) {
 			System.out.println("Using mantle corrections");
@@ -400,14 +433,6 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 		// obsDirからイベントフォルダを指定
 		eventDirs = Utilities.eventFolderSet(obsPath);
-		
-		timewindowInformationSet = TimewindowInformationFile.read(timewindowPath)
-				.stream().filter(tw -> {
-					double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
-					if (distance < minDistance)
-						return false;
-					return true;
-				}).collect(Collectors.toSet());
 		
 		if (timewindowRefPath != null)
 			timewindowRefInformationSet = TimewindowInformationFile.read(timewindowRefPath)
@@ -603,6 +628,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 				for (TimewindowInformation window : windows) {
 					int npts = (int) ((window.getEndTime() - window.getStartTime()) * finalSamplingHz);
+					if (window.getEndTime() > synSac.getValue(SACHeaderEnum.E) - 10)
+						continue;
 					double startTime = window.getStartTime();
 					double shift = 0;
 					double ratio = 1;
@@ -610,7 +637,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 						try {
 							StaticCorrection sc = getStaticCorrection(window);
 							shift = timeCorrection ? sc.getTimeshift() : 0;
-							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
+//							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
+							ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : amplitudeCorrEventMap.get(window.getGlobalCMTID());
 							
 							if (correctionBootstrap) {
 								double tmp = 2 * random.nextGaussian(); 
@@ -667,8 +695,17 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double[] obsHy = cutHySac(obsSac, startTime - shift, npts);
 					double[] synHy = cutHySac(synSac, startTime, npts);
 					
-					Trace obsSpcAmpTrace = cutSpcAmpSac(obsSac, startTime - shift, npts);
-					Trace synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
+					Trace obsSpcAmpTrace = null;
+					Trace synSpcAmpTrace = null;
+					
+					if (addNoise) {
+						obsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, startTime - shift, npts);
+						synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
+					}
+					else {
+						obsSpcAmpTrace = cutSpcAmpSac(obsSac, startTime - shift, npts);
+						synSpcAmpTrace = cutSpcAmpSac(synSac, startTime, npts);
+					}
 					
 					Complex[] obsFy = cutSpcFySac(obsSac, startTime - shift, npts);
 					Complex[] synFy = cutSpcFySac(synSac, startTime, npts);
@@ -682,14 +719,32 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 					double[] obsSpcAmp = null;
 					double[] synSpcAmp = null;
 					
+					//normalize each spectrum by max(obsSpc)
+//					double max = Math.abs(new ArrayRealVector(Arrays.stream(obsFy).mapToDouble(Complex::abs).toArray()).getMaxValue());
+					
+					
 					Trace refObsSpcAmpTrace = null;
 					Trace refSynSpcAmpTrace = null;
 					if (windowRef != null) {
-						refObsSpcAmpTrace = cutSpcAmpSac(obsSac, windowRef.getStartTime(), nptsRef);
-						refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
+						if (addNoise) {
+							refObsSpcAmpTrace = cutSpcAmpSacAddNoise(obsSac, windowRef.getStartTime(), nptsRef);
+							refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
+						}
+						else {
+							refObsSpcAmpTrace = cutSpcAmpSac(obsSac, windowRef.getStartTime(), nptsRef);
+							refSynSpcAmpTrace = cutSpcAmpSac(synSac, windowRef.getStartTime(), nptsRef);
+						}
 						
-						obsSpcAmp = correctSpcAmp(obsSpcAmpTrace, refObsSpcAmpTrace);
-						synSpcAmp = correctSpcAmp(synSpcAmpTrace, refSynSpcAmpTrace);
+						if (amplitudeCorrection) {
+							obsSpcAmp = correctSpcAmp(obsSpcAmpTrace, refObsSpcAmpTrace);
+							synSpcAmp = correctSpcAmp(synSpcAmpTrace, refSynSpcAmpTrace);
+						}
+						else {
+							obsSpcAmp = obsSpcAmpTrace.getY();
+							synSpcAmp = synSpcAmpTrace.getY();
+							double corrratio = amplitudeCorrEventMap.get(window.getGlobalCMTID());
+							obsSpcAmp = Arrays.stream(obsSpcAmp).map(d -> d - Math.log(corrratio)).toArray();
+						}
 					}
 					else {
 						obsSpcAmp = obsSpcAmpTrace.getY();
@@ -851,6 +906,26 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
 	}
 	
+	private Trace cutSpcAmpSacAddNoise(SACData sac, double startTime, int npts) {
+		Trace trace = sac.createTrace();
+		int step = (int) (sacSamplingHz / finalSamplingHz);
+		int startPoint = trace.getNearestXIndex(startTime);
+		double[] cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
+		Trace tmp = createNoiseTrace(new ArrayRealVector(cutY).getLInfNorm());
+		Trace noiseTrace = new Trace(trace.getX(), Arrays.copyOf(tmp.getY(), trace.getLength()));
+		trace = trace.add(noiseTrace);
+		cutY = trace.getYVector().getSubVector(startPoint, npts * step).toArray();
+		FourierTransform fourier = new FourierTransform(cutY, finalFreqSamplingHz);
+		double df = fourier.getFreqIncrement(sacSamplingHz);
+		if (highFreq > sacSamplingHz)
+			throw new RuntimeException("f1 must be <= sacSamplingHz");
+		int iStart = (int) (lowFreq / df) - 1;
+		int fnpts = (int) ((highFreq - lowFreq) / df);
+		double[] spcAmp = fourier.getLogA();
+		return new Trace(IntStream.range(0, fnpts).mapToDouble(i -> (i + iStart) * df).toArray(),
+			IntStream.range(0, fnpts).mapToDouble(i -> spcAmp[i + iStart]).toArray());
+	}
+	
 	private double[] correctSpcAmp(Trace spcAmp, Trace refSpcAmp) {
 		double[] spcAmpCorr = new double[spcAmp.getLength()];
 		for (int i = 0; i < spcAmp.getLength(); i++) {
@@ -905,11 +980,11 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	}
 	
 	private Trace createNoiseTrace(double normalize) {
-		double maxFreq = 0.05;
-		double minFreq = 0.01;
-		int np = 6;
+		double maxFreq = 0.08;
+		double minFreq = 0.005;
+		int np = 4;
 		ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * maxFreq, 2 * Math.PI * 0.05 * minFreq, np);
-		Trace tmp = RandomNoiseMaker.create(1., sacSamplingHz, 3276.8, 512);
+		Trace tmp = RandomNoiseMaker.create(1., sacSamplingHz, 1638.4, 512);
 		double[] u = tmp.getY();
 		RealVector uvec = new ArrayRealVector(bpf.applyFilter(u));
 		return new Trace(tmp.getX(), uvec.mapMultiply(noisePower * normalize / uvec.getLInfNorm()).toArray());

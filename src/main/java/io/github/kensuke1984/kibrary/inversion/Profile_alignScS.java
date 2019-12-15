@@ -204,7 +204,7 @@ public class Profile_alignScS {
 //						i.incrementAndGet();
 						try {
 							RealVector bornVector = ir.bornOf(id, method, methodOrder).getYVector();
-							double maxObs = ir.observedOf(id).getYVector().getLInfNorm();
+							double maxObs = ir.observedOf(id).getYVector().getLInfNorm() * 4;
 							String name = ir.getTxtName(id);
 							double distance = id.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(id.getStation().getPosition())
 									* 180. / Math.PI;

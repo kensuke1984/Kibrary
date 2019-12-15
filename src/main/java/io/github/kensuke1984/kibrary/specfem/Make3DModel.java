@@ -43,20 +43,28 @@ public class Make3DModel {
 //		System.out.println(nD);
 //		System.exit(0);
 		
-		List<UnknownParameter> unknowns = UnknownParameterFile.read(Paths.get(args[0]));
-		
-		List<PerturbationPoint> checkerboard_4deg_4layers = checkerboardCATZ_4deg_4layers(2., unknowns);
-		Path outpath_4deg_4layers = Paths.get("checkerboard_4x4_4layers_2per.inf");
-		
-		List<PerturbationPoint> checkerboard_4deg_8layers = checkerboardCATZ_4deg_8layers(2., unknowns);
-		Path outpath_4deg_8layers = Paths.get("checkerboard_4x4_8layers_2per.inf");
+//		List<UnknownParameter> unknowns = UnknownParameterFile.read(Paths.get(args[0]));
+//		
+//		List<PerturbationPoint> checkerboard_4deg_4layers = checkerboardCATZ_4deg_4layers(2., unknowns);
+//		Path outpath_4deg_4layers = Paths.get("checkerboard_4x4_4layers_2per.inf");
+//		
+//		List<PerturbationPoint> checkerboard_4deg_8layers = checkerboardCATZ_4deg_8layers(2., unknowns);
+//		Path outpath_4deg_8layers = Paths.get("checkerboard_4x4_8layers_2per.inf");
 		
 //		List<PerturbationPoint> checkerboard = checkerboardCATZ_6deg_4layers(3., unknowns);
 //		Path outpath = Paths.get("checkerboard_6x6_4layers_3per.inf");
 		
+//		List<PerturbationPoint> lowVelocityLens = velocityLens_CA(-5);
+//		Path outpath_lowvelocitylens = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/low_velocity_lens_5per.inf");
+		
+		List<PerturbationPoint> hlh = model_hlh();
+		Path outpath_hlh = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_HLH/model_hlh.txt");
+		
 		try {
-			writeModel(checkerboard_4deg_4layers, outpath_4deg_4layers);
-			writeModel(checkerboard_4deg_8layers, outpath_4deg_8layers);
+//			writeModel(checkerboard_4deg_4layers, outpath_4deg_4layers);
+//			writeModel(checkerboard_4deg_8layers, outpath_4deg_8layers);
+//			writeModel(lowVelocityLens, outpath_lowvelocitylens);
+			writeModel(hlh, outpath_hlh);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -372,6 +380,34 @@ public class Make3DModel {
 		
 		return perturbations;
 	}
+	
+	public static List<PerturbationPoint> velocityLens_CA(double dvs) {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		double lonmin = -77;
+		double lonmax = -74;
+		double latmin = 6;
+		double latmax = 12;
+		double dl = 1;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 50;
+		double[] depths = new double[] {2891 - h, 2891};
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					perturbations.add(new PerturbationPoint(loc, dvs));
+				}
+			}
+		}
+		
+		return perturbations;
+	}
 		
 	public static void writeModel(List<PerturbationPoint> perturbations, Path outpath) throws IOException {
 		PolynomialStructure prem = PolynomialStructure.PREM;
@@ -413,6 +449,43 @@ public class Make3DModel {
 		double[] lons = perturbations.stream().mapToDouble(p -> p.getLocation().getLongitude()).sorted().toArray();
 		
 		return sortedList;
+	}
+	
+	public static List<PerturbationPoint> model_hlh() {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		double lonmin = -84;
+		double lonmax = -64;
+		double latmin = 2;
+		double latmax = 9;
+		double dl = .25;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 250;
+		double[] depths = new double[] {2891 - h, 2891};
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					double dvs = 0;
+					if (lat >= 3 && lat < 8) {
+						if (lon >= -83 && lon < -78)
+							dvs = 2.5;
+						else if (lon >= -78 && lon < -73)
+							dvs = -1.5;
+						else if (lon >= -73 && lon < -65)
+							dvs = 3;
+					}
+					perturbations.add(new PerturbationPoint(loc, dvs));
+				}
+			}
+		}
+		
+		return perturbations;
 	}
 }
 

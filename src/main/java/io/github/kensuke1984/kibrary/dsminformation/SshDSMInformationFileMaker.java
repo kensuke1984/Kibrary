@@ -191,9 +191,12 @@ public class SshDSMInformationFileMaker implements Operation {
 					}).filter(Objects::nonNull).map(Station::of).collect(Collectors.toSet());
 			
 			//select stations in timewindows
-			if (timewindowInformationPath != null)
+			if (timewindowInformationPath != null) {
+//				System.out.println("Select stations based on timeindows " + timewindowInformationPath);
 				stations.removeIf(sta -> timewindows.stream().filter(tw -> tw.getStation().equals(sta) 
-						&& tw.getGlobalCMTID().equals(eventDir.getGlobalCMTID())).count() == 0);
+						&& tw.getGlobalCMTID().equals(eventDir.getGlobalCMTID())
+						&& useComponents.contains(tw.getComponent())).count() == 0);
+			}
 			
 			if (stations.isEmpty())
 				continue;

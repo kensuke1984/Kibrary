@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -197,7 +198,17 @@ public class CheckerBoardTest implements Operation {
 
 	private void read() throws IOException {
 		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveIDPath, waveformPath);
-		Dvector dVector = new Dvector(ids, id -> true, WeightingType.RECIPROCAL);
+		Predicate<BasicID> chooser = id -> {
+			if (id.getStation().getStationName().equals("LGU") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
+					|| id.getStation().getStationName().equals("BH4F") && id.getGlobalCMTID().equals(new GlobalCMTID("200911141944A"))
+					|| id.getStation().getStationName().equals("G26A") && id.getGlobalCMTID().equals(new GlobalCMTID("201007261731A"))
+					|| id.getStation().getStationName().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201409241116A"))
+					|| id.getStation().getStationName().equals("C34A") && id.getGlobalCMTID().equals(new GlobalCMTID("201206020752A"))
+					)
+				return false;
+			return true;
+		};
+		Dvector dVector = new Dvector(ids, chooser, WeightingType.RECIPROCAL);
 		PartialID[] pids = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialWaveformPath);
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownParameterListPath);
 		eq = new ObservationEquation(pids, parameterList, dVector, false, false, null, null, null, null);
