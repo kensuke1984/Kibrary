@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.2
+ * @version 0.2.1.3
  */
 public class RaypathCatalog implements Serializable {
 
     /**
      * 2019/12/15
      */
-    private static final long serialVersionUID = 4893754919036609142L;
+    private static final long serialVersionUID = -3617123428670012851L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -538,7 +538,7 @@ public class RaypathCatalog implements Serializable {
         DoubleUnaryOperator calcVsv = getStructure()::computeVsv;
         DoubleUnaryOperator calcVsh = getStructure()::computeVsh;
         long t = System.nanoTime();
-        if (false) for (double mantleBoundary : mantleBoundaries) {
+        for (double mantleBoundary : mantleBoundaries) {
             if (mantleBoundary == getStructure().coreMantleBoundary() || !getStructure().isJump(mantleBoundary))
                 continue;
             System.err.print("Creating a catalog for the boundary at " + mantleBoundary);
