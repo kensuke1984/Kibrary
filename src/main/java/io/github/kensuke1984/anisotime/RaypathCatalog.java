@@ -28,7 +28,7 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.5.1
+ * @version 0.2.1.6
  */
 public class RaypathCatalog implements Serializable {
 
@@ -440,12 +440,17 @@ public class RaypathCatalog implements Serializable {
          * @return if a search should skip the input targetPhase.
          */
         private boolean shouldSkip(Phase targetPhase) {
-            if (PP == PhasePart.SH && targetPhase.isPSV()) return true;
             if ((targetPhase.toString().contains("p") || targetPhase.toString().contains("P")) &&
                     (targetPhase.toString().contains("s") || targetPhase.toString().contains("S"))) return false;
+            if (PP == PhasePart.SH && targetPhase.isPSV()) return true;
+            if (PP == PhasePart.P && (targetPhase.toString().contains("S") || targetPhase.toString().contains("s")))
+                return true;
+            if ((PP == PhasePart.SH || PP == PhasePart.SV) &&
+                    (targetPhase.toString().contains("P") || targetPhase.toString().contains("p"))) return true;
             if (getStructure().coreMantleBoundary() <= BOUNDARY_R && targetPhase.toString().contains("K")) return true;
             if (getStructure().innerCoreBoundary() <= BOUNDARY_R &&
                     (targetPhase.toString().contains("I") || targetPhase.toString().contains("J"))) return true;
+            if (BOUNDARY_R < getStructure().coreMantleBoundary() && (targetPhase.toString().contains("c"))) return true;
 
             return targetPhase.equals(Phase.PKP) || targetPhase.equals(Phase.SKS) ||
                     targetPhase.toString().contains("I") || targetPhase.toString().contains("J");
@@ -525,8 +530,8 @@ public class RaypathCatalog implements Serializable {
             for (Double[] edges : edgeList)
                 bounceCatalogs.add(new BounceCatalog(targetPhase, computeRaypaths(targetPhase, edges[0], edges[1])));
         }
-        System.err
-                .println("\rCreating catalogs for bouncing waves done in " + Utilities.toTimeString(System.nanoTime() - t));
+        System.err.println(
+                "\rCreating catalogs for bouncing waves done in " + Utilities.toTimeString(System.nanoTime() - t));
     }
 
     /**
