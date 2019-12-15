@@ -1,19 +1,20 @@
 package io.github.kensuke1984.anisotime;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 
 /**
  * Named discontinuity structre
  *
  * @author Kensuke Konishi
- * @version 0.0.7
+ * @version 0.0.7.1
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
     /**
-     * 2016/8/26
+     * 2019/11/9
      */
-    private static final long serialVersionUID = 2894713193785835485L;
+    private static final long serialVersionUID = -1772022420771520676L;
     io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
     private NamedDiscontinuityStructure() {
@@ -28,6 +29,15 @@ class NamedDiscontinuityStructure implements VelocityStructure {
         nd.structure = io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure.prem();
         return nd;
     }
+
+    @Override
+    public double[] velocityBoundaries() {
+        double[] boundaries = new double[structure.getNzone() + 1];
+        for (int i = 0; i < boundaries.length; i++)
+            boundaries[i] = structure.getBoundary(i);
+        return Arrays.stream(boundaries).distinct().toArray();
+    }
+
 
     @Override
     public double shTurningR(double rayParameter) {

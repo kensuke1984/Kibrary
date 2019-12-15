@@ -11,6 +11,8 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -27,13 +29,14 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6
+ * @version 0.2.9
  */
 public class PolynomialStructure implements Serializable {
     /**
-     * 2019/10/3
+     * 2019/12/7
      */
-    private static final long serialVersionUID = 1301735196105813616L;
+//    private static final long serialVersionUID = 1301735196105813616L;
+    private static final long serialVersionUID = 1350404622577105338L;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Usage: model file.");
@@ -52,9 +55,7 @@ public class PolynomialStructure implements Serializable {
             Utilities.println(r1, getRhoAt(r1), getVpvAt(r1), getVphAt(r1), getVsvAt(r1), getVshAt(r1), getEtaAt(r1),
                     getQmuAt(r1), getQkappaAt(r1));
         }
-
     }
-
 
     /**
      * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -162,7 +163,7 @@ public class PolynomialStructure implements Serializable {
                 new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0}, {1, 0, 0, 0}, {3.3687, -2.4778, 0, 0}, {3.3687, -2.4778, 0, 0}, {1, 0, 0, 0},
                         {1, 0, 0, 0},};
-        double[] qMu = new double[]{84.6, Double.POSITIVE_INFINITY, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
+        double[] qMu = new double[]{84.6, -1, 312, 312, 312, 143, 143, 143, 80, 600, 600, 600,};
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823};
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
@@ -218,7 +219,6 @@ public class PolynomialStructure implements Serializable {
         double[] qKappa =
                 new double[]{1327.7, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823, 57823,}; // OK
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
-
     }
 
     /**
@@ -239,6 +239,36 @@ public class PolynomialStructure implements Serializable {
         return set(nzone, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
     }
 
+    /**
+     * i-th layer is merged to (i-1)th layer.
+     * in other words, ith boundary is gone.
+     * values in the i-th layer becomes those of the (i-1)th layer.
+     * So far you can not merge a layer beneath CMB.
+     *
+     * @param i index of a layer which disappears after the merge
+     * @return slimmed Structure
+     */
+    public PolynomialStructure mergeLayer(int i) {
+        if (i <= coreZone) throw new IllegalArgumentException("Cannot merge layers in the core.");
+        if (nzone - 2 < i) throw new IllegalArgumentException("Input i must be less than " + (nzone - 1));
+        UnaryOperator<double[]> one =
+                old -> IntStream.range(0, nzone).filter(j -> j != i).mapToDouble(j -> old[j]).toArray();
+        Function<PolynomialFunction[], double[][]> two =
+                old -> IntStream.range(0, nzone).filter(j -> j != i).mapToObj(j -> old[j].getCoefficients())
+                        .toArray(double[][]::new);
+        double[] rmin = one.apply(this.rmin);
+        double[] rmax = one.apply(this.rmax);
+        rmax[i - 1] = this.rmax[i];
+        double[][] rho = two.apply(this.rho);
+        double[][] vpv = two.apply(this.vpv);
+        double[][] vph = two.apply(this.vph);
+        double[][] vsv = two.apply(this.vsv);
+        double[][] vsh = two.apply(this.vsh);
+        double[][] eta = two.apply(this.eta);
+        double[] qMu = one.apply(this.qMu);
+        double[] qKappa = one.apply(this.qKappa);
+        return set(nzone - 1, rmin, rmax, rho, vpv, vph, vsv, vsh, eta, qMu, qKappa);
+    }
 
     /**
      * change String line from coefficients a + bx + cx**2 >>>>> a b c 0
@@ -335,7 +365,6 @@ public class PolynomialStructure implements Serializable {
     }
 
     /**
-     * 半径boundariesのところに境界を作る（層を一つ増やす）
      * Add boundaries at the input radii.
      * if there is already a boundary at r then nothing will be done.
      *
@@ -495,18 +524,78 @@ public class PolynomialStructure implements Serializable {
         return r / rmax[nzone - 1];
     }
 
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for &rho; in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setRho(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.rho[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>pv</sub> in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setVpv(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.vpv[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>ph</sub> in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setVph(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.vph[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>sv</sub> in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setVsv(int izone, PolynomialFunction polynomialFunction) {
         PolynomialStructure str = deepCopy();
         str.vsv[izone] = polynomialFunction;
         return str;
     }
 
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>sh</sub> in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setVsh(int izone, PolynomialFunction polynomialFunction) {
         PolynomialStructure str = deepCopy();
         str.vsh[izone] = polynomialFunction;
         return str;
     }
 
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>pv</sub> and V<sub>ph</sub> in the ith zone to it
+     * @return new structure
+     */
+    public PolynomialStructure setVp(int izone, PolynomialFunction polynomialFunction) {
+        PolynomialStructure str = deepCopy();
+        str.vph[izone] = polynomialFunction;
+        str.vpv[izone] = polynomialFunction;
+        return str;
+    }
+
+    /**
+     * @param izone              index of the target zone
+     * @param polynomialFunction replace the function for V<sub>sv</sub> and V<sub>sh</sub> in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setVs(int izone, PolynomialFunction polynomialFunction) {
         PolynomialStructure str = deepCopy();
         str.vsh[izone] = polynomialFunction;
@@ -514,6 +603,11 @@ public class PolynomialStructure implements Serializable {
         return str;
     }
 
+    /**
+     * @param izone index of the target zone
+     * @param qMu   replace q<sub>&mu;</sub> in the ith zone to it
+     * @return new structure
+     */
     public PolynomialStructure setQMu(int izone, double qMu) {
         PolynomialStructure str = deepCopy();
         str.qMu[izone] = qMu;
@@ -559,6 +653,14 @@ public class PolynomialStructure implements Serializable {
      */
     public double getRhoAt(double r) {
         return rho[zoneOf(r)].value(toX(r));
+    }
+
+    /**
+     * @param izone index of a zone
+     * @return polynomial function for &rho; of the zone
+     */
+    public PolynomialFunction getRhoOf(int izone) {
+        return rho[izone];
     }
 
     /**

@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.3.2
+ * @version 0.5.4b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2017/11/19
+     * 2019/11/23
      */
-    private static final long serialVersionUID = -2138740611342857870L;
+    private static final long serialVersionUID = -7854966996076335692L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -148,7 +148,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
         jPanelParameter = new ParameterInputPanel(this);
         JButton buttonCompute = new JButton("Compute");
-        JButton buttonShow = new JButton("Save");
+        JButton buttonSave = new JButton("Save");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         MenuBar jMenuBar1 = new MenuBar(this);
@@ -156,7 +156,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
         buttonCompute.addActionListener(this::buttonComputeActionPerformed);
 
-        buttonShow.addActionListener(this::buttonSavePerformed);
+        buttonSave.addActionListener(this::buttonSavePerformed);
 
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -166,14 +166,14 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                                 layout.createParallelGroup(Alignment.LEADING).addGroup(layout.createSequentialGroup())
                                         .addComponent(jPanelParameter, GroupLayout.PREFERRED_SIZE, 300,
                                                 Short.MAX_VALUE))).addGroup(layout.createSequentialGroup().addGroup(
-                                layout.createSequentialGroup().addComponent(buttonCompute).addComponent(buttonShow)))
+                                layout.createSequentialGroup().addComponent(buttonCompute).addComponent(buttonSave)))
                         .addComponent(resultWindow)).addContainerGap()));
         layout.setVerticalGroup(layout.createParallelGroup(Alignment.LEADING).addGroup(
                 layout.createSequentialGroup().addContainerGap()
                         .addComponent(jPanelParameter, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
                                 GroupLayout.PREFERRED_SIZE).addGroup(
                         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                .addComponent(buttonCompute).addComponent(buttonShow))
+                                .addComponent(buttonCompute).addComponent(buttonSave))
                         .addComponent(resultWindow, 100, 100, 100).addContainerGap()));
         pack();
         setLocation(getX() - getWidth() / 2, getY() - getHeight() / 2);
@@ -316,7 +316,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private RaypathCatalog getCatalog() {
-        return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
+        return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure),
+                RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
     }
 
     private void runEpicentralDistanceMode() {
@@ -327,20 +328,24 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         for (Phase phase : phaseSet) {
             Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance, false);
             for (Raypath raypath : raypaths) {
+                if (!phase.isDiffracted()) {
+                    raypathList.add(raypath);
+                    phaseList.add(phase);
+                    continue;
+                }
+                double deltaOnBoundary = Math.toDegrees(epicentralDistance - raypath.computeDelta(eventR, phase));
+                if (deltaOnBoundary < 0) {
+                    System.err.println(phase + " would have longer distance than " +
+                            Math.toDegrees(raypath.computeDelta(eventR, phase)) + " (Your input:" +
+                            Math.toDegrees(epicentralDistance) + ")");
+                    continue;
+                }
                 raypathList.add(raypath);
-                phaseList.add(phase);
+                phaseList.add(Phase.create(phase.toString() + deltaOnBoundary));
             }
         }
-        for (int i = 0; i < phaseList.size(); i++) {
-            Phase phase = phaseList.get(i);
-            if (!phase.isDiffracted()) continue;
-            Raypath raypath = raypathList.get(i);
-            double delta = raypath.computeDelta(eventR, phase);
-            double dDelta = Math.toDegrees(epicentralDistance - delta);
-            phaseList.set(i, Phase.create(phase.toString() + dDelta));
-        }
+
         int n = raypathList.size();
-        // System.out.println("Whats done is done");
         double[] delta = new double[n];
         Arrays.fill(delta, epicentralDistance);
         showResult(delta, raypathList, phaseList);
@@ -360,11 +365,11 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         boolean added = false;
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
-            Phase phase = phaseList.get(i);
+            Phase phase = getCatalog().getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
             double travelTime = raypath.computeT(eventR, phase);
             if (Double.isNaN(epicentralDistance)) continue;
-            String title = phase.isPSV() ? phase + " (P-SV)" : phase + " (SH)";
+            String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
             double depth = raypath.getStructure().earthRadius() - eventR;
             if (delta == null) {
                 added = true;

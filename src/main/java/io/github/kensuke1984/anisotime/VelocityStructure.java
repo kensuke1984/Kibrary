@@ -1,17 +1,86 @@
 package io.github.kensuke1984.anisotime;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
 
 /**
  * Structure information for computing travel time.
  *
  * @author Kensuke Konishi
- * @version 0.0.9.2
+ * @version 0.1.3
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
  */
 public interface VelocityStructure extends Serializable {
+
+    /**
+     * [%] (must be a positive number)
+     * If all values (ACFLN&rho;) at a boundary and boundary + {@link ComputationalMesh#EPS} has smaller gap in ratio than this value,
+     * the boundary is regarded as the D boundary.
+     * If this value is 1 [%], ratio of values (smaller/larger) must be in 99-100 % at continuous point.
+     */
+    double MAXIMUM_RATIO_OF_D_BOUNDARY = 1e-2;
+
+    /**
+     * [km]
+     * Radius close to a D boundary by this value, boundary &le; r &le; boundary + this value,
+     * the value at the radius will be modified.
+     */
+    double D_BOUNDARY_ZONE = 0.5;
+
+    /**
+     * @param r [km] target radius
+     * @return if there is a jump at r. Any of the values (ACFLN&rho;) at r&plusmn;&epsilon;
+     * has larger ratio gap than {@link #MAXIMUM_RATIO_OF_D_BOUNDARY},
+     * this method returns true.
+     */
+    default boolean isJump(double r) {
+        if (r < 0 || earthRadius() < r) throw new IllegalArgumentException("Input r " + r + " is not correct.");
+        else if (r < ComputationalMesh.EPS || earthRadius() - ComputationalMesh.EPS < r) return false;
+        Function<DoubleUnaryOperator, Boolean> checker = getter -> {
+            double ratio =
+                    getter.applyAsDouble(r + ComputationalMesh.EPS) / getter.applyAsDouble(r - ComputationalMesh.EPS);
+            if (1 < ratio) ratio = 1 / ratio;
+            return ratio < 1 - MAXIMUM_RATIO_OF_D_BOUNDARY / 100;
+        };
+        return checker.apply(this::getA) || checker.apply(this::getC) || checker.apply(this::getF) ||
+                checker.apply(this::getL) || checker.apply(this::getN) || checker.apply(this::getRho);
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vpv
+     */
+    default double computeVpv(double r) {
+        return Math.sqrt(getC(r) / getRho(r));
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vph
+     */
+    default double computeVph(double r) {
+        return Math.sqrt(getA(r) / getRho(r));
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vsv
+     */
+    default double computeVsv(double r) {
+        return Math.sqrt(getL(r) / getRho(r));
+    }
+
+    /**
+     * @param r [km]
+     * @return [km/s] vsh
+     */
+    default double computeVsh(double r) {
+        return Math.sqrt(getN(r) / getRho(r));
+    }
 
     /**
      * @return Transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -45,8 +114,8 @@ public interface VelocityStructure extends Serializable {
                 return iTurningR(rayParameter);
             case JV:
                 return jvTurningR(rayParameter);
-            case JH:
-                return jhTurningR(rayParameter);
+//            case JH:
+//                return jhTurningR(rayParameter);
             case K:
                 return kTurningR(rayParameter);
             case P:
@@ -197,20 +266,44 @@ public interface VelocityStructure extends Serializable {
     double earthRadius();
 
     /**
-     * TODO
      * When layered structures have boundaries which are in particular
      * not related to CMB, ICB and so on.., the values from this method may be useful
      * for generating a mesh ({@link ComputationalMesh}. Even when the input structure
      * is not layered but you want to arbitrary add layers. (e.g. the boundaries of MTZ)
+     * the center (r=0), ICB, CMB and the surface must be included.
+     *
      * @return array of radii [km]. Values of the boundaries for layers.
+     * Velocity changes at boundaries.
      * It is NOT the depth but radius from the center.
-     * The values should be in order (small to large values) and
+     * The values must be in order (small to large values) and
      * later changes to the array should not affect the velocity structure,
      * in other words, changes in the returning array must not result in changes
      * of their original values.
      */
-    default double[] additionalBoundaries() {
-        return new double[]{earthRadius() - 660, earthRadius() - 410};
+    default double[] velocityBoundaries() {
+        return new double[]{0, innerCoreBoundary(), coreMantleBoundary(), earthRadius()};
+    }
+
+    /**
+     * @return [km] radii array of boundaries in the mantle. including the CMB and surface.
+     */
+    default double[] boundariesInMantle() {
+        return Arrays.stream(velocityBoundaries()).filter(r -> coreMantleBoundary() <= r).toArray();
+    }
+
+    /**
+     * @return [km] radii array of boundaries in the mantle. including the CMB and ICB.
+     */
+    default double[] boundariesInOuterCore() {
+        return Arrays.stream(velocityBoundaries()).filter(r -> innerCoreBoundary() <= r && r <= coreMantleBoundary())
+                .toArray();
+    }
+
+    /**
+     * @return [km] radii array of boundaries in the inner-core. including the center (0) and ICB.
+     */
+    default double[] boundariesInInnerCore() {
+        return Arrays.stream(velocityBoundaries()).filter(r -> r <= innerCoreBoundary()).toArray();
     }
 
     /**
