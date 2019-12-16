@@ -28,12 +28,12 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.1.6
+ * @version 0.2.2
  */
 public class RaypathCatalog implements Serializable {
 
     /**
-     * 2019/12/15
+     * 2019/12/16
      */
     private static final long serialVersionUID = -656615885607641150L;
 
@@ -447,11 +447,17 @@ public class RaypathCatalog implements Serializable {
                 return true;
             if ((PP == PhasePart.SH || PP == PhasePart.SV) &&
                     (targetPhase.toString().contains("P") || targetPhase.toString().contains("p"))) return true;
-            if (getStructure().coreMantleBoundary() <= BOUNDARY_R && targetPhase.toString().contains("K")) return true;
+            double cmb = getStructure().coreMantleBoundary();
+            if (cmb <= BOUNDARY_R && targetPhase.toString().contains("K")) return true;
             if (getStructure().innerCoreBoundary() <= BOUNDARY_R &&
                     (targetPhase.toString().contains("I") || targetPhase.toString().contains("J"))) return true;
-            if (BOUNDARY_R < getStructure().coreMantleBoundary() && (targetPhase.toString().contains("c"))) return true;
-
+            if (BOUNDARY_R < cmb && (targetPhase.toString().contains("c"))) return true;
+            if (PP == PhasePart.P && getStructure().coreMantleBoundary() < BOUNDARY_R && targetPhase.equals(Phase.PcP))
+                return true;
+            if (PP == PhasePart.SV && getStructure().coreMantleBoundary() < BOUNDARY_R &&
+                    targetPhase.equals(Phase.SVcS)) return true;
+            if (PP == PhasePart.SH && getStructure().coreMantleBoundary() < BOUNDARY_R && targetPhase.equals(Phase.ScS))
+                return true;
             return targetPhase.equals(Phase.PKP) || targetPhase.equals(Phase.SKS) ||
                     targetPhase.toString().contains("I") || targetPhase.toString().contains("J");
         }
@@ -464,8 +470,14 @@ public class RaypathCatalog implements Serializable {
          * @return raypaths with the &Delta; never returns null. but Raypath[0]
          */
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+            if (CATALOG.isEmpty()) return new Raypath[0];
             if (shouldSkip(targetPhase)) return new Raypath[0];
             Phase actualPhase = toReflection(targetPhase);
+            TreeSet<Raypath> catalog = (TreeSet) CATALOG;
+            double delta1 = catalog.first().computeDelta(actualPhase, eventR);
+            double delta2 = catalog.last().computeDelta(actualPhase, eventR);
+            if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
+                return new Raypath[0];
             return RaypathCatalog.this
                     .searchPath(actualPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -503,7 +515,13 @@ public class RaypathCatalog implements Serializable {
         }
 
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+            if (CATALOG.isEmpty()) return new Raypath[0];
             if (shouldSkip(targetPhase)) return new Raypath[0];
+            TreeSet<Raypath> catalog = (TreeSet) CATALOG;
+            double delta1 = catalog.first().computeDelta(targetPhase, eventR);
+            double delta2 = catalog.last().computeDelta(targetPhase, eventR);
+            if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
+                return new Raypath[0];
             return RaypathCatalog.this
                     .searchPath(targetPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -649,7 +667,7 @@ public class RaypathCatalog implements Serializable {
     private BiPredicate<Raypath, Raypath> simplePredicate(Phase phase, double dDelta) {
         double r = getStructure().earthRadius();
         return (r1, r2) -> Math.abs(r1.getRayParameter() - r2.getRayParameter()) < MINIMUM_DELTA_P ||
-                !(Math.abs(r1.computeDelta(r, phase) - r2.computeDelta(r, phase)) > dDelta);
+                !(Math.abs(r1.computeDelta(phase, r) - r2.computeDelta(phase, r)) > dDelta);
     }
 
     /**
@@ -670,23 +688,39 @@ public class RaypathCatalog implements Serializable {
         startRaypath.compute();
         Raypath endRaypath = new Raypath(endP, WOODHOUSE, MESH);
         endRaypath.compute();
-        BiFunction<Double, Double, Raypath> getFirstP = (firstP, deltaP) -> {
-            for (double p = firstP; startP <= p && p <= endP; p += deltaP) {
-                Raypath r = new Raypath(p, WOODHOUSE, MESH);
-                r.compute();
-                if (!Double.isNaN(r.computeDelta(getStructure().earthRadius(), phase))) return r;
+        double earthRadius = getStructure().earthRadius();
+        //If delta for the firstRaypath is NaN then the first P for not NaN delta returns and vice versa.
+        BiFunction<Double, Double, Raypath> getFirstRaypath = (firstP, deltaP) -> {
+            Raypath firstRaypath = new Raypath(firstP, WOODHOUSE, MESH);
+            firstRaypath.compute();
+            boolean firstIsNaN = Double.isNaN(firstRaypath.computeDelta(phase, earthRadius));
+            for (double p = firstP + deltaP; startP <= p && p <= endP; p += deltaP) {
+                Raypath nextR = new Raypath(p, WOODHOUSE, MESH);
+                nextR.compute();
+                if (!firstIsNaN && Double.isNaN(nextR.computeDelta(phase, earthRadius))) return nextR;
+                if (firstIsNaN && !Double.isNaN(nextR.computeDelta(phase, earthRadius))) return nextR;
             }
             return null;
         };
-        if (Double.isNaN(startRaypath.computeDelta(getStructure().earthRadius(), phase)))
-            for (double deltaP = (endP - startP) / 100; !Objects.isNull(startRaypath) && MINIMUM_DELTA_P < deltaP;
-                 deltaP = deltaP / 10)
-                startRaypath = getFirstP.apply(startRaypath.getRayParameter(), deltaP);
 
-        if (Double.isNaN(endRaypath.computeDelta(getStructure().earthRadius(), phase)))
-            for (double deltaP = -(endP - startP) / 100; !Objects.isNull(endRaypath) && MINIMUM_DELTA_P < -deltaP;
-                 deltaP = deltaP / 10)
-                endRaypath = getFirstP.apply(endRaypath.getRayParameter(), deltaP);
+        if (Double.isNaN(startRaypath.computeDelta(phase, getStructure().earthRadius()))) {
+            for (double deltaP = (endP - startP) / 100;
+                 !Objects.isNull(startRaypath) && MINIMUM_DELTA_P < Math.abs(deltaP); deltaP = -deltaP / 10)
+                startRaypath = getFirstRaypath.apply(startRaypath.getRayParameter(), deltaP);
+            if (Objects.isNull(startRaypath)) throw new RuntimeException("sUNIKUSUPECTED " + phase);
+            if (Double.isNaN(startRaypath.computeDelta(phase, 6371)))
+                startRaypath = getFirstRaypath.apply(startRaypath.getRayParameter(), MINIMUM_DELTA_P);
+            if (Objects.isNull(startRaypath)) throw new RuntimeException("SNJKUSUPECTED " + phase);
+        }
+        if (Double.isNaN(endRaypath.computeDelta(phase, getStructure().earthRadius()))) {
+            for (double deltaP = -(endP - startP) / 100;
+                 !Objects.isNull(endRaypath) && MINIMUM_DELTA_P < Math.abs(deltaP); deltaP = -deltaP / 10)
+                endRaypath = getFirstRaypath.apply(endRaypath.getRayParameter(), deltaP);
+            if (Objects.isNull(endRaypath)) return new Raypath[2];
+            if (Double.isNaN(endRaypath.computeDelta(phase, 6371)))
+                endRaypath = getFirstRaypath.apply(endRaypath.getRayParameter(), -MINIMUM_DELTA_P);
+            if (Objects.isNull(endRaypath)) throw new RuntimeException("UNJKUSUPECTED " + phase);
+        }
         return new Raypath[]{startRaypath, endRaypath};
     }
 
@@ -847,7 +881,7 @@ public class RaypathCatalog implements Serializable {
                                        Raypath... raypaths) {
         WeightedObservedPoints deltaP = new WeightedObservedPoints();
         for (Raypath raypath : raypaths) {
-            double delta = raypath.computeDelta(eventR, targetPhase);
+            double delta = raypath.computeDelta(targetPhase, eventR);
             if (relativeAngle) delta = toRelativeAngle(delta);
             deltaP.add(delta, raypath.getRayParameter());
         }
@@ -906,7 +940,7 @@ public class RaypathCatalog implements Serializable {
      */
     public Phase getActualTargetPhase(Raypath raypath, Phase targetPhase, double eventR, double targetDelta,
                                       boolean relativeAngle) {
-        if (Math.abs(raypath.computeDelta(eventR, targetPhase) - targetDelta) < MAXIMUM_D_DELTA) return targetPhase;
+        if (Math.abs(raypath.computeDelta(targetPhase, eventR) - targetDelta) < MAXIMUM_D_DELTA) return targetPhase;
         VelocityStructure structure = getStructure();
         if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S) ||
                 targetPhase.equals(Phase.pP) || targetPhase.equals(Phase.sSV) || targetPhase.equals(Phase.sS)) {
@@ -922,8 +956,8 @@ public class RaypathCatalog implements Serializable {
                 else return Phase.create("sSv" + xx + "S");
             };
             return Arrays.stream(structure.boundariesInMantle()).mapToObj(toPhase).filter(p -> Math.abs(
-                    relativeAngle ? raypath.computeDelta(eventR, p) :
-                            toRelativeAngle(raypath.computeDelta(eventR, p)) - targetDelta) < MAXIMUM_D_DELTA).findAny()
+                    relativeAngle ? raypath.computeDelta(p, eventR) :
+                            toRelativeAngle(raypath.computeDelta(p, eventR)) - targetDelta) < MAXIMUM_D_DELTA).findAny()
                     .get();
         }
         throw new RuntimeException("UNIKUSYOEJU " + targetPhase);
@@ -954,8 +988,8 @@ public class RaypathCatalog implements Serializable {
         for (int i = 0; i < referenceRaypaths.length - 1; i++) {
             Raypath rayI = referenceRaypaths[i];
             Raypath rayP = referenceRaypaths[i + 1];
-            double deltaI = rayI.computeDelta(eventR, targetPhase);
-            double deltaP = rayP.computeDelta(eventR, targetPhase);
+            double deltaI = rayI.computeDelta(targetPhase, eventR);
+            double deltaP = rayP.computeDelta(targetPhase, eventR);
             if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
             if (relativeAngle) {
                 deltaI = toRelativeAngle(deltaI);
@@ -964,9 +998,9 @@ public class RaypathCatalog implements Serializable {
             if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
             Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
             rayC.compute();
-            if (Double.isNaN(rayC.computeDelta(eventR, targetPhase))) continue;
+            if (Double.isNaN(rayC.computeDelta(targetPhase, eventR))) continue;
             Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayI, rayC, rayP);
-            if (Double.isNaN(rayIn.computeDelta(eventR, targetPhase))) continue;
+            if (Double.isNaN(rayIn.computeDelta(targetPhase, eventR))) continue;
             pathList.add(rayIn);
         }
         return pathList.toArray(new Raypath[0]);
@@ -988,20 +1022,20 @@ public class RaypathCatalog implements Serializable {
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
 
-        double delta0 = raypath0.computeDelta(eventR, targetPhase);
+        double delta0 = raypath0.computeDelta(targetPhase, eventR);
         Raypath lower = raypathList.lower(raypath0);
         Raypath higher = raypathList.higher(raypath0);
-        double lowerDelta = lower.computeDelta(eventR, targetPhase);
-        double higherDelta = higher.computeDelta(eventR, targetPhase);
+        double lowerDelta = lower.computeDelta(targetPhase, eventR);
+        double higherDelta = higher.computeDelta(targetPhase, eventR);
         if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
         if (relativeAngle) {
             lowerDelta = toRelativeAngle(lowerDelta);
             higherDelta = toRelativeAngle(higherDelta);
         }
         WeightedObservedPoints pTime = new WeightedObservedPoints();
-        pTime.add(delta0, raypath0.computeT(eventR, targetPhase));
-        pTime.add(lowerDelta, lower.computeT(eventR, targetPhase));
-        pTime.add(higherDelta, higher.computeT(eventR, targetPhase));
+        pTime.add(delta0, raypath0.computeT(targetPhase, eventR));
+        pTime.add(lowerDelta, lower.computeT(targetPhase, eventR));
+        pTime.add(higherDelta, higher.computeT(targetPhase, eventR));
         PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(pTime.toList()));
         return pf.value(targetDelta);
@@ -1024,11 +1058,11 @@ public class RaypathCatalog implements Serializable {
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
 
-        double delta0 = raypath0.computeDelta(eventR, targetPhase);
+        double delta0 = raypath0.computeDelta(targetPhase, eventR);
         Raypath lower = raypathList.lower(raypath0);
         Raypath higher = raypathList.higher(raypath0);
-        double lowerDelta = lower.computeDelta(eventR, targetPhase);
-        double higherDelta = higher.computeDelta(eventR, targetPhase);
+        double lowerDelta = lower.computeDelta(targetPhase, eventR);
+        double higherDelta = higher.computeDelta(targetPhase, eventR);
         if (Double.isNaN(lowerDelta) || Double.isNaN(higherDelta)) return Double.NaN;
         if (relativeAngle) {
             lowerDelta = toRelativeAngle(lowerDelta);
