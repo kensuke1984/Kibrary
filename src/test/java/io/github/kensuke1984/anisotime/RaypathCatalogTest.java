@@ -10,8 +10,8 @@ import java.io.*;
  */
 class RaypathCatalogTest {
     private static void createCheck() throws IOException, ParseException {
-        RaypathCatalog prem = RaypathCatalog.prem();
-        RaypathCatalog isoPrem = RaypathCatalog.iprem();
+//        RaypathCatalog prem = RaypathCatalog.prem();
+//        RaypathCatalog isoPrem = RaypathCatalog.iprem();
         RaypathCatalog ak135 = RaypathCatalog.ak135();
     }
 
