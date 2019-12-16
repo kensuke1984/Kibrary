@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.2
+ * @version 0.2.2.1
  */
 public class RaypathCatalog implements Serializable {
 
     /**
      * 2019/12/16
      */
-    private static final long serialVersionUID = -656615885607641150L;
+    private static final long serialVersionUID = -1692363736850939251L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -553,6 +553,21 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
+     * @param boundaryR radius at a target jump
+     * @param phase     target {@link Phase}
+     * @param calcV     to compute a velocity
+     * @return Set of {@link Raypath}s which has a reflecting raypath of the phase.
+     * If no raypaths found, it returns an empty set(not null).
+     */
+    private Set<Raypath> computeReflectingRaypaths(double boundaryR, Phase phase, DoubleUnaryOperator calcV) {
+        Raypath[] edgeRaypaths = getEdgeRaypathsInPRangeForRelectingRaypaths(boundaryR, phase, calcV);
+        if (Objects.isNull(edgeRaypaths[0]) && Objects.isNull(edgeRaypaths[1])) return Collections.emptySet();
+        else if (Objects.isNull(edgeRaypaths[0]) || Objects.isNull(edgeRaypaths[1]))
+            throw new RuntimeException("UNEXPECTED " + phase + " reflecting at " + boundaryR);
+        return catalogInBranch(phase, edgeRaypaths[0], edgeRaypaths[1]);
+    }
+
+    /**
      * Reflection waves PcP, ScS(SV/SH), PvXXXP and SvXXXP(SV/SH).
      * XXX should be one of the velocity boundaries in the structure.
      * TODO waves reflecting beneath CMB i.e. XXX is inside the core.
@@ -604,21 +619,6 @@ public class RaypathCatalog implements Serializable {
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.SKiKS, 0, pPKiKP)));
         System.err
                 .println("\rCatalogs for boundaries are computed in " + Utilities.toTimeString(System.nanoTime() - t));
-    }
-
-    /**
-     * @param boundaryR radius at a target jump
-     * @param phase     target {@link Phase}
-     * @param calcV     to compute a velocity
-     * @return Set of {@link Raypath}s which has a reflecting raypath of the phase.
-     * If no raypaths found, it returns an empty set(not null).
-     */
-    private Set<Raypath> computeReflectingRaypaths(double boundaryR, Phase phase, DoubleUnaryOperator calcV) {
-        Raypath[] edgeRaypaths = getEdgeRaypathsInPRangeForRelectingRaypaths(boundaryR, phase, calcV);
-        if (Objects.isNull(edgeRaypaths[0]) && Objects.isNull(edgeRaypaths[1])) return Collections.emptySet();
-        else if (Objects.isNull(edgeRaypaths[0]) || Objects.isNull(edgeRaypaths[1]))
-            throw new RuntimeException("UNEXPECTED " + phase + " reflecting at " + boundaryR);
-        return catalogInBranch(phase, edgeRaypaths[0], edgeRaypaths[1]);
     }
 
     /**
@@ -707,12 +707,15 @@ public class RaypathCatalog implements Serializable {
             for (double deltaP = (endP - startP) / 100;
                  !Objects.isNull(startRaypath) && MINIMUM_DELTA_P < Math.abs(deltaP); deltaP = -deltaP / 10)
                 startRaypath = getFirstRaypath.apply(startRaypath.getRayParameter(), deltaP);
-            if (Objects.isNull(startRaypath)) throw new RuntimeException("sUNIKUSUPECTED " + phase);
+            if (Objects.isNull(startRaypath)) return new Raypath[2];
             if (Double.isNaN(startRaypath.computeDelta(phase, 6371)))
                 startRaypath = getFirstRaypath.apply(startRaypath.getRayParameter(), MINIMUM_DELTA_P);
-            if (Objects.isNull(startRaypath)) throw new RuntimeException("SNJKUSUPECTED " + phase);
+            if (Objects.isNull(startRaypath)) return new Raypath[2];
         }
         if (Double.isNaN(endRaypath.computeDelta(phase, getStructure().earthRadius()))) {
+            Raypath startClose = new Raypath(startRaypath.getRayParameter() + MINIMUM_DELTA_P, WOODHOUSE, MESH);
+            startClose.compute();
+            if (Double.isNaN(startClose.computeDelta(phase, earthRadius))) return new Raypath[2];
             for (double deltaP = -(endP - startP) / 100;
                  !Objects.isNull(endRaypath) && MINIMUM_DELTA_P < Math.abs(deltaP); deltaP = -deltaP / 10)
                 endRaypath = getFirstRaypath.apply(endRaypath.getRayParameter(), deltaP);
@@ -821,21 +824,6 @@ public class RaypathCatalog implements Serializable {
                 else if (pMax < pEndR) edges.add(new Double[]{pStartR, pMax});
                 else edges.add(new Double[]{pStartR, pEndR});
             }
-            //case: reflecting waves TODO ->reflection
-        } else if (phase == Phase.PcP || phase == Phase.ScS) {
-            double v = phase == Phase.PcP ? getStructure().computeVph(cmb) :
-                    phase.isPSV() ? getStructure().computeVsv(cmb) : getStructure().computeVsh(cmb);
-            double p = cmb / v;
-            DoubleUnaryOperator pToTurningR = rayP -> phase == Phase.PcP ? getStructure().pTurningR(rayP) :
-                    phase.isPSV() ? getStructure().svTurningR(rayP) : getStructure().shTurningR(rayP);
-            while (!Double.isNaN(pToTurningR.applyAsDouble(p))) p -= MINIMUM_DELTA_P;
-            edges.add(new Double[]{0d, p});
-        } else if (phase == Phase.PKiKP || phase == Phase.SKiKS) {
-            double v = getStructure().computeVph(icb + ComputationalMesh.EPS);
-            double p = (icb + ComputationalMesh.EPS) / v;
-            DoubleUnaryOperator pToTurningR = rayP -> getStructure().kTurningR(rayP);
-            while (!Double.isNaN(pToTurningR.applyAsDouble(p))) p -= MINIMUM_DELTA_P;
-            edges.add(new Double[]{0d, p});
         } else throw new RuntimeException("NEXPEKTED");
         return edges;
     }
