@@ -15,7 +15,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.3
+ * @version 0.0.6.4
  */
 public class Raypath {
 
@@ -150,7 +150,7 @@ public class Raypath {
         io.github.kensuke1984.anisotime.Raypath[] rays = toANISOtime(phase, structure);
         if (rays.length == 0) throw new RuntimeException("No raypath");
         if (1 < rays.length) throw new RuntimeException("multiples");
-        return rays[0].computeDelta(structure.earthRadius(), phase);
+        return rays[0].computeDelta(phase, structure.earthRadius());
     }
 
     /**

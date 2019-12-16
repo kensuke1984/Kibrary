@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.4b
+ * @version 0.5.4.1b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -249,7 +249,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                         Phase phase = phaseList.get(i);
                         if (!phase.isDiffracted()) continue;
                         Raypath raypath = raypathList.get(i);
-                        double delta = raypath.computeDelta(eventR, phase);
+                        double delta = raypath.computeDelta(phase, eventR);
                         double dDelta = Math.toDegrees(epicentralDistance - delta);
                         phaseList.set(i, Phase.create(phase.toString() + dDelta));
                     }
@@ -275,9 +275,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     Path outEPSFile = outputDirectory.resolve(name + ".eps");
                     Path outInfoFile = outputDirectory.resolve(name + ".inf");
                     Path outDataFile = outputDirectory.resolve(name + ".dat");
-                    raypathList.get(i).outputEPS(eventR, phaseList.get(i), outEPSFile);
-                    raypathList.get(i).outputInfo(outInfoFile, eventR, phaseList.get(i));
-                    raypathList.get(i).outputDat(outDataFile, eventR, phaseList.get(i));
+                    raypathList.get(i).outputEPS(outEPSFile, phaseList.get(i), eventR);
+                    raypathList.get(i).outputInfo(outInfoFile, phaseList.get(i), eventR);
+                    raypathList.get(i).outputDat(outDataFile, phaseList.get(i), eventR);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -333,10 +333,10 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     phaseList.add(phase);
                     continue;
                 }
-                double deltaOnBoundary = Math.toDegrees(epicentralDistance - raypath.computeDelta(eventR, phase));
+                double deltaOnBoundary = Math.toDegrees(epicentralDistance - raypath.computeDelta(phase, eventR));
                 if (deltaOnBoundary < 0) {
                     System.err.println(phase + " would have longer distance than " +
-                            Math.toDegrees(raypath.computeDelta(eventR, phase)) + " (Your input:" +
+                            Math.toDegrees(raypath.computeDelta(phase, eventR)) + " (Your input:" +
                             Math.toDegrees(epicentralDistance) + ")");
                     continue;
                 }
@@ -366,8 +366,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
             Phase phase = getCatalog().getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
-            double epicentralDistance = Math.toDegrees(raypath.computeDelta(eventR, phase));
-            double travelTime = raypath.computeT(eventR, phase);
+            double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
+            double travelTime = raypath.computeT(phase, eventR);
             if (Double.isNaN(epicentralDistance)) continue;
             String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
             double depth = raypath.getStructure().earthRadius() - eventR;
@@ -399,14 +399,12 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private void showRayPath(Raypath raypath, Phase phase) {
-        double[][] points = raypath.getRouteXY(eventR, phase);
+        double[][] points = raypath.getRouteXY(phase, eventR);
         if (points != null) {
             double[] x = new double[points.length];
             double[] y = new double[points.length];
-            for (int i = 0; i < points.length; i++) {
-                x[i] = points[i][0];
-                y[i] = points[i][1];
-            }
+            Arrays.setAll(x,i->points[i][0]);
+            Arrays.setAll(y,i->points[i][1]);
             try {
                 SwingUtilities.invokeAndWait(() -> addPath(x, y));
             } catch (Exception e) {

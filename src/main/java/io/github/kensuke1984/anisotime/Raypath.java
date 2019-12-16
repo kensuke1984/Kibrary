@@ -51,7 +51,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.5.8b
+ * @version 0.5.9b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -201,12 +201,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param eventR          [km] radius of event
      * @param phase           Seismic {@link Phase}
      */
-    public void outputInfo(Path informationFile, double eventR, Phase phase) {
+    public void outputInfo(Path informationFile, Phase phase, double eventR) {
         try (PrintWriter pw = new PrintWriter(informationFile.toFile())) {
             pw.println("Phase: " + phase);
             pw.println("Ray parameter: " + RAY_PARAMETER);
-            pw.println("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(eventR, phase)));
-            pw.println("Travel time[s]: " + computeT(eventR, phase));
+            pw.println("Epicentral distance[deg]: " + Math.toDegrees(computeDelta(phase, eventR)));
+            pw.println("Travel time[s]: " + computeT(phase, eventR));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -217,10 +217,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @param eventR   [km] radius of event
      * @param phase    to write
      */
-    void outputDat(Path dataFile, double eventR, Phase phase) {
-        if (Double.isNaN(computeDelta(eventR, phase))) return;
+    void outputDat(Path dataFile, Phase phase, double eventR) {
+        if (Double.isNaN(computeDelta(phase, eventR))) return;
         try (PrintWriter os = new PrintWriter(dataFile.toFile())) {
-            double[][] points = getRoute(eventR, phase);
+            double[][] points = getRoute(phase, eventR);
             os.println("#Radius[km] Theta[deg]");
             if (points != null) for (double[] point : points) os.println(point[0] + " " + Math.toDegrees(point[1]));
         } catch (Exception e) {
@@ -231,29 +231,29 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * Create an EPS file of {@link Phase}
      *
-     * @param eventR  [km] radius of event
-     * @param phase   Seismic {@link Phase}
      * @param epsFile Path of an eps file name
+     * @param phase   Seismic {@link Phase}
+     * @param eventR  [km] radius of event
      * @param options open options
      * @throws IOException if any
      */
-    public void outputEPS(double eventR, Phase phase, Path epsFile, OpenOption... options) throws IOException {
-        double delta = computeDelta(eventR, phase);
-        double t = computeT(eventR, phase);
+    public void outputEPS(Path epsFile, Phase phase, double eventR, OpenOption... options) throws IOException {
+        double delta = computeDelta(phase, eventR);
+        double t = computeT(phase, eventR);
         if (Double.isNaN(delta)) return;
         try (BufferedOutputStream os = new BufferedOutputStream(Files.newOutputStream(epsFile, options))) {
-            createPanel(eventR, phase).toEPS(os, phase, RAY_PARAMETER, delta, t, eventR);
+            createPanel(phase, eventR).toEPS(os, phase, RAY_PARAMETER, delta, t, eventR);
         }
     }
 
     /**
-     * @param eventR [km] radius of the event
      * @param phase  target phase
+     * @param eventR [km] radius of the event
      * @return RaypathPanel for the input values
      */
-    RaypathPanel createPanel(double eventR, Phase phase) {
+    RaypathPanel createPanel(Phase phase, double eventR) {
         RaypathPanel panel = new RaypathPanel(getStructure());
-        double[][] points = getRouteXY(eventR, phase);
+        double[][] points = getRouteXY(phase, eventR);
         if (points != null) {
             double[] x = new double[points.length];
             double[] y = new double[points.length];
@@ -268,8 +268,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
     /**
      * Compute travel times and deltas in layers. This method must be done
-     * before {@link #computeDelta(double, Phase)} or
-     * {@link #computeT(double, Phase)}. If once this method is called, it does
+     * before {@link #computeDelta(Phase, double)} or
+     * {@link #computeT(Phase, double)}. If once this method is called, it does
      * not compute anymore in the future.
      */
     public void compute() {
@@ -492,11 +492,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * @param eventR [km] radius of the event
      * @param part   part of path
+     * @param eventR [km] radius of the event
      * @return [rad] &Delta; for the part
      */
-    private double computeDelta(double eventR, GeneralPart part) {
+    private double computeDelta(GeneralPart part, double eventR) {
         PhasePart phase = part.getPhase();
         PassPoint inner = part.getInnerPoint();
         PassPoint outer = part.getOuterPoint();
@@ -560,11 +560,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * @param eventR [km] radius of the event
      * @param part   part of path
+     * @param eventR [km] radius of the event
      * @return [s] T (travel time) for the part
      */
-    private double computeT(double eventR, GeneralPart part) {
+    private double computeT(GeneralPart part, double eventR) {
         PhasePart pp = part.getPhase();
         PassPoint inner = part.getInnerPoint();
         PassPoint outer = part.getOuterPoint();
@@ -628,22 +628,22 @@ public class Raypath implements Serializable, Comparable<Raypath> {
 
 
     /**
-     * @param eventR [km] radius at the event
      * @param part   to compute for
+     * @param eventR [km] radius at the event
      * @return [rad] &Delta; for the part
      */
-    private double computeDelta(double eventR, PathPart part) {
+    private double computeDelta(PathPart part, double eventR) {
         if (part.isDiffraction()) return ((Diffracted) part).getAngle();
-        else if (part.isPropagation()) return computeDelta(eventR, (GeneralPart) part);
+        else if (part.isPropagation()) return computeDelta((GeneralPart) part, eventR);
         else return 0;
     }
 
     /**
-     * @param eventR [km] radius at the event
      * @param part   to compute for
+     * @param eventR [km] radius at the event
      * @return [s] T (travel time) for the part
      */
-    private double computeT(double eventR, PathPart part) {
+    private double computeT(PathPart part, double eventR) {
         if (part.isDiffraction()) {
             Diffracted diffracted = ((Diffracted) part);
             double angle = diffracted.getAngle();
@@ -666,37 +666,37 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             else throw new RuntimeException("Something wrong related to diffraction");
             return computeTAlongBoundary(diffracted.getPhase(), r, angle, true);
         } else if (part.isPropagation()) {
-            return computeT(eventR, (GeneralPart) part);
+            return computeT((GeneralPart) part, eventR);
         } else return 0;
     }
 
     /**
      * Compute delta for the input {@link Phase}
      *
-     * @param eventR [km] must be in the mantle
      * @param phase  Seismic {@link Phase}
+     * @param eventR [km] must be in the mantle
      * @return [rad] Epicentral distance(&Delta;) for the phase if the phase does not
      * exist or anything wrong, returns Double.NaN
      */
-    public double computeDelta(double eventR, Phase phase) {
+    public double computeDelta(Phase phase, double eventR) {
         if (!isComputed) throw new RuntimeException("Not computed yet.");
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
         PathPart[] parts = phase.getPassParts();
         double delta = 0;
         for (PathPart part : parts)
-            delta += computeDelta(eventR, part);
+            delta += computeDelta(part, eventR);
         return delta;
     }
 
     /**
      * Compute T for the input.
      *
-     * @param eventR [km] must be in the mantle
      * @param phase  Seismic {@link Phase}
+     * @param eventR [km] must be in the mantle
      * @return [s] T (travel time) for the phase
      */
-    public double computeT(double eventR, Phase phase) {
+    public double computeT(Phase phase, double eventR) {
         if (!isComputed) throw new RuntimeException("Not computed yet.");
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
@@ -704,7 +704,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double time = 0;
         PathPart[] parts = phase.getPassParts();
         for (PathPart part : parts)
-            time += computeT(eventR, part);
+            time += computeT(part, eventR);
         return time;
     }
 
@@ -720,13 +720,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * r &le; nextR. rStart is the last entry of the rList. (The $Delta; + the last
      * entry of thetaList) is added to the thetaList. T is same. The nextR and
      * the last entry of rList must be in a same partition.
-     *
+     * @param pp target {@link PhasePart}
      * @param nextR          [km]
      * @param rList          to add nextR
      * @param thetaList      to add &Delta;
      * @param travelTimeList to add T
      */
-    private void addRThetaTime(double nextR, PhasePart pp, LinkedList<Double> rList, LinkedList<Double> thetaList,
+    private void addRThetaTime(PhasePart pp, double nextR, LinkedList<Double> rList, LinkedList<Double> thetaList,
                                LinkedList<Double> travelTimeList) {
         double beforeR = rList.getLast();
         double cmbR = getStructure().coreMantleBoundary();
@@ -763,14 +763,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * epicenter. T is the same. 0 th point is epicenter.
      * radius, theta and T are in [km], [rad] and [s], respectively.
      *
-     * @param eventR [km] must be in the mantle
      * @param phase  Seismic {@link Phase}
+     * @param eventR [km] must be in the mantle
      * @return route[point][]{r, theta, T}
      */
-    public double[][] getRoute(double eventR, Phase phase) {
+    public double[][] getRoute(Phase phase, double eventR) {
         if (getStructure().earthRadius() < eventR || eventR <= getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Input eventR:" + eventR + " is out of the mantle.");
-        if (Double.isNaN(computeDelta(eventR, phase))) throw new RuntimeException(phase + " does not exist.");
+        if (Double.isNaN(computeDelta(phase, eventR))) throw new RuntimeException(phase + " does not exist.");
         // radius [km]
         LinkedList<Double> rList = new LinkedList<>();
         // theta [rad]
@@ -812,8 +812,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 GeneralPart g = (GeneralPart) part;
                 PhasePart pp = g.getPhase();
                 Partition partition = g.getPhase().whichPartition();
-                double startR = getROf(!g.isDownward(), eventR, g) + (g.isDownward() ? -1 : 1) * ComputationalMesh.EPS;
-                double endR = getROf(g.isDownward(), eventR, g) + (g.isDownward() ? 1 : -1) * ComputationalMesh.EPS;
+                double startR = getROf(g, eventR, !g.isDownward()) + (g.isDownward() ? -1 : 1) * ComputationalMesh.EPS;
+                double endR = getROf(g, eventR, g.isDownward()) + (g.isDownward() ? 1 : -1) * ComputationalMesh.EPS;
                 int startIndex = MESH.getNextIndexOf(startR, partition);
                 int endIndex = MESH.getNextIndexOf(endR, partition);
                 if (!g.isDownward()) startIndex++;
@@ -824,7 +824,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                     //when the path reaches the jeffreys boundary.
                     if (r <= jeffreysBoundary) {
                         if (g.isDownward()) {
-                            addRThetaTime(jeffreysBoundary, pp, rList, thetaList, tList);
+                            addRThetaTime(pp, jeffreysBoundary, rList, thetaList, tList);
                             rList.add(endR);
                             thetaList.add(thetaList.getLast() + jeffreysDeltaMap.get(pp));
                             tList.add(tList.getLast() + jeffreysTMap.get(pp));
@@ -837,11 +837,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                             if (j == endIndex) break;
                         }
                     }
-                    addRThetaTime(r, pp, rList, thetaList, tList);
+                    addRThetaTime(pp, r, rList, thetaList, tList);
                     if (g.isDownward()) j--;
                     else j++;
                 }
-                addRThetaTime(endR, pp, rList, thetaList, tList);
+                addRThetaTime(pp, endR, rList, thetaList, tList);
             }
 //            else if (part.isBottomsideReflection() || part.isTransmission() || part.isPenetration() ||
 //                    part.isBounce() || part.isTopsideReflection()) {
@@ -859,12 +859,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * @param inner  inner(true) or outer (false)
-     * @param eventR radius [km] of the event
      * @param part   for the innerR.
+     * @param eventR radius [km] of the event
+     * @param inner  inner(true) or outer (false)
      * @return radius [km] of the inner(true) or outer (false) point of the part
      */
-    private double getROf(boolean inner, double eventR, GeneralPart part) {
+    private double getROf(GeneralPart part, double eventR, boolean inner) {
         PassPoint point = inner ? part.getInnerPoint() : part.getOuterPoint();
         switch (point) {
             case OTHER:
@@ -885,16 +885,16 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * The center of the Earth is (0, 0) Starting point is (0, eventR)
      *
-     * @param eventR [km] radius of event
      * @param phase  Seismic {@link Phase}
+     * @param eventR [km] radius of event
      * @return [point]{x, y} coordinates of the path
      */
-    double[][] getRouteXY(double eventR, Phase phase) {
-        if (Double.isNaN(computeDelta(eventR, phase))) {
+    double[][] getRouteXY(Phase phase, double eventR) {
+        if (Double.isNaN(computeDelta(phase, eventR))) {
             System.err.println(phase + " does not exist.");
             return null;
         }
-        double[][] rTheta = getRoute(eventR, phase);
+        double[][] rTheta = getRoute(phase, eventR);
         double[][] points = new double[rTheta.length][2];
         for (int i = 0; i < points.length; i++) {
             points[i][0] = rTheta[i][0] * Math.sin(rTheta[i][1]);
