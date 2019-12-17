@@ -36,6 +36,9 @@ Thumbs.db
 # Gradle
 .gradle/
 !gradle-wrapper.jar
+gradle
+gradlew.bat
+gradlew
 
 # Maven
 target
