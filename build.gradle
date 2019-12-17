@@ -1,12 +1,12 @@
 /////////////////////////////////////////
 // build.gradle for Kibrary
-// v0.0.1
+// v0.0.2
 /////////////////////////////////////////
 // Apply the java plugin to add support for Java
 plugins {
     id 'java'
-    id "de.undercouch.download" version "4.0.1"
     id 'application'
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
 }
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -22,77 +22,19 @@ repositories {
 }
 
 dependencies {
-    compile 'org.apache.commons:commons-math3:+'
-    compile 'org.apache.commons:commons-lang3:+'
-    compile 'org.apache.commons:commons-email:+'
-    compile 'commons-io:commons-io:+'
-    compile 'commons-net:commons-net:+'
-    compile 'commons-net:commons-net:+'
-    compile 'commons-cli:commons-cli:+'
-    compile 'net.sf.epsgraphics:epsgraphics:+'
-    compile 'edu.sc.seis:TauP:+'
+    implementation 'org.apache.commons:commons-math3:+'
+    implementation 'org.apache.commons:commons-lang3:+'
+    implementation 'org.apache.commons:commons-email:+'
+    implementation 'commons-io:commons-io:+'
+    implementation 'commons-net:commons-net:+'
+    implementation 'commons-net:commons-net:+'
+    implementation 'commons-cli:commons-cli:+'
+    implementation 'net.sf.epsgraphics:epsgraphics:+'
+    implementation 'edu.sc.seis:TauP:+'
 }
 
-// path for jar files.
-def dependJarCopyTo = 'lib'
 jar {
-    baseName = 'kibrary'
     manifest {
-        attributes 'Implementation-Title': 'kibrary', 'Implementation-Version': version
-        attributes "Main-Class": "io.github.kensuke1984.kibrary.About"
-    }
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-}
-
-task downloadAndUnzip {
-    outputs.upToDateWhen { file('src').exists() }
-    doLast { 
-       def master = file('Kibrary-master')
-        def downloadedFile = File.createTempFile("kibrary", ".zip")
-        download {
-            src 'https://github.com/kensuke1984/Kibrary/archive/master.zip'
-            dest downloadedFile
-        }
-        copy {
-            from zipTree(downloadedFile)
-            into file('.')
-        }
-        delete downloadedFile
-        file('Kibrary-master/src').renameTo(file('src'))
-        delete master
+        attributes "Main-Class": mainClassName
     }
 }
-
-task setupSourceCodes(dependsOn: downloadAndUnzip){
-}
-
-// Delete a folder for jar files
-task delDependJar {
-    doLast {
-        delete dependJarCopyTo
-    }
-}
-
-// Copy jar files into a folder.
-task getDependJar(dependsOn: delDependJar) {
-    doLast {
-        configurations.compile.each {
-            def fromJarFile = it.absolutePath
-            copy {
-                from fromJarFile
-                into dependJarCopyTo
-            }
-        }
-        println "----- Downloaded these jar files -----"
-//        FileCollection copyFiles = files { file(dependJarCopyTo).listFiles() }
-//        copyFiles.each {File file -> println file.name}
-        files { file(dependJarCopyTo).listFiles() }.each {file -> println file.name}
-    } 
-}
-
-compileJava {
-    dependsOn setupSourceCodes
-}
-
-clean { delete "src" }
-
