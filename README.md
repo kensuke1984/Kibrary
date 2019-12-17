@@ -33,26 +33,17 @@ Most general users just need the jar file (and [Java](#java)).
 Download the [binary release of Kibrary][kibrary].
 If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
 
-
-
- <i>Build by yourself</i>
-
 If you just want to use Kibrary, just install as [above](#installation).
-If you would like to have source files, execute [this](https://kensuke1984.github.io/bin/install.sh).
+If you would like to install useful launchers, execute [this](https://bit.ly/2YUfEB6).
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
 #If you have curl installed 
- % kins=$(mktemp) && curl -s -o $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm -f $kins
+ % kins=$(mktemp) && curl -s -o $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 #else if wget is installed, try
- % kins=$(mktemp) && wget -q -O $kins https://kensuke1984.github.io/bin/install.sh && /bin/sh $kins && rm -f $kins
+ % kins=$(mktemp) && wget -q -O $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 ```
 If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
-the download may fail. In that case, you must update it, 
-
-If you want to clean install, use ```/bin/sh $kins -f``` instead of ```/bin/sh $kins```.
-Java Development Kit is required for compiling Kibrary. 
-
-otherwise you can download the [binary release of Kibrary][kibrary]. 
+the download may fail. In that case, you must update it, otherwise you can download the [binary release of Kibrary][kibrary]. 
 
 The necessary/bundled libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
@@ -61,6 +52,29 @@ The necessary/bundled libraries are
 The latest versions are strongly recommended.
 
 
+ <i>Build by yourself</i>
+
+If you would like to have source files, just get them using ```git``` like below:
+
+```bash
+ % cd /path/to/install
+ % git clone https://github.com/kensuke1984/Kibrary.git
+```
+
+To solve dependencies, ```build.gradle``` is prepared. If you do not have ```gradle```, this might help:
+
+```bash
+ % cd /path/to/install
+ #If you have curl installed 
+ % kins=$(mktemp) && curl -s -o $kins https://bit.ly/380vUbe && /bin/sh $kins && rm -f $kins
+ #else if wget is installed, try
+ % kins=$(mktemp) && wget -q -O $kins https://bit.ly/38OvUbe && tar -xf $kins && rm -f $kins
+ % ./gradlew
+ % ./gradlew build
+ % java -jar build/libs/Kibrary-0.4.5-all.jar
+```
+
+This makes an all-in-one(dependencies) jar file (```Kibrary-0.4.5-all.jar```).
 
 ## Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
