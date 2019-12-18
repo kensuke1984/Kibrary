@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.DoubleUnaryOperator;
 
 /**
  * The class is calculator of the formulation in Woodhouse (1981).
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @version 0.0.4.2
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -35,12 +36,32 @@ class Woodhouse1981 implements Serializable {
     private transient Map<Double, Double> s4;
     private transient Map<Double, Double> s5;
 
+    private final DoubleUnaryOperator calcS1;
+    private final DoubleUnaryOperator calcS2;
+    private final DoubleUnaryOperator calcS3;
+    private final DoubleUnaryOperator calcS4;
+    private final DoubleUnaryOperator calcS5;
+
     /**
      * @param structure for Woodhouse computation
      */
     Woodhouse1981(VelocityStructure structure) {
         STRUCTURE = structure;
         copyOrCreate();
+        calcS1 = x -> 0.5 * STRUCTURE.getRho(x) * (1 / STRUCTURE.getL(x) + 1 / STRUCTURE.getC(x));
+        calcS2 = x -> 0.5 * STRUCTURE.getRho(x) * (1 / STRUCTURE.getL(x) - 1 / STRUCTURE.getC(x));
+        calcS3 = x -> {
+            double c = STRUCTURE.getC(x);
+            double f = STRUCTURE.getF(x);
+            double l = STRUCTURE.getL(x);
+            return 0.5 / l / c * (STRUCTURE.getA(x) * c - f * f - 2 * l * f);
+        };
+        calcS4 = x -> {
+            double s3 = computeS3(x);
+            return s3 * s3 - STRUCTURE.getA(x) / STRUCTURE.getC(x);
+        };
+        calcS5 = x -> 0.5 * STRUCTURE.getRho(x) / STRUCTURE.getC(x) * (1 + STRUCTURE.getA(x) / STRUCTURE.getL(x)) -
+                computeS1(x) * computeS3(x);
     }
 
     private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
@@ -221,7 +242,7 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>1</sub>
      */
     private double computeS1(double r) {
-        return s1.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(r) * (1 / STRUCTURE.getL(r) + 1 / STRUCTURE.getC(r)));
+        return s1.computeIfAbsent(r, calcS1::applyAsDouble);
     }
 
     /**
@@ -229,7 +250,7 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>2</sub>
      */
     private double computeS2(double r) {
-        return s2.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(r) * (1 / STRUCTURE.getL(r) - 1 / STRUCTURE.getC(r)));
+        return s2.computeIfAbsent(r, calcS2::applyAsDouble);
     }
 
     /**
@@ -237,12 +258,7 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>3</sub>
      */
     private double computeS3(double r) {
-        return s3.computeIfAbsent(r, x -> {
-            double c = STRUCTURE.getC(r);
-            double f = STRUCTURE.getF(r);
-            double l = STRUCTURE.getL(r);
-            return 0.5 / l / c * (STRUCTURE.getA(r) * c - f * f - 2 * l * f);
-        });
+        return s3.computeIfAbsent(r, calcS3::applyAsDouble);
     }
 
     /**
@@ -250,10 +266,7 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>4</sub>
      */
     private double computeS4(double r) {
-        return s4.computeIfAbsent(r, x -> {
-            double s3 = computeS3(r);
-            return s3 * s3 - STRUCTURE.getA(r) / STRUCTURE.getC(r);
-        });
+        return s4.computeIfAbsent(r, calcS4::applyAsDouble);
     }
 
     /**
@@ -261,8 +274,6 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>5</sub>
      */
     private double computeS5(double r) {
-        return s5.computeIfAbsent(r,
-                x -> 0.5 * STRUCTURE.getRho(r) / STRUCTURE.getC(r) * (1 + STRUCTURE.getA(r) / STRUCTURE.getL(r)) -
-                        computeS1(r) * computeS3(r));
+        return s5.computeIfAbsent(r, calcS5::applyAsDouble);
     }
 }
