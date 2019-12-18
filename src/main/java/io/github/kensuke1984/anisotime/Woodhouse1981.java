@@ -9,7 +9,7 @@ import java.util.*;
  * The class is calculator of the formulation in Woodhouse (1981).
  *
  * @author Kensuke Konishi
- * @version 0.0.4
+ * @version 0.0.4.1
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -221,7 +221,7 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>1</sub>
      */
     private double computeS1(double r) {
-        return s1.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(x) * (1 / STRUCTURE.getL(x) + 1 / STRUCTURE.getC(x)));
+        return s1.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(r) * (1 / STRUCTURE.getL(r) + 1 / STRUCTURE.getC(r)));
     }
 
     /**
@@ -229,7 +229,7 @@ class Woodhouse1981 implements Serializable {
      * @return S<sub>2</sub>
      */
     private double computeS2(double r) {
-        return s2.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(x) * (1 / STRUCTURE.getL(x) - 1 / STRUCTURE.getC(x)));
+        return s2.computeIfAbsent(r, x -> 0.5 * STRUCTURE.getRho(r) * (1 / STRUCTURE.getL(r) - 1 / STRUCTURE.getC(r)));
     }
 
     /**
@@ -238,10 +238,10 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS3(double r) {
         return s3.computeIfAbsent(r, x -> {
-            double c = STRUCTURE.getC(x);
-            double f = STRUCTURE.getF(x);
-            double l = STRUCTURE.getL(x);
-            return 0.5 / l / c * (STRUCTURE.getA(x) * c - f * f - 2 * l * f);
+            double c = STRUCTURE.getC(r);
+            double f = STRUCTURE.getF(r);
+            double l = STRUCTURE.getL(r);
+            return 0.5 / l / c * (STRUCTURE.getA(r) * c - f * f - 2 * l * f);
         });
     }
 
@@ -262,7 +262,7 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS5(double r) {
         return s5.computeIfAbsent(r,
-                x -> 0.5 * STRUCTURE.getRho(x) / STRUCTURE.getC(x) * (1 + STRUCTURE.getA(x) / STRUCTURE.getL(x)) -
-                        computeS1(x) * computeS3(x));
+                x -> 0.5 * STRUCTURE.getRho(r) / STRUCTURE.getC(r) * (1 + STRUCTURE.getA(r) / STRUCTURE.getL(r)) -
+                        computeS1(r) * computeS3(r));
     }
 }
