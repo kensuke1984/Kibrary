@@ -1,6 +1,7 @@
 package io.github.kensuke1984.anisotime;
 
 import io.github.kensuke1984.kibrary.math.Integrand;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
@@ -286,6 +287,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (hasTransients) return;
         synchronized (this) {
             if (hasTransients) return;
+            computeTau();
             computeDelta();
             computeT();
             isComputed = true;
@@ -720,7 +722,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * r &le; nextR. rStart is the last entry of the rList. (The $Delta; + the last
      * entry of thetaList) is added to the thetaList. T is same. The nextR and
      * the last entry of rList must be in a same partition.
-     * @param pp target {@link PhasePart}
+     *
+     * @param pp             target {@link PhasePart}
      * @param nextR          [km]
      * @param rList          to add nextR
      * @param thetaList      to add &Delta;
@@ -1134,6 +1137,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             double[] dTheta = new double[mesh.getDimension() - 1];
             dThetaMap.put(pp, dTheta);
             return new Thread(() -> {
+                long t = System.nanoTime();
                 double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
 
                 for (int i = 0; i < dTheta.length; i++) {
@@ -1149,6 +1153,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                     deltaMap.put(pp, Math.PI / 2);
                     dTheta[0] = Math.PI / 2;
                 }
+                if (pp==PhasePart.P) System.out.println(Utilities.toTimeString(System.nanoTime()-t)+" Delta");
             });
         };
 
@@ -1164,6 +1169,70 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             throw new RuntimeException("Could not compute epicentral distances.");
         }
     }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////<----------------------------tau develop
+///////////////////////////////////////////////////////////////////////////////////////
+    // &tau; for each pp
+    private transient Map<PhasePart, Double> tauMap;
+    // &Delta;&tau; in each layer for each pp
+    private transient Map<PhasePart, double[]> dTauMap;
+
+double getTau(PhasePart pp){
+    return tauMap.get(pp);
+}
+    private void computeTau() {
+        tauMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+        Arrays.stream(PhasePart.values()).forEach(pp -> tauMap.put(pp, Double.NaN));
+        Function<PhasePart, Thread> createThread = pp -> {
+            RealVector mesh = MESH.getMesh(pp.whichPartition());
+            double[] dTau = new double[mesh.getDimension() - 1];
+            dTauMap.put(pp, dTau);
+//            if (pp != PhasePart.K) return new Thread();
+            return new Thread(() -> {
+                long t = System.nanoTime();
+                double turningR = getTurningR(pp);
+                int startIndex = Double.isNaN(turningR) ? 0 : MESH.getNextIndexOf(turningR, pp.whichPartition()) + 1;
+                double minimumR = Double.isNaN(turningR) ? mesh.getEntry(0) : turningR;
+                if (!Double.isNaN(turningR)) while (Double.isNaN(WOODHOUSE.computeQTau(pp, RAY_PARAMETER, minimumR)))
+                    minimumR += ComputationalMesh.EPS; //TODO
+                double nextR = mesh.getEntry(startIndex);
+                double sum = simpson(r -> WOODHOUSE.computeQTau(pp, RAY_PARAMETER, r), minimumR, nextR);
+                if (pp==PhasePart.P)
+                System.out.println(pp+" sum turning "+sum);
+//                sum=0;
+                for (int i = startIndex; i < dTau.length; i++)
+                    sum += dTau[i] = simpson(r -> WOODHOUSE.computeQTau(pp, RAY_PARAMETER, r), mesh.getEntry(i),
+                            mesh.getEntry(i + 1));
+
+//                double startR = Double.isNaN(turningR) ? mesh.getEntry(0) : turningR;
+                //TODO diffraction
+                tauMap.put(pp, sum);
+//                tauMap.put(pp, computeDelta(pp, startR, mesh.getEntry(dTau.length)));
+//                if (RAY_PARAMETER == 0 && (pp == PhasePart.I || pp == PhasePart.JV)) {
+//                    //TODO
+//                }
+//                System.out.println(pp+" "+sum);
+                if (pp==PhasePart.P) System.out.println(Utilities.toTimeString(System.nanoTime()-t)+" Tau "+pp);
+
+            });
+        };
+
+        dTauMap = Collections.synchronizedMap(new EnumMap<>(PhasePart.class));
+        List<Thread> runningThread = Arrays.stream(PhasePart.values()).map(createThread).collect(Collectors.toList());
+
+        runningThread.forEach(Thread::start);
+        try {
+            for (Thread t : runningThread)
+                t.join();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Could not compute epicentral distances.");
+        }
+    }
+/////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////<----------------------------tau develop
+///////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * computes turning radius
@@ -1230,7 +1299,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double ratio = a < c ? a / c : c / a;
         if (INTEGRAL_THRESHOLD < ratio) return bySimpsonRule(a, b, c, deltaX);
         if (a + b + c == 0) return 0;
-        return simpsonInCriticalRange(dXdr, startR, endR);
+        return simpsonInCriticalRange(dXdr, startR, startR + 0.01 * deltaX) +
+                simpsonInCriticalRange(dXdr, startR + 0.01 * deltaX, endR);
+//        return simpsonInCriticalRange(dXdr, startR, endR);
     }
 
     /**
