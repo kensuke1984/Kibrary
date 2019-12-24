@@ -171,13 +171,6 @@ class RaypathTest {
 
     }
 
-    public static void main(String[] args) throws IOException, TauModelException, TauPException {
-//        current();
-//        checkTauP();
-//        compareTAUDELTA();
-//        check3005();
-        good2bad2();
-    }
 
     private static void good2bad2() throws TauPException, IOException, TauModelException {
 //        double bounceR = 3480;
@@ -279,8 +272,8 @@ class RaypathTest {
         RaypathCatalog catalog = RaypathCatalog.prem();
         Phase phase = Phase.create("Sdiff");
         Raypath[] raypaths = catalog.searchPath(phase, 6371 - 50.2, Math.toRadians(108.5), false);
-        System.out.println(raypaths[0].computeDelta(6371 - 50.2, phase));
-        System.out.println(raypaths[0].computeDelta(6371 - 50.2, phase.S));
+        System.out.println(raypaths[0].computeDelta(phase, 6371 - 50.2));
+        System.out.println(raypaths[0].computeDelta(phase.S, 6371 - 50.2));
     }
 
     private static void skiks() {
@@ -297,7 +290,7 @@ class RaypathTest {
 //        System.out.println("############################");
 //        raypath.getRoute(6371,skiks);
 //        System.exit(0);
-        double[][] pointsSKIKS = raypath.getRouteXY(6371, Phase.SKIKS);
+        double[][] pointsSKIKS = raypath.getRouteXY(Phase.SKIKS, 6371);
         double[] xSKIKS = new double[pointsSKIKS.length];
         double[] ySKIKS = new double[pointsSKIKS.length];
         for (int i = 0; i < pointsSKIKS.length; i++) {
@@ -323,8 +316,8 @@ class RaypathTest {
         Raypath ray1 = raypaths[0];
         Raypath ray2 = raypaths[1];
 
-        System.out.println(ray1.getRayParameter() + " " + Math.toDegrees(ray1.computeDelta(6371, targetPhase)));
-        System.out.println(ray2.getRayParameter() + " " + Math.toDegrees(ray2.computeDelta(6371, targetPhase)));
+        System.out.println(ray1.getRayParameter() + " " + Math.toDegrees(ray1.computeDelta(targetPhase, 6371)));
+        System.out.println(ray2.getRayParameter() + " " + Math.toDegrees(ray2.computeDelta(targetPhase, 6371)));
 
         System.out.println(raypaths.length);
     }
@@ -364,8 +357,8 @@ class RaypathTest {
         Raypath[] raypaths = catalog.searchPath(Phase.PKIKP, 6371, Math.toRadians(150), false);
         for (Raypath raypath : raypaths) {
             System.out.println(
-                    raypath.getRayParameter() + " " + Math.toDegrees(raypath.computeDelta(6371, Phase.PKIKP)) + " " +
-                            raypath.computeT(6371, Phase.PKIKP));
+                    raypath.getRayParameter() + " " + Math.toDegrees(raypath.computeDelta(Phase.PKIKP, 6371)) + " " +
+                            raypath.computeT(Phase.PKIKP, 6371));
         }
     }
 
@@ -375,8 +368,8 @@ class RaypathTest {
         System.out.println("############");
         raypath1.compute();
         Phase phase = Phase.create("PKIKP");
-        double delta = raypath1.computeDelta(6371, phase);
-        System.out.println(Math.toDegrees(delta) + " " + raypath1.computeT(6371, phase));
+        double delta = raypath1.computeDelta(phase, 6371);
+        System.out.println(Math.toDegrees(delta) + " " + raypath1.computeT(phase, 6371));
         System.out.println("############");
         System.exit(0);
 
@@ -391,8 +384,8 @@ class RaypathTest {
             System.out.println("############");
             raypath1.compute();
             Phase phase = Phase.create("PKIKP");
-            double delta = raypath1.computeDelta(6371, phase);
-            System.out.println(p + " " + Math.toDegrees(delta) + " " + raypath1.computeT(6371, phase));
+            double delta = raypath1.computeDelta(phase, 6371);
+            System.out.println(p + " " + Math.toDegrees(delta) + " " + raypath1.computeT(phase, 6371));
             System.out.println("############");
         }
     }
@@ -402,9 +395,9 @@ class RaypathTest {
         System.out.println("############");
         raypath1.compute();
         Phase phase = Phase.create("P");
-        double delta = raypath1.computeDelta(6371, phase);
+        double delta = raypath1.computeDelta(phase, 6371);
         System.out.println(
-                Math.toDegrees(delta) + " " + raypath1.computeT(6371, phase) + " " + raypath1.getTurningR(PhasePart.P));
+                Math.toDegrees(delta) + " " + raypath1.computeT(phase, 6371) + " " + raypath1.getTurningR(PhasePart.P));
         System.out.println("############");
     }
 
@@ -420,8 +413,8 @@ class RaypathTest {
         for (double p = minP; p < maxP; p += dP) {
             Raypath raypath = new Raypath(p);
             raypath.compute();
-            double delta = Math.toDegrees(raypath.computeDelta(6371, Phase.P));
-            if (Double.isNaN(delta)) delta = Math.toDegrees(raypath.computeDelta(6371, p220));
+            double delta = Math.toDegrees(raypath.computeDelta(Phase.P, 6371));
+            if (Double.isNaN(delta)) delta = Math.toDegrees(raypath.computeDelta(p220, 6371));
             if (Double.isNaN(delta)) continue;
             System.out.println(p + " " + delta + " " + (6371 - raypath.getTurningR(PhasePart.P)));
 
@@ -438,16 +431,13 @@ class RaypathTest {
         }
     }
 
-    private static void catalogDev() {
-        RaypathCatalog.prem().debug();
-    }
 
     private static void test1986() {
 //        Raypath raypath = new Raypath(1986.2500000312498);
         Raypath raypath = new Raypath(1379.0292530838485);
         raypath.compute();
         System.out.println(raypath.getTurningR(PhasePart.SH));
-        System.out.println(raypath.computeDelta(6371, Phase.create("Sv15S")));
+        System.out.println(raypath.computeDelta(Phase.create("Sv15S"), 6371));
     }
 
     private static void check220() {
@@ -461,7 +451,7 @@ class RaypathTest {
         for (double p = pstart; p < pend; p += pdelta) {
             Raypath raypath = new Raypath(p);
             raypath.compute();
-            System.out.println(p + " " + raypath.getTurningR(PhasePart.SH) + " " + raypath.computeDelta(6371, Phase.S));
+            System.out.println(p + " " + raypath.getTurningR(PhasePart.SH) + " " + raypath.computeDelta(Phase.S, 6371));
         }
     }
 
@@ -477,7 +467,7 @@ class RaypathTest {
         Raypath raypath = new Raypath(1382.5332586419352);
         raypath.compute();
         System.out.println("turning " + (6371 - raypath.getTurningR(PhasePart.SH)));
-        System.out.println(Math.toDegrees(raypath.computeDelta(6371, Phase.S)));
+        System.out.println(Math.toDegrees(raypath.computeDelta(Phase.S, 6371)));
     }
 
     private static void single1() {
@@ -490,8 +480,8 @@ class RaypathTest {
         Raypath raypath = new Raypath(pMax);
         raypath.compute();
         System.out.println(
-                raypath.getTurningR(PhasePart.SH) + " " + Math.toDegrees(raypath.computeDelta(6371, Phase.S)) + " " +
-                        Math.toDegrees(raypath.computeDelta(6371, Phase.SV)));
+                raypath.getTurningR(PhasePart.SH) + " " + Math.toDegrees(raypath.computeDelta(Phase.S, 6371)) + " " +
+                        Math.toDegrees(raypath.computeDelta(Phase.SV, 6371)));
     }
 
     private static void single10() throws ParseException {
@@ -509,10 +499,10 @@ class RaypathTest {
 
         for (Raypath raypath : raypaths) {
             double p = raypath.getRayParameter();
-            double delta = raypath.computeDelta(6371, Phase.S);
+            double delta = raypath.computeDelta(Phase.S, 6371);
             delta = Math.toDegrees(delta);
             double turningR = raypath.getTurningR(PhasePart.SH);
-            double time = raypath.computeT(6371, Phase.S);
+            double time = raypath.computeT(Phase.S, 6371);
             if (Double.isNaN(delta)) System.out.println("#" + raypath.getRayParameter() + " " + delta + " " + turningR);
             else System.out.println(raypath.getRayParameter() + " " + delta + " " + time + " " + turningR);
         }
@@ -549,7 +539,7 @@ class RaypathTest {
         for (double p = pstart; p < pend; p += pdelta) {
             Raypath raypath = new Raypath(p);
             raypath.compute();
-            double v = raypath.computeDelta(6371, Phase.S);
+            double v = raypath.computeDelta(Phase.S, 6371);
             v = Math.toDegrees(v);
             System.out.println(p + " " + v);
         }
@@ -631,7 +621,7 @@ inrange
     private static void ray0() {
         Raypath raypath = new Raypath(0, VelocityStructure.iprem());
         raypath.compute();
-        System.out.println(raypath.computeDelta(6371, Phase.PcP) + " " + raypath.computeT(6371, Phase.PcP));
+        System.out.println(raypath.computeDelta(Phase.PcP, 6371) + " " + raypath.computeT(Phase.PcP, 6371));
     }
 
     private static void single2() {
@@ -661,7 +651,7 @@ inrange
         Path out = Paths.get("/home/kensuke/workspace/kibrary/anisotime/catalog/1208/s_PREM.txt");
         List<String> lines = new ArrayList<>();
         for (Raypath raypath : raypaths) {
-            double delta = Math.toDegrees(raypath.computeDelta(6371, phase));
+            double delta = Math.toDegrees(raypath.computeDelta(phase, 6371));
 
             String line = raypath.getRayParameter() + " " + delta;
             if (Double.isNaN(delta)) line = "# " + line;
@@ -677,7 +667,7 @@ inrange
         for (double p = pstart; p < pend; p += deltaP) {
             Raypath raypath1 = new Raypath(p, VelocityStructure.iprem());
             raypath1.compute();
-            System.out.println(p + " " + Math.toDegrees(raypath1.computeDelta(6371, Phase.create("Sv2741S"))) + " " +
+            System.out.println(p + " " + Math.toDegrees(raypath1.computeDelta(Phase.create("Sv2741S"), 6371)) + " " +
                     raypath1.getTurningR(PhasePart.SH));
 
         }
@@ -688,7 +678,7 @@ inrange
         Raypath raypath1 = new Raypath(1990.930175750244, VelocityStructure.iprem());
         raypath1.compute();
         System.out
-                .println(Math.toDegrees(raypath1.computeDelta(6371, Phase.S)) + " " + raypath1.computeT(6371, Phase.S));
+                .println(Math.toDegrees(raypath1.computeDelta(Phase.S, 6371)) + " " + raypath1.computeT(Phase.S, 6371));
     }
 
     private static void eternally() {
@@ -696,7 +686,7 @@ inrange
         Raypath raypath1 = new Raypath(499.5891057171594, VelocityStructure.iprem());
         raypath1.compute();
         System.out
-                .println(Math.toDegrees(raypath1.computeDelta(6371, Phase.S)) + " " + raypath1.computeT(6371, Phase.S));
+                .println(Math.toDegrees(raypath1.computeDelta(Phase.S, 6371)) + " " + raypath1.computeT(Phase.S, 6371));
 
     }
 
@@ -784,14 +774,14 @@ inrange
             raypath.compute();
             double eventR = 6371.;
 
-            double delta_scs_sh = Math.toDegrees(raypath.computeDelta(eventR, Phase.ScS));
-            double t_scs_sh = raypath.computeT(eventR, Phase.ScS);
+            double delta_scs_sh = Math.toDegrees(raypath.computeDelta(Phase.ScS, eventR));
+            double t_scs_sh = raypath.computeT(Phase.ScS, eventR);
 
-            double delta_scs_sv = Math.toDegrees(raypath.computeDelta(eventR, Phase.create("ScS", true)));
-            double t_scs_sv = raypath.computeT(eventR, Phase.create("ScS", true));
+            double delta_scs_sv = Math.toDegrees(raypath.computeDelta(Phase.create("ScS", true), eventR));
+            double t_scs_sv = raypath.computeT(Phase.create("ScS", true), eventR);
 
-            double delta_pcp = Math.toDegrees(raypath.computeDelta(eventR, Phase.PcP));
-            double t_pcp = raypath.computeT(eventR, Phase.PcP);
+            double delta_pcp = Math.toDegrees(raypath.computeDelta(Phase.PcP, eventR));
+            double t_pcp = raypath.computeT(Phase.PcP, eventR);
 
             double tAnal_scs_sh = computeTanalyticalHomogenSH(rayparameter, 3480., 6371.) * 2;
             double tAnal_scs_sv = computeTanalyticalHomogenSV(rayparameter, 3480., 6371.) * 2;
