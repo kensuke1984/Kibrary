@@ -51,7 +51,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.6.0b
+ * @version 0.6.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -63,7 +63,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * 2019/12/27
      */
-    private static final long serialVersionUID = 4024903518590781105L;
+    private static final long serialVersionUID = -6178811489749269738L;
 
     @Override
     public boolean equals(Object o) {
@@ -1354,13 +1354,12 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double nextREnd = radii.getEntry(endIndexForMemory);
         //outside the nextREnd
         double tau = simpson(qTau, nextREnd, endR);
-        if (dThetaMap != null) {
-            double[] theta = dThetaMap.get(pp);
+        if (dTauMap != null) {
+            double[] taus = dTauMap.get(pp);
             for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
-                tau += theta[i];
+                tau += taus[i];
         } else for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
             tau += simpson(qTau, radii.getEntry(i), radii.getEntry(i + 1));
-
         return tau + simpson(qTau, startR, radii.getEntry(firstIndexForMemory));
     }
 
