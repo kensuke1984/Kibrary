@@ -51,7 +51,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.6.1b
+ * @version 0.6.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -1283,7 +1283,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     static double computeDelta(Phase phase, double eventR, Raypath ray0, Raypath targetRaypath, Raypath ray2) {
         if (targetRaypath.getRayParameter() <= ray0.RAY_PARAMETER || ray2.RAY_PARAMETER <= targetRaypath.RAY_PARAMETER)
             throw new IllegalArgumentException(
-                    "ray parameters must be p0<p1<p2. Input parameters are " + ray0 + " " + targetRaypath + " " + ray2);
+                    "Ray parameters must be p0<p1<p2. Input parameters are " + ray0 + " " + targetRaypath + " " + ray2);
+        if(phase.isDiffracted())
+            throw new RuntimeException("Diffraction waves meibangfa");
         double tau0 = ray0.computeTau(phase, eventR);
         double tau1 = targetRaypath.computeTau(phase, eventR);
         double tau2 = ray2.computeTau(phase, eventR);
