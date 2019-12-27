@@ -10,7 +10,7 @@ import java.util.function.DoubleUnaryOperator;
  * The class is calculator of the formulation in Woodhouse (1981).
  *
  * @author Kensuke Konishi
- * @version 0.0.5
+ * @version 0.0.5.1
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -244,7 +244,7 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS1(double r) {
         return computeS1.applyAsDouble(r);
-//        return s1.computeIfAbsent(r, calcS1::applyAsDouble);
+//        return s1.computeIfAbsent(r, computeS1::applyAsDouble);
     }
 
     /**
@@ -253,7 +253,7 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS2(double r) {
         return computeS2.applyAsDouble(r);
-//        return s2.computeIfAbsent(r, calcS2::applyAsDouble);
+//        return s2.computeIfAbsent(r, computeS2::applyAsDouble);
     }
 
     /**
@@ -262,7 +262,7 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS3(double r) {
         return computeS3.applyAsDouble(r);
-//        return s3.computeIfAbsent(r, calcS3::applyAsDouble);
+//        return s3.computeIfAbsent(r, computeS3::applyAsDouble);
     }
 
     /**
@@ -271,7 +271,7 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS4(double r) {
         return computeS4.applyAsDouble(r);
-//        return s4.computeIfAbsent(r, calcS4::applyAsDouble);
+//        return s4.computeIfAbsent(r, computeS4::applyAsDouble);
     }
 
     /**
@@ -280,6 +280,6 @@ class Woodhouse1981 implements Serializable {
      */
     private double computeS5(double r) {
         return computeS5.applyAsDouble(r);
-//        return s5.computeIfAbsent(r, calcS5::applyAsDouble);
+//        return s5.computeIfAbsent(r, computeS5::applyAsDouble);
     }
 }
