@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.2.1
+ * @version 0.2.3
  */
 public class RaypathCatalog implements Serializable {
 
     /**
      * 2019/12/16
      */
-    private static final long serialVersionUID = -1692363736850939251L;
+    private static final long serialVersionUID = -16111119192151L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -140,7 +140,6 @@ public class RaypathCatalog implements Serializable {
                     PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (ClassNotFoundException | IOException e) {
-                    e.printStackTrace();
                     System.err.println("failed.\nCreating a catalog for PREM.");
                     PREM = createAndWrite(p, VelocityStructure.prem());
                 }
@@ -575,9 +574,9 @@ public class RaypathCatalog implements Serializable {
     private void catalogOfReflections() {
         //mantle
         double[] mantleBoundaries = getStructure().boundariesInMantle();
-        DoubleUnaryOperator calcVp = getStructure()::computeVph;
-        DoubleUnaryOperator calcVsv = getStructure()::computeVsv;
-        DoubleUnaryOperator calcVsh = getStructure()::computeVsh;
+        DoubleUnaryOperator computeVph = getStructure()::computeVph;
+        DoubleUnaryOperator computeVsv = getStructure()::computeVsv;
+        DoubleUnaryOperator computeVsh = getStructure()::computeVsh;
         long t = System.nanoTime();
         for (double mantleBoundary : mantleBoundaries) {
             if (mantleBoundary == getStructure().coreMantleBoundary() || !getStructure().isJump(mantleBoundary))
@@ -587,16 +586,18 @@ public class RaypathCatalog implements Serializable {
             System.err.print(" for P ..");
             //P
             reflectionCatalogs.add(new ReflectionCatalog(mantleBoundary, PhasePart.P,
-                    computeReflectingRaypaths(mantleBoundary, Phase.create("Pv" + depthString + "P"), calcVp)));
+                    computeReflectingRaypaths(mantleBoundary, Phase.create("Pv" + depthString + "P"), computeVph)));
             System.err.print(" SV ..");
             //SV
             reflectionCatalogs.add(new ReflectionCatalog(mantleBoundary, PhasePart.SV,
-                    computeReflectingRaypaths(mantleBoundary, Phase.create("Sv" + depthString + "S", true), calcVsv)));
+                    computeReflectingRaypaths(mantleBoundary, Phase.create("Sv" + depthString + "S", true),
+                            computeVsv)));
             System.err.print(" SH ..");
             //SH
             reflectionCatalogs.add(new ReflectionCatalog(mantleBoundary, PhasePart.SH,
-                    computeReflectingRaypaths(mantleBoundary, Phase.create("Sv" + depthString + "S"), calcVsh)));
+                    computeReflectingRaypaths(mantleBoundary, Phase.create("Sv" + depthString + "S"), computeVsh)));
             System.err.print("\r");
+            WOODHOUSE.clear();
         }
         //inside outercore innercore TODO
 
@@ -610,6 +611,7 @@ public class RaypathCatalog implements Serializable {
         reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.P, computeRaypaths(Phase.PcP, 0, pPcP)));
         reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.SV, computeRaypaths(Phase.SVcS, 0, pSVcS)));
         reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.SH, computeRaypaths(Phase.ScS, 0, pScS)));
+        WOODHOUSE.clear();
         //ICB PKiKP SKiKS
         System.err.print("\rCreating a catalog for ICB");
         double icb = getStructure().innerCoreBoundary();
@@ -617,6 +619,7 @@ public class RaypathCatalog implements Serializable {
         double pPKiKP = loweMostOutercore / getStructure().computeVph(loweMostOutercore);
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.PKiKP, 0, pPKiKP)));
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.SKiKS, 0, pPKiKP)));
+        WOODHOUSE.clear();
         System.err
                 .println("\rCatalogs for boundaries are computed in " + Utilities.toTimeString(System.nanoTime() - t));
     }
@@ -650,10 +653,10 @@ public class RaypathCatalog implements Serializable {
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         computeANDadd(firstPath);
         catalogOfReflections();
+        WOODHOUSE.clear();
         catalogOfBounceWaves();
-
         computeDiffraction();
-
+        WOODHOUSE.clear();
         System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
     }
 
