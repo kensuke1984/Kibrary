@@ -102,160 +102,95 @@ class RaypathTest {
 
         double rayP = 300;
 //        double bounceR = 3480;
-        List<String> line = new ArrayList<>();
-        rayP = 181;
+        List<String> linePKIKP = new ArrayList<>();
+        List<String> lineSKIKS = new ArrayList<>();
+        List<String> lineSKiKS = new ArrayList<>();
+        List<String> lineScS = new ArrayList<>();
+        List<String> lineSKS = new ArrayList<>();
+        List<String> linePKiKP = new ArrayList<>();
+        List<String> linePcP = new ArrayList<>();
+        List<String> linePKP = new ArrayList<>();
+        rayP = 180;
 //        rayP = 3500/VelocityStructure.iprem().computeVph(3500);
 //        System.out.println(rayP);
 
         while (true) {
 //            bounceR+=1;
 //            if (bounceR>4000)
-            if (rayP > 182.01) break;
-            rayP += 0.001;
+            if (rayP > 220) break;
+            rayP += 0.05;
+            System.out.println("rayparameter " + rayP);
 //            rayP = bounceR / VelocityStructure.iprem().computeVph(bounceR);
-            double deltaP = 1;
-            Raypath raypath0 = new Raypath(rayP - deltaP, ipremW, mesh);
-            Raypath raypath1 = new Raypath(rayP, ipremW, mesh);
-            Raypath raypath2 = new Raypath(rayP + deltaP, ipremW, mesh);
-            System.out.println("rayP, deltaP: " + rayP + " " + deltaP);
-            raypath0.compute();
-            raypath1.compute();
-            raypath2.compute();
-            Phase phase = Phase.PKP;
-            double bounceR = raypath1.getTurningR(PhasePart.K);
-//            PhasePart pp = PhasePart.P;
-//            System.out.println(
-//                    raypath0.getTurningR(pp) + " " + raypath1.getTurningR(pp) + " " + raypath2.getTurningR(pp));
-            double delta0 = Math.toDegrees(raypath0.computeDelta(phase, 6371));
-            double delta1 = Math.toDegrees(raypath1.computeDelta(phase, 6371));
-            double time1 = raypath1.computeT(phase, 6371);
-            double delta2 = Math.toDegrees(raypath2.computeDelta(phase, 6371));
-//            double t = raypath.computeT(p, 6371);0.9811088004940575 0.9860402275788196 0.9909716546635817 0.9860402153491439
-            PhasePart[] op = new PhasePart[]{PhasePart.P};
-            PhasePart[] pki = new PhasePart[]{PhasePart.P, PhasePart.K, PhasePart.I};
-            PhasePart[] pk = new PhasePart[]{PhasePart.P, PhasePart.K};
-
-            double tau0 = Arrays.stream(pk).mapToDouble(raypath0::getTau).sum();
-            double tau1 = Arrays.stream(pk).mapToDouble(raypath1::getTau).sum();
-            double tau2 = Arrays.stream(pk).mapToDouble(raypath2::getTau).sum();
-            System.out.println("tau " + tau0 + " " + tau1 + " " + tau2);
-            double dtaudpAhead = -(tau2 - tau1) / deltaP;
-            double dtaudpBefore = -(tau1 - tau0) / deltaP;
-            double dtaudpCenter = -(tau2 - tau0) / 2 / deltaP;
-            dtaudpAhead = 2 * Math.toDegrees(dtaudpAhead);
-            dtaudpCenter = 2 * Math.toDegrees(dtaudpCenter);
-            dtaudpBefore = 2 * Math.toDegrees(dtaudpBefore);
-            Set<Phase> tauPPhases = new HashSet<>();
-            tauPPhases.add(phase);
-            Set<TauPPhase> tauPPhase = TauP_Time.getTauPPhase(6371, dtaudpCenter, tauPPhases);
-            double deltani = dtaudpCenter;
-            System.out.println(deltani + " " + raypath1.getTurningR(PhasePart.K));
-            TauPPhase next =
-                    tauPPhase.stream().filter(tp -> Math.abs(tp.getPuristDistance() - deltani) < 0.1).findAny().get();
-            double taupDelta = next.getPuristDistance();
-            double taupT = next.getTravelTime();
-            System.out.println("dtaudpBefore  dtaudpCenter  dtaudpAhead  deltabyOLD");
-//        System.out.println(dtaudpBefore + " " + dtaudpCenter + " " + dtaudpAhead + " " + delta1);
-            double deltaRatio = 100 * Math.abs(1 - dtaudpCenter / taupDelta);
-            System.out.println(
-                    dtaudpCenter + " " + delta1 + " " + dtaudpCenter / delta1 + " " + taupDelta + " " + deltaRatio);
-            double time5 = tau1 * 2 + (rayP) * Math.toRadians(dtaudpCenter);
-            double tRatio = Math.abs(1 - time5 / taupT) * 100;
-
-            System.out.println(
-                    time5 + " " + time1 + " " + time5 / time1 + " " + taupT + " " + tRatio + " " + tau0 + " " + tau1 +
-                            " " + tau2);
-            line.add(rayP + " " + bounceR + " " + deltaRatio + " " + tRatio + " " + tau0 + " " + tau1 + " " + tau2);
+            double deltaP = 0.5;
+            Raypath okRay1 = new Raypath(rayP, ipremW, mesh);
+            if (3480 < okRay1.getTurningR(PhasePart.P)) continue;
+            Raypath okRayM = new Raypath(rayP - deltaP, ipremW, mesh);
+            Raypath okRayP = new Raypath(rayP + deltaP, ipremW, mesh);
+//            raypath2Ratio(Phase.PcP,okRayM,okRay1,okRayP);
+            if (okRay1.getTurningR(PhasePart.I) < 1220) {
+                linePKIKP.add(raypath2Ratio2(Phase.PKIKP, okRayM, okRay1, okRayP));
+                linePKiKP.add(raypath2Ratio2(Phase.PKiKP, okRayM, okRay1, okRayP));
+            }
+//            linePcP.add(raypath2Ratio(Phase.PcP, rayP, deltaP));
+            linePcP.add(raypath2Ratio2(Phase.PcP, okRayM, okRay1, okRayP));
+//            System.exit(0);
+            if (1225 < okRay1.getTurningR(PhasePart.K)) linePKP.add(raypath2Ratio2(Phase.PKP, okRayM, okRay1, okRayP));
+//            linePKP.add(raypath2Ratio(Phase.PKP, rayP, deltaP));
+//            lineSKIKS.add(raypath2Ratio(Phase.SKIKS, rayP, deltaP));
+//            lineScS.add(raypath2Ratio(Phase.ScS, rayP, deltaP));
+            if (3480 < okRay1.getTurningR(PhasePart.SV)) continue;
+            lineScS.add(raypath2Ratio2(Phase.ScS, okRayM, okRay1, okRayP));
+//            lineSKiKS.add(raypath2Ratio(Phase.SKiKS, rayP, deltaP));
+            if (1225 < okRay1.getTurningR(PhasePart.K)) lineSKS.add(raypath2Ratio2(Phase.SKS, okRayM, okRay1, okRayP));
+            if (okRay1.getTurningR(PhasePart.I) < 1220) {
+                lineSKiKS.add(raypath2Ratio2(Phase.SKiKS, okRayM, okRay1, okRayP));
+                lineSKIKS.add(raypath2Ratio2(Phase.SKIKS, okRayM, okRay1, okRayP));
+            }
+//            lineSKS.add(raypath2Ratio(Phase.SKS, rayP, deltaP));
         }
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/tmp.txt"), line);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pkiikp27.txt"), linePKiKP);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/skiiks27.txt"), lineSKiKS);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pcp27.txt"), linePcP);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/scs27.txt"), lineScS);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pkp27.txt"), linePKP);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/sks27.txt"), lineSKS);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pkikp27.txt"), linePKIKP);
+        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/skiks27.txt"), lineSKIKS);
 
     }
 
 
-    private static void good2bad2() throws TauPException, IOException, TauModelException {
-//        double bounceR = 3480;
-        List<String> line = new ArrayList<>();
-//        rayP = 3500/VelocityStructure.iprem().computeVph(3500);
-//        System.out.println(rayP);
-
-//            bounceR+=1;
-//            if (bounceR>4000)
-        double okP1 = 180;
-        double okP2 = 180.01;
-        double noP1 = 180.02;
-        double okP3 = 180.03;
-        double okP4 = 180.04;
-        double okP5 = 180.05;
-        double okP = 180.01999999999998;
-//        while (true) {
-//if(okP>180.1)break;
-        raypath2Ratio(okP, 1);
-//    okP+=0.01;
-//        }
-//        raypath2Ratio(okP1,1);
-//        raypath2Ratio(okP2,1);
-//        raypath2Ratio(okP3,1);
-//        raypath2Ratio(noP1,1);
-
-
-//            rayP = bounceR / VelocityStructure.iprem().computeVph(bounceR);
-        //        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/tmp.txt"), line);
-    }
-
-    private static void raypath2Ratio(double okP1, double deltaP) throws TauPException, IOException, TauModelException {
-        Raypath okRayM = new Raypath(okP1 - deltaP, ipremW, mesh);
-        Raypath okRay1 = new Raypath(okP1, ipremW, mesh);
-        Raypath okRayP = new Raypath(okP1 + deltaP, ipremW, mesh);
-        System.out.println("rayP, deltaP: " + okP1 + " " + deltaP);
-        okRayM.compute();
+    private static String raypath2Ratio2(Phase phase, Raypath okRayM, Raypath okRay1, Raypath okRayP)
+            throws TauPException, IOException, TauModelException {
         okRay1.compute();
+        okRayM.compute();
         okRayP.compute();
-        Phase phase = Phase.PKP;
         double bounceR = okRay1.getTurningR(PhasePart.K);
-//            PhasePart pp = PhasePart.P;
-//            System.out.println(
-//                    raypath0.getTurningR(pp) + " " + raypath1.getTurningR(pp) + " " + raypath2.getTurningR(pp));
-        double delta0 = Math.toDegrees(okRayM.computeDelta(phase, 6371));
         double delta1 = Math.toDegrees(okRay1.computeDelta(phase, 6371));
         double time1 = okRay1.computeT(phase, 6371);
-        double delta2 = Math.toDegrees(okRayP.computeDelta(phase, 6371));
 //            double t = raypath.computeT(p, 6371);0.9811088004940575 0.9860402275788196 0.9909716546635817 0.9860402153491439
-        PhasePart[] op = new PhasePart[]{PhasePart.P};
-        PhasePart[] pki = new PhasePart[]{PhasePart.P, PhasePart.K, PhasePart.I};
-        PhasePart[] pk = new PhasePart[]{PhasePart.P, PhasePart.K};
-
-        double tau0 = Arrays.stream(pk).mapToDouble(okRayM::getTau).sum();
-        double tau1 = Arrays.stream(pk).mapToDouble(okRay1::getTau).sum();
-        double tau2 = Arrays.stream(pk).mapToDouble(okRayP::getTau).sum();
-        System.out.println("tau " + tau0 + " " + tau1 + " " + tau2);
-        double dtaudpAhead = -(tau2 - tau1) / deltaP;
-        double dtaudpBefore = -(tau1 - tau0) / deltaP;
-        double dtaudpCenter = -(tau2 - tau0) / 2 / deltaP;
-        dtaudpAhead = 2 * Math.toDegrees(dtaudpAhead);
-        dtaudpCenter = 2 * Math.toDegrees(dtaudpCenter);
-        dtaudpBefore = 2 * Math.toDegrees(dtaudpBefore);
+        double dtaudpCenter = Raypath.computeDelta(phase, 6371, okRayM, okRay1, okRayP);
+        dtaudpCenter = Math.toDegrees(dtaudpCenter);
         Set<Phase> tauPPhases = new HashSet<>();
         tauPPhases.add(phase);
         Set<TauPPhase> tauPPhase = TauP_Time.getTauPPhase(6371, dtaudpCenter, tauPPhases);
         double deltani = dtaudpCenter;
-        System.out.println(deltani + " " + okRay1.getTurningR(PhasePart.K));
-        TauPPhase next =
-                tauPPhase.stream().filter(tp -> Math.abs(tp.getPuristDistance() - deltani) < 0.1).findAny().get();
+//        System.out.println(deltani + " " + okRay1.getTurningR(PhasePart.K));
+        double time5 = Raypath.computeT(phase, 6371, okRayM, okRay1, okRayP);
+        System.out.println(deltani + " a " + time5);
+        TauPPhase next = tauPPhase.stream().filter(tp -> Math.abs(tp.getPuristDistance() - deltani) < 0.1)
+                .sorted(Comparator.comparingDouble(tp -> Math.abs(tp.getTravelTime() - time5))).findFirst().get();
         double taupDelta = next.getPuristDistance();
         double taupT = next.getTravelTime();
         System.out.println("dtaudpBefore  dtaudpCenter  dtaudpAhead  deltabyOLD");
 //        System.out.println(dtaudpBefore + " " + dtaudpCenter + " " + dtaudpAhead + " " + delta1);
         double deltaRatio = 100 * Math.abs(1 - dtaudpCenter / taupDelta);
-        System.out.println(
-                dtaudpCenter + " " + delta1 + " " + dtaudpCenter / delta1 + " " + taupDelta + " " + deltaRatio);
-        double time5 = tau1 * 2 + (okP1) * Math.toRadians(dtaudpCenter);
         double tRatio = Math.abs(1 - time5 / taupT) * 100;
-
         System.out.println(
-                time5 + " " + time1 + " " + time5 / time1 + " " + taupT + " " + tRatio + " " + tau0 + " " + tau1 + " " +
-                        tau2);
-//        line.add(okP1 + " " + bounceR + " " + deltaRatio + " " + tRatio + " " + tau0 + " " + tau1 + " " + tau2);
+                dtaudpCenter + " " + delta1 + " " + dtaudpCenter / delta1 + " " + taupDelta + " " + deltaRatio + " " +
+                        tRatio);
 
+        return okRay1.getRayParameter() + " " + bounceR + " " + deltaRatio + " " + tRatio;
     }
 
     private static void catalogCheck() {
@@ -569,9 +504,99 @@ inrange
         polynomialStructure.writePSV(Paths.get("/tmp/hoge.txt"));
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
-//        recordSection();
+    private static void edgeCheck() {
+        VelocityStructure structure = ipremW.getStructure();
+        double icb = structure.innerCoreBoundary() - ComputationalMesh.EPS;
+        double pkikpMax = icb / structure.computeVph(icb);
+        // 348.5706287454159
+        double skiksMax = icb / structure.computeVsv(icb);
+        //431.5054502232356 117.95418336407785
+        double pkpMin = (structure.innerCoreBoundary() + ComputationalMesh.EPS) /
+                structure.computeVph(structure.innerCoreBoundary() + ComputationalMesh.EPS);
+        double pkpMax = (structure.coreMantleBoundary() - ComputationalMesh.EPS) /
+                structure.computeVph(structure.coreMantleBoundary() - ComputationalMesh.EPS);
+        double pMin = (structure.coreMantleBoundary() + ComputationalMesh.EPS) /
+                structure.computeVph(structure.coreMantleBoundary() + ComputationalMesh.EPS);
+        double sksMin = (structure.innerCoreBoundary() + ComputationalMesh.EPS) /
+                structure.computeVph(structure.innerCoreBoundary() + ComputationalMesh.EPS);
+        double sksMax = (structure.coreMantleBoundary() - ComputationalMesh.EPS) /
+                structure.computeVph(structure.coreMantleBoundary() - ComputationalMesh.EPS);
+        double sMin = (structure.coreMantleBoundary() + ComputationalMesh.EPS) /
+                structure.computeVph(structure.coreMantleBoundary() + ComputationalMesh.EPS);
+        System.out.println(sksMax + " " + sksMin + " " + skiksMax);
+    }
 
+    private static void r29() {
+
+        Raypath raypath0 = new Raypath(0);
+        Raypath raypath = new Raypath(1);
+        Raypath raypath2 = new Raypath(2);
+        raypath0.compute();
+        raypath2.compute();
+        raypath.compute();
+//        System.out.println(raypath0.computeTau(Phase.PcP, 6371));
+//        System.out.println(raypath0.getTurningR(PhasePart.P) + " " + raypath.getTurningR(PhasePart.P) + " " +
+//                raypath2.getTurningR(PhasePart.P));
+        Phase phase = Phase.PKIKP;
+        System.out.println(Math.toDegrees(raypath0.computeDelta(Phase.PKIKP, 6371)));
+        System.out.println(Math.toDegrees(raypath.computeDelta(phase, 6371)));
+        System.out.println(Math.toDegrees(raypath.computeDelta(phase, 6371, raypath0, raypath, raypath2)));
+        System.out.println(raypath.computeT(phase, 6371));
+        System.out.println(raypath.computeT(phase, 6371, raypath0, raypath, raypath2));
+    }
+
+
+    static final VelocityStructure iprem = VelocityStructure.iprem();
+
+    private static void reflectionWaves() {
+        ///718.6630222140612 769.8654162763569
+        Raypath ray0 = new Raypath(729, iprem);
+        Raypath targetRay = new Raypath(730, iprem);
+        Raypath ray1 = new Raypath(731, iprem);
+        ray0.compute();
+        ray1.compute();
+        targetRay.compute();
+        Phase phase = Phase.create("Pv220P");
+        System.out.println("Turning:" + ray0.getTurningR(PhasePart.P) + " " + targetRay.getTurningR(PhasePart.P) + " " +
+                ray1.getTurningR(PhasePart.P));
+        System.out.println(ray0.computeTau(phase, 6371) + " " + targetRay.computeTau(phase, 6371) + " " +
+                ray1.computeTau(phase, 6371));
+//        System.exit(0);
+        double tar = Math.toDegrees(targetRay.computeDelta(phase, 6371));
+        double delta = Math.toDegrees(Raypath.computeDelta(phase, 6371, ray0, targetRay, ray1));
+        double time = (Raypath.computeT(phase, 6371, ray0, targetRay, ray1));
+        double t = targetRay.computeT(phase, 6371);
+        System.out.println(tar + " " + t);
+        System.out.println(delta + " " + time);
+//        Arrays.stream(prem.boundariesInMantle()).forEach(System.out::println);
+//        double boundaryR = 6371 - 220;
+//        double lowerR = boundaryR - ComputationalMesh.EPS;
+//        double upperR = boundaryR + ComputationalMesh.EPS;
+//        double vLower = iprem.computeVph(lowerR);
+//        double vUpper = iprem.computeVph(upperR);
+//        double pLower = lowerR / vLower;
+//        double pUpper = upperR / vUpper;
+//        System.out.println(pLower + " " + pUpper);
+    }
+
+    private static void p0() {
+        long t = System.nanoTime();
+
+//        for(int i=0;i<10000;i++) {
+        Raypath raypath = new Raypath(478.85555933255523,iprem);
+//        }
+        raypath.compute();
+        System.out.println(Math.toDegrees(raypath.computeDelta(Phase.P, 6271)) + " " + raypath.computeT(Phase.P, 6271));
+        System.out.println(Utilities.toTimeString(System.nanoTime() - t));
+    }
+
+    public static void main(String[] args) throws IOException, ParseException, TauModelException, TauPException {
+//        recordSection();
+//        edgeCheck();
+        p0();
+//        r29();
+//        reflectionWaves();
+//        compareTAUDELTA();
 //        single10();
 //        catalog1();
 //        single1();
@@ -586,7 +611,7 @@ inrange
 //        catalogDev();
 //                catalogOut();
 //        diffBack();
-        catalogCheck();
+//        catalogCheck();
 //manyPKIKP();
 //        singlePKIKP();
 //        singleP();
