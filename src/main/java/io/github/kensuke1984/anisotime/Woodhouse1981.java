@@ -11,7 +11,7 @@ import java.util.function.DoubleUnaryOperator;
  * The class is calculator of the formulation in Woodhouse (1981).
  *
  * @author Kensuke Konishi
- * @version 0.0.6
+ * @version 0.0.7
  * @see <a href=
  * https://www.sciencedirect.com/science/article/pii/0031920181900479>Woodhouse,
  * 1981</a>
@@ -242,6 +242,14 @@ class Woodhouse1981 implements Serializable {
         s3 = new ConcurrentHashMap<>();
         s4 = new ConcurrentHashMap<>();
         s5 = new ConcurrentHashMap<>();
+    }
+
+    void clear(){
+        s1.clear();
+        s2.clear();
+        s3.clear();
+        s4.clear();
+        s5.clear();
     }
 
     /**
