@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.3
+ * @version 0.2.4
  */
 public class RaypathCatalog implements Serializable {
 
     /**
-     * 2019/12/16
+     * 2019/12/29
      */
-    private static final long serialVersionUID = -16111119192151L;
+    private static final long serialVersionUID = -1611119192151L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -139,7 +139,7 @@ public class RaypathCatalog implements Serializable {
                     System.err.print("Reading a catalog for PREM...");
                     PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
-                } catch (ClassNotFoundException | IOException e) {
+                } catch (Exception e) {
                     System.err.println("failed.\nCreating a catalog for PREM.");
                     PREM = createAndWrite(p, VelocityStructure.prem());
                 }
@@ -161,7 +161,7 @@ public class RaypathCatalog implements Serializable {
                     System.err.print("Reading a catalog for ISO_PREM...");
                     ISO_PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
-                } catch (ClassNotFoundException | IOException e) {
+                } catch (Exception e) {
                     System.err.println("failed.\nCreating a catalog for ISO_PREM.");
                     ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
                 }
@@ -182,7 +182,7 @@ public class RaypathCatalog implements Serializable {
                     System.err.print("Reading a catalog for AK135...");
                     AK135 = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
-                } catch (ClassNotFoundException | IOException e) {
+                } catch (Exception e) {
                     System.err.println("failed.\nCreating a catalog for AK135.");
                     AK135 = createAndWrite(p, VelocityStructure.ak135());
                 }
