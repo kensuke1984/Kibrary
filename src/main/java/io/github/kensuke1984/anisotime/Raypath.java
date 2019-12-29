@@ -61,7 +61,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * 2019/12/29
      */
-    private static final long serialVersionUID = -11111111118L;
+    private static final long serialVersionUID = -5361377999209624222L;
 
     @Override
     public boolean equals(Object o) {
