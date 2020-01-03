@@ -28,14 +28,14 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.4
+ * @version 0.2.4.1
  */
 public class RaypathCatalog implements Serializable {
 
     /**
-     * 2019/12/29
+     * 2020/1/1
      */
-    private static final long serialVersionUID = -1611119192151L;
+    private static final long serialVersionUID = 2838429462174053669L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -472,7 +472,7 @@ public class RaypathCatalog implements Serializable {
             if (CATALOG.isEmpty()) return new Raypath[0];
             if (shouldSkip(targetPhase)) return new Raypath[0];
             Phase actualPhase = toReflection(targetPhase);
-            TreeSet<Raypath> catalog = (TreeSet) CATALOG;
+            @SuppressWarnings({"unchecked"}) TreeSet<Raypath> catalog = (TreeSet) CATALOG;
             double delta1 = catalog.first().computeDelta(actualPhase, eventR);
             double delta2 = catalog.last().computeDelta(actualPhase, eventR);
             if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
@@ -678,7 +678,7 @@ public class RaypathCatalog implements Serializable {
      * the first Raypath which has minimum ray parameter in the range (searched using {@link #MINIMUM_DELTA_P}) and
      * the last raypath which has maximum ray parameter in the range. If Raypath(startP) and/or Raypath(endP) exists,
      * they return.
-     *
+     * TODO when edges have NaN
      * @param phase  target phase
      * @param startP range start
      * @param endP   range end
@@ -718,14 +718,10 @@ public class RaypathCatalog implements Serializable {
         if (Double.isNaN(endRaypath.computeDelta(phase, getStructure().earthRadius()))) {
             Raypath startClose = new Raypath(startRaypath.getRayParameter() + MINIMUM_DELTA_P, WOODHOUSE, MESH);
             startClose.compute();
+            Raypath endClose = new Raypath(endRaypath.getRayParameter() - MINIMUM_DELTA_P, WOODHOUSE, MESH);
+            endClose.compute();
             if (Double.isNaN(startClose.computeDelta(phase, earthRadius))) return new Raypath[2];
-            for (double deltaP = -(endP - startP) / 100;
-                 !Objects.isNull(endRaypath) && MINIMUM_DELTA_P < Math.abs(deltaP); deltaP = -deltaP / 10)
-                endRaypath = getFirstRaypath.apply(endRaypath.getRayParameter(), deltaP);
-            if (Objects.isNull(endRaypath)) return new Raypath[2];
-            if (Double.isNaN(endRaypath.computeDelta(phase, 6371)))
-                endRaypath = getFirstRaypath.apply(endRaypath.getRayParameter(), -MINIMUM_DELTA_P);
-            if (Objects.isNull(endRaypath)) throw new RuntimeException("UNJKUSUPECTED " + phase);
+            if (!Double.isNaN(endClose.computeDelta(phase, earthRadius))) return new Raypath[]{startRaypath,endClose};
         }
         return new Raypath[]{startRaypath, endRaypath};
     }
