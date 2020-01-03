@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.16
+ * @version 0.3.16.2
  */
 public final class ANISOtimeCLI {
 
@@ -202,10 +202,10 @@ public final class ANISOtimeCLI {
                 Arrays.stream(cmd.getOptionValues("ph")).flatMap(arg -> Arrays.stream(arg.split(",")))
                         .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
         else targetPhases = cmd.hasOption("SV") ?
-                new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.SV, Phase.SVcS,
-                        Phase.create("SKiKS", true), Phase.create("SKIKS", true), Phase.SVdiff} :
-                new Phase[]{Phase.P, Phase.PcP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS, Phase.SKiKS,
-                        Phase.SKIKS, Phase.Sdiff};
+                new Phase[]{Phase.P, Phase.PcP, Phase.PKP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.SV, Phase.SVcS,
+                        Phase.SKS, Phase.create("SKiKS", true), Phase.create("SKIKS", true), Phase.SVdiff} :
+                new Phase[]{Phase.P, Phase.PcP, Phase.PKP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS,
+                        Phase.SKS, Phase.SKiKS, Phase.SKIKS, Phase.Sdiff};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
@@ -262,7 +262,7 @@ public final class ANISOtimeCLI {
             for (Phase phase : targetPhases) {
                 if (phase.isDiffracted()) {
                     Raypath diff = catalog.searchPath(phase, eventR, 0, relativeAngleMode)[0];
-                    double sAngle = Math.toDegrees(diff.computeDelta(eventR, phase));
+                    double sAngle = Math.toDegrees(diff.computeDelta(phase, eventR));
                     for (double d : targets) {
                         double deltaOnBoundary = d - sAngle;
                         if (deltaOnBoundary < 0) continue;
@@ -345,15 +345,15 @@ public final class ANISOtimeCLI {
                 Raypath raypath = new Raypath(rayParameter, structure);
                 raypath.compute();
                 for (Phase targetPhase : targetPhases) {
-                    double delta = Math.toDegrees(raypath.computeDelta(eventR, targetPhase));
-                    double time = raypath.computeT(eventR, targetPhase);
+                    double delta = Math.toDegrees(raypath.computeDelta(targetPhase, eventR));
+                    double time = raypath.computeT(targetPhase, eventR);
                     if (Double.isNaN(delta)) {
                         System.err.println(targetPhase + " does not exist.");
                         continue;
                     }
                     double rayParameterDegree = Math.toRadians(rayParameter);
                     printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
-                    if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
+                    if (cmd.hasOption("eps")) createEPS(raypath.createPanel(targetPhase, eventR),
                             outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameterDegree, delta,
                             time, eventR);
                 }
@@ -370,16 +370,16 @@ public final class ANISOtimeCLI {
                 if (targetPhase.isDiffracted()) {
                     Raypath raypath = raypaths[0];
                     double deltaOnBoundary =
-                            Math.toDegrees(targetDelta - raypaths[0].computeDelta(eventR, targetPhase));
+                            Math.toDegrees(targetDelta - raypaths[0].computeDelta(targetPhase, eventR));
                     if (deltaOnBoundary < 0) {
                         System.err.println(targetPhase + " would have longer distance than " + Precision
-                                .round(Math.toDegrees(raypath.computeDelta(eventR, targetPhase)), decimalPlaces) +
+                                .round(Math.toDegrees(raypath.computeDelta(targetPhase, eventR)), decimalPlaces) +
                                 " (Your input:" + Precision.round(Math.toDegrees(targetDelta), decimalPlaces) + ")");
                         continue;
                     }
                     targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
                     double[] results = printResults(-1, raypath, targetPhase, System.out);
-                    if (cmd.hasOption("eps")) createEPS(raypath.createPanel(eventR, targetPhase),
+                    if (cmd.hasOption("eps")) createEPS(raypath.createPanel(targetPhase, eventR),
                             outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, raypath.getRayParameter(),
                             targetDelta, results[1], eventR);
                     continue;
@@ -390,10 +390,10 @@ public final class ANISOtimeCLI {
                             catalog.getActualTargetPhase(raypath, targetPhase, eventR, targetDelta, relativeAngleMode);
                     double[] results = printResults(Math.toDegrees(targetDelta), raypath, actualPhase, System.out);
                     if (cmd.hasOption("eps")) if (raypaths.length == 1)
-                        createEPS(raypath.createPanel(eventR, targetPhase),
+                        createEPS(raypath.createPanel(targetPhase, eventR),
                                 outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,
                                 raypath.getRayParameter(), targetDelta, results[1], eventR);
-                    else createEPS(raypath.createPanel(eventR, targetPhase),
+                    else createEPS(raypath.createPanel(targetPhase, eventR),
                                 outDir.resolve(targetPhase + "." + j++ + "." + tmpStr + ".eps"), targetPhase,
                                 raypath.getRayParameter(), targetDelta, results[1], eventR);
                 }
@@ -440,8 +440,8 @@ public final class ANISOtimeCLI {
      */
     private double[] printResults(double targetDelta, Raypath raypath, Phase targetPhase, PrintStream out) {
         double p0 = raypath.getRayParameter();
-        double delta0 = raypath.computeDelta(eventR, targetPhase);
-        double time0 = raypath.computeT(eventR, targetPhase);
+        double delta0 = raypath.computeDelta(targetPhase, eventR);
+        double time0 = raypath.computeT(targetPhase, eventR);
         if (Double.isNaN(delta0) || Double.isNaN(time0)) return new double[]{Double.NaN, Double.NaN};
 
         delta0 = Math.toDegrees(delta0);
@@ -450,8 +450,8 @@ public final class ANISOtimeCLI {
                     relativeAngleMode, raypath);
             Raypath raypath1 = new Raypath(p1, raypath.getStructure());
             raypath1.compute();
-            double time1 = raypath1.computeT(eventR, targetPhase);
-            double delta1 = Math.toDegrees(raypath1.computeDelta(eventR, targetPhase));
+            double time1 = raypath1.computeT(targetPhase, eventR);
+            double delta1 = Math.toDegrees(raypath1.computeDelta(targetPhase, eventR));
             if (!Double.isNaN(time1)) {
                 time0 = time1;
                 delta0 = delta1;
