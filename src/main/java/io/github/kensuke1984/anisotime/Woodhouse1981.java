@@ -103,6 +103,20 @@ class Woodhouse1981 implements Serializable {
                 throw new RuntimeException("unexpecTed");
         }
     }
+    
+    double computeQdeltaNearZero(PhasePart pp, double rayParameter, double r) {
+    	double r2 = r * r;
+    	switch (pp) {
+    		case I:
+    			return rayParameter / r2 / computeQTauNear0(pp, rayParameter, r) * (computeS3(0) +
+                        (computeS4(0) * rayParameter * rayParameter / r2 + computeS5(0)) / computeRNear0(rayParameter, r));
+    		case JV:
+    			return rayParameter / r2 / computeQTauNear0(pp, rayParameter, r) * (computeS3(0) -
+                        (computeS4(0) * rayParameter * rayParameter / r2 + computeS5(0)) / computeRNear0(rayParameter, r));
+    		default:
+    			throw new RuntimeException("unexpecTed");
+    	}
+    }
 
     /**
      * @param pp           target phase
@@ -176,6 +190,20 @@ class Woodhouse1981 implements Serializable {
                 throw new RuntimeException(pp + " is Unexpected");
         }
     }
+    
+    double computeQTauNear0(PhasePart pp, double rayParameter, double r) {
+        double r2 = r * r;
+        switch (pp) {
+            case I:
+                return Math.sqrt(computeS1(0) - computeS3(0) * rayParameter * rayParameter / r2 -
+                        computeRNear0(rayParameter, r));
+            case JV:
+                return Math.sqrt(computeS1(0) - computeS3(0) * rayParameter * rayParameter / r2 +
+                        computeRNear0(rayParameter, r));
+            default:
+                throw new RuntimeException(pp + " is Unexpected");
+        }
+    }
 
     /**
      * @param rayParameter to compute for
@@ -190,6 +218,13 @@ class Woodhouse1981 implements Serializable {
         double por = rayParameter / r;
         double por2 = por * por;
         return Math.sqrt(computeS4(r) * por2 * por2 + 2 * computeS5(r) * por2 + s2 * s2);
+    }
+    
+    private double computeRNear0(double rayParameter, double r) {
+        double s2 = computeS2(0);
+        double por = rayParameter / r;
+        double por2 = por * por;
+        return Math.sqrt(computeS4(0) * por2 * por2 + 2 * computeS5(0) * por2 + s2 * s2);
     }
 
     /**

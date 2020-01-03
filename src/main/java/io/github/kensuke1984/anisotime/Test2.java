@@ -14,20 +14,20 @@ import edu.sc.seis.TauP.TauP_Time;
 
 public class Test2 {
 	public static void main(String[] args) throws IOException {
-		compareAnalytical();
+//		compareAnalytical();
 //		showCatalog();
 //		showActualCatalog();
-//		compareToTaup();
+		compareToTaup();
 	}
 	
 	public static void compareToTaup() {
 		double eventDepth = 0;
 		double eventR = 6371. - eventDepth;
 		
-//		int mindist = 70;
-//		int maxdist = 100;
-		int mindist = 85;
-		int maxdist = 85;
+		int mindist = 70;
+		int maxdist = 100;
+//		int mindist = 85;
+//		int maxdist = 85;
 		int ndist = (maxdist - mindist) + 1;
 		
 		double[] dist = new double[ndist];
@@ -42,11 +42,13 @@ public class Test2 {
 		double[] time_taup = new double[ndist];
 		
 		try {
+			System.err.println("Copmute TAUP times");
 			TauP_Time timetool = new TauP_Time("/home/anselme/Dropbox/Kenji/anisoTimePaper/traveltime/taup_models/PREM_10000.taup");
 			timetool.parsePhaseList("S");
 			timetool.setSourceDepth(0);
 			for (int i = 0; i < ndist; i++) {
 				double d = mindist + i;
+				System.err.println(d);
 				timetool.calculate(d);
 				dist_taup[i] = timetool.getArrival(0).getDistDeg();
 				rayparam_taup[i] = timetool.getArrival(0).getRayParamDeg();
@@ -57,12 +59,14 @@ public class Test2 {
 		}
 		
 		try {
+			System.err.println("Copmute ANISOTIME times");
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			PrintStream ps = new PrintStream(baos);
 			PrintStream old = System.out;
 			System.setOut(ps);
 		for (int i = 0; i < ndist; i++) {
 			double d = mindist + i;
+			System.err.println(d);
 			ANISOtimeCLI.main(new String[] {"-mod", "iprem", "-ph", "S", "-deg", String.format("%.2f", d), "-h", "0", "-dec", "9"});
 		}
 			System.setOut(old);
@@ -70,10 +74,11 @@ public class Test2 {
 			ps.close();
 			
 			for (int i = 0; i < lines.length; i++) {
+				System.err.println(lines[i]);
 				String[] ss = lines[i].split("\\s+");
-				dist[i] = Double.parseDouble(ss[2]);
-				rayparam[i] = Double.parseDouble(ss[1]);
-				time[i] = Double.parseDouble(ss[3]);
+					dist[i] = Double.parseDouble(ss[2]);
+					rayparam[i] = Double.parseDouble(ss[1]);
+					time[i] = Double.parseDouble(ss[3]);
 			}
 		} catch (ParseException e) {
 			e.printStackTrace();
@@ -101,7 +106,7 @@ public class Test2 {
 //			new NamedDiscontinuityStructure(Paths.get("/home/anselme/Dropbox/Kenji/anisoTimePaper/traveltime/taup_models/PREM_1000.nd"));
 		
 		double eventR = 6371. - 0.;
-		RaypathCatalog catalog = RaypathCatalog.ISO_PREM;
+		RaypathCatalog catalog = RaypathCatalog.iprem();
 		Arrays.stream(catalog.getRaypaths())
 			.forEach(p -> System.out.println(Math.toRadians(p.getRayParameter()) + " " + Math.toDegrees(p.computeDelta(eventR, Phase.S))));
 	}
@@ -175,7 +180,7 @@ public class Test2 {
 		for (int i = 0; i < 20; i++) {
 			double dr = 1000*Math.exp(-i/4.);
 			System.out.println(i + " " + dr);
-			ComputationalMesh mesh = new ComputationalMesh(homogen, dr, dr, dr, 0.009);
+			ComputationalMesh mesh = new ComputationalMesh(homogen, dr, dr, dr);
 			
 			Raypath raypath = new Raypath(rayparameter, homogen, mesh);
 			raypath.compute();
