@@ -66,7 +66,7 @@ To solve dependencies, ```build.gradle``` is prepared. If you do not have ```gra
 ```bash
  % cd /path/to/install
  #If you have curl installed 
- % kins=$(mktemp) && curl -s -o $kins https://bit.ly/380vUbe && /bin/sh $kins && rm -f $kins
+ % kins=$(mktemp) && curl -sL -o $kins https://bit.ly/380vUbe && /bin/sh $kins && rm -f $kins
  #else if wget is installed, try
  % kins=$(mktemp) && wget -q -O $kins https://bit.ly/38OvUbe && tar -xf $kins && rm -f $kins
  % ./gradlew
