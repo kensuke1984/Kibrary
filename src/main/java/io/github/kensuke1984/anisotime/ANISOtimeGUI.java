@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.4.1b
+ * @version 0.5.4.2b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2019/11/23
+     * 2020/1/23
      */
-    private static final long serialVersionUID = -7854966996076335692L;
+    private static final long serialVersionUID = -685659184433433887L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -345,10 +345,13 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             }
         }
 
-        int n = raypathList.size();
-        double[] delta = new double[n];
-        Arrays.fill(delta, epicentralDistance);
-        showResult(delta, raypathList, phaseList);
+        if (raypathList.isEmpty()) {
+            JOptionPane.showMessageDialog(null, "No raypaths found.");
+        } else {
+            double[] delta = new double[raypathList.size()];
+            Arrays.fill(delta, epicentralDistance);
+            showResult(delta, raypathList, phaseList);
+        }
     }
 
     /**
@@ -365,7 +368,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         boolean added = false;
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
-            Phase phase = getCatalog().getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
+            Phase phase = getCatalog()
+                    .getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
             double travelTime = raypath.computeT(phase, eventR);
             if (Double.isNaN(epicentralDistance)) continue;
@@ -403,8 +407,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         if (points != null) {
             double[] x = new double[points.length];
             double[] y = new double[points.length];
-            Arrays.setAll(x,i->points[i][0]);
-            Arrays.setAll(y,i->points[i][1]);
+            Arrays.setAll(x, i -> points[i][0]);
+            Arrays.setAll(y, i -> points[i][1]);
             try {
                 SwingUtilities.invokeAndWait(() -> addPath(x, y));
             } catch (Exception e) {
