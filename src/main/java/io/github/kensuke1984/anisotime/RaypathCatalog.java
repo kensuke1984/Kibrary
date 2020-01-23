@@ -28,14 +28,15 @@ import java.util.function.*;
  * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.4.1
+ * @version 0.2.5
  */
 public class RaypathCatalog implements Serializable {
 
+    private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
-     * 2020/1/1
+     * 2020/1/23
      */
-    private static final long serialVersionUID = 2838429462174053669L;
+    private static final long serialVersionUID = 5760284249441786433L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -416,7 +417,7 @@ public class RaypathCatalog implements Serializable {
             }
             BOUNDARY_R = boundaryR;
             PP = pp;
-            double depth = Precision.round(6371 - boundaryR, 4);
+            double depth = Precision.round(getStructure().earthRadius() - boundaryR, 4);
             DEPTH = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
                     String.valueOf(depth);
         }
@@ -469,14 +470,15 @@ public class RaypathCatalog implements Serializable {
          * @return raypaths with the &Delta; never returns null. but Raypath[0]
          */
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
-            if (CATALOG.isEmpty()) return new Raypath[0];
-            if (shouldSkip(targetPhase)) return new Raypath[0];
+            if (eventR < BOUNDARY_R) return EMPTY_RAYPATH;
+            if (CATALOG.isEmpty()) return EMPTY_RAYPATH;
+            if (shouldSkip(targetPhase)) return EMPTY_RAYPATH;
             Phase actualPhase = toReflection(targetPhase);
             @SuppressWarnings({"unchecked"}) TreeSet<Raypath> catalog = (TreeSet) CATALOG;
             double delta1 = catalog.first().computeDelta(actualPhase, eventR);
             double delta2 = catalog.last().computeDelta(actualPhase, eventR);
             if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
-                return new Raypath[0];
+                return EMPTY_RAYPATH;
             return RaypathCatalog.this
                     .searchPath(actualPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -510,17 +512,26 @@ public class RaypathCatalog implements Serializable {
          * @return if a search should skip the input targetPhase.
          */
         private boolean shouldSkip(Phase targetPhase) {
-            return targetPhase.toString().contains("c") || targetPhase.toString().contains("i");
+            //TODO more effectively
+            if (RERERENCE_PHASE.toString().equals("P")) {
+                if (!targetPhase.toString().contains("P")) return true;
+            }
+            if (RERERENCE_PHASE.toString().equals("S")) {
+                if (!targetPhase.toString().contains("S")) return true;
+            }
+            return targetPhase.toString().contains("c") || targetPhase.toString().contains("i") ||
+                    (targetPhase.toString().contains("K") ^ RERERENCE_PHASE.toString().contains("K")) ||
+                    targetPhase.isPSV() ^ RERERENCE_PHASE.isPSV();
         }
 
         private Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
-            if (CATALOG.isEmpty()) return new Raypath[0];
-            if (shouldSkip(targetPhase)) return new Raypath[0];
+            if (CATALOG.isEmpty()) return EMPTY_RAYPATH;
+            if (shouldSkip(targetPhase)) return EMPTY_RAYPATH;
             TreeSet<Raypath> catalog = (TreeSet) CATALOG;
             double delta1 = catalog.first().computeDelta(targetPhase, eventR);
             double delta2 = catalog.last().computeDelta(targetPhase, eventR);
             if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
-                return new Raypath[0];
+                return EMPTY_RAYPATH;
             return RaypathCatalog.this
                     .searchPath(targetPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -721,7 +732,7 @@ public class RaypathCatalog implements Serializable {
             Raypath endClose = new Raypath(endRaypath.getRayParameter() - MINIMUM_DELTA_P, WOODHOUSE, MESH);
             endClose.compute();
             if (Double.isNaN(startClose.computeDelta(phase, earthRadius))) return new Raypath[2];
-            if (!Double.isNaN(endClose.computeDelta(phase, earthRadius))) return new Raypath[]{startRaypath,endClose};
+            if (!Double.isNaN(endClose.computeDelta(phase, earthRadius))) return new Raypath[]{startRaypath, endClose};
         }
         return new Raypath[]{startRaypath, endRaypath};
     }
@@ -950,9 +961,28 @@ public class RaypathCatalog implements Serializable {
         throw new RuntimeException("UNIKUSYOEJU " + targetPhase);
     }
 
+    private List<Integer> searchForSurfaceCase(Phase targetPhase, double targetDelta, boolean relativeAngle,
+                                               Raypath[] referenceRaypaths) {
+        List<Integer> indexList = new ArrayList<>();
+        for (int i = 0; i < referenceRaypaths.length - 1; i++) {
+            Raypath rayI = referenceRaypaths[i];
+            Raypath rayP = referenceRaypaths[i + 1];
+            double deltaI = rayI.computeDelta(targetPhase, getStructure().earthRadius());
+            double deltaP = rayP.computeDelta(targetPhase, getStructure().earthRadius());
+            if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
+            if (relativeAngle) {
+                deltaI = toRelativeAngle(deltaI);
+                deltaP = toRelativeAngle(deltaP);
+            }
+            if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
+            indexList.add(i);
+        }
+        return indexList;
+    }
+
 
     /**
-     * Search raypaths in the referenceRaypaths
+     * Search raypaths in the referenceRaypaths.
      *
      * @param targetPhase       target phase
      * @param eventR            [km] event radius
@@ -971,26 +1001,56 @@ public class RaypathCatalog implements Serializable {
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
 //        System.err.println("Looking for Phase:" + targetPhase + ", \u0394[\u02da]:" + TODO
 //                Precision.round(Math.toDegrees(targetDelta), 4));
-        List<Raypath> pathList = new ArrayList<>();
-        for (int i = 0; i < referenceRaypaths.length - 1; i++) {
-            Raypath rayI = referenceRaypaths[i];
-            Raypath rayP = referenceRaypaths[i + 1];
-            double deltaI = rayI.computeDelta(targetPhase, eventR);
-            double deltaP = rayP.computeDelta(targetPhase, eventR);
-            if (Double.isNaN(deltaI) || Double.isNaN(deltaP)) continue;
-            if (relativeAngle) {
-                deltaI = toRelativeAngle(deltaI);
-                deltaP = toRelativeAngle(deltaP);
+        ToDoubleFunction<Raypath> toDelta = relativeAngle ? r -> toRelativeAngle(r.computeDelta(targetPhase, eventR)) :
+                r -> r.computeDelta(targetPhase, eventR);
+        List<Integer> surfaceList = searchForSurfaceCase(targetPhase, targetDelta, relativeAngle, referenceRaypaths);
+        if (surfaceList.isEmpty()) return EMPTY_RAYPATH;
+        List<Raypath> returnRaypaths = new ArrayList<>();
+        BinaryOperator<Raypath> interpolate = (ray1, ray2) -> {
+            Raypath rayC = new Raypath((ray1.getRayParameter() + ray2.getRayParameter()) / 2, WOODHOUSE, MESH);
+            if (Double.isNaN(rayC.computeDelta(targetPhase, eventR))) throw new RuntimeException("STGAI");
+            Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, ray1, rayC, ray2);
+            if (Double.isNaN(rayIn.computeDelta(targetPhase, eventR))) throw new RuntimeException("ORZ");
+            return rayIn;
+        };
+        for (Integer surfaceIndex : surfaceList) {
+            double current = toDelta.applyAsDouble(referenceRaypaths[surfaceIndex]);
+// trial nextIndex
+            int firstNextIndex = surfaceIndex < referenceRaypaths.length - 1 ? surfaceIndex + 1 : surfaceIndex - 1;
+            double next = toDelta.applyAsDouble(referenceRaypaths[firstNextIndex]);
+            int startIndex = surfaceIndex;
+            int increment = 0;
+            if ((current - targetDelta) * (next - targetDelta) < 0) {
+                Raypath ray1 = referenceRaypaths[startIndex];
+                Raypath ray2 = referenceRaypaths[firstNextIndex];
+                returnRaypaths.add(interpolate.apply(ray1, ray2));
+                continue;
+            } else if (Math.abs(current - targetDelta) < Math.abs(next - targetDelta)) {
+                increment = surfaceIndex < referenceRaypaths.length - 1 ? -1 : 1;
+            } else {
+                startIndex = firstNextIndex;
+                current = next;
+                increment = surfaceIndex < referenceRaypaths.length - 1 ? 1 : -1;
             }
-            if (0 < (deltaI - targetDelta) * (deltaP - targetDelta)) continue;
-            Raypath rayC = new Raypath((rayI.getRayParameter() + rayP.getRayParameter()) / 2, WOODHOUSE, MESH);
-            rayC.compute();
-            if (Double.isNaN(rayC.computeDelta(targetPhase, eventR))) continue;
-            Raypath rayIn = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayI, rayC, rayP);
-            if (Double.isNaN(rayIn.computeDelta(targetPhase, eventR))) continue;
-            pathList.add(rayIn);
+
+            for (int currentI = startIndex; ; currentI += increment) {
+                if (currentI + increment < 0 || referenceRaypaths.length - 1 < currentI + increment) break;
+                next = toDelta.applyAsDouble(referenceRaypaths[currentI + increment]);
+                if ((current - targetDelta) * (next - targetDelta) < 0) {
+                    Raypath ray1 = referenceRaypaths[currentI];
+                    Raypath ray2 = referenceRaypaths[currentI + increment];
+                    Raypath rayC = new Raypath((ray1.getRayParameter() + ray2.getRayParameter()) / 2, WOODHOUSE, MESH);
+                    if (Double.isNaN(rayC.computeDelta(targetPhase, eventR))) throw new RuntimeException("STGAI");
+                    Raypath rayIn =
+                            interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, ray1, rayC, ray2);
+                    if (Double.isNaN(rayIn.computeDelta(targetPhase, eventR))) throw new RuntimeException("ORZ");
+                    returnRaypaths.add(rayIn);
+                    break;
+                }
+                current = next;
+            }
         }
-        return pathList.toArray(new Raypath[0]);
+        return returnRaypaths.toArray(new Raypath[0]);
     }
 
     /**
