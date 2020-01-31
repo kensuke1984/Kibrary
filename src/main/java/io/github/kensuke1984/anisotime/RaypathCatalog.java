@@ -27,7 +27,7 @@ import java.util.function.*;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.5.1
+ * @version 0.2.5.2
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -1024,14 +1024,15 @@ public class RaypathCatalog implements Serializable {
             double next = toDelta.applyAsDouble(referenceRaypaths[firstNextIndex]);
             int startIndex = surfaceIndex;
             int increment = 0;
-            if ((current - targetDelta) * (next - targetDelta) < 0) {
+            if (Double.isNaN(next)) increment = surfaceIndex < referenceRaypaths.length - 1 ? -1 : 1;
+            else if ((current - targetDelta) * (next - targetDelta) < 0) {
                 Raypath ray1 = referenceRaypaths[startIndex];
                 Raypath ray2 = referenceRaypaths[firstNextIndex];
                 returnRaypaths.add(interpolate.apply(ray1, ray2));
                 continue;
-            } else if (Math.abs(current - targetDelta) < Math.abs(next - targetDelta)) {
+            } else if (Math.abs(current - targetDelta) < Math.abs(next - targetDelta))
                 increment = surfaceIndex < referenceRaypaths.length - 1 ? -1 : 1;
-            } else {
+            else {
                 startIndex = firstNextIndex;
                 current = next;
                 increment = surfaceIndex < referenceRaypaths.length - 1 ? 1 : -1;
