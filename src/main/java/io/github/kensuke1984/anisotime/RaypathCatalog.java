@@ -25,13 +25,11 @@ import java.util.function.*;
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
  * <p>
- * TODO Search should be within branches
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.5
+ * @version 0.2.5.1
  */
 public class RaypathCatalog implements Serializable {
-
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
      * 2020/1/23
@@ -308,7 +306,7 @@ public class RaypathCatalog implements Serializable {
      * If an input angle is a radian for 190 deg, then one for 170 deg returns.
      *
      * @param angle [rad]
-     * @return a relative angle for the input angle. The angle is [0,180]
+     * @return [rad] a relative angle for the input angle. The angle is [0, 180]
      */
     private static double toRelativeAngle(double angle) {
         while (0 < angle) angle -= 2 * Math.PI;
@@ -795,8 +793,7 @@ public class RaypathCatalog implements Serializable {
      */
     private List<Double[]> computeRaypameterEdge(Phase phase) {
         List<Double[]> edges = new ArrayList<>();
-        double cmb = getStructure().coreMantleBoundary();
-        double icb = getStructure().innerCoreBoundary();
+        VelocityStructure structure = getStructure();
 
         //case: bounsing waves
         if (phase == Phase.P || phase == Phase.S || phase == Phase.SV || phase == Phase.SKIKS || phase == Phase.PKIKP) {
@@ -804,12 +801,16 @@ public class RaypathCatalog implements Serializable {
             double[] concerningBoundaries;
             if (phase == Phase.P || phase == Phase.S || phase == Phase.SV) {
                 turningPP = phase == Phase.P ? PhasePart.P : phase.isPSV() ? PhasePart.SV : PhasePart.SH;
-                concerningBoundaries = getStructure().boundariesInMantle();
+                concerningBoundaries = structure.boundariesInMantle();
             } else {
                 turningPP = phase == Phase.PKIKP ? PhasePart.I : PhasePart.JV;
-                concerningBoundaries = getStructure().boundariesInInnerCore();
+                concerningBoundaries = structure.boundariesInInnerCore();
             }
+            Arrays.stream(concerningBoundaries).forEach(System.out::println);
+            concerningBoundaries = Arrays.stream(concerningBoundaries).filter(structure::isJump).toArray();
+            Arrays.stream(concerningBoundaries).forEach(System.out::println);
             for (int i = 0; i < concerningBoundaries.length - 1; i++) {
+                if (!structure.isJump(concerningBoundaries[i])) continue;
                 double startR = concerningBoundaries[i] + ComputationalMesh.EPS;
                 double endR = concerningBoundaries[i + 1] - ComputationalMesh.EPS;
                 double pStartR = computeRayparameterFor(turningPP, startR);
@@ -819,11 +820,13 @@ public class RaypathCatalog implements Serializable {
             }
         } else if (phase == Phase.PKP || phase == Phase.SKS) {
             PhasePart turningPP = PhasePart.K;
-            double[] concerningBoundaries = getStructure().boundariesInOuterCore();
-            double v = phase == Phase.PKP ? getStructure().computeVph(cmb) : getStructure().computeVsv(cmb);
+            double cmb = structure.coreMantleBoundary();
+            double[] concerningBoundaries =
+                    Arrays.stream(structure.boundariesInOuterCore()).filter(structure::isJump).toArray();
+            double v = phase == Phase.PKP ? structure.computeVph(cmb) : structure.computeVsv(cmb);
             double pMax = cmb / v;
-            DoubleUnaryOperator pToTurningR = rayP -> phase == Phase.PcP ? getStructure().pTurningR(rayP) :
-                    phase.isPSV() ? getStructure().svTurningR(rayP) : getStructure().shTurningR(rayP);
+            DoubleUnaryOperator pToTurningR = rayP -> phase == Phase.PcP ? structure.pTurningR(rayP) :
+                    phase.isPSV() ? structure.svTurningR(rayP) : structure.shTurningR(rayP);
             while (!Double.isNaN(pToTurningR.applyAsDouble(pMax))) pMax -= MINIMUM_DELTA_P;
             for (int i = 0; i < concerningBoundaries.length - 1; i++) {
                 double startR = concerningBoundaries[i] + ComputationalMesh.EPS;
@@ -926,7 +929,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * If the input raypath doesn't have targetDelta for the input phase,
      * try reflecting wave at velocity jump and if the delta is close enough to targetDelta
-     * This method returns an actual phase which gives delta (delta-target) &lt; {@link RaypathCatalog#MAXIMUM_D_DELTA}
+     * This method returns an actual phase which gives delta (delta-target) &lt; {@link RaypathCatalog#DEFAULT_MAXIMUM_D_DELTA}
      * TODO currently only major phases
      *
      * @param raypath       check phase with this raypath
@@ -936,10 +939,11 @@ public class RaypathCatalog implements Serializable {
      * @param relativeAngle if the delta is relative angle
      * @return actual {@link Phase} to obtain the targetDelta, such as PvXXP for base P
      */
-    public Phase getActualTargetPhase(Raypath raypath, Phase targetPhase, double eventR, double targetDelta,
-                                      boolean relativeAngle) {
-        if (Math.abs(raypath.computeDelta(targetPhase, eventR) - targetDelta) < MAXIMUM_D_DELTA) return targetPhase;
-        VelocityStructure structure = getStructure();
+    public static Phase getActualTargetPhase(Raypath raypath, Phase targetPhase, double eventR, double targetDelta,
+                                             boolean relativeAngle) {
+        if (Math.abs(raypath.computeDelta(targetPhase, eventR) - targetDelta) < DEFAULT_MAXIMUM_D_DELTA)
+            return targetPhase;
+        VelocityStructure structure = raypath.getStructure();
         if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S) ||
                 targetPhase.equals(Phase.pP) || targetPhase.equals(Phase.sSV) || targetPhase.equals(Phase.sS)) {
             DoubleFunction<Phase> toPhase = radius -> {
@@ -955,8 +959,8 @@ public class RaypathCatalog implements Serializable {
             };
             return Arrays.stream(structure.boundariesInMantle()).mapToObj(toPhase).filter(p -> Math.abs(
                     relativeAngle ? raypath.computeDelta(p, eventR) :
-                            toRelativeAngle(raypath.computeDelta(p, eventR)) - targetDelta) < MAXIMUM_D_DELTA).findAny()
-                    .get();
+                            toRelativeAngle(raypath.computeDelta(p, eventR)) - targetDelta) < DEFAULT_MAXIMUM_D_DELTA)
+                    .findAny().get();
         }
         throw new RuntimeException("UNIKUSYOEJU " + targetPhase);
     }
@@ -1015,7 +1019,7 @@ public class RaypathCatalog implements Serializable {
         };
         for (Integer surfaceIndex : surfaceList) {
             double current = toDelta.applyAsDouble(referenceRaypaths[surfaceIndex]);
-// trial nextIndex
+// trial nextIndex basically surfaceIndex+1 if not surfaceIndex is of the last element.
             int firstNextIndex = surfaceIndex < referenceRaypaths.length - 1 ? surfaceIndex + 1 : surfaceIndex - 1;
             double next = toDelta.applyAsDouble(referenceRaypaths[firstNextIndex]);
             int startIndex = surfaceIndex;
@@ -1032,7 +1036,6 @@ public class RaypathCatalog implements Serializable {
                 current = next;
                 increment = surfaceIndex < referenceRaypaths.length - 1 ? 1 : -1;
             }
-
             for (int currentI = startIndex; ; currentI += increment) {
                 if (currentI + increment < 0 || referenceRaypaths.length - 1 < currentI + increment) break;
                 next = toDelta.applyAsDouble(referenceRaypaths[currentI + increment]);
