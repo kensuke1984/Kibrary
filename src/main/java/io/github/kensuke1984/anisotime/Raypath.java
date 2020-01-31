@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.0b
+ * @version 0.7.0.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -1168,7 +1168,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * Computes a epicentral distance &Deleta; for a raypath with two raypaths via &tau;.
+     * Computes an epicentral distance &Delta; for a raypath with two raypaths via &tau;.
      *
      * @param phase         target phase
      * @param eventR        [km] event radius
