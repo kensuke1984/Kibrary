@@ -32,9 +32,9 @@ import java.util.function.*;
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
-     * 2020/1/23
+     * 2020/2/3
      */
-    private static final long serialVersionUID = 5760284249441786433L;
+    private static final long serialVersionUID = 1319747960091187209L;
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
