@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.0.1b
+ * @version 0.7.0.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2019/12/29
+     * 2020/2/7
      */
-    private static final long serialVersionUID = -5361377999209624222L;
+    private static final long serialVersionUID = -1730146423558487638L;
 
     @Override
     public boolean equals(Object o) {
@@ -344,6 +344,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 jeffreysTMap.put(pp, stream.readDouble());
             }
         setTurningRs();
+//        readDTheta(stream);
     }
 
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -373,7 +374,48 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             stream.writeDouble(value);
         for (double value : jeffList)
             stream.writeDouble(value);
+        writeDTheta(stream);
     }
+
+    private void readDTheta(ObjectInputStream stream) throws IOException, ClassNotFoundException {
+        RealVector mantle = MESH.getMesh(Partition.MANTLE);
+        double limitR = getStructure().earthRadius() - 700;
+        double[] pTheta = new double[mantle.getDimension() - 1];
+        double[] svTheta = new double[mantle.getDimension() - 1];
+        double[] shTheta = new double[mantle.getDimension() - 1];
+        dThetaMap.put(PhasePart.P, pTheta);
+        dThetaMap.put(PhasePart.SV, svTheta);
+        dThetaMap.put(PhasePart.SH, shTheta);
+        double pJeff = jeffreysBoundaryMap.get(PhasePart.P);
+        double svJeff = jeffreysBoundaryMap.get(PhasePart.SV);
+        double shJeff = jeffreysBoundaryMap.get(PhasePart.SH);
+        for (int i = 0; i < mantle.getDimension() - 1; i++) {
+            double r = mantle.getEntry(i);
+            if (r < limitR) continue;
+            if (pJeff <= r) pTheta[i] = stream.readDouble();
+            if (svJeff <= r) svTheta[i] = stream.readDouble();
+            if (shJeff <= r) shTheta[i] = stream.readDouble();
+        }
+    }
+
+    private void writeDTheta(ObjectOutputStream stream) throws IOException {
+        RealVector mantle = MESH.getMesh(Partition.MANTLE);
+        double limitR = getStructure().earthRadius() - 700;
+        double[] pTheta = dThetaMap.get(PhasePart.P);
+        double[] svTheta = dThetaMap.get(PhasePart.SV);
+        double[] shTheta = dThetaMap.get(PhasePart.SH);
+        double pJeff = jeffreysBoundaryMap.get(PhasePart.P);
+        double svJeff = jeffreysBoundaryMap.get(PhasePart.SV);
+        double shJeff = jeffreysBoundaryMap.get(PhasePart.SH);
+        for (int i = 0; i < mantle.getDimension() - 1; i++) {
+            double r = mantle.getEntry(i);
+            if (r < limitR) continue;
+            if (pJeff <= r) stream.writeDouble(pTheta[i]);
+            if (svJeff <= r) stream.writeDouble(svTheta[i]);
+            if (shJeff <= r) stream.writeDouble(shTheta[i]);
+        }
+    }
+
 
     /**
      * @param startR [km]
@@ -524,8 +566,11 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 (outer == PassPoint.SEISMIC_SOURCE && eventR == getStructure().earthRadius());
         double turningR = getTurningR(pp);
         if (innerIsBoundary && !Double.isNaN(turningR)) return Double.NaN;
-        if (outerIsBoundary) if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR)))
-            return deltaMap.get(pp);
+        if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR))) {
+            if (outerIsBoundary) return deltaMap.get(pp);
+//            else if (outer == PassPoint.SEISMIC_SOURCE)
+//                return deltaMap.get(pp) - computeDelta(pp, eventR, getStructure().earthRadius());
+        }
         double[] interval = getIntegralInterval(part, eventR);
         if (Double.isNaN(interval[0]) || Double.isNaN(interval[1]) || interval[1] < interval[0]) return Double.NaN;
         return computeDelta(pp, interval[0], interval[1]);
@@ -667,6 +712,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (!isComputed) throw new RuntimeException("Not computed yet.");
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
+        //TODO because of computeSourceSideDelta
+        if (eventR<getStructure().earthRadius()-700)
+            throw new RuntimeException("Not super deep earthquakes yet. The event depth must be shallwer than 700");
         PathPart[] parts = phase.getPassParts();
         double delta = 0;
         for (PathPart part : parts)
