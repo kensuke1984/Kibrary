@@ -27,7 +27,7 @@ import java.util.function.*;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6
+ * @version 0.2.6.1
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -520,10 +520,8 @@ public class RaypathCatalog implements Serializable {
             if (REFERENCE_PHASE.toString().equals("S")) {
                 if (!targetPhase.toString().contains("S")) return true;
             }
-            if (REFERENCE_PHASE.toString().contains("P")^targetPhase.toString().contains("P"))
-                return true;
-            if (REFERENCE_PHASE.toString().contains("S")^targetPhase.toString().contains("S"))
-                return true;
+            if (REFERENCE_PHASE.toString().contains("P") ^ targetPhase.toString().contains("P")) return true;
+            if (REFERENCE_PHASE.toString().contains("S") ^ targetPhase.toString().contains("S")) return true;
             return targetPhase.toString().contains("c") || targetPhase.toString().contains("i") ||
                     (targetPhase.toString().contains("K") ^ REFERENCE_PHASE.toString().contains("K")) ||
                     targetPhase.isPSV() ^ REFERENCE_PHASE.isPSV();
@@ -696,6 +694,7 @@ public class RaypathCatalog implements Serializable {
      * the last raypath which has maximum ray parameter in the range. If Raypath(startP) and/or Raypath(endP) exists,
      * they return.
      * TODO when edges have NaN
+     *
      * @param phase  target phase
      * @param startP range start
      * @param endP   range end
@@ -919,18 +918,16 @@ public class RaypathCatalog implements Serializable {
      * @return Arrays of raypaths which epicentral distances are close to the targetDelta. Never returns null. zero length array is possible.
      */
     public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
-        if (relativeAngle)
-            throw new RuntimeException("sorry relative angle system is not activated yet");
-        if (targetDelta==0){
-            if (targetPhase.toString().contains("c")||targetPhase.toString().contains("i"))
+        if (relativeAngle) throw new RuntimeException("Relative angle system not activated yet");
+        if (targetDelta == 0) {
+            if (targetPhase.toString().contains("c") || targetPhase.toString().contains("i"))
                 return new Raypath[]{raypathList.first()};
             else {
                 System.err.println("Looking for epicentral distance 0, " + targetPhase + "? Isn't it 360?");
                 return new Raypath[0];
             }
         }
-        if (targetDelta==Math.toRadians(180)&&(targetPhase.toString().contains("I")))
-            return new Raypath[]{raypathList.first()};
+        if (targetDelta == Math.PI && targetPhase.toString().contains("I")) return new Raypath[]{raypathList.first()};
 
         if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
                 (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
@@ -963,6 +960,8 @@ public class RaypathCatalog implements Serializable {
                                              boolean relativeAngle) {
         if (Math.abs(raypath.computeDelta(targetPhase, eventR) - targetDelta) < DEFAULT_MAXIMUM_D_DELTA)
             return targetPhase;
+        //TODO e.g. PvXXPScS
+        if (targetPhase.toString().contains("c")) return targetPhase;
         VelocityStructure structure = raypath.getStructure();
         if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S) ||
                 targetPhase.equals(Phase.pP) || targetPhase.equals(Phase.sSV) || targetPhase.equals(Phase.sS)) {
