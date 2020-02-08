@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.0.2b
+ * @version 0.7.0.3b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2020/2/7
+     * 2020/2/8
      */
-    private static final long serialVersionUID = -1730146423558487638L;
+    private static final long serialVersionUID = 528853256787517435L;
 
     @Override
     public boolean equals(Object o) {
@@ -344,7 +344,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 jeffreysTMap.put(pp, stream.readDouble());
             }
         setTurningRs();
-//        readDTheta(stream);
+        readDTheta(stream);
     }
 
     private void writeObject(ObjectOutputStream stream) throws IOException {
@@ -1011,7 +1011,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private double drdx(PhasePart pp, double r) {
         return ComputationalMesh.EPS / (toX(pp, r) - toX(pp, r - ComputationalMesh.EPS));
     }
-
     /**
      * This method computes &Delta; with precomputed values. The startR and endR
      * must be in the section (inner-core, outer-core or mantle).
@@ -1048,7 +1047,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
 
         DoubleUnaryOperator qDelta = r -> WOODHOUSE.computeQDelta(pp, RAY_PARAMETER, r);
-
         // the case where the integral interval is inside the jeffrey interval TODO
         if (turningR < endR && endR <= jeffreysBoundary)
             return jeffreys(qDelta, pp, endR) - jeffreys(qDelta, pp, startR);
@@ -1069,10 +1067,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double[] theta = dThetaMap.computeIfAbsent(pp, p -> computeTransients(pp, qDelta));
         for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
             delta += theta[i];
+       if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
+            return delta + simpson(qDelta, startR, radii.getEntry(firstIndexForMemory));
         if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary) delta +=
                 simpson(qDelta, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
-        if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
-            return delta + simpson(qDelta, startR, radii.getEntry(firstIndexForMemory));
         double jeffreys = jeffreysDelta - jeffreys(qDelta, pp, startR);
         return delta + jeffreys;
     }
@@ -1132,10 +1130,10 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double[] t = dTMap.computeIfAbsent(pp, p -> computeTransients(pp, qT));
         for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
             time += t[i];
-        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary)
-            time += simpson(qT, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return time + simpson(qT, startR, radii.getEntry(firstIndexForMemory));
+        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary)
+            time += simpson(qT, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
         double jeffreys = jeffreysT - jeffreys(qT, pp, startR);
         return time + jeffreys;
     }
