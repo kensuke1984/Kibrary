@@ -41,7 +41,7 @@ import java.util.regex.Pattern;
  * P and S after transmission strictly are downward, and p and s are upward.
  *
  * @author Kensuke Konishi
- * @version 0.1.10.3
+ * @version 0.1.10.4
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -187,8 +187,8 @@ public class Phase implements Serializable {
     public static Phase create(String name, boolean... sv) {
         if (1 < sv.length) throw new IllegalArgumentException("SV or not");
         String expandedName = expandParentheses(name);
-        if (isValid(expandedName))
-            return new Phase(name, expandedName, name.contains("P") || name.contains("K") || (sv.length != 0 && sv[0]));
+        if (isValid(expandedName)) return new Phase(name, expandedName,
+                name.contains("p") || name.contains("P") || name.contains("K") || (sv.length != 0 && sv[0]));
         else throw new IllegalArgumentException("Invalid phase name " + name);
     }
 
