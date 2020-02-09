@@ -27,12 +27,12 @@ import java.util.function.*;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6.1
+ * @version 0.2.6.2
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
-     * 2020/2/3
+     * 2020/2/9
      */
     private static final long serialVersionUID = 1319747960091187209L;
 
@@ -440,9 +440,10 @@ public class RaypathCatalog implements Serializable {
          * @return if a search should skip the input targetPhase.
          */
         private boolean shouldSkip(Phase targetPhase) {
+            if (PP == PhasePart.SH && targetPhase.isPSV()) return true;
+            if (PP == PhasePart.SV && !targetPhase.isPSV()) return true;
             if ((targetPhase.toString().contains("p") || targetPhase.toString().contains("P")) &&
                     (targetPhase.toString().contains("s") || targetPhase.toString().contains("S"))) return false;
-            if (PP == PhasePart.SH && targetPhase.isPSV()) return true;
             if (PP == PhasePart.P && (targetPhase.toString().contains("S") || targetPhase.toString().contains("s")))
                 return true;
             if ((PP == PhasePart.SH || PP == PhasePart.SV) &&
@@ -474,11 +475,11 @@ public class RaypathCatalog implements Serializable {
             if (CATALOG.isEmpty()) return EMPTY_RAYPATH;
             if (shouldSkip(targetPhase)) return EMPTY_RAYPATH;
             Phase actualPhase = toReflection(targetPhase);
-            @SuppressWarnings({"unchecked"}) TreeSet<Raypath> catalog = (TreeSet) CATALOG;
-            double delta1 = catalog.first().computeDelta(actualPhase, eventR);
-            double delta2 = catalog.last().computeDelta(actualPhase, eventR);
-            if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
-                return EMPTY_RAYPATH;
+//            @SuppressWarnings({"unchecked"}) TreeSet<Raypath> catalog = (TreeSet) CATALOG;
+//            double delta1 = catalog.first().computeDelta(actualPhase, eventR);
+//            double delta2 = catalog.last().computeDelta(actualPhase, eventR);
+//            if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
+//                return EMPTY_RAYPATH;
             return RaypathCatalog.this
                     .searchPath(actualPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
@@ -512,18 +513,13 @@ public class RaypathCatalog implements Serializable {
          * @return if a search should skip the input targetPhase.
          */
         private boolean shouldSkip(Phase targetPhase) {
+            String reference = REFERENCE_PHASE.toString();
+            String target = targetPhase.toString();
             //TODO more effectively
-            if (REFERENCE_PHASE.toString().contains("I") ^ targetPhase.toString().contains("I")) return true;
-            if (REFERENCE_PHASE.toString().equals("P")) {
-                if (!targetPhase.toString().contains("P")) return true;
-            }
-            if (REFERENCE_PHASE.toString().equals("S")) {
-                if (!targetPhase.toString().contains("S")) return true;
-            }
-            if (REFERENCE_PHASE.toString().contains("P") ^ targetPhase.toString().contains("P")) return true;
-            if (REFERENCE_PHASE.toString().contains("S") ^ targetPhase.toString().contains("S")) return true;
-            return targetPhase.toString().contains("c") || targetPhase.toString().contains("i") ||
-                    (targetPhase.toString().contains("K") ^ REFERENCE_PHASE.toString().contains("K")) ||
+            if (reference.contains("I") ^ target.contains("I")) return true;
+            if (reference.contains("P") ^ (target.contains("P") || target.equals("p"))) return true;
+            if (reference.contains("S") ^ (target.contains("S") || target.equals("s"))) return true;
+            return target.contains("c") || target.contains("i") || (target.contains("K") ^ reference.contains("K")) ||
                     targetPhase.isPSV() ^ REFERENCE_PHASE.isPSV();
         }
 
@@ -918,19 +914,21 @@ public class RaypathCatalog implements Serializable {
      * @return Arrays of raypaths which epicentral distances are close to the targetDelta. Never returns null. zero length array is possible.
      */
     public Raypath[] searchPath(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
+        String phase = targetPhase.toString();
         if (relativeAngle) throw new RuntimeException("Relative angle system not activated yet");
         if (targetDelta == 0) {
-            if (targetPhase.toString().contains("c") || targetPhase.toString().contains("i"))
-                return new Raypath[]{raypathList.first()};
+            if (phase.contains("c") || phase.contains("i")) return new Raypath[]{raypathList.first()};
             else {
-                System.err.println("Looking for epicentral distance 0, " + targetPhase + "? Isn't it 360?");
-                return new Raypath[0];
+                System.err.println("Looking for epicentral distance 0, " + phase + "? Isn't it 360?");
+                return EMPTY_RAYPATH;
             }
         }
-        if (targetDelta == Math.PI && targetPhase.toString().contains("I")) return new Raypath[]{raypathList.first()};
+        if (phase.startsWith("p") || phase.startsWith("s"))
+            if (Math.abs(eventR - getStructure().earthRadius()) < ComputationalMesh.EPS) return EMPTY_RAYPATH;
 
-        if (targetPhase.isDiffracted()) return new Raypath[]{targetPhase.toString().contains("Pdiff") ? getPdiff() :
-                (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
+        if (targetDelta == Math.PI && phase.contains("I")) return new Raypath[]{raypathList.first()};
+        if (targetPhase.isDiffracted()) return new Raypath[]{
+                phase.contains("Pdiff") ? getPdiff() : (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
         if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
