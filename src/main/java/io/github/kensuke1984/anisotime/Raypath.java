@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.0.3b
+ * @version 0.7.0.4b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2020/2/8
+     * 2020/2/9
      */
-    private static final long serialVersionUID = 528853256787517435L;
+    private static final long serialVersionUID = -4264764047503688820L;
 
     @Override
     public boolean equals(Object o) {
@@ -392,9 +392,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         for (int i = 0; i < mantle.getDimension() - 1; i++) {
             double r = mantle.getEntry(i);
             if (r < limitR) continue;
-            if (pJeff <= r) pTheta[i] = stream.readDouble();
-            if (svJeff <= r) svTheta[i] = stream.readDouble();
-            if (shJeff <= r) shTheta[i] = stream.readDouble();
+            if (Double.isNaN(pJeff)||pJeff <= r) pTheta[i] = stream.readDouble();
+            if (Double.isNaN(svJeff)||svJeff <= r) svTheta[i] = stream.readDouble();
+            if (Double.isNaN(shJeff)||shJeff <= r) shTheta[i] = stream.readDouble();
         }
     }
 
@@ -410,9 +410,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         for (int i = 0; i < mantle.getDimension() - 1; i++) {
             double r = mantle.getEntry(i);
             if (r < limitR) continue;
-            if (pJeff <= r) stream.writeDouble(pTheta[i]);
-            if (svJeff <= r) stream.writeDouble(svTheta[i]);
-            if (shJeff <= r) stream.writeDouble(shTheta[i]);
+            if (Double.isNaN(pJeff)||pJeff <= r) stream.writeDouble(pTheta[i]);
+            if (Double.isNaN(svJeff)||svJeff <= r) stream.writeDouble(svTheta[i]);
+            if (Double.isNaN(shJeff)||shJeff <= r) stream.writeDouble(shTheta[i]);
         }
     }
 
