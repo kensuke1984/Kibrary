@@ -392,9 +392,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         for (int i = 0; i < mantle.getDimension() - 1; i++) {
             double r = mantle.getEntry(i);
             if (r < limitR) continue;
-            if (Double.isNaN(pJeff)||pJeff <= r) pTheta[i] = stream.readDouble();
-            if (Double.isNaN(svJeff)||svJeff <= r) svTheta[i] = stream.readDouble();
-            if (Double.isNaN(shJeff)||shJeff <= r) shTheta[i] = stream.readDouble();
+            if (Double.isNaN(pJeff) || pJeff <= r) pTheta[i] = stream.readDouble();
+            if (Double.isNaN(svJeff) || svJeff <= r) svTheta[i] = stream.readDouble();
+            if (Double.isNaN(shJeff) || shJeff <= r) shTheta[i] = stream.readDouble();
         }
     }
 
@@ -410,9 +410,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         for (int i = 0; i < mantle.getDimension() - 1; i++) {
             double r = mantle.getEntry(i);
             if (r < limitR) continue;
-            if (Double.isNaN(pJeff)||pJeff <= r) stream.writeDouble(pTheta[i]);
-            if (Double.isNaN(svJeff)||svJeff <= r) stream.writeDouble(svTheta[i]);
-            if (Double.isNaN(shJeff)||shJeff <= r) stream.writeDouble(shTheta[i]);
+            if (Double.isNaN(pJeff) || pJeff <= r) stream.writeDouble(pTheta[i]);
+            if (Double.isNaN(svJeff) || svJeff <= r) stream.writeDouble(svTheta[i]);
+            if (Double.isNaN(shJeff) || shJeff <= r) stream.writeDouble(shTheta[i]);
         }
     }
 
@@ -568,8 +568,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (innerIsBoundary && !Double.isNaN(turningR)) return Double.NaN;
         if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR))) {
             if (outerIsBoundary) return deltaMap.get(pp);
-//            else if (outer == PassPoint.SEISMIC_SOURCE)
-//                return deltaMap.get(pp) - computeDelta(pp, eventR, getStructure().earthRadius());
+            else if (outer == PassPoint.SEISMIC_SOURCE)
+                return deltaMap.get(pp) - computeDelta(pp, eventR, getStructure().earthRadius());
         }
         double[] interval = getIntegralInterval(part, eventR);
         if (Double.isNaN(interval[0]) || Double.isNaN(interval[1]) || interval[1] < interval[0]) return Double.NaN;
@@ -713,7 +713,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
         //TODO because of computeSourceSideDelta
-        if (eventR<getStructure().earthRadius()-700)
+        if (eventR < getStructure().earthRadius() - 700)
             throw new RuntimeException("Not super deep earthquakes yet. The event depth must be shallwer than 700");
         PathPart[] parts = phase.getPassParts();
         double delta = 0;
@@ -1011,6 +1011,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private double drdx(PhasePart pp, double r) {
         return ComputationalMesh.EPS / (toX(pp, r) - toX(pp, r - ComputationalMesh.EPS));
     }
+
     /**
      * This method computes &Delta; with precomputed values. The startR and endR
      * must be in the section (inner-core, outer-core or mantle).
@@ -1067,7 +1068,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double[] theta = dThetaMap.computeIfAbsent(pp, p -> computeTransients(pp, qDelta));
         for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
             delta += theta[i];
-       if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
+        if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return delta + simpson(qDelta, startR, radii.getEntry(firstIndexForMemory));
         if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary) delta +=
                 simpson(qDelta, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
