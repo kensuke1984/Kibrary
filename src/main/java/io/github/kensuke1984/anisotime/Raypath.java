@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.0.4b
+ * @version 0.7.0.5b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -61,7 +61,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     /**
      * 2020/2/9
      */
-    private static final long serialVersionUID = -4264764047503688820L;
+    private static final long serialVersionUID = 296970131282572254L;
 
     @Override
     public boolean equals(Object o) {
@@ -355,19 +355,21 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         AtomicInteger bounceFlag = new AtomicInteger();
         List<Double> outputList = new ArrayList<>();
         List<Double> jeffList = new ArrayList<>();
-        Arrays.stream(PhasePart.values()).filter(pp -> !Double.isNaN(deltaMap.get(pp))).forEach(pp -> {
-            existFlag.set(existFlag.get() | pp.getFlag());
-            if (!Double.isNaN(jeffreysBoundaryMap.get(pp))) {
-                bounceFlag.set(bounceFlag.get() | pp.getFlag());
-                jeffList.add(jeffreysBoundaryMap.get(pp));
-                jeffList.add(jeffreysDeltaMap.get(pp));
-                jeffList.add(jeffreysTMap.get(pp));
-            }
-            outputList.add(criticalTauMap.get(pp));
-            outputList.add(tauMap.get(pp));
-            outputList.add(deltaMap.get(pp));
-            outputList.add(timeMap.get(pp));
-        });
+        Arrays.stream(PhasePart.values())
+                .filter(pp -> !Double.isNaN(deltaMap.get(pp)) || !Double.isNaN(jeffreysBoundaryMap.get(pp)))
+                .forEach(pp -> {
+                    existFlag.set(existFlag.get() | pp.getFlag());
+                    if (!Double.isNaN(jeffreysBoundaryMap.get(pp))) {
+                        bounceFlag.set(bounceFlag.get() | pp.getFlag());
+                        jeffList.add(jeffreysBoundaryMap.get(pp));
+                        jeffList.add(jeffreysDeltaMap.get(pp));
+                        jeffList.add(jeffreysTMap.get(pp));
+                    }
+                    outputList.add(criticalTauMap.get(pp));
+                    outputList.add(tauMap.get(pp));
+                    outputList.add(deltaMap.get(pp));
+                    outputList.add(timeMap.get(pp));
+                });
         stream.writeByte(existFlag.get());
         stream.writeByte(bounceFlag.get());
         for (double value : outputList)
