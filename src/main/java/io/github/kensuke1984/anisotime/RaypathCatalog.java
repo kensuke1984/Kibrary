@@ -27,7 +27,7 @@ import java.util.function.*;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6.2
+ * @version 0.2.6.3
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -423,14 +423,24 @@ public class RaypathCatalog implements Serializable {
         }
 
         private Phase toReflection(Phase base) {
-            if (BOUNDARY_R <= getStructure().coreMantleBoundary()) return base; //TODO such as PKXXKP
-            if (base.equals(Phase.P)) return Phase.create("Pv" + DEPTH + "P");
-            if (base.equals(Phase.pP)) return Phase.create("pPv" + DEPTH + "P");
-            if (base.equals(Phase.SV)) return Phase.create("Sv" + DEPTH + "S", true);
-            if (base.equals(Phase.sSV)) return Phase.create("sSv" + DEPTH + "S", true);
-            if (base.equals(Phase.S)) return Phase.create("Sv" + DEPTH + "S");
-            if (base.equals(Phase.sS)) return Phase.create("sSv" + DEPTH + "S");
-            else return base;
+            if (BOUNDARY_R <= getStructure().coreMantleBoundary()) return base; //TODO such as PKvXXKP
+            String s = base.toString();
+            switch (PP) {
+                case P:
+                    return Phase.create(s.replace("P", "Pv" + DEPTH + "P"));
+                case SV:
+                    return Phase.create(s.replace("S", "Sv" + DEPTH + "S"), true);
+                case SH:
+                    return Phase.create(s.replace("S", "Sv" + DEPTH + "S"));
+                case K:
+                    return Phase.create(s.replace("K", "Kv" + DEPTH + "K"));
+                case I:
+                    return Phase.create(s.replace("I", "Iv" + DEPTH + "I"));
+                case JV:
+                    return Phase.create(s.replace("J", "Jv" + DEPTH + "J"));
+                default:
+                    throw new RuntimeException("NOTJEIKT");
+            }
         }
 
         /**
@@ -440,27 +450,26 @@ public class RaypathCatalog implements Serializable {
          * @return if a search should skip the input targetPhase.
          */
         private boolean shouldSkip(Phase targetPhase) {
+            String target = targetPhase.toString();
+            if (PP == PhasePart.P && target.contains("p")) return false;
             if (PP == PhasePart.SH && targetPhase.isPSV()) return true;
             if (PP == PhasePart.SV && !targetPhase.isPSV()) return true;
-            if ((targetPhase.toString().contains("p") || targetPhase.toString().contains("P")) &&
-                    (targetPhase.toString().contains("s") || targetPhase.toString().contains("S"))) return false;
-            if (PP == PhasePart.P && (targetPhase.toString().contains("S") || targetPhase.toString().contains("s")))
+            if (PP == PhasePart.SV && target.contains("s")) return false;
+            if (PP == PhasePart.SH && target.contains("s")) return false;
+            if (target.contains("P") && target.contains("S")) return false;
+            if (PP == PhasePart.P && !target.contains("P")) return true;
+            if ((PP == PhasePart.SH || PP == PhasePart.SV) && !target.contains("S")) return true;
+            if (getStructure().innerCoreBoundary() <= BOUNDARY_R == (target.contains("I") || target.contains("J")))
                 return true;
-            if ((PP == PhasePart.SH || PP == PhasePart.SV) &&
-                    (targetPhase.toString().contains("P") || targetPhase.toString().contains("p"))) return true;
             double cmb = getStructure().coreMantleBoundary();
-            if (cmb <= BOUNDARY_R && targetPhase.toString().contains("K")) return true;
-            if (getStructure().innerCoreBoundary() <= BOUNDARY_R &&
-                    (targetPhase.toString().contains("I") || targetPhase.toString().contains("J"))) return true;
-            if (BOUNDARY_R < cmb && (targetPhase.toString().contains("c"))) return true;
-            if (PP == PhasePart.P && getStructure().coreMantleBoundary() < BOUNDARY_R && targetPhase.equals(Phase.PcP))
-                return true;
-            if (PP == PhasePart.SV && getStructure().coreMantleBoundary() < BOUNDARY_R &&
-                    targetPhase.equals(Phase.SVcS)) return true;
-            if (PP == PhasePart.SH && getStructure().coreMantleBoundary() < BOUNDARY_R && targetPhase.equals(Phase.ScS))
-                return true;
-            return targetPhase.equals(Phase.PKP) || targetPhase.equals(Phase.SKS) ||
-                    targetPhase.toString().contains("I") || targetPhase.toString().contains("J");
+            if (cmb <= BOUNDARY_R == target.contains("K")) return true;
+            if (cmb < BOUNDARY_R) {
+                if ((PP == PhasePart.P && (target.contains("Pc") || target.contains("cP"))) ||
+                        ((PP == PhasePart.SV || PP == PhasePart.SH) &&
+                                (target.contains("cS") || target.contains("Sc")))) return true;
+            }
+            return targetPhase.equals(Phase.PKP) || targetPhase.equals(Phase.SKS) || target.contains("I") ||
+                    target.contains("J");
         }
 
         /**
@@ -535,6 +544,7 @@ public class RaypathCatalog implements Serializable {
             return RaypathCatalog.this
                     .searchPath(targetPhase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]));
         }
+
     }
 
     /**
@@ -958,28 +968,24 @@ public class RaypathCatalog implements Serializable {
                                              boolean relativeAngle) {
         if (Math.abs(raypath.computeDelta(targetPhase, eventR) - targetDelta) < DEFAULT_MAXIMUM_D_DELTA)
             return targetPhase;
-        //TODO e.g. PvXXPScS
-        if (targetPhase.toString().contains("c")) return targetPhase;
+        String target = targetPhase.toString();
+        //TODO e.g. PvXXPScS PKvXXKP
+        if (target.contains("c")) return targetPhase;
+        if (target.contains("K")) return targetPhase;
+        //PSvXXS
+        if (target.contains("P") && target.contains("S")) return targetPhase;
         VelocityStructure structure = raypath.getStructure();
-        if (targetPhase.equals(Phase.P) || targetPhase.equals(Phase.SV) || targetPhase.equals(Phase.S) ||
-                targetPhase.equals(Phase.pP) || targetPhase.equals(Phase.sSV) || targetPhase.equals(Phase.sS)) {
-            DoubleFunction<Phase> toPhase = radius -> {
-                double depth = Precision.round(structure.earthRadius() - radius, 2);
-                String xx = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
-                        String.valueOf(depth);
-                if (targetPhase.equals(Phase.P)) return Phase.create("Pv" + xx + "P");
-                else if (targetPhase.equals(Phase.pP)) return Phase.create("pPv" + xx + "P");
-                else if (targetPhase.equals(Phase.S)) return Phase.create("Sv" + xx + "S");
-                else if (targetPhase.equals(Phase.SV)) return Phase.create("Sv" + xx + "S", true);
-                else if (targetPhase.equals(Phase.sSV)) return Phase.create("sSv" + xx + "S", true);
-                else return Phase.create("sSv" + xx + "S");
-            };
-            return Arrays.stream(structure.boundariesInMantle()).mapToObj(toPhase).filter(p -> Math.abs(
-                    relativeAngle ? raypath.computeDelta(p, eventR) :
-                            toRelativeAngle(raypath.computeDelta(p, eventR)) - targetDelta) < DEFAULT_MAXIMUM_D_DELTA)
-                    .findAny().get();
-        }
-        throw new RuntimeException("UNIKUSYOEJU " + targetPhase);
+        DoubleFunction<Phase> toPhase = radius -> {
+            double depth = Precision.round(structure.earthRadius() - radius, 2);
+            String xx = depth == Math.floor(depth) && !Double.isInfinite(depth) ? String.valueOf((int) depth) :
+                    String.valueOf(depth);
+            String newName = target.replace("P", "Pv" + xx + "P").replace("S", "Sv" + xx + "S");
+            return Phase.create(newName, targetPhase.isPSV());
+        };
+        return Arrays.stream(structure.boundariesInMantle()).mapToObj(toPhase).filter(p -> Math.abs(
+                relativeAngle ? raypath.computeDelta(p, eventR) :
+                        toRelativeAngle(raypath.computeDelta(p, eventR)) - targetDelta) < DEFAULT_MAXIMUM_D_DELTA)
+                .findAny().get();
     }
 
     /**
