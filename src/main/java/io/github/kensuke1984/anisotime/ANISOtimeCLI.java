@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.16.2
+ * @version 0.3.16.3
  */
 final class ANISOtimeCLI {
 
@@ -202,10 +202,10 @@ final class ANISOtimeCLI {
                 Arrays.stream(cmd.getOptionValues("ph")).flatMap(arg -> Arrays.stream(arg.split(",")))
                         .map(n -> Phase.create(n, cmd.hasOption("SV"))).distinct().toArray(Phase[]::new);
         else targetPhases = cmd.hasOption("SV") ?
-                new Phase[]{Phase.P, Phase.PcP, Phase.PKP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.SV, Phase.SVcS,
-                        Phase.SKS, Phase.create("SKiKS", true), Phase.create("SKIKS", true), Phase.SVdiff} :
-                new Phase[]{Phase.P, Phase.PcP, Phase.PKP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff, Phase.S, Phase.ScS,
-                        Phase.SKS, Phase.SKiKS, Phase.SKIKS, Phase.Sdiff};
+                new Phase[]{Phase.p, Phase.pP, Phase.P, Phase.PcP, Phase.PKP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff,
+                        Phase.SV, Phase.SVcS, Phase.SKS, Phase.SKiKS, Phase.SKIKS, Phase.SVdiff} :
+                new Phase[]{Phase.p, Phase.pP, Phase.P, Phase.PcP, Phase.PKP, Phase.PKiKP, Phase.PKIKP, Phase.Pdiff,
+                        Phase.s, Phase.sS, Phase.S, Phase.ScS, Phase.SKS, Phase.SKiKS, Phase.SKIKS, Phase.Sdiff};
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
