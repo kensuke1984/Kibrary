@@ -27,7 +27,7 @@ import java.util.function.*;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.6.3
+ * @version 0.2.6.4
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -424,6 +424,8 @@ public class RaypathCatalog implements Serializable {
 
         private Phase toReflection(Phase base) {
             if (BOUNDARY_R <= getStructure().coreMantleBoundary()) return base; //TODO such as PKvXXKP
+            //TODO already actual phase name
+            if (base.toString().contains("v")) return base;
             String s = base.toString();
             switch (PP) {
                 case P:
@@ -1112,6 +1114,12 @@ public class RaypathCatalog implements Serializable {
             }
             if (Double.isNaN(next)) {
                 int oppositeNextIndex = surfaceIndex - increment;
+                if (oppositeNextIndex<0){
+                    Raypath addPath = interpolateNaNPath
+                            .apply(referenceRaypaths[0], referenceRaypaths[1]);
+                    if (Objects.nonNull(addPath)) returnRaypaths.add(addPath);
+                    continue;
+                }
                 double oppositeNext = toDelta.applyAsDouble(referenceRaypaths[oppositeNextIndex]);
                 if (Double.isNaN(oppositeNext)) throw new RuntimeException("orz");
                 if ((current - targetDelta) * (oppositeNext - targetDelta) < 0) {
