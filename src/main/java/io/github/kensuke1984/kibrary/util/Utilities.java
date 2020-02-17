@@ -41,11 +41,32 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.6
+ * @version 0.1.7
  */
 public final class Utilities {
 
     private Utilities() {
+    }
+
+    /**
+     * e.g. num=2, values={1,2,3,4} -> {1,1}, {1,2}, {1,3}, ...{4,3},{4,4}
+     *
+     * @param num    number of elements for each pattern
+     * @param values elements are chosen from these values
+     * @return Array of all possible patterns of num-elements from the values.
+     * Each element in the array has the array of num elements. patterns[i][j]
+     * is j-th degit in the i-th pattern
+     */
+    public static double[][] makePatterns(int num, double[] values) {
+        int patternN = (int) Math.pow(values.length, num);
+        double[][] patterns = new double[patternN][num];
+        int i = 0;
+        while (i < patternN) {
+            for (int j = 0; j < num; j++)
+                patterns[i][j] = values[(i / (int) Math.pow(values.length, j)) % values.length];
+            i++;
+        }
+        return patterns;
     }
 
     /**
