@@ -1,9 +1,10 @@
 package io.github.kensuke1984.anisotime;
 
+import io.github.kensuke1984.kibrary.util.Utilities;
+import org.apache.commons.math3.util.Precision;
+
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +42,7 @@ import java.util.regex.Pattern;
  * P and S after transmission strictly are downward, and p and s are upward.
  *
  * @author Kensuke Konishi
- * @version 0.1.10.4
+ * @version 0.1.11
  * <p>
  * TODO P2PPcP no exist but exist
  */
@@ -79,7 +80,7 @@ public class Phase implements Serializable {
     private static final Pattern outercoreP = Pattern.compile("PK|KP");
     private static final Pattern outercoreS = Pattern.compile("SK|KS");
 
-    // phase turning R icb < r < cmb, i.e., the phase does not go to inner core.
+    // K turning R icb < r < cmb, i.e., the phase does not go to inner core.
     // if a phase name contains "K(depth)K", the phase does not go to inner core.
     private static final Pattern outercore = Pattern.compile("K\\d|[PSK]K[\\^PSK]");
 
@@ -213,6 +214,189 @@ public class Phase implements Serializable {
             return expanded;
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid phase name " + name);
+        }
+    }
+
+    /**
+     * @param base    phase
+     * @param pvDepth [km] DEPTH of P reflections, the number of the radii must be same as that of P in the phase
+     * @param svDepth [km] DEPTH of S reflections, the number of the radii must be same as that of S in the phase
+     * @param kvDepth [km] DEPTH of K reflections, the number of the radii must be same as that of S in the phase
+     * @param ivDepth [km] DEPTH of I reflections, the number of the radii must be same as that of S in the phase
+     * @param jvDepth [km] DEPTH of J reflections, the number of the radii must be same as that of S in the phase
+     * @return actual phase containing boundaries e.g. P &to; Pv??P
+     */
+    private static String addBoundaries(String base, double[] pvDepth, double[] svDepth, double[] kvDepth,
+                                        double[] ivDepth, double[] jvDepth) {
+        if (base.contains("v") || base.contains("c")) throw new RuntimeException("UNIKUSPEKUTEDDO");
+        int ip = 0;
+        int is = 0;
+        int ii = 0;
+        int ik = 0;
+        int ij = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < base.length(); i++) {
+            char c = base.charAt(i);
+            if (c == 'P') {
+                double depth = pvDepth[ip++];
+                if (Math.abs(depth) < ComputationalMesh.EPS) sb.append("P");
+                else {
+                    depth = Precision.round(depth, 2);
+                    String x = (int) depth == depth ? Integer.toString((int) depth) : Double.toString(depth);
+                    sb.append("Pv").append(x).append("P");
+                }
+            } else if (c == 'S') {
+                double depth = svDepth[is++];
+                if (Math.abs(depth) < ComputationalMesh.EPS) sb.append("S");
+                else {
+                    depth = Precision.round(depth, 2);
+                    String x = (int) depth == depth ? Integer.toString((int) depth) : Double.toString(depth);
+                    sb.append("Sv").append(x).append("S");
+                }
+            } else if (c == 'K') {
+                double depth = kvDepth[ik++];
+                if (Math.abs(depth) < ComputationalMesh.EPS) sb.append("K");
+                else {
+                    depth = Precision.round(depth, 2);
+                    String x = (int) depth == depth ? Integer.toString((int) depth) : Double.toString(depth);
+                    sb.append("Kv").append(x).append("K");
+                }
+            } else if (c == 'I') {
+                double depth = ivDepth[ii++];
+                if (Math.abs(depth) < ComputationalMesh.EPS) sb.append("I");
+                else {
+                    depth = Precision.round(depth, 2);
+                    String x = (int) depth == depth ? Integer.toString((int) depth) : Double.toString(depth);
+                    sb.append("Iv").append(x).append("I");
+                }
+            } else if (c == 'J') {
+                double depth = jvDepth[ij++];
+                if (Math.abs(depth) < ComputationalMesh.EPS) sb.append("J");
+                else {
+                    depth = Precision.round(depth, 2);
+                    String x = (int) depth == depth ? Integer.toString((int) depth) : Double.toString(depth);
+                    sb.append("Jv").append(x).append("J");
+                }
+            } else sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @param structure refer to
+     * @return all possible phases which reflects at internal boundaries except for the icb cmb..
+     */
+    Phase[] toAllPossibilities(VelocityStructure structure) {
+        String name = toString();
+        double cmb = structure.coreMantleBoundary();
+        double icb = structure.innerCoreBoundary();
+        double surface = structure.earthRadius();
+        double[] mantleBoundaries = Arrays.stream(structure.boundariesInMantle())
+                .filter(d -> d == surface || (structure.isJump(d) && cmb < d)).map(d -> surface - d).toArray();
+        double[] outercoreBoundaries =
+                Arrays.stream(structure.boundariesInOuterCore()).filter(d -> structure.isJump(d) && icb < d)
+                        .map(d -> cmb - d).toArray();
+        double[] innercoreBoundaries =
+                Arrays.stream(structure.boundariesInInnerCore()).filter(structure::isJump).map(d -> icb - d).toArray();
+        //TODO using phasepart in the future
+        List<Integer> pPlace = new ArrayList<>();
+        List<Integer> sPlace = new ArrayList<>();
+        List<Integer> kPlace = new ArrayList<>();
+        List<Integer> iPlace = new ArrayList<>();
+        List<Integer> jPlace = new ArrayList<>();
+        //TODO
+        if (name.contains("v") || name.contains("c")) throw new RuntimeException("NOTEKUSUPEKUTED");
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == 'P') pPlace.add(i);
+            if (c == 'S') sPlace.add(i);
+            if (c == 'K') kPlace.add(i);
+            if (c == 'I') iPlace.add(i);
+            if (c == 'J') jPlace.add(i);
+        }
+        int numP = pPlace.size();
+        int numS = sPlace.size();
+        int numK = kPlace.size();
+        int numI = iPlace.size();
+        int numJ = jPlace.size();
+        double[][] pvRadii = Utilities.makePatterns(numP, mantleBoundaries);
+        double[][] svRadii = Utilities.makePatterns(numS, mantleBoundaries);
+        //TODO no checked
+        double[][] kvRadii = Utilities.makePatterns(numK, outercoreBoundaries);
+        double[][] ivRadii = Utilities.makePatterns(numI, innercoreBoundaries);
+        double[][] jvRadii = Utilities.makePatterns(numJ, innercoreBoundaries);
+        List<String> phaseList = new ArrayList<>();
+        for (double[] pvRadius : pvRadii)
+            for (double[] svRadius : svRadii)
+                for (double[] kvRadius : kvRadii)
+                    for (double[] ivRadius : ivRadii)
+                        for (double[] jvRadius : jvRadii)
+                            phaseList.add(addBoundaries(name, pvRadius, svRadius, kvRadius, ivRadius, jvRadius));
+        return phaseList.stream().map(s -> {
+            try {
+                return create(s, isPSV());
+            } catch (Exception e) {
+                return null;
+            }
+        }).filter(Objects::nonNull).toArray(Phase[]::new);
+    }
+
+    /**
+     * @return if the phase is in the default list of TauP.
+     * P, S, K, I, J reflects only at same boundaries. the boundaries for P and S can be different.
+     * such as PvXPPvYP -> false, PvXPPvXP -> true, PvXPSvYS -> true
+     */
+    boolean isTauPDefault() {
+        String name = toString();
+        Matcher p = Pattern.compile("Pv(\\d+(\\.\\d+)?)").matcher(name);
+        Set<String> pDepth = new HashSet<>();
+        while (p.find()) pDepth.add(p.group());
+        if (1 < pDepth.size()) return false;
+        else if (pDepth.size() == 1 && containsBounce(PhasePart.P)) return false;
+        Matcher s = Pattern.compile("Sv(\\d+(\\.\\d+)?)").matcher(name);
+        Set<String> sDepth = new HashSet<>();
+        while (s.find()) sDepth.add(s.group());
+        if (1 < sDepth.size()) return false;
+        else if (sDepth.size() == 1 && (containsBounce(PhasePart.SV) || containsBounce(PhasePart.SH))) return false;
+        Matcher k = Pattern.compile("Kv(\\d+(\\.\\d+)?)").matcher(name);
+        Set<String> kDepth = new HashSet<>();
+        while (k.find()) kDepth.add(k.group());
+        if (1 < kDepth.size()) return false;
+        else if (kDepth.size() == 1 && containsBounce(PhasePart.K)) return false;
+        Matcher i = Pattern.compile("Iv(\\d+(\\.\\d+)?)").matcher(name);
+        Set<String> iDepth = new HashSet<>();
+        while (i.find()) iDepth.add(i.group());
+        if (1 < iDepth.size()) return false;
+        else if (iDepth.size() == 1 && containsBounce(PhasePart.I)) return false;
+        Matcher j = Pattern.compile("Jv(\\d+(\\.\\d+)?)").matcher(name);
+        Set<String> jDepth = new HashSet<>();
+        while (j.find()) jDepth.add(j.group());
+        if (1 < jDepth.size()) return false;
+        else if (jDepth.size() == 1 && containsBounce(PhasePart.JV)) return false;
+        return true;
+    }
+
+    /**
+     * @return if P,S,K,I,J has reflections and bounces.
+     * such as PPvXXP
+     */
+    boolean containsBounce(PhasePart pp) {
+        String name = toString();
+        switch (pp) {
+            case P:
+                return mantleP.matcher(name).find();
+            case SV:
+                if (!isPSV()) return false;
+            case SH:
+                if (isPSV()) return false;
+                return mantleS.matcher(name).find();
+            case K:
+                return outercore.matcher(name).find();
+            case I:
+            case JV:
+                return true;
+            default:
+                throw new RuntimeException("souteigai");
         }
     }
 
