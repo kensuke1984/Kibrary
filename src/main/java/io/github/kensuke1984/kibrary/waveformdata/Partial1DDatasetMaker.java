@@ -41,14 +41,15 @@ import java.util.stream.Collectors;
  * same events</b> TODO
  *
  * @author Kensuke Konishi
- * @version 0.2.1.2
+ * @version 0.2.2
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
     private Set<SACComponent> components;
     private Path workPath;
     /**
-     * bp, fp フォルダの下のどこにspcファイルがあるか 直下なら何も入れない（""）
+     * name of folders containing SPC files under the folders bp, fp
+     * if the files are (bp|fp)/*.spc, modelName should be "".
      */
     private String modelName;
     /**
@@ -66,8 +67,8 @@ public class Partial1DDatasetMaker implements Operation {
      */
     private double maxFreq;
     /**
-     * spcFileをコンボリューションして時系列にする時のサンプリングHz デフォルトは20
-     * TODO まだ触れない
+     * Sampling Hz when convert spcFile to time series. Default: 20
+     * TODO only 20 now
      */
     private double partialSamplingHz = 20;
     /**
@@ -103,18 +104,15 @@ public class Partial1DDatasetMaker implements Operation {
      */
     private ButterworthFilter filter;
     /**
-     * sacdataを何ポイントおきに取り出すか
+     * steps of SACdata to output (frequency)
      */
     private int step;
 
     private Set<TimewindowInformation> timewindowInformationSet;
-    //
     private WaveformDataWriter partialDataWriter;
     private Path logPath;
     private FujiConversion fujiConversion;
     private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
-    private Set<GlobalCMTID> idSet;
-    private Set<Station> stationSet;
     private Set<Location> perturbationLocationSet;
     private double[][] periodRanges;
 
@@ -137,7 +135,7 @@ public class Partial1DDatasetMaker implements Operation {
             pw.println("##but the eventDirs can have only one folder inside and they must be same.");
             pw.println("#modelName");
             pw.println("##Type source time function 0:none, 1:boxcar, 2:triangle. (0)");
-            pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf ");
+            pw.println("##or folder name containing *.stf if you want to your own GLOBALCMTID.stf.");
             pw.println("#sourceTimeFunction");
             pw.println("##Path of a timewindow information file, must be set");
             pw.println("#timewindowPath timewindow.dat");
@@ -145,19 +143,19 @@ public class Partial1DDatasetMaker implements Operation {
             pw.println("#partialTypes");
             pw.println("##Filter if backward filtering is applied (true)");
             pw.println("#backward");
-            pw.println("##double time length:DSM parameter TLEN, must be set");
+            pw.println("##double time length:DSM parameter TLEN, must be set.");
             pw.println("#TLEN 3276.8");
-            pw.println("##int step of frequency domain DSM parameter NP, must be set");
+            pw.println("##int step of frequency domain DSM parameter NP, must be set.");
             pw.println("#NP 512");
             pw.println("##double minimum value of passband (0.005)");
             pw.println("#minFreq");
             pw.println("##double maximum value of passband (0.08)");
             pw.println("#maxFreq");
             pw.println("#double");
-            pw.println("#partialSamplingHz cant change now");
+            pw.println("#partialSamplingHz cant change now.");
             pw.println("##double sampling Hz in write dataset (1)");
             pw.println("#finalSamplingHz");
-            pw.println("##radius for perturbation points, must be set");
+            pw.println("##radii for perturbation points, must be set.");
             pw.println("#bodyR 3505 3555 3605");
         }
         System.err.println(outPath + " is created.");
@@ -222,7 +220,7 @@ public class Partial1DDatasetMaker implements Operation {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
 
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist.");
         timewindowPath = getPath("timewindowPath");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
@@ -237,6 +235,8 @@ public class Partial1DDatasetMaker implements Operation {
         partialTypes = Arrays.stream(property.getProperty("partialTypes").split("\\s+")).map(PartialType::valueOf)
                 .collect(Collectors.toSet());
 
+        if (!property.containsKey("NP")) throw new IllegalArgumentException("There is no information about NP.");
+        if (!property.containsKey("TLEN")) throw new IllegalArgumentException("There is no information about TLEN.");
         tlen = Double.parseDouble(property.getProperty("TLEN"));
         np = Integer.parseInt(property.getProperty("NP"));
         minFreq = Double.parseDouble(property.getProperty("minFreq"));
@@ -289,9 +289,8 @@ public class Partial1DDatasetMaker implements Operation {
         System.err.println(Partial1DDatasetMaker.class.getName() + " is going.");
         long startTime = System.nanoTime();
 
-        // pdm.createStreams();
         int N_THREADS = Runtime.getRuntime().availableProcessors();
-        writeLog("going with " + N_THREADS + " threads");
+        writeLog("Going with " + N_THREADS + " threads.");
 
         if (partialTypes.contains(PartialType.PARQ)) fujiConversion = new FujiConversion(PolynomialStructure.PREM);
 
@@ -307,13 +306,12 @@ public class Partial1DDatasetMaker implements Operation {
         setBandPassFilter();
         System.err.println("Model name is " + modelName);
         setPerturbationLocation();
-        stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
+        Set<Station> stationSet = timewindowInformationSet.parallelStream().map(TimewindowInformation::getStation)
                 .collect(Collectors.toSet());
-        idSet = Utilities.globalCMTIDSet(workPath);
+        Set<GlobalCMTID> idSet = Utilities.globalCMTIDSet(workPath);
         // information about write partial types
         writeLog(partialTypes.stream().map(Object::toString).collect(Collectors.joining(" ", "Computing for ", "")));
 
-        // sacdataを何ポイントおきに取り出すか
         step = (int) (partialSamplingHz / finalSamplingHz);
 
         Set<EventFolder> eventDirs = Utilities.eventFolderSet(workPath);
@@ -345,7 +343,7 @@ public class Partial1DDatasetMaker implements Operation {
                 Utilities.toTimeString(System.nanoTime() - startTime);
         System.err.println(endLine);
         writeLog(endLine);
-        writeLog(idPath + " " + datasetPath + " were created");
+        writeLog(idPath + " " + datasetPath + " were created.");
         writeLog(numberOfAddedID + " IDs are added.");
 
     }
@@ -400,7 +398,7 @@ public class Partial1DDatasetMaker implements Operation {
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            Path spcFolder = eventDir.toPath().resolve(modelName); // SPCの入っているフォルダ
+            Path spcFolder = eventDir.toPath().resolve(modelName);
 
             if (!Files.exists(spcFolder)) {
                 System.err.println(spcFolder + " does not exist...");
@@ -563,7 +561,7 @@ public class Partial1DDatasetMaker implements Operation {
          */
         private double[] sampleOutput(double[] u, TimewindowInformation timewindowInformation) {
             int cutstart = (int) (timewindowInformation.getStartTime() * partialSamplingHz);
-            // 書きだすための波形
+            // waveform to output
             int outnpts = (int) ((timewindowInformation.getEndTime() - timewindowInformation.getStartTime()) *
                     finalSamplingHz);
             double[] sampleU = new double[outnpts];
