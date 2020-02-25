@@ -38,7 +38,7 @@ If you would like to install useful launchers, execute [this](https://bit.ly/2YU
 If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/), paste this at a Terminal prompt.
 ```bash
 #If you have curl installed 
- % kins=$(mktemp) && curl -s -o $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
+ % kins=$(mktemp) && curl -sL -o $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 #else if wget is installed, try
  % kins=$(mktemp) && wget -q -O $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 ```
