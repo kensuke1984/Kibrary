@@ -21,15 +21,12 @@ import java.util.stream.IntStream;
  * <p>
  * The catalog contains list of events
  * from <b>1976 January - 2017 September</b>.
+ * TODO add the latest catalogs
  *
  * @author Kensuke Konishi
- * @version 0.1.4.1
+ * @version 0.1.5
  */
 final class GlobalCMTCatalog {
-
-    public static void main(String[] args) {
-        System.out.println("The catalog contains events from Jan 1976 - Sep 2017.");
-    }
 
     private final static Set<NDK> NDKs;
 
@@ -49,7 +46,7 @@ final class GlobalCMTCatalog {
             try {
                 path = JOptionPane.showInputDialog("A catalog filename?", path);
             } catch (Exception e) {
-                System.out.println("A catalog filename?");
+                System.err.println("A catalog filename?");
                 try (BufferedReader br = new BufferedReader(
                         new InputStreamReader(new CloseShieldInputStream(System.in)))) {
                     path = br.readLine().trim();
@@ -61,7 +58,7 @@ final class GlobalCMTCatalog {
             } finally {
                 catalogFile = Paths.get(path);
             }
-        } while (catalogFile == null || !Files.exists(catalogFile));
+        } while (!Files.exists(catalogFile));
         return catalogFile;
     }
 
