@@ -22,7 +22,7 @@ import java.util.*;
  * TODO information of eliminated stations and events
  *
  * @author Kensuke Konishi
- * @version 0.2.2
+ * @version 0.2.2.1
  */
 public class InformationFileMaker implements Operation {
     /**
@@ -30,7 +30,7 @@ public class InformationFileMaker implements Operation {
      */
     protected int np;
     /**
-     * TLEN default:3276.8
+     * [s] TLEN default:3276.8
      */
     protected double tlen;
     /**
@@ -42,7 +42,7 @@ public class InformationFileMaker implements Operation {
      */
     protected PolynomialStructure ps;
     /**
-     * Information file name is header_[psv,sh].inf
+     * Information file name is header_[PSV|SH].inf
      */
     protected String header;
     protected Path stationInformationPath;
@@ -56,7 +56,7 @@ public class InformationFileMaker implements Operation {
      */
     private HorizontalPosition[] perturbationPointPositions;
     /**
-     * Radii of perturbation points default values are double[]{3505, 3555,
+     * Radii of perturbation points default values are {3505, 3555,
      * 3605, 3655, 3705, 3755, 3805, 3855} Sorted. No duplication.
      */
     private double[] perturbationR;
@@ -163,7 +163,7 @@ public class InformationFileMaker implements Operation {
     }
 
     /**
-     * horizontalPoint.inf と perturbationPointのインフォメーションファイルを作る
+     * Creates files, horizontalPoint.inf and information perturbationPoint
      */
     private void createPointInformationFile() throws IOException {
         Path horizontalPointPath = outputPath.resolve("horizontalPoint.inf");
@@ -208,7 +208,6 @@ public class InformationFileMaker implements Operation {
         // reading station information
         Set<Station> stationSet = StationInformationFile.read(stationInformationPath);
 
-        // System.exit(0);
         // //////////////////////////////////////
         System.err.println("Making information files for the events(fp)");
         for (EventFolder ed : eventDirs) {
@@ -220,7 +219,7 @@ public class InformationFileMaker implements Operation {
             fp.writePSVFP(infPath.resolve(header + "_PSV.inf"));
         }
 
-        System.out.println("making information files for the stations(bp)");
+        System.err.println("making information files for the stations(bp)");
         for (Station station : stationSet) {
             // System.out.println(str);
             BPinfo bp = new BPinfo(station, header, ps, tlen, np, perturbationR, perturbationPointPositions);

@@ -13,7 +13,7 @@ import java.util.Properties;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.1.1
+ * @version 0.1.1.2
  */
 public class Environment {
     public final static Path KIBRARY_HOME;

@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6
+ * @version 0.0.6.1
  */
 public class SshDSMinfo extends SyntheticDSMInfo {
 
@@ -32,7 +32,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     }
 
     /**
-     * sshpsv(TI)計算用のファイル出力
+     * Creates a file for sshpsv(TI)
      *
      * @param psvPath write path
      * @param options options for writing
@@ -75,7 +75,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     }
 
     /**
-     * sshpsvi(isotropic)計算用のファイル出力
+     * Creates a file for sshpsvi(isotropic)
      *
      * @param psvPath write path
      * @param options options for writing
@@ -111,7 +111,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     }
 
     /**
-     * sshsh(TI)計算用のファイル出力
+     * Creates a file for sshsh(TI)
      *
      * @param shPath  write path
      * @param options options for writing
@@ -150,7 +150,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     }
 
     /**
-     * sshshi(isotropic)計算用のファイル出力
+     * Creates a file for sshshi(isotropic)
      *
      * @param shPath  write path
      * @param options for writing
@@ -185,7 +185,7 @@ public class SshDSMinfo extends SyntheticDSMInfo {
     }
 
     /**
-     * @return radii for the perturbation points
+     * @return [km] radii for the perturbation points
      */
     public double[] getPerturbationPointDepth() {
         return RADII.clone();

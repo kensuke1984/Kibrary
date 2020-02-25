@@ -10,7 +10,7 @@ import java.util.List;
  * Reader for files which contains c # ! etc for comment lines.
  *
  * @author Kensuke Konishi
- * @version 0.0.2.2
+ * @version 0.0.2.3
  */
 class InformationFileReader {
     /**
@@ -70,7 +70,7 @@ class InformationFileReader {
      * if the next line is a comment line, it will be skipped. (c#!...) the line
      * will be returned after trimmed
      *
-     * @return the next line to the line already read ,returns null if all lines
+     * @return the next line to the line already read, returns null if all lines
      * are already read
      */
     String next() {

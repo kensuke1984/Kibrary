@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * Information file for TIPSV and TISH
  *
  * @author Kensuke Konishi
- * @version 0.1.8
+ * @version 0.1.8.1
  */
 public class SyntheticDSMInfo extends DSMheader {
 
@@ -53,7 +53,7 @@ public class SyntheticDSMInfo extends DSMheader {
     }
 
     /**
-     * PSV計算用のファイル出力
+     * Creates a file for tipsv
      *
      * @param psvPath Path of an write file
      * @param options for write
@@ -96,7 +96,7 @@ public class SyntheticDSMInfo extends DSMheader {
     }
 
     /**
-     * SH計算用のファイル出力
+     * Creates a file for tish
      *
      * @param outPath write path
      * @param options for write

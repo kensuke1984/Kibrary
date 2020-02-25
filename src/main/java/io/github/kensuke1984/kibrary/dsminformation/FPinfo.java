@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.1
+ * @version 0.0.6.2
  */
 public class FPinfo extends DSMheader {
 
@@ -31,7 +31,7 @@ public class FPinfo extends DSMheader {
      * @param event              source
      * @param outputDir          write folder
      * @param structure          structure
-     * @param tlen               must be a power of 2 (2<sup>n</sup>)/10
+     * @param tlen               [s] must be a power of 2 (2<sup>n</sup>)/10
      * @param np                 must be a power of 2 (2<sup>n</sup>)
      * @param perturbationPointR will be copied
      * @param perturbationPoint  will be copied
