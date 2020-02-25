@@ -11,7 +11,7 @@ import java.util.List;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1
+ * @version 0.0.5.2
  */
 class DSMheader {
 
@@ -26,12 +26,12 @@ class DSMheader {
     private final int NP;
 
     /**
-     * The default value is 0 .
+     * The default value is 0.
      */
     private final int IMIN;
 
     /**
-     * The default value is 256 .
+     * The default value is 256.
      */
     private final int IMAX;
 
@@ -56,17 +56,13 @@ class DSMheader {
      */
     private final double ARTIFICIAL_DAMPING;
 
-    DSMheader() {
-        this(3276.8, 1024);
-    }
-
     /**
-     * DSMヘッダー <br>
+     * Header info of DSM
      * re = 1.e-2; ratc = 1.e-10; ratl = 1.e-5; artificialDampl = 1.e-2 imin =
      * 0, imax = NP
      *
-     * @param tlen 2<sup>n</sup>/10でないといけない nは整数
-     * @param np   2<sup>n</sup>でないといけない nは整数
+     * @param tlen must be 2<sup>n</sup>/10 where n is an integer
+     * @param np   must be 2<sup>n</sup> where n is an integer
      */
     DSMheader(double tlen, int np) {
         this(tlen, np, 0, np, 1.e-2, 1.e-10, 1.e-5, 1.e-2);
