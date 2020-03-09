@@ -42,7 +42,7 @@ If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/softw
 #else if wget is installed, try
  % kins=$(mktemp) && wget -q -O $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 ```
-If you use an old version of downloader ([curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
+If you use an old version of downloader ([curl](https://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
 the download may fail. In that case, you must update it, otherwise you can download the [binary release of Kibrary][kibrary]. 
 
 The necessary/bundled libraries are  
@@ -96,7 +96,7 @@ Last updated Nov 5, 2019
 [alicense]: https://www.apache.org/licenses/LICENSE-2.0
 
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
-[olicense]: http://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
+[olicense]: https://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
 
 [ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
@@ -104,21 +104,21 @@ Last updated Nov 5, 2019
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
-[JRE8]:http://www.oracle.com/technetwork/java/javase/downloads/index.html
-[gradlescript]:http://kensuke1984.github.io/build.gradle
-[gradlew]:http://kensuke1984.github.io/gradlew.tar
+[JRE8]:https://www.oracle.com/technetwork/java/javase/downloads/index.html
+[gradlescript]:https://kensuke1984.github.io/build.gradle
+[gradlew]:https://kensuke1984.github.io/gradlew.tar
 
 [wiki]:https://github.com/kensuke1984/Kibrary/wiki
 [mailto]:mailto:kensuke@earth.sinica.edu.tw
 [javadoc]:https://kensuke1984.github.io/Kibrary
 
-[cli]:http://commons.apache.org/proper/commons-cli/
-[email]:http://commons.apache.org/proper/commons-email/
-[io]:http://commons.apache.org/proper/commons-io/
-[lang]:http://commons.apache.org/proper/commons-lang/
-[math]:http://commons.apache.org/proper/commons-math/
-[net]:http://commons.apache.org/proper/commons-net/
-[eps]:http://www.abeel.be/wiki/EPSGraphics
+[cli]:https://commons.apache.org/proper/commons-cli/
+[email]:https://commons.apache.org/proper/commons-email/
+[io]:https://commons.apache.org/proper/commons-io/
+[lang]:https://commons.apache.org/proper/commons-lang/
+[math]:https://commons.apache.org/proper/commons-math/
+[net]:https://commons.apache.org/proper/commons-net/
+[eps]:https://www.abeel.be/wiki/EPSGraphics
 [mail]:https://java.net/projects/javamail/pages/Home
 
 
