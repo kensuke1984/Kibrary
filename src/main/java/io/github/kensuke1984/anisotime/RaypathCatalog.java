@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.7
+ * @version 0.2.7.1
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -53,7 +53,7 @@ public class RaypathCatalog implements Serializable {
     private static void extractInShare() throws IOException {
         Files.createDirectories(share);
         Path zipPath = downloadCatalogZip();
-        Utilities.extractZip(zipPath, share);
+        Utilities.extractZip(zipPath, share, true);
     }
 
     /**
@@ -135,16 +135,21 @@ public class RaypathCatalog implements Serializable {
         if (Objects.isNull(PREM)) synchronized (LOCK_PREM) {
             if (Objects.isNull(PREM)) {
                 Path p = share.resolve("prem.cat");
-                if (Files.exists(p)) try {
+                try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for PREM...");
                     PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
-                    System.err.println("failed.\nCreating a catalog for PREM.");
-                    PREM = createAndWrite(p, VelocityStructure.prem());
+                    try {
+                        System.err.println("failed.\nDownloading a catalog for PREM...");
+                        extractInShare();
+                        PREM = read(p);
+                    } catch (Exception e2) {
+                        System.err.println("failed.\nCreating a catalog for PREM.");
+                        PREM = createAndWrite(p, VelocityStructure.prem());
+                    }
                 }
-                else PREM = createAndWrite(p, VelocityStructure.prem());
             }
         }
         return PREM;
@@ -157,16 +162,21 @@ public class RaypathCatalog implements Serializable {
         if (Objects.isNull(ISO_PREM)) synchronized (LOCK_ISO_PREM) {
             if (Objects.isNull(ISO_PREM)) {
                 Path p = share.resolve("iprem.cat");
-                if (Files.exists(p)) try {
+                try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for ISO_PREM...");
                     ISO_PREM = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
-                    System.err.println("failed.\nCreating a catalog for ISO_PREM.");
-                    ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
+                    try {
+                        System.err.println("failed.\nDownloading a catalog for ISO_PREM...");
+                        extractInShare();
+                        ISO_PREM = read(p);
+                    } catch (Exception e2) {
+                        System.err.println("failed.\nCreating a catalog for ISO_PREM.");
+                        ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
+                    }
                 }
-                else ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
             }
         }
         return ISO_PREM;
@@ -179,16 +189,21 @@ public class RaypathCatalog implements Serializable {
         if (Objects.isNull(AK135)) synchronized (LOCK_AK135) {
             if (Objects.isNull(AK135)) {
                 Path p = share.resolve("ak135.cat");
-                if (Files.exists(p)) try {
+                try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for AK135...");
                     AK135 = read(p);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
-                    System.err.println("failed.\nCreating a catalog for AK135.");
-                    AK135 = createAndWrite(p, VelocityStructure.ak135());
+                    try {
+                        System.err.println("failed.\nDownloading a catalog for AK135...");
+                        extractInShare();
+                        AK135 = read(p);
+                    } catch (Exception e2) {
+                        System.err.println("failed.\nCreating a catalog for AK135.");
+                        AK135 = createAndWrite(p, VelocityStructure.ak135());
+                    }
                 }
-                else AK135 = createAndWrite(p, VelocityStructure.ak135());
             }
         }
         return AK135;

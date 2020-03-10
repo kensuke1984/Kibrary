@@ -22,7 +22,10 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.*;
+import java.nio.file.CopyOption;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -41,7 +44,7 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.7.1
  */
 public final class Utilities {
 
@@ -49,7 +52,7 @@ public final class Utilities {
     }
 
     /**
-     * e.g. num=2, values={1,2,3,4} -> {1,1}, {1,2}, {1,3}, ...{4,3},{4,4}
+     * e.g. num=2, values={1,2,3,4} &rarr; {1,1}, {1,2}, {1,3}, ...{4,3},{4,4}
      *
      * @param num    number of elements for each pattern
      * @param values elements are chosen from these values
@@ -88,15 +91,17 @@ public final class Utilities {
     /**
      * Extract a zipfile into outRoot
      *
-     * @param zipPath path of a zip file to extract
-     * @param outRoot path of a target path (folder)
+     * @param zipPath   path of a zip file to extract
+     * @param outRoot   path of a target path (folder)
+     * @param overWrite if it is true, this method will overwrite
      */
-    public static void extractZip(Path zipPath, Path outRoot) throws IOException {
+    public static void extractZip(Path zipPath, Path outRoot, boolean overWrite) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 Path outPath = outRoot.resolve(entry.getName());
-                if (Files.exists(outPath)) throw new FileAlreadyExistsException(outPath + " already exists.");
+                if (!overWrite && Files.exists(outPath))
+                    throw new FileAlreadyExistsException(outPath + " already exists.");
                 try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
                         Files.newOutputStream(outPath))) {
                     if (IOUtils.copy(zis, bufferedOutputStream) < 0)
@@ -109,7 +114,7 @@ public final class Utilities {
     /**
      * Change the input to an intelligible expression.
      *
-     * @param nanoSeconds time
+     * @param nanoSeconds [ns] time
      * @return ?d, ?h, ?min and ?s
      */
     public static String toTimeString(long nanoSeconds) {
@@ -244,7 +249,6 @@ public final class Utilities {
     public static void moveSacfile(Path path, Predicate<SACFileName> predicate)
             throws IOException, InterruptedException {
         String directoryName = "movedSACFiles" + getTemporaryString();
-        // System.out.println(directoryName);
         Consumer<EventFolder> moveProcess = eventDirectory -> {
             try {
                 eventDirectory.moveSacFile(predicate, eventDirectory.toPath().resolve(directoryName));
@@ -275,8 +279,7 @@ public final class Utilities {
      * @return changed value which effective digit is n
      */
     public static double toSignificantFigure(int n, double d) {
-        if (n < 1) throw new RuntimeException("invalid input n");
-
+        if (n < 1) throw new IllegalArgumentException("invalid input n");
         long log10 = (long) Math.floor(Math.log10(Math.abs(d)));
         double power10 = FastMath.pow(10, log10 - n + 1);
         return Math.round(d / power10) * power10;
