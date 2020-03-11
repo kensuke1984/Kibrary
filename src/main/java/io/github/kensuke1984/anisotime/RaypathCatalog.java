@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.7.1
+ * @version 0.2.7.2
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -90,7 +90,7 @@ public class RaypathCatalog implements Serializable {
         ComputationalMesh mesh =
                 new ComputationalMesh(structure, Double.parseDouble(args[2]), Double.parseDouble(args[3]),
                         Double.parseDouble(args[4]));
-        computeCatalogue(structure, mesh, dDelta);
+        computeCatalog(structure, mesh, dDelta);
     }
 
     /**
@@ -223,7 +223,7 @@ public class RaypathCatalog implements Serializable {
 
     /**
      * Minimum value of &delta;p [s/rad] (ray parameter). Even if similar raypaths
-     * satisfying {@link #MAXIMUM_D_DELTA} are not found within this value, a catalogue
+     * satisfying {@link #MAXIMUM_D_DELTA} are not found within this value, a catalog
      * does not have a denser ray parameter than the value.
      */
     private static final double MINIMUM_DELTA_P = 1e-3;
@@ -259,7 +259,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
      * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
-     * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue.<br>
+     * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalog.<br>
      * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
      * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
      * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
@@ -278,7 +278,7 @@ public class RaypathCatalog implements Serializable {
     /**
      * We compute epicentral distances &Delta;<sup>(P)</sup><sub>i</sub> (P or
      * PcP) and &Delta;<sup>(S)</sup><sub>i</sub> (S or ScS) for ray parameters
-     * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalogue.<br>
+     * p<sub>i</sub> (p<sub>i</sub> &lt; p<sub>i+1</sub>) for a catalog.<br>
      * If &delta;&Delta;<sub>i</sub> (|&Delta;<sub>i</sub> -
      * &Delta;<sub>i</sub>|) &lt; this value, both p<sub>i</sub> and
      * p<sub>i+1</sub> are stored, otherwise either only one of them is stored.
@@ -289,9 +289,9 @@ public class RaypathCatalog implements Serializable {
      * @param structure for computation of raypaths
      * @param mesh      for computation of raypaths.
      * @param dDelta    &delta;&Delta; [rad] for creation of a catalog.
-     * @return Catalogue for the input structure
+     * @return catalog for the input structure
      */
-    public static RaypathCatalog computeCatalogue(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
+    public static RaypathCatalog computeCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
         if (structure.equals(VelocityStructure.prem())) return prem();
         else if (structure.equals(VelocityStructure.iprem())) return iprem();
         else if (structure.equals(VelocityStructure.ak135())) return ak135();
@@ -308,9 +308,9 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param path    the path for the catalogue file.
+     * @param path    the path for the catalog file.
      * @param options open option
-     * @return Catalogue read from the path
+     * @return catalog read from the path
      * @throws IOException            if any
      * @throws ClassNotFoundException if any
      */
@@ -752,13 +752,13 @@ public class RaypathCatalog implements Serializable {
 
     /**
      * TODO
-     * Creates a catalogue.
+     * Creates a catalog.
      * when running into a ray path with all NaN. what should we do.
      */
     private void create() {
         // Compute raparameters for diffration phases.
         long time = System.nanoTime();
-        System.err.println("Computing a catalogue. If you use the same model, the catalog is not computed anymore.");
+        System.err.println("Computing a catalog. If you use the same model, the catalog is not computed anymore.");
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         computeANDadd(firstPath);
         catalogOfReflections();
@@ -766,7 +766,7 @@ public class RaypathCatalog implements Serializable {
         catalogOfBounceWaves();
         computeDiffraction();
         WOODHOUSE.clear();
-        System.err.println("Catalogue was made in " + Utilities.toTimeString(System.nanoTime() - time));
+        System.err.println("A catalog was made in " + Utilities.toTimeString(System.nanoTime() - time));
     }
 
     /**

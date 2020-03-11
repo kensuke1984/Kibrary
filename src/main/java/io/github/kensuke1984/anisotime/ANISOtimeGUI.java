@@ -236,7 +236,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     raypathList = new ArrayList<>();
                     phaseList = new ArrayList<>();
                     RaypathCatalog catalog = RaypathCatalog
-                            .computeCatalogue(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
+                            .computeCatalog(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
                     double epicentralDistance = Math.toRadians(mostImportant);
                     for (Phase phase : phaseSet) {
                         Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance, false);
@@ -316,8 +316,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private RaypathCatalog getCatalog() {
-        return RaypathCatalog.computeCatalogue(structure, ComputationalMesh.simple(structure),
-                RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
+        return RaypathCatalog
+                .computeCatalog(structure, ComputationalMesh.simple(structure), RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
     }
 
     private void runEpicentralDistanceMode() {
