@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * NDK format in Global CMT Catalogue
+ * NDK format in Global CMT Catalog
  * <p>
  * This class is <b>IMMUTABLE</b> <br>
  * ==============================================
