@@ -194,7 +194,7 @@ final class ANISOtimeCLI {
                 // option TODO
             else {
                 ComputationalMesh mesh = ComputationalMesh.simple(structure);
-                catalog = RaypathCatalog.computeCatalogue(structure, mesh, dDelta);
+                catalog = RaypathCatalog.computeCatalog(structure, mesh, dDelta);
             }
         }
 
