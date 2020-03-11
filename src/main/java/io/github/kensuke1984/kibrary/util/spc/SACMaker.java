@@ -26,10 +26,10 @@ import java.util.function.Predicate;
  * {@link Spectrum})
  * <p>
  * SPC file name must be station.eventID(PSV, SH).spc If the eventID is included
- * in Global CMT catalogue, the information for the event is written in SAC.
+ * in Global CMT catalog, the information for the event is written in SAC.
  *
  * @author Kensuke Konishi
- * @version 0.1.9
+ * @version 0.1.9.1
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/sac/>SAC</a>
  */
 public class SACMaker implements Runnable {
@@ -51,7 +51,7 @@ public class SACMaker implements Runnable {
         OPTIONS.addOption(null, "scardec", true, "use the source parameter by SCARDEC. (--scardec yyyyMMdd_HHmmss)");
         OPTIONS.addOption(null, "gcmt", true,
                 "boxcar/triangle source time function is considered using the source parameter (half duration) by the Global CMT project. (e.g. -gcmt triangle");
-        OPTIONS.addOption(null, "gid", true, "an ID for the event in the Global CMT catalogue. (e.g. -gid 010202A)");
+        OPTIONS.addOption(null, "gid", true, "an ID for the event in the Global CMT catalog. (e.g. -gid 010202A)");
     }
 
     static void printHelp() {
@@ -234,7 +234,7 @@ public class SACMaker implements Runnable {
         try {
             globalCMTID = new GlobalCMTID(oneSPC.getSourceID());
         } catch (Exception e) {
-            System.err.println(oneSPC.getSourceID() + " is not in the Global CMT catalogue.");
+            System.err.println(oneSPC.getSourceID() + " is not in the Global CMT catalog.");
         }
         this.sourceTimeFunction = sourceTimeFunction;
     }
@@ -360,9 +360,7 @@ public class SACMaker implements Runnable {
         DSMOutput oneSPC = Spectrum.getInstance(oneName);
 
         DSMOutput pairSPC = null;
-        if (1 < spcfiles.length)
-
-        {
+        if (1 < spcfiles.length) {
             SPCFile pairName = new FormattedSPCFile(spcfiles[1]);
             pairSPC = Spectrum.getInstance(pairName);
         }
