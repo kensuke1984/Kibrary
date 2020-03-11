@@ -26,7 +26,7 @@ import java.util.regex.Matcher;
  * <a href=https://ds.iris.edu/ds/nodes/dmc/software/downloads/sac/>SAC</a> can be found in IRIS.
  *
  * @author Kensuke Konishi
- * @version 0.1.8.5.1
+ * @version 0.1.8.6
  */
 class SeedSAC implements Runnable {
 
@@ -169,7 +169,7 @@ class SeedSAC implements Runnable {
         System.err.println("Dataset in this seed file starts " + seedFile.getStartingDate());
         GlobalCMTSearch sc = new GlobalCMTSearch(seedFile.getStartingDate(), seedFile.getEndingDate());
         id = sc.select();
-        Objects.requireNonNull(id, "There is no event in the global CMT catalogue");
+        Objects.requireNonNull(id, "There is no event in the global CMT catalog.");
     }
 
     /**
@@ -318,11 +318,10 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * rdseedで解凍した波形ファイルのうちおかしなものを省くdeltaがずれているものはすて、波形がとびとびのものをmergeする
+     * Eliminates problematic files made by rdseed, such as ones with different delta, and merge split files.
      */
     private void mergeUnevenSac() throws IOException {
-        // System.out.println("Merging in " + eventDir);
-        // mergeする
+        // merge
         UnevenSACMerger u = new UnevenSACMerger(eventDir.toPath());
         u.merge();
         u.move();
@@ -344,8 +343,6 @@ class SeedSAC implements Runnable {
                 // TODO 00 01 "" duplication detect
                 // header check khole e.t.c
                 if (!sm.canInterpolate() || !sm.checkHeader()) {
-                    // System.out.println(sacPath + " has too big gap to be
-                    // interpolated. or header problem");
                     Utilities.moveToDirectory(sacPath, trashBoxPath, true);
                     continue;
                 }
@@ -370,11 +367,8 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * Rotate SACfile (E, N -> R, T)
-     * <p>
-     * eventDir内のすべての (.E, .N), (.1, .2)ファイルについて.R, .Tに回転する
-     * <p>
-     * 回転できたものは rotatedNEフォルダに できなかったものはnonrotatedNEに
+     * Convert/rotate all files with (.E, .N), (.1, .2) to (.R, .T).
+     * successful files are put in rotatedNE the others are in nonrotatedNE
      */
     private void rotate() throws IOException {
         Path trashBox = eventDir.toPath().resolve("nonRotatedNE");
@@ -523,7 +517,7 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * @return true 問題あり false なし
+     * @return if there are no problems, returns true
      */
     boolean hasProblem() {
         return problem;
@@ -554,14 +548,14 @@ class SeedSAC implements Runnable {
     }
 
     /**
-     * evalrespをはしらせる evalresp station component year julian day minfreq maxfreq
-     * npts -s lin -r cs -u vel firstHandlerと同じ結果になる！
+     * evalresp station component year julian day minfreq maxfreq
+     * npts -s lin -r cs -u vel
      *
      * @param headerMap header of sac file
      * @return if succeed
      */
     private boolean runEvalresp(Map<SACHeaderEnum, String> headerMap) {
-        int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS)); // nptsをそろえるようにするか
+        int npts = Integer.parseInt(headerMap.get(SACHeaderEnum.NPTS));
         double minFreq = samplingHz / npts;
         String command =
                 "evalresp " + headerMap.get(SACHeaderEnum.KSTNM) + " " + headerMap.get(SACHeaderEnum.KCMPNM) + " " +
