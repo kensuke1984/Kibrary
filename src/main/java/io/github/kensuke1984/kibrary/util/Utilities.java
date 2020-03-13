@@ -22,10 +22,7 @@ import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.CopyOption;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -44,7 +41,7 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.7.1
+ * @version 0.1.7.2
  */
 public final class Utilities {
 
@@ -91,19 +88,17 @@ public final class Utilities {
     /**
      * Extract a zipfile into outRoot
      *
-     * @param zipPath   path of a zip file to extract
-     * @param outRoot   path of a target path (folder)
-     * @param overWrite if it is true, this method will overwrite
+     * @param zipPath path of a zip file to extract
+     * @param outRoot path of a target path (folder)
+     * @param options options for writing
      */
-    public static void extractZip(Path zipPath, Path outRoot, boolean overWrite) throws IOException {
+    public static void extractZip(Path zipPath, Path outRoot, OpenOption... options) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(zipPath)))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 Path outPath = outRoot.resolve(entry.getName());
-                if (!overWrite && Files.exists(outPath))
-                    throw new FileAlreadyExistsException(outPath + " already exists.");
                 try (BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(
-                        Files.newOutputStream(outPath))) {
+                        Files.newOutputStream(outPath, options))) {
                     if (IOUtils.copy(zis, bufferedOutputStream) < 0)
                         throw new RuntimeException("Zip file could not be extracted without errors.");
                 }
