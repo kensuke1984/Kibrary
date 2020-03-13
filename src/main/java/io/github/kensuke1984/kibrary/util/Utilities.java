@@ -23,6 +23,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -41,11 +44,30 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.7.2
+ * @version 0.1.8
  */
 public final class Utilities {
 
     private Utilities() {
+    }
+
+    /**
+     * @param path      Path of the target
+     * @param algorithm MD5, SHA-256, ...
+     * @return byte string
+     * @throws IOException              if any
+     * @throws NoSuchAlgorithmException if any
+     */
+    public static String checksum(Path path, String algorithm) throws IOException, NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance(algorithm);
+        try (DigestInputStream digestInputStream = new DigestInputStream(
+                new BufferedInputStream(Files.newInputStream(path)), md)) {
+            while (digestInputStream.read() != -1) ;
+        }
+        StringBuilder result = new StringBuilder();
+        for (byte b : md.digest())
+            result.append(String.format("%02x", b));
+        return result.toString();
     }
 
     /**
