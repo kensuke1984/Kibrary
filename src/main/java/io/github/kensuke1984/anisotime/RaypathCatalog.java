@@ -53,7 +53,7 @@ public class RaypathCatalog implements Serializable {
     private static void extractInShare() throws IOException {
         Files.createDirectories(share);
         Path zipPath = downloadCatalogZip();
-        Utilities.extractZip(zipPath, share, true);
+        Utilities.extractZip(zipPath, share);
     }
 
     /**
