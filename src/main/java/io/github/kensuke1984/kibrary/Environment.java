@@ -13,7 +13,7 @@ import java.util.Properties;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
+ * @version 0.1.2
  */
 public class Environment {
     public final static Path KIBRARY_HOME;
@@ -34,7 +34,11 @@ public class Environment {
     static {
         String home = System.getenv("KIBRARY_HOME");
         if (Objects.isNull(home)) {
-            KIBRARY_HOME = Paths.get(System.getProperty("user.home")).resolve("Kibrary");
+            if (Objects.nonNull(home = System.getenv("APPDATA"))) {
+                KIBRARY_HOME = Paths.get(home).resolve("Kibrary");
+            } else {
+                KIBRARY_HOME = Paths.get(System.getProperty("user.home")).resolve("Kibrary");
+            }
             System.err.println("Because KIBRARY_HOME is not set, it is assumed to be " + KIBRARY_HOME);
         } else KIBRARY_HOME = Paths.get(home);
         try {
