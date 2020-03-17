@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.*;
 import java.util.regex.Matcher;
@@ -29,31 +30,42 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.7.2
+ * @version 0.2.8
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
-     * 2020/2/18
+     * 2020/3/17
      */
-    private static final long serialVersionUID = -5124266637086881241L;
+    private static final long serialVersionUID = 7787098314086388817L;
+    private static final String PIAC_SHA256 = "cb008583385a62e7b9a0a3468b3f04c47adcfbffd1b00c151860319b42ef781a";
+
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
         URL website = new URL("https://bit.ly/2rnhOMS");
         Utilities.download(website, zipPath, true);
+        try {
+            if (!PIAC_SHA256.equals(Utilities.checksum(zipPath, "SHA-256")))
+                throw new RuntimeException("Downloaded file is broken.");
+        } catch (NoSuchAlgorithmException e) {
+        }
         return zipPath;
     }
 
     /**
-     * Creates {@link #share}, and download catalogs from internet.
+     * Creates {@link #SHARE_PATH}, and download catalogs from internet.
      *
      * @throws IOException if any
      */
     private static void extractInShare() throws IOException {
-        Files.createDirectories(share);
+        Files.createDirectories(SHARE_PATH);
         Path zipPath = downloadCatalogZip();
-        Utilities.extractZip(zipPath, share);
+        Path piacTemp = Files.createTempDirectory("piac");
+        Utilities.extractZip(zipPath, piacTemp);
+        if (!Files.exists(ISO_PREM_PATH)) Files.copy(piacTemp.resolve("iprem.cat"), ISO_PREM_PATH);
+        if (!Files.exists(PREM_PATH)) Files.copy(piacTemp.resolve("prem.cat"), PREM_PATH);
+        if (!Files.exists(AK135_PATH)) Files.copy(piacTemp.resolve("ak135.cat"), AK135_PATH);
     }
 
     /**
@@ -110,7 +122,10 @@ public class RaypathCatalog implements Serializable {
      * Catalog for AK135. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
      */
     private static RaypathCatalog AK135;
-    private static final Path share = Environment.KIBRARY_HOME.resolve("share");
+    private static final Path SHARE_PATH = Environment.KIBRARY_HOME.resolve("share");
+    private static final Path ISO_PREM_PATH = SHARE_PATH.resolve("iprem.cat");
+    private static final Path PREM_PATH = SHARE_PATH.resolve("prem.cat");
+    private static final Path AK135_PATH = SHARE_PATH.resolve("ak135.cat");
 
     /**
      * @param out       path to output a catalog
@@ -134,20 +149,20 @@ public class RaypathCatalog implements Serializable {
     public static RaypathCatalog prem() {
         if (Objects.isNull(PREM)) synchronized (LOCK_PREM) {
             if (Objects.isNull(PREM)) {
-                Path p = share.resolve("prem.cat");
                 try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for PREM...");
-                    PREM = read(p);
+                    PREM = read(PREM_PATH);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for PREM...");
+                        Files.delete(PREM_PATH);
                         extractInShare();
-                        PREM = read(p);
+                        PREM = read(PREM_PATH);
                     } catch (Exception e2) {
                         System.err.println("failed.\nCreating a catalog for PREM.");
-                        PREM = createAndWrite(p, VelocityStructure.prem());
+                        PREM = createAndWrite(PREM_PATH, VelocityStructure.prem());
                     }
                 }
             }
@@ -161,20 +176,20 @@ public class RaypathCatalog implements Serializable {
     public static RaypathCatalog iprem() {
         if (Objects.isNull(ISO_PREM)) synchronized (LOCK_ISO_PREM) {
             if (Objects.isNull(ISO_PREM)) {
-                Path p = share.resolve("iprem.cat");
                 try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for ISO_PREM...");
-                    ISO_PREM = read(p);
+                    ISO_PREM = read(ISO_PREM_PATH);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for ISO_PREM...");
+                        Files.delete(ISO_PREM_PATH);
                         extractInShare();
-                        ISO_PREM = read(p);
+                        ISO_PREM = read(ISO_PREM_PATH);
                     } catch (Exception e2) {
                         System.err.println("failed.\nCreating a catalog for ISO_PREM.");
-                        ISO_PREM = createAndWrite(p, VelocityStructure.iprem());
+                        ISO_PREM = createAndWrite(ISO_PREM_PATH, VelocityStructure.iprem());
                     }
                 }
             }
@@ -188,20 +203,20 @@ public class RaypathCatalog implements Serializable {
     public static RaypathCatalog ak135() {
         if (Objects.isNull(AK135)) synchronized (LOCK_AK135) {
             if (Objects.isNull(AK135)) {
-                Path p = share.resolve("ak135.cat");
                 try {
                     long t = System.nanoTime();
                     System.err.print("Reading a catalog for AK135...");
-                    AK135 = read(p);
+                    AK135 = read(AK135_PATH);
                     System.err.println(" in " + Utilities.toTimeString(System.nanoTime() - t));
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for AK135...");
+                        Files.delete(AK135_PATH);
                         extractInShare();
-                        AK135 = read(p);
+                        AK135 = read(AK135_PATH);
                     } catch (Exception e2) {
                         System.err.println("failed.\nCreating a catalog for AK135.");
-                        AK135 = createAndWrite(p, VelocityStructure.ak135());
+                        AK135 = createAndWrite(AK135_PATH, VelocityStructure.ak135());
                     }
                 }
             }
@@ -214,7 +229,7 @@ public class RaypathCatalog implements Serializable {
     private static final Object LOCK_AK135 = new Object();
 
     static {
-        if (!Files.exists(share)) try {
+        if (!Files.exists(SHARE_PATH)) try {
             extractInShare();
         } catch (IOException e) {
             System.err.println("Could not download catalog files from internet.");
@@ -298,7 +313,7 @@ public class RaypathCatalog implements Serializable {
         RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
         cat.create();
         try {
-            Path p = Files.createTempFile(share, "raypath", ".cat");
+            Path p = Files.createTempFile(SHARE_PATH, "raypath", ".cat");
             cat.write(p);
             System.err.println(p + " is created.");
         } catch (IOException e) {
