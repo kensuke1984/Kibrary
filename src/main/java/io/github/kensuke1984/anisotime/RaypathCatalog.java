@@ -7,6 +7,8 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.util.Precision;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -17,6 +19,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.*;
 import java.util.function.*;
 import java.util.regex.Matcher;
@@ -30,7 +33,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.8.1
+ * @version 0.2.8.2
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -44,7 +47,11 @@ public class RaypathCatalog implements Serializable {
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
         URL website = new URL("https://bit.ly/2rnhOMS");
+        JDialog dialog = new JOptionPane("Downloading a catalog", JOptionPane.WARNING_MESSAGE).createDialog(null);
+        dialog.setModalityType(Dialog.ModalityType.MODELESS);
+        dialog.setVisible(true);
         Utilities.download(website, zipPath, true);
+        dialog.dispose();
         try {
             if (!PIAC_SHA256.equals(Utilities.checksum(zipPath, "SHA-256")))
                 throw new RuntimeException("Downloaded file is broken.");
@@ -66,6 +73,7 @@ public class RaypathCatalog implements Serializable {
         if (!Files.exists(ISO_PREM_PATH)) Files.copy(piacTemp.resolve("iprem.cat"), ISO_PREM_PATH);
         if (!Files.exists(PREM_PATH)) Files.copy(piacTemp.resolve("prem.cat"), PREM_PATH);
         if (!Files.exists(AK135_PATH)) Files.copy(piacTemp.resolve("ak135.cat"), AK135_PATH);
+        Files.deleteIfExists(zipPath);
     }
 
     /**
