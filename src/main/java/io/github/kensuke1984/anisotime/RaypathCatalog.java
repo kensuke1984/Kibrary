@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.8
+ * @version 0.2.8.1
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -157,7 +157,7 @@ public class RaypathCatalog implements Serializable {
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for PREM...");
-                        Files.delete(PREM_PATH);
+                        Files.deleteIfExists(PREM_PATH);
                         extractInShare();
                         PREM = read(PREM_PATH);
                     } catch (Exception e2) {
@@ -184,7 +184,7 @@ public class RaypathCatalog implements Serializable {
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for ISO_PREM...");
-                        Files.delete(ISO_PREM_PATH);
+                        Files.deleteIfExists(ISO_PREM_PATH);
                         extractInShare();
                         ISO_PREM = read(ISO_PREM_PATH);
                     } catch (Exception e2) {
@@ -211,7 +211,7 @@ public class RaypathCatalog implements Serializable {
                 } catch (Exception e) {
                     try {
                         System.err.println("failed.\nDownloading a catalog for AK135...");
-                        Files.delete(AK135_PATH);
+                        Files.deleteIfExists(AK135_PATH);
                         extractInShare();
                         AK135 = read(AK135_PATH);
                     } catch (Exception e2) {
