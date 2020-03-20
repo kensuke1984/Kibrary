@@ -1,12 +1,14 @@
 package io.github.kensuke1984.kibrary.util.globalcmt;
 
-import org.apache.commons.io.IOUtils;
+import io.github.kensuke1984.kibrary.Environment;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.io.input.CloseShieldInputStream;
 
 import javax.swing.*;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,14 +26,15 @@ import java.util.stream.IntStream;
  * TODO add the latest catalogs
  *
  * @author Kensuke Konishi
- * @version 0.1.5
+ * @version 0.1.6
  */
 final class GlobalCMTCatalog {
 
     private final static Set<NDK> NDKs;
+    private final static Path CATALOG_PATH = Environment.KIBRARY_HOME.resolve("share/globalcmt.catalog");
 
     static {
-        Set<NDK> readSet = readJar();
+        Set<NDK> readSet = readCatalog();
         if (null == readSet) readSet = read(selectCatalogFile());
         NDKs = Collections.unmodifiableSet(readSet);
     }
@@ -62,12 +65,11 @@ final class GlobalCMTCatalog {
         return catalogFile;
     }
 
-    private static Set<NDK> readJar() {
+    private static Set<NDK> readCatalog() {
         try {
-            List<String> lines =
-                    IOUtils.readLines(GlobalCMTCatalog.class.getClassLoader().getResourceAsStream("globalcmt.catalog"),
-                            Charset.defaultCharset());
-            if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog contained in the jar file is broken");
+            if (!Files.exists(CATALOG_PATH)) downloadCatalog();
+            List<String> lines = Files.readAllLines(CATALOG_PATH);
+            if (lines.size() % 5 != 0) throw new Exception("Global CMT catalog is broken.");
             return IntStream.range(0, lines.size() / 5).mapToObj(
                     i -> NDK.read(lines.get(i * 5), lines.get(i * 5 + 1), lines.get(i * 5 + 2), lines.get(i * 5 + 3),
                             lines.get(i * 5 + 4))).collect(Collectors.toSet());
@@ -77,6 +79,10 @@ final class GlobalCMTCatalog {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private static void downloadCatalog() throws IOException {
+        Utilities.download(new URL("https://bit.ly/3bdGQji"), CATALOG_PATH, false);
     }
 
     /**
