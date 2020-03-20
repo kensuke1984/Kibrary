@@ -12,15 +12,16 @@ import org.apache.commons.mail.Email;
 import org.apache.commons.mail.SimpleEmail;
 import org.apache.commons.math3.util.FastMath;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.security.DigestInputStream;
@@ -30,6 +31,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -44,7 +46,7 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.8
+ * @version 0.1.9
  */
 public final class Utilities {
 
@@ -100,12 +102,34 @@ public final class Utilities {
     public static void download(URL url, Path outPath, boolean overwrite) throws IOException {
         if (!overwrite && Files.exists(outPath)) throw new FileAlreadyExistsException(outPath + " already exists.");
         ReadableByteChannel rbc = Channels.newChannel(url.openStream());
-        try (FileOutputStream fos = new FileOutputStream(outPath.toFile())) {
-            try (FileChannel channel = fos.getChannel()) {
-                channel.transferFrom(rbc, 0, Long.MAX_VALUE);
+        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
+        long fileSize = httpConnection.getContentLength();
+        JProgressBar bar = null;
+        JFrame frame = null;
+        if (0 < fileSize && !GraphicsEnvironment.isHeadless()) {
+            bar = new JProgressBar(0, (int) fileSize);
+            frame = new JFrame("Downloading a file");
+            frame.setResizable(false);
+            frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            frame.setSize(300, 70);
+            frame.add(bar);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        }
+        try (FileOutputStream fos = new FileOutputStream(outPath.toFile());
+             BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());) {
+            byte[] buf = new byte[8192];
+            int x = 0;
+            int downloaded = 0;
+            while (0 <= (x = bufferedInputStream.read(buf))) {
+                fos.write(buf, 0, x);
+                if (Objects.nonNull(bar)) bar.setValue((downloaded += x));
             }
+        } finally {
+            if (frame != null) frame.dispose();
         }
     }
+
 
     /**
      * Extract a zipfile into outRoot
