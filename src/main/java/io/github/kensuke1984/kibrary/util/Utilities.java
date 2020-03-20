@@ -46,7 +46,7 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.9
+ * @version 0.1.9.1
  */
 public final class Utilities {
 
@@ -85,11 +85,10 @@ public final class Utilities {
         int patternN = (int) Math.pow(values.length, num);
         double[][] patterns = new double[patternN][num];
         int i = 0;
-        while (i < patternN) {
+        do {
             for (int j = 0; j < num; j++)
                 patterns[i][j] = values[(i / (int) Math.pow(values.length, j)) % values.length];
-            i++;
-        }
+        } while (++i < patternN);
         return patterns;
     }
 
@@ -117,7 +116,7 @@ public final class Utilities {
             frame.setVisible(true);
         }
         try (FileOutputStream fos = new FileOutputStream(outPath.toFile());
-             BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());) {
+             BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream())) {
             byte[] buf = new byte[8192];
             int x = 0;
             int downloaded = 0;
@@ -160,15 +159,15 @@ public final class Utilities {
      */
     public static String toTimeString(long nanoSeconds) {
         long used = 0;
-        long days = TimeUnit.NANOSECONDS.toDays(nanoSeconds);
-        used += TimeUnit.DAYS.toNanos(days);
-        long hours = TimeUnit.NANOSECONDS.toHours(nanoSeconds - used);
-        used += TimeUnit.HOURS.toNanos(hours);
-        long mins = TimeUnit.NANOSECONDS.toMinutes(nanoSeconds - used);
-        used += TimeUnit.MINUTES.toNanos(mins);
+        long day = TimeUnit.NANOSECONDS.toDays(nanoSeconds);
+        used += TimeUnit.DAYS.toNanos(day);
+        long hour = TimeUnit.NANOSECONDS.toHours(nanoSeconds - used);
+        used += TimeUnit.HOURS.toNanos(hour);
+        long min = TimeUnit.NANOSECONDS.toMinutes(nanoSeconds - used);
+        used += TimeUnit.MINUTES.toNanos(min);
         double sec = (nanoSeconds - used) / 1000000000.0;
-        return (days == 0 ? "" : days + "d, ") + (hours == 0 ? "" : hours + "h, ") +
-                (mins == 0 ? "" : mins + " min and ") + sec + " s";
+        return (day == 0 ? "" : day + "d, ") + (hour == 0 ? "" : hour + "h, ") +
+                (min == 0 ? "" : min + " min and ") + sec + " s";
     }
 
     /**
