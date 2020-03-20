@@ -1,7 +1,9 @@
 package io.github.kensuke1984.kibrary.datacorrection;
 
+import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.math3.complex.Complex;
@@ -27,21 +29,34 @@ import java.util.zip.ZipInputStream;
  * <p>
  * Information of a seismic event in
  * <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>.
- *
+ * <p>
  * The database is as of 20161115.
+ *
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.2
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  * <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
  */
 public class SCARDEC {
 
     public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss");
-    private static final URL SCARDEC_ROOT_PATH = SCARDEC.class.getClassLoader().getResource("scardec20161115.zip");
+    private static final Path SCARDEC_ROOT_PATH = Environment.KIBRARY_HOME.resolve("share/scardec.zip");
     private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
+    private static void downloadCatalog() throws IOException {
+        Utilities.download(new URL("https://bit.ly/2IYsPKh"), SCARDEC_ROOT_PATH, false);
+    }
+
     static {
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()))) {
+        if (!Files.exists(SCARDEC_ROOT_PATH)) {
+            try {
+                downloadCatalog();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try (ZipInputStream zis = new ZipInputStream(
+                new BufferedInputStream(Files.newInputStream(SCARDEC_ROOT_PATH)))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 if (entry.isDirectory()) {
@@ -116,7 +131,7 @@ public class SCARDEC {
     public static SCARDEC getSCARDEC(SCARDEC_ID id) {
         if (!EXISTING_ID.contains(id))
             throw new RuntimeException("No information for " + id.ORIGIN_TIME + " " + id.REGION);
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(SCARDEC_ROOT_PATH.openStream()));
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(SCARDEC_ROOT_PATH)));
              DataInputStream dis = new DataInputStream(zis)) {
             ZipEntry entry;
             Location loc = null;
