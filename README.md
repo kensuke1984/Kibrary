@@ -14,7 +14,7 @@ It bundles [ANISOtime](https://github.com/kensuke1984/Kibrary/wiki/ANISOtime) ([
  
  <i><b><a name ="java">Java environment</b></i>
  
-Kibrary currently runs on *Java SE Runtime Environment 8*.
+Kibrary currently runs on *Java SE Runtime Environment 8* (Java 13 is strongly recommended).
 You need [Java SE Runtime Environment 8][JRE8] or higher (the latest version is strongly recommended).
 If you are not sure about the version you have, 
 click <a href="https://www.java.com/en/download/installed8.jsp" target="_blank">here</a> to check. 
@@ -30,7 +30,7 @@ If you are a macOS user and have [Homebrew](https://brew.sh) installed, then you
  <i><b>Executable jar file</b></i>
  
 Most general users just need the jar file (and [Java](#java)).
-Download the [binary release of Kibrary][kibrary].
+Download the [binary release of Kibrary][kibraryjar].
 If you do not agree with [the terms and conditions](#copyright-and-licence), do NOT download the software.
 
 If you just want to use Kibrary, just install as [above](#installation).
@@ -88,9 +88,9 @@ Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]
 Last updated Nov 5, 2019
 
 
-[release-image]:https://img.shields.io/badge/release-Titan-pink.svg
-[release]:https://en.wikipedia.org/wiki/Titan_(mythology)
-[version-image]:https://img.shields.io/badge/version-0.4.7-yellow.svg
+[release-image]:https://img.shields.io/badge/release-Garuda-pink.svg
+[release]:https://en.wikipedia.org/wiki/Garuda
+[version-image]:https://img.shields.io/badge/version-0.4.8-yellow.svg
 
 [alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: https://www.apache.org/licenses/LICENSE-2.0
@@ -100,7 +100,7 @@ Last updated Nov 5, 2019
 
 [ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
-[kibrary]: https://bit.ly/37wxazr
+[kibraryjar]: https://bit.ly/2U4zkBl
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
