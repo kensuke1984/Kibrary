@@ -33,7 +33,7 @@ dependencies {
 }
 
 shadowJar {
-    baseName = 'kibrary'
+    archiveBaseName = 'kibrary'
     classifier = ''
 }
 
