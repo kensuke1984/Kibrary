@@ -13,7 +13,7 @@ import java.util.Properties;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @version 0.1.3.1
  */
 public class Environment {
     public final static Path KIBRARY_HOME;
@@ -25,7 +25,7 @@ public class Environment {
         DEFAULT_PROPERTY.setProperty("userName", System.getProperty("user.name"));
         DEFAULT_PROPERTY.setProperty("email", "hoge@foo.com");
         DEFAULT_PROPERTY.setProperty("institute", "University of Hoge");
-        DEFAULT_PROPERTY.setProperty("mail", "0-0-0 Hoge, Foo, Tokyo, Japan");
+        DEFAULT_PROPERTY.setProperty("mail", "0-0-0 Hoge, Foo, Tokyo, " + System.getProperty("user.country"));
         DEFAULT_PROPERTY.setProperty("phone", "01-2345-6789");
         DEFAULT_PROPERTY.setProperty("fax", "09-8765-4321");
     }
