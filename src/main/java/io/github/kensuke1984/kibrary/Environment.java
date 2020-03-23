@@ -13,7 +13,7 @@ import java.util.Properties;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class Environment {
     public final static Path KIBRARY_HOME;
@@ -23,12 +23,11 @@ public class Environment {
 
     private static void setDefaultProperty() {
         DEFAULT_PROPERTY.setProperty("userName", System.getProperty("user.name"));
-        DEFAULT_PROPERTY.setProperty("gmail", "waveformrequest2015@gmail.com");
-        DEFAULT_PROPERTY.setProperty("email", "waveformrequest2015@gmail.com");
-        DEFAULT_PROPERTY.setProperty("institute", "University of Tokyo");
-        DEFAULT_PROPERTY.setProperty("mail", "7-3-1 Hongo, Bunkyo, Tokyo, Japan");
-        DEFAULT_PROPERTY.setProperty("phone", "03-5841-4290");
-        DEFAULT_PROPERTY.setProperty("fax", "03-5841-8791");
+        DEFAULT_PROPERTY.setProperty("email", "hoge@foo.com");
+        DEFAULT_PROPERTY.setProperty("institute", "University of Hoge");
+        DEFAULT_PROPERTY.setProperty("mail", "0-0-0 Hoge, Foo, Tokyo, Japan");
+        DEFAULT_PROPERTY.setProperty("phone", "01-2345-6789");
+        DEFAULT_PROPERTY.setProperty("fax", "09-8765-4321");
     }
 
     static {
