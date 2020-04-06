@@ -22,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.security.DigestInputStream;
@@ -46,7 +47,7 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.9.1
+ * @version 0.1.10
  */
 public final class Utilities {
 
@@ -93,14 +94,27 @@ public final class Utilities {
     }
 
     /**
+     * @param url URL of the file to download
+     * @return path of the downloaded file (dl......tmp in TEMP)
+     * @throws IOException if any
+     */
+    public static Path download(URL url) throws IOException {
+        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+        Path out = Files.createTempFile("dl", "tmp");
+        try (FileOutputStream fos = new FileOutputStream(out.toFile()); FileChannel fc = fos.getChannel()) {
+            fc.transferFrom(rbc, 0, Long.MAX_VALUE);
+        }
+        return out;
+    }
+
+    /**
      * @param url       URL of the file to download
-     * @param outPath   path of the downloaded files
+     * @param outPath   path of the downloaded file
      * @param overwrite if this is false and the file of outPath exists, the download is cancelled.
      * @throws IOException if any
      */
     public static void download(URL url, Path outPath, boolean overwrite) throws IOException {
         if (!overwrite && Files.exists(outPath)) throw new FileAlreadyExistsException(outPath + " already exists.");
-        ReadableByteChannel rbc = Channels.newChannel(url.openStream());
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         long fileSize = httpConnection.getContentLength();
         JProgressBar bar = null;
@@ -166,8 +180,8 @@ public final class Utilities {
         long min = TimeUnit.NANOSECONDS.toMinutes(nanoSeconds - used);
         used += TimeUnit.MINUTES.toNanos(min);
         double sec = (nanoSeconds - used) / 1000000000.0;
-        return (day == 0 ? "" : day + "d, ") + (hour == 0 ? "" : hour + "h, ") +
-                (min == 0 ? "" : min + " min and ") + sec + " s";
+        return (day == 0 ? "" : day + "d, ") + (hour == 0 ? "" : hour + "h, ") + (min == 0 ? "" : min + " min and ") +
+                sec + " s";
     }
 
     /**
@@ -406,7 +420,7 @@ public final class Utilities {
     }
 
     public static void sendMail(String address, String title, String... bodies) throws URISyntaxException, IOException {
-        String body = Arrays.stream(bodies).collect(Collectors.joining("%0A"));
+        String body = String.join("%0A", bodies);
         URI uri = new URI("mailto:" + address + "?subject=" + title.replace(" ", "%20") + "&body=" +
                 body.replace(" ", "%20").replace("\n", "%0A"));
         Desktop.getDesktop().mail(uri);
