@@ -1,26 +1,27 @@
 package io.github.kensuke1984.anisotime;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
 /**
- * Named discontinuity structre
+ * Named discontinuity structure
  *
  * @author Kensuke Konishi
- * @version 0.0.7.1
+ * @version 0.0.7.3
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
     /**
-     * 2019/11/9
+     * 2020/4/18
      */
-    private static final long serialVersionUID = -1772022420771520676L;
+    private static final long serialVersionUID = 3938768467108267860L;
     io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
     private NamedDiscontinuityStructure() {
     }
 
-    NamedDiscontinuityStructure(Path path) {
+    NamedDiscontinuityStructure(Path path) throws NoSuchFileException {
         structure = new io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure(path);
     }
 
@@ -125,12 +126,12 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 
     @Override
     public double innerCoreBoundary() {
-        return structure.getInnerCoreBoundary();
+        return structure.innerCoreBoundary();
     }
 
     @Override
     public double coreMantleBoundary() {
-        return structure.getCoreMantleBoundary();
+        return structure.coreMantleBoundary();
     }
 
     @Override
