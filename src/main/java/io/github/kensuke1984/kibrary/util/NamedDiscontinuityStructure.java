@@ -1,8 +1,12 @@
 package io.github.kensuke1984.kibrary.util;
 
+import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -12,12 +16,12 @@ import java.util.List;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.0.5
+ * @version 0.0.6
  */
 public class NamedDiscontinuityStructure {
 
     /**
-     * the number of boundaries
+     * number of boundaries
      */
     private int nBoundary;
 
@@ -63,32 +67,32 @@ public class NamedDiscontinuityStructure {
     /**
      * values at boundaries
      */
-    private double[] qmu;
+    private double[] qMu;
     /**
      * values of Bullen law
      */
-    private double[] qmuA;
+    private double[] qMuA;
     /**
      * values of Bullen law
      */
-    private double[] qmuB;
+    private double[] qMuB;
 
     /**
      * values at boundaries
      */
-    private double[] qkappa;
+    private double[] qKappa;
 
     /**
      * values of Bullen law
      */
-    private double[] qkappaA;
+    private double[] qKappaA;
     /**
      * values of Bullen law
      */
-    private double[] qkappaB;
+    private double[] qKappaB;
 
     /**
-     * radiuses of boundaries
+     * [km] radii of boundaries
      */
     private double[] r;
 
@@ -96,9 +100,9 @@ public class NamedDiscontinuityStructure {
      * structure file
      */
     private Path infPath;
-    private double coreMantleBoundary;
-    private double innerCoreBoundary;
-    private double mohoDiscontinuity;
+    private int indexOfCoreMantleBoundary;
+    private int indexOfInnerCoreBoundary;
+    private int indexOfMohoDiscontinuity;
 
     protected NamedDiscontinuityStructure() {
     }
@@ -106,26 +110,19 @@ public class NamedDiscontinuityStructure {
     /**
      * @param path model file written by nd format.
      */
-    public NamedDiscontinuityStructure(Path path) {
+    public NamedDiscontinuityStructure(Path path) throws NoSuchFileException {
         infPath = path;
         readInfFile();
     }
 
-    public static void main(String[] args) {
-        NamedDiscontinuityStructure nd = prem();
-        System.out.println(nd.getVs(3480 + 10e-9));
-    }
-
     /**
-     * PREM
-     *
      * @return Isotropic PREM
      */
     public static NamedDiscontinuityStructure prem() {
         NamedDiscontinuityStructure nd = new NamedDiscontinuityStructure();
-        nd.coreMantleBoundary = 3480;
-        nd.innerCoreBoundary = 1221.5;
-        nd.mohoDiscontinuity = 6356;
+        nd.indexOfCoreMantleBoundary = 37;
+        nd.indexOfInnerCoreBoundary = 13;
+        nd.indexOfMohoDiscontinuity = 83;
         nd.nBoundary = 88;
         nd.r = new double[]{0.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0, 1100.0, 1200.0,
                 1221.5, 1221.5, 1300.0, 1400.0, 1500.0, 1600.0, 1700.0, 1800.0, 1900.0, 2000.0, 2100.0, 2200.0, 2300.0,
@@ -143,13 +140,13 @@ public class NamedDiscontinuityStructure {
                 4.44317, 4.41241, 4.38071, 3.99214, 3.98399, 3.97584, 3.91282, 3.8498, 3.78678, 3.72378, 3.54325,
                 3.51639, 3.48951, 3.46264, 3.43578, 3.3595, 3.3633, 3.3671, 3.37091, 3.37471, 3.37688, 3.37906, 3.38076,
                 2.9, 2.9, 2.6, 2.6,};
-        nd.qmu = new double[]{85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 0.0,
+        nd.qMu = new double[]{85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 0.0,
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 0.0, 0.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0,
                 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 143.0, 143.0,
                 143.0, 143.0, 143.0, 143.0, 143.0, 143.0, 143.0, 143.0, 143.0, 143.0, 80.0, 80.0, 80.0, 80.0, 80.0,
                 600.0, 600.0, 600.0, 600.0, 600.0, 600.0, 600.0,};
-        nd.qkappa =
+        nd.qKappa =
                 new double[]{431.0, 431.0, 431.0, 432.0, 432.0, 433.0, 434.0, 436.0, 437.0, 439.0, 440.0, 443.0, 445.0,
                         445.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0,
                         57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0, 57822.0,
@@ -178,6 +175,27 @@ public class NamedDiscontinuityStructure {
         return nd;
     }
 
+    private String[] toLines() {
+        String[] outString = new String[nBoundary + 3];
+        for (int i = nBoundary - 1, j = 0; 0 <= i; i--) {
+            if (i == indexOfMohoDiscontinuity) outString[j++] = "mantle";
+            else if (i == indexOfCoreMantleBoundary) outString[j++] = "outer-core";
+            else if (i == indexOfInnerCoreBoundary) outString[j++] = "inner-core";
+            outString[j++] = Math.round((6371.0 - r[i])*10000000) /10000000.0 + " " + vp[i] + " " + vs[i] + " " + rho[i] + " " + qKappa[i] + " " + qMu[i];
+        }
+        return outString;
+    }
+
+    /**
+     * @param outPath {@link Path} of an write file.
+     * @param options for writing
+     * @throws IOException if any
+     */
+    public void write(Path outPath, OpenOption... options) throws IOException {
+        Files.write(outPath, Arrays.asList(toLines()), options);
+    }
+
+
     /**
      * @param r radius [km]
      * @param a a
@@ -191,22 +209,19 @@ public class NamedDiscontinuityStructure {
     /**
      * @return radius of the core mantle boundary [km]
      */
-    public double getCoreMantleBoundary() {
-        return coreMantleBoundary;
+    public double coreMantleBoundary() {
+        return r[indexOfCoreMantleBoundary];
     }
 
     /**
      * @return radius of the inner core boundary [km]
      */
-    public double getInnerCoreBoundary() {
-        return innerCoreBoundary;
+    public double innerCoreBoundary() {
+        return r[indexOfInnerCoreBoundary];
     }
 
-    private void readInfFile() {
-        if (!Files.exists(infPath)) {
-            // System.out.println("no "+infFile);
-            throw new RuntimeException(" no " + infPath);
-        }
+    private void readInfFile() throws NoSuchFileException {
+        if (!Files.exists(infPath)) throw new NoSuchFileException(infPath + " does not exist.");
         List<String[]> useLines = new ArrayList<>();
         // which layers are boundaries
         int iMoho = 0;
@@ -234,15 +249,14 @@ public class NamedDiscontinuityStructure {
                 if (parts.length != 6) throw new RuntimeException("FORMAT ERROR");
                 useLines.add(parts);
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         nBoundary = useLines.size(); // inner core outer core.....
         rho = new double[nBoundary];
-        qkappa = new double[nBoundary];
-        qmu = new double[nBoundary];
+        qKappa = new double[nBoundary];
+        qMu = new double[nBoundary];
         vs = new double[nBoundary];
         vp = new double[nBoundary];
         r = new double[nBoundary];
@@ -254,13 +268,13 @@ public class NamedDiscontinuityStructure {
             vp[j] = Double.parseDouble(parts[1]);
             vs[j] = Double.parseDouble(parts[2]);
             rho[j] = Double.parseDouble(parts[3]);
-            qkappa[j] = Double.parseDouble(parts[4]);
-            qmu[j] = Double.parseDouble(parts[5]);
+            qKappa[j] = Double.parseDouble(parts[4]);
+            qMu[j] = Double.parseDouble(parts[5]);
         }
 
-        coreMantleBoundary = r[nBoundary - iCoreMantleBoundary];
-        innerCoreBoundary = r[nBoundary - iInnerCoreBoundary];
-        mohoDiscontinuity = r[nBoundary - iMoho];
+        indexOfCoreMantleBoundary = nBoundary - iCoreMantleBoundary;
+        indexOfInnerCoreBoundary = nBoundary - iInnerCoreBoundary;
+        indexOfMohoDiscontinuity = nBoundary - iMoho;
 
         computeBullenLaw();
     }
@@ -269,7 +283,7 @@ public class NamedDiscontinuityStructure {
      * @return radius of the moho discontinuity
      */
     public double getMohoDiscontinuity() {
-        return mohoDiscontinuity;
+        return r[indexOfMohoDiscontinuity];
     }
 
     /**
@@ -301,11 +315,11 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param r radius [km]
-     * @return Qµ at r
+     * @return Q&mu; at r
      */
     public double getQMu(double r) {
         int izone = rToZone(r);
-        return computeBullenLaw(r, qmuA[izone], qmuB[izone]);
+        return computeBullenLaw(r, qMuA[izone], qMuB[izone]);
     }
 
     /**
@@ -314,7 +328,7 @@ public class NamedDiscontinuityStructure {
      */
     public double getQKappa(double r) {
         int izone = rToZone(r);
-        return computeBullenLaw(r, qkappaA[izone], qkappaB[izone]);
+        return computeBullenLaw(r, qKappaA[izone], qKappaB[izone]);
     }
 
     /**
@@ -327,7 +341,7 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param izone zone number
-     * @return b of a*r**b in i th zone
+     * @return b of a*r<sup>b</sup> in i th zone
      */
     public double getVpB(int izone) {
         return vpB[izone];
@@ -335,7 +349,7 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param izone zone number
-     * @return a of a*r**b in i th zone
+     * @return a of a*r<sup>b</sup> in i th zone
      */
     public double getVsA(int izone) {
         return vsA[izone];
@@ -343,7 +357,7 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param izone zone number
-     * @return b of a*r**b in i th zone
+     * @return b of a*r<sup>b</sup> in i th zone
      */
     public double getVsB(int izone) {
         return vsB[izone];
@@ -352,8 +366,7 @@ public class NamedDiscontinuityStructure {
     private int rToZone(double r) {
         for (int i = 0; i < this.r.length - 1; i++)
             if (this.r[i] <= r && r <= this.r[i + 1]) return i;
-        System.err.println("rToZone did not work correctly");
-        return 0;
+        throw new RuntimeException("rToZone did not work correctly");
     }
 
     private void computeBullenLaw() {
@@ -364,10 +377,10 @@ public class NamedDiscontinuityStructure {
         vpB = new double[nzone];
         vsA = new double[nzone];
         vsB = new double[nzone];
-        qmuA = new double[nzone];
-        qmuB = new double[nzone];
-        qkappaA = new double[nzone];
-        qkappaB = new double[nzone];
+        qMuA = new double[nzone];
+        qMuB = new double[nzone];
+        qKappaA = new double[nzone];
+        qKappaB = new double[nzone];
         for (int i = 0; i < nzone; i++) {
             double[] rho = computeBullenLaw(i, this.rho);
             rhoA[i] = rho[0];
@@ -378,14 +391,13 @@ public class NamedDiscontinuityStructure {
             double[] vs = computeBullenLaw(i, this.vs);
             vsA[i] = vs[0];
             vsB[i] = vs[1];
-            double[] qmu = computeBullenLaw(i, this.qmu);
-            qmuA[i] = qmu[0];
-            qmuB[i] = qmu[1];
-            double[] qkappa = computeBullenLaw(i, this.qkappa);
-            qkappaA[i] = qkappa[0];
-            qkappaB[i] = qkappa[1];
+            double[] qmu = computeBullenLaw(i, this.qMu);
+            qMuA[i] = qmu[0];
+            qMuB[i] = qmu[1];
+            double[] qkappa = computeBullenLaw(i, this.qKappa);
+            qKappaA[i] = qkappa[0];
+            qKappaB[i] = qkappa[1];
         }
-
     }
 
     /**

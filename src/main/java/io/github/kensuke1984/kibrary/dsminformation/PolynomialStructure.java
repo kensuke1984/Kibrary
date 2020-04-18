@@ -29,14 +29,13 @@ import java.util.stream.IntStream;
  * isShallower layer, i.e., the layer which has the radius as rmin.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.9
+ * @version 0.2.10
  */
 public class PolynomialStructure implements Serializable {
     /**
-     * 2019/12/7
+     * 2020/4/18
      */
-//    private static final long serialVersionUID = 1301735196105813616L;
-    private static final long serialVersionUID = 1350404622577105338L;
+    private static final long serialVersionUID = 387354455950454238L;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Usage: model file.");
@@ -189,12 +188,12 @@ public class PolynomialStructure implements Serializable {
      */
     private static PolynomialStructure initialAK135() {
         int nzone = 11;
-        double[] rmin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351};
-        double[] rmax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336.6, 6351, 6371};
-        double[][] rho = new double[][]{{13.0885, 0, -8.8381, 0}, {12.5815, -1.2638, -3.6426, -5.5281},
-                {7.9565, -6.4761, 5.5283, -3.0807}, {7.9565, -6.4761, 5.5283, -3.0807},
-                {7.9565, -6.4761, 5.5283, -3.0807}, {5.3197, -1.4836, 0, 0}, {11.2494, -8.0298, 0, 0},
-                {7.1089, -3.8045, 0, 0}, {2.691, 0.6924, 0, 0}, {2.691, 0.6924, 0, 0}, {2.9, 0, 0, 0}, {2.6, 0, 0, 0},};
+        double[] rmin = new double[]{0, 1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351};
+        double[] rmax = new double[]{1217.5, 3479.5, 3631, 5611, 5711, 5961, 6161, 6251, 6336, 6351, 6371};
+        double[][] rho = new double[][]{{13.01224, -0.00072, -8.448571, 0}, {12.27867, 1.206494, -10.135214, 0},
+                {5.520665, -0.172417, 0, 0}, {9.404821, -14.092113, 17.721033, -9.221153}, {10.084566, -6.409226, 0, 0},
+                {11.384761, -8.109009, 0, 0}, {11.916663, -8.811093, 0, 0}, {9.878741, -6.703708, 0, 0},
+                {3.573402, -0.277326, 0, 0}, {2.7142, 0, 0, 0}, {2.449, 0, 0, 0},};
         double[][] vpv = new double[][]{{11.261692, 0.028794, -6.627846, 0}, {10.118851, 3.457774, -13.434875, 0},
                 {13.908244, -0.45417, 0, 0}, {24.138794, -37.097655, 46.631994, -24.272115},
                 {25.969838, -16.934118, 0, 0}, {29.38896, -21.40656, 0, 0}, {30.78765, -23.25415, 0, 0},
@@ -847,19 +846,16 @@ public class PolynomialStructure implements Serializable {
         outString[2] = "c                      ---   Vsv     (km/s) ---";
         outString[3] = "c                      ---   Vsh     (km/s) ---      - Qmu -";
         for (int i = coreZone; i < nzone; i++) {
-            outString[3 * (i - coreZone) + 4] =
-                    String.valueOf(rmin[i]) + " " + String.valueOf(rmax[i]) + " " + toLine(rho[i]);
+            outString[3 * (i - coreZone) + 4] = rmin[i] + " " + rmax[i] + " " + toLine(rho[i]);
             outString[3 * (i - coreZone) + 5] = toLine(vsv[i]);
-            outString[3 * (i - coreZone) + 6] = toLine(vsh[i]) + " " + String.valueOf(qMu[i]);
+            outString[3 * (i - coreZone) + 6] = toLine(vsh[i]) + " " + qMu[i];
         }
         return outString;
     }
 
     public String[] toPSVlines() {
         String[] outString = new String[6 * (nzone) + 7];
-        // int zone = nzone - cmbZone;
         outString[0] = String.valueOf(nzone) + " nzone";
-        // System.out.println(nzone + " " + cmbZone);
         outString[1] = "c  - Radius(km) -     --- Density (g/cm^3)---";
         outString[2] = "c                     ---   Vpv     (km/s) ---";
         outString[3] = "c                     ---   Vph     (km/s) ---";
@@ -867,20 +863,20 @@ public class PolynomialStructure implements Serializable {
         outString[5] = "c                     ---   Vsh     (km/s) ---";
         outString[6] = "c                     ---   eta     (ND  ) ---             - Qmu -  - Qkappa -";
         for (int i = 0; i < nzone; i++) {
-            outString[6 * i + 7] = String.valueOf(rmin[i]) + " " + String.valueOf(rmax[i]) + " " + toLine(rho[i]);
+            outString[6 * i + 7] = rmin[i] + " " + rmax[i] + " " + toLine(rho[i]);
             outString[6 * i + 8] = toLine(vpv[i]);
             outString[6 * i + 9] = toLine(vph[i]);
             outString[6 * i + 10] = toLine(vsv[i]);
             outString[6 * i + 11] = toLine(vsh[i]);
-            outString[6 * i + 12] = toLine(eta[i]) + " " + String.valueOf(qMu[i]) + " " + String.valueOf(qKappa[i]);
+            outString[6 * i + 12] = toLine(eta[i]) + " " + qMu[i] + " " + qKappa[i];
         }
         return outString;
     }
 
     /**
      * @param outPath {@link Path} of an write file.
-     * @param options for write
-     * @throws IOException if an I/O error occurs
+     * @param options for writing
+     * @throws IOException if any
      */
     public void writePSV(Path outPath, OpenOption... options) throws IOException {
         Files.write(outPath, Arrays.asList(toPSVlines()), options);
@@ -889,7 +885,7 @@ public class PolynomialStructure implements Serializable {
     /**
      * @param outPath {@link Path} of an write file.
      * @param options for write
-     * @throws IOException if an I/O error occurs
+     * @throws IOException if any
      */
     public void writeSH(Path outPath, OpenOption... options) throws IOException {
         Files.write(outPath, Arrays.asList(toSHlines()), options);
