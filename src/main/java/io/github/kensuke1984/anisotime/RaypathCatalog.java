@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.8.2
+ * @version 0.2.8.3
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -41,7 +41,7 @@ public class RaypathCatalog implements Serializable {
      * 2020/3/17
      */
     private static final long serialVersionUID = 7787098314086388817L;
-    private static final String PIAC_SHA256 = "cb008583385a62e7b9a0a3468b3f04c47adcfbffd1b00c151860319b42ef781a";
+    private static final String PIAC_SHA256 = "bda932afa4510c35b092073315fd7d0400aa8d9d732179d0671eaa352d94f5c6";
 
 
     private static Path downloadCatalogZip() throws IOException {
