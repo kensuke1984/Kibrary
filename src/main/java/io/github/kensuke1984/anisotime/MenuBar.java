@@ -16,7 +16,7 @@ import java.nio.file.Paths;
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.5.3
+ * @version 0.1.5.4
  */
 final class MenuBar extends JMenuBar {
 
@@ -31,7 +31,6 @@ final class MenuBar extends JMenuBar {
     private JMenuItem jMenuItemParameterDescription;
     private JMenuItem jMenuItemAbout;
     private JMenuItem jMenuItemMail;
-    private JMenuItem jMenuItemPreferences;
     private JMenuItem jMenuItemPSVSH;
     private JMenuItem jMenuItemPSV;
     private JMenuItem jMenuItemSH;
@@ -60,8 +59,6 @@ final class MenuBar extends JMenuBar {
         buttonGroupPolarization.add(jMenuItemPSV);
         buttonGroupPolarization.add(jMenuItemSH);
 
-        jMenuItemPreferences = new JMenuItem("Preferences");
-
         JMenu jMenuHelp = new JMenu("Help");
         jMenuItemParameterDescription = new JMenuItem("Parameter description");
         jMenuItemAbout = new JMenuItem("About");
@@ -76,7 +73,6 @@ final class MenuBar extends JMenuBar {
         jMenuItemPSVSH.setSelected(true);
         jMenuSettings.add(jMenuModes);
         jMenuSettings.add(jMenuPolarization);
-        jMenuSettings.add(jMenuItemPreferences);
         jMenuPolarization.add(jMenuItemPSVSH);
         jMenuPolarization.add(jMenuItemPSV);
         jMenuPolarization.add(jMenuItemSH);
@@ -100,8 +96,6 @@ final class MenuBar extends JMenuBar {
 
         jMenuItemRayparameterMode.addActionListener(e -> GUI.setMode(ComputationMode.RAY_PARAMETER));
         jMenuItemEpicentralDistanceMode.addActionListener(e -> GUI.setMode(ComputationMode.EPICENTRAL_DISTANCE));
-        jMenuItemPreferences.addActionListener(e -> GUI.changePropertiesVisible());
-
 
         jMenuItemParameterDescription.addActionListener(e -> {
             URL descriptionPdf = getClass().getClassLoader().getResource("description.pdf");
@@ -125,8 +119,6 @@ final class MenuBar extends JMenuBar {
                     return;
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    // JOptionPane.showMessageDialog(null,
-                    // "미안 해요. PDF를 열 수 없습니다");
                 }
             }
             JOptionPane
