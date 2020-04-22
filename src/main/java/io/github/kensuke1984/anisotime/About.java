@@ -22,7 +22,7 @@ final class About extends javax.swing.JFrame {
      */
     private static final long serialVersionUID = 1987478866667550198L;
     private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
-            ") Copyright \u00a9 2015 Kensuke Konishi\n\n" +
+            ") Copyright \u00a9 2015-2020 Kensuke Konishi, Anselme Bourgeaud, Kenji Kawai and Robert J. Geller\n\n" +
             "Licensed under the Apache License, Version 2.0 (the \"License\")\n" +
             "You may not use this file except in compliance with the License.\n" +
             "You may obtain a copy of the License at\n\n" + "\thttp://www.apache.org/licenses/LICENSE-2.0\n\n" +

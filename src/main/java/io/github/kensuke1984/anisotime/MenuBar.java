@@ -28,7 +28,6 @@ final class MenuBar extends JMenuBar {
 
     private JMenuItem jMenuItemRayparameterMode;
     private JMenuItem jMenuItemEpicentralDistanceMode;
-    private JMenuItem jMenuItemParameterDescription;
     private JMenuItem jMenuItemAbout;
     private JMenuItem jMenuItemMail;
     private JMenuItem jMenuItemPSVSH;
@@ -60,7 +59,6 @@ final class MenuBar extends JMenuBar {
         buttonGroupPolarization.add(jMenuItemSH);
 
         JMenu jMenuHelp = new JMenu("Help");
-        jMenuItemParameterDescription = new JMenuItem("Parameter description");
         jMenuItemAbout = new JMenuItem("About");
         jMenuItemMail = new JMenuItem("Feedback");
 
@@ -77,7 +75,6 @@ final class MenuBar extends JMenuBar {
         jMenuPolarization.add(jMenuItemPSV);
         jMenuPolarization.add(jMenuItemSH);
         jMenuHelp.add(jMenuItemAbout);
-        jMenuHelp.add(jMenuItemParameterDescription);
         jMenuHelp.add(jMenuItemMail);
         jMenuModes.add(jMenuItemEpicentralDistanceMode);
         jMenuModes.add(jMenuItemRayparameterMode);
@@ -97,33 +94,6 @@ final class MenuBar extends JMenuBar {
         jMenuItemRayparameterMode.addActionListener(e -> GUI.setMode(ComputationMode.RAY_PARAMETER));
         jMenuItemEpicentralDistanceMode.addActionListener(e -> GUI.setMode(ComputationMode.EPICENTRAL_DISTANCE));
 
-        jMenuItemParameterDescription.addActionListener(e -> {
-            URL descriptionPdf = getClass().getClassLoader().getResource("description.pdf");
-            Path pdfFile;
-            try {
-                pdfFile = Files.createTempFile("ANISOtime_description", ".pdf");
-            } catch (Exception e2) {
-                pdfFile = Paths.get(System.getProperty("user.dir"), "ANISOtime_description.pdf");
-            }
-            try (BufferedOutputStream pdfOutStream = new BufferedOutputStream(Files.newOutputStream(pdfFile));
-                 InputStream pdfStream = descriptionPdf.openStream()) {
-                IOUtils.copy(pdfStream, pdfOutStream);
-            } catch (Exception e2) {
-                e2.printStackTrace();
-                return;
-            }
-            if (Desktop.isDesktopSupported()) {
-                try {
-                    Desktop.getDesktop().open(pdfFile.toFile());
-                    pdfFile.toFile().deleteOnExit();
-                    return;
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-            JOptionPane
-                    .showMessageDialog(null, "Can't open a pdf file. Look at " + pdfFile + " and delete by yourself.");
-        });
         jMenuItemAbout.addActionListener(e -> About.main(null));
         jMenuItemMail.addActionListener(e -> {
             try {

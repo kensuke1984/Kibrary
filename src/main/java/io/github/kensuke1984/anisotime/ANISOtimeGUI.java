@@ -395,7 +395,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     private void showRayPath(Raypath raypath, Phase phase) {
