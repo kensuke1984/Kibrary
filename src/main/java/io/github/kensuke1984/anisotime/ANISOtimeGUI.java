@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.4.2b
+ * @version 0.5.4.3b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2020/1/23
+     * 2020/4/22
      */
-    private static final long serialVersionUID = -685659184433433887L;
+    private static final long serialVersionUID = 878103862454733039L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -107,10 +107,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         this.mode = mode;
         jPanelParameter.changeBorderTitle(mode + "  " + getPoleString());
         jPanelParameter.setMode(mode);
-    }
-
-    void changePropertiesVisible() {
-        jPanelParameter.changePropertiesVisible();
     }
 
     /**

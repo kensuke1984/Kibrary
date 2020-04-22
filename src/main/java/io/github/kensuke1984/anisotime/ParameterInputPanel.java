@@ -16,14 +16,14 @@ import java.util.function.Consumer;
  * Panel for inputting parameters
  *
  * @author Kensuke Konishi
- * @version 0.3.0.3
+ * @version 0.3.0.4
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 
     /**
-     * 2019/11/21
+     * 2020/4/22
      */
-    private static final long serialVersionUID = 3709863163928978543L;
+    private static final long serialVersionUID = 6689964410399502211L;
     private final ANISOtimeGUI GUI;
 
     private javax.swing.JComboBox<String> jComboBoxModel;
@@ -93,11 +93,6 @@ class ParameterInputPanel extends javax.swing.JPanel {
                 jTextFieldMostImportant.grabFocus();
                 break;
         }
-    }
-
-    void changePropertiesVisible() {
-        //TODO
-        JOptionPane.showMessageDialog(null, "Tell me what you want to set..");
     }
 
     void changeBorderTitle(String title) {

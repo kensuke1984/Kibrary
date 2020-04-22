@@ -1107,8 +1107,8 @@ public class RaypathCatalog implements Serializable {
      *
      * @param raypath       check phase with this raypath
      * @param targetPhase   basic Phase such as P, S, ...
-     * @param eventR
-     * @param targetDelta   [rad] target delta.
+     * @param eventR        [km] event radius
+     * @param targetDelta   [rad] target &Delta;
      * @param relativeAngle if the delta is relative angle
      * @return actual {@link Phase} to obtain the targetDelta, such as PvXXP for base P
      */
@@ -1124,8 +1124,8 @@ public class RaypathCatalog implements Serializable {
 
     /**
      * @param targetPhase       phase
-     * @param eventR            [km]
-     * @param targetDelta       [rad]
+     * @param eventR            [km] event radius
+     * @param targetDelta       [rad] target &Delta;
      * @param relativeAngle     if it is relative angle mode
      * @param referenceRaypaths catalog
      * @return index i, where raypath[i] &le; targetDelta &le; raypath[i+1]
