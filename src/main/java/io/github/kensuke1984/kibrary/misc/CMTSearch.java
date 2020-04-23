@@ -14,11 +14,10 @@ import java.util.Set;
 
 import org.apache.commons.math3.util.FastMath;
 
-
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTSearch;
 
 class CMTSearch {
 
@@ -26,7 +25,7 @@ class CMTSearch {
 		try{
 			//フィイルを開く(BufferedReaderオブジェクトを作る)
 			String homedir = args[0];
-			BufferedReader br = new BufferedReader(new FileReader(homedir+args[1]));	
+			BufferedReader br = new BufferedReader(new FileReader(homedir+args[1]));
 			Path outPath = Paths.get(homedir+args[2]);
 			Files.deleteIfExists(outPath);
 			Files.createFile(outPath);
@@ -35,24 +34,24 @@ class CMTSearch {
 			String s;
 			while((s = br.readLine()) !=null){
 				if (lines < 2) {
-					System.out.println("File readling");
-				}	
+					System.out.println("File reading");
+				}
 				else {
 					String[] parts = s.split(",");
 					double stLat = Double.parseDouble(parts[1]);
 					double stLon = Double.parseDouble(parts[2]);
 				  System.out.println(stLat+" "+stLon);
 				  GlobalCMTSearch sea = new GlobalCMTSearch(LocalDate.of(2017, 10, 1), LocalDate.of(2019, 1, 31));	//年月日の指定
-				  
+
 				  String title = "TONGA FIJI";
 				  sea.setLatitudeRange(-40, -10);	//緯度範囲の指定
 				  sea.setLongitudeRange(170, 190);	//経度範囲の指定
 				  sea.setDepthRange(150, 700);	//深さ範囲の指定
 				  sea.setMwRange(5.5, 7.3);
-				  
+
 				  Set<GlobalCMTID> id = sea.search();	//条件に合致するgcmtIDをidに代入
-				  
-				  
+
+
 				  for (GlobalCMTID i : id){
 //					  System.out.println(i);
 					  double edRad = i.getEvent().getCmtLocation().getEpicentralDistance(new HorizontalPosition(stLat, stLon));
@@ -71,20 +70,20 @@ class CMTSearch {
 										.getEpicentralDistance(new HorizontalPosition(20, 80)));
 						double mw = i.getEvent().getCmt().getMw();
 //						System.out.printf("%s %.2f %.2f %.2f %.2f %s %s %.1f\n", i, lat, lon, depth, gcarc, ymd, hms, mw);
-//					}	
+//					}
 //				  /**
 						try{
 							Files.write(outPath,
 									String.format("%s %s/%s/%s %s:%s:%s %.2f %.2f %.2f %.1f %s\n",
 											i,
-											ymd.getYear(), ymd.getMonthValue(), ymd.getDayOfMonth(), 
+											ymd.getYear(), ymd.getMonthValue(), ymd.getDayOfMonth(),
 											hms.getHour(), hms.getMinute(), hms.getSecond(),
-											lat, lon, depth, mw, title).getBytes(), 
+											lat, lon, depth, mw, title).getBytes(),
 									StandardOpenOption.APPEND);
 						}catch (IOException error){
 							System.err.println("ファイルを作成できません");
 						}
-				  }	
+				  }
 //					*/
 //				  }
 				  }
@@ -92,15 +91,15 @@ class CMTSearch {
 				lines ++;
 			}
 			  br.close();	//ファイルを閉じる
-			  
+
 			}
 				 catch (FileNotFoundException erroe) {
 					System.out.println("ファイルを開けません");
 				} catch (IOException error) {
 					System.out.println("データを読み出せません");
 				}
-		}	
-		
+		}
+
 	}
- 
+
 

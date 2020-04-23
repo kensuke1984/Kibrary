@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package io.github.kensuke1984.kibrary.datacorrection;
 
@@ -24,29 +24,29 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
 
 /**
  * Source time function. <br>
- * 
+ *
  * You have to multiply<br>
  * Source time function: stf[0], .. stf[np-1] <br>
  * on <br>
  * Waveform in frequency domain: U[1].. U[np], respectively. See
  * {@link #convolve(Complex[])}
- * 
+ *
  * @version 0.0.6.2
- * 
+ *
  * @author Kensuke Konishi
  *
  */
 public class SourceTimeFunction {
 	/**
 	 * Triangle source time function
-	 * 
+	 *
 	 * The width is determined by the half duration &tau;. <br>
 	 * f(t) = 1/&tau;<sup>2</sup> t + 1/&tau; (-&tau; &le; t &le; 0), -1/&tau;
 	 * <sup>2</sup> t + 1/&tau; (0 &le; t &le; &tau;), 0 (t &lt; -&tau;, &tau;
 	 * &lt; t) <br>
 	 * Source time function F(&omega;) = (2-2cos(2&pi;&omega;&tau;))
 	 * /(2&pi;&omega;&tau;)<sup>2</sup>
-	 * 
+	 *
 	 * @param np
 	 *            the number of steps in frequency domain
 	 * @param tlen
@@ -56,22 +56,22 @@ public class SourceTimeFunction {
 	 * @param halfDuration
 	 *            [s] of the source
 	 */
-	
+
 	public static void main(String[] args) {
 		int np = 32768;
 		double tlen = 3276.8;
 		double samplingHz = 20.;
 		double halfDuration = 3.;
-		
+
 		SourceTimeFunction boxcar = SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		SourceTimeFunction triangle = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 		SourceTimeFunction triangleA = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, halfDuration);
-		
+
 		Complex[] c1 = boxcar.getSourceTimeFunctionInFrequencyDomain();
 		Complex[] c2 = triangle.getSourceTimeFunctionInFrequencyDomain();
 //		for (int i = 0; i < c1.length; i++)
 //			System.out.println(c1[i].getReal() + " " + c2[i].getReal() + " , " + c1[i].getImaginary() + " " + c2[i].getImaginary());
-		
+
 		Trace trace1 = boxcar.getSourceTimeFunctionInTimeDomain();
 		Trace trace2 = triangle.getSourceTimeFunctionInTimeDomain();
 		Trace trace3 = triangleA.getSourceTimeFunctionInTimeDomain();
@@ -79,7 +79,7 @@ public class SourceTimeFunction {
 			if (trace1.getXAt(i) < 30)
 				System.out.println(trace1.getXAt(i) + " " + trace1.getYAt(i) + " " + trace2.getYAt(i) + " " + trace3.getYAt(i));
 	}
-	
+
 	public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration) {
 		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
@@ -97,7 +97,7 @@ public class SourceTimeFunction {
 		}
 		return sourceTimeFunction;
 	}
-	
+
 	public static final SourceTimeFunction triangleSourceTimeFunction(int np, double tlen, double samplingHz,
 			double halfDuration, double amplitudeCorrection) {
 		SourceTimeFunction sourceTimeFunction = new SourceTimeFunction(np, tlen, samplingHz) {
@@ -116,7 +116,7 @@ public class SourceTimeFunction {
 		}
 		return sourceTimeFunction;
 	}
-	
+
     /**
      * ASYMMETRIC Triangle source time function
      * @author lina
@@ -151,21 +151,21 @@ public class SourceTimeFunction {
         					 -1.*h/omega/omega*(Math.sin(omega*halfDuration1)/halfDuration1 - Math.sin(omega*halfDuration2)/halfDuration2));
         }
         return sourceTimeFunction;
-    } 
-	
+    }
+
 //	public static final SourceTimeFunction gaussianSourceTimeFunction() {
-//		
+//
 //	}
 
 	/**
 	 * Boxcar source time function
-	 * 
+	 *
 	 * The width is determined by the half duration &tau;. <br>
 	 * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
 	 * &tau; &lt; t) <br>
 	 * Source time function F(&omega;) =
 	 * sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
-	 * 
+	 *
 	 * @param np
 	 *            the number of steps in frequency domain
 	 * @param tlen
@@ -195,16 +195,16 @@ public class SourceTimeFunction {
 
 	/**
 	 * Smoothed ramp source time function
-	 * 
+	 *
 	 * The width is determined by the half duration &tau;. <br>
 	 * f(t) = (1-tanh<sup>2</sup>(2t/&tau;))/&tau; (-&tau; &le; t &le; &tau;), 0
 	 * (t &lt; -&tau;, &tau; &lt; t) <br>
 	 * Source time function F(&omega;) = (&pi;<sup>2</sup>
 	 * &omega;&tau;/2)/sinh(&pi;<sup>2</sup>&omega;&tau;/2)<br>
-	 * 
+	 *
 	 * @param np
 	 *            the number of steps in frequency domain
-	 * 
+	 *
 	 * @param tlen
 	 *            [s] time length
 	 * @param samplingHz
@@ -372,7 +372,7 @@ public class SourceTimeFunction {
 //		// set values for imaginary frequency
 		for (int i = 0, nnp = nptsInTimeDomain / 2; i < nnp - 1; i++)
 			data[nnp + 1 + i] = data[nnp - 1 - i].conjugate();
-		
+
 		// fast fourier transformation
 		data = fft.transform(data, TransformType.INVERSE);
 
@@ -381,7 +381,7 @@ public class SourceTimeFunction {
 
 	/**
 	 * Operates convolution for data in <b>time</b> domain.
-	 * 
+	 *
 	 * @param data
 	 *            to be convolved in <b>time</b> domain. The data is convolved
 	 *            after FFTed.
@@ -398,14 +398,14 @@ public class SourceTimeFunction {
 
 	/**
 	 * Operates convolution for data in <b>frequency</b> domain.
-	 * 
+	 *
 	 * @param data
 	 *            to be convolved in <b>frequency</b> domain. The length must be
 	 *            {@link #np} + 1
 	 * @return convolute data in <b>frequency</b> domain
 	 */
 	public final Complex[] convolve(Complex[] data) {
-		System.out.println("stf is not null? " + (sourceTimeFunction!=null));
+//		System.out.println("stf is not null? " + (sourceTimeFunction!=null));
 		if (data.length != np + 1)
 			throw new IllegalArgumentException("Input data length is invalid: " + data.length + " " + (np+1));
 		return IntStream.range(0, np + 1).parallel()
@@ -425,7 +425,7 @@ public class SourceTimeFunction {
 
 	/**
 	 * x axis: time [s], y axis: amplitude
-	 * After considering that conjugate F[i] = F[N-i], 
+	 * After considering that conjugate F[i] = F[N-i],
 	 * @return trace of Source time function in time domain
 	 */
 	public Trace getSourceTimeFunctionInTimeDomain() {
@@ -445,7 +445,7 @@ public class SourceTimeFunction {
 
 	/**
 	 * Source time function is computed simply by division.
-	 * 
+	 *
 	 * @param obs
 	 *            waveform of observed
 	 * @param syn

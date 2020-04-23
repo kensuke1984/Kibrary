@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package io.github.kensuke1984.kibrary.misc;
 
@@ -24,14 +24,14 @@ import org.apache.commons.math3.util.FastMath;
 
 import edu.sc.seis.TauP.TauModelException;
 import edu.sc.seis.TauP.TauP_Time;
-import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
 import io.github.kensuke1984.kibrary.inversion.InversionResult;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
+import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 
 /**
@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.waveformdata.BasicID;
  *
  */
 public class QCstackRecordSection {
-	
+
 	static Path irPath = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/ALL/threeDPartial/Inv");
 	static Path stationInfPath = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/station_all.inf");
 	static Path outRootPath = Paths.get("/mnt/doremi/suzuki/ALASKA/DIVIDE/PREM/ALL/threeDPartial/Inv/QCRS");
@@ -57,7 +57,7 @@ public class QCstackRecordSection {
 	static double tAfter0 = 150;
 	static double distanceIncrement = 1.;
 	static double dt = .05;
-	
+
 	public static void main(String[] args) throws IOException {
 		InversionResult ir = new InversionResult(irPath);
 		GlobalCMTID[] ids = {new GlobalCMTID("200609160222A")};
@@ -75,8 +75,8 @@ public class QCstackRecordSection {
 			} catch (IOException e) {e.printStackTrace();}
 		});
 	}
-	
-	
+
+
 	public static void makeStackRecordSection (InversionResult ir, Set<Station> stations, GlobalCMTID gid,
 			RealVector[] stacksObs, RealVector[] stacksSyn, RealVector[] stacksBorn, int[] numOfStack) throws IOException {
 		Set<PosixFilePermission> perms =
@@ -110,12 +110,12 @@ public class QCstackRecordSection {
 					try {
 						Trace obs = ir.observedOf(id);
 						Trace syn = ir.syntheticOf(id);
-						
+
 						try {
 							timetool.depthCorrect(Earth.EARTH_RADIUS - id.getGlobalCMTID().getEvent().getCmtLocation().getR());
 							timetool.calculate(distance);
 						} catch (TauModelException e) {e.printStackTrace();}
-						
+
 						if (timetool.getNumArrivals() > 1)
 							System.out.println("Warning: more than one S arrival for " + id.toString());
 						if (! timewindows.containsKey(id.getGlobalCMTID())) {
@@ -133,7 +133,7 @@ public class QCstackRecordSection {
 						}
 					} catch (IOException e) {e.printStackTrace();}
 				});
-			
+
 			ir.getBasicIDList().stream()
 				.filter(id -> id.getGlobalCMTID().equals(gid))
 				.filter(id -> id.getWaveformType().equals(WaveformType.OBS))
@@ -154,10 +154,10 @@ public class QCstackRecordSection {
 						} catch (TauModelException e) {e.printStackTrace();}
 						if (timetool.getNumArrivals() > 1)
 							System.out.println("Warning: more than one S arrival for " + id.toString());
-						
+
 						double start = timetool.getArrival(0).getTime() - timewindows.get(id.getGlobalCMTID())[0];
 						double end = timetool.getArrival(0).getTime() + timewindows.get(id.getGlobalCMTID())[1];
-						
+
 //						/**
 						if (start < id.getStartTime() || end > id.getStartTime() + id.getNpts() / id.getSamplingHz()) {
 							throw new IndexOutOfBoundsException("timewindow shorter than the stack time window "
@@ -165,10 +165,10 @@ public class QCstackRecordSection {
 									+ " for event " + id.getGlobalCMTID().toString()
 									);
 						}
-						
+
 						int istart = (int) ((start - id.getStartTime()) * id.getSamplingHz());
 						int iIncr = (int) ((end - start) * id.getSamplingHz());
-						
+
 						RealVector obs = ir.observedOf(id).getYVector().getSubVector(istart, iIncr);
 						Trace obsTrace = ir.observedOf(id);
 						double maxObs = FastMath.max(obs.getMaxValue(), FastMath.abs(obs.getMinValue()));
@@ -178,7 +178,7 @@ public class QCstackRecordSection {
 						RealVector born = ir.bornOf(id, InverseMethodEnum.CONJUGATE_GRADIENT, bornOrder).getYVector().getSubVector(istart, iIncr);
 						Trace bornTrace = ir.bornOf(id, InverseMethodEnum.CONJUGATE_GRADIENT, bornOrder);
 						double maxBorn = FastMath.max(born.getMaxValue(), FastMath.abs(born.getMinValue()));
-						
+
 						try {
 							for (int i=0;i<obs.toArray().length;i++) {
 								Files.write(outPath, (String.valueOf(obsTrace.getX()[i])
@@ -192,7 +192,7 @@ public class QCstackRecordSection {
 										, StandardOpenOption.APPEND);
 							}
 						} catch (IOException e) {e.printStackTrace();}
-						
+
 						int index = (int) (distance / distanceIncrement);
 						if (stacksObs[index] == null) {
 							stacksObs[index] = new ArrayRealVector(obsTrace.getYVector().mapDivide(maxObs));
@@ -212,10 +212,10 @@ public class QCstackRecordSection {
 								stacksBorn[index].addToEntry(i, bornTrace.getY()[i] / maxBorn);
 						}
 						numOfStack[index] += 1;
-						
+
 					} catch (IOException e) {e.printStackTrace();}
 				});
-			
+
 			for (int i=0; i < numOfStack.length; i++) {
 				if (numOfStack[i] != 0) {
 					Path outpathstack = Paths.get(outRootPath.toString(), "stack" + String.format("%.1f", i * distanceIncrement) + ".T.txt");
@@ -231,7 +231,7 @@ public class QCstackRecordSection {
 										+ " "
 										+ String.valueOf(stacksBorn[i].getEntry(j) / numOfStack[i])
 										+ "\n").getBytes()
-								, StandardOpenOption.APPEND);					
+								, StandardOpenOption.APPEND);
 						Files.write(outpathscriptstack, ("\'"
 							+ "stack" + i * distanceIncrement + ".txt"
 							+ "\'"
@@ -264,16 +264,16 @@ public class QCstackRecordSection {
 								, StandardOpenOption.APPEND);
 				}
 			}
-			
+
 		} catch (TauModelException e ) {e.printStackTrace();}
 	}
-	
+
 	public static void plotScriptInitialize (Path outPathPltScript, Path gmtMapScript, Path outStackScript,
 			int minlat2, int maxlat2, int minlon2, int maxlon2, File dir) {
 		try {
 			Files.write(outPathPltScript, String.join("\n", "set terminal postscript enhanced color font 'Helvetica,18'"
 					,"unset key"
-					,"set size .5,1" 
+					,"set size .5,1"
 					,"set xlabel 'Reduced time (s)'"
 					,"set ylabel 'distance (deg)'"
 					,"set output 'profile" +  ".eps'\np").getBytes()

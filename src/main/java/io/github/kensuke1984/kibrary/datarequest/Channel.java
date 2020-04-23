@@ -9,24 +9,24 @@ import java.util.stream.Collectors;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
- * 
- * 
+ *
+ *
  * BREAKFASTシステムへのデータリクエストの際のデータ部分
- * 
+ *
  * millisecond があいまい 強制的に0にする 各データのchannel は "1 BH?"に固定
  * <p>
  * STA NN YYYY MM DD HH MM SS.TTTT YYYY MM DD HH MM SS.TTTT #_CH CH1 CH2 CHn LI
  * <p>
  * where
- * 
+ *
  * #_CH is the number of channel designators in the immediately following list
  * CHn is a channel designator that can contain wildcards LI is location
  * identifier (optional)<br>
  * <p>
  * For OHP request, TTTT is now only one digit.
- * 
+ *
  * @version 0.0.5.1
- * 
+ *
  * @author kensuke
  * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
  *      guide</a>
@@ -61,7 +61,8 @@ public class Channel {
 	 * 指定するチャンネル数（ワイルドカードは一つとして数える）
 	 */
 	private int channelNumber = 1;
-	private String[] channel = { "BH?" };
+//	private String[] channel = { "BH?" };
+	private String[] channel = { "EH?" };
 
 	public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
 		super();
@@ -76,16 +77,16 @@ public class Channel {
 	/**
 	 * STA NN YYYY MM DD HH MM SS.TTTT YYYY MM DD HH MM SS.TTTT #_CH CH1 CH2 CHn
 	 * LI
-	 * 
+	 *
 	 * where
-	 * 
+	 *
 	 * STA is the station NN is the network code or "virtual network" YYYY is
 	 * the year - 2 digit entries will be rejected! MM is the month DD is the
 	 * day HH is the hour MM is the minute SS.TTTT is the second and
 	 * ten-thousandths of seconds #_CH is the number of channel designators in
 	 * the immediately following list CHn is a channel designator that can
 	 * contain wildcards LI is location identifier (optional)
-	 * 
+	 *
 	 * @param time
 	 *            to be formatted
 	 * @return formatted line
@@ -102,7 +103,7 @@ public class Channel {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param network
 	 *            names of networks
 	 * @param id

@@ -10,17 +10,17 @@ import java.nio.file.StandardOpenOption;
 
 /**
  * Color pallet for GMT.
- * 
- * 
- * @version 0.0.5
- * @author Kensuke Konishi
- * 
+ *
+ *
+ * @version 0.1.0 (original is 0.0.5)
+ * @author Kensuke Konishi --> modified by Yuki S.
+ *
  */
 public interface ColorPallet {
 
 	/**
 	 * If there is no min value, then the range is [-max, max]
-	 * 
+	 *
 	 * @param args
 	 *            [output file name](Option min value of range) [max value of
 	 *            range]
@@ -61,7 +61,7 @@ public interface ColorPallet {
 
 	/**
 	 * output the color pallet
-	 * 
+	 *
 	 * @param min
 	 *            min value of range
 	 * @param max
@@ -113,7 +113,7 @@ public interface ColorPallet {
 
 	/**
 	 * output the color pallet
-	 * 
+	 *
 	 * @param max
 	 *            max value of range
 	 * @return Color pallet by Oobayashi
@@ -121,7 +121,7 @@ public interface ColorPallet {
 	static ColorPallet oobayashi(double max) {
 		return oobayashi(-max, max);
 	}
-	
+
 	static ColorPallet brbg(double min, double max) {
 		if (max <= min)
 			throw new IllegalArgumentException("Input values are invalid");
@@ -154,7 +154,7 @@ public interface ColorPallet {
 						String rgbPart = " " + rgb[i][0] + " " + rgb[i][1] + "  " + rgb[i][2] + " ";
 						pw.println(start + rgbPart + end + rgbPart);
 					}
-					pw.println("B\t 255\t 255\t 255\nF\t 255\t 255\t 255\nN\t 255\t 255\t 255");
+					pw.println("B\t 140\t 129\t 10\nF\t 1\t 102\t 94\nN\t 255\t 255\t 255");
 				}
 
 			}
@@ -162,7 +162,7 @@ public interface ColorPallet {
 
 		return brbg;
 	}
-	
+
 	static ColorPallet brbg (double max) {
 		return brbg(-max, max);
 	}
