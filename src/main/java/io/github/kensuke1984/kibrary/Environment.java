@@ -13,7 +13,7 @@ import java.util.Properties;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.3.1
+ * @version 0.1.3.2
  */
 public class Environment {
     public final static Path KIBRARY_HOME;
@@ -38,7 +38,7 @@ public class Environment {
             } else {
                 KIBRARY_HOME = Paths.get(System.getProperty("user.home")).resolve("Kibrary");
             }
-            System.err.println("Because KIBRARY_HOME is not set, it is assumed to be " + KIBRARY_HOME);
+            System.err.println("KIBRARY_HOME is set to be " + KIBRARY_HOME);
         } else KIBRARY_HOME = Paths.get(home);
         try {
             Files.createDirectories(KIBRARY_HOME);
