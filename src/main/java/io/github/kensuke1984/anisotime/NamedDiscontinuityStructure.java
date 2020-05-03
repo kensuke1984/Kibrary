@@ -8,20 +8,20 @@ import java.util.Arrays;
  * Named discontinuity structure
  *
  * @author Kensuke Konishi
- * @version 0.0.7.3
+ * @version 0.0.7.4
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
     /**
-     * 2020/4/18
+     * 2020/5/3
      */
-    private static final long serialVersionUID = 3938768467108267860L;
+    private static final long serialVersionUID = 2958179761423002041L;
     io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
     private NamedDiscontinuityStructure() {
     }
 
-    NamedDiscontinuityStructure(Path path) throws NoSuchFileException {
+    NamedDiscontinuityStructure(Path path) throws Exception {
         structure = new io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure(path);
     }
 
