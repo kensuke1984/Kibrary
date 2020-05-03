@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.4.3b
+ * @version 0.5.4.4b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -56,7 +56,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
