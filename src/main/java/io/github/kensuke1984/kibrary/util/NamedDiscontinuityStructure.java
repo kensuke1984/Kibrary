@@ -16,7 +16,7 @@ import java.util.List;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.0.6
+ * @version 0.0.7
  */
 public class NamedDiscontinuityStructure {
 
@@ -110,7 +110,7 @@ public class NamedDiscontinuityStructure {
     /**
      * @param path model file written by nd format.
      */
-    public NamedDiscontinuityStructure(Path path) throws NoSuchFileException {
+    public NamedDiscontinuityStructure(Path path) throws Exception {
         infPath = path;
         readInfFile();
     }
@@ -181,7 +181,9 @@ public class NamedDiscontinuityStructure {
             if (i == indexOfMohoDiscontinuity) outString[j++] = "mantle";
             else if (i == indexOfCoreMantleBoundary) outString[j++] = "outer-core";
             else if (i == indexOfInnerCoreBoundary) outString[j++] = "inner-core";
-            outString[j++] = Math.round((6371.0 - r[i])*10000000) /10000000.0 + " " + vp[i] + " " + vs[i] + " " + rho[i] + " " + qKappa[i] + " " + qMu[i];
+            outString[j++] =
+                    Math.round((6371.0 - r[i]) * 10000000) / 10000000.0 + " " + vp[i] + " " + vs[i] + " " + rho[i] +
+                            " " + qKappa[i] + " " + qMu[i];
         }
         return outString;
     }
@@ -220,37 +222,33 @@ public class NamedDiscontinuityStructure {
         return r[indexOfInnerCoreBoundary];
     }
 
-    private void readInfFile() throws NoSuchFileException {
+    private void readInfFile() throws Exception {
         if (!Files.exists(infPath)) throw new NoSuchFileException(infPath + " does not exist.");
         List<String[]> useLines = new ArrayList<>();
         // which layers are boundaries
         int iMoho = 0;
         int iCoreMantleBoundary = 0;
         int iInnerCoreBoundary = 0;
-        try {
-            List<String> lineList = Files.readAllLines(infPath);
-            String mantle = "mantle";
-            String outercore = "outer-core";
-            String innercore = "inner-core";
-            for (int i = 0; i < lineList.size(); i++) {
-                String line = lineList.get(i);
-                if (line.startsWith("#")) continue;
-                if (line.equals(mantle)) {
-                    iMoho = i - 1;
-                    continue;
-                } else if (line.equals(outercore)) {
-                    iCoreMantleBoundary = i - 1;
-                    continue;
-                } else if (line.equals(innercore)) {
-                    iInnerCoreBoundary = i - 1;
-                    continue;
-                }
-                String[] parts = lineList.get(i).trim().split("\\s+");
-                if (parts.length != 6) throw new RuntimeException("FORMAT ERROR");
-                useLines.add(parts);
+        List<String> lineList = Files.readAllLines(infPath);
+        String mantle = "mantle";
+        String outercore = "outer-core";
+        String innercore = "inner-core";
+        for (int i = 0; i < lineList.size(); i++) {
+            String line = lineList.get(i);
+            if (line.startsWith("#")) continue;
+            if (line.equals(mantle)) {
+                iMoho = i - 1;
+                continue;
+            } else if (line.equals(outercore)) {
+                iCoreMantleBoundary = i - 1;
+                continue;
+            } else if (line.equals(innercore)) {
+                iInnerCoreBoundary = i - 1;
+                continue;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            String[] parts = lineList.get(i).trim().split("\\s+");
+            if (parts.length != 6) throw new RuntimeException("FORMAT ERROR");
+            useLines.add(parts);
         }
 
         nBoundary = useLines.size(); // inner core outer core.....
