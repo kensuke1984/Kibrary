@@ -6,7 +6,6 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.*;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -16,14 +15,14 @@ import java.util.function.Consumer;
  * Panel for inputting parameters
  *
  * @author Kensuke Konishi
- * @version 0.3.0.4
+ * @version 0.3.1
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 
     /**
-     * 2020/4/22
+     * 2020/5/3
      */
-    private static final long serialVersionUID = 6689964410399502211L;
+    private static final long serialVersionUID = 888181027267948528L;
     private final ANISOtimeGUI GUI;
 
     private javax.swing.JComboBox<String> jComboBoxModel;
@@ -137,7 +136,6 @@ class ParameterInputPanel extends javax.swing.JPanel {
                         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jTextFieldDepth).addComponent(jLabelDepth))
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE))));
-//		createStructure();
         GUI.setStructure(VelocityStructure.prem());
         GUI.setEventDepth(100);
     }
@@ -164,8 +162,7 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
             @Override
             public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-                GUI.setStructure(createStructure());
-                GUI.setEventDepth(Double.parseDouble(jTextFieldDepth.getText()));
+                SwingUtilities.invokeLater(() -> GUI.setStructure(createStructure()));
             }
 
             @Override
@@ -188,16 +185,13 @@ class ParameterInputPanel extends javax.swing.JPanel {
             case NAMED_DISCONTINUITY:
                 fileChooser = new JFileChooser();
                 fileChooser.setFileFilter(new FileNameExtensionFilter("named discontinuity file", "nd"));
-                if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-                    Path file = fileChooser.getSelectedFile().toPath();
-                    try {
-                        return new NamedDiscontinuityStructure(file);
-                    } catch (Exception e) {
-                        JOptionPane.showMessageDialog(null, "The file is invalid!");
-                        return null;
-                    }
+                if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) try {
+                    return new NamedDiscontinuityStructure(fileChooser.getSelectedFile().toPath());
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "The file is invalid!");
+                    break;
                 }
-                return null;
+                break;
             case POLYNOMIAL:
                 fileChooser = new JFileChooser();
                 fileChooser.setFileFilter(new FileNameExtensionFilter("polynomial file", "inf"));
@@ -205,11 +199,13 @@ class ParameterInputPanel extends javax.swing.JPanel {
                     return new PolynomialStructure(fileChooser.getSelectedFile().toPath());
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(null, "The file is invalid!");
-                    return null;
+                    break;
                 }
-                return null;
+                break;
             default:
                 throw new RuntimeException("unexpected");
         }
+        jComboBoxModel.setSelectedIndex(0);
+        return PolynomialStructure.PREM;
     }
 }
