@@ -118,8 +118,6 @@ public enum PartialType {
 			return SpcFileType.PAR0;
 		case PARVS:
 			return SpcFileType.PARVS;
-		case PARVSIM:
-			return SpcFileType.PARVSIM;
 		case PAR00:
 		case PARM:
 		case PARVP:

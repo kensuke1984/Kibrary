@@ -78,7 +78,6 @@ public class UnknownParameterFile {
 				case PARQ:
 				case PAR2:
 				case PARVS:
-				case PARVSIM:
 				case PARVP:
 				case PARG:
 				case PARM:

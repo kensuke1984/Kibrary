@@ -35,6 +35,7 @@ import edu.sc.seis.TauP.TauP_Time;
 import io.github.kensuke1984.kibrary.quick.taupModelMaker;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
@@ -296,7 +297,7 @@ public class Dvector {
 				}
 				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
 					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
-				return 1. / obsVec.getLInfNorm(); 
+				return 1. / obsVec.getLInfNorm();
 //						Math.max(Math.abs(obsVec.getMinValue()), Math.abs(obsVec.getMaxValue()));
 			};
 			break;
@@ -310,7 +311,7 @@ public class Dvector {
 				}
 				if (obsVec.getLInfNorm() == 0 || Double.isNaN(obsVec.getLInfNorm()))
 					throw new RuntimeException("Obs is 0 or NaN: " + obs + " " + obsVec.getLInfNorm());
-				double weight = 2./ Math.abs(obsVec.getMaxValue() - obsVec.getMinValue()); ;
+				double weight = 2./ Math.abs(obsVec.getMaxValue() - obsVec.getMinValue());
 //				RealVector residualVec = obsVec.subtract(synVec);
 //				weight /= Math.pow(residualVec.dotProduct(residualVec) / (weight*weight), 0.25);
 				return weight;
@@ -738,6 +739,7 @@ public class Dvector {
 		dvector.weightingVectors = weightingVectors.clone();
 		dvector.weightingFunction = weightingFunction;
 		dvector.obsNormSquare = obsNormSquare;
+		dvector.usedGlobalCMTIDset = usedGlobalCMTIDset;
 		return dvector;
 	}
 	
@@ -1240,6 +1242,10 @@ public class Dvector {
 				synVec[i].setEntry(j, synVec[i].getEntry(j) * ws[j]);
 			}
 			
+			//TODO
+//			HorizontalPosition centerPosition = new HorizontalPosition(-27.629, -63.097);
+//			obsVec[i] = correct3DFocusing(i, centerPosition);
+			
 			double denominator = obsVec[i].dotProduct(obsVec[i]);
 			dVec[i] = obsVec[i].subtract(synVec[i]);
 			double numerator = dVec[i].dotProduct(dVec[i]);
@@ -1262,6 +1268,24 @@ public class Dvector {
 		obsNormSquare = obs2;
 		obsNorm = Math.sqrt(obs2);
 		System.err.println("Vector D was created. The variance is " + variance + ". The number of points is " + npts);
+	}
+	
+	private RealVector correct3DFocusing(int i, HorizontalPosition centerPosition) {
+		double azimuth = Math.toDegrees(centerPosition.getAzimuth(obsIDs[i].getStation().getPosition()));
+		if (azimuth < 180) azimuth += 360;
+		double tmpw = 1.;
+		if (azimuth < 323) tmpw = 0.85;
+		else if (azimuth < 329) tmpw = 0.87;
+		else if (azimuth < 336) tmpw = 0.93;
+		else if (azimuth < 341) tmpw = 1.11;
+		else if (azimuth < 347) tmpw = 0.99;
+		else tmpw = 0.84;
+		RealVector v = null;
+		if (weightingType.equals(WeightingType.RECIPROCAL_FREQ))
+			v = obsVec[i].mapSubtract(Math.log(tmpw));
+		else if (weightingType.equals(WeightingType.RECIPROCAL))
+			v = obsVec[i].mapDivide(tmpw);
+		return v;
 	}
 	
 	private double obsNormSquare;
@@ -1544,5 +1568,12 @@ public class Dvector {
 	int whichTimewindow(BasicID id) {
 		BasicID[] ids = id.getWaveformType() == WaveformType.OBS ? obsIDs : synIDs;
 		return IntStream.range(0, ids.length).filter(i -> isPair(id, ids[i])).findAny().orElse(-1);
+	}
+	
+	public void mapMultiply(double d) {
+		for (int i = 0; i < obsVec.length; i++) {
+			obsVec[i] = obsVec[i].mapMultiply(d);
+			synVec[i] = synVec[i].mapMultiply(d);
+		}
 	}
 }

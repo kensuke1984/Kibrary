@@ -9,7 +9,9 @@ import io.github.kensuke1984.kibrary.waveformdata.PartialID;
 import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 
 import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,8 +35,8 @@ public class KernelVisual {
 		Set<String> stationnameSet = new HashSet<>();
 //		idSet.add(new GlobalCMTID("200506021056A"));
 //		stationnameSet.add("ISCO");
-		idSet.add(new GlobalCMTID("201704052217A"));
-		stationnameSet.add("H21K");
+//		idSet.add(new GlobalCMTID("201704052217A"));
+//		stationnameSet.add("H21K");
 		
 		Path dir0 = Paths.get("KernelTemporalVisual");
 		Files.createDirectories(dir0);
@@ -62,18 +64,18 @@ public class KernelVisual {
 						+ "_" + partial.getPartialType() + "_" + partial.getSacComponent()
 						+ String.format("_kernelTemporal_snapshots_t0%d.txt", (int) t0));
 				
-				Path filePath_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
-						+ "_" + partial.getPartialType() + "_" + partial.getSacComponent()
-						+ String.format("_sensitivityTemporal_snapshots_t0%d.txt", (int) t0));
+//				Path filePath_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
+//						+ "_" + partial.getPartialType() + "_" + partial.getSacComponent()
+//						+ String.format("_sensitivityTemporal_snapshots_t0%d.txt", (int) t0));
 				
 				if (!Files.exists(filePath))
 					Files.createFile(filePath);
-				if (!Files.exists(filePath_sensitivity))
-					Files.createFile(filePath_sensitivity);
+//				if (!Files.exists(filePath_sensitivity))
+//					Files.createFile(filePath_sensitivity);
 				
 				double cumulativeSensitivity = 0.;
 					
-				BufferedWriter writer2 = Files.newBufferedWriter(filePath, StandardOpenOption.APPEND);
+				PrintWriter writer2 = new PrintWriter(new FileWriter(filePath.toString(), true));
 				double lat = partial.getPerturbationLocation().getLatitude();
 				double lon = partial.getPerturbationLocation().getLongitude();
 				if (lon < 0)
@@ -81,20 +83,20 @@ public class KernelVisual {
 				double r = partial.getPerturbationLocation().getR();
 //				writer2.write(String.format("%s ", partial.getPerturbationLocation()));
 				writer2.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
-				BufferedWriter writer2_s = Files.newBufferedWriter(filePath_sensitivity, StandardOpenOption.APPEND);
+//				BufferedWriter writer2_s = Files.newBufferedWriter(filePath_sensitivity, StandardOpenOption.APPEND);
 //				writer2_s.write(String.format("%s ", partial.getPerturbationLocation()));
-				writer2_s.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
+//				writer2_s.write(String.format("%.3f %.3f %.1f ", lat, lon, r));
 				for (int i = 0; i < data.length; i++) {
 					writer2.write(String.format("%.5e "
 							, data[i]));
 					
 					cumulativeSensitivity += data[i] * data[i];
-					writer2_s.write(String.format("%.5e ", Math.sqrt(cumulativeSensitivity) / (i+1)));
+//					writer2_s.write(String.format("%.5e ", Math.sqrt(cumulativeSensitivity) / (i+1)));
 				}
-				writer2.newLine();
+				writer2.println();
 				writer2.close();
-				writer2_s.newLine();
-				writer2_s.close();
+//				writer2_s.newLine();
+//				writer2_s.close();
 		}
 	}
 	

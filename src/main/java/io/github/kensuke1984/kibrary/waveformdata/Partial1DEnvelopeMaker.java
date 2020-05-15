@@ -50,7 +50,6 @@ import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
 import io.github.kensuke1984.kibrary.util.spc.VSConversion;
-import io.github.kensuke1984.kibrary.util.spc.VSIMConversion;
 
 /**
  * Creates a pair of files containing 1-D partial derivatives
@@ -402,8 +401,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 				PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
 				if (!(partialTypes.contains(partialType)
-						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2)
-						|| (partialTypes.contains(PartialType.PARVSIM) && spcFileType == SpcFileType.PAR2)))
+						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2)))
 					continue;
 				
 				SpcFileName shspcname = null;
@@ -546,14 +544,7 @@ public class Partial1DEnvelopeMaker implements Operation {
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
-			DSMOutput vsimSpectrum = null;
-			if (partialTypes.contains(PartialType.PARVS) && partialTypes.contains(PartialType.PARVSIM)) {
-				vsimSpectrum = vsimConversion.convert(spectrum);
-				spectrum = vsConversion.convert(spectrum);
-				partialType = PartialType.PARVS;
-				process(vsimSpectrum);
-			}
-			else if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+			if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum = fujiConversion.convert(spectrum);
 				process(qSpectrum);
 			}
@@ -610,25 +601,6 @@ public class Partial1DEnvelopeMaker implements Operation {
 							double[] filteredUt = tmpfilter.applyFilter(ut);
 							for (TimewindowInformation t : tw)
 								cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ, periodRanges[i]);
-						}
-					}
-				if (vsimSpectrum != null)
-					for (int k = 0; k < spectrum.nbody(); k++) {
-						double bodyR = spectrum.getBodyR()[k];
-						boolean exists = false;
-						for (double r : Partial1DEnvelopeMaker.this.bodyR)
-							if (Utilities.equalWithinEpsilon(r, bodyR, eps))
-								exists = true;
-						if (!exists)
-							continue;
-						double[] ut = vsimSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
-						// applying the filter
-						
-						for (int i = 0; i < periodRanges.length; i++) {
-							ButterworthFilter tmpfilter = filter.get(i);
-							double[] filteredUt = tmpfilter.applyFilter(ut);
-							for (TimewindowInformation t : tw)
-								cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARVSIM, periodRanges[i]);
 						}
 					}
 			}
@@ -953,8 +925,6 @@ public class Partial1DEnvelopeMaker implements Operation {
 	
 	private VSConversion vsConversion;
 	
-	private VSIMConversion vsimConversion;
-
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 
 	private void readSourceTimeFunctions() throws IOException {
@@ -1048,9 +1018,6 @@ public class Partial1DEnvelopeMaker implements Operation {
 		
 		if (partialTypes.contains(PartialType.PARQ))
 			fujiConversion = new FujiConversion(structure);
-		
-		if (partialTypes.contains(PartialType.PARVSIM))
-			vsimConversion = new VSIMConversion(structure);
 		
 		if (partialTypes.contains(PartialType.PARVS))
 			vsConversion = new VSConversion(structure);

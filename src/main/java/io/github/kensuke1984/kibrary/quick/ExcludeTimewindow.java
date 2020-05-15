@@ -4,6 +4,7 @@ import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
+import io.github.kensuke1984.kibrary.util.EventCluster;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
@@ -56,6 +57,17 @@ public class ExcludeTimewindow {
 				"201302221201A","200909301903A"})
 				.map(GlobalCMTID::new)
 				.collect(Collectors.toSet());
+		
+		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		List<EventCluster> clusters = null;
+		try {
+			clusters = EventCluster.readClusterFile(clusterPath);
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		int clusterIndex = 4;
+		Set<GlobalCMTID> clusterIDs = clusters.stream().filter(c -> c.getIndex() == clusterIndex).map(EventCluster::getID)
+			.collect(Collectors.toSet());
 		
 //		Path eachVarianceFile = Paths.get("eachVariance.txt");
 //		List<String> stationNames = new ArrayList<>();
@@ -121,9 +133,11 @@ public class ExcludeTimewindow {
 //								return false;
 //							if (distance > 80)
 //								return false;
-//							if (distance < 70)
+							if (distance < 70)
+								return false;
+//							if (distance < 60)
 //								return false;
-							if (distance < 60)
+							if (!clusterIDs.contains(tw.getGlobalCMTID()))
 								return false;
 							else 
 								return true;
@@ -160,7 +174,6 @@ public class ExcludeTimewindow {
 //						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("T21A")))
 //						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("200809031125A")) && tw.getStation().getStationName().equals("U20A")))
 //						.filter(tw -> !(tw.getGlobalCMTID().equals(new GlobalCMTID("201205280507A")) && tw.getStation().getStationName().equals("TUC")))
-						
 						
 //						.filter(tw -> tw.getStation().getStationName().equals("L41A"))
 //						.filter(tw -> tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()) * 180. / Math.PI >= 18.)
@@ -221,6 +234,9 @@ public class ExcludeTimewindow {
 //				newTimewindows = timewindows.stream().limit(1).collect(Collectors.toSet());
 //				newTimewindows = timewindows.stream().filter(tw -> tw.getGlobalCMTID()
 //					.equals(new GlobalCMTID("201205280507A"))).collect(Collectors.toSet());
+				
+//				newTimewindows = timewindows.stream().filter(tw -> tw.getStation().getStationName().equals("PH10") ||
+//						tw.getStation().getStationName().equals("Y12C")).collect(Collectors.toSet());
 				
 				TimewindowInformationFile.write(newTimewindows, newTimewindowFile);
 //				

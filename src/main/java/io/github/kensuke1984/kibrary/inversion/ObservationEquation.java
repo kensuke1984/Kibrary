@@ -150,7 +150,8 @@ public class ObservationEquation {
 		RealMatrix atatmp = ata.add(equation.getAtA());
 		RealVector atdtmp = atd.add(equation.getAtD());
 		dVector.setVariance(dVector.getVariance() + equation.getDVector().getVariance());
-		dVector.setObsNormSquare(dVector.getObsNormSquare() + equation.getDVector().getObsNormSquare());
+		
+//		dVector.setObsNormSquare(dVector.getObsNormSquare() + equation.getDVector().getObsNormSquare());
 		
 		return new ObservationEquation(atatmp, atdtmp, parameterList, dVector, a);
 	}
@@ -160,7 +161,8 @@ public class ObservationEquation {
 		RealMatrix atatmp = ata.scalarMultiply(d);
 		RealVector atdtmp = atd.mapMultiply(d);
 		dVector.setVariance(dVector.getVariance() * d);
-		dVector.setObsNormSquare(dVector.getObsNormSquare() * d);
+//		dVector.mapMultiply(Math.sqrt(d)); // TODO check if valid
+//		dVector.setObsNormSquare(dVector.getObsNormSquare() * d);
 		ObservationEquation eq = new ObservationEquation(atatmp, atdtmp, parameterList, dVector, a);
 		return eq;
 	}
@@ -233,6 +235,13 @@ public class ObservationEquation {
 	}
 	
 	public void addRegularization(RealMatrix D) {
+		if (ata != null)
+			ata = ata.add(D);
+		else
+			throw new RuntimeException("AtA is null");
+	}
+	
+	public void removeRegularization(RealMatrix D) {
 		if (ata != null)
 			ata = ata.add(D);
 		else
@@ -517,6 +526,7 @@ public class ObservationEquation {
 //				+ m.dotProduct(getAtA().operate(m));
 				variance = var0 - 2 * atd.dotProduct(m)
 						+ m.dotProduct(getAtA().operate(m));
+//				System.out.println(var0 + " " + 2 * atd.dotProduct(m) + " " + m.dotProduct(getAtA().operate(m)));
 			}
 		}
 		else
@@ -1375,8 +1385,8 @@ public class ObservationEquation {
 					ntmp++;
 				}
 			}
-			meanAColumnNorm /= ntmp;
-			meanAQNorm /= ntmpQ;
+//			meanAColumnNorm /= ntmp;
+//			meanAQNorm /= ntmpQ;
 			if (ntmpQ > 0) {
 				for (int j = 0; j < a.getColumnDimension(); j++) {
 					if (!parameterList.get(j).getPartialType().equals(PartialType.PARQ))
@@ -1511,7 +1521,6 @@ public class ObservationEquation {
 			case PAR1:
 			case PAR2:
 			case PARVS:
-			case PARVSIM:
 			case PARVP:
 			case PARG:
 			case PARM:
@@ -1836,5 +1845,10 @@ public class ObservationEquation {
 	
 	public void setVariance(double variance) {
 		dVector.setVariance(variance);
+	}
+	
+	public void setObsNormSquare(double obs2) {
+		dVector.setVariance(dVector.getVariance() * dVector.getObsNormSquare() / obs2);
+		dVector.setObsNormSquare(obs2);
 	}
 }

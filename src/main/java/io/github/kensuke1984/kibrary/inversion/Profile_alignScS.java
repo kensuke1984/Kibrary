@@ -252,6 +252,8 @@ public class Profile_alignScS {
 							double bornCorr = bornVector.dotProduct(obsVector) / (bornVector.getNorm() * obsVector.getNorm());
 							double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
 							double bornRatio = bornVector.getLInfNorm() / obsVector.getLInfNorm();
+//							double synRatio = (synVector.getMaxValue() - synVector.getMinValue()) / (obsVector.getMaxValue() - obsVector.getMinValue());
+//							double bornRatio = (bornVector.getMaxValue() - bornVector.getMinValue()) / (obsVector.getMaxValue() - obsVector.getMinValue());
 							eachMisfitString[0] += id.getStation().getStationName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
 									+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 									+ tmpSyn + " " + tmpBorn + " " + synCorr + " " + bornCorr + "\n";

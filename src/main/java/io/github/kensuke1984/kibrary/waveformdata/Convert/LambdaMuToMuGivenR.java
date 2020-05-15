@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.waveformdata;
+package io.github.kensuke1984.kibrary.waveformdata.Convert;
 
 import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
@@ -9,6 +9,9 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.PartialID;
+import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
 
 import java.io.IOException;
 import java.nio.file.Files;

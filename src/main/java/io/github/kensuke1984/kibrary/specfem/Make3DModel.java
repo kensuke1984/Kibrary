@@ -1,18 +1,24 @@
 package io.github.kensuke1984.kibrary.specfem;
 
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
+import io.github.kensuke1984.kibrary.inversion.InversionResult;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.util.EventCluster;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -57,17 +63,37 @@ public class Make3DModel {
 //		List<PerturbationPoint> lowVelocityLens = velocityLens_CA(-5);
 //		Path outpath_lowvelocitylens = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/low_velocity_lens_5per.inf");
 		
-		List<PerturbationPoint> hlh = model_hlh();
-		Path outpath_hlh = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_HLH/model_hlh.txt");
+//		List<PerturbationPoint> hlh = model_hlh();
+//		Path outpath_hlh = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_HLH/model_hlh.txt");
 		
-		try {
+//		List<PerturbationPoint> cl4 = from1DmodelsCl4();
+//		Path outpath_cl4 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/model_cl4.txt");
+		
+//		List<PerturbationPoint> cl3 = from1DmodelsCl3();
+//		Path outpath_cl3 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl3.txt");
+		
+		List<PerturbationPoint> cl4_simple = from1DmodelsCl4_simple();
+		Path outpath_cl4_simple = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl4_simple.txt");
+		
+		List<PerturbationPoint> cl3_simple = from1DmodelsCl3_simple();
+		Path outpath_cl3_simple = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl3_simple.txt");
+		
+		List<PerturbationPoint> cl5_simple = from1DmodelsCl5_simple();
+		Path outpath_cl5_simple = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_cl5_simple.txt");
+		
+//		try {
 //			writeModel(checkerboard_4deg_4layers, outpath_4deg_4layers);
 //			writeModel(checkerboard_4deg_8layers, outpath_4deg_8layers);
 //			writeModel(lowVelocityLens, outpath_lowvelocitylens);
-			writeModel(hlh, outpath_hlh);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//			writeModel(hlh, outpath_hlh);
+//			writeModel(cl4, outpath_cl4);
+//			writeModel(cl3, outpath_cl3);
+//			writeModel(cl4_simple, outpath_cl3_simple);
+//			writeModel(cl3_simple, outpath_cl3_simple);
+//			writeModel(cl5_simple, outpath_cl5_simple);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 	public static List<PerturbationPoint> onePerturbationLayer(double rmin, double rmax, double dvs) {
@@ -407,6 +433,654 @@ public class Make3DModel {
 		}
 		
 		return perturbations;
+	}
+	
+	public static List<PerturbationPoint> from1DmodelsCl4() {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		Path eventClusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster4/oneDPartial_sw_it1/inversion/each_6deg/8s/SPECTRUM/NEW/");
+		Path root2 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/oneDPartialPREM_Q165/inversion/40km/8s/each_3deg/NEW/");
+		Path cl4az0Path = root.resolve("lmi_7279_AB_vs_cl4_az0_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az1Path = root.resolve("lmi_7279_AB_vs_cl4_az1_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az2Path = root.resolve("lmi_7279_AB_vs_cl4_az2_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az3Path = root2.resolve("lmi_7079_AB_vs_cl4_az3_l02_g02_lq06_gq08_semucb_noAmpCorr");
+		Path cl4az4Path = root.resolve("lmi_7279_AB_vs_cl4_az4_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az5Path = root.resolve("lmi_7279_AB_vs_cl4_az5_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		
+		List<EventCluster> clusters = null;
+		try {
+			clusters = EventCluster.readClusterFile(eventClusterPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<Double, Double> vel0 = readVel(cl4az0Path);
+		Map<Double, Double> vel1 = readVel(cl4az1Path);
+		Map<Double, Double> vel2 = readVel(cl4az2Path);
+		Map<Double, Double> vel3 = readVel(cl4az3Path);
+		Map<Double, Double> vel4 = readVel(cl4az4Path);
+		Map<Double, Double> vel5 = readVel(cl4az5Path);
+		
+		double lonmin = -120;
+		double lonmax = -50;
+		double latmin = -20;
+		double latmax = 40;
+		double dl = 0.25;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 40;
+		
+		double[] depths = new double[] {2371,2411,2451,2491,2531,2571,2611,2651,2691,2731,2771,2811,2851,2891};
+		
+		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == 4).findFirst().get();
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					double dv = 0;
+					if (depth == 2371)
+						dv = 0.;
+					else {
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						if (azimuth < 180) azimuth += 360;
+						
+						int iaz = -1;
+						for (int i = 0; i < 6; i++) {
+							double azmin = cluster.getAzimuthBound(i)[0];
+							double azmax = cluster.getAzimuthBound(i)[1];
+							
+	//						if (i == 0) azmin = 0;
+							if (i == 5) azmax = 720;
+							if (azimuth >= azmin && azimuth < azmax) iaz = i;
+						}
+						
+						double tmpdepth = depth == 2891 ? depth : depth + h;
+						
+						switch (iaz) {
+						case 0:
+							dv = vel0.get(tmpdepth);
+							break;
+						case 1:
+							dv = vel1.get(tmpdepth);
+							break;
+						case 2:
+							dv = vel2.get(tmpdepth);
+							break;
+						case 3:
+							dv = vel3.get(tmpdepth);
+							break;
+						case 4:
+							dv = vel4.get(tmpdepth);
+							break;
+						case 5:
+							dv = vel5.get(tmpdepth);
+							break;
+						default:
+							break;
+						}
+					}
+					
+					perturbations.add(new PerturbationPoint(loc, dv));
+				}
+			}
+		}
+		
+		return perturbations;
+	}
+	
+	public static List<PerturbationPoint> from1DmodelsCl4_simple() {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		Path eventClusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster4/oneDPartial_sw_it1/inversion/each_6deg/8s/SPECTRUM/NEW/");
+		Path root2 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/oneDPartialPREM_Q165/inversion/40km/8s/each_3deg/NEW/");
+		Path cl4az0Path = root.resolve("lmi_7279_AB_vs_cl4_az0_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az1Path = root.resolve("lmi_7279_AB_vs_cl4_az1_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az2Path = root.resolve("lmi_7279_AB_vs_cl4_az2_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az3Path = root2.resolve("lmi_7079_AB_vs_cl4_az3_l02_g02_lq06_gq08_semucb_noAmpCorr");
+		Path cl4az4Path = root.resolve("lmi_7279_AB_vs_cl4_az4_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		Path cl4az5Path = root.resolve("lmi_7279_AB_vs_cl4_az5_l04_g02_lq12_gq06_semucb_ef1.5_noAmpCorr");
+		
+		List<EventCluster> clusters = null;
+		try {
+			clusters = EventCluster.readClusterFile(eventClusterPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<Double, Double> vel0 = readVel(cl4az0Path);
+		Map<Double, Double> vel1 = readVel(cl4az1Path);
+		Map<Double, Double> vel2 = readVel(cl4az2Path);
+		Map<Double, Double> vel3 = readVel(cl4az3Path);
+		Map<Double, Double> vel4 = readVel(cl4az4Path);
+		Map<Double, Double> vel5 = readVel(cl4az5Path);
+		
+//		double dv0 = vel0.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv0 /= vel0.values().size();
+//		double dv1 = vel1.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv1 /= vel1.values().size();
+//		double dv2 = vel2.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv2 /= vel2.values().size();
+//		double dv3 = vel3.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv3 /= vel3.values().size();
+//		double dv4 = vel4.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv4 /= vel4.values().size();
+//		double dv5 = vel5.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv5 /= vel5.values().size();
+//		
+//		double dv_high_cmb = (dv0 + dv1 + dv2 + dv4 + dv5) / 5. * (2891 - 2400) / 150. * 2;
+//		double dv_low_cmb = dv3 * (2891 - 2400) / 150. * 2;
+//		
+//		System.out.println(dv_high_cmb + " " + dv_low_cmb);
+		
+		Map<Double, Double> vel_high = new HashMap<>();
+		Map<Double, Double> vel_low = vel3;
+		
+		PolynomialStructure model = null;
+		try {
+			model = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		for (Double depth : vel0.keySet()) {
+			double dv = 0;
+			if (depth > 2600)
+				dv = (vel0.get(depth) + vel1.get(depth) + vel2.get(depth) + vel4.get(depth) + vel5.get(depth)) / 5.;
+			else {
+				double r = 6371 - depth;
+				dv = (model.getVshAt(r) - PolynomialStructure.PREM.getVshAt(r)) / PolynomialStructure.PREM.getVshAt(r) * 100;
+			}
+			vel_high.put(depth, dv);
+		}
+		
+		Path outpath_low = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/model_low.txt");
+		Path outpath_high = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/model_high.txt");
+		try {
+			PrintWriter pw_low = new PrintWriter(outpath_low.toFile());
+			PrintWriter pw_high = new PrintWriter(outpath_high.toFile());
+			
+			List<Double> sortedDepths = vel0.keySet().stream().collect(Collectors.toList());
+			Collections.sort(sortedDepths);
+			
+			for (Double depth : sortedDepths) {
+				double vlow = PolynomialStructure.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
+				double vhigh = new PolynomialStructure(Paths.get("/work/anselme/POLY/sw_it1.poly")).getVshAt(6371. - depth)
+						* (1 + vel_high.get(depth) / 100.);
+				pw_low.println(depth + " " + vlow + " " + vlow + " " + vlow);
+				pw_high.println(depth + " " + vhigh + " " + vhigh + " " + vhigh);
+			}
+			
+			pw_low.close();
+			pw_high.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		double lonmin = -120;
+		double lonmax = -50;
+		double latmin = -20;
+		double latmax = 40;
+		double dl = 0.25;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 40;
+		
+		double[] depths = new double[] {2371,2411,2451,2491,2531,2571,2611,2651,2691,2731,2771,2811,2851,2891};
+		
+		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == 4).findFirst().get();
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					double dv = 0;
+					if (depth == 2371)
+						dv = 0.;
+					else {
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						if (azimuth < 180) azimuth += 360;
+						
+						int iaz = -1;
+						for (int i = 0; i < 6; i++) {
+							double azmin = cluster.getAzimuthBound(i)[0];
+							double azmax = cluster.getAzimuthBound(i)[1];
+							
+	//						if (i == 0) azmin = 0;
+							if (i == 5) azmax = 720;
+							if (azimuth >= azmin && azimuth < azmax) iaz = i;
+						}
+						
+						double tmpdepth = depth == 2891 ? depth : depth + h;
+						
+						switch (iaz) {
+						case 0:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 1:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 2:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 3:
+							dv = vel_low.get(tmpdepth);
+							break;
+						case 4:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 5:
+							dv = vel_high.get(tmpdepth);
+							break;
+						default:
+							break;
+						}
+					}
+					
+					perturbations.add(new PerturbationPoint(loc, dv));
+				}
+			}
+		}
+		
+		return perturbations;
+	}
+	
+	
+	
+	public static List<PerturbationPoint> from1DmodelsCl3() {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		Path eventClusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/oneDPartial_cl3s0_it2/inversion/40km/8s/NEW");
+		Path root2 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/oneDPartialPREM_Q165/inversion/40km/8s/each_3deg/NEW");
+		Path cl3az0Path = root.resolve("lmi_7079_AB_vs_cl3_az0_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az1Path = root.resolve("lmi_7079_AB_vs_cl3_az1_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az2Path = root.resolve("lmi_7079_AB_vs_cl3_az2_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az3Path = root.resolve("lmi_7079_AB_vs_cl3_az3_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az4Path = root2.resolve("lmi_7079_4AB_vs_cl3_az4_cl5_az1_l04_g02_lq06_gq12_semucb_noAmpCorr");
+		Path cl3az5Path = root.resolve("lmi_7079_AB_vs_cl3_az3_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		
+		List<EventCluster> clusters = null;
+		try {
+			clusters = EventCluster.readClusterFile(eventClusterPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<Double, Double> vel0 = readVel(cl3az0Path);
+		Map<Double, Double> vel1 = readVel(cl3az1Path);
+		Map<Double, Double> vel2 = readVel(cl3az2Path);
+		Map<Double, Double> vel3 = readVel(cl3az3Path);
+		Map<Double, Double> vel4 = readVel(cl3az4Path);
+		Map<Double, Double> vel5 = readVel(cl3az5Path);
+		
+		double lonmin = -120;
+		double lonmax = -50;
+		double latmin = -20;
+		double latmax = 40;
+		double dl = 0.25;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 40;
+		
+		double[] depths = new double[] {2371,2411,2451,2491,2531,2571,2611,2651,2691,2731,2771,2811,2851,2891};
+		
+		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == 3).findFirst().get();
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					double dv = 0;
+					if (depth == 2371)
+						dv = 0.;
+					else {
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						if (azimuth < 180) azimuth += 360;
+						
+						int iaz = -1;
+						for (int i = 0; i < 6; i++) {
+							double azmin = cluster.getAzimuthBound(i)[0];
+							double azmax = cluster.getAzimuthBound(i)[1];
+							
+	//						if (i == 0) azmin = 0;
+							if (i == 5) azmax = 720;
+							if (azimuth >= azmin && azimuth < azmax) iaz = i;
+						}
+						
+						double tmpdepth = depth == 2891 ? depth : depth + h;
+						
+						switch (iaz) {
+						case 0:
+							dv = vel0.get(tmpdepth);
+							break;
+						case 1:
+							dv = vel1.get(tmpdepth);
+							break;
+						case 2:
+							dv = vel2.get(tmpdepth);
+							break;
+						case 3:
+							dv = vel3.get(tmpdepth);
+							break;
+						case 4:
+							dv = vel4.get(tmpdepth);
+							break;
+						case 5:
+							dv = vel5.get(tmpdepth);
+							break;
+						default:
+							break;
+						}
+					}
+					
+					perturbations.add(new PerturbationPoint(loc, dv));
+				}
+			}
+		}
+		
+		return perturbations;
+	}
+	
+	public static List<PerturbationPoint> from1DmodelsCl3_simple() {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		Path eventClusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/oneDPartial_cl3s0_it2/inversion/40km/8s/NEW");
+		Path root2 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/oneDPartialPREM_Q165/inversion/40km/8s/each_3deg/NEW");
+		Path cl3az0Path = root.resolve("lmi_7079_AB_vs_cl3_az0_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az1Path = root.resolve("lmi_7079_AB_vs_cl3_az1_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az2Path = root.resolve("lmi_7079_AB_vs_cl3_az2_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az3Path = root.resolve("lmi_7079_AB_vs_cl3_az3_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az4Path = root2.resolve("lmi_7079_4AB_vs_cl3_az4_cl5_az1_l04_g02_lq06_gq12_semucb_noAmpCorr");
+		Path cl3az5Path = root.resolve("lmi_7079_AB_vs_cl3_az3_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		
+		List<EventCluster> clusters = null;
+		try {
+			clusters = EventCluster.readClusterFile(eventClusterPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<Double, Double> vel0 = readVel(cl3az0Path);
+		Map<Double, Double> vel1 = readVel(cl3az1Path);
+		Map<Double, Double> vel2 = readVel(cl3az2Path);
+		Map<Double, Double> vel3 = readVel(cl3az3Path);
+		Map<Double, Double> vel4 = readVel(cl3az4Path);
+		Map<Double, Double> vel5 = readVel(cl3az5Path);
+		
+//		double dv0 = vel0.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv0 /= vel0.values().size();
+//		double dv1 = vel1.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv1 /= vel1.values().size();
+//		double dv2 = vel2.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv2 /= vel2.values().size();
+//		double dv3 = vel3.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv3 /= vel3.values().size();
+//		double dv4 = vel4.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv4 /= vel4.values().size();
+//		double dv5 = vel5.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv5 /= vel5.values().size();
+//		
+//		double dv_high_cmb = (dv0 + dv1 + dv2 + dv3 + dv5) / 5. * (2891 - 2400) / 150. * 2;
+//		double dv_low_cmb = dv4 * (2891 - 2400) / 150. * 2;
+		
+//		System.out.println(dv_high_cmb + " " + dv_low_cmb);
+		
+		Map<Double, Double> vel_high = new HashMap<>();
+		Map<Double, Double> vel_low = vel4;
+		
+		for (Double depth : vel0.keySet()) {
+			double dv = 0;
+			if (depth > 2600)
+				dv = (vel0.get(depth) + vel1.get(depth) + vel2.get(depth) + vel3.get(depth)) / 4.;
+			vel_high.put(depth, dv);
+		}
+		
+		Path outpath_low = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_low.txt");
+		Path outpath_high = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/model_high.txt");
+		try {
+			PrintWriter pw_low = new PrintWriter(outpath_low.toFile());
+			PrintWriter pw_high = new PrintWriter(outpath_high.toFile());
+			
+			List<Double> sortedDepths = vel0.keySet().stream().collect(Collectors.toList());
+			Collections.sort(sortedDepths);
+			
+			for (Double depth : sortedDepths) {
+				double vlow = PolynomialStructure.PREM.getVshAt(6371 - depth) * (1 + vel_low.get(depth) / 100.);
+				double vhigh = new PolynomialStructure(Paths.get("/work/anselme/POLY/cl3az0_it2.poly")).getVshAt(6371. - depth)
+						* (1 + vel_high.get(depth) / 100.);
+				pw_low.println(depth + " " + vlow + " " + vlow + " " + vlow);
+				pw_high.println(depth + " " + vhigh + " " + vhigh + " " + vhigh);
+			}
+			
+			pw_low.close();
+			pw_high.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		
+		double lonmin = -120;
+		double lonmax = -50;
+		double latmin = -20;
+		double latmax = 40;
+		double dl = 0.25;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 40;
+		
+		double[] depths = new double[] {2371,2411,2451,2491,2531,2571,2611,2651,2691,2731,2771,2811,2851,2891};
+		
+		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == 3).findFirst().get();
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					double dv = 0;
+					if (depth == 2371)
+						dv = 0.;
+					else {
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						if (azimuth < 180) azimuth += 360;
+						
+						int iaz = -1;
+						for (int i = 0; i < 6; i++) {
+							double azmin = cluster.getAzimuthBound(i)[0];
+							double azmax = cluster.getAzimuthBound(i)[1];
+							
+	//						if (i == 0) azmin = 0;
+							if (i == 5) azmax = 720;
+							if (azimuth >= azmin && azimuth < azmax) iaz = i;
+						}
+						
+						double tmpdepth = depth == 2891 ? depth : depth + h;
+						
+						switch (iaz) {
+						case 0:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 1:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 2:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 3:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 4:
+							dv = vel_low.get(tmpdepth);
+							break;
+						case 5:
+							dv = vel_high.get(tmpdepth);
+							break;
+						default:
+							break;
+						}
+					}
+					
+					perturbations.add(new PerturbationPoint(loc, dv));
+				}
+			}
+		}
+		
+		return perturbations;
+	}
+	
+	public static List<PerturbationPoint> from1DmodelsCl5_simple() {
+		List<PerturbationPoint> perturbations = new ArrayList<>();
+		
+		Path eventClusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		Path root = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/oneDPartial_cl3s0_it2/inversion/40km/8s/NEW");
+		Path root2 = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/oneDPartialPREM_Q165/inversion/40km/8s/each_3deg/NEW");
+		Path cl3az0Path = root.resolve("lmi_7079_AB_vs_cl3_az0_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az1Path = root.resolve("lmi_7079_AB_vs_cl3_az1_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az2Path = root.resolve("lmi_7079_AB_vs_cl3_az2_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az3Path = root.resolve("lmi_7079_AB_vs_cl3_az3_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		Path cl3az4Path = root2.resolve("lmi_7079_4AB_vs_cl3_az4_cl5_az1_l04_g02_lq06_gq12_semucb_noAmpCorr");
+		Path cl3az5Path = root.resolve("lmi_7079_AB_vs_cl3_az3_l08_g04_lq12_gq12_semucb_noAmpCorr");
+		
+		List<EventCluster> clusters = null;
+		try {
+			clusters = EventCluster.readClusterFile(eventClusterPath);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		Map<Double, Double> vel0 = readVel(cl3az0Path);
+		Map<Double, Double> vel1 = readVel(cl3az1Path);
+		Map<Double, Double> vel2 = readVel(cl3az2Path);
+		Map<Double, Double> vel3 = readVel(cl3az3Path);
+		Map<Double, Double> vel4 = readVel(cl3az4Path);
+		Map<Double, Double> vel5 = readVel(cl3az5Path);
+		
+//		double dv0 = vel0.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv0 /= vel0.values().size();
+//		double dv1 = vel1.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv1 /= vel1.values().size();
+//		double dv2 = vel2.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv2 /= vel2.values().size();
+//		double dv3 = vel3.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv3 /= vel3.values().size();
+//		double dv4 = vel4.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv4 /= vel4.values().size();
+//		double dv5 = vel5.values().stream().reduce((v1, v2) -> v1 + v2).get();
+//		dv5 /= vel5.values().size();
+//		
+//		double dv_high_cmb = (dv0 + dv1 + dv2 + dv3 + dv5) / 5. * (2891 - 2400) / 150. * 2;
+//		double dv_low_cmb = dv4 * (2891 - 2400) / 150. * 2;
+		
+//		System.out.println(dv_high_cmb + " " + dv_low_cmb);
+		
+		Map<Double, Double> vel_high = new HashMap<>();
+		Map<Double, Double> vel_low = vel4;
+		
+		for (Double depth : vel0.keySet()) {
+			double dv = 0;
+			if (depth > 2600)
+				dv = (vel0.get(depth) + vel1.get(depth) + vel2.get(depth) + vel3.get(depth)) / 4.;
+			vel_high.put(depth, dv);
+		}
+		
+		double lonmin = -120;
+		double lonmax = -50;
+		double latmin = -20;
+		double latmax = 40;
+		double dl = 0.25;
+		int nlat = (int) ((latmax - latmin) / dl) + 1;
+		int nlon = (int) ((lonmax - lonmin) / dl) + 1;
+		
+		double h = 40;
+		
+		double[] depths = new double[] {2371,2411,2451,2491,2531,2571,2611,2651,2691,2731,2771,2811,2851,2891};
+		
+		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == 5).findFirst().get();
+		
+		for (double depth : depths) {
+			for (int ilon = 0; ilon <nlon; ilon++) {
+				double lon = lonmin + ilon * dl;
+				for (int ilat = 0; ilat < nlat; ilat++) {
+					double lat = latmin + ilat * dl;
+					Location loc = new Location(lat, lon, 6371 - depth);
+					double dv = 0;
+					if (depth == 2371)
+						dv = 0.;
+					else {
+						double azimuth = Math.toDegrees(cluster.getCenterPosition().getAzimuth(loc));
+						if (azimuth < 180) azimuth += 360;
+						
+						int iaz = -1;
+						for (int i = 0; i < 3; i++) {
+							double azmin = cluster.getAzimuthBound(i)[0];
+							double azmax = cluster.getAzimuthBound(i)[1];
+							
+	//						if (i == 0) azmin = 0;
+							if (i == 2) azmax = 720;
+							if (azimuth >= azmin && azimuth < azmax) iaz = i;
+						}
+						
+						double tmpdepth = depth == 2891 ? depth : depth + h;
+						
+						switch (iaz) {
+						case 0:
+							dv = vel_high.get(tmpdepth);
+							break;
+						case 1:
+							dv = vel_low.get(tmpdepth);
+							break;
+						case 2:
+							dv = vel_high.get(tmpdepth);
+							break;
+						default:
+							break;
+						}
+					}
+					
+					perturbations.add(new PerturbationPoint(loc, dv));
+				}
+			}
+		}
+		
+		return perturbations;
+	}
+	
+	private static Map<Double, Double> readVel(Path inversionRootPath) {
+		PolynomialStructure model = PolynomialStructure.PREM;
+		Map<Double, Double> velMap = new HashMap<Double, Double>();
+		List<String> lines = null;
+		try {
+			lines = Files.readAllLines(inversionRootPath.resolve("CG/velocityCG12.txt"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		String[] ss = lines.get(1).split("\\s+");
+		double r = Double.valueOf(ss[0]);;
+		double depth = 6371. - r;
+		double dv = (Double.valueOf(ss[1]) - model.getVshAt(r)) / Double.valueOf(ss[2]) * 100;
+		velMap.put(depth, dv);
+		for (int i = 3; i < lines.size() - 1; i += 2) {
+			ss = lines.get(i).split("\\s+");
+			r = Double.valueOf(ss[0]);
+			depth = 6371. - r;
+			dv = (Double.valueOf(ss[1]) - model.getVshAt(r)) / Double.valueOf(ss[2]) * 100;
+			velMap.put(depth, dv);
+		}
+		ss = lines.get(lines.size() - 1).split("\\s+");
+		depth = 6371. - Double.valueOf(ss[0]);
+		dv = 0.;
+		velMap.put(depth, dv);
+		return velMap;
 	}
 		
 	public static void writeModel(List<PerturbationPoint> perturbations, Path outpath) throws IOException {

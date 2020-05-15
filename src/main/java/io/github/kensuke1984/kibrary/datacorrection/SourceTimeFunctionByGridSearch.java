@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -178,7 +179,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		
 		// amplitude correction of 1.4 corresponds to a difference in moment magnitude (Mw) of ~0.1,
 		// which is typical of the maximum difference to GCMT in previous studies (e.g. Yamaya et al. 2018)
-		double maxAmpcorr = 1.4;
+		double maxAmpcorr = 2.;
 		double deltaAmpcorr = .05;
 		int nampcorr = 2 * (int) ((maxAmpcorr - 1) / deltaAmpcorr) + 1;
 		amplitudeCorrections = new double[nampcorr];
@@ -277,6 +278,9 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 			Files.write(catalogueFile, ">id, Mw, half-duration, amp. corr., num. traces, misfit, gcmt misfit\n".getBytes()
 					, StandardOpenOption.APPEND);
 			
+			Files.write(detailedCatalogFile, ("id, half_duration, half_duration_gcmt, misfit, misfit_2, misfit_gcmt, misfit_diff_2,"
+					+ " misfit_diff, count, Mw, Mw_new, amp_corr, evt_depth").getBytes(), StandardOpenOption.APPEND);
+			
 			
 			for (EventFolder eventFolder : eventFolders) {
 				System.out.println("> " + eventFolder.getGlobalCMTID());
@@ -307,6 +311,8 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 						+ " " + synTraces.size());
 				
 				obsData = new double[orderedTimewindows.size()][];
+				
+				double[] weights = compute_weight(orderedTimewindows);
 				
 				List<StaticCorrection> orderedStaticCorrection = null;
 				if (staticCorrectionFile != null) {
@@ -353,7 +359,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					for (int i = 0; i < npts; i++) {
 //						System.out.println(i + "/" + (npts-1));
 						Worker worker = new Worker(halfDurations[i], amplitudeCorrections, orderedTimewindows, i
-								, obsTraces, synTraces, orderedStaticCorrection, gcmtHalfDuration);
+								, obsTraces, synTraces, orderedStaticCorrection, gcmtHalfDuration, weights);
 						es.execute(worker);
 					}
 					
@@ -440,9 +446,13 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 						, Earth.EARTH_RADIUS - eventFolder.getGlobalCMTID().getEvent().getCmtLocation().getR()).getBytes()
 					, StandardOpenOption.APPEND);
 				
-				Files.write(catalogueFile, String.format("%s %f\n"
+				Files.write(catalogueFile, String.format("%s %f %f %d %f %f\n"
 						, eventFolder.getGlobalCMTID()
-						, halfDurationMinMisfit).getBytes()
+						, halfDurationMinMisfit
+						, ampCorrMinMisfit
+						, obsTraces.size()
+						, minMisfit
+						, gcmtMisfit).getBytes()
 					, StandardOpenOption.APPEND);
 				
 				Files.write(gcmtFile, String.format("%s %f\n"
@@ -457,15 +467,15 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 //				double[] bestSynStack;
 //				double[] gcmtSynStack;
 				
-				SourceTimeFunction stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDurationMinMisfit);
+				SourceTimeFunction stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDurationMinMisfit, ampCorrMinMisfit);
 				Map<SACComponent, RealVector[]> obsSynStacks = stack(stf, orderedTimewindows, synTraces, obsTraces, orderedStaticCorrection
-						, halfDurationMinMisfit, gcmtHalfDuration, ampCorrMinMisfit);
+						, halfDurationMinMisfit, gcmtHalfDuration, 1.);
 //				obsStack = obsSynStacks[0].toArray();
 //				bestSynStack = obsSynStacks[1].toArray();
 				
 				stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, gcmtHalfDuration);
 				Map<SACComponent, RealVector[]> gcmtObsSynStack = stack(stf, orderedTimewindows, synTraces, obsTraces, orderedStaticCorrection
-						, halfDurationMinMisfit, gcmtHalfDuration, ampCorrMinMisfit);
+						, halfDurationMinMisfit, gcmtHalfDuration, 1.);
 				
 				// Write quality control stack (qcStack) to files.
 				for (SACComponent component : components) {
@@ -519,6 +529,33 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		}
 	}
 	
+	private double[] compute_weight(List<TimewindowInformation> orderedTimewindows) {
+		double[] weights = new double[orderedTimewindows.size()];
+		int bin_width = 5;
+		Map<Integer, Long> azimuth_freqs = orderedTimewindows.stream().mapToDouble(TimewindowInformation::getAzimuthDegree).boxed()
+			.collect(Collectors.groupingBy(d -> (int) (d / bin_width) * bin_width, Collectors.counting()));
+		Map<Integer, Long> distance_freqs = orderedTimewindows.stream().mapToDouble(TimewindowInformation::getDistanceDegree).boxed()
+				.collect(Collectors.groupingBy(d -> (int) (d / bin_width) * bin_width, Collectors.counting()));
+		
+//		for (int key : azimuth_freqs.keySet())
+//			System.out.println(key + " " + azimuth_freqs.get(key));
+//		for (int key : distance_freqs.keySet())
+//			System.out.println(key + " " + distance_freqs.get(key));
+			
+		for (int i = 0; i < orderedTimewindows.size(); i++) {
+			TimewindowInformation timewindow = orderedTimewindows.get(i);
+			int az_key = (int) (timewindow.getAzimuthDegree() / bin_width) * bin_width;
+			double az_freq = azimuth_freqs.get(az_key);
+			int dist_key = (int) (timewindow.getDistanceDegree() / bin_width) * bin_width;
+			double dist_freq = distance_freqs.get(dist_key);
+			if (az_freq > 5 && dist_freq > 5)
+				weights[i] = 1. / Math.sqrt(az_freq * dist_freq);
+			else
+				weights[i] = 0.;
+		}
+		return weights;
+	}
+	
 	private class Worker implements Runnable {
 	private double halfDuration;
 	private double gcmtHalfDuration;
@@ -527,6 +564,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 	private List<Trace> obsTraceList;
 	private List<Trace> synTraceList;
 	private List<StaticCorrection> staticCorrections;
+	private double[] weights;
 	
 	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowInformation> orderedTimewindows, int i
 			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrection> staticCorrections, double gcmtHalfDuration) {
@@ -537,6 +575,19 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 		this.synTraceList = synTraceList;
 		this.staticCorrections = staticCorrections;
 		this.gcmtHalfDuration = gcmtHalfDuration;
+	}
+	
+	public Worker(double halfDuration, double[] amplitudeCorrections, List<TimewindowInformation> orderedTimewindows, int i
+			, List<Trace> obsTraceList, List<Trace> synTraceList, List<StaticCorrection> staticCorrections, double gcmtHalfDuration
+			, double[] weights) {
+		this.halfDuration = halfDuration;
+		this.orderedTimewindows = orderedTimewindows;
+		this.i = i;
+		this.obsTraceList = obsTraceList;
+		this.synTraceList = synTraceList;
+		this.staticCorrections = staticCorrections;
+		this.gcmtHalfDuration = gcmtHalfDuration;
+		this.weights = weights;
 	}
 	
 	@Override
@@ -587,6 +638,12 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 				
 				double weight = 1. / obsVector.getLInfNorm();
 				
+				if (weights != null) {
+					weight *= weights[j];
+					if (weight == 0)
+						continue;
+				}
+				
 				synVector = synVector.mapMultiply(weight);
 				obsVector = obsVector.mapMultiply(weight);
 				
@@ -605,11 +662,34 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 					obsVector = obsVector.getSubVector(0, synVector.getDimension());
 				
 				// variance as misfit
+//				for (int k = 0; k < amplitudeCorrections.length; k++) {
+////					RealVector correctedObs = obsVector.mapMultiply(amplitudeCorrections[k]);
+//					RealVector correctedSyn = synVector.mapMultiply(amplitudeCorrections[k]);
+//					RealVector residual = correctedSyn.subtract(obsVector);
+//					double numerator = residual.dotProduct(residual);
+//					double denominator = obsVector.dotProduct(obsVector);
+//					misfitNumerator[i][k] += numerator;
+//					misfitDenominator[i][k] += denominator;
+////					misfits[i][k] += tmpMisfit;
+//				}
+				
+				// cc and amp ratio
 				for (int k = 0; k < amplitudeCorrections.length; k++) {
-					RealVector correctedObs = obsVector.mapMultiply(amplitudeCorrections[k]);
-					RealVector residual = synVector.subtract(correctedObs);
-					double numerator = residual.dotProduct(residual);
-					double denominator = correctedObs.dotProduct(correctedObs);
+//					RealVector correctedObs = obsVector.mapMultiply(amplitudeCorrections[k]);
+					RealVector correctedSyn = synVector.mapMultiply(amplitudeCorrections[k]);
+					
+					double cc = obsVector.dotProduct(correctedSyn) / (obsVector.getNorm() * correctedSyn.getNorm());
+					double misfit_cc = 0.5 * (1. - cc);
+					
+					double amp_ratio = (correctedSyn.getMaxValue() - correctedSyn.getMinValue()) / 
+							(obsVector.getMaxValue() - obsVector.getMinValue());
+					double misfit_amp_ratio = Math.abs(Math.log(amp_ratio) / Math.log(ratio));
+					
+//					System.out.println(misfit_cc + " " + misfit_amp_ratio + " " + amp_ratio + " " + ratio + " " + weight);
+					
+					double numerator = (misfit_cc + misfit_amp_ratio) * weight;
+					double denominator = 2 * weight;
+					
 					misfitNumerator[i][k] += numerator;
 					misfitDenominator[i][k] += denominator;
 //					misfits[i][k] += tmpMisfit;

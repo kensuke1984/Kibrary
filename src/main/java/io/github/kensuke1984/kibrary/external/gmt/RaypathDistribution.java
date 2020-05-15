@@ -115,7 +115,10 @@ public class RaypathDistribution implements Operation {
 		
 		model = property.getProperty("model");
 		
-		eventClusterPath = getPath("eventClusterPath");
+		if (property.containsKey("eventClusterPath"))
+			eventClusterPath = getPath("eventClusterPath");
+		else
+			eventClusterPath = null;
 	}
 
 	private Properties property;
@@ -238,8 +241,10 @@ public class RaypathDistribution implements Operation {
 			ids = timeWindowInformationFile.stream().map(tw -> tw.getGlobalCMTID())
 				.collect(Collectors.toSet());
 		
-		eventClusterMap = new HashMap<GlobalCMTID, Integer>();
-		EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
+		if (eventClusterPath != null) {
+			eventClusterMap = new HashMap<GlobalCMTID, Integer>();
+			EventCluster.readClusterFile(eventClusterPath).forEach(c -> eventClusterMap.put(c.getID(), c.getIndex()));
+		}
 		
 		outputEvent();
 		outputStation();
@@ -364,13 +369,21 @@ public class RaypathDistribution implements Operation {
 						info = infoList.get(0);
 						Location enterPoint = info.getEnterPoint();
 						Location leavePoint = info.getLeavePoint();
-						lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
-							, enterPoint.getLatitude()
-							, enterPoint.getLongitude()
-							, leavePoint.getLatitude()
-							, leavePoint.getLongitude()
-							, eventClusterMap.get(headerData.getGlobalCMTID())
-							));
+						if (eventClusterPath != null)
+							lines.add(String.format("%.2f %.2f %.2f %.2f cluster%d"
+								, enterPoint.getLatitude()
+								, enterPoint.getLongitude()
+								, leavePoint.getLatitude()
+								, leavePoint.getLongitude()
+								, eventClusterMap.get(headerData.getGlobalCMTID())
+								));
+						else
+							lines.add(String.format("%.2f %.2f %.2f %.2f"
+									, enterPoint.getLatitude()
+									, enterPoint.getLongitude()
+									, leavePoint.getLatitude()
+									, leavePoint.getLongitude()
+									));
 					}
 				});
 		

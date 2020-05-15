@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.waveformdata;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -20,6 +21,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import io.github.kensuke1984.anisotime.Phase;
@@ -47,8 +49,8 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
 import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
+import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 import io.github.kensuke1984.kibrary.util.spc.VSConversion;
-import io.github.kensuke1984.kibrary.util.spc.VSIMConversion;
 
 /**
  * Creates a pair of files containing 1-D partial derivatives
@@ -376,8 +378,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
 				if (!(partialTypes.contains(partialType)
-						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2)
-						|| (partialTypes.contains(PartialType.PARVSIM) && spcFileType == SpcFileType.PAR2)))
+						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2)))
 					continue;
 				
 				SpcFileName shspcname = null;
@@ -435,6 +436,49 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
 			case 2:
 				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration);
+			case 3:
+				if (stfcat.contains("LSTF")) {
+		        	double halfDuration1 = id.getEvent().getHalfDuration();
+		        	double halfDuration2 = id.getEvent().getHalfDuration();
+		        	boolean found = false;
+			      	for (String str : stfcat) {
+			      		String[] stflist = str.split("\\s+");
+			      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
+			      	    if(id.equals(eventID)) {
+			      	    	if(Integer.valueOf(stflist[3]) >= 5.) {
+			      	    		halfDuration1 = Double.valueOf(stflist[1]);
+			      	    		halfDuration2 = Double.valueOf(stflist[2]);
+			      	    		found = true;
+			      	    	}
+			      	    }
+			      	}
+			      	SourceTimeFunction stf = null;
+			      	if (found) {
+			      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+		//	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
+			      	}
+			      	else
+			      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+			      	return stf;
+				}
+				else {
+					boolean found = false;
+					double ampCorr = 1.;
+					for (String str : stfcat) {
+			      		String[] ss = str.split("\\s+");
+			      	    GlobalCMTID eventID = new GlobalCMTID(ss[0]);
+			      	    if (id.equals(eventID)) {
+			      	    	halfDuration = Double.parseDouble(ss[1]);
+			      	    	ampCorr = Double.parseDouble(ss[2]);
+			      	    	found = true;
+			      	    	break;
+			      	    }
+			      	}
+					if (found)
+						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, ampCorr);
+					else
+						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+				}
 			default:
 				throw new RuntimeException("Integer for source time function is invalid.");
 			}
@@ -492,14 +536,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
-			DSMOutput vsimSpectrum = null;
-			if (partialTypes.contains(PartialType.PARVS) && partialTypes.contains(PartialType.PARVSIM)) {
-				vsimSpectrum = vsimConversion.convert(spectrum);
-				spectrum = vsConversion.convert(spectrum);
-				partialType = PartialType.PARVS;
-				process(vsimSpectrum);
-			}
-			else if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+			if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum = fujiConversion.convert(spectrum);
 				process(qSpectrum);
 			}
@@ -556,25 +593,6 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 							double[] filteredUt = tmpfilter.applyFilter(ut);
 							for (TimewindowInformation t : tw)
 								cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARQ, periodRanges[i]);
-						}
-					}
-				if (vsimSpectrum != null)
-					for (int k = 0; k < spectrum.nbody(); k++) {
-						double bodyR = spectrum.getBodyR()[k];
-						boolean exists = false;
-						for (double r : Partial1DDatasetMaker_v2.this.bodyR)
-							if (Utilities.equalWithinEpsilon(r, bodyR, eps))
-								exists = true;
-						if (!exists)
-							continue;
-						double[] ut = vsimSpectrum.getSpcBodyList().get(k).getSpcComponent(component).getTimeseries();
-						// applying the filter
-						
-						for (int i = 0; i < periodRanges.length; i++) {
-							ButterworthFilter tmpfilter = filter.get(i);
-							double[] filteredUt = tmpfilter.applyFilter(ut);
-							for (TimewindowInformation t : tw)
-								cutAndWrite(station, filteredUt, t, bodyR, PartialType.PARVSIM, periodRanges[i]);
 						}
 					}
 			}
@@ -907,8 +925,6 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 	
 	private VSConversion vsConversion;
 	
-	private VSIMConversion vsimConversion;
-
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 
 	private void readSourceTimeFunctions() throws IOException {
@@ -936,6 +952,14 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			throw new NoSuchFileException(pdm.timewindowPath.toString());
 
 		pdm.run();
+	}
+	
+	private final List<String> stfcat = readSTFCatalogue("astf_cc_ampratio_ca.catalog");
+	
+	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
+		System.out.println("STF catalogue: " +  STFcatalogue);
+		return IOUtils.readLines(Partial1DDatasetMaker_v2.class.getClassLoader().getResourceAsStream(STFcatalogue)
+					, Charset.defaultCharset());
 	}
 
 	private Set<GlobalCMTID> idSet;
@@ -989,9 +1013,6 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		if (partialTypes.contains(PartialType.PARQ))
 			fujiConversion = new FujiConversion(structure);
-		
-		if (partialTypes.contains(PartialType.PARVSIM))
-			vsimConversion = new VSIMConversion(structure);
 		
 		if (partialTypes.contains(PartialType.PARVS))
 			vsConversion = new VSConversion(structure);

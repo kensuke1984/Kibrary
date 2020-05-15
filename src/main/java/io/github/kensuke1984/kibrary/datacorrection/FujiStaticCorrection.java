@@ -255,7 +255,8 @@ public class FujiStaticCorrection implements Operation {
 							else
 								shift = computeTimeshiftForBestCorrelation_peak(obsSac, synSac, window);
 //							double ratio = computeMaxRatio(obsSac, synSac, shift, window);
-							double ratio = computeP2PRatio(obsSac, synSac, shift, window);
+//							double ratio = computeP2PRatio(obsSac, synSac, shift, window);
+							double ratio = computeP2PRatio(obsSac, synSac, 0., window);
 							StaticCorrection t = new StaticCorrection(station, eventID, component,
 									window.getStartTime(), shift, ratio, window.getPhases());
 							staticCorrectionSet.add(t);

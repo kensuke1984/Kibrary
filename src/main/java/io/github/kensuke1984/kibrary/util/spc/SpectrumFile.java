@@ -137,9 +137,12 @@ public class SpectrumFile implements DSMOutput {
 			int np = dis.readInt();
 			// nbody
 			int nbody = dis.readInt();
-
+			
+			int ncomp = dis.readInt();
+			System.out.println(np + " " + nbody + " " + ncomp);
+			
 			// ncomponents
-			switch (dis.readInt()) {
+			switch (ncomp) {
 			case 0: // isotropic 1D partial par2 (lambda)
 				specFile.spcFileType = spcFileName.getFileType();
 				specFile.nComponent = 3;

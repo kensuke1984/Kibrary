@@ -71,6 +71,8 @@ public class DataRequestor implements Operation {
 	
 	private boolean dataless;
 	
+	private String identifier;
+	
 	/**
 	 * @param args
 	 *            Request Mode: [parameter file name]
@@ -146,6 +148,8 @@ public class DataRequestor implements Operation {
 			property.setProperty("send", "false");
 		if (!property.containsKey("dataless"))
 			property.setProperty("dataless", "false");
+		if (!property.containsKey("identifier"))
+			property.setProperty("identifier", "");
 	}
 
 	private boolean send;
@@ -176,6 +180,8 @@ public class DataRequestor implements Operation {
 		eventsFromFile = property.containsKey("eventsFromFile") ? Paths.get(property.getProperty("eventsFromFile")) : null;
 		
 		dataless = Boolean.parseBoolean(property.getProperty("dataless"));
+		
+		identifier = property.getProperty("identifier").trim();
 	}
 
 	private Properties property;
@@ -194,6 +200,18 @@ public class DataRequestor implements Operation {
 				footAdjustment);
 		return new BreakFastMail(System.getProperty("user.name"), institute, mail, email, phone, fax,
 				id.toString() + "." + date, media, channels);
+	}
+	
+	public BreakFastMail createBreakFastMail(GlobalCMTID id, String identifier) {
+		Channel[] channels = Channel.listChannels(networks, id, ChronoUnit.MINUTES, headAdjustment, ChronoUnit.MINUTES,
+				footAdjustment);
+		String label = null;
+		if (identifier != "")
+			label = id.toString() + "." + date + "." + identifier;
+		else
+			label = id.toString() + "." + date;
+		return new BreakFastMail(System.getProperty("user.name"), institute, mail, email, phone, fax,
+				label, media, channels);
 	}
 
 	private Set<GlobalCMTID> listIDs() {
@@ -269,6 +287,7 @@ public class DataRequestor implements Operation {
 			pw.println("#footAdjustment 120");
 			pw.println("##If you just want to create emails, then set it true (false)");
 			pw.println("#send");
+			pw.println("#identifier");
 		}
 		System.out.println(outPath + " is created.");
 	}
@@ -297,7 +316,7 @@ public class DataRequestor implements Operation {
 		} catch (Exception e2) {
 		}
 		requestedIDs.forEach(id -> {
-			BreakFastMail m = createBreakFastMail(id);
+			BreakFastMail m = createBreakFastMail(id, identifier);
 			try {
 				output(m);
 				if (!send)

@@ -86,7 +86,9 @@ public class EventCluster {
 	
 	public static List<EventCluster> readClusterFile(Path file) throws IOException {
 		AtomicInteger imax = new AtomicInteger();
-		List<EventCluster> clusters = Files.readAllLines(file).stream().map(line -> {
+		List<EventCluster> clusters = Files.readAllLines(file).stream()
+			.filter(line -> !line.startsWith("#"))
+			.map(line -> {
 			String[] ss = line.split("\\s+");
 			GlobalCMTID id = new GlobalCMTID(ss[0].trim());
 			HorizontalPosition centerPosition = new HorizontalPosition(Double.parseDouble(ss[3]), Double.parseDouble(ss[4]));
@@ -191,6 +193,13 @@ public class EventCluster {
 		return azimuthSlices;
 	}
 	
+	public int getNAzimuthSlices() {
+		if (azimuthSlices.size() == 0)
+			return 0;
+		else
+			return azimuthSlices.size() + 1;
+	}
+	
 	public double[] getAzimuthBound(int azimuthIndex) {
 		double[] azs = new double[2];
 		
@@ -223,7 +232,7 @@ public class EventCluster {
 		clusters.stream().map(c -> c.getIndex()).forEach(i ->  {
 			if (idmax.get() < i) idmax.set(i);
 		});
-		for (int i = 0; i < idmax.get(); i++) {
+		for (int i = 0; i <= idmax.get(); i++) {
 			for (EventCluster cluster : clusters) {
 				if (cluster.getIndex() == i) {
 					HorizontalPosition pos0 = cluster.getCenterPosition();
@@ -232,8 +241,8 @@ public class EventCluster {
 						double lon = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 100., az);
 						double lat65 = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), 60./2., az);
 						double lon65 = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 60./2., az);
-						double lat85 = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), 85./2., az);
-						double lon85 = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 85./2., az);
+						double lat85 = SphericalCoords.latFor(pos0.getLatitude(), pos0.getLongitude(), 80./2., az);
+						double lon85 = SphericalCoords.lonFor(pos0.getLatitude(), pos0.getLongitude(), 80./2., az);
 						HorizontalPosition pos1 = new HorizontalPosition(lat, lon);
 						pw.println("> > > >cluster_" + cluster.getIndex());
 						pw.println(pos0.getLongitude() + " " + pos0.getLatitude() + " " +

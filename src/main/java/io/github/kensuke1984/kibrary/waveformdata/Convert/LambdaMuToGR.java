@@ -1,20 +1,22 @@
-package io.github.kensuke1984.kibrary.waveformdata;
+package io.github.kensuke1984.kibrary.waveformdata.Convert;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
 import io.github.kensuke1984.kibrary.util.FrequencyRange;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Phases;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
+import io.github.kensuke1984.kibrary.waveformdata.PartialID;
+import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
+import io.github.kensuke1984.kibrary.waveformdata.WaveformDataWriter;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,11 +24,15 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class LambdaMuToLambda2MuMu_prime {
+public class LambdaMuToGR {
 	
 	public static void main(String[] args) throws IOException {
 		Path partialIDPath = Paths.get(args[0]);
 		Path partialPath = Paths.get(args[1]);
+		
+		PolynomialStructure structure = PolynomialStructure.AK135;
+		
+		System.out.println("Using " + structure);
 		
 		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
 		
@@ -35,8 +41,8 @@ public class LambdaMuToLambda2MuMu_prime {
 		
 		System.out.println(partialsMU.size());
 		
-		List<PartialID> partialsMUPrime = new ArrayList<>();
-		List<PartialID> partialsLambda2mu = new ArrayList<>();
+		List<PartialID> partialsG = new ArrayList<>();
+		List<PartialID> partialsR = new ArrayList<>();
 		
 		final Location[] locations = partialsMU.stream().map(p -> p.getPerturbationLocation()).distinct().collect(Collectors.toList()).toArray(new Location[0]);
 		final PartialID[] partialsOrder = partialsMU.stream().parallel().filter(p -> p.getPerturbationLocation().equals(locations[0])).collect(Collectors.toList()).toArray(new PartialID[0]);
@@ -50,34 +56,9 @@ public class LambdaMuToLambda2MuMu_prime {
 		});
 		IntStream.range(0, partialsLambda.size()).parallel().forEach(i -> {
 			int index = whichTimewindow(partialsLambda.get(i), partialsOrder) * locations.length + whichUnknown(partialsLambda.get(i), locations);
-			indexOrderedLambda[index] = i;
+			indexOrderedLambda[index] = i; 
 		});
 		
-//		for (PartialID partialMU : partialsMU) {
-//			for (PartialID par : tmpPartialsLambda) {
-//				if (par.getGlobalCMTID().equals(partialMU.getGlobalCMTID())
-//					&& par.getStation().equals(partialMU.getStation())
-//					&& par.getPerturbationLocation().equals(partialMU.getPerturbationLocation())
-//					&& par.getSacComponent().equals(partialMU.getSacComponent())
-//					&& new Phases(par.getPhases()).equals(new Phases(partialMU.getPhases()))) {
-//						partialsLambda.add(par);
-//						
-//						PartialID parKappa = partialMU;
-//						double[] muData = partialMU.getData();
-//						double[] lambdaData = par.getData();
-//						double[] kappaData = new double[muData.length];
-//						for (int i = 0; i < muData.length; i++)
-//							kappaData[i] = lambdaData[i] + 2. * muData[i];
-//						
-//						parKappa = parKappa.setData(kappaData);
-//						partialsLambda2MU.add(parKappa);
-//						
-//						break;
-//				}
-//			}
-//		}
-		
-		// fast version
 		for (int i = 0; i < partialsMU.size(); i++) {
 			PartialID partialMU = partialsMU.get(indexOrderedMU[i]);
 			PartialID partialLambda = partialsLambda.get(indexOrderedLambda[i]);
@@ -90,31 +71,31 @@ public class LambdaMuToLambda2MuMu_prime {
 				throw new RuntimeException("Partials order differ");
 			}
 			
-			SACComponent component = partialLambda.getSacComponent();
+			double r = partialMU.getPerturbationLocation().getR();
+			double mu = structure.computeMu(r);
+			double R = structure.getVshAt(r) / structure.getVphAt(r);
 			
-			double[] muPrimeData = partialMU.getData();
+			double[] muData = partialMU.getData();
 			double[] lambdaData = partialLambda.getData();
-			if (component.equals(SACComponent.Z)) {
-				for (int j = 0; j < lambdaData.length; j++)
-					lambdaData[j] = lambdaData[j] + .5 * muPrimeData[j];
-				Arrays.fill(muPrimeData, 0.);
-			}
-			else if (component.equals(SACComponent.T)) {
-				Arrays.fill(lambdaData, 0.);
+			double[] gData = new double[muData.length];
+			double[] rData = new double[muData.length];
+			for (int j = 0; j < muData.length; j++) {
+				gData[i] = muData[i];
+				rData[i] = -mu/(2 * Math.pow(R, 1.5)) * lambdaData[i];
 			}
 			
-			PartialID parMuPrime = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parG = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
-					, PartialType.MU, muPrimeData);
+					, PartialType.MU, gData);
 			
-			PartialID parLambda2mu = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
+			PartialID parR = new PartialID(partialLambda.getStation(), partialLambda.getGlobalCMTID(), partialLambda.getSacComponent(), partialLambda.getSamplingHz(),
 					partialLambda.getStartTime(), partialLambda.getNpts(), partialLambda.getMinPeriod(), partialLambda.getMaxPeriod(),
 					partialLambda.getPhases(), partialLambda.getStartByte(), partialLambda.isConvolute(), partialLambda.getPerturbationLocation()
-					, PartialType.LAMBDA2MU, lambdaData);
+					, PartialType.R, rData);
 			
-			partialsMUPrime.add(parMuPrime);
-			partialsLambda2mu.add(parLambda2mu);
+			partialsG.add(parG);
+			partialsR.add(parR);
 		}
 		
 		String tmpString = Utilities.getTemporaryString();
@@ -144,10 +125,10 @@ public class LambdaMuToLambda2MuMu_prime {
 		
 		WaveformDataWriter writer = new WaveformDataWriter(outID, out, stationSet, globalCMTIDSet, periodRanges, phases, locationSet);
 		
-		for (PartialID partial : partialsMUPrime)
+		for (PartialID partial : partialsG)
 			writer.addPartialID(partial);
 		
-		for (PartialID partial : partialsLambda2mu)
+		for (PartialID partial : partialsR)
 			writer.addPartialID(partial);
 		
 		writer.close();

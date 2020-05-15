@@ -7,6 +7,7 @@ import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -43,7 +44,7 @@ class PartialIDMerge {
 		Set<double[]> periodSet = new HashSet<>();
 		Set<Phase> phaseSet = new HashSet<>();
 		
-		Stream.concat(Stream.of(src0), Stream.of(src1)).forEach(id -> {
+		Stream.concat(Stream.of(src0).filter(id -> id.getPartialType().equals(PartialType.PARVS)), Stream.of(src1)).forEach(id -> {
 			globalCMTIDSet.add(id.getGlobalCMTID());
 			stationSet.add(id.getStation());
 			perturbationPoints.add(id.getPerturbationLocation());

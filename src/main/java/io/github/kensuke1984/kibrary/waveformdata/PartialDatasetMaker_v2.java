@@ -1072,7 +1072,7 @@ private class WorkerTimePartial implements Runnable {
 
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
-	private final String stfcatName = "LSTF1.stfcat"; //LSTF1 ASTF1 ASTF2
+	private final String stfcatName = "astf_cc_ampratio_ca.catalog"; //LSTF1 ASTF1 ASTF2
 	private final List<String> stfcat = readSTFCatalogue(stfcatName);
 	
 	private void setSourceTimeFunctions() throws IOException {
@@ -1096,32 +1096,46 @@ private class WorkerTimePartial implements Runnable {
 //				System.out.println("Triangle STF " + halfDuration);
 				break;
 			case 3:
-				double halfDuration1 = 0.;
-	        	double halfDuration2 = 0.;
-	        	boolean found = false;
-		      	for (String str : stfcat) {
-		      		String[] stflist = str.split("\\s+");
-		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
-		      	    if(id.equals(eventID)) {
-		      	    	found = true;
-		      	    	halfDuration1 = Double.valueOf(stflist[1]);
-		      	    	halfDuration2 = Double.valueOf(stflist[2]);
-		      	    	if(Integer.valueOf(stflist[3]) < 5.) {
-		      	    		halfDuration1 = id.getEvent().getHalfDuration();
-		      	    		halfDuration2 = id.getEvent().getHalfDuration();
-		      	    	}
-//		      	    	System.out.println( "DEBUG1: GET STF of " + eventID
-//		      	    		+ " halfDuration 1 is " + halfDuration1 + " halfDuration 2 is " + halfDuration2 );
-		      	    }
-		      	}
-		      	if (found) {
-		      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
-		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
-		      	}
-		      	else {
-		      		System.out.println(id + " Using GCMT STF with duration " + (halfDuration + halfDuration));
-		      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, halfDuration);
-		      	}
+				if (stfcat.contains("LSTF")) {
+		        	double halfDuration1 = id.getEvent().getHalfDuration();
+		        	double halfDuration2 = id.getEvent().getHalfDuration();
+		        	boolean found = false;
+			      	for (String str : stfcat) {
+			      		String[] stflist = str.split("\\s+");
+			      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
+			      	    if(id.equals(eventID)) {
+			      	    	if(Integer.valueOf(stflist[3]) >= 5.) {
+			      	    		halfDuration1 = Double.valueOf(stflist[1]);
+			      	    		halfDuration2 = Double.valueOf(stflist[2]);
+			      	    		found = true;
+			      	    	}
+			      	    }
+			      	}
+			      	if (found) {
+			      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration1, halfDuration2);
+		//	      		System.out.println(id + " Using LSTF with duration " + (halfDuration1 + halfDuration2));
+			      	}
+			      	else
+			      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+				}
+				else {
+					boolean found = false;
+					double ampCorr = 1.;
+					for (String str : stfcat) {
+			      		String[] ss = str.split("\\s+");
+			      	    GlobalCMTID eventID = new GlobalCMTID(ss[0]);
+			      	    if (id.equals(eventID)) {
+			      	    	halfDuration = Double.parseDouble(ss[1]);
+			      	    	ampCorr = Double.parseDouble(ss[2]);
+			      	    	found = true;
+			      	    	break;
+			      	    }
+			      	}
+					if (found)
+						stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, halfDuration, ampCorr);
+					else
+						stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, partialSamplingHz, id.getEvent().getHalfDuration());
+				}
 	            break;
 			case 4:
 				throw new RuntimeException("Case 4 not implemented yet");
@@ -1134,7 +1148,7 @@ private class WorkerTimePartial implements Runnable {
 //				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
 				halfDuration = 0.;
 				double amplitudeCorrection = 1.;
-				found = false;
+				boolean found = false;
 		      	for (String str : stfcat) {
 		      		String[] stflist = str.split("\\s+");
 		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());

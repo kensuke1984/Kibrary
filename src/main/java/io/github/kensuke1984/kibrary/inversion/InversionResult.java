@@ -309,6 +309,21 @@ public class InversionResult {
 		});
 		return new Trace(x, y);
 	}
+	
+	public Trace partialOf_spc(BasicID id, UnknownParameter parameter) throws IOException {
+		int parN = unknownParameterList.indexOf(parameter);
+		Path txtPath = rootPath.resolve("partial_spc/" + getTxtName(id));
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[parN + 1]);
+		});
+		return new Trace(x, y).multiply(mul);
+	}
 
 	/**
 	 * Example, if you want to get an answer of CG1. <br>
@@ -395,6 +410,48 @@ public class InversionResult {
 		});
 		return new Trace(x, y);
 	}
+	
+	private Trace readBORNTrace_spc(BasicID id, InverseMethodEnum method, int n) throws IOException {
+		Path txtPath = rootPath.resolve("born_spc/" + method + n + "/" + getTxtName(id));
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[1]);
+		});
+		return new Trace(x, y);
+	}
+	
+	private Trace readBORNTrace(BasicID id, InverseMethodEnum method, int n, PartialType type) throws IOException {
+		Path txtPath = rootPath.resolve("born/" + method + n + "_" + type + "/" + getTxtName(id));
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[1]);
+		});
+		return new Trace(x, y);
+	}
+	
+	private Trace readBORNTrace_spc(BasicID id, InverseMethodEnum method, int n, PartialType type) throws IOException {
+		Path txtPath = rootPath.resolve("born_spc/" + method + n + "_" + type + "/" + getTxtName(id));
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[1]);
+		});
+		return new Trace(x, y);
+	}
 
 	/**
 	 * @param id
@@ -417,6 +474,20 @@ public class InversionResult {
 			y[j] = Double.parseDouble(parts[2]);
 		});
 		return new Trace(x, y);
+	}
+	
+	public Trace observedOf_spc(BasicID id) throws IOException {
+		Path txtPath = rootPath.resolve("trace_spc/" + getTxtName(id));
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[2]);
+		});
+		return new Trace(x, y).multiply(mul);
 	}
 
 	/**
@@ -443,17 +514,6 @@ public class InversionResult {
 	public Trace syntheticOf(BasicID id) throws IOException {
 		Path txtPath = rootPath.resolve("trace/" + getTxtName(id));
 		
-//		List<Path> tmplist;
-//		try (Stream<Path> stream = Files.list(rootPath.resolve("trace/" + id.getGlobalCMTID()))) {
-//			tmplist = stream.filter(p -> {
-//				String name = p.getFileName().toString();
-//				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
-//			}).collect(Collectors.toList());
-//		}
-//		if (tmplist.size() != 1)
-//			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
-//		txtPath = tmplist.get(0);
-		
 		List<String> lines = Files.readAllLines(txtPath);
 		int npts = lines.size() - 1;
 		double[] x = new double[npts];
@@ -464,6 +524,21 @@ public class InversionResult {
 			y[j] = Double.parseDouble(parts[3]);
 		});
 		return new Trace(x, y);
+	}
+	
+	public Trace syntheticOf_spc(BasicID id) throws IOException {
+		Path txtPath = rootPath.resolve("trace_spc/" + getTxtName(id));
+		
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[1]);
+			y[j] = Double.parseDouble(parts[3]);
+		});
+		return new Trace(x, y).multiply(mul);
 	}
 	
 	public Trace syntheticOf_noorder(BasicID id) throws IOException {
@@ -490,6 +565,32 @@ public class InversionResult {
 			y[j] = Double.parseDouble(parts[3]);
 		});
 		return new Trace(x, y);
+	}
+	
+	public Trace syntheticOf_noorder_spc(BasicID id) throws IOException {
+		List<Path> tmplist;
+		try (Stream<Path> stream = Files.list(rootPath.resolve("trace_spc/" + id.getGlobalCMTID()))) {
+			tmplist = stream.filter(p -> {
+				String name = p.getFileName().toString();
+				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+			}).collect(Collectors.toList());
+		}
+		if (tmplist.size() != 1) {
+			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
+			return null;
+		}
+		Path txtPath = tmplist.get(0);
+		
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[1]);
+			y[j] = Double.parseDouble(parts[3]);
+		});
+		return new Trace(x, y).multiply(mul);
 	}
 
 	private void readVarianceMap() throws IOException {
@@ -555,6 +656,65 @@ public class InversionResult {
 
 		for (UnknownParameter par : unknownParameterList)
 			born = born.add(partialOf(id, par).multiply(answer.get(par)));
+		writeBorn(bornPath, born);
+		
+		return born;
+	}
+	
+	public Trace bornOf_spc(BasicID id, InverseMethodEnum method, int n) throws IOException {
+		String txtname = getTxtName(id);
+		Path bornPath = rootPath.resolve("born_spc/" + method + n + "/" + txtname);
+		if (Files.exists(bornPath))
+			return readBORNTrace_spc(id, method, n);
+
+		Files.createDirectories(bornPath.getParent());
+		Trace syn = syntheticOf_spc(id);
+		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
+		Trace born = syn;
+
+		for (UnknownParameter par : unknownParameterList)
+			born = born.add(partialOf_spc(id, par).multiply(answer.get(par)));
+		writeBorn(bornPath, born);
+		
+		return born;
+	}
+	
+	public Trace bornOf(BasicID id, InverseMethodEnum method, int n, PartialType type) throws IOException {
+		String txtname = getTxtName(id);
+		Path bornPath = rootPath.resolve("born/" + method + n + "_" + type + "/" + txtname);
+		if (Files.exists(bornPath))
+			return readBORNTrace(id, method, n, type);
+
+		Files.createDirectories(bornPath.getParent());
+		Trace syn = syntheticOf(id);
+		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
+		Trace born = syn;
+
+		for (UnknownParameter par : unknownParameterList) {
+			if (par.getPartialType().equals(type))
+				born = born.add(partialOf(id, par).multiply(answer.get(par)));
+		}
+		writeBorn(bornPath, born);
+		
+		return born;
+	}
+	
+	public Trace bornOf_spc(BasicID id, InverseMethodEnum method, int n, PartialType type) throws IOException {
+		String txtname = getTxtName(id);
+		Path bornPath = rootPath.resolve("born_spc/" + method + n + "_" + type + "/" + txtname);
+		if (Files.exists(bornPath))
+			return readBORNTrace_spc(id, method, n, type);
+
+		Files.createDirectories(bornPath.getParent());
+		Trace syn = syntheticOf_spc(id);
+		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
+		Trace born = syn;
+		
+		for (UnknownParameter par : unknownParameterList) {
+			if (par.getPartialType().equals(type)) {
+				born = born.add(partialOf_spc(id, par).multiply(answer.get(par)));
+			}
+		}
 		writeBorn(bornPath, born);
 		
 		return born;
@@ -722,5 +882,14 @@ public class InversionResult {
 		}
 		return Files.readAllLines(rootPath.resolve("unknownParameterWeigths.inf"))
 				.stream().mapToDouble(Double::parseDouble).toArray();
+	}
+	
+	public Path getRootPath() {
+		return rootPath;
+	}
+	
+	private double mul = 1.;
+	public void set_mul(double mul) {
+		this.mul = Math.sqrt(mul);
 	}
 }

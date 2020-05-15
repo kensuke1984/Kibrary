@@ -54,7 +54,7 @@ public class RadialSecondOrderDifferentialOperator {
 	}
 	
 	private void compute() {
-		double dr = parameters.get(1).getLocation().getR() - parameters.get(0).getLocation().getR();
+//		double dr = parameters.get(1).getLocation().getR() - parameters.get(0).getLocation().getR();
 //		double dr2 = 1. / (dr * dr);
 		double dr2 = 1.;
 		
@@ -64,6 +64,11 @@ public class RadialSecondOrderDifferentialOperator {
 			PartialType type = types.get(itype);
 			List<UnknownParameter> thisParameters = parameters.stream().filter(p -> p.getPartialType().equals(type)).collect(Collectors.toList());
 			int m = thisParameters.size();
+			
+			if (m == 1) {
+				D2.setEntry(c, c, 0.);
+				continue;
+			}
 
 			indexNonZeroElements[c] = new int[] {c, c+1, c+2};
 			valueNonZeroElements[c] = new double[] {dr2*coeff, -2*dr2*coeff, dr2*coeff};
