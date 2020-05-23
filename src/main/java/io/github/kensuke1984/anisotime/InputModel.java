@@ -4,11 +4,10 @@ package io.github.kensuke1984.anisotime;
  * Input model for travel time computation
  *
  * @author Kensuke Konishi
- * @version 0.0.2.1
+ * @version 0.0.3
  */
 enum InputModel {
-    ANISOTROPIC_PREM("PREM (anisotropic)"), ISOTROPIC_PREM("PREM (isotropic)"), AK135("ak135"),
-    POLYNOMIAL("polynomial"), NAMED_DISCONTINUITY("named discontinuity");
+    ANISOTROPIC_PREM("PREM (anisotropic)"), ISOTROPIC_PREM("PREM (isotropic)"), AK135("ak135");
 
     /**
      * name of model
