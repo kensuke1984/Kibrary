@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * Panel for inputting parameters
  *
  * @author Kensuke Konishi
- * @version 0.3.1
+ * @version 0.3.2
  */
 class ParameterInputPanel extends javax.swing.JPanel {
 
@@ -174,7 +174,6 @@ class ParameterInputPanel extends javax.swing.JPanel {
 
     private VelocityStructure createStructure() {
         InputModel model = InputModel.titleOf((String) jComboBoxModel.getSelectedItem());
-        JFileChooser fileChooser;
         switch (model) {
             case AK135:
                 return PolynomialStructure.AK135;
@@ -182,30 +181,8 @@ class ParameterInputPanel extends javax.swing.JPanel {
                 return PolynomialStructure.PREM;
             case ISOTROPIC_PREM:
                 return PolynomialStructure.ISO_PREM;
-            case NAMED_DISCONTINUITY:
-                fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("named discontinuity file", "nd"));
-                if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) try {
-                    return new NamedDiscontinuityStructure(fileChooser.getSelectedFile().toPath());
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "The file is invalid!");
-                    break;
-                }
-                break;
-            case POLYNOMIAL:
-                fileChooser = new JFileChooser();
-                fileChooser.setFileFilter(new FileNameExtensionFilter("polynomial file", "inf"));
-                if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) try {
-                    return new PolynomialStructure(fileChooser.getSelectedFile().toPath());
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "The file is invalid!");
-                    break;
-                }
-                break;
             default:
                 throw new RuntimeException("unexpected");
         }
-        jComboBoxModel.setSelectedIndex(0);
-        return PolynomialStructure.PREM;
     }
 }
