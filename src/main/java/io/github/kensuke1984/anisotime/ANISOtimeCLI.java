@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.16.4
+ * @version 0.3.17
  */
 final class ANISOtimeCLI {
 
@@ -66,7 +66,7 @@ final class ANISOtimeCLI {
     /**
      * [rad]
      */
-    private double dDelta = 0.1;
+//    private double dDelta = 0.1;
     /**
      * [s/rad] dT/d&Delta;
      */
@@ -147,14 +147,14 @@ final class ANISOtimeCLI {
         options.addOption("deg", "epicentral-distance", true, "Epicentral distance \u0394 [deg]");
         options.addOption("ph", "phase", true, "Seismic phase (default:P,PCP,PKiKP,S,ScS,SKiKS)");
         options.addOption("mod", true, "Structure (default:prem)");
-        options.addOption("dec", true, "Number of decimal places.");
+        options.addOption("dec", true, "Number of decimal places (default:2)");
         options.addOption("p", true, "Ray parameter [s/deg]");
         options.addOption("dR", true, "Integral interval [km] (default:10)");
-//        options.addOption("dD", true, "Parameter \u03b4\u0394 [deg] for a catalog creation. (default:0.1");
+        options.addOption("dD", true, "Parameter \u03b4\u0394 [deg] for a catalog creation. (default:0.1)");
         options.addOption("rc", "read-catalog", true, "Path of a catalog for which travel times are computed.");
         options.addOption("rs", "record-section", true,
                 "start, end (,interval) [deg]\n Computes a table of a record section for the range.");
-        options.addOption("o", true, "Directory for ray path figures or file name for record sections.");
+        options.addOption("o", true, "Directory for output files");
     }
 
     /**
@@ -188,14 +188,8 @@ final class ANISOtimeCLI {
                 throw new RuntimeException("You must specify a velocity model (e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
-            // Default PREM ISOPREM AK135
-            if (structure.equals(PolynomialStructure.PREM)) catalog = RaypathCatalog.prem();
-            else if (structure.equals(PolynomialStructure.ISO_PREM)) catalog = RaypathCatalog.iprem();
-            else if (structure.equals(PolynomialStructure.AK135)) catalog = RaypathCatalog.ak135();
-            else {
-                ComputationalMesh mesh = ComputationalMesh.simple(structure);
-                catalog = RaypathCatalog.computeCatalog(structure, mesh, dDelta);
-            }
+            ComputationalMesh mesh = ComputationalMesh.simple(structure);
+            catalog = RaypathCatalog.computeCatalog(structure, mesh, Math.toRadians(0.1));
         }
 
         if (cmd.hasOption("ph")) targetPhases =
@@ -362,7 +356,7 @@ final class ANISOtimeCLI {
             for (Phase targetPhase : targetPhases) {
                 Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta, relativeAngleMode);
                 if (raypaths.length == 0) {
-                    System.err.println("No raypaths satisfying the input condition :" + targetPhase);
+                    System.err.println("No raypaths satisfying the input condition: " + targetPhase);
                     continue;
                 }
 
@@ -373,7 +367,8 @@ final class ANISOtimeCLI {
                     if (deltaOnBoundary < 0) {
                         System.err.println(targetPhase + " would have longer distance than " + Precision
                                 .round(Math.toDegrees(raypath.computeDelta(targetPhase, eventR)), decimalPlaces) +
-                                " (Your input:" + Precision.round(Math.toDegrees(targetDelta), decimalPlaces) + ")");
+                                "\u00B0 (Your input: " + Precision.round(Math.toDegrees(targetDelta), decimalPlaces) +
+                                "\u00B0)");
                         continue;
                     }
                     targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
@@ -496,9 +491,9 @@ final class ANISOtimeCLI {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            throw new RuntimeException("Input model file is not acceptable.");
+            throw new RuntimeException("Input model file is invalid.");
         }
-        throw new RuntimeException("No input model file " + modelPath + " is found.");
+        throw new RuntimeException(modelPath + " (input model) is not found.");
     }
 
     /**
