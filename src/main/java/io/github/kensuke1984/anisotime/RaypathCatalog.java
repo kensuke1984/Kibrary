@@ -14,10 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.*;
@@ -33,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.8.4
+ * @version 0.2.9
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -315,10 +312,21 @@ public class RaypathCatalog implements Serializable {
      * @return catalog for the input structure
      */
     public static RaypathCatalog computeCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
-        if (structure.equals(VelocityStructure.prem())) return prem();
-        else if (structure.equals(VelocityStructure.iprem())) return iprem();
-        else if (structure.equals(VelocityStructure.ak135())) return ak135();
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(SHARE_PATH, "*.cat")) {
+            for (Path path : directoryStream) {
+                try {
+                    RaypathCatalog catalog = read(path);
+                    System.out.println(path);
+                    if (catalog.getStructure().equals(structure) && catalog.MESH.equals(mesh) &&
+                            catalog.MAXIMUM_D_DELTA == dDelta) return catalog;
+                } catch (Exception e) {
+                    Files.delete(path);
+                }
+            }
+        } catch (IOException e) {
+        }
         RaypathCatalog cat = new RaypathCatalog(structure, mesh, dDelta);
+        System.err.println("Computing a catalog for the input structure.");
         cat.create();
         try {
             Path p = Files.createTempFile(SHARE_PATH, "raypath", ".cat");
