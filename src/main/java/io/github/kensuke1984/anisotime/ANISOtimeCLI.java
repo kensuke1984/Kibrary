@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.16.3
+ * @version 0.3.16.4
  */
 final class ANISOtimeCLI {
 
@@ -184,14 +184,14 @@ final class ANISOtimeCLI {
                 throw new RuntimeException(e);
             }
         } else {
-            if (!cmd.hasOption("mod")) throw new RuntimeException("You must specify a velocity model(e.g. -mod prem).");
+            if (!cmd.hasOption("mod"))
+                throw new RuntimeException("You must specify a velocity model (e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
             // Default PREM ISOPREM AK135
             if (structure.equals(PolynomialStructure.PREM)) catalog = RaypathCatalog.prem();
             else if (structure.equals(PolynomialStructure.ISO_PREM)) catalog = RaypathCatalog.iprem();
             else if (structure.equals(PolynomialStructure.AK135)) catalog = RaypathCatalog.ak135();
-                // option TODO
             else {
                 ComputationalMesh mesh = ComputationalMesh.simple(structure);
                 catalog = RaypathCatalog.computeCatalog(structure, mesh, dDelta);
@@ -212,8 +212,6 @@ final class ANISOtimeCLI {
         if (targetDelta < 0) throw new RuntimeException("A value for the option -deg must be non-negative.");
         if (relativeAngleMode && Math.PI < targetDelta)
             throw new RuntimeException("In the relative angle mode, a value for the option -deg must be 180 or less.");
-
-        double interval = Double.parseDouble(cmd.getOptionValue("dR", "10")); //TODO dR is not working.
 
         double rayParameterDegree = Double.parseDouble(cmd.getOptionValue("p", "NaN"));
         rayParameter = Math.toDegrees(rayParameterDegree);
@@ -335,7 +333,8 @@ final class ANISOtimeCLI {
             }
 
             // only create a catalog
-            if (!cmd.hasOption("p") && !cmd.hasOption("deg")) return;
+            if (!cmd.hasOption("p") && !cmd.hasOption("deg")) throw new RuntimeException(
+                    "You must specify a rayparameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
 
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
             Files.createDirectories(outDir);
