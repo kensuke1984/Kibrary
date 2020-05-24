@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.8.3
+ * @version 0.2.8.4
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -1254,8 +1254,7 @@ public class RaypathCatalog implements Serializable {
                         continue;
                     }
                     double oppositeNext = toDelta.applyAsDouble(referenceRaypaths[oppositeNextIndex]);
-                    if (Double.isNaN(oppositeNext)) throw new RuntimeException(
-                            "Problem: " + targetPhase + " " + eventR + " " + Math.toDegrees(targetDelta));
+                    if (Double.isNaN(oppositeNext)) continue; //TODO could be a problem
                     if ((current - targetDelta) * (oppositeNext - targetDelta) < 0) {
                         returnRaypaths.add(interpolate
                                 .apply(referenceRaypaths[startIndex], referenceRaypaths[oppositeNextIndex]));
