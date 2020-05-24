@@ -386,8 +386,8 @@ final class ANISOtimeCLI {
                 }
                 int j = 0;
                 for (Raypath raypath : raypaths) {
-                    Phase actualPhase =
-                            catalog.getActualTargetPhase(raypath, targetPhase, eventR, targetDelta, relativeAngleMode);
+                    Phase actualPhase = RaypathCatalog
+                            .getActualTargetPhase(raypath, targetPhase, eventR, targetDelta, relativeAngleMode);
                     double[] results = printResults(Math.toDegrees(targetDelta), raypath, actualPhase, System.out);
                     if (cmd.hasOption("eps")) if (raypaths.length == 1)
                         createEPS(raypath.createPanel(targetPhase, eventR),
