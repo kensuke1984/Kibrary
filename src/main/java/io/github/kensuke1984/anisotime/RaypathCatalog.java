@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.9.1
+ * @version 0.2.9.2
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -312,6 +312,13 @@ public class RaypathCatalog implements Serializable {
      * @return catalog for the input structure
      */
     public static RaypathCatalog computeCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
+        if (dDelta == RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA) if (structure.equals(VelocityStructure.prem()) &&
+                mesh.equals(ComputationalMesh.simple(VelocityStructure.prem()))) return prem();
+        else if (structure.equals(VelocityStructure.iprem()) &&
+                mesh.equals(ComputationalMesh.simple(VelocityStructure.iprem()))) return iprem();
+        else if (structure.equals(VelocityStructure.ak135()) &&
+                mesh.equals(ComputationalMesh.simple(VelocityStructure.ak135()))) return ak135();
+
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(SHARE_PATH, "*.cat")) {
             for (Path path : directoryStream) {
                 try {
