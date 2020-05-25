@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.17
+ * @version 0.3.18
  */
 final class ANISOtimeCLI {
 
@@ -63,10 +63,6 @@ final class ANISOtimeCLI {
     private double eventR;
     private Phase[] targetPhases;
     private boolean relativeAngleMode;
-    /**
-     * [rad]
-     */
-//    private double dDelta = 0.1;
     /**
      * [s/rad] dT/d&Delta;
      */
@@ -161,7 +157,6 @@ final class ANISOtimeCLI {
      * Sets parameters according to the input arguments.
      */
     private void setParameters() {
-//        dDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("dD", "0.1")));
 
         decimalPlaces = Integer.parseInt(cmd.getOptionValue("dec", "2"));
         if (decimalPlaces < 0)
@@ -282,13 +277,11 @@ final class ANISOtimeCLI {
      * @param time         [s] to be printed
      * @param eventR       radius of the event [km]
      */
-
     void createEPS(RaypathPanel panel, Path out, Phase phase, double rayparameter, double delta, double time,
                    double eventR) {
-        EpsGraphics epsGraphics = null;
         try (BufferedOutputStream bos = new BufferedOutputStream(
                 Files.newOutputStream(out, StandardOpenOption.CREATE_NEW))) {
-            epsGraphics = new EpsGraphics(phase.toString(), bos, 0, 0, panel.getWidth(), panel.getHeight(),
+            EpsGraphics epsGraphics = new EpsGraphics(phase.toString(), bos, 0, 0, panel.getWidth(), panel.getHeight(),
                     ColorMode.COLOR_RGB);
             panel.paintComponent(epsGraphics);
             String rayp = Utilities.fixDecimalPlaces(decimalPlaces, rayparameter);
@@ -298,20 +291,10 @@ final class ANISOtimeCLI {
             String line = phase + ", Ray parameter: " + rayp + ", Depth[km]:" + depth + ", Epicentral distance[deg]: " +
                     delt + ", Travel time[s]: " + tra;
             int startInt = (int) panel.changeX(-line.length() / 2 * 6371 / 45);
-            // epsGraphics.drawLine(0, 100, 200, 300);
-            // epsGraphics.close();
             epsGraphics.drawString(line, startInt, (int) panel.changeY(structure.earthRadius()) - 25);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("orz");
-        } finally {
-            if (epsGraphics != null) try {
-                epsGraphics.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-
     }
 
     private void run() {
@@ -359,7 +342,6 @@ final class ANISOtimeCLI {
                     System.err.println("No raypaths satisfying the input condition: " + targetPhase);
                     continue;
                 }
-
                 if (targetPhase.isDiffracted()) {
                     Raypath raypath = raypaths[0];
                     double deltaOnBoundary =
@@ -384,11 +366,11 @@ final class ANISOtimeCLI {
                             .getActualTargetPhase(raypath, targetPhase, eventR, targetDelta, relativeAngleMode);
                     double[] results = printResults(Math.toDegrees(targetDelta), raypath, actualPhase, System.out);
                     if (cmd.hasOption("eps")) if (raypaths.length == 1)
-                        createEPS(raypath.createPanel(targetPhase, eventR),
-                                outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase,
+                        createEPS(raypath.createPanel(actualPhase, eventR),
+                                outDir.resolve(actualPhase + "." + tmpStr + ".eps"), actualPhase,
                                 raypath.getRayParameter(), targetDelta, results[1], eventR);
-                    else createEPS(raypath.createPanel(targetPhase, eventR),
-                                outDir.resolve(targetPhase + "." + j++ + "." + tmpStr + ".eps"), targetPhase,
+                    else createEPS(raypath.createPanel(actualPhase, eventR),
+                                outDir.resolve(actualPhase + "." + j++ + "." + tmpStr + ".eps"), actualPhase,
                                 raypath.getRayParameter(), targetDelta, results[1], eventR);
                 }
             }

@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.4.5b
+ * @version 0.5.4.6b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -231,8 +231,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 case EPICENTRAL_DISTANCE:
                     raypathList = new ArrayList<>();
                     phaseList = new ArrayList<>();
-                    RaypathCatalog catalog = RaypathCatalog
-                            .computeCatalog(structure, ComputationalMesh.simple(structure), Math.toRadians(1));
+                    RaypathCatalog catalog = getCatalog();
                     double epicentralDistance = Math.toRadians(mostImportant);
                     for (Phase phase : phaseSet) {
                         Raypath[] raypaths = catalog.searchPath(phase, eventR, epicentralDistance, false);
