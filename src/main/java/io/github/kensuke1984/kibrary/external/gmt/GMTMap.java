@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Helper for use of GMT
  *
  * @author Kensuke Konishi
- * @version 0.0.3.5
+ * @version 0.0.3.6
  */
 public final class GMTMap {
 
@@ -78,9 +78,8 @@ public final class GMTMap {
     public static String psxy(Symbol symbol, double symbolSize, HorizontalPosition position, double value,
                               Path colorPalletPath, String... additionalOptions) {
         String cpOption = " -C" + colorPalletPath;
-        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
         return "echo " + position + " " + value + " " + symbolSize + " | psxy -V -: -J -R " + symbol.getOption() +
-                cpOption + " " + additional + " -K -O -P  >>$psname";
+                cpOption + " " + String.join(" ", additionalOptions) + " -K -O -P  >>$psname";
     }
 
     /**
@@ -110,8 +109,7 @@ public final class GMTMap {
         String echoPart =
                 "echo -e " + start.getLatitude() + " " + start.getLongitude() + "\\\\n" + end.getLatitude() + " " +
                         end.getLongitude();
-        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        String psxyPart = "psxy -V -: -J -R -P -K -O " + additional + " >>$psname";
+        String psxyPart = "psxy -V -: -J -R -P -K -O " + String.join(" ", additionalOptions) + " >>$psname";
         // System.out.println(psxyPart);
         return echoPart + " | " + psxyPart;
     }
@@ -144,8 +142,7 @@ public final class GMTMap {
      * @return pscoast -J -R -Bs -Dc -V -W -K -O (additional) &gt;&gt; $psname
      */
     public static String psCoast(String... additionalOptions) {
-        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        return "pscoast -J -R -B -Dc -W " + additional + " -V -P -K -O >>$psname";
+        return "pscoast -J -R -B -Dc -W " + String.join(" ", additionalOptions) + " -V -P -K -O >>$psname";
     }
 
     private static void createGrid() {
@@ -227,9 +224,7 @@ public final class GMTMap {
      * @return psbasemap -R -Bhoge -O -V -P -J
      */
     public String psEnd(String... additionalOptions) {
-        String additional = Arrays.stream(additionalOptions).collect(Collectors.joining(" "));
-        return "psbasemap -R -J" + bOption + additional + " -O -V -P >>$psname";
-
+        return "psbasemap -R -J" + bOption + String.join(" ", additionalOptions) + " -O -V -P >>$psname";
     }
 
     public String fixEPS() {
@@ -269,11 +264,11 @@ public final class GMTMap {
 
 /*
  * private void outputGridMakerScript() throws IOException {
- * 
+ *
  * Set<Double> rSet = new TreeSet<>(); for (int i = 0; i < grid.length; i++)
  * rSet.add(grid[i].getR()); double[] r = new double[rSet.size()]; { int i = 0;
  * for (double x : rSet) r[i++] = x; }
- * 
+ *
  * Path gridPath = outPath.resolve("gridmaker.sh"); try (PrintWriter pw = new
  * PrintWriter(Files.newBufferedWriter(gridPath))) { pw.println("#!/bin/sh");
  * pw.print("for depth in "); for (int i = 0; i < r.length; i++) pw.print(r[i] +
@@ -284,15 +279,15 @@ public final class GMTMap {
  * " -I5"); pw.println("#xyz2grd -G$dep.grd -R145/180/-10/30 -I2.5 -N0");
  * pw.println("grdsample $dep.grd -G${dep}comp.grd -I0.1"); pw.println("done");
  * }
- * 
+ *
  * gridPath.toFile().setExecutable(true); }
- * 
+ *
  * private void outputMaskMakerScript() throws IOException {
- * 
+ *
  * Set<Double> rSet = new TreeSet<>(); for (int i = 0; i < grid.length; i++)
  * rSet.add(grid[i].getR()); double[] r = new double[rSet.size()]; { int i = 0;
  * for (double x : rSet) r[i++] = x; }
- * 
+ *
  * Path maskPath = outPath.resolve("masking.sh"); try (PrintWriter pw = new
  * PrintWriter(Files.newBufferedWriter(maskPath))) { pw.println("#!/bin/sh");
  * pw.println("grdmask mask.dat -Gmask.grd -I0.1 -R" + minLongitude + "/" +
@@ -302,20 +297,20 @@ public final class GMTMap {
  * pw.println("grdmath $dep\\comp.grd mask.grd OR = masked_data.grd");
  * pw.println("mv masked_data.grd $dep\\comp.grd"); pw.println("done"); }
  * maskPath.toFile().setExecutable(true);
- * 
+ *
  * }
- * 
+ *
  * private void outputNeoScript() throws IOException { Path neoPath =
  * outPath.resolve("neo.sh");
- * 
+ *
  * try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(neoPath))) {
  * pw.println("#!/bin/sh");
- * 
+ *
  * pw.println("# parameters for pscoast"); pw.println("R='-R" + minLongitude +
  * "/" + maxLongitude + "/" + minLatitude + "/" + maxLatitude + "';");
  * pw.println("J='-JQ145/15';"); pw.println("G='-G255/255/255';");
  * pw.println("B='-BWeSna30f10';"); pw.println("O='-A5000 -W1 -P';");
- * 
+ *
  * // pw.println("gmtset BASEMAP_FRAME_RGB 0/0/0"); // pw.println(
  * "gmtset ANOT_FONT_SIZE 25"); // pw.println("gmtset LABEL_FONT_SIZE 25"); //
  * pw.println("gmtset PAPER_MEDIA a0+"); // pw.println(
@@ -326,7 +321,7 @@ public final class GMTMap {
  * "psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K  -Y-1  -O >>$outputps");
  * pw.println(
  * "pscoast -V  -R -J -B:.\"350 - 400 km (B)\":  $O -K -O -Y1   >> $outputps");
- * 
+ *
  * pw.println(
  * "grdimage 3805\\comp.grd $J  $R -C$cpt $B -K -O -P   -X20 >> $outputps");
  * pw.println(
@@ -334,7 +329,7 @@ public final class GMTMap {
  * pw.println(
  * "pscoast -V -R -J -B:.\"300 - 350 km (A)\":  $O  -K -O -Y1 -X-1 >> $outputps"
  * );
- * 
+ *
  * pw.println(
  * "grdimage 3755\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
  * pw.println(
@@ -342,7 +337,7 @@ public final class GMTMap {
  * pw.println(
  * "pscoast -V -R -J -B:.\"250 - 300 km (B)\":  $O -K -O -Y1 -X-1 >> $outputps"
  * );
- * 
+ *
  * pw.println(
  * "grdimage 3705\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
  * pw.println(
@@ -350,7 +345,7 @@ public final class GMTMap {
  * pw.println(
  * "pscoast -V -R -J -B:.\"200 - 250 km (A)\":  $O -K -O -Y1 -X-1 >> $outputps"
  * );
- * 
+ *
  * pw.println(
  * "grdimage 3655\\comp.grd $J  $R -C$cpt $B -K -P -Y-23 -X-60 -O >> $outputps"
  * ); pw.println(
@@ -358,7 +353,7 @@ public final class GMTMap {
  * pw.println(
  * "pscoast -V -R -J -B:.\"150 - 200 km (B)\":  $O -K -O -Y1 -X-1 >> $outputps"
  * );
- * 
+ *
  * pw.println(
  * "grdimage 3605\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
  * pw.println(
@@ -366,21 +361,21 @@ public final class GMTMap {
  * pw.println(
  * "pscoast -V -R -J -B:.\"100 - 150 km (A)\":  $O  -K -O -Y1 -X-1 >> $outputps"
  * );
- * 
+ *
  * pw.println(
  * "grdimage 3555\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
  * pw.println(
  * "psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
  * pw.println(
  * "pscoast -V -R -J -B:.\"50 - 100 km (B)\":  $O -K -O -Y1 -X-1 >> $outputps");
- * 
+ *
  * pw.println(
  * "grdimage 3505\\comp.grd $J  $R -C$cpt $B -K -O -P  -X20 >> $outputps");
  * pw.println(
  * "psscale -C$scale -D7/-1/5/0.5h -B2:Vs\\(\\%\\): -K -O -Y-1 -X1>>$outputps");
  * pw.println(
  * "pscoast -V -R -J -B:.\"0 - 50 km (A)\":  $O  -O -K  -Y1 -X-1 >> $outputps");
- * 
+ *
  * // pw.println("grdimage a.grd $J $R -Ccp12a.cpt -K -O -P -Y47 -X-40 // >>
  * $outputps"); // pw.println("psscale -Ccp2.cpt -D7/-1/5/0.5h -B2:Vs\\(\\%\\):
  * -K // -O -Y-1 -X1 -O >>$outputps"); // pw.println(
@@ -389,20 +384,20 @@ public final class GMTMap {
  * $outputps"); // pw.println("psscale -Ccp2.cpt -D7/-1/5/0.5h -B2:Vs\\(\\%\\):
  * -K // -O -Y-1 -X1 -O >>$outputps"); // pw.println(
  * "pscoast -V -R -J $B:.\"Pattern B\": $O -O -Y1 -X-1 >> // $outputps");
- * 
+ *
  * pw.println("ps2epsi $outputps");
- * 
+ *
  * pw.println("mv ${outputps%.ps}.epsi ${outputps%.ps}.eps");
- * 
+ *
  * // pw.println("echo $B:a:");
- * 
+ *
  * } neoPath.toFile().setExecutable(true); }
- * 
+ *
  * private void outputMapMakerScript() throws IOException { Set<Double> rSet =
  * new TreeSet<>(); for (int i = 0; i < grid.length; i++)
  * rSet.add(grid[i].getR()); double[] r = new double[rSet.size()]; { int i = 0;
  * for (double x : rSet) r[i++] = x; }
- * 
+ *
  * Path maskPath = outPath.resolve("mapMaker.sh"); try (PrintWriter pw = new
  * PrintWriter(Files.newBufferedWriter(maskPath))) { pw.println("#!/bin/sh");
  * pw.println("# parameters for pscoast"); pw.println("R='-R" + minLongitude +
@@ -410,7 +405,7 @@ public final class GMTMap {
  * pw.println("J='-JQ145/15'"); pw.println("G='-G255/255/255'");
  * pw.println("B='-Bg30WeSna30f20'"); pw.println("B='-Bg30WeSnf20'");
  * pw.println("O='-A5000 -W1 -P'");
- * 
+ *
  * pw.println("gmtset BASEMAP_FRAME_RGB 0/0/0"); pw.println(
  * "gmtset LABEL_FONT_SIZE 15"); pw.print("for depth in "); for (int i = 0; i <
  * r.length; i++) pw.print(r[i] + " "); pw.println(); pw.println("do");
@@ -422,7 +417,7 @@ public final class GMTMap {
  * "psscale -Cscale$depth.cpt -D7/-1/5/0.5h -Ba1g0.5 -K -O >>$outputps");
  * pw.println("pscoast -V -R -J $B  $O  -O >> $outputps"); pw.println("done"); }
  * maskPath.toFile().setExecutable(true);
- * 
+ *
  * }
- * 
+ *
  */
