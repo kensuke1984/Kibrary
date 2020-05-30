@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * same events</b> TODO
  *
  * @author Kensuke Konishi
- * @version 0.2.2
+ * @version 0.2.2.1
  */
 public class Partial1DDatasetMaker implements Operation {
     private boolean backward;
@@ -330,7 +330,7 @@ public class Partial1DDatasetMaker implements Operation {
 
             while (!execs.isTerminated()) {
                 Thread.sleep(100);
-                String per = processMap.entrySet().stream().map(e -> e.getValue().toString())
+                String per = processMap.values().stream().map(Object::toString)
                         .collect(Collectors.joining(" "));
                 System.err.print("\033[2K\rWorking each thread " + per + " % : entire progress " +
                         Math.ceil(100.0 * numberOfFinishedEvents.get() / eventDirs.size()) + " %");

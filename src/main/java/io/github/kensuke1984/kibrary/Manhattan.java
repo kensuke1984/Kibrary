@@ -25,7 +25,7 @@ import java.util.Arrays;
  * The list of names of manhattan (operation)
  *
  * @author Kensuke Konishi
- * @version 0.0.5.2
+ * @version 0.0.5.3
  */
 public enum Manhattan {
     CheckerBoardTest(1, CheckerBoardTest.class), //
@@ -57,7 +57,7 @@ public enum Manhattan {
     }
 
     public static void printList() {
-        Arrays.stream(values()).sorted().forEach(m -> System.out.println(m.c.getSimpleName() + " " + m.value));
+        Arrays.stream(values()).sorted().forEach(m -> System.err.println(m.c.getSimpleName() + " " + m.value));
     }
 
     static Manhattan valueOf(int n) {

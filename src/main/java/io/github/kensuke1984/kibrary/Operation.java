@@ -14,7 +14,7 @@ import java.util.Properties;
  * Main procedures in Kibrary
  *
  * @author Kensuke Konishi
- * @version 0.0.6
+ * @version 0.0.6.1
  */
 public interface Operation {
 
@@ -23,11 +23,11 @@ public interface Operation {
             List<Path> list = new ArrayList<>();
             int i = 1;
             for (Path path : stream) {
-                System.out.println(i++ + ": " + path);
+                System.err.println(i++ + ": " + path);
                 list.add(path);
             }
             if (list.isEmpty()) throw new NoSuchFileException("No property file is found");
-            System.out.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
+            System.err.print("Which one do you want to use as a property file? [1-" + list.size() + "] ");
             String input = Utilities.readInputLine();
             if (input.isEmpty()) System.exit(9);
             return list.get(Integer.parseInt(input) - 1);
@@ -42,7 +42,7 @@ public interface Operation {
     static void main(String[] args) throws Exception {
         if (args.length == 0) {
             Manhattan.printList();
-            System.out.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
+            System.err.print("Which one do you want to operate? [1-" + Manhattan.values().length + "] ");
             String input = Utilities.readInputLine();
             if (input.isEmpty()) System.exit(1);
             args = new String[]{Manhattan.valueOf(Integer.parseInt(input)).toString()};
