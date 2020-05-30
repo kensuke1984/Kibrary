@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.18
+ * @version 0.3.18.1
  */
 final class ANISOtimeCLI {
 
@@ -86,7 +86,7 @@ final class ANISOtimeCLI {
      */
     private ANISOtimeCLI(String[] args) throws ParseException {
         cmd = new DefaultParser().parse(options, args);
-        INPUT = Arrays.stream(args).collect(Collectors.joining(" "));
+        INPUT = String.join(" ", args);
     }
 
     /**

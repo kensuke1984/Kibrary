@@ -9,14 +9,12 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.1.1
  */
 class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructure> {
 
@@ -130,7 +128,7 @@ class RandomPolynomialModelGenerator implements ModelGenerator<PolynomialStructu
 
     @Override
     public String toString(PolynomialStructure model) {
-        return Arrays.stream(model.toPSVlines()).collect(Collectors.joining("\n"));
+        return String.join("\n", model.toPSVlines());
     }
 
 }

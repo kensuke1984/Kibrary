@@ -5,8 +5,6 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * BREAKFASTシステムへのデータリクエストの際のデータ部分
@@ -24,7 +22,7 @@ import java.util.stream.Collectors;
  * For OHP request, TTTT is now only one digit.
  *
  * @author kensuke
- * @version 0.0.5.1
+ * @version 0.0.5.2
  * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
  * guide</a>
  */
@@ -111,8 +109,8 @@ public class Channel {
 
     @Override
     public String toString() {
-        String channels = Arrays.stream(channel).collect(Collectors.joining(" "));
-        return STATION + " " + NETWORK + " " + toLine(START) + " " + toLine(END) + " " + channelNumber + " " + channels;
+        return STATION + " " + NETWORK + " " + toLine(START) + " " + toLine(END) + " " + channelNumber + " " +
+                String.join(" ", channel);
     }
 
 }
