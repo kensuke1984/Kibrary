@@ -312,7 +312,7 @@ public class RaypathCatalog implements Serializable {
      * @return catalog for the input structure
      */
     public static RaypathCatalog computeCatalog(VelocityStructure structure, ComputationalMesh mesh, double dDelta) {
-        if (dDelta == RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA) if (structure.equals(VelocityStructure.prem()) &&
+        if (dDelta == DEFAULT_MAXIMUM_D_DELTA) if (structure.equals(VelocityStructure.prem()) &&
                 mesh.equals(ComputationalMesh.simple(VelocityStructure.prem()))) return prem();
         else if (structure.equals(VelocityStructure.iprem()) &&
                 mesh.equals(ComputationalMesh.simple(VelocityStructure.iprem()))) return iprem();

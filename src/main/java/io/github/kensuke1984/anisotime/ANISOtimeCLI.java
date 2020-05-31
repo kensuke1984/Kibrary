@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.18.1
+ * @version 0.3.19
  */
 final class ANISOtimeCLI {
 
@@ -183,8 +183,13 @@ final class ANISOtimeCLI {
                 throw new RuntimeException("You must specify a velocity model (e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
-            ComputationalMesh mesh = ComputationalMesh.simple(structure);
-            catalog = RaypathCatalog.computeCatalog(structure, mesh, Math.toRadians(0.1));
+            if (structure.equals(VelocityStructure.iprem())) catalog = RaypathCatalog.iprem();
+            else if (structure.equals(VelocityStructure.prem())) catalog = RaypathCatalog.prem();
+            else if (structure.equals(VelocityStructure.ak135())) catalog = RaypathCatalog.ak135();
+            else {
+                ComputationalMesh mesh = ComputationalMesh.simple(structure);
+                catalog = RaypathCatalog.computeCatalog(structure, mesh, RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
+            }
         }
 
         if (cmd.hasOption("ph")) targetPhases =

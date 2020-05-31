@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.4.6b
+ * @version 0.5.5b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -311,6 +311,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private RaypathCatalog getCatalog() {
+        if (structure.equals(VelocityStructure.iprem())) return RaypathCatalog.iprem();
+        else if (structure.equals(VelocityStructure.prem())) return RaypathCatalog.prem();
+        else if (structure.equals(VelocityStructure.ak135())) return RaypathCatalog.ak135();
         return RaypathCatalog
                 .computeCatalog(structure, ComputationalMesh.simple(structure), RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
     }
