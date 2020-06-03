@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.0.5b
+ * @version 0.7.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -572,6 +572,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             if (outerIsBoundary) return deltaMap.get(pp);
             else if (outer == PassPoint.SEISMIC_SOURCE)
                 return deltaMap.get(pp) - computeDelta(pp, eventR, getStructure().earthRadius());
+            else if (!Double.isNaN(deltaMap.get(pp))) return deltaMap.get(pp) -
+                    computeDelta(pp, getStructure().earthRadius() - part.getOuterDepth(), getStructure().earthRadius());
         }
         double[] interval = getIntegralInterval(part, eventR);
         if (Double.isNaN(interval[0]) || Double.isNaN(interval[1]) || interval[1] < interval[0]) return Double.NaN;
