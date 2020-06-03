@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.19
+ * @version 0.3.19.1
  */
 final class ANISOtimeCLI {
 
@@ -235,10 +235,9 @@ final class ANISOtimeCLI {
     private void printRecordSection() throws IOException {
         Path outfile = Paths.get(cmd.getOptionValue("o", "anisotime.rcs"));
 
-        if (Files.exists(outfile)) {
-            System.err.println(outfile + " already exists. Option '-o' allows changing the write file name.");
-            return;
-        }
+        if (Files.exists(outfile))
+            throw new RuntimeException(outfile + " already exists. Option '-o' allows changing the output file name.");
+
         double[] ranges = Arrays.stream(cmd.getOptionValue("rs").split(",")).mapToDouble(Double::parseDouble).toArray();
         double min = ranges[0];
         double max = ranges[1];
