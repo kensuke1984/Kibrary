@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.1b
+ * @version 0.7.2b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -652,9 +652,13 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         boolean outerIsBoundary = PassPoint.isBoundary(outer) ||
                 (outer == PassPoint.SEISMIC_SOURCE && eventR == getStructure().earthRadius());
         double turningR = getTurningR(pp);
-        if (innerIsBoundary && !Double.isNaN(turningR)) return Double.NaN;
-        if (outerIsBoundary)
-            if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR))) return timeMap.get(pp);
+        if (innerIsBoundary || (inner == PassPoint.BOUNCE_POINT && !Double.isNaN(turningR))) {
+            if (outerIsBoundary) return timeMap.get(pp);
+            else if (outer == PassPoint.SEISMIC_SOURCE)
+                return timeMap.get(pp) - computeT(pp, eventR, getStructure().earthRadius());
+            else if (!Double.isNaN(timeMap.get(pp))) return timeMap.get(pp) -
+                    computeT(pp, getStructure().earthRadius() - part.getOuterDepth(), getStructure().earthRadius());
+        }
         double[] interval = getIntegralInterval(part, eventR);
         if (Double.isNaN(interval[0]) || Double.isNaN(interval[1]) || interval[1] < interval[0]) return Double.NaN;
         return computeT(pp, interval[0], interval[1]);
@@ -1045,6 +1049,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         // the value <= jeffreysBoundary
         double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
                 radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
+        double closestLargerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
+                radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
         double jeffreysDelta = jeffreysDeltaMap.get(pp);
         //index of the mesh point next to startR  (startR < mesh[firstIndex]) TODO redundant? when startR is on mesh
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
@@ -1074,8 +1080,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             delta += theta[i];
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return delta + simpson(qDelta, startR, radii.getEntry(firstIndexForMemory));
-        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary) delta +=
-                simpson(qDelta, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
+        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary && closestLargerJeffreysBoundaryInMesh < nextREnd)
+            delta += simpson(qDelta, jeffreysBoundary, closestLargerJeffreysBoundaryInMesh);
         double jeffreys = jeffreysDelta - jeffreys(qDelta, pp, startR);
         return delta + jeffreys;
     }
@@ -1102,14 +1108,14 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         //Integral interval contains a singular(bounce) point.
         if (startR + ComputationalMesh.EPS < turningR && turningR < endR) return Double.NaN;
 //        if (startR < turningR && turningR < endR) return Double.NaN;
-
         startR = Math.max(startR, minR);
         endR = Math.min(endR, maxR);
-
         double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
         // the value <= jeffreysBoundary
         double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
                 radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
+        double closestLargerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
+                radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
         double jeffreysT = jeffreysTMap.get(pp);
         //index of the mesh point next to startR  (startR < mesh[firstIndex])//TODO when startR is on mesh
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
@@ -1137,8 +1143,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             time += t[i];
         if (Double.isNaN(jeffreysBoundary) || jeffreysBoundary <= startR)
             return time + simpson(qT, startR, radii.getEntry(firstIndexForMemory));
-        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary)
-            time += simpson(qT, jeffreysBoundary, radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1));
+        if (closestSmallerJeffreysBoundaryInMesh < jeffreysBoundary && closestLargerJeffreysBoundaryInMesh < nextREnd)
+            time += simpson(qT, jeffreysBoundary, closestLargerJeffreysBoundaryInMesh);
         double jeffreys = jeffreysT - jeffreys(qT, pp, startR);
         return time + jeffreys;
     }
