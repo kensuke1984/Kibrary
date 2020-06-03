@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.9.2.1
+ * @version 0.2.10
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -606,14 +606,11 @@ public class RaypathCatalog implements Serializable {
             Phase[] actualPhases = toReflections(targetPhase);
             List<Raypath> candidates = new ArrayList<>();
             for (Phase phase : actualPhases) {
+//                String phaseStr = phase.getPHASENAME(); TODO p s ??
+//                if (!phaseStr.contains("c") && !phaseStr.contains("i") && !phaseStr.contains("v")) continue;
                 candidates.addAll(Arrays.asList(RaypathCatalog.this
                         .searchPath(phase, eventR, targetDelta, relativeAngle, CATALOG.toArray(new Raypath[0]))));
             }
-//            @SuppressWarnings({"unchecked"}) TreeSet<Raypath> catalog = (TreeSet) CATALOG;
-//            double delta1 = catalog.first().computeDelta(actualPhase, eventR);
-//            double delta2 = catalog.last().computeDelta(actualPhase, eventR);
-//            if ((targetDelta < delta1 && targetDelta < delta2) || (delta1 < targetDelta && delta2 < targetDelta))
-//                return EMPTY_RAYPATH;
             return candidates.toArray(new Raypath[0]);
         }
     }
