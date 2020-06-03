@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.9.2
+ * @version 0.2.9.2.1
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -1066,17 +1066,6 @@ public class RaypathCatalog implements Serializable {
         }
     }
 
-    void debugSearch(Phase targetPhase, double eventR, double targetDelta, boolean relativeAngle) {
-//        targetPhase = Phase.create("PP");
-        for (ReflectionCatalog reflectionCatalog : reflectionCatalogs) {
-            if (reflectionCatalog.BOUNDARY_R != 6371 - 15) continue;
-            System.out.println(reflectionCatalog.DEPTH + " " + reflectionCatalog.PP);
-            Raypath[] raypaths = reflectionCatalog.searchPath(targetPhase, eventR, targetDelta, relativeAngle);
-            System.out.println(raypaths.length);
-        }
-
-    }
-
     /**
      * @param targetPhase   target phase
      * @param eventR        [km] event radius
@@ -1088,11 +1077,12 @@ public class RaypathCatalog implements Serializable {
         String phase = targetPhase.toString();
         if (relativeAngle) throw new RuntimeException("Relative angle system not activated yet");
         if (targetDelta == 0) {
-            if (phase.contains("c") || phase.contains("i")) return new Raypath[]{raypathList.first()};
-            else {
-                System.err.println("Looking for epicentral distance 0, " + phase + "? Isn't it 360?");
+            if (phase.equals("p") || phase.equals("s") || phase.contains("c") || phase.contains("i"))
+                return new Raypath[]{raypathList.first()};
+            else
+//                System.err.println("Looking for epicentral distance 0, " + phase + "? Isn't it 360?");
                 return EMPTY_RAYPATH;
-            }
+
         }
         if (phase.startsWith("p") || phase.startsWith("s"))
             if (Math.abs(eventR - getStructure().earthRadius()) < ComputationalMesh.EPS) return EMPTY_RAYPATH;
