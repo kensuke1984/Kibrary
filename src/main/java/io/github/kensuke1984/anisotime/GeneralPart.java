@@ -5,7 +5,7 @@ package io.github.kensuke1984.anisotime;
  * This class describes a part of seismic phases.
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1b
+ * @version 0.0.1.2b
  */
 class GeneralPart implements PathPart {
 
@@ -24,12 +24,12 @@ class GeneralPart implements PathPart {
     private final PassPoint OUTER_POINT;
 
     /**
-     * radius at the deeper point
+     * DEPTH [km] at the deeper point
      */
     private final double INNER_DEPTH;
 
     /**
-     * radius at the isShallower point
+     * DEPTH [km] at the shallower point
      */
     private final double OUTER_DEPTH;
 
@@ -69,17 +69,22 @@ class GeneralPart implements PathPart {
         return OUTER_POINT;
     }
 
+    /**
+     * @return DEPTH [km] of the deeper point, distance from the surface
+     */
     double getInnerDepth() {
         return INNER_DEPTH;
     }
 
+    /**
+     * @return DEPTH [km], distance from the surface
+     */
     double getOuterDepth() {
         return OUTER_DEPTH;
     }
 
     @Override
     public String toString() {
-        //TODO
         String inner = "null";
         String outer = "null";
         if (INNER_POINT != null)
