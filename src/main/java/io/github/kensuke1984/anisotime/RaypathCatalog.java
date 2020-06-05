@@ -1079,11 +1079,9 @@ public class RaypathCatalog implements Serializable {
             else
 //                System.err.println("Looking for epicentral distance 0, " + phase + "? Isn't it 360?");
                 return EMPTY_RAYPATH;
-
         }
         if (phase.startsWith("p") || phase.startsWith("s"))
             if (Math.abs(eventR - getStructure().earthRadius()) < ComputationalMesh.EPS) return EMPTY_RAYPATH;
-
         if (targetDelta == Math.PI && phase.contains("I")) return new Raypath[]{raypathList.first()};
         if (targetPhase.isDiffracted()) return new Raypath[]{
                 phase.contains("Pdiff") ? getPdiff() : (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
