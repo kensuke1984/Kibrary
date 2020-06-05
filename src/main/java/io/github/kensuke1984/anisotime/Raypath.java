@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.2b
+ * @version 0.7.3b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -1049,8 +1049,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         // the value <= jeffreysBoundary
         double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
                 radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
-        double closestLargerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
-                radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
+        double closestLargerJeffreysBoundaryInMesh =
+                Double.isNaN(jeffreysBoundary) || Math.abs(jeffreysBoundary - endR) < ComputationalMesh.EPS ?
+                        Double.NaN : radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
         double jeffreysDelta = jeffreysDeltaMap.get(pp);
         //index of the mesh point next to startR  (startR < mesh[firstIndex]) TODO redundant? when startR is on mesh
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
@@ -1114,8 +1115,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         // the value <= jeffreysBoundary
         double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
                 radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
-        double closestLargerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
-                radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
+        double closestLargerJeffreysBoundaryInMesh =
+                Double.isNaN(jeffreysBoundary) || Math.abs(jeffreysBoundary - endR) < ComputationalMesh.EPS ?
+                        Double.NaN : radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
         double jeffreysT = jeffreysTMap.get(pp);
         //index of the mesh point next to startR  (startR < mesh[firstIndex])//TODO when startR is on mesh
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
@@ -1270,6 +1272,8 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
+     * TODO confirm no problem
+     * <p>
      * This method computes &tau; with precomputed values. The startR and endR
      * must be in the section (inner-core, outer-core or mantle).
      *
@@ -1342,7 +1346,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 }
             } else criticalTauMap.put(pp, Double.NaN);
             dTauMap.computeIfAbsent(pp, this::computeTransientTau);
-            tauMap.put(pp, computeDelta(pp, Double.isNaN(turningR) ? mesh.getEntry(0) : turningR,
+            tauMap.put(pp, computeTau(pp, Double.isNaN(turningR) ? mesh.getEntry(0) : turningR,
                     mesh.getEntry(mesh.getDimension() - 1)));
         });
     }
