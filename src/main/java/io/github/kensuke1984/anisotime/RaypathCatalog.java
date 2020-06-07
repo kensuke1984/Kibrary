@@ -30,16 +30,15 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.10
+ * @version 0.2.11
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
-     * 2020/3/17
+     * 2020/6/7
      */
-    private static final long serialVersionUID = 7787098314086388817L;
-    private static final String PIAC_SHA256 = "bda932afa4510c35b092073315fd7d0400aa8d9d732179d0671eaa352d94f5c6";
-
+    private static final long serialVersionUID = -845119778834636455L;
+    private static final String PIAC_SHA256 = "2cfb7c327c74b7e22133e59742a45cef186912bfd3d41fc6993ae7a15beeddb9";
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
@@ -647,8 +646,8 @@ public class RaypathCatalog implements Serializable {
             String target = targetPhase.toString();
             //TODO more effectively
             if (reference.contains("I") ^ target.contains("I")) return true;
-            if (reference.contains("P") && (!target.contains("P") && !target.equals("p"))) return true;
-            if (reference.contains("S") && (!target.contains("S") && !target.equals("s"))) return true;
+            if (reference.contains("P") && (!target.contains("P") && !target.contains("p"))) return true;
+            if (reference.contains("S") && (!target.contains("S") && !target.contains("s"))) return true;
             if (target.contains("S") && target.contains("P") && reference.contains("P")) return true;
             return target.contains("c") || target.contains("i") || (target.contains("K") ^ reference.contains("K")) ||
                     targetPhase.isPSV() ^ REFERENCE_PHASE.isPSV();
@@ -740,7 +739,6 @@ public class RaypathCatalog implements Serializable {
             reflectionCatalogs.add(new ReflectionCatalog(mantleBoundary, PhasePart.SH,
                     computeReflectingRaypaths(mantleBoundary, Phase.create("Sv" + depthString + "S"), computeVsh)));
             System.err.print("\r");
-            WOODHOUSE.clear();
         }
         //inside outercore innercore TODO
 
@@ -754,7 +752,6 @@ public class RaypathCatalog implements Serializable {
         reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.P, computeRaypaths(Phase.PcP, 0, pPcP)));
         reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.SV, computeRaypaths(Phase.SVcS, 0, pSVcS)));
         reflectionCatalogs.add(new ReflectionCatalog(cmb, PhasePart.SH, computeRaypaths(Phase.ScS, 0, pScS)));
-        WOODHOUSE.clear();
         //ICB PKiKP SKiKS
         System.err.print("\rCreating a catalog for ICB");
         double icb = getStructure().innerCoreBoundary();
@@ -762,7 +759,6 @@ public class RaypathCatalog implements Serializable {
         double pPKiKP = loweMostOutercore / getStructure().computeVph(loweMostOutercore);
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.PKiKP, 0, pPKiKP)));
         reflectionCatalogs.add(new ReflectionCatalog(icb, PhasePart.K, computeRaypaths(Phase.SKiKS, 0, pPKiKP)));
-        WOODHOUSE.clear();
         System.err
                 .println("\rCatalogs for boundaries are computed in " + Utilities.toTimeString(System.nanoTime() - t));
     }
@@ -796,10 +792,8 @@ public class RaypathCatalog implements Serializable {
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
         computeANDadd(firstPath);
         catalogOfReflections();
-        WOODHOUSE.clear();
         catalogOfBounceWaves();
         computeDiffraction();
-        WOODHOUSE.clear();
         System.err.println("A catalog was made in " + Utilities.toTimeString(System.nanoTime() - time));
     }
 
@@ -1094,7 +1088,28 @@ public class RaypathCatalog implements Serializable {
         for (ReflectionCatalog reflectionCatalog : reflectionCatalogs)
             candidates.addAll(Arrays
                     .asList(reflectionCatalog.searchPath(targetPhase, eventR, targetDelta, relativeAngle)));
-        return candidates.toArray(new Raypath[0]);
+        return removeDuplicate(candidates);
+    }
+
+    /**
+     * Remove one of duplicate raypaths with rayparameter difference smaller than {@link #MINIMUM_DELTA_P}
+     *
+     * @param originalSet to look into for removing
+     * @return array of raypaths where no duplication.
+     */
+    private static Raypath[] removeDuplicate(Set<Raypath> originalSet) {
+        if (originalSet.size() < 2) return originalSet.toArray(new Raypath[0]);
+        Set<Raypath> cleanSet = new HashSet<>();
+        Raypath[] originalArray = originalSet.toArray(new Raypath[0]);
+        Arrays.sort(originalArray);
+        cleanSet.add(originalArray[0]);
+        Raypath lastAdded = originalArray[0];
+        for (int i = 1; i < originalArray.length; i++)
+            if (MINIMUM_DELTA_P < (originalArray[i].getRayParameter() - lastAdded.getRayParameter())) {
+                cleanSet.add(originalArray[i]);
+                lastAdded = originalArray[i];
+            }
+        return cleanSet.toArray(new Raypath[0]);
     }
 
     /**
