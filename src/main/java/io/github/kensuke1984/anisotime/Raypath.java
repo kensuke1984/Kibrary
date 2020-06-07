@@ -46,10 +46,10 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * <p>
  * TODO when the path partially exists. I have to change drastically the structure of dealing with layers each layer has a phase or not
  * <p>
- * TODO cache eventR phase
+ * TODO cache eventR phase    Tau
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.3b
+ * @version 0.7.4b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -59,9 +59,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     static final double permissibleGapForDiff = 1e-5;
     /**
-     * 2020/2/9
+     * 2020/6/7
      */
-    private static final long serialVersionUID = 296970131282572254L;
+    private static final long serialVersionUID = 3791903712513910094L;
 
     @Override
     public boolean equals(Object o) {
@@ -188,10 +188,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         setTurningRs();
         createMaps();
         computeJeffreysRange();
-        computeTau();
-        computeDelta();
-        computeT();
-        isComputed = true;
+        compute();
     }
 
     /**
@@ -1041,7 +1038,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
         double turningR = getTurningR(pp);
         //Integral interval contains a singular(bounce) point.
-//        if (startR < turningR && turningR < endR) return Double.NaN;
         if (startR + ComputationalMesh.EPS < turningR && turningR < endR) return Double.NaN;
         startR = Math.max(startR, minR);
         endR = Math.min(endR, maxR);
@@ -1050,8 +1046,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
                 radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
         double closestLargerJeffreysBoundaryInMesh =
-                Double.isNaN(jeffreysBoundary) || Math.abs(jeffreysBoundary - endR) < ComputationalMesh.EPS ?
-                        Double.NaN : radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
+                Double.isNaN(jeffreysBoundary) || Math.abs(jeffreysBoundary - endR) < ComputationalMesh.EPS ||
+                        endR < jeffreysBoundary ? Double.NaN :
+                        radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
         double jeffreysDelta = jeffreysDeltaMap.get(pp);
         //index of the mesh point next to startR  (startR < mesh[firstIndex]) TODO redundant? when startR is on mesh
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
@@ -1108,7 +1105,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double turningR = getTurningR(pp);
         //Integral interval contains a singular(bounce) point.
         if (startR + ComputationalMesh.EPS < turningR && turningR < endR) return Double.NaN;
-//        if (startR < turningR && turningR < endR) return Double.NaN;
         startR = Math.max(startR, minR);
         endR = Math.min(endR, maxR);
         double jeffreysBoundary = jeffreysBoundaryMap.get(pp);
@@ -1116,8 +1112,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         double closestSmallerJeffreysBoundaryInMesh = Double.isNaN(jeffreysBoundary) ? Double.NaN :
                 radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition));
         double closestLargerJeffreysBoundaryInMesh =
-                Double.isNaN(jeffreysBoundary) || Math.abs(jeffreysBoundary - endR) < ComputationalMesh.EPS ?
-                        Double.NaN : radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
+                Double.isNaN(jeffreysBoundary) || Math.abs(jeffreysBoundary - endR) < ComputationalMesh.EPS ||
+                        endR < jeffreysBoundary ? Double.NaN :
+                        radii.getEntry(MESH.getNextIndexOf(jeffreysBoundary, partition) + 1);
         double jeffreysT = jeffreysTMap.get(pp);
         //index of the mesh point next to startR  (startR < mesh[firstIndex])//TODO when startR is on mesh
         int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;
@@ -1149,6 +1146,56 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             time += simpson(qT, jeffreysBoundary, closestLargerJeffreysBoundaryInMesh);
         double jeffreys = jeffreysT - jeffreys(qT, pp, startR);
         return time + jeffreys;
+    }
+
+    /**
+     * TODO confirm no problem
+     * <p>
+     * This method computes &tau; with precomputed values. The startR and endR
+     * must be in the section (inner-core, outer-core or mantle).
+     *
+     * @param pp     to compute
+     * @param startR [km] must be a positive number
+     * @param endR   [km] must be a positive number
+     * @return [s] &tau; for rStart &le; r &le; rEnd
+     */
+    private double computeTau(PhasePart pp, double startR, double endR) {
+        if (Double.isNaN(startR + endR) || startR < 0 || endR < 0)
+            throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
+        if (Math.abs(endR - startR) < ComputationalMesh.EPS) return 0;
+        Partition partition = pp.whichPartition();
+        RealVector radii = MESH.getMesh(partition);
+        double minR = radii.getEntry(0);
+        double maxR = radii.getEntry(radii.getDimension() - 1);
+        if (startR < minR - ComputationalMesh.EPS || endR < startR || maxR + ComputationalMesh.EPS < endR)
+            throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
+        double turningR = getTurningR(pp);
+        //Integral interval contains a singular(bounce) point.
+//        if (startR < turningR && turningR < endR) return Double.NaN;
+        if (startR + ComputationalMesh.EPS < turningR && turningR < endR) return Double.NaN;
+        startR = Math.max(startR, minR);
+        endR = Math.min(endR, maxR);
+        //index of the mesh point next to startR  (startR < mesh[firstIndex])
+        int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;//TODO
+        //index of the mesh point next to endR  (mesh[endIndex]<=endR)
+        int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
+
+        DoubleUnaryOperator qTau = r -> WOODHOUSE.computeQTau(pp, RAY_PARAMETER, r);
+
+        // the case where the integral interval is inside the jeffrey interval TODO
+
+        // the case where integral interval is shorter than mesh grid
+        if (endIndexForMemory < firstIndexForMemory) return simpson(qTau, startR, endR);
+
+        double nextREnd = radii.getEntry(endIndexForMemory);
+        //outside the nextREnd
+        double tau = simpson(qTau, nextREnd, endR);
+
+        double[] dTau = dTauMap.computeIfAbsent(pp, this::computeTransientTau);
+        for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
+            tau += dTau[i];
+        return tau + startR == turningR ? criticalTauMap.get(pp) :
+                simpson(qTau, startR, radii.getEntry(firstIndexForMemory));
     }
 
     /**
@@ -1272,57 +1319,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * TODO confirm no problem
-     * <p>
-     * This method computes &tau; with precomputed values. The startR and endR
-     * must be in the section (inner-core, outer-core or mantle).
-     *
-     * @param pp     to compute
-     * @param startR [km] must be a positive number
-     * @param endR   [km] must be a positive number
-     * @return [s] &tau; for rStart &le; r &le; rEnd
-     */
-    private double computeTau(PhasePart pp, double startR, double endR) {
-        if (Double.isNaN(startR + endR) || startR < 0 || endR < 0)
-            throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
-        if (Math.abs(endR - startR) < ComputationalMesh.EPS) return 0;
-        Partition partition = pp.whichPartition();
-        RealVector radii = MESH.getMesh(partition);
-        double minR = radii.getEntry(0);
-        double maxR = radii.getEntry(radii.getDimension() - 1);
-        if (startR < minR - ComputationalMesh.EPS || endR < startR || maxR + ComputationalMesh.EPS < endR)
-            throw new IllegalArgumentException("Invalid input (startR, endR)=(" + startR + ", " + endR + ")");
-        double turningR = getTurningR(pp);
-        //Integral interval contains a singular(bounce) point.
-//        if (startR < turningR && turningR < endR) return Double.NaN;
-        if (startR + ComputationalMesh.EPS < turningR && turningR < endR) return Double.NaN;
-        startR = Math.max(startR, minR);
-        endR = Math.min(endR, maxR);
-        //index of the mesh point next to startR  (startR < mesh[firstIndex])
-        int firstIndexForMemory = MESH.getNextIndexOf(startR, partition) + 1;//TODO
-        //index of the mesh point next to endR  (mesh[endIndex]<=endR)
-        int endIndexForMemory = MESH.getNextIndexOf(endR, partition);
-
-        DoubleUnaryOperator qTau = r -> WOODHOUSE.computeQTau(pp, RAY_PARAMETER, r);
-
-        // the case where the integral interval is inside the jeffrey interval TODO
-
-        // the case where integral interval is shorter than mesh grid
-        if (endIndexForMemory < firstIndexForMemory) return simpson(qTau, startR, endR);
-
-        double nextREnd = radii.getEntry(endIndexForMemory);
-        //outside the nextREnd
-        double tau = simpson(qTau, nextREnd, endR);
-
-        double[] dTau = dTauMap.computeIfAbsent(pp, this::computeTransientTau);
-        for (int i = firstIndexForMemory; i < endIndexForMemory; i++)
-            tau += dTau[i];
-        return tau + startR == turningR ? criticalTauMap.get(pp) :
-                simpson(qTau, startR, radii.getEntry(firstIndexForMemory));
-    }
-
-
-    /**
      * &tau; for critical ranges.
      * a critical range for a phase part is from a bounce point to next mesh grid.
      * If there is no bounce point for a phase part, the value for the pp is NaN.
@@ -1346,8 +1342,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 }
             } else criticalTauMap.put(pp, Double.NaN);
             dTauMap.computeIfAbsent(pp, this::computeTransientTau);
-            tauMap.put(pp, computeTau(pp, Double.isNaN(turningR) ? mesh.getEntry(0) : turningR,
-                    mesh.getEntry(mesh.getDimension() - 1)));
+//            tauMap.put(pp, computeTau(pp, Double.isNaN(turningR) ? mesh.getEntry(0) : turningR,
+//                    mesh.getEntry(mesh.getDimension() - 1))); TODO TAU
+            tauMap.put(pp,Double.NaN);
         });
     }
 
