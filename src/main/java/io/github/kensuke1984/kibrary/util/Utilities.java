@@ -47,9 +47,18 @@ import java.util.zip.ZipInputStream;
  * this contains various useful static methods.
  *
  * @author Kensuke Konishi
- * @version 0.1.10
+ * @version 0.1.11
  */
 public final class Utilities {
+
+    public static void deleteOnExit(Path path) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException ignored) {
+            }
+        }));
+    }
 
     private Utilities() {
     }

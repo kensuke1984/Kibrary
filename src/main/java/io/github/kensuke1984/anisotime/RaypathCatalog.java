@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.12
+ * @version 0.2.13
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -42,6 +42,12 @@ public class RaypathCatalog implements Serializable {
 
     private static Path downloadCatalogZip() throws IOException {
         Path zipPath = Files.createTempFile("piac", ".zip");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                Files.deleteIfExists(zipPath);
+            } catch (IOException ignored) {
+            }
+        }));
         URL website = new URL("https://bit.ly/2rnhOMS");
         JDialog dialog = new JOptionPane("Downloading a catalog", JOptionPane.WARNING_MESSAGE).createDialog(null);
         dialog.setModalityType(Dialog.ModalityType.MODELESS);
@@ -65,11 +71,22 @@ public class RaypathCatalog implements Serializable {
         Files.createDirectories(SHARE_PATH);
         Path zipPath = downloadCatalogZip();
         Path piacTemp = Files.createTempDirectory("piac");
+        Path ipremPath = piacTemp.resolve("iprem.cat");
+        Path premPath = piacTemp.resolve("prem.cat");
+        Path ak135Path = piacTemp.resolve("ak135.cat");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                Files.deleteIfExists(ipremPath);
+                Files.deleteIfExists(premPath);
+                Files.deleteIfExists(ak135Path);
+                Files.deleteIfExists(piacTemp);
+            } catch (IOException ignored) {
+            }
+        }));
         Utilities.extractZip(zipPath, piacTemp);
-        if (!Files.exists(ISO_PREM_PATH)) Files.copy(piacTemp.resolve("iprem.cat"), ISO_PREM_PATH);
+        if (!Files.exists(ISO_PREM_PATH)) Files.copy(ipremPath, ISO_PREM_PATH);
         if (!Files.exists(PREM_PATH)) Files.copy(piacTemp.resolve("prem.cat"), PREM_PATH);
         if (!Files.exists(AK135_PATH)) Files.copy(piacTemp.resolve("ak135.cat"), AK135_PATH);
-        Files.deleteIfExists(zipPath);
     }
 
     /**
