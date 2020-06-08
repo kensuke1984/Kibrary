@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.11
+ * @version 0.2.12
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -51,7 +51,7 @@ public class RaypathCatalog implements Serializable {
         try {
             if (!PIAC_SHA256.equals(Utilities.checksum(zipPath, "SHA-256")))
                 throw new RuntimeException("Downloaded file is broken.");
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException ignored) {
         }
         return zipPath;
     }
@@ -1215,12 +1215,14 @@ public class RaypathCatalog implements Serializable {
             double theta1 = toDelta.applyAsDouble(ray1);
             double theta2 = toDelta.applyAsDouble(ray2);
             if (Double.isNaN(thetaC) || 0 < (theta1 - thetaC) * (theta2 - thetaC)) throw new RuntimeException("STGAI");
-            Raypath rayIn = Math.abs(theta1 - targetDelta) < Math.abs(theta2 - targetDelta) ?
-                    interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, ray1, rayC) :
-                    interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayC, ray2);
-            if (Double.isNaN(toDelta.applyAsDouble(rayIn))) throw new RuntimeException(
-                    "Problem: " + targetPhase + " " + eventR + " " + Math.toDegrees(targetDelta));
-            return rayIn;
+            Raypath ray1C = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, ray1, rayC);
+            Raypath ray2C = interpolateRaypath(targetPhase, eventR, targetDelta, relativeAngle, rayC, ray2);
+            if (Double.isNaN(toDelta.applyAsDouble(ray1C)) && Double.isNaN(toDelta.applyAsDouble(ray2C)))
+                throw new RuntimeException(
+                        "Problem: " + targetPhase + " " + eventR + " " + Math.toDegrees(targetDelta));
+            else if (Double.isNaN(toDelta.applyAsDouble(ray1C))) return ray2C;
+            else if (Double.isNaN(toDelta.applyAsDouble(ray2C))) return ray1C;
+            return Math.abs(theta1 - targetDelta) < Math.abs(theta2 - targetDelta) ? ray1C : ray2C;
         };
         //TODO efficiency
         BinaryOperator<Raypath> findNotNaNPath = (ray, nan) -> {
