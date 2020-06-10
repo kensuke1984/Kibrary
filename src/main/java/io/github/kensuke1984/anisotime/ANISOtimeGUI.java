@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.5b
+ * @version 0.5.5.1b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -253,7 +253,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     raypathList = new ArrayList<>();
                     phaseList = new ArrayList<>(phaseSet);
                     Raypath raypath = new Raypath(mostImportant, structure);
-                    raypath.compute();
                     for (int i = 0; i < phaseList.size(); i++)
                         raypathList.add(raypath);
                     break;
@@ -300,7 +299,6 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
     private void runRayParameterMode() {
         Raypath raypath = new Raypath(mostImportant, structure);
-        raypath.compute();
         List<Raypath> raypaths = new ArrayList<>();
         List<Phase> phases = new ArrayList<>(phaseSet);
 

@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.19.2
+ * @version 0.3.19.3
  */
 final class ANISOtimeCLI {
 
@@ -323,7 +323,6 @@ final class ANISOtimeCLI {
             // When the ray parameter is given
             if (cmd.hasOption("p")) {
                 Raypath raypath = new Raypath(rayParameter, structure);
-                raypath.compute();
                 for (Phase targetPhase : targetPhases) {
                     double delta = Math.toDegrees(raypath.computeDelta(targetPhase, eventR));
                     double time = raypath.computeT(targetPhase, eventR);
@@ -429,7 +428,6 @@ final class ANISOtimeCLI {
             double p1 = catalog.rayParameterByThreePointInterpolate(targetPhase, eventR, Math.toRadians(targetDelta),
                     relativeAngleMode, raypath);
             Raypath raypath1 = new Raypath(p1, raypath.getStructure());
-            raypath1.compute();
             double time1 = raypath1.computeT(targetPhase, eventR);
             double delta1 = Math.toDegrees(raypath1.computeDelta(targetPhase, eventR));
             if (!Double.isNaN(time1)) {
