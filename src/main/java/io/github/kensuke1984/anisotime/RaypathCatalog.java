@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.13
+ * @version 0.2.14
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -415,14 +415,6 @@ public class RaypathCatalog implements Serializable {
     }
 
     /**
-     * @param raypath to compute and add in {@link #raypathList}
-     */
-    private void computeANDadd(Raypath raypath) {
-        raypath.compute();
-        raypathList.add(raypath);
-    }
-
-    /**
      * Computes ray parameters of diffraction phases (Pdiff and Sdiff).
      */
     private void computeDiffraction() {
@@ -435,9 +427,9 @@ public class RaypathCatalog implements Serializable {
         pDiff = new Raypath(p_Pdiff, WOODHOUSE, MESH);
         svDiff = new Raypath(p_SVdiff, WOODHOUSE, MESH);
         shDiff = new Raypath(p_SHdiff, WOODHOUSE, MESH);
-        computeANDadd(pDiff);
-        computeANDadd(svDiff);
-        computeANDadd(shDiff);
+        raypathList.add(pDiff);
+        raypathList.add(svDiff);
+        raypathList.add(shDiff);
     }
 
     /**
@@ -807,7 +799,7 @@ public class RaypathCatalog implements Serializable {
         long time = System.nanoTime();
         System.err.println("Computing a catalog. If you use the same model, the catalog is not computed anymore.");
         Raypath firstPath = new Raypath(0, WOODHOUSE, MESH);
-        computeANDadd(firstPath);
+        raypathList.add(firstPath);
         catalogOfReflections();
         catalogOfBounceWaves();
         computeDiffraction();
@@ -843,18 +835,14 @@ public class RaypathCatalog implements Serializable {
         if (endP < startP)
             throw new IllegalArgumentException("Input ray parameters are invalid. " + startP + " " + endP);
         Raypath startRaypath = new Raypath(startP, WOODHOUSE, MESH);
-        startRaypath.compute();
         Raypath endRaypath = new Raypath(endP, WOODHOUSE, MESH);
-        endRaypath.compute();
         double earthRadius = getStructure().earthRadius();
         //If delta for the firstRaypath is NaN then the first P for not NaN delta returns and vice versa.
         BiFunction<Double, Double, Raypath> getFirstRaypath = (firstP, deltaP) -> {
             Raypath firstRaypath = new Raypath(firstP, WOODHOUSE, MESH);
-            firstRaypath.compute();
             boolean firstIsNaN = Double.isNaN(firstRaypath.computeDelta(phase, earthRadius));
             for (double p = firstP + deltaP; startP <= p && p <= endP; p += deltaP) {
                 Raypath nextR = new Raypath(p, WOODHOUSE, MESH);
-                nextR.compute();
                 if (!firstIsNaN && Double.isNaN(nextR.computeDelta(phase, earthRadius))) return nextR;
                 if (firstIsNaN && !Double.isNaN(nextR.computeDelta(phase, earthRadius))) return nextR;
             }
@@ -872,9 +860,7 @@ public class RaypathCatalog implements Serializable {
         }
         if (Double.isNaN(endRaypath.computeDelta(phase, getStructure().earthRadius()))) {
             Raypath startClose = new Raypath(startRaypath.getRayParameter() + MINIMUM_DELTA_P, WOODHOUSE, MESH);
-            startClose.compute();
             Raypath endClose = new Raypath(endRaypath.getRayParameter() - MINIMUM_DELTA_P, WOODHOUSE, MESH);
-            endClose.compute();
             if (Double.isNaN(startClose.computeDelta(phase, earthRadius))) return new Raypath[2];
             if (!Double.isNaN(endClose.computeDelta(phase, earthRadius))) return new Raypath[]{startRaypath, endClose};
         }
@@ -905,7 +891,6 @@ public class RaypathCatalog implements Serializable {
                 if (closeEnough.test(raypath, higher)) continue;
                 supplementList.add(centerRayparameterRaypath.apply(raypath, higher));
             }
-            supplementList.forEach(Raypath::compute);
         } while (catalog.addAll(supplementList));
         raypathList.addAll(catalog);
         return catalog;
@@ -1034,7 +1019,6 @@ public class RaypathCatalog implements Serializable {
         PolynomialCurveFitter fitter = PolynomialCurveFitter.create(raypathSet.size() - 1);
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(deltaP.toList()));
         Raypath ray = new Raypath(pf.value(targetDelta), WOODHOUSE, MESH);
-        ray.compute();
         return ray;
     }
 
@@ -1121,8 +1105,10 @@ public class RaypathCatalog implements Serializable {
         Arrays.sort(originalArray);
         cleanSet.add(originalArray[0]);
         Raypath lastAdded = originalArray[0];
+        BiPredicate<Raypath, Raypath> isDifferent =
+                (r1, r2) -> MINIMUM_DELTA_P < (r2.getRayParameter() - r1.getRayParameter()) / 10;
         for (int i = 1; i < originalArray.length; i++)
-            if (MINIMUM_DELTA_P < (originalArray[i].getRayParameter() - lastAdded.getRayParameter())) {
+            if (isDifferent.test(lastAdded, originalArray[i])) {
                 cleanSet.add(originalArray[i]);
                 lastAdded = originalArray[i];
             }

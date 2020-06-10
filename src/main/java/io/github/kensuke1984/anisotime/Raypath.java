@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase    Tau
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.4b
+ * @version 0.7.4.1b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -143,10 +143,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * The boundary is on mesh. If the pp has no bounce point, the value is NaN.
      */
     private transient Map<PhasePart, Double> jeffreysBoundaryMap;
-    /**
-     * If this method has &Delta; and T for partitions.
-     */
-    private boolean isComputed;
 
     /**
      * The source is on the surface. PREM is used.
@@ -188,7 +184,9 @@ public class Raypath implements Serializable, Comparable<Raypath> {
         setTurningRs();
         createMaps();
         computeJeffreysRange();
-        compute();
+        computeTau();
+        computeDelta();
+        computeT();
     }
 
     /**
@@ -284,23 +282,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             panel.addPath(x, y);
         }
         return panel;
-    }
-
-    /**
-     * Compute travel times and deltas in layers. This method must be done
-     * before {@link #computeDelta(Phase, double)} or
-     * {@link #computeT(Phase, double)}. If once this method is called, it does
-     * not compute anymore in the future.
-     */
-    void compute() {
-        if (isComputed) return;
-        synchronized (this) {
-            if (isComputed) return;
-            computeTau();
-            computeDelta();
-            computeT();
-            isComputed = true;
-        }
     }
 
     /**
@@ -714,7 +695,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * exist or anything wrong, returns Double.NaN
      */
     public double computeDelta(Phase phase, double eventR) {
-        if (!isComputed) throw new RuntimeException("Not computed yet.");
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
         //TODO because of computeSourceSideDelta
@@ -735,7 +715,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * @return [s] T (travel time) for the phase
      */
     public double computeT(Phase phase, double eventR) {
-        if (!isComputed) throw new RuntimeException("Not computed yet.");
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
 //        if (!exists(eventR, phase)) return Double.NaN;
@@ -1231,7 +1210,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     private transient Map<PhasePart, double[]> dTauMap;
 
     double computeTau(Phase phase, double eventR) {
-        if (!isComputed) throw new RuntimeException("Not computed yet.");
         if (getStructure().earthRadius() < eventR || eventR < getStructure().coreMantleBoundary())
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
         PathPart[] parts = phase.getPassParts();
@@ -1385,8 +1363,6 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      * this is computed, an exception happens.
      */
     public void printInfo() {
-        if (!isComputed)
-            throw new RuntimeException("Not computed yet. It must be computed before printing information.");
         System.out.println("#Phase:Turning points[km] Jeffrey boundary[km] Propagation delta[deg] time[s]");
         Arrays.stream(PhasePart.values()).forEach(pp -> System.out.println(
                 pp + ": " + Precision.round(turningRMap.get(pp), 3) + " " + jeffreysBoundaryMap.get(pp) + " " +
