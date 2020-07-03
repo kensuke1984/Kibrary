@@ -2,8 +2,7 @@
 
 ![version][version-image]
 [![release][release-image]][release]
-[![aLicense][alicense-image]][alicense]
-[![oLicense][olicense-image]][olicense]
+[![gLicense][gplicense-image]][gplicense]
 [![Java8][Java8-image]][Java8]
 
 Library for waveform inversion.   
@@ -99,6 +98,8 @@ Last updated Jul 3, 2020
 [olicense]: https://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
 
 [gplicense]: https://www.gnu.org/licenses/gpl-3.0.html
+[gplicense-image]: http://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat
+
 
 [ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
