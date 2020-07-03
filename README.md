@@ -42,7 +42,7 @@ If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/softw
  % kins=$(mktemp) && wget -q -O $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 ```
 If you use an old version of downloader ([curl](https://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
-the download may fail. In that case, you must update it, otherwise you can download the [binary release of Kibrary][kibrary]. 
+the download may fail. In that case, you must update it, otherwise you can download the [binary release of Kibrary][kibraryjar]. 
 
 The necessary/bundled libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
