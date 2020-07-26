@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.20
+ * @version 0.3.21
  */
 final class ANISOtimeCLI {
 
@@ -314,9 +314,11 @@ final class ANISOtimeCLI {
             }
 
             // only create a catalog
-            if (!cmd.hasOption("p") && !cmd.hasOption("deg")) throw new RuntimeException(
-                    "You must specify a rayparameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
-
+            if (!cmd.hasOption("p") && !cmd.hasOption("deg")) {
+                if (cmd.hasOption("mod")) return;
+                throw new RuntimeException(
+                        "You must specify a rayparameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
+            }
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
             Files.createDirectories(outDir);
 
