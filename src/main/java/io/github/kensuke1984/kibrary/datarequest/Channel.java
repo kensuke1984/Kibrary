@@ -9,7 +9,7 @@ import java.time.temporal.ChronoUnit;
 /**
  * BREAKFASTシステムへのデータリクエストの際のデータ部分
  * <p>
- * millisecond があいまい 強制的に0にする 各データのchannel は "1 BH?"に固定
+ * millisecond is forcibly 0
  * <p>
  * STA NN YYYY MM DD HH MM SS.TTTT YYYY MM DD HH MM SS.TTTT #_CH CH1 CH2 CHn LI
  * <p>
@@ -22,7 +22,7 @@ import java.time.temporal.ChronoUnit;
  * For OHP request, TTTT is now only one digit.
  *
  * @author kensuke
- * @version 0.0.5.2
+ * @version 0.0.6
  * @see <a href=http://www.iris.edu/dms/nodes/dmc/manuals/breq_fast>official
  * guide</a>
  */
@@ -50,18 +50,19 @@ public class Channel {
      * end time
      */
     private final LocalDateTime END;
-    /**
-     * 指定するチャンネル数（ワイルドカードは一つとして数える）
-     */
-    private final int channelNumber = 1;
-    private final String[] channel = {"BH?"};
+    private final String[] CHANNELS;
 
     public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime) {
-        super();
+        this(stationName, networkName, startTime, endTime, new String[]{"BH?"});
+    }
+
+    public Channel(String stationName, String networkName, LocalDateTime startTime, LocalDateTime endTime,
+                   String[] channels) {
         STATION = stationName;
         NETWORK = networkName;
         START = startTime;
         END = endTime;
+        CHANNELS = channels;
     }
 
     /**
@@ -109,8 +110,8 @@ public class Channel {
 
     @Override
     public String toString() {
-        return STATION + " " + NETWORK + " " + toLine(START) + " " + toLine(END) + " " + channelNumber + " " +
-                String.join(" ", channel);
+        return STATION + " " + NETWORK + " " + toLine(START) + " " + toLine(END) + " " + CHANNELS.length + " " +
+                String.join(" ", CHANNELS);
     }
 
 }

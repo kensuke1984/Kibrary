@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.20
+ * @version 0.3.22
  */
 final class ANISOtimeCLI {
 
@@ -314,9 +314,11 @@ final class ANISOtimeCLI {
             }
 
             // only create a catalog
-            if (!cmd.hasOption("p") && !cmd.hasOption("deg")) throw new RuntimeException(
-                    "You must specify a rayparameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
-
+            if (!cmd.hasOption("p") && !cmd.hasOption("deg")) {
+                if (cmd.hasOption("mod")) return;
+                throw new RuntimeException(
+                        "You must specify a rayparameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
+            }
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
             Files.createDirectories(outDir);
 
@@ -384,13 +386,11 @@ final class ANISOtimeCLI {
                 System.err.println(e.getMessage());
             }
         } finally {
-            if (cmd.hasOption("s")) try {
-                Utilities.sendMail(io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS, "ANISOtime problem",
-                        "Input: " + INPUT, "If you use your original structure, please attach it.\n",
-                        "OS: " + System.getProperty("os.name"), "Java VERSION: " + System.getProperty("java.version"));
-            } catch (Exception e2) {
-                System.err.println("Sorry could not send an Email. Please inform me of your situation.");
-                System.err.println("Email address: " + io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS);
+            if (cmd.hasOption("s")) {
+                System.err.println("Please send an Email to " + io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS +
+                        ", which contains the below information");
+                System.err.println("Input: " + INPUT + ", OS: " + System.getProperty("os.name") + ", Java VERSION: " +
+                        System.getProperty("java.version") + ", ANISOtime: " + ANISOtime.VERSION);
             }
         }
     }

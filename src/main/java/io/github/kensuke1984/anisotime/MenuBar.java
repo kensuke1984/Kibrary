@@ -1,29 +1,19 @@
 package io.github.kensuke1984.anisotime;
 
-import org.apache.commons.io.IOUtils;
-
 import javax.swing.*;
-import java.awt.*;
-import java.io.BufferedOutputStream;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.5.4
+ * @version 0.1.6
  */
 final class MenuBar extends JMenuBar {
 
     /**
-     * 2017/11/4
+     * 2020/7/26
      */
-    private static final long serialVersionUID = -523430659401469839L;
+    private static final long serialVersionUID = -3385046821286061454L;
     private final ANISOtimeGUI GUI;
 
     private JMenuItem jMenuItemRayparameterMode;
@@ -95,14 +85,9 @@ final class MenuBar extends JMenuBar {
         jMenuItemEpicentralDistanceMode.addActionListener(e -> GUI.setMode(ComputationMode.EPICENTRAL_DISTANCE));
 
         jMenuItemAbout.addActionListener(e -> About.main(null));
-        jMenuItemMail.addActionListener(e -> {
-            try {
-                Desktop.getDesktop().mail(new URI("mailto:kensuke@earth.sinica.edu.tw"));
-            } catch (Exception e2) {
-                JOptionPane.showMessageDialog(null,
-                        "<html>Can't launch a mailer. Please send Email to <a href>kensuke@earth.sinica.edu.tw</a>.");
-            }
-        });
+        jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
+                "<html>Please send an Email to <a href>" + io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS +
+                        "</a>."));
 
     }
 }
