@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Earth utility.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
+ * @version 0.1.1.3
  */
 public final class Earth {
     /**
@@ -130,18 +130,18 @@ public final class Earth {
     }
 
     /**
-     * Compute epicentral distance between loc1 and loc2
+     * Compute epicentral distance between pos1 and pos2
      *
-     * @param loc1 {@link HorizontalPosition} of a point
-     * @param loc2 {@link HorizontalPosition} of a point
-     * @return [rad] epicentral distance between loc1 and loc2
+     * @param pos1 {@link HorizontalPosition} of a point
+     * @param pos2 {@link HorizontalPosition} of a point
+     * @return [rad] epicentral distance between pos1 and pos2
      */
-    public static double getEpicentralDistance(HorizontalPosition loc1, HorizontalPosition loc2) {
+    public static double getEpicentralDistance(HorizontalPosition pos1, HorizontalPosition pos2) {
 
-        double theta1 = loc1.getTheta();
-        double theta2 = loc2.getTheta();
-        double phi1 = loc1.getPhi();
-        double phi2 = loc2.getPhi();
+        double theta1 = pos1.getTheta();
+        double theta2 = pos2.getTheta();
+        double phi1 = pos1.getPhi();
+        double phi2 = pos2.getPhi();
         // cos a = a*b/|a|/|b|
         double cosAlpha = FastMath.sin(theta1) * FastMath.sin(theta2) * FastMath.cos(phi1 - phi2) +
                 FastMath.cos(theta1) * FastMath.cos(theta2);
@@ -299,7 +299,6 @@ public final class Earth {
                 "startLatitude: " + startLatitude + " must be [-90, endLatitude]. endLatitude: " + endLatitude +
                         " must be [startLatitude, 90].");
 
-        // System.out.println(startLatitude+" "+endLatitude);
         Ellipse el0 = new Ellipse(startA, startA - startA * FLATTENING);
         Ellipse el1 = new Ellipse(endA, endA - endA * FLATTENING);
         double theta0 = toGeocentric(FastMath.toRadians(startLatitude));
