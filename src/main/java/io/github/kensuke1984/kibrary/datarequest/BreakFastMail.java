@@ -14,7 +14,7 @@ import java.util.Objects;
  * BREQ_FAST request Mail
  *
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.1
  */
 public class BreakFastMail {
 
@@ -35,9 +35,8 @@ public class BreakFastMail {
     private static volatile DefaultAuthenticator authenticator;
 
     private static synchronized DefaultAuthenticator createAuthenticator() throws InterruptedException {
-        return Objects.nonNull(authenticator) ?
-                new DefaultAuthenticator(Environment.getGmail(), Utilities.getPassword(Environment.getGmail())) :
-                authenticator;
+        return Objects.nonNull(authenticator) ? authenticator :
+                new DefaultAuthenticator(Environment.getGmail(), Utilities.getPassword(Environment.getGmail()));
     }
 
     private static void sendIris(String[] lines) throws Exception {
