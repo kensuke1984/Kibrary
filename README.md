@@ -2,8 +2,7 @@
 
 ![version][version-image]
 [![release][release-image]][release]
-[![aLicense][alicense-image]][alicense]
-[![oLicense][olicense-image]][olicense]
+[![gLicense][gplicense-image]][gplicense]
 [![Java8][Java8-image]][Java8]
 
 Library for waveform inversion.   
@@ -43,7 +42,7 @@ If you have [curl](http://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/softw
  % kins=$(mktemp) && wget -q -O $kins https://bit.ly/2YUfEB6 && /bin/sh $kins && rm -f $kins
 ```
 If you use an old version of downloader ([curl](https://curl.haxx.se/) or [GNU Wget](https://www.gnu.org/software/wget/)), 
-the download may fail. In that case, you must update it, otherwise you can download the [binary release of Kibrary][kibrary]. 
+the download may fail. In that case, you must update it, otherwise you can download the [binary release of Kibrary][kibraryjar]. 
 
 The necessary/bundled libraries are  
 [*Apache Commons CLI*][cli], [*Apache Commons Email*][email], [*Apache Commons IO*][io],
@@ -84,8 +83,8 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 
 ## Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
-Licensed under [Apache-2][alicense] and [Oracle BSD License][olicense]  
-Last updated Nov 5, 2019
+Licensed under [GNU General Public License v3][gplicense]  
+Last updated Jul 3, 2020
 
 
 [release-image]:https://img.shields.io/badge/release-Garuda-pink.svg
@@ -97,6 +96,10 @@ Last updated Nov 5, 2019
 
 [olicense-image]: http://img.shields.io/badge/license-Oracle-blue.svg?style=flat
 [olicense]: https://www.oracle.com/technetwork/licenses/bsd-license-1835287.html
+
+[gplicense]: https://www.gnu.org/licenses/gpl-3.0.html
+[gplicense-image]: http://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat
+
 
 [ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
