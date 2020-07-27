@@ -4,9 +4,9 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderData;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Identifier of an event listed in Global CMT project.
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
  * This class is <b>IMMUTABLE</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.1.1
+ * @version 0.1.1.2
  * @see <a href=http://www.globalcmt.org/> Global CMT project official page</a>
  */
 public class GlobalCMTID implements Comparable<GlobalCMTID> {
@@ -36,13 +36,14 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     private volatile NDK ndk;
 
     /**
-     * id名でインスタンスを作る if theres no ID for idStr, throw {@link RuntimeException}
+     * Create an instance for an input
+     * If no ID exists for the input, throw {@link RuntimeException}
      *
      * @param idStr global cmt id
      */
     public GlobalCMTID(String idStr) {
         if (isGlobalCMTID(idStr)) id = idStr;
-        else throw new IllegalArgumentException(idStr + " is an invalid id.");
+        else throw new IllegalArgumentException(idStr + " does not exist.");
     }
 
     /**
@@ -54,7 +55,6 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
     }
 
     /**
-     * Global CMT ID かどうか
      *
      * @param string global cmt id
      * @return if the string is contained in global cmt catalog
@@ -71,7 +71,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
         if (args.length == 0) throw new IllegalArgumentException("Usage: [Global CMT IDs]");
         for (String idString : args) {
             if (!isGlobalCMTID(idString)) {
-                System.err.println(idString + " is not a global CMT ID.");
+                System.err.println(idString + " does not exist.");
                 continue;
             }
 
@@ -92,7 +92,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
      * @return {@link GlobalCMTData} written in catalogFile
      */
     public static Set<GlobalCMTData> readCatalog(Path catalogFile) {
-        return GlobalCMTCatalog.read(catalogFile).stream().collect(Collectors.toSet());
+        return new HashSet<>(GlobalCMTCatalog.read(catalogFile));
     }
 
     /**
@@ -133,7 +133,7 @@ public class GlobalCMTID implements Comparable<GlobalCMTID> {
      * if there is a certain existing ID, then returns the {@link GlobalCMTData}
      * for the ID if not null will be returned.
      *
-     * @return 当該idのEventを返す idが存在しないならnullを返す
+     * @return GlobalCMTData for this
      */
     public GlobalCMTData getEvent() {
         if (ndk == null) synchronized (this) {
