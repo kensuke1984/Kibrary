@@ -22,14 +22,14 @@ import java.util.logging.Logger;
  */
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
-    public static final String CODENAME = "Garuda";
-    public static final String VERSION = "0.4.8.17";
+    public static final String CODENAME = "Shiva";
+    public static final String VERSION = "0.4.9";
     private static final String line;
 
     /**
-     * 2019/11/22
+     * 2020/7/27
      */
-    private static final long serialVersionUID = -4011742888258139705L;
+    private static final long serialVersionUID = 5648703402071570271L;
 
     static {
         try {
