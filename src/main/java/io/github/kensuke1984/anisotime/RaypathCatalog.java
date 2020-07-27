@@ -7,8 +7,6 @@ import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.apache.commons.math3.util.Precision;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -16,7 +14,6 @@ import java.io.Serializable;
 import java.net.URL;
 import java.nio.file.*;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 import java.util.*;
 import java.util.function.*;
 import java.util.regex.Matcher;
@@ -30,7 +27,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.14
+ * @version 0.2.14.1
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -49,11 +46,7 @@ public class RaypathCatalog implements Serializable {
             }
         }));
         URL website = new URL("https://bit.ly/2rnhOMS");
-        JDialog dialog = new JOptionPane("Downloading a catalog", JOptionPane.WARNING_MESSAGE).createDialog(null);
-        dialog.setModalityType(Dialog.ModalityType.MODELESS);
-        dialog.setVisible(true);
         Utilities.download(website, zipPath, true);
-        dialog.dispose();
         try {
             if (!PIAC_SHA256.equals(Utilities.checksum(zipPath, "SHA-256")))
                 throw new RuntimeException("Downloaded file is broken.");
