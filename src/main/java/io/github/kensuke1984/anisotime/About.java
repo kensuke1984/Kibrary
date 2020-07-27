@@ -12,23 +12,18 @@ import static javax.swing.UIManager.*;
  * Information about ANISOtime package.
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @version 0.0.5
  * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
  */
 final class About extends javax.swing.JFrame {
 
     /**
-     * 2019/11/21
+     * 2020/7/27
      */
-    private static final long serialVersionUID = 1987478866667550198L;
+    private static final long serialVersionUID = -5905860950780042944L;
     private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
-            ") Copyright \u00a9 2015-2020 Kensuke Konishi, Anselme Bourgeaud, Kenji Kawai and Robert J. Geller\n\n" +
-            "Licensed under the Apache License, Version 2.0 (the \"License\")\n" +
-            "You may not use this file except in compliance with the License.\n" +
-            "You may obtain a copy of the License at\n\n" + "\thttp://www.apache.org/licenses/LICENSE-2.0\n\n" +
-            "Unless required by applicable law or agreed to in writing, " +
-            "software distributed under the License is distributed on an \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n" +
-            "See the License for the specific language governing permissions and limitations under the License.";
+            ")\nCopyright \u00a9 2015-2020 Kensuke Konishi, Anselme Bourgeaud, Kenji Kawai and Robert J. Geller\n\n" +
+            "This program is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
     private JScrollPane jScrollPane1;
 
     private About() {
