@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.22
+ * @version 0.3.23
  */
 final class ANISOtimeCLI {
 
@@ -123,6 +123,7 @@ final class ANISOtimeCLI {
     }
 
     private static void setBooleanOptions() {
+        options.addOption("n", false, "Outputs information even for not existing raypaths. (default:false)");
         options.addOption("SV", false, "Computes travel time for SV. (default:SH)");
         options.addOption("SH", false, "Computes travel time for SH. (default:SH)");
         options.addOption("help", "Shows this message. This option has the highest priority.");
@@ -317,7 +318,7 @@ final class ANISOtimeCLI {
             if (!cmd.hasOption("p") && !cmd.hasOption("deg")) {
                 if (cmd.hasOption("mod")) return;
                 throw new RuntimeException(
-                        "You must specify a rayparameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
+                        "You must specify a ray parameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
             }
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
             Files.createDirectories(outDir);
@@ -344,7 +345,8 @@ final class ANISOtimeCLI {
             for (Phase targetPhase : targetPhases) {
                 Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta, relativeAngleMode);
                 if (raypaths.length == 0) {
-                    System.err.println("No raypaths satisfying the input condition: " + targetPhase);
+                    if (cmd.hasOption('n'))
+                        System.err.println("No raypaths satisfying the input condition: " + targetPhase);
                     continue;
                 }
                 if (targetPhase.isDiffracted()) {
@@ -352,10 +354,10 @@ final class ANISOtimeCLI {
                     double deltaOnBoundary =
                             Math.toDegrees(targetDelta - raypaths[0].computeDelta(targetPhase, eventR));
                     if (deltaOnBoundary < 0) {
-                        System.err.println(targetPhase + " would have longer distance than " + Precision
-                                .round(Math.toDegrees(raypath.computeDelta(targetPhase, eventR)), decimalPlaces) +
-                                "\u00B0 (Your input: " + Precision.round(Math.toDegrees(targetDelta), decimalPlaces) +
-                                "\u00B0)");
+                        if (cmd.hasOption('n')) System.err.println(targetPhase + " would have longer distance than " +
+                                Precision.round(Math.toDegrees(raypath.computeDelta(targetPhase, eventR)),
+                                        decimalPlaces) + "\u00B0 (Your input: " +
+                                Precision.round(Math.toDegrees(targetDelta), decimalPlaces) + "\u00B0)");
                         continue;
                     }
                     targetPhase = Phase.create(targetPhase.toString() + deltaOnBoundary, targetPhase.isPSV());
