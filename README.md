@@ -84,12 +84,12 @@ If you have any comments or questions, please feel free to contact me by [E-mail
 ## Copyright and Licence
 Copyright © 2015 Kensuke Konishi  
 Licensed under [GNU General Public License v3][gplicense]  
-Last updated Jul 3, 2020
+Last updated Jul 28, 2020
 
 
-[release-image]:https://img.shields.io/badge/release-Garuda-pink.svg
-[release]:https://en.wikipedia.org/wiki/Garuda
-[version-image]:https://img.shields.io/badge/version-0.4.8-yellow.svg
+[release-image]:https://img.shields.io/badge/release-Shiva-pink.svg
+[release]:https://en.wikipedia.org/wiki/Shiva
+[version-image]:https://img.shields.io/badge/version-0.4.9-yellow.svg
 
 [alicense-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [alicense]: https://www.apache.org/licenses/LICENSE-2.0
