@@ -1,51 +1,23 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.cli.ParseException;
+import edu.sc.seis.TauP.TauModelException;
+import edu.sc.seis.TauP.TauPException;
+import io.github.kensuke1984.kibrary.external.TauPPhase;
+import io.github.kensuke1984.kibrary.external.TauP_Time;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Kensuke Konishi
- * @version 0.0.2
+ * @version 0.0.3
  */
 class RaypathCatalogTest {
-    private static void createCheck() throws IOException, ParseException {
-        RaypathCatalog prem = RaypathCatalog.iprem();
-        for (Raypath raypath : prem.getRaypaths()) {
-//            double eventR = 6371 - 100;
-//            System.out.println(raypath.getRayParameter()+" "+Math.toDegrees(raypath.computeDelta(Phase.P,eventR))+" "+
-//                    raypath.computeT(Phase.P,eventR));
-
-        }
-        double eventR = 6371 - 10;
-        Phase phase = Phase.create("P");
-        Phase phase1 = Phase.create("Pv220P");
-        Phase phase2 = Phase.create("Pv400P");
-        Phase phase3 = Phase.create("Pv670P");
-        long t = System.nanoTime();
-        Raypath[] candidates = prem.searchPath(phase, 6361, Math.toRadians(20), false);
-        System.out.println(Utilities.toTimeString(System.nanoTime() - t));
-        System.out.println(candidates.length);
-        for (Raypath candidate : candidates) {
-//            double d = candidate.computeDelta(phase, 6271);
-//            if (!Double.isNaN(d))
-            System.out.println("y");
-            System.out.println(
-                    Math.toDegrees(candidate.computeDelta(phase, eventR)) + " " + candidate.computeT(phase, eventR));
-            System.out.println(
-                    Math.toDegrees(candidate.computeDelta(phase1, eventR)) + " " + candidate.computeT(phase1, eventR));
-            System.out.println(
-                    Math.toDegrees(candidate.computeDelta(phase2, eventR)) + " " + candidate.computeT(phase2, eventR));
-            System.out.println(
-                    Math.toDegrees(candidate.computeDelta(phase3, eventR)) + " " + candidate.computeT(phase3, eventR));
-        }
-//        System.out.println((prem.searchPath(phase, 6371, Math.toRadians(20), false)[0].computeT(phase, 6371)));
-//        System.exit(0);w
-        //261.6192175422948 94.01490821552146 798.1703394543351
-        // 337.7542692276028 73.18767642655352 691.0307993093318
-//478.85555933255523 39.05726961249951 431.16559569122245
-        RaypathCatalog isoPrem = RaypathCatalog.prem();
+    private static void createCheck() {
+        RaypathCatalog prem = RaypathCatalog.prem();
+        RaypathCatalog isoPrem = RaypathCatalog.iprem();
         RaypathCatalog ak135 = RaypathCatalog.ak135();
     }
 
@@ -53,25 +25,143 @@ class RaypathCatalogTest {
     private RaypathCatalogTest() {
     }
 
-    private static void kennetFig2() throws ParseException {
-//        Raypath raypath = new Raypath(100)
-        ANISOtimeCLI.main("-deg 50 -mod iprem".split("\\s+"));
+
+    private static void checkPhases() throws TauPException, IOException, TauModelException {
+        double[] eventRs = {6371, 6271, 6171, 6071, 5971, 5871, 5771, 5671};
+        double[] deltas = {5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180};
+        Phase[] phases =
+                {Phase.p, Phase.s, Phase.pP, Phase.sS, Phase.P, Phase.S, Phase.create("PS"), Phase.create("SP"),
+                        Phase.create("PP"), Phase.create("SS"), Phase.PcP, Phase.ScS, Phase.PKP, Phase.create("PKKP"),
+                        Phase.SKS, Phase.create("SKKS"), Phase.PKiKP, Phase.SKiKS, Phase.PKIKP, Phase.SKIKS,};
+        for (Phase phase : phases) {
+            System.out.println("\r" + phase);
+            for (double eventR : eventRs) {
+                System.out.print("\r" + eventR);
+                for (double delta : deltas) {
+                    System.out.print(" " + delta);
+                    ipremCheck(phase, eventR, delta);
+                }
+            }
+        }
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
-        createCheck();
-//        kennetFig2();
-//        test1();
+    private static void ipremCheck(Phase phase, double eventR, double delta)
+            throws TauPException, IOException, TauModelException {
+        Raypath[] raypaths = inIPREM(phase, eventR, delta);
+        Set<TauPPhase> taup = taup(phase, eventR, delta);
+        taup.removeIf(t -> t.getPuristDistance() != delta);
+        if (raypaths.length != taup.size())
+            System.err.println("Different number of paths: " + phase + " " + eventR + " " + delta);
+    }
+
+
+    // TODO PKKKKP PCPSCS PS PPPP
+    private static void extremeCheck() throws TauPException, IOException, TauModelException {
+        Phase phase = Phase.create("pP");
+        double eventR = 6371;
+        double delta = 50;
+        ipremCheck(phase, eventR, delta);
+    }
+
+    /**
+     * @param phase
+     * @param eventR
+     * @param delta  [deg]
+     */
+    private static void showDeltaTime(Raypath raypath, Phase phase, double eventR, double delta) {
+        Phase p = RaypathCatalog.getActualTargetPhase(raypath, phase, eventR, Math.toRadians(delta), false);
+        double d = Math.toDegrees(raypath.computeDelta(p, eventR));
+        double rayP = raypath.getRayParameter() / 180 * Math.PI;
+        double t = raypath.computeT(p, eventR);
+        System.out.println(p + " " + rayP + " " + d + " " + t);
+    }
+
+
+    /**
+     * @param phase  target phase
+     * @param eventR [km]
+     * @param delta  [deg]
+     * @return raypaths in the iprem catalog
+     */
+    private static Raypath[] inIPREM(Phase phase, double eventR, double delta) {
+//        RaypathCatalog.iprem().debugSearch(phase, eventR, Math.toRadians(delta), false);
+//        System.exit(0);
+        return RaypathCatalog.iprem().searchPath(phase, eventR, Math.toRadians(delta), false);
+    }
+
+    /**
+     * @param phase  target phase
+     * @param eventR [km]
+     * @param delta  [deg]
+     * @return raypaths in the prem catalog
+     */
+    private static Raypath[] inPREM(Phase phase, double eventR, double delta) {
+        return RaypathCatalog.prem().searchPath(phase, eventR, Math.toRadians(delta), false);
+    }
+
+    /**
+     * @param phase  target phase
+     * @param eventR [km]
+     * @param delta  [deg]
+     * @return raypaths in the ak135 catalog
+     */
+    private static Raypath[] inAK135(Phase phase, double eventR, double delta) {
+        return RaypathCatalog.ak135().searchPath(phase, eventR, Math.toRadians(delta), false);
+    }
+
+    private static Set<TauPPhase> taup(Phase phase, double eventR, double epicentralDistance)
+            throws TauPException, IOException, TauModelException {
+        return TauP_Time.getTauPPhase(eventR, epicentralDistance, new HashSet<>(Arrays.asList(phase)));
+    }
+
+    private static Set<TauPPhase> taup(double eventR, double epicentralDistance, Set<Phase> phaseSet)
+            throws TauPException, IOException, TauModelException {
+        return TauP_Time.getTauPPhase(eventR, epicentralDistance, phaseSet);
+    }
+
+    private static void test() throws TauPException, IOException, TauModelException {
+        double[] eventRs = {5671};
+        double[] deltas = {20,};
+        Phase[] phases = {Phase.create("SP"),};
+        for (Phase phase : phases) {
+            System.out.println("\r" + phase);
+            for (double eventR : eventRs) {
+                System.out.print("\r" + eventR);
+                for (double delta : deltas) {
+                    System.out.print(" " + delta);
+                    ipremCheck(phase, eventR, delta);
+                }
+            }
+        }
         System.exit(0);
     }
 
-    private static void test1() throws ParseException {
-double delta = Math.toRadians(108.5);
-double r = 6371-50.2;
-ANISOtimeCLI.main("-deg 108.5 -h 50.2 -mod iprem".split("\\s+"));
-//RaypathCatalog.iprem().searchPath(Phase.S)
+
+    public static void main(String[] args) {
     }
 
+    //TODO K J I
+    private static String addDepth(String name, double[] pvRadii, double[] svRadii) {
+        if (name.contains("v") || name.contains("c") || name.contains("K"))
+            throw new RuntimeException("UNIKUSPEKUTEDDO");
+        int ip = 0;
+        int is = 0;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == 'P') {
+                double r = pvRadii[ip++];
+                if (r == 6371) sb.append("P");
+                else sb.append("Pv").append(r).append("P");
+            }
+            if (c == 'S') {
+                double r = svRadii[is++];
+                if (r == 6371) sb.append("S");
+                else sb.append("Sv").append(r).append("S");
+            }
+        }
+        return sb.toString();
+    }
 
 
 }
