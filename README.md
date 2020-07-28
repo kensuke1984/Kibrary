@@ -64,15 +64,14 @@ To solve dependencies, ```build.gradle``` is prepared. If you do not have ```gra
 ```bash
  % cd /path/to/install
  #If you have curl installed 
- % kins=$(mktemp) && curl -sL -o $kins https://bit.ly/380vUbe && /bin/sh $kins && rm -f $kins
+ % kins=$(mktemp) && curl -sL -o $kins https://bit.ly/380vUbe && tar xf $kins && rm -f $kins
  #else if wget is installed, try
- % kins=$(mktemp) && wget -q -O $kins https://bit.ly/38OvUbe && tar -xf $kins && rm -f $kins
+ % kins=$(mktemp) && wget -q -O $kins https://bit.ly/38OvUbe && tar xf $kins && rm -f $kins
  % ./gradlew
  % ./gradlew build
- % java -jar build/libs/Kibrary-0.4.5-all.jar
 ```
 
-This makes an all-in-one(dependencies) jar file (```Kibrary-0.4.5-all.jar```).
+This makes an all-in-one(dependencies) jar file (```kibrary-x.x.jar```) in the ```/path/to/install/build/libs```.
 
 ## Usage
 Please see [Javadoc][javadoc]. [Wiki][wiki] is still under construction.
