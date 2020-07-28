@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.23
+ * @version 0.3.24
  */
 final class ANISOtimeCLI {
 
@@ -106,7 +106,7 @@ final class ANISOtimeCLI {
             }
 
         for (String o : args)
-            if (o.equals("-v") || o.equals("--version") || o.equals("-version")) {
+            if (o.equals("--version") || o.equals("-version")) {
                 About.main(null);
                 return;
             }
@@ -123,7 +123,7 @@ final class ANISOtimeCLI {
     }
 
     private static void setBooleanOptions() {
-        options.addOption("n", false, "Outputs information even for not existing raypaths. (default:false)");
+        options.addOption("v", "verbose", false, "Outputs information even for not existing raypaths. (default:false)");
         options.addOption("SV", false, "Computes travel time for SV. (default:SH)");
         options.addOption("SH", false, "Computes travel time for SH. (default:SH)");
         options.addOption("help", "Shows this message. This option has the highest priority.");
@@ -131,7 +131,7 @@ final class ANISOtimeCLI {
         options.addOption(null, "rayp", false, "Shows ray parameters.");
         options.addOption(null, "time", false, "Shows travel times.");
         options.addOption(null, "delta", false, "Shows epicentral distances.");
-        options.addOption("v", "version", false,
+        options.addOption(null, "version", false,
                 "Shows information of the tool. This option has the 2nd highest priority.");
         options.addOption("s", "send", false,
                 "If you find any problem with a set of commands, add this argument to send the situation to Kensuke Konishi.");
@@ -180,8 +180,6 @@ final class ANISOtimeCLI {
                 throw new RuntimeException(e);
             }
         } else {
-            if (!cmd.hasOption("mod"))
-                throw new RuntimeException("You must specify a velocity model (e.g. -mod prem).");
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
             if (structure.equals(VelocityStructure.iprem())) catalog = RaypathCatalog.iprem();
@@ -330,7 +328,7 @@ final class ANISOtimeCLI {
                     double delta = Math.toDegrees(raypath.computeDelta(targetPhase, eventR));
                     double time = raypath.computeT(targetPhase, eventR);
                     if (Double.isNaN(delta)) {
-                        System.err.println(targetPhase + " does not exist.");
+                        if (cmd.hasOption('v')) System.err.println(targetPhase + " does not exist.");
                         continue;
                     }
                     double rayParameterDegree = Math.toRadians(rayParameter);
@@ -345,7 +343,7 @@ final class ANISOtimeCLI {
             for (Phase targetPhase : targetPhases) {
                 Raypath[] raypaths = catalog.searchPath(targetPhase, eventR, targetDelta, relativeAngleMode);
                 if (raypaths.length == 0) {
-                    if (cmd.hasOption('n'))
+                    if (cmd.hasOption('v'))
                         System.err.println("No raypaths satisfying the input condition: " + targetPhase);
                     continue;
                 }
@@ -354,7 +352,7 @@ final class ANISOtimeCLI {
                     double deltaOnBoundary =
                             Math.toDegrees(targetDelta - raypaths[0].computeDelta(targetPhase, eventR));
                     if (deltaOnBoundary < 0) {
-                        if (cmd.hasOption('n')) System.err.println(targetPhase + " would have longer distance than " +
+                        if (cmd.hasOption('v')) System.err.println(targetPhase + " would have longer distance than " +
                                 Precision.round(Math.toDegrees(raypath.computeDelta(targetPhase, eventR)),
                                         decimalPlaces) + "\u00B0 (Your input: " +
                                 Precision.round(Math.toDegrees(targetDelta), decimalPlaces) + "\u00B0)");
