@@ -101,7 +101,7 @@ Last updated Jul 28, 2020
 
 [ANISOtime]: http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.html
 
-[kibraryjar]: https://bit.ly/3f4gYrG
+[kibraryjar]: https://bit.ly/305JHrE
 
 [Java8-image]:https://img.shields.io/badge/dependencies-JRE%208-brightgreen.svg
 [Java8]:https://www.java.com/
