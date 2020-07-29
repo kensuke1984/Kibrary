@@ -18,7 +18,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Taoyuan";
 
-    static final String VERSION = "1.3.8.2b";
+    static final String VERSION = "1.3.8.3b";
 
     private ANISOtime() {
     }
@@ -36,6 +36,10 @@ final class ANISOtime {
             return;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } catch (OutOfMemoryError oe) {
+            System.err.println("Sorry, this machine does not have enough memory to run ANISOtime.\n" +
+                    "Please try again on a more modern machine with more memory.");
+            return;
         }
         else if (GraphicsEnvironment.isHeadless()) {
             System.err.println("No graphical environment.. please use CLI.");
