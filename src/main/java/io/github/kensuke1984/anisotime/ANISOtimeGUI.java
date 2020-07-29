@@ -21,13 +21,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.5.1b
+ * @version 0.5.6b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2020/5/23
+     * 2020/7/29
      */
-    private static final long serialVersionUID = 878103862454733039L;
+    private static final long serialVersionUID = -3642019220774480755L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -194,14 +194,11 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 }
                 return;
             case 1:
-                for (String phase : phaseSet)
-                    this.phaseSet.add(Phase.create(phase, true));
+                phaseSet.forEach(p -> this.phaseSet.add(Phase.create(p, true)));
                 return;
             case 2:
-                for (String phase : phaseSet) {
-                    Phase p = Phase.create(phase, false);
-                    if (!p.isPSV()) this.phaseSet.add(p);
-                }
+                phaseSet.stream().map(Phase::create).
+                        filter(p -> !p.isPSV()).forEach(this.phaseSet::add);
                 return;
             default:
                 throw new RuntimeException("anekusupekutedo");
@@ -287,14 +284,23 @@ class ANISOtimeGUI extends javax.swing.JFrame {
      */
     private void buttonComputeActionPerformed(ActionEvent e) {
         createNewRaypathTabs();
+        Thread t;
         switch (mode) {
             case EPICENTRAL_DISTANCE:
-                new Thread(this::runEpicentralDistanceMode).start();
+                t = new Thread(this::runEpicentralDistanceMode);
                 break;
             case RAY_PARAMETER:
-                new Thread(this::runRayParameterMode).start();
+                t = new Thread(this::runRayParameterMode);
                 break;
+            default:
+                throw new RuntimeException("ANIKUSUPEkuted");
         }
+        t.setUncaughtExceptionHandler((thread, error) -> {
+            System.err.println("\nSorry, this machine does not have enough memory to run ANISOtime.\n" +
+                    "Please try again on a more modern machine with more memory.");
+            System.exit(71);
+        });
+        t.start();
     }
 
     private void runRayParameterMode() {
@@ -330,12 +336,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     continue;
                 }
                 double deltaOnBoundary = Math.toDegrees(epicentralDistance - raypath.computeDelta(phase, eventR));
-                if (deltaOnBoundary < 0) {
-                    System.err.println(phase + " would have longer distance than " +
-                            Math.toDegrees(raypath.computeDelta(phase, eventR)) + " (Your input:" +
-                            Math.toDegrees(epicentralDistance) + ")");
-                    continue;
-                }
+                if (deltaOnBoundary < 0) continue;
                 raypathList.add(raypath);
                 phaseList.add(Phase.create(phase.toString() + deltaOnBoundary));
             }
@@ -364,26 +365,20 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         boolean added = false;
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
-            Phase phase = getCatalog()
+            Phase phase = RaypathCatalog
                     .getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
             double travelTime = raypath.computeT(phase, eventR);
             if (Double.isNaN(epicentralDistance)) continue;
             String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
             double depth = raypath.getStructure().earthRadius() - eventR;
-            if (delta == null) {
+            double time = travelTime;
+            if (!phase.isDiffracted())
+                time = getCatalog().travelTimeByThreePointInterpolate(phase, eventR, delta[i], false, raypath);
+            if (!Double.isNaN(time)) {
                 added = true;
-                resultWindow.addRow(epicentralDistance, depth, title, travelTime, raypath.getRayParameter());
+                resultWindow.addRow(epicentralDistance, depth, title, time, raypath.getRayParameter());
                 showRayPath(raypath, phase);
-            } else {
-                double time = travelTime;
-                if (!phase.isDiffracted())
-                    time = getCatalog().travelTimeByThreePointInterpolate(phase, eventR, delta[i], false, raypath);
-                if (!Double.isNaN(time)) {
-                    added = true;
-                    resultWindow.addRow(epicentralDistance, depth, title, time, raypath.getRayParameter());
-                    showRayPath(raypath, phase);
-                }
             }
         }
         try {

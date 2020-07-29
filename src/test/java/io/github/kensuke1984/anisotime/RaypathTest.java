@@ -10,11 +10,9 @@ import org.apache.commons.cli.ParseException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -37,7 +35,7 @@ class RaypathTest {
         try {
             Set<TauPPhase> tauPPhase = TauP_Time.
                     getTauPPhase(eventR, Math.toDegrees(anisoDelta), phaseSet);
-            if (tauPPhase.size() == 0) return Double.NaN;
+            if (tauPPhase.isEmpty()) return Double.NaN;
             double anisoTime = raypath.computeT(phase, eventR);
             double[] tauptimes = tauPPhase.stream().mapToDouble(TauPPhase::getTravelTime).toArray();
             double difference = anisoTime;
@@ -256,14 +254,6 @@ class RaypathTest {
             }
 //            lineSKS.add(raypath2Ratio(Phase.SKS, rayP, deltaP));
         }
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pkiikp27.txt"), linePKiKP);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/skiiks27.txt"), lineSKiKS);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pcp27.txt"), linePcP);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/scs27.txt"), lineScS);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pkp27.txt"), linePKP);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/sks27.txt"), lineSKS);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/pkikp27.txt"), linePKIKP);
-        Files.write(Paths.get("/home/kensuke/workspace/kibrary/anisotime/taup/skiks27.txt"), lineSKIKS);
 
     }
 
@@ -299,9 +289,7 @@ class RaypathTest {
     }
 
     private static void recordSection() throws ParseException {
-        String[] cmd =
-                "-rs 30,40,0.1 -ph S -SV -mod prem -o /home/kensuke/workspace/kibrary/anisotime/record_section/rs.txt"
-                        .split("\\s+");
+        String[] cmd = "-rs 30,40,0.1 -ph S -SV -mod prem -o /tmp/rs.txt".split("\\s+");
         ANISOtimeCLI.main(cmd);
 
     }
@@ -332,17 +320,6 @@ class RaypathTest {
 
     static final VelocityStructure iprem = VelocityStructure.iprem();
 
-    private static void compareTauP() {
-//        Raypath raypath = new Raypath(230, iprem);
-//        compareTauP(6371, Phase.ScS, raypath);
-//        compareTauP_PcP();
-//        compareTauP_PKP();
-//        compareTauP_ScS();
-        System.out.println("#delta[deg] abs(aniso-taup) [s]");
-        compareTauP_PKIKP();
-
-    }
-
     private static void write(Raypath ray, Path path, OpenOption... options) throws IOException {
         try (ObjectOutputStream o = new ObjectOutputStream(Files.newOutputStream(path, options))) {
             o.writeObject(ray);
@@ -361,71 +338,6 @@ class RaypathTest {
         Raypath raypath1  = new Raypath(896.5881432173587);
         Raypath raypath2  = new Raypath( 1103.895751953125);
         System.out.println(raypath1.getTurningR(PhasePart.SV)+" "+raypath2.getTurningR(PhasePart.SV));
-    }
-
-
-
-
-
-    public static void compareAnalytical() throws IOException {
-        double rayparameter = 10.;
-
-        PrintWriter pwD =
-                new PrintWriter(Paths.get("/home/kensuke/secondDisk/workspace/anisotime/analyt/distance.dat").toFile());
-        PrintWriter pwT = new PrintWriter(
-                Paths.get("/home/kensuke/secondDisk/workspace/anisotime/analyt/error_analytical.dat").toFile());
-
-        pwT.println("# dr (km), err_scs_sh (%), err_scs_sv (%), err_pcp (%)");
-        pwD.println("# dr (km), d_scs_sh (deg), d_scs_sv (deg), d_pcp (deg)");
-
-        PolynomialStructure homogen = PolynomialStructure.HOMOGEN;
-        double r0 = 5000.;
-        double rho0 = homogen.getRho(r0);
-        double N0 = homogen.getN(1);
-        double L0 = homogen.getL(1);
-        double A0 = homogen.getA(1);
-        double C0 = homogen.getC(1);
-        double F0 = homogen.getF(1);
-        System.out.println(A0 + " " + C0 + " " + F0 + " " + L0 + " " + N0 + " " + rho0);
-
-        //mesh
-        for (int i = 0; i < 20; i++) {
-            double dr = 1000 * Math.exp(-i / 4.);
-            System.out.println(i + " " + dr);
-            ComputationalMesh mesh = new ComputationalMesh(homogen, dr, dr, dr);
-
-            Raypath raypath = new Raypath(rayparameter, homogen, mesh);
-            double eventR = 6371;
-
-            double delta_scs_sh = Math.toDegrees(raypath.computeDelta(Phase.ScS, eventR));
-            double t_scs_sh = raypath.computeT(Phase.ScS, eventR);
-
-            double delta_scs_sv = Math.toDegrees(raypath.computeDelta(Phase.create("ScS", true), eventR));
-            double t_scs_sv = raypath.computeT(Phase.create("ScS", true), eventR);
-
-            double delta_pcp = Math.toDegrees(raypath.computeDelta(Phase.PcP, eventR));
-            double t_pcp = raypath.computeT(Phase.PcP, eventR);
-
-            double tAnal_scs_sh = computeTanalyticalHomogenSH(rayparameter, 3480., 6371.) * 2;
-            double tAnal_scs_sv = computeTanalyticalHomogenSV(rayparameter, 3480., 6371.) * 2;
-            double tAnal_pcp = computeTanalyticalHomogenP(rayparameter, 3480., 6371.) * 2;
-
-            System.out.println("ScS (SH): " + delta_scs_sh + " " + t_scs_sh + " " + tAnal_scs_sh);
-            System.out.println("ScS (SV): " + delta_scs_sv + " " + t_scs_sv + " " + tAnal_scs_sv);
-            System.out.println("PcP: " + delta_pcp + " " + t_pcp + " " + tAnal_pcp);
-
-            double e_t_scs_sh = Math.abs(t_scs_sh - tAnal_scs_sh) / tAnal_scs_sh;
-            double e_t_scs_sv = Math.abs(t_scs_sv - tAnal_scs_sv) / tAnal_scs_sv;
-            double e_t_pcp = Math.abs(t_pcp - tAnal_pcp) / tAnal_pcp;
-
-
-            pwD.println(dr + " " + delta_scs_sh + " " + delta_scs_sv + " " + delta_pcp);
-            pwT.println(dr + " " + e_t_scs_sh + " " + e_t_scs_sv + " " + e_t_pcp);
-            pwD.flush();
-            pwT.flush();
-        }
-        pwT.close();
-        pwD.close();
     }
 
     public static double computeTanalyticalHomogenSH(double rayparameter, double rmin, double rmax) {
