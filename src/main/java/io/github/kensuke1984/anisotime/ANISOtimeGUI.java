@@ -9,6 +9,8 @@ import javax.swing.*;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.UIManager.LookAndFeelInfo;
 import java.awt.event.ActionEvent;
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.FutureTask;
@@ -21,13 +23,13 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.6b
+ * @version 0.5.7b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
-     * 2020/7/29
+     * 2020/7/31
      */
-    private static final long serialVersionUID = -3642019220774480755L;
+    private static final long serialVersionUID = 4937482734562562702L;
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
@@ -211,8 +213,9 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     private void buttonSavePerformed(ActionEvent evt) {
         FutureTask<Path> askOutPath = new FutureTask<>(() -> {
             JFileChooser fileChooser = new JFileChooser(System.getProperty("user.dir"));
-            fileChooser.setDialogTitle("Output the path?");
-            fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fileChooser.setDialogTitle("Choose a folder or input a name for a new folder");
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            fileChooser.setSelectedFile(new File("anisotime_output"));
             int action = fileChooser.showOpenDialog(null);
             if (action == JFileChooser.CANCEL_OPTION || action == JFileChooser.ERROR_OPTION) return null;
             return fileChooser.getSelectedFile().toPath();
@@ -260,6 +263,11 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             try {
                 outputDirectory = askOutPath.get();
                 if (outputDirectory == null) return;
+                if (Files.isRegularFile(outputDirectory)) {
+                    JOptionPane.showMessageDialog(null, "Please choose a folder or input a new folder name.");
+                    return;
+                }
+                Files.createDirectories(outputDirectory);
                 if (raypathList.size() != phaseList.size()) throw new RuntimeException("UNEXPECTED");
                 for (int i = 0; i < raypathList.size(); i++) {
                     String name = phaseList.get(i).isPSV() ? phaseList.get(i) + "_PSV" : phaseList.get(i) + "_SH";
