@@ -27,20 +27,15 @@ final class ANISOtime {
 
     static final String CODENAME = "Taoyuan";
 
-    static final String VERSION = "1.3.8.5b";
+    static final String VERSION = "1.3.8.6b";
 
     private ANISOtime() {
     }
 
-    //anisotime.bat
-    private static final String WINDOWS_SCRIPT_URL;
     //anisotime (shell script)
-    private static final String UNIX_SCRIPT_URL;
-
-    static {
-        WINDOWS_SCRIPT_URL = "https://bit.ly/2QUnqJr";
-        UNIX_SCRIPT_URL = "https://bit.ly/2Xdq5QI";
-    }
+    private static final String UNIX_SCRIPT_URL = "https://bit.ly/2Xdq5QI";
+    //anisotime.bat
+    private static final String WINDOWS_SCRIPT_URL = "https://bit.ly/2QUnqJr";
 
     /**
      * @param args the command line arguments
@@ -87,13 +82,12 @@ final class ANISOtime {
 
     private static void downloadANISOtime() throws IOException, NoSuchAlgorithmException, URISyntaxException {
         Path localPath = Paths.get(ANISOtime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        if (Files.isDirectory(localPath))
-            return;
+        if (Files.isDirectory(localPath) || localPath.toString().contains("kibrary")) return;
         String localSum = Utilities.checksum(localPath, "SHA-256");
-        Path path = Utilities.download(new URL(System.getProperty("os.name").contains("Windows") ? WINDOWS_SCRIPT_URL : UNIX_SCRIPT_URL));
+        Path path = Utilities.download(
+                new URL(System.getProperty("os.name").contains("Windows") ? WINDOWS_SCRIPT_URL : UNIX_SCRIPT_URL));
         String cloudSum = Utilities.checksum(path, "SHA-256");
-        if (localSum.equals(cloudSum))
-            return;
+        if (localSum.equals(cloudSum)) return;
         Files.move(path, localPath.resolveSibling("latest_anisotime"), StandardCopyOption.REPLACE_EXISTING);
         try {
             JOptionPane.showMessageDialog(null, "Software update is found. ANISOtime restarts.");
