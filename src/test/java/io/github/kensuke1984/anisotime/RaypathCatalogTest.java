@@ -15,12 +15,21 @@ import java.util.Set;
  * @version 0.0.3
  */
 class RaypathCatalogTest {
-    private static void createCheck() {
+    private static void readCheck() {
         RaypathCatalog prem = RaypathCatalog.prem();
         RaypathCatalog isoPrem = RaypathCatalog.iprem();
         RaypathCatalog ak135 = RaypathCatalog.ak135();
     }
 
+    private static void createCheck() {
+        try {
+            RaypathCatalog.main("prem".split(" "));
+            RaypathCatalog.main("iprem".split(" "));
+            RaypathCatalog.main("ak135".split(" "));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private RaypathCatalogTest() {
     }
@@ -136,8 +145,17 @@ class RaypathCatalogTest {
         System.exit(0);
     }
 
+    private static void debugPKJKP() {
+        RaypathCatalog iprem = RaypathCatalog.iprem();
+        Phase pkjkp = Phase.create("PKJKP");
+        double delta = Math.toRadians(170);
+    }
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws TauPException, IOException, TauModelException {
+//        debugPKJKP();
+//        readCheck();
+        checkPhases();
     }
 
     //TODO K J I

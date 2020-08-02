@@ -13,7 +13,8 @@ import java.security.NoSuchAlgorithmException;
 
 class ANISOtimeTest {
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException, URISyntaxException {
-        downloadANISOtime();
+//        downloadANISOtime();
+        ANISOtime.main("-mod prem -ph PKJKP -rs 180,200,1 -o /tmp/rctmp".split(" "));
 //        System.out.println(Complex.class.getProtectionDomain().getCodeSource().getLocation());
     }
 
