@@ -13,6 +13,7 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -335,12 +336,40 @@ class RaypathTest {
     public static void main(String[] args)
             throws IOException, ParseException, TauModelException, TauPException, ClassNotFoundException {
 //        compareTauP();
-        Raypath raypath1  = new Raypath(896.5881432173587);
-        Raypath raypath2  = new Raypath( 1103.895751953125);
-        System.out.println(raypath1.getTurningR(PhasePart.SV)+" "+raypath2.getTurningR(PhasePart.SV));
+        debugPKJKP();
     }
 
-    public static double computeTanalyticalHomogenSH(double rayparameter, double rmin, double rmax) {
+
+    private static void debugPKJKP() throws IOException {
+//        Raypath good = new Raypath(45.29);
+        Raypath good = new Raypath(68.29);
+        Raypath bad = new Raypath(79.29);
+        Phase pkjkp = Phase.create("PKJKP");
+        double eventR = 6371;
+        double goodtheta = good.computeDelta(pkjkp, eventR);
+        double badtheta = bad.computeDelta(pkjkp, eventR);
+        System.out.println(Math.toDegrees(goodtheta));
+        System.out.println(Math.toDegrees(badtheta));
+//        bad.debug();
+//        System.exit(0);
+        double[][] badXY = bad.getRoute(pkjkp, eventR);
+//        System.exit(0);
+        double[][] goodXY = good.getRoute(pkjkp, eventR);
+        System.out.println(goodXY.length + " " + badXY.length);
+        List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12000; i++) {
+            double goodX = goodXY[i][0];
+            double goodY = goodXY[i][1];
+            double badX = badXY[i][0];
+            double badY = badXY[i][1];
+            lines.add(goodX + " " + goodY + " " + badX + " " + badY);
+        }
+
+
+        Files.write(Paths.get("/tmp/paths.txt"), lines);
+    }
+
+    private static double computeTanalyticalHomogenSH(double rayparameter, double rmin, double rmax) {
         PolynomialStructure homogen = PolynomialStructure.HOMOGEN;
         double r0 = 5000.;
         double rho0 = homogen.getRho(r0);

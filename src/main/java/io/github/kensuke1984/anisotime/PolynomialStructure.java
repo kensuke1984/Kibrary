@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
  * Outer-core must have a value of Q<sub>&mu;</sub> =-1
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.1.2.1
+ * @version 0.1.3
  */
 public class PolynomialStructure implements VelocityStructure {
 
@@ -244,6 +244,7 @@ public class PolynomialStructure implements VelocityStructure {
     public double iTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
         for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
+            if (innerCoreBoundary() < STRUCTURE.getRMinOf(i)) continue;
             PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
@@ -280,6 +281,7 @@ public class PolynomialStructure implements VelocityStructure {
     public double jvTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
         for (int i = STRUCTURE.getNzone() - 1; i > -1; i--) {
+            if (innerCoreBoundary() < STRUCTURE.getRMinOf(i)) continue;
             PolynomialFunction pvr = STRUCTURE.getVsvOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
@@ -304,6 +306,7 @@ public class PolynomialStructure implements VelocityStructure {
     public double kTurningR(double p) {
         PolynomialFunction pFunction = new PolynomialFunction(new double[]{p});
         for (int i = STRUCTURE.getNzone() - 1; -1 < i; i--) {
+            if (coreMantleBoundary() < STRUCTURE.getRMinOf(i)) continue;
             PolynomialFunction pvr = STRUCTURE.getVphOf(i).multiply(pFunction).add(RADIUS_SUBTRACTION); // pv-r=0
             LinearEquation eq = new LinearEquation(pvr);
             double r = findTurningR(i, eq);
