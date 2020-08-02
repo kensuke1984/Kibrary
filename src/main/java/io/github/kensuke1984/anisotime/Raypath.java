@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase    Tau
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.4.1b
+ * @version 0.7.5b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -775,8 +775,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     }
 
     /**
-     * <p>
-     * route [i] is a set of radius[i][0], theta[i][1], T[i][2].<br>
+     * route[i] is a set of radius[i][0], theta[i][1], T[i][2].<br>
      * Note that the i-th theta indicates the &Delta; [rad] between the i-th point and
      * epicenter. T is the same. 0 th point is epicenter.
      * radius, theta and T are in [km], [rad] and [s], respectively.
@@ -961,7 +960,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     private double jeffreys(DoubleUnaryOperator dXdr, PhasePart pp, double endR) {
         double turningR = turningRMap.get(pp);
-        if (Math.abs(endR - turningR) <= ComputationalMesh.EPS) return 0;
+        if (Math.abs(endR - turningR) <= 5 * ComputationalMesh.EPS) return 0;
         DoubleFunction<Double> rToY = r -> dXdr.applyAsDouble(r) * drdx(pp, r);
         double rCenter = (endR + turningR) / 2;
         double modifiedR = rCenter + (toX(pp, endR) / 2 - toX(pp, rCenter)) * drdx(pp, rCenter);

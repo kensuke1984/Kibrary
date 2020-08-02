@@ -27,14 +27,14 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.14.1
+ * @version 0.2.15
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
     /**
-     * 2020/6/7
+     * 2020/8/2
      */
-    private static final long serialVersionUID = -845119778834636455L;
+    private static final long serialVersionUID = 1261342672467429092L;
     private static final String PIAC_SHA256 = "2cfb7c327c74b7e22133e59742a45cef186912bfd3d41fc6993ae7a15beeddb9";
 
     private static Path downloadCatalogZip() throws IOException {
@@ -87,30 +87,42 @@ public class RaypathCatalog implements Serializable {
      * The catalog computes so densely as any adjacent raypath pairs has smaller gap
      * than (&delta;&Delta;) in P, PcP, S and ScS.
      * Computation mesh in each part is (inner-core, outer-core and mantle), respectively.
+     * If the input is just 'prem', 'iprem' or 'ak135', this renews a catalog for the input.
      *
      * @param args [model file (prem, iprem, ak135 or a polynomial file only now)] [&delta;&Delta; (deg)] [inner-core]
-     *             [outer-core] [mantle] intervals
+     *             [outer-core] [mantle] intervals, [prem, iprem, ak135] for renew a standard catalog.
      * @throws IOException if any
      */
     public static void main(String[] args) throws IOException {
-        if (args.length != 6) throw new IllegalArgumentException(
-                "Usage: [model name, polynomial file] [\u03b4\u0394 (deg)] [inner-core] [outer-core] [mantle]");
+        if (args.length != 1 && args.length != 6) throw new IllegalArgumentException(
+                "Usage: [model name, polynomial file] [\u03b4\u0394 (deg)] [inner-core] [outer-core] [mantle], or [prem, iprem, ak135]");
         VelocityStructure structure;
+        Path catalogPath;
         switch (args[0]) {
             case "prem":
             case "PREM":
                 structure = VelocityStructure.prem();
+                catalogPath = PREM_PATH;
                 break;
             case "iprem":
             case "iPREM":
                 structure = VelocityStructure.iprem();
+                catalogPath = ISO_PREM_PATH;
                 break;
             case "ak135":
             case "AK135":
                 structure = VelocityStructure.ak135();
+                catalogPath = AK135_PATH;
                 break;
             default:
                 structure = new PolynomialStructure(Paths.get(args[0]));
+                catalogPath = null;
+        }
+        if (args.length == 1) {
+            if (Objects.isNull(catalogPath)) throw new IllegalArgumentException(
+                    "Usage: [model name, polynomial file] [\u03b4\u0394 (deg)] [inner-core] [outer-core] [mantle], or [prem, iprem, ak135]");
+            createAndWrite(catalogPath, structure);
+            return;
         }
         double dDelta = Math.toRadians(Double.parseDouble(args[1]));
         ComputationalMesh mesh =
@@ -647,7 +659,7 @@ public class RaypathCatalog implements Serializable {
             String reference = REFERENCE_PHASE.toString();
             String target = targetPhase.toString();
             //TODO more effectively
-            if (reference.contains("I") ^ target.contains("I")) return true;
+            if (reference.contains("I") ^ (target.contains("I") || target.contains("J"))) return true;
             if (reference.contains("P") && (!target.contains("P") && !target.contains("p"))) return true;
             if (reference.contains("S") && (!target.contains("S") && !target.contains("s"))) return true;
             if (target.contains("S") && target.contains("P") && reference.contains("P")) return true;

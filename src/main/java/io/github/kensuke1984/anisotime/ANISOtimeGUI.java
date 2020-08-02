@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.7b
+ * @version 0.5.8b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
     /**
@@ -304,6 +304,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 throw new RuntimeException("ANIKUSUPEkuted");
         }
         t.setUncaughtExceptionHandler((thread, error) -> {
+            error.printStackTrace();
             System.err.println("\nSorry, this machine does not have enough memory to run ANISOtime.\n" +
                     "Please try again on a more modern machine with more memory.");
             System.exit(71);
@@ -350,9 +351,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             }
         }
 
-        if (raypathList.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No raypaths found.");
-        } else {
+        if (raypathList.isEmpty()) JOptionPane.showMessageDialog(null, "No raypaths found.");
+        else {
             double[] delta = new double[raypathList.size()];
             Arrays.fill(delta, epicentralDistance);
             showResult(delta, raypathList, phaseList);
@@ -373,7 +373,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
         boolean added = false;
         for (int i = 0; i < phaseList.size(); i++) {
             Raypath raypath = raypathList.get(i);
-            Phase phase = RaypathCatalog
+            Phase phase = Objects.isNull(delta) ? phaseList.get(i) : RaypathCatalog
                     .getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
             double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
             double travelTime = raypath.computeT(phase, eventR);
@@ -381,8 +381,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
             double depth = raypath.getStructure().earthRadius() - eventR;
             double time = travelTime;
-            if (!phase.isDiffracted())
-                time = getCatalog().travelTimeByThreePointInterpolate(phase, eventR, delta[i], false, raypath);
+            if (!phase.isDiffracted()) time = getCatalog().travelTimeByThreePointInterpolate(phase, eventR,
+                    Objects.isNull(delta) ? epicentralDistance : delta[i], false, raypath);
             if (!Double.isNaN(time)) {
                 added = true;
                 resultWindow.addRow(epicentralDistance, depth, title, time, raypath.getRayParameter());
@@ -395,6 +395,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 resultWindow.setColor(0);
                 raypathWindow.selectPath(0);
             });
+            else JOptionPane.showMessageDialog(null, "No raypaths found.");
         } catch (Exception e) {
             e.printStackTrace();
         }
