@@ -10,7 +10,7 @@ class ANISOtimeCLITest {
     private ANISOtimeCLITest(){}
 
     public static void main(String[] args) throws ParseException {
-        String line = "-h 50 -mod ak135 -deg 150";
+        String line = "-h 50 -mod /mnt/ntfs/kensuke/workspace/anisotime/nd/miasp91_aniso.nd -deg 150";
         ANISOtimeCLI.main(line.split("\\s+"));
     }
 }
