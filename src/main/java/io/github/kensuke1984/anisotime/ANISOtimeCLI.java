@@ -187,6 +187,7 @@ final class ANISOtimeCLI {
             else if (structure.equals(VelocityStructure.ak135())) catalog = RaypathCatalog.ak135();
             else {
                 ComputationalMesh mesh = ComputationalMesh.simple(structure);
+                System.out.println("jij");
                 catalog = RaypathCatalog.computeCatalog(structure, mesh, RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
             }
         }
@@ -306,7 +307,7 @@ final class ANISOtimeCLI {
             hasConflict();
 
             setParameters();
-
+            System.out.println("kokko");
             if (cmd.hasOption("rs")) {
                 printRecordSection();
                 return;
@@ -470,12 +471,10 @@ final class ANISOtimeCLI {
             try {
                 return new PolynomialStructure(modelPath);
             } catch (Exception e) {
-                e.printStackTrace();
             }
             try {
                 return new NamedDiscontinuityStructure(modelPath);
             } catch (Exception e) {
-                e.printStackTrace();
             }
             throw new RuntimeException("Input model file is invalid.");
         }

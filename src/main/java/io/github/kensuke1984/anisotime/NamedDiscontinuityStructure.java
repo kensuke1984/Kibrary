@@ -1,6 +1,5 @@
 package io.github.kensuke1984.anisotime;
 
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -8,14 +7,14 @@ import java.util.Arrays;
  * Named discontinuity structure
  *
  * @author Kensuke Konishi
- * @version 0.0.7.4
+ * @version 0.1.0
  */
 class NamedDiscontinuityStructure implements VelocityStructure {
 
     /**
-     * 2020/5/3
+     * 2020/8/5
      */
-    private static final long serialVersionUID = 2958179761423002041L;
+    private static final long serialVersionUID = -2013057761520479103L;
     io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
     private NamedDiscontinuityStructure() {
@@ -39,13 +38,21 @@ class NamedDiscontinuityStructure implements VelocityStructure {
         return Arrays.stream(boundaries).distinct().toArray();
     }
 
+    /**
+     * @param rayParameter for the raypath
+     * @param a            a of the Bullen law
+     * @param b            b of the Bullen law
+     * @return r [km] for the bounce point
+     */
+    private static double computeTurningR(double rayParameter, double a, double b) {
+        return Math.pow(1 / (a * rayParameter), 1 / (b - 1));
+    }
+
 
     @Override
     public double shTurningR(double rayParameter) {
         for (int i = structure.getNzone() - 1; 0 <= i; i--) {
-            double vsA = structure.getVsA(i);
-            double vsB = structure.getVsB(i);
-            double r = Math.pow(1 / (vsA * rayParameter), 1 / (vsB - 1));
+            double r = computeTurningR(rayParameter, structure.getVshA(i), structure.getVshB(i));
             if (coreMantleBoundary() <= r && structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
                 return r;
         }
@@ -55,9 +62,7 @@ class NamedDiscontinuityStructure implements VelocityStructure {
     @Override
     public double jhTurningR(double rayParameter) {
         for (int i = structure.getNzone() - 1; 0 <= i; i--) {
-            double vsA = structure.getVsA(i);
-            double vsB = structure.getVsB(i);
-            double r = Math.pow(1 / (vsA * rayParameter), 1 / (vsB - 1));
+            double r = computeTurningR(rayParameter, structure.getVshA(i), structure.getVshB(i));
             if (r <= innerCoreBoundary() && structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
                 return r;
         }
@@ -66,20 +71,28 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 
     @Override
     public double jvTurningR(double rayParameter) {
-        return jhTurningR(rayParameter);
+        for (int i = structure.getNzone() - 1; 0 <= i; i--) {
+            double r = computeTurningR(rayParameter, structure.getVsvA(i), structure.getVsvB(i));
+            if (r <= innerCoreBoundary() && structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
+                return r;
+        }
+        return Double.NaN;
     }
 
     @Override
     public double svTurningR(double rayParameter) {
-        return shTurningR(rayParameter);
+        for (int i = structure.getNzone() - 1; 0 <= i; i--) {
+            double r = computeTurningR(rayParameter, structure.getVsvA(i), structure.getVsvB(i));
+            if (coreMantleBoundary() <= r && structure.getBoundary(i) <= r && r <= structure.getBoundary(i + 1))
+                return r;
+        }
+        return Double.NaN;
     }
 
     @Override
     public double pTurningR(double rayParameter) {
         for (int i = structure.getNzone() - 1; 0 <= i; i--) {
-            double vpA = structure.getVpA(i);
-            double vpB = structure.getVpB(i);
-            double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
+            double r = computeTurningR(rayParameter, structure.getVphA(i), structure.getVphB(i));
             if (coreMantleBoundary() <= r && structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1))
                 return r;
         }
@@ -89,9 +102,7 @@ class NamedDiscontinuityStructure implements VelocityStructure {
     @Override
     public double iTurningR(double rayParameter) {
         for (int i = structure.getNzone() - 1; 0 <= i; i--) {
-            double vpA = structure.getVpA(i);
-            double vpB = structure.getVpB(i);
-            double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
+            double r = computeTurningR(rayParameter, structure.getVphA(i), structure.getVphB(i));
             if (r <= innerCoreBoundary() && structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1)) return r;
         }
         return Double.NaN;
@@ -99,29 +110,31 @@ class NamedDiscontinuityStructure implements VelocityStructure {
 
     @Override
     public double getA(double r) {
-        double v = structure.getVp(r);
+        double v = structure.getVph(r);
         return v * v * getRho(r);
     }
 
     @Override
     public double getC(double r) {
-        return getA(r);
+        double v = structure.getVpv(r);
+        return v * v * getRho(r);
     }
 
     @Override
     public double getF(double r) {
-        return getA(r) - 2 * getL(r);
+        return structure.getEta(r) * (getA(r) - 2 * getL(r));
     }
 
     @Override
     public double getL(double r) {
-        double vs = structure.getVs(r);
-        return vs * vs * getRho(r);
+        double v = structure.getVsv(r);
+        return v * v * getRho(r);
     }
 
     @Override
     public double getN(double r) {
-        return getL(r);
+        double v = structure.getVsh(r);
+        return v * v * getRho(r);
     }
 
     @Override
@@ -147,9 +160,7 @@ class NamedDiscontinuityStructure implements VelocityStructure {
     @Override
     public double kTurningR(double rayParameter) {
         for (int i = structure.getNzone() - 1; 0 <= i; i--) {
-            double vpA = structure.getVpA(i);
-            double vpB = structure.getVpB(i);
-            double r = Math.pow(1 / (vpA * rayParameter), 1 / (vpB - 1));
+            double r = computeTurningR(rayParameter, structure.getVphA(i), structure.getVphB(i));
             if (structure.getBoundary(i) <= r && r < structure.getBoundary(i + 1) && r < coreMantleBoundary() &&
                     innerCoreBoundary() < r) return r;
         }
