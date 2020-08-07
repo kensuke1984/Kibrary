@@ -5,9 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Within each layer Bullen law v(r) = Ar<sup>B</sup> is used.
@@ -16,7 +14,7 @@ import java.util.List;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.0.7
+ * @version 0.1.0
  */
 public class NamedDiscontinuityStructure {
 
@@ -37,43 +35,77 @@ public class NamedDiscontinuityStructure {
      * values of Bullen law
      */
     private double[] rhoB;
+    /**
+     * values at boundaries
+     */
+    private double[] vpv;
+    /**
+     * values at boundaries
+     */
+    private double[] vph;
+    /**
+     * values of the Bullen law
+     */
+    private double[] vpvA;
+    /**
+     * values of the Bullen law
+     */
+    private double[] vpvB;
+    /**
+     * values of the Bullen law
+     */
+    private double[] vphA;
+    /**
+     * values of the Bullen law
+     */
+    private double[] vphB;
 
     /**
      * values at boundaries
      */
-    private double[] vs;
-    /**
-     * values of Bullen law
-     */
-    private double[] vsA;
-    /**
-     * values of Bullen law
-     */
-    private double[] vsB;
-
+    private double[] vsv;
     /**
      * values at boundaries
      */
-    private double[] vp;
+    private double[] vsh;
     /**
-     * values of Bullen law
+     * values of the Bullen law
      */
-    private double[] vpA;
+    private double[] vsvA;
     /**
-     * values of Bullen law
+     * values of the Bullen law
      */
-    private double[] vpB;
+    private double[] vsvB;
+    /**
+     * values of the Bullen law
+     */
+    private double[] vshA;
+    /**
+     * values of the Bullen law
+     */
+    private double[] vshB;
+
+    private double[] eta;
+    /**
+     * values of the Bullen law
+     */
+    private double[] etaA;
+    /**
+     * values of the Bullen law
+     */
+    private double[] etaB;
+
 
     /**
      * values at boundaries
      */
     private double[] qMu;
     /**
-     * values of Bullen law
+     * values of the Bullen law
      */
     private double[] qMuA;
     /**
-     * values of Bullen law
+     * values of the Bullen law
      */
     private double[] qMuB;
 
@@ -83,11 +115,11 @@ public class NamedDiscontinuityStructure {
     private double[] qKappa;
 
     /**
-     * values of Bullen law
+     * values of the Bullen law
      */
     private double[] qKappaA;
     /**
-     * values of Bullen law
+     * values of the Bullen law
      */
     private double[] qKappaB;
 
@@ -140,6 +172,22 @@ public class NamedDiscontinuityStructure {
                 4.44317, 4.41241, 4.38071, 3.99214, 3.98399, 3.97584, 3.91282, 3.8498, 3.78678, 3.72378, 3.54325,
                 3.51639, 3.48951, 3.46264, 3.43578, 3.3595, 3.3633, 3.3671, 3.37091, 3.37471, 3.37688, 3.37906, 3.38076,
                 2.9, 2.9, 2.6, 2.6,};
+        nd.vph = new double[]{11.2622, 11.26064, 11.25593, 11.24809, 11.23712, 11.22301, 11.20576, 11.18538, 11.16186,
+                11.13521, 11.10542, 11.07249, 11.03643, 11.02827, 10.35568, 10.30971, 10.24959, 10.18743, 10.12291,
+                10.05572, 9.98554, 9.91206, 9.83496, 9.75393, 9.66865, 9.57881, 9.48409, 9.38418, 9.27867, 9.16752,
+                9.05015, 8.92632, 8.79573, 8.65805, 8.51298, 8.36019, 8.19939, 8.06482, 13.7166, 13.71168, 13.68753,
+                13.68041, 13.59597, 13.47742, 13.36074, 13.24532, 13.13055, 13.01579, 12.90045, 12.78389, 12.6655,
+                12.54466, 12.42075, 12.29316, 12.16126, 12.02445, 11.88209, 11.73357, 11.57828, 11.4156, 11.2449,
+                11.06557, 10.91005, 10.75131, 10.26622, 10.21203, 10.15782, 9.90185, 9.64588, 9.3899, 9.13397, 8.90522,
+                8.81867, 8.73209, 8.64552, 8.55896, 7.9897, 8.0118, 8.0337, 8.0554, 8.07688, 8.08907, 8.10119, 8.11061,
+                6.8, 6.8, 5.8, 5.8,};
+        nd.vsh = new double[]{3.6678, 3.6667, 3.66342, 3.65794, 3.65027, 3.64041, 3.62835, 3.61411, 3.59767, 3.57905,
+                3.55823, 3.53522, 3.51002, 3.50432, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.26466, 7.26486, 7.26575, 7.26597, 7.23403,
+                7.18892, 7.14423, 7.09974, 7.05525, 7.01053, 6.96538, 6.91957, 6.87289, 6.82512, 6.77606, 6.72548,
+                6.67317, 6.61891, 6.5625, 6.5037, 6.44232, 6.37813, 6.31091, 6.24046, 6.09418, 5.94508, 5.5702, 5.54311,
+                5.51602, 5.37014, 5.22428, 5.07842, 4.93259, 4.76989, 4.7384, 4.7069, 4.6754, 4.64391, 4.41885, 4.43108,
+                4.44361, 4.45643, 4.46953, 4.47715, 4.48486, 4.49094, 3.9, 3.9, 3.2, 3.2,};
         nd.qMu = new double[]{85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 85.0, 0.0,
                 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                 0.0, 0.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0, 312.0,
@@ -155,22 +203,6 @@ public class NamedDiscontinuityStructure {
                         743.0, 737.0, 730.0, 744.0, 759.0, 362.0, 362.0, 362.0, 363.0, 364.0, 365.0, 366.0, 372.0,
                         370.0, 367.0, 365.0, 362.0, 195.0, 195.0, 195.0, 195.0, 195.0, 1447.0, 1446.0, 1446.0, 1350.0,
                         1350.0, 1456.0, 1456.0,};
-        nd.vp = new double[]{11.2622, 11.26064, 11.25593, 11.24809, 11.23712, 11.22301, 11.20576, 11.18538, 11.16186,
-                11.13521, 11.10542, 11.07249, 11.03643, 11.02827, 10.35568, 10.30971, 10.24959, 10.18743, 10.12291,
-                10.05572, 9.98554, 9.91206, 9.83496, 9.75393, 9.66865, 9.57881, 9.48409, 9.38418, 9.27867, 9.16752,
-                9.05015, 8.92632, 8.79573, 8.65805, 8.51298, 8.36019, 8.19939, 8.06482, 13.7166, 13.71168, 13.68753,
-                13.68041, 13.59597, 13.47742, 13.36074, 13.24532, 13.13055, 13.01579, 12.90045, 12.78389, 12.6655,
-                12.54466, 12.42075, 12.29316, 12.16126, 12.02445, 11.88209, 11.73357, 11.57828, 11.4156, 11.2449,
-                11.06557, 10.91005, 10.75131, 10.26622, 10.21203, 10.15782, 9.90185, 9.64588, 9.3899, 9.13397, 8.90522,
-                8.81867, 8.73209, 8.64552, 8.55896, 7.9897, 8.0118, 8.0337, 8.0554, 8.07688, 8.08907, 8.10119, 8.11061,
-                6.8, 6.8, 5.8, 5.8,};
-        nd.vs = new double[]{3.6678, 3.6667, 3.66342, 3.65794, 3.65027, 3.64041, 3.62835, 3.61411, 3.59767, 3.57905,
-                3.55823, 3.53522, 3.51002, 3.50432, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 7.26466, 7.26486, 7.26575, 7.26597, 7.23403,
-                7.18892, 7.14423, 7.09974, 7.05525, 7.01053, 6.96538, 6.91957, 6.87289, 6.82512, 6.77606, 6.72548,
-                6.67317, 6.61891, 6.5625, 6.5037, 6.44232, 6.37813, 6.31091, 6.24046, 6.09418, 5.94508, 5.5702, 5.54311,
-                5.51602, 5.37014, 5.22428, 5.07842, 4.93259, 4.76989, 4.7384, 4.7069, 4.6754, 4.64391, 4.41885, 4.43108,
-                4.44361, 4.45643, 4.46953, 4.47715, 4.48486, 4.49094, 3.9, 3.9, 3.2, 3.2,};
         nd.computeBullenLaw();
         return nd;
     }
@@ -182,8 +214,8 @@ public class NamedDiscontinuityStructure {
             else if (i == indexOfCoreMantleBoundary) outString[j++] = "outer-core";
             else if (i == indexOfInnerCoreBoundary) outString[j++] = "inner-core";
             outString[j++] =
-                    Math.round((6371.0 - r[i]) * 10000000) / 10000000.0 + " " + vp[i] + " " + vs[i] + " " + rho[i] +
-                            " " + qKappa[i] + " " + qMu[i];
+                    Math.round((6371.0 - r[i]) * 10000000) / 10000000.0 + " " + rho[i] + " " + vpv[i] + " " + vph[i] +
+                            " " + vsv[i] + " " + vsh[i] + " " + qKappa[i] + " " + qMu[i];
         }
         return outString;
     }
@@ -222,9 +254,13 @@ public class NamedDiscontinuityStructure {
         return r[indexOfInnerCoreBoundary];
     }
 
+    private Map<String, Double> boundaries = new HashMap<>();
+
     private void readInfFile() throws Exception {
         if (!Files.exists(infPath)) throw new NoSuchFileException(infPath + " does not exist.");
         List<String[]> useLines = new ArrayList<>();
+        Map<String, Integer> boundaries = new HashMap<>();
+
         // which layers are boundaries
         int iMoho = 0;
         int iCoreMantleBoundary = 0;
@@ -233,46 +269,62 @@ public class NamedDiscontinuityStructure {
         String mantle = "mantle";
         String outercore = "outer-core";
         String innercore = "inner-core";
+        int discontinuity = 0;
         for (int i = 0; i < lineList.size(); i++) {
-            String line = lineList.get(i);
-            if (line.startsWith("#")) continue;
+            String line = lineList.get(i).trim();
+            if (line.charAt(0) == '#' || line.charAt(0) == '!' || line.charAt(0) == 'c') continue;
             if (line.equals(mantle)) {
-                iMoho = i - 1;
+                iMoho = i - 1 - discontinuity;
+                discontinuity++;
                 continue;
             } else if (line.equals(outercore)) {
-                iCoreMantleBoundary = i - 1;
+                iCoreMantleBoundary = i - 1 - discontinuity;
+                discontinuity++;
                 continue;
             } else if (line.equals(innercore)) {
-                iInnerCoreBoundary = i - 1;
+                iInnerCoreBoundary = i - 1 - discontinuity;
+                discontinuity++;
+                continue;
+            } else if (!Character.isDigit(line.charAt(0))) {
+                boundaries.put(line, i - 1 - discontinuity);
+                discontinuity++;
                 continue;
             }
-            String[] parts = lineList.get(i).trim().split("\\s+");
-            if (parts.length != 6) throw new RuntimeException("FORMAT ERROR");
+            String[] parts = lineList.get(i).split("\\s+");
+            if (parts.length != 9) throw new RuntimeException("FORMAT ERROR at " + lineList.get(i));
             useLines.add(parts);
         }
 
         nBoundary = useLines.size(); // inner core outer core.....
+        r = new double[nBoundary];
         rho = new double[nBoundary];
+        vpv = new double[nBoundary];
+        vph = new double[nBoundary];
+        vsv = new double[nBoundary];
+        vsh = new double[nBoundary];
+        eta = new double[nBoundary];
         qKappa = new double[nBoundary];
         qMu = new double[nBoundary];
-        vs = new double[nBoundary];
-        vp = new double[nBoundary];
-        r = new double[nBoundary];
         for (int i = 0; i < nBoundary; i++) {
             String[] parts = useLines.get(i);
             int j = nBoundary - 1 - i;
-            if (parts.length != 6) continue;
-            r[j] = 6371 - Double.parseDouble(parts[0]);
-            vp[j] = Double.parseDouble(parts[1]);
-            vs[j] = Double.parseDouble(parts[2]);
-            rho[j] = Double.parseDouble(parts[3]);
-            qKappa[j] = Double.parseDouble(parts[4]);
-            qMu[j] = Double.parseDouble(parts[5]);
+            r[j] = Double.parseDouble(parts[0]);
+            rho[j] = Double.parseDouble(parts[1]);
+            vpv[j] = Double.parseDouble(parts[2]);
+            vph[j] = Double.parseDouble(parts[3]);
+            vsv[j] = Double.parseDouble(parts[4]);
+            vsh[j] = Double.parseDouble(parts[5]);
+            eta[j] = Double.parseDouble(parts[6]);
+            qKappa[j] = Double.parseDouble(parts[7]);
+            qMu[j] = Double.parseDouble(parts[8]);
         }
 
-        indexOfCoreMantleBoundary = nBoundary - iCoreMantleBoundary;
-        indexOfInnerCoreBoundary = nBoundary - iInnerCoreBoundary;
-        indexOfMohoDiscontinuity = nBoundary - iMoho;
+        for (int i = 1; i < r.length; i++) r[i] = r[0] - r[i];
+
+        indexOfCoreMantleBoundary = nBoundary - iCoreMantleBoundary - 1;
+        indexOfInnerCoreBoundary = nBoundary - iInnerCoreBoundary - 1;
+        indexOfMohoDiscontinuity = nBoundary - iMoho - 1;
+        boundaries.forEach((s, i) -> this.boundaries.put(s, r[nBoundary - i - 1]));
 
         computeBullenLaw();
     }
@@ -295,20 +347,47 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param r radius [km]
-     * @return Vp at r
+     * @return Vpv at r
      */
-    public double getVp(double r) {
+    public double getVpv(double r) {
         int izone = rToZone(r);
-        return computeBullenLaw(r, vpA[izone], vpB[izone]);
+        return computeBullenLaw(r, vpvA[izone], vpvB[izone]);
     }
 
     /**
      * @param r radius [km]
-     * @return Vs at r
+     * @return Vph at r
      */
-    public double getVs(double r) {
+    public double getVph(double r) {
         int izone = rToZone(r);
-        return computeBullenLaw(r, vsA[izone], vsB[izone]);
+        return computeBullenLaw(r, vphA[izone], vphB[izone]);
+    }
+
+    /**
+     * @param r radius [km]
+     * @return Vsv at r
+     */
+    public double getVsv(double r) {
+        int izone = rToZone(r);
+        return computeBullenLaw(r, vsvA[izone], vsvB[izone]);
+    }
+
+    /**
+     * @param r radius [km]
+     * @return Vsh at r
+     */
+    public double getVsh(double r) {
+        int izone = rToZone(r);
+        return computeBullenLaw(r, vshA[izone], vshB[izone]);
+    }
+
+    /**
+     * @param r radius [km]
+     * @return Q&eta; at r
+     */
+    public double getEta(double r) {
+        int izone = rToZone(r);
+        return computeBullenLaw(r, etaA[izone], etaB[izone]);
     }
 
     /**
@@ -322,43 +401,76 @@ public class NamedDiscontinuityStructure {
 
     /**
      * @param r radius [km]
-     * @return Qkappa at r
+     * @return Q&kappa; at r
      */
     public double getQKappa(double r) {
         int izone = rToZone(r);
         return computeBullenLaw(r, qKappaA[izone], qKappaB[izone]);
     }
 
+
     /**
      * @param izone zone number
-     * @return a of a*r**b in i th zone
+     * @return a of a*r<sup>b</sup> in i th zone
      */
-    public double getVpA(int izone) {
-        return vpA[izone];
+    public double getVpvA(int izone) {
+        return vpvA[izone];
     }
 
     /**
      * @param izone zone number
      * @return b of a*r<sup>b</sup> in i th zone
      */
-    public double getVpB(int izone) {
-        return vpB[izone];
+    public double getVpvB(int izone) {
+        return vpvB[izone];
     }
 
     /**
      * @param izone zone number
      * @return a of a*r<sup>b</sup> in i th zone
      */
-    public double getVsA(int izone) {
-        return vsA[izone];
+    public double getVphA(int izone) {
+        return vphA[izone];
     }
 
     /**
      * @param izone zone number
      * @return b of a*r<sup>b</sup> in i th zone
      */
-    public double getVsB(int izone) {
-        return vsB[izone];
+    public double getVphB(int izone) {
+        return vphB[izone];
+    }
+
+    /**
+     * @param izone zone number
+     * @return a of a*r<sup>b</sup> in i th zone
+     */
+    public double getVsvA(int izone) {
+        return vsvA[izone];
+    }
+
+    /**
+     * @param izone zone number
+     * @return b of a*r<sup>b</sup> in i th zone
+     */
+    public double getVsvB(int izone) {
+        return vsvB[izone];
+    }
+
+    /**
+     * @param izone zone number
+     * @return a of a*r<sup>b</sup> in i th zone
+     */
+    public double getVshA(int izone) {
+        return vshA[izone];
+    }
+
+    /**
+     * @param izone zone number
+     * @return b of a*r<sup>b</sup> in i th zone
+     */
+    public double getVshB(int izone) {
+        return vshB[izone];
     }
 
     private int rToZone(double r) {
@@ -371,28 +483,43 @@ public class NamedDiscontinuityStructure {
         int nzone = nBoundary - 1;
         rhoA = new double[nzone];
         rhoB = new double[nzone];
-        vpA = new double[nzone];
-        vpB = new double[nzone];
-        vsA = new double[nzone];
-        vsB = new double[nzone];
+        vpvA = new double[nzone];
+        vpvB = new double[nzone];
+        vphA = new double[nzone];
+        vphB = new double[nzone];
+        vsvA = new double[nzone];
+        vsvB = new double[nzone];
+        vshA = new double[nzone];
+        vshB = new double[nzone];
+        etaA = new double[nzone];
+        etaB = new double[nzone];
         qMuA = new double[nzone];
         qMuB = new double[nzone];
         qKappaA = new double[nzone];
         qKappaB = new double[nzone];
         for (int i = 0; i < nzone; i++) {
-            double[] rho = computeBullenLaw(i, this.rho);
-            rhoA[i] = rho[0];
-            rhoB[i] = rho[1];
-            double[] vp = computeBullenLaw(i, this.vp);
-            vpA[i] = vp[0];
-            vpB[i] = vp[1];
-            double[] vs = computeBullenLaw(i, this.vs);
-            vsA[i] = vs[0];
-            vsB[i] = vs[1];
-            double[] qmu = computeBullenLaw(i, this.qMu);
+            double[] rh = computeBullenLaw(i, rho);
+            rhoA[i] = rh[0];
+            rhoB[i] = rh[1];
+            double[] pv = computeBullenLaw(i, vpv);
+            vpvA[i] = pv[0];
+            vpvB[i] = pv[1];
+            double[] ph = computeBullenLaw(i, vph);
+            vphA[i] = ph[0];
+            vphB[i] = ph[1];
+            double[] sv = computeBullenLaw(i, vsv);
+            vsvA[i] = sv[0];
+            vsvB[i] = sv[1];
+            double[] sh = computeBullenLaw(i, vsh);
+            vshA[i] = sh[0];
+            vshB[i] = sh[1];
+            double[] e = computeBullenLaw(i, eta);
+            etaA[i] = e[0];
+            etaB[i] = e[1];
+            double[] qmu = computeBullenLaw(i, qMu);
             qMuA[i] = qmu[0];
             qMuB[i] = qmu[1];
-            double[] qkappa = computeBullenLaw(i, this.qKappa);
+            double[] qkappa = computeBullenLaw(i, qKappa);
             qKappaA[i] = qkappa[0];
             qKappaB[i] = qkappa[1];
         }

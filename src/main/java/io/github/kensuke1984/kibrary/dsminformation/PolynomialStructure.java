@@ -409,8 +409,8 @@ public class PolynomialStructure implements Serializable {
      * @return the parameter A under TI approx.
      */
     private double computeA(double r) {
-        double vph = getVphAt(r);
-        return getRhoAt(r) * vph * vph;
+        double v = getVphAt(r);
+        return getRhoAt(r) * v * v;
     }
 
     /**
@@ -420,8 +420,8 @@ public class PolynomialStructure implements Serializable {
      * @return the parameter C under TI approximation.
      */
     private double computeC(double r) {
-        double vpv = getVpvAt(r);
-        return getRhoAt(r) * vpv * vpv;
+        double v = getVpvAt(r);
+        return getRhoAt(r) * v * v;
     }
 
     public double getTransverselyIsotropicValue(TransverselyIsotropicParameter ti, double r) {
