@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.24
+ * @version 0.3.24.1
  */
 final class ANISOtimeCLI {
 
@@ -187,7 +187,6 @@ final class ANISOtimeCLI {
             else if (structure.equals(VelocityStructure.ak135())) catalog = RaypathCatalog.ak135();
             else {
                 ComputationalMesh mesh = ComputationalMesh.simple(structure);
-                System.out.println("jij");
                 catalog = RaypathCatalog.computeCatalog(structure, mesh, RaypathCatalog.DEFAULT_MAXIMUM_D_DELTA);
             }
         }
