@@ -14,7 +14,7 @@ import java.util.*;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.0.1
  */
 public class NamedDiscontinuityStructure {
 
@@ -319,7 +319,7 @@ public class NamedDiscontinuityStructure {
             qMu[j] = Double.parseDouble(parts[8]);
         }
 
-        for (int i = 1; i < r.length; i++) r[i] = r[0] - r[i];
+        for (int i = r.length; 0 < i; i--) r[i - 1] = r[0] - r[i - 1];
 
         indexOfCoreMantleBoundary = nBoundary - iCoreMantleBoundary - 1;
         indexOfInnerCoreBoundary = nBoundary - iInnerCoreBoundary - 1;
@@ -476,7 +476,7 @@ public class NamedDiscontinuityStructure {
     private int rToZone(double r) {
         for (int i = 0; i < this.r.length - 1; i++)
             if (this.r[i] <= r && r <= this.r[i + 1]) return i;
-        throw new RuntimeException("rToZone did not work correctly");
+        throw new RuntimeException("rToZone did not work correctly for " + r);
     }
 
     private void computeBullenLaw() {
