@@ -15,14 +15,14 @@ import java.util.*;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.2
  */
 public class NamedDiscontinuityStructure implements Serializable {
 
     /**
      * 2020/8/12
      */
-    private static final long serialVersionUID = 2729300639018628130L;
+    private static final long serialVersionUID = 6139332358697391003L;
 
     /**
      * number of boundaries
@@ -524,6 +524,42 @@ public class NamedDiscontinuityStructure implements Serializable {
             qKappaA[i] = qkappa[0];
             qKappaB[i] = qkappa[1];
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NamedDiscontinuityStructure)) return false;
+        NamedDiscontinuityStructure that = (NamedDiscontinuityStructure) o;
+        return nBoundary == that.nBoundary &&
+                indexOfCoreMantleBoundary == that.indexOfCoreMantleBoundary &&
+                indexOfInnerCoreBoundary == that.indexOfInnerCoreBoundary &&
+                indexOfMohoDiscontinuity == that.indexOfMohoDiscontinuity &&
+                Arrays.equals(rho, that.rho) &&
+                Arrays.equals(vpv, that.vpv) &&
+                Arrays.equals(vph, that.vph) &&
+                Arrays.equals(vsv, that.vsv) &&
+                Arrays.equals(vsh, that.vsh) &&
+                Arrays.equals(eta, that.eta) &&
+                Arrays.equals(qMu, that.qMu) &&
+                Arrays.equals(qKappa, that.qKappa) &&
+                Arrays.equals(r, that.r) &&
+                boundaries.equals(that.boundaries);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(nBoundary, indexOfCoreMantleBoundary, indexOfInnerCoreBoundary, indexOfMohoDiscontinuity, boundaries);
+        result = 31 * result + Arrays.hashCode(rho);
+        result = 31 * result + Arrays.hashCode(vpv);
+        result = 31 * result + Arrays.hashCode(vph);
+        result = 31 * result + Arrays.hashCode(vsv);
+        result = 31 * result + Arrays.hashCode(vsh);
+        result = 31 * result + Arrays.hashCode(eta);
+        result = 31 * result + Arrays.hashCode(qMu);
+        result = 31 * result + Arrays.hashCode(qKappa);
+        result = 31 * result + Arrays.hashCode(r);
+        return result;
     }
 
     /**
