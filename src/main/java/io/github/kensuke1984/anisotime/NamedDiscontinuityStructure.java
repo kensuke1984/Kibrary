@@ -3,19 +3,32 @@ package io.github.kensuke1984.anisotime;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Named discontinuity structure
  *
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.2
  */
 class NamedDiscontinuityStructure implements VelocityStructure, Serializable {
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NamedDiscontinuityStructure)) return false;
+        NamedDiscontinuityStructure that = (NamedDiscontinuityStructure) o;
+        return structure.equals(that.structure);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(structure);
+    }
 
     /**
      * 2020/8/12
      */
-    private static final long serialVersionUID = -2013057761520479103L;
+    private static final long serialVersionUID = -67293605910714390L;
     io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
 
     private NamedDiscontinuityStructure() {

@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
  * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.24.1
+ * @version 0.3.24.2
  */
 final class ANISOtimeCLI {
 
@@ -306,7 +306,6 @@ final class ANISOtimeCLI {
             hasConflict();
 
             setParameters();
-            System.out.println("kokko");
             if (cmd.hasOption("rs")) {
                 printRecordSection();
                 return;
