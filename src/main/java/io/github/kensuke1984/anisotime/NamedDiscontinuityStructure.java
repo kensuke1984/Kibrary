@@ -1,5 +1,6 @@
 package io.github.kensuke1984.anisotime;
 
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -7,12 +8,12 @@ import java.util.Arrays;
  * Named discontinuity structure
  *
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.1
  */
-class NamedDiscontinuityStructure implements VelocityStructure {
+class NamedDiscontinuityStructure implements VelocityStructure, Serializable {
 
     /**
-     * 2020/8/5
+     * 2020/8/12
      */
     private static final long serialVersionUID = -2013057761520479103L;
     io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure structure;
