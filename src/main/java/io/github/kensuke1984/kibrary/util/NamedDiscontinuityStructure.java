@@ -1,6 +1,7 @@
 package io.github.kensuke1984.kibrary.util;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
@@ -14,9 +15,14 @@ import java.util.*;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.1
  */
-public class NamedDiscontinuityStructure {
+public class NamedDiscontinuityStructure implements Serializable {
+
+    /**
+     * 2020/8/12
+     */
+    private static final long serialVersionUID = 2729300639018628130L;
 
     /**
      * number of boundaries
@@ -128,10 +134,6 @@ public class NamedDiscontinuityStructure {
      */
     private double[] r;
 
-    /**
-     * structure file
-     */
-    private Path infPath;
     private int indexOfCoreMantleBoundary;
     private int indexOfInnerCoreBoundary;
     private int indexOfMohoDiscontinuity;
@@ -143,8 +145,8 @@ public class NamedDiscontinuityStructure {
      * @param path model file written by nd format.
      */
     public NamedDiscontinuityStructure(Path path) throws Exception {
-        infPath = path;
-        readInfFile();
+        if (!Files.exists(path)) throw new NoSuchFileException(path + " does not exist.");
+        readInfFile(path);
     }
 
     /**
@@ -256,8 +258,7 @@ public class NamedDiscontinuityStructure {
 
     private Map<String, Double> boundaries = new HashMap<>();
 
-    private void readInfFile() throws Exception {
-        if (!Files.exists(infPath)) throw new NoSuchFileException(infPath + " does not exist.");
+    private void readInfFile(Path infPath) throws IOException {
         List<String[]> useLines = new ArrayList<>();
         Map<String, Integer> boundaries = new HashMap<>();
 
