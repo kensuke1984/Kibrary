@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
     public static final String CODENAME = "Shiva";
-    public static final String VERSION = "0.4.9.9";
+    public static final String VERSION = "0.4.9.10";
     private static final String line;
 
     //kibrary.jar
