@@ -25,9 +25,9 @@ import java.util.logging.Logger;
  */
 final class ANISOtime {
 
-    static final String CODENAME = "Taoyuan";
+    static final String CODENAME = "Owase";
 
-    static final String VERSION = "1.3.8.10b";
+    static final String VERSION = "1.3.8.11b";
 
     private ANISOtime() {
     }
@@ -90,9 +90,9 @@ final class ANISOtime {
         if (localSum.equals(cloudSum)) return;
         Files.move(path, localPath.resolveSibling("latest_anisotime"), StandardCopyOption.REPLACE_EXISTING);
         try {
-            JOptionPane.showMessageDialog(null, "Software update is found. ANISOtime restarts.");
+            JOptionPane.showMessageDialog(null, "ANISOtime has successfully been updated. Please relaunch it.");
         } catch (HeadlessException e) {
-            System.err.println("Software update is found. ANISOtime restarts.");
+            System.err.println("ANISOtime has successfully been updated. Please relaunch it.");
         }
         System.exit(55);
     }
