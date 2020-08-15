@@ -6,14 +6,14 @@ import javax.swing.*;
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.6
+ * @version 0.1.7
  */
 final class MenuBar extends JMenuBar {
 
     /**
-     * 2020/7/26
+     * 2020/8/15
      */
-    private static final long serialVersionUID = -3385046821286061454L;
+    private static final long serialVersionUID = -8883127280959631558L;
     private final ANISOtimeGUI GUI;
 
     private JMenuItem jMenuItemRayparameterMode;
@@ -86,8 +86,7 @@ final class MenuBar extends JMenuBar {
 
         jMenuItemAbout.addActionListener(e -> About.main(null));
         jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
-                "<html>Please send an Email to <a href>" + io.github.kensuke1984.kibrary.About.EMAIL_ADDRESS +
-                        "</a>."));
+                "<html>Please send an Email to <a href>" + ANISOtime.EMAIL_ADDRESS + "</a>."));
 
     }
 }
