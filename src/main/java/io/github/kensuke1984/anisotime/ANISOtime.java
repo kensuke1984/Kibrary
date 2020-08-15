@@ -1,5 +1,6 @@
 package io.github.kensuke1984.anisotime;
 
+import io.github.kensuke1984.kibrary.Environment;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import org.apache.commons.cli.UnrecognizedOptionException;
 
@@ -25,9 +26,11 @@ import java.util.logging.Logger;
  */
 final class ANISOtime {
 
+    public static final String EMAIL_ADDRESS = "ut-globalseis@googlegroups.com";
+
     static final String CODENAME = "Owase";
 
-    static final String VERSION = "1.3.8.12b";
+    static final String VERSION = "1.3.8.13b";
 
     private ANISOtime() {
     }
@@ -36,11 +39,16 @@ final class ANISOtime {
     private static final String UNIX_SCRIPT_URL = "https://bit.ly/2Xdq5QI";
     //anisotime.bat
     private static final String WINDOWS_SCRIPT_URL = "https://bit.ly/2QUnqJr";
+    //user manual pdf
+    private static final String USER_MANUAL_URL = "https://bit.ly/30MLxy1";
+
+    static final Path AGREEMENT_PATH =
+            Environment.KIBRARY_HOME.resolve(".anisotime_agreed");
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         try {
             downloadANISOtime();
         } catch (IOException e) {
@@ -48,6 +56,8 @@ final class ANISOtime {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        if (!EULA.isAccepted())
+            System.exit(71);
         if (args.length != 0) try {
             ANISOtimeCLI.main(args);
             return;
