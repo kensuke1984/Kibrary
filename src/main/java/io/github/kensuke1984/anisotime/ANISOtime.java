@@ -30,7 +30,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Owase";
 
-    static final String VERSION = "1.3.8.16b";
+    static final String VERSION = "1.3.8.17b";
 
     private ANISOtime() {
     }
@@ -92,7 +92,7 @@ final class ANISOtime {
 
     private static void downloadANISOtime() throws IOException, NoSuchAlgorithmException, URISyntaxException {
         Path localPath = Paths.get(ANISOtime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        if (Files.isDirectory(localPath) || localPath.toString().contains("kibrary")) return;
+        if (Files.isDirectory(localPath) || localPath.getFileName().toString().contains("kibrary")) return;
         String localSum = Utilities.checksum(localPath, "SHA-256");
         Path path = Utilities.download(
                 new URL(System.getProperty("os.name").contains("Windows") ? WINDOWS_SCRIPT_URL : UNIX_SCRIPT_URL));

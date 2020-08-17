@@ -30,18 +30,18 @@ import java.util.logging.Logger;
  * @see <a href=https://kensuke1984.github.io/Kibrary>Javadoc</a>
  */
 public final class About extends javax.swing.JFrame {
-    public static final String EMAIL_ADDRESS = "kensuke@earth.sinica.edu.tw";
+    public static final String EMAIL_ADDRESS = "kensuke1984@gmail.com";
     public static final String CODENAME = "Shiva";
-    public static final String VERSION = "0.4.9.15";
+    public static final String VERSION = "0.4.9.16";
     private static final String line;
 
     //kibrary.jar
     private static final String KIBRARY_JAR_URL = "https://bit.ly/305JHrE";
 
     /**
-     * 2020/7/27
+     * 2020/8/17
      */
-    private static final long serialVersionUID = 5648703402071570271L;
+    private static final long serialVersionUID = 7712409459117684481L;
 
     static {
         try {
