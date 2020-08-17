@@ -19,15 +19,12 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.0
+ * @version 0.1.1
  */
-public class EULA extends JDialog {
+class EULA extends JDialog {
 
-    /**
-     * Creates new form GUITest
-     */
-    public EULA(Frame parent, boolean modal) {
-        super(parent, modal);
+    private EULA(Frame parent, boolean modal) {
+        super(parent,"End user license agreement", modal);
         initComponents();
     }
 
