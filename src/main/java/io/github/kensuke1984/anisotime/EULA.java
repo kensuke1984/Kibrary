@@ -19,12 +19,12 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.1
+ * @version 0.1.2
  */
 class EULA extends JDialog {
 
     private EULA(Frame parent, boolean modal) {
-        super(parent,"End user license agreement", modal);
+        super(parent, "End user license agreement", modal);
         initComponents();
     }
 
@@ -36,28 +36,24 @@ class EULA extends JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">
     private void initComponents() {
-
-        eulaScroll = new JScrollPane();
-        eulaArea = new JTextArea();
-        jPanel1 = new JPanel();
-        ButtonGroup acceptDecline = new ButtonGroup();
-        acceptButton = new JRadioButton();
-        declineButton = new JRadioButton();
-        acceptDecline.add(acceptButton);
-        acceptDecline.add(declineButton);
-        okButton = new JToggleButton();
-        acceptButton.setEnabled(false);
-
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        eulaArea.setColumns(20);
-        eulaArea.setRows(5);
-        eulaArea.setText(EULA);
+        eulaScroll = new JScrollPane();
+        eulaArea = new JTextArea(EULA, 5, 20);
+        jPanel1 = new JPanel();
+        ButtonGroup acceptDecline = new ButtonGroup();
+        acceptButton = new JRadioButton("Accept");
+        declineButton = new JRadioButton("Decline");
+        acceptDecline.add(acceptButton);
+        acceptDecline.add(declineButton);
+        okButton = new JToggleButton("OK");
+        acceptButton.setEnabled(false);
+        declineButton.setSelected(true);
+
         eulaArea.setLineWrap(true);
         eulaArea.setEditable(false);
         eulaArea.setCaretPosition(0);
         eulaScroll.setViewportView(eulaArea);
-
 
         eulaScroll.getVerticalScrollBar().getModel().addChangeListener(e -> {
             BoundedRangeModel m = (BoundedRangeModel) e.getSource();
@@ -69,16 +65,6 @@ class EULA extends JDialog {
             if (maximum <= value + extent)
                 acceptButton.setEnabled(true);
         });
-
-        acceptButton.setText("Accept");
-        acceptButton.setHorizontalAlignment(SwingConstants.CENTER);
-        acceptButton.setHorizontalTextPosition(SwingConstants.RIGHT);
-
-        declineButton.setSelected(true);
-        declineButton.setText("Decline");
-        declineButton.setHorizontalAlignment(SwingConstants.CENTER);
-
-        okButton.setText("OK");
 
         okButton.addActionListener(e -> {
             if (declineButton.isSelected()) System.exit(71);
@@ -123,7 +109,7 @@ class EULA extends JDialog {
                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                                         .addComponent(eulaScroll, GroupLayout.DEFAULT_SIZE, 394, Short.MAX_VALUE)
                                         .addComponent(jPanel1, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                                )
+                        )
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(GroupLayout.Alignment.LEADING)
