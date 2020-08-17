@@ -30,7 +30,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Owase";
 
-    static final String VERSION = "1.3.8.15b";
+    static final String VERSION = "1.3.8.16b";
 
     private ANISOtime() {
     }
