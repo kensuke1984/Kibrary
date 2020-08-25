@@ -5,31 +5,26 @@ import org.apache.commons.math3.util.Precision;
 
 /**
  * Longitude (-180, 180]
- * <p>
  * If you input 200, then the value is considered -160.
- * <p>
  * The value is rounded off to the 4th decimal position.
- * <p>
- * <p>
  * This class is <b>IMMUTABLE</b>
- * </p>
  *
  * @author Kensuke Konishi
- * @version 0.1.0.3
+ * @version 0.1.0.4
  */
 class Longitude implements Comparable<Longitude> {
     /**
-     * inputされた値 [-180, 360)
+     * input value [-180, 360) [deg]
      */
-    private double inLongitude;
+    private final double INPUT_LONGITUDE;
 
     /**
-     * (-180, 180] the geographic longitude. 計算等に使う値
+     * (-180, 180] geographic longitude [deg]
      */
     private double longitude;
 
     /**
-     * [0, 2*pi) φ in spherical coordinates.
+     * [0, 2*&pi;) &phi; in spherical coordinates [rad]
      */
     private double phi;
 
@@ -39,7 +34,7 @@ class Longitude implements Comparable<Longitude> {
     Longitude(double longitude) {
         if (!checkLongitude(longitude)) throw new IllegalArgumentException(
                 "The input longitude: " + longitude + " is invalid (must be [-180, 360).");
-        inLongitude = longitude;
+        INPUT_LONGITUDE = longitude;
         if (180 < longitude) {
             phi = FastMath.toRadians(longitude - 360);
             this.longitude = -360 + longitude;
@@ -52,10 +47,10 @@ class Longitude implements Comparable<Longitude> {
     }
 
     /**
-     * check if the longitude works for this class [-180, 360)
+     * check if the longitude is [-180, 360)
      *
      * @param longitude [deg]
-     * @return true or false
+     * @return if the longitude is valid
      */
     private static boolean checkLongitude(double longitude) {
         return -180 <= longitude && longitude < 360;
@@ -83,26 +78,26 @@ class Longitude implements Comparable<Longitude> {
     /**
      * (-180, 180]
      *
-     * @return 緯度（度）
+     * @return longitude [deg]
      */
     public double getLongitude() {
         return longitude;
     }
 
     /**
-     * [0, 2*pi)
+     * [0, 2*&pi;)
      *
-     * @return φ(rad)
+     * @return &phi; [rad]
      */
     public double getPhi() {
         return phi;
     }
 
     /**
-     * @return コンストラクタに代入された値
+     * @return raw value input to constructor
      */
     public double getValue() {
-        return inLongitude;
+        return INPUT_LONGITUDE;
     }
 
     @Override
