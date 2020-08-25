@@ -16,7 +16,7 @@ import org.apache.commons.math3.util.FastMath;
  * </p>
  *
  * @author Kensuke Konishi
- * @version 0.1.1.2
+ * @version 0.1.1.3
  */
 public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
@@ -24,7 +24,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     private final Longitude longitude;
 
     /**
-     * 地理緯度、経度でのコンストラクト
+     * Creates an instance with geographic latitude and longitude
      *
      * @param latitude  [deg] geographic latitude [-90, 90] {@link Location#latitude}
      * @param longitude [deg] (-180, 360)
@@ -63,7 +63,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 
     /**
      * @param r [km] radius
-     * @return rの情報を含めたLocation(新しく作る deep copy)
+     * @return Location newly created with the input r (deep copy)
      */
     public Location toLocation(double r) {
         return new Location(latitude.getLatitude(), longitude.getLongitude(), r);
@@ -86,7 +86,7 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * @return geographic latitude [deg] [-90, 90]（地理緯度）
+     * @return geographic latitude [deg] [-90, 90]
      */
     public double getLatitude() {
         return latitude.getLatitude();
@@ -102,18 +102,18 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     }
 
     /**
-     * 極座標でのθ
+     * &theta; in spherical coordinates
      *
-     * @return theta [rad] in sperical coordinate.
+     * @return &theta; [rad] in spherical coordinate.
      */
     public double getTheta() {
         return latitude.getTheta();
     }
 
     /**
-     * 極座標でのφ
+     * &phi; in spherical coordinate
      *
-     * @return phi [rad[ in sperical coordinate.
+     * @return phi [rad] in spherical coordinate.
      */
     public double getPhi() {
         return longitude.getPhi();
