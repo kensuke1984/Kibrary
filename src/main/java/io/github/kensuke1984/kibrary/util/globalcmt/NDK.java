@@ -8,26 +8,17 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * NDK format in Global CMT Catalog
- * <p>
  * This class is <b>IMMUTABLE</b> <br>
- * ==============================================
  * ==================================
- * <p>
  * This file contains an explanation of the "ndk" file format used to store and
  * distribute the Global Centroid-Moment-Tensor (CMT) catalog (formerly the
  * Harvard CMT catalog).
  * <p>
  * The "ndk" format replaces the earlier "dek" format.
- * <p>
- * <p>
- * <p>
  * ============================================================================
- * ====
  * 12345678901234567890123456789012345678901234567890123456789012345678901234567890
  * <p>
  * The format is ASCII and uses five 80-character lines per earthquake.
- * <p>
- * <p>
  * ============================================================================
  * ==== <br>
  * Notes (additional information):
@@ -57,12 +48,10 @@ import java.time.format.DateTimeFormatter;
  * constrain the vertical-dip-slip components of the moment tensor (Mrt and
  * Mrp), and we constrain these components to zero in the inversion. The
  * standard errors for Mrt and Mrp are set to zero in this case.
- * <p>
  * ============================================================================
- * ====
  *
  * @author Kensuke Konishi
- * @version 0.0.6.4
+ * @version 0.0.6.5
  * @see <a href=
  * http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
  * guide</a>
@@ -71,8 +60,7 @@ final class NDK implements GlobalCMTData {
 
     private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
     /**
-     * hypocenter [1-4] <br>
-     * Hypocenter reference catalog (e.g., PDE for USGS location, ISC for ISC
+     * Hypocenter reference catalog [1-4] (e.g., PDE for USGS location, ISC for ISC
      * catalog, SWE for surface-wave location, [Ekstrom, BSSA, 2006])
      */
     private String hypocenterReferenceCatalog;
@@ -97,16 +85,13 @@ final class NDK implements GlobalCMTData {
      */
     private String geographicalLocation;
     /**
-     * [1-16] CMT event name. <br>
+     * [1-16] CMT event name.
      * This string is a unique CMT-event identifier. Older events have
      * 8-character names, current ones have 14-character names. See note (1)
      * below for the naming conventions used. (The first letter is ignored.)
      */
     private GlobalCMTID id;
 
-    // //////////////////////
-    // Second line: CMT info (1)
-    // ////////////////////
     /**
      * [18-61] Data used in the CMT inversion. Three data types may be used:
      * Long-period body waves (B), Intermediate-period surface waves (S), and
@@ -145,7 +130,7 @@ final class NDK implements GlobalCMTData {
      * hypocentral coordinates are held fixed. Centroidとreference Timeとの違い
      */
     private double timeDifference;
-    // ///////////////////////////
+
     private Location centroidLocation;
     /**
      * [60-63] Type of depth. "FREE" indicates that the depth was a result of
@@ -175,20 +160,13 @@ final class NDK implements GlobalCMTData {
      */
     private int momentExponent;
 
-    // ///////////////////////////
-    // Fourth line: CMT info (3)
-    // //////////////////////
     private MomentTensor momentTensor;
     /**
      * [1-3] Version code. This three-character string is used to track the
      * version of the program that generates the "ndk" file.
      */
     private String versionCode;
-    // ///////////////////////
 
-    // ////////////////////
-    // Fifth line: CMT info (4)
-    // /////////////////////////
     /**
      * [4-48] Moment tensor expressed in its principal-axis system: eigenvalue,
      * plunge, and azimuth of the three eigenvectors. The eigenvalue should be
@@ -224,7 +202,7 @@ final class NDK implements GlobalCMTData {
     }
 
     /**
-     * ５行の一つ分のNDKを読み取る
+     * creates an NDK from 5 lines
      *
      * @param lines Lines expressing one NDK
      */
@@ -332,10 +310,8 @@ final class NDK implements GlobalCMTData {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         NDK other = (NDK) obj;
-        if (id == null) {
-            if (other.id != null) return false;
-        } else if (!id.equals(other.id)) return false;
-        return true;
+        if (id == null) return other.id == null;
+        else return id.equals(other.id);
     }
 
     @Override
@@ -350,7 +326,6 @@ final class NDK implements GlobalCMTData {
     boolean fulfill(GlobalCMTSearch search) {
         LocalDateTime cmtDate = getCMTTime();
         if (search.getStartDate().isAfter(cmtDate) || search.getEndDate().isBefore(cmtDate)) return false;
-
         if (!search.getPredicateSet().stream().allMatch(p -> p.test(this))) return false;
 
         // latitude

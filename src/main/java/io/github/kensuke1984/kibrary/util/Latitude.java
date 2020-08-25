@@ -5,33 +5,30 @@ import org.apache.commons.math3.util.Precision;
 
 /**
  * Latitude [-90, 90] The value is rounded off to the fourth decimal position.
- * <p>
- * <p>
+ *
  * This class is <b>IMMUTABLE</b>
- * </p>
  *
  * @author Kensuke Konishi
- * @version 0.0.6.2
+ * @version 0.0.6.3
  */
 class Latitude implements Comparable<Latitude> {
 
     /**
-     * Geographic latitude 地理緯度 [-90, 90]
+     * geographic latitude [deg] [-90, 90]
      */
     private double geographicLatitude;
     /**
-     * 地心緯度 [-90, 90]
+     * geocentric latitude [deg] [-90, 90]
      */
     private double geocentricLatitude;
     /**
-     * [0, pi] radian θ in spherical coordinates.
+     * [0, &pi;] radian &theta; in spherical coordinates.
      */
     private double theta;
     private double inGeographicLatitude;
 
     /**
-     * @param geographicLatitude 地理緯度
-     *                           [deg] geographicLatitude [-90, 90]
+     * @param geographicLatitude [deg] [-90, 90]
      */
     Latitude(double geographicLatitude) {
         inGeographicLatitude = geographicLatitude;
@@ -45,16 +42,16 @@ class Latitude implements Comparable<Latitude> {
     /**
      * check if the latitude works for this class
      *
-     * @param latitude [deg] latitude
-     * @return true or false
+     * @param latitude [deg]
+     * @return if the latitude is valid
      */
     private static boolean checkLatitude(double latitude) {
         return -90 <= latitude && latitude <= 90;
     }
 
     /**
-     * @param theta [rad] spherical coordinates 球座標 [0, &pi;]
-     * @return geographic latitude [deg] 地理緯度(度）
+     * @param theta [rad] spherical coordinates [0, &pi;]
+     * @return geographic latitude [deg]
      */
     static double toLatitude(double theta) {
         if (theta < 0 || Math.PI < theta) throw new IllegalArgumentException(
@@ -94,7 +91,7 @@ class Latitude implements Comparable<Latitude> {
     }
 
     /**
-     * @return geographic latitude [deg] 地理緯度
+     * @return geographic latitude [deg]
      */
     public double getLatitude() {
         return geographicLatitude;
