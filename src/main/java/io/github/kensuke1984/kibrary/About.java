@@ -1,14 +1,12 @@
 package io.github.kensuke1984.kibrary;
 
 import io.github.kensuke1984.kibrary.util.Utilities;
-import org.apache.commons.io.IOUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,11 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * About Kibrary (this library).
- * <p>
- * Library for waveform inversion.
- * <p>
- * <br>
+ * About Kibrary.
  *
  * @author Kensuke Konishi
  * @version {@value VERSION}
@@ -32,27 +26,13 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke1984@gmail.com";
     public static final String CODENAME = "Shiva";
-    public static final String VERSION = "0.4.9.16";
-    private static final String line;
+    public static final String VERSION = "0.4.9.17";
+    private static final String LINE = "Kibrary " + VERSION + " (" + CODENAME + ")\n" +
+            "Copyright \u00a9 2015-2020 Kensuke Konishi and Anselme F.E. Borgeaud.\n\n" +
+            "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
 
     //kibrary.jar
     private static final String KIBRARY_JAR_URL = "https://bit.ly/305JHrE";
-
-    /**
-     * 2020/8/17
-     */
-    private static final long serialVersionUID = 7712409459117684481L;
-
-    static {
-        try {
-            line = String.join("\n", IOUtils.readLines(About.class.getClassLoader().getResourceAsStream("LICENSE"),
-                    Charset.defaultCharset()));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private JScrollPane jScrollPane1;
 
     private About() {
         super("About Kibrary");
@@ -74,12 +54,12 @@ public final class About extends javax.swing.JFrame {
             Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
-        else System.out.println(line);
+        else System.err.println(LINE);
     }
 
     private void initComponents() {
-        JTextArea jTextArea1 = new JTextArea(line, 5, 20);
-        jScrollPane1 = new JScrollPane(jTextArea1);
+        JTextArea jTextArea1 = new JTextArea(LINE, 5, 20);
+        JScrollPane jScrollPane1 = new JScrollPane(jTextArea1);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         jTextArea1.setLineWrap(true);
