@@ -30,7 +30,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Nagoya";
 
-    static final String VERSION = "1.3.8.18b";
+    static final String VERSION = "1.3.8.19b";
 
     private ANISOtime() {
     }
@@ -116,7 +116,7 @@ final class ANISOtime {
         try {
             Object[] choices = {"Close"};
             Object defaultChoice = choices[0];
-            JOptionPane.showOptionDialog(null, "ANISOtime has successfully been updated. Please relaunch it.",
+            JOptionPane.showOptionDialog(null, "ANISOtime update in progress. Program will relaunch automatically.",
                     null, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, defaultChoice);
         } catch (HeadlessException e) {
             System.err.println("ANISOtime update in progress. Program will relaunch automatically.");
