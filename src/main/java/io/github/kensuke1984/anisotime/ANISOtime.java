@@ -28,9 +28,9 @@ final class ANISOtime {
 
     public static final String EMAIL_ADDRESS = "ut-globalseis@googlegroups.com";
 
-    static final String CODENAME = "Owase";
+    static final String CODENAME = "Nagoya";
 
-    static final String VERSION = "1.3.8.17b";
+    static final String VERSION = "1.3.8.18b";
 
     private ANISOtime() {
     }
@@ -50,8 +50,10 @@ final class ANISOtime {
      */
     public static void main(String[] args) throws InterruptedException {
         try {
+            downloadManual();
             downloadANISOtime();
         } catch (IOException e) {
+            e.printStackTrace();
             System.err.println("Can't check for updates, could be due to Off-Line.");
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -90,6 +92,18 @@ final class ANISOtime {
         SwingUtilities.invokeLater(() -> new ANISOtimeGUI().setVisible(true));
     }
 
+    private static void downloadManual() throws IOException, NoSuchAlgorithmException, URISyntaxException {
+        Path localPath = Environment.KIBRARY_HOME.resolve(Paths.get("share/user_manual.pdf"));
+        Path path = Utilities.download(new URL(USER_MANUAL_URL));
+        if (Files.exists(localPath)) {
+            String localSum = Utilities.checksum(localPath, "SHA-256");
+            String cloudSum = Utilities.checksum(path, "SHA-256");
+            if (localSum.equals(cloudSum)) return;
+        }
+        Files.move(path, localPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+
     private static void downloadANISOtime() throws IOException, NoSuchAlgorithmException, URISyntaxException {
         Path localPath = Paths.get(ANISOtime.class.getProtectionDomain().getCodeSource().getLocation().toURI());
         if (Files.isDirectory(localPath) || localPath.getFileName().toString().contains("kibrary")) return;
@@ -100,9 +114,12 @@ final class ANISOtime {
         if (localSum.equals(cloudSum)) return;
         Files.move(path, localPath.resolveSibling("latest_anisotime"), StandardCopyOption.REPLACE_EXISTING);
         try {
-            JOptionPane.showMessageDialog(null, "ANISOtime has successfully been updated. Please relaunch it.");
+            Object[] choices = {"Close"};
+            Object defaultChoice = choices[0];
+            JOptionPane.showOptionDialog(null, "ANISOtime has successfully been updated. Please relaunch it.",
+                    null, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, defaultChoice);
         } catch (HeadlessException e) {
-            System.err.println("ANISOtime has successfully been updated. Please relaunch it.");
+            System.err.println("ANISOtime update in progress. Program will relaunch automatically.");
         }
         System.exit(55);
     }
