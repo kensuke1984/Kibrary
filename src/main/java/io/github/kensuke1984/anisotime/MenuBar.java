@@ -1,25 +1,26 @@
 package io.github.kensuke1984.anisotime;
 
+import io.github.kensuke1984.kibrary.Environment;
+
 import javax.swing.*;
+import java.awt.*;
+import java.nio.file.Path;
 
 /**
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.8
  */
 final class MenuBar extends JMenuBar {
 
-    /**
-     * 2020/8/15
-     */
-    private static final long serialVersionUID = -8883127280959631558L;
     private final ANISOtimeGUI GUI;
 
     private JMenuItem jMenuItemRayparameterMode;
     private JMenuItem jMenuItemEpicentralDistanceMode;
     private JMenuItem jMenuItemAbout;
     private JMenuItem jMenuItemMail;
+    private JMenuItem jMenuItemManual;
     private JMenuItem jMenuItemPSVSH;
     private JMenuItem jMenuItemPSV;
     private JMenuItem jMenuItemSH;
@@ -50,6 +51,7 @@ final class MenuBar extends JMenuBar {
 
         JMenu jMenuHelp = new JMenu("Help");
         jMenuItemAbout = new JMenuItem("About");
+        jMenuItemManual= new JMenuItem("Help");
         jMenuItemMail = new JMenuItem("Feedback");
 
         ButtonGroup buttonGroupModes = new ButtonGroup();
@@ -65,6 +67,7 @@ final class MenuBar extends JMenuBar {
         jMenuPolarization.add(jMenuItemPSV);
         jMenuPolarization.add(jMenuItemSH);
         jMenuHelp.add(jMenuItemAbout);
+        jMenuHelp.add(jMenuItemManual);
         jMenuHelp.add(jMenuItemMail);
         jMenuModes.add(jMenuItemEpicentralDistanceMode);
         jMenuModes.add(jMenuItemRayparameterMode);
@@ -87,6 +90,18 @@ final class MenuBar extends JMenuBar {
         jMenuItemAbout.addActionListener(e -> About.main(null));
         jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
                 "<html>Please send an Email to <a href>" + ANISOtime.EMAIL_ADDRESS + "</a>."));
-
+        jMenuItemManual.addActionListener(e -> {
+            Path manual = Environment.KIBRARY_HOME.resolve("share/user_manual.pdf");
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().open(manual.toFile());
+                    return;
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+            JOptionPane
+                    .showMessageDialog(null, "Can't open the manual file. Look at " + manual + ".");
+        });
     }
 }
