@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @version 0.1.4
  */
 class EULA extends JDialog {
 
@@ -178,7 +178,9 @@ class EULA extends JDialog {
                     " FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT." +
                     " THIS SOFTWARE IS PROVIDED ON AN \"AS IS\" BASIS," +
                     " AND THE DEVELOPERS HAVE NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS," +
-                    " OR MODIFICATIONS.\n\n" +
+                    " OR MODIFICATIONS.\n\n" + "THIS AGREEMENT APPLIES TO ALL UPDATED VERSIONS OF ANISOtime," +
+                    " EXCEPT THAT IN THE EVENT THE LICENSE AGREEMENT IS MODIFIED" +
+                    " THE USER WILL BE ABLE TO CHOOSE WHETHER OR NOT TO ACCEPT THE NEW AGREEMENT.\n\n" +
                     "Acknowledgement: Portions of the wording of this license are modified" +
                     " from the license for the Tau-P Toolkit.\n";
 
