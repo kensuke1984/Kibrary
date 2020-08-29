@@ -10,7 +10,7 @@ import java.nio.file.Path;
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.8
+ * @version 0.1.9
  */
 final class MenuBar extends JMenuBar {
 
@@ -51,7 +51,7 @@ final class MenuBar extends JMenuBar {
 
         JMenu jMenuHelp = new JMenu("Help");
         jMenuItemAbout = new JMenuItem("About");
-        jMenuItemManual= new JMenuItem("Help");
+        jMenuItemManual= new JMenuItem("User guide");
         jMenuItemMail = new JMenuItem("Feedback");
 
         ButtonGroup buttonGroupModes = new ButtonGroup();
@@ -91,7 +91,7 @@ final class MenuBar extends JMenuBar {
         jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
                 "<html>Please send an Email to <a href>" + ANISOtime.EMAIL_ADDRESS + "</a>."));
         jMenuItemManual.addActionListener(e -> {
-            Path manual = Environment.KIBRARY_HOME.resolve("share/user_manual.pdf");
+            Path manual = Environment.KIBRARY_HOME.resolve("share/user_guide.pdf");
             if (Desktop.isDesktopSupported()) {
                 try {
                     Desktop.getDesktop().open(manual.toFile());
