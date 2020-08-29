@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @version 0.1.5
  */
 class EULA extends JDialog {
 
@@ -25,21 +25,20 @@ class EULA extends JDialog {
     private void initComponents() {
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        eulaScroll = new JScrollPane();
-        eulaArea = new JTextArea(EULA, 5, 20);
-        jPanel1 = new JPanel();
+        JPanel jPanel1 = new JPanel();
+        JTextArea eulaArea = new JTextArea(EULA, 5, 20);
+        JScrollPane eulaScroll = new JScrollPane(eulaArea);
         ButtonGroup acceptDecline = new ButtonGroup();
-        acceptButton = new JRadioButton("Accept");
+        JRadioButton acceptButton = new JRadioButton("Accept");
         declineButton = new JRadioButton("Decline");
         acceptDecline.add(acceptButton);
         acceptDecline.add(declineButton);
-        okButton = new JToggleButton("OK");
+        JToggleButton okButton = new JToggleButton("OK");
         declineButton.setSelected(true);
 
         eulaArea.setLineWrap(true);
         eulaArea.setEditable(false);
         eulaArea.setCaretPosition(0);
-        eulaScroll.setViewportView(eulaArea);
 
         okButton.addActionListener(e -> {
             if (declineButton.isSelected()) System.exit(71);
@@ -125,12 +124,7 @@ class EULA extends JDialog {
         });
     }
 
-    private JRadioButton acceptButton;
     private JRadioButton declineButton;
-    private JPanel jPanel1;
-    private JScrollPane eulaScroll;
-    private JTextArea eulaArea;
-    private JToggleButton okButton;
 
     static boolean isAccepted() {
         if (Files.exists(ANISOtime.AGREEMENT_PATH)) return true;
