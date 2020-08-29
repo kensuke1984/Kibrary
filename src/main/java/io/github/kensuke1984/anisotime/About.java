@@ -12,15 +12,11 @@ import static javax.swing.UIManager.*;
  * Information about ANISOtime package.
  *
  * @author Kensuke Konishi
- * @version 0.0.5.1
- * @see <a href=http://www-solid.eps.s.u-tokyo.ac.jp/~dsm/anisotime.htm>web</a>
+ * @version 0.0.6
+ * @see <a href=https://github.com/UT-GlobalSeismology/anisotime>web</a>
  */
 final class About extends javax.swing.JFrame {
 
-    /**
-     * 2020/7/27
-     */
-    private static final long serialVersionUID = -5905860950780042944L;
     private static final String line = "ANISOtime " + ANISOtime.VERSION + " (" + ANISOtime.CODENAME +
             ")\nCopyright \u00a9 2015-2020 Kensuke Konishi, Anselme F.E. Borgeaud, Kenji Kawai and Robert J. Geller.\n\n" +
             "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
@@ -49,11 +45,10 @@ final class About extends javax.swing.JFrame {
     }
 
     private void initComponents() {
-        jScrollPane1 = new JScrollPane();
         JTextArea jTextArea1 = new JTextArea(line, 5, 20);
+        jScrollPane1 = new JScrollPane(jTextArea1);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        jScrollPane1.setViewportView(jTextArea1);
         jTextArea1.setLineWrap(true);
         jTextArea1.setEditable(false);
         GroupLayout layout = new GroupLayout(getContentPane());
