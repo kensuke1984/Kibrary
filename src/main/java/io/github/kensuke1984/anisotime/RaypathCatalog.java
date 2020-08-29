@@ -45,6 +45,7 @@ public class RaypathCatalog implements Serializable {
             } catch (IOException ignored) {
             }
         }));
+        // piac.zip
         URL website = new URL("https://bit.ly/2rnhOMS");
         Utilities.download(website, zipPath, true);
         try {
