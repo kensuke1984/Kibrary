@@ -23,13 +23,10 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.8b
+ * @version 0.5.9b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
-    /**
-     * 2020/7/31
-     */
-    private static final long serialVersionUID = 4937482734562562702L;
+
     private RaypathWindow raypathWindow;
     private volatile VelocityStructure structure;
     private volatile double eventR;
