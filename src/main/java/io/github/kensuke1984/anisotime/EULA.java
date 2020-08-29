@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.5
+ * @version 0.1.6
  */
 class EULA extends JDialog {
 
@@ -177,5 +177,27 @@ class EULA extends JDialog {
                     " THE USER WILL BE ABLE TO CHOOSE WHETHER OR NOT TO ACCEPT THE NEW AGREEMENT.\n\n" +
                     "Acknowledgement: Portions of the wording of this license are modified" +
                     " from the license for the Tau-P Toolkit.\n";
+
+
+    static void showInWindow(){
+        JFrame jFrame = new JFrame("End user license");
+        JTextArea jTextArea1 = new JTextArea(EULA, 5, 20);
+        JScrollPane jScrollPane1 = new JScrollPane(jTextArea1);
+        jFrame.setLocationRelativeTo(null);
+        jFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        jTextArea1.setLineWrap(true);
+        jTextArea1.setEditable(false);
+        GroupLayout layout = new GroupLayout(jFrame.getContentPane());
+        jFrame.getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup().addContainerGap()
+                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE).addContainerGap()));
+        layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING).addGroup(
+                layout.createSequentialGroup().addContainerGap()
+                        .addComponent(jScrollPane1, GroupLayout.DEFAULT_SIZE, 276, Short.MAX_VALUE).addContainerGap()));
+        jFrame.pack();
+        jFrame.setVisible(true);
+        SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
+    }
 
 }
