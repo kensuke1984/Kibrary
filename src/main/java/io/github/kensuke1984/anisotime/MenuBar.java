@@ -10,7 +10,7 @@ import java.nio.file.Path;
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.9
+ * @version 0.1.10
  */
 final class MenuBar extends JMenuBar {
 
@@ -20,7 +20,8 @@ final class MenuBar extends JMenuBar {
     private JMenuItem jMenuItemEpicentralDistanceMode;
     private JMenuItem jMenuItemAbout;
     private JMenuItem jMenuItemMail;
-    private JMenuItem jMenuItemManual;
+    private JMenuItem jMenuItemLicense;
+    private JMenuItem jMenuItemGuide;
     private JMenuItem jMenuItemPSVSH;
     private JMenuItem jMenuItemPSV;
     private JMenuItem jMenuItemSH;
@@ -51,14 +52,14 @@ final class MenuBar extends JMenuBar {
 
         JMenu jMenuHelp = new JMenu("Help");
         jMenuItemAbout = new JMenuItem("About");
-        jMenuItemManual= new JMenuItem("User guide");
+        jMenuItemLicense = new JMenuItem("License");
+        jMenuItemGuide = new JMenuItem("User guide");
         jMenuItemMail = new JMenuItem("Feedback");
 
         ButtonGroup buttonGroupModes = new ButtonGroup();
         buttonGroupModes.add(jMenuItemEpicentralDistanceMode);
         buttonGroupModes.add(jMenuItemRayparameterMode);
 
-        // first is normal mode
         jMenuItemEpicentralDistanceMode.setSelected(true);
         jMenuItemPSVSH.setSelected(true);
         jMenuSettings.add(jMenuModes);
@@ -67,7 +68,8 @@ final class MenuBar extends JMenuBar {
         jMenuPolarization.add(jMenuItemPSV);
         jMenuPolarization.add(jMenuItemSH);
         jMenuHelp.add(jMenuItemAbout);
-        jMenuHelp.add(jMenuItemManual);
+        jMenuHelp.add(jMenuItemLicense);
+        jMenuHelp.add(jMenuItemGuide);
         jMenuHelp.add(jMenuItemMail);
         jMenuModes.add(jMenuItemEpicentralDistanceMode);
         jMenuModes.add(jMenuItemRayparameterMode);
@@ -90,7 +92,7 @@ final class MenuBar extends JMenuBar {
         jMenuItemAbout.addActionListener(e -> About.main(null));
         jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
                 "<html>Please send an Email to <a href>" + ANISOtime.EMAIL_ADDRESS + "</a>."));
-        jMenuItemManual.addActionListener(e -> {
+        jMenuItemGuide.addActionListener(e -> {
             Path manual = Environment.KIBRARY_HOME.resolve("share/user_guide.pdf");
             if (Desktop.isDesktopSupported()) {
                 try {
@@ -102,6 +104,9 @@ final class MenuBar extends JMenuBar {
             }
             JOptionPane
                     .showMessageDialog(null, "Can't open the manual file. Look at " + manual + ".");
+        });
+        jMenuItemLicense.addActionListener(e->{
+            EULA.showInWindow();
         });
     }
 }
