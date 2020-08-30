@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.6
+ * @version 0.1.7
  */
 class EULA extends JDialog {
 
@@ -37,6 +37,7 @@ class EULA extends JDialog {
         declineButton.setSelected(true);
 
         eulaArea.setLineWrap(true);
+        eulaArea.setWrapStyleWord(true);
         eulaArea.setEditable(false);
         eulaArea.setCaretPosition(0);
 
