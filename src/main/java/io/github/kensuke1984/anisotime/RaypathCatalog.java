@@ -20,14 +20,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Raypath catalog for one model
- * <p>
+ * Raypath catalog for one model.
  * If a new catalog is computed which does not exist in Kibrary share, it
  * automatically is stored.
- * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.17
+ * @version 0.2.18
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -62,7 +60,6 @@ public class RaypathCatalog implements Serializable {
      * @throws IOException if any
      */
     private static void extractInShare() throws IOException {
-        Files.createDirectories(SHARE_PATH);
         Path zipPath = downloadCatalogZip();
         Path piacTemp = Files.createTempDirectory("piac");
         Path ipremPath = piacTemp.resolve("iprem.cat");
@@ -149,7 +146,7 @@ public class RaypathCatalog implements Serializable {
      * Catalog for AK135. &delta;&Delta; = {@link #DEFAULT_MAXIMUM_D_DELTA}. Mesh is simple.
      */
     private static RaypathCatalog AK135;
-    private static final Path SHARE_PATH = Environment.KIBRARY_HOME.resolve("share");
+    private static final Path SHARE_PATH = Environment.KIBRARY_SHARE;
     private static final Path ISO_PREM_PATH = SHARE_PATH.resolve("iprem.cat");
     private static final Path PREM_PATH = SHARE_PATH.resolve("prem.cat");
     private static final Path AK135_PATH = SHARE_PATH.resolve("ak135.cat");
@@ -254,14 +251,6 @@ public class RaypathCatalog implements Serializable {
     private static final Object LOCK_PREM = new Object();
     private static final Object LOCK_ISO_PREM = new Object();
     private static final Object LOCK_AK135 = new Object();
-
-    static {
-        if (!Files.exists(SHARE_PATH)) try {
-            extractInShare();
-        } catch (IOException e) {
-            System.err.println("Could not download catalog files from internet.");
-        }
-    }
 
     /**
      * Minimum value of &delta;p [s/rad] (ray parameter). Even if similar raypaths

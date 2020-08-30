@@ -30,7 +30,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Tokoname";
 
-    static final String VERSION = "1.3.8.23b";
+    static final String VERSION = "1.3.8.24b";
 
     private ANISOtime() {
     }
@@ -92,13 +92,14 @@ final class ANISOtime {
     }
 
     private static void downloadManual() throws IOException, NoSuchAlgorithmException, URISyntaxException {
-        Path localPath = Environment.KIBRARY_HOME.resolve(Paths.get("share/user_guide.pdf"));
+        Path localPath = Environment.KIBRARY_SHARE.resolve(Paths.get("user_guide.pdf"));
         Path path = Utilities.download(new URL(USER_GUIDE_URL));
         if (Files.exists(localPath)) {
             String localSum = Utilities.checksum(localPath, "SHA-256");
             String cloudSum = Utilities.checksum(path, "SHA-256");
             if (localSum.equals(cloudSum)) return;
         }
+        Files.createDirectories(localPath.getParent());
         Files.move(path, localPath, StandardCopyOption.REPLACE_EXISTING);
     }
 

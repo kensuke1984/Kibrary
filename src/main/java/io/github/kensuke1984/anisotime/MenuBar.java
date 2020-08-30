@@ -93,7 +93,7 @@ final class MenuBar extends JMenuBar {
         jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
                 "<html>Please send an Email to <a href>" + ANISOtime.EMAIL_ADDRESS + "</a>."));
         jMenuItemGuide.addActionListener(e -> {
-            Path manual = Environment.KIBRARY_HOME.resolve("share/user_guide.pdf");
+            Path manual = Environment.KIBRARY_SHARE.resolve("user_guide.pdf");
             if (Desktop.isDesktopSupported()) {
                 try {
                     Desktop.getDesktop().open(manual.toFile());
