@@ -13,10 +13,12 @@ import java.util.Properties;
  * Runtime environment
  *
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @version 0.1.5
  */
 public class Environment {
     public final static Path KIBRARY_HOME;
+    public final static Path KIBRARY_SHARE;
+    public final static Path KIBRARY_BIN;
     public final static Path PROPERTY_FILE;
     private static final Properties PROPERTY = new Properties();
     private static final Properties DEFAULT_PROPERTY = new Properties();
@@ -39,8 +41,12 @@ public class Environment {
                 KIBRARY_HOME = Paths.get(System.getProperty("user.home")).resolve("Kibrary");
             }
         } else KIBRARY_HOME = Paths.get(home);
+        KIBRARY_BIN = KIBRARY_HOME.resolve("bin");
+        KIBRARY_SHARE = KIBRARY_HOME.resolve("share");
         try {
             Files.createDirectories(KIBRARY_HOME);
+            Files.createDirectories(KIBRARY_BIN);
+            Files.createDirectories(KIBRARY_SHARE);
         } catch (IOException io) {
             throw new RuntimeException("Set a proper KIBRARY_HOME.");
         }
