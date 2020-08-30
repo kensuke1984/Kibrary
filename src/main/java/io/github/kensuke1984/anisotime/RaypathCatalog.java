@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * <p>
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.2.16
+ * @version 0.2.17
  */
 public class RaypathCatalog implements Serializable {
     private static final Raypath[] EMPTY_RAYPATH = new Raypath[0];
@@ -46,7 +46,7 @@ public class RaypathCatalog implements Serializable {
             }
         }));
         // piac.zip
-        URL website = new URL("https://bit.ly/2rnhOMS");
+        URL website = new URL("https://bit.ly/31EUOZk");
         Utilities.download(website, zipPath, true);
         try {
             if (!PIAC_SHA256.equals(Utilities.checksum(zipPath, "SHA-256")))
