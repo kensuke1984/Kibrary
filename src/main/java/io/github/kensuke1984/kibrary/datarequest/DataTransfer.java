@@ -14,7 +14,7 @@ import java.nio.file.StandardOpenOption;
  * FTP access to IRIS server. OHP will be prepared
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.2
  */
 final class DataTransfer {
 
@@ -46,20 +46,18 @@ final class DataTransfer {
             FTPFileFilter fff = file -> date.equals("*") || date.equals("-c") ? file.getName().endsWith(".seed") :
                     file.getName().endsWith(".seed") && file.getName().contains(date);
             FTPFile[] ffiles = ftpclient.listFiles(IRIS_USER_PATH, fff);
-            System.out.println(ffiles.length + " seed files are found in the server.");
+            System.err.println(ffiles.length + " seed files are found in the server.");
             for (FTPFile f : ffiles)
-                System.out.println(f);
+                System.err.println(f);
             if (date.equals("-c")) return;
-            System.out.println("Downloading in 10 s");
+            System.err.println("Downloading in 10 s");
             Thread.sleep(10 * 1000);
             Files.createDirectories(outPath);
             for (FTPFile ffile : ffiles)
                 try (BufferedOutputStream ostream = new BufferedOutputStream(
                         Files.newOutputStream(outPath.resolve(ffile.getName()), StandardOpenOption.CREATE_NEW))) {
-                    // ファイル受信
-                    System.out.println("receiving " + ffile.getName());
+                    System.err.println("Receiving " + ffile.getName());
                     ftpclient.retrieveFile(IRIS_USER_PATH + "/" + ffile.getName(), ostream);
-                    // System.out.println(m);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

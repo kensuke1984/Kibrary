@@ -13,10 +13,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +30,7 @@ import java.util.function.Predicate;
  */
 public class SecondHandler implements Consumer<EventFolder>, Operation {
     /**
-     * SACのDELTA
+     * DELTA in SAC
      */
     protected double delta;
     protected int npts;
@@ -42,7 +39,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
     private Predicate<SACData> predicate;
     private String trashName;
 
-    public SecondHandler(Properties property) {
+    public SecondHandler(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
         String date = Utilities.getTemporaryString();
@@ -103,13 +100,10 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
         if (!property.containsKey("workPath")) property.setProperty("workPath", "");
     }
 
-    /**
-     * parameterのセット
-     */
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         predicate = createPredicate();
     }
 

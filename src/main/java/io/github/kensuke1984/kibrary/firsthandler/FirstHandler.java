@@ -35,7 +35,7 @@ import java.util.stream.Stream;
  * intermediate files explicitly.
  *
  * @author Kensuke Konishi
- * @version 0.2.2
+ * @version 0.2.3
  */
 public class FirstHandler implements Operation {
     private double samplingHz;
@@ -54,7 +54,7 @@ public class FirstHandler implements Operation {
     private Path workPath;
     private Properties property;
 
-    public FirstHandler(Properties property) {
+    public FirstHandler(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
     }
@@ -98,13 +98,10 @@ public class FirstHandler implements Operation {
         if (!property.containsKey("removeIntermediateFile")) property.setProperty("removeIntermediateFile", "true");
     }
 
-    /**
-     * set parameters
-     */
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         switch (property.getProperty("catalog")) {
             case "cmt":
             case "CMT":

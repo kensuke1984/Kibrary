@@ -9,10 +9,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
@@ -23,7 +20,7 @@ import java.util.stream.Collectors;
  * Information file for SSHSH
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.3
  */
 public class SshDSMInformationFileMaker implements Operation {
 
@@ -54,7 +51,7 @@ public class SshDSMInformationFileMaker implements Operation {
      */
     private Path structurePath;
 
-    public SshDSMInformationFileMaker(Properties property) {
+    public SshDSMInformationFileMaker(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
     }
@@ -106,11 +103,11 @@ public class SshDSMInformationFileMaker implements Operation {
             throw new RuntimeException("perturbationR must be defined.");
     }
 
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
 
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
         np = Integer.parseInt(property.getProperty("np"));

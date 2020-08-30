@@ -48,12 +48,12 @@ import java.util.stream.IntStream;
  * network in one event</b>
  *
  * @author Kensuke Konishi
- * @version 0.2.2.1.1
+ * @version 0.2.3
  */
 public class ObservedSyntheticDatasetMaker implements Operation {
 
     private Path workPath;
-    private Properties property;
+    private final Properties PROPERTY;
 
     /**
      * components to be included in the dataset
@@ -116,7 +116,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                     s.getComponent() == t.getComponent();
 
     public ObservedSyntheticDatasetMaker(Properties property) throws IOException {
-        this.property = (Properties) property.clone();
+        this.PROPERTY = (Properties) property.clone();
         set();
     }
 
@@ -170,44 +170,44 @@ public class ObservedSyntheticDatasetMaker implements Operation {
     }
 
     private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
-        if (!property.containsKey("synPath")) property.setProperty("synPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("convolute")) property.setProperty("convolute", "true");
-        if (!property.containsKey("amplitudeCorrection")) property.setProperty("amplitudeCorrection", "false");
-        if (!property.containsKey("timeCorrection")) property.setProperty("timeCorrection", "false");
-        if (!property.containsKey("timewindowPath"))
+        if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
+        if (!PROPERTY.containsKey("obsPath")) PROPERTY.setProperty("obsPath", "");
+        if (!PROPERTY.containsKey("synPath")) PROPERTY.setProperty("synPath", "");
+        if (!PROPERTY.containsKey("components")) PROPERTY.setProperty("components", "Z R T");
+        if (!PROPERTY.containsKey("convolute")) PROPERTY.setProperty("convolute", "true");
+        if (!PROPERTY.containsKey("amplitudeCorrection")) PROPERTY.setProperty("amplitudeCorrection", "false");
+        if (!PROPERTY.containsKey("timeCorrection")) PROPERTY.setProperty("timeCorrection", "false");
+        if (!PROPERTY.containsKey("timewindowPath"))
             throw new IllegalArgumentException("There is no information about timewindowPath.");
-        if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
-        if (!property.containsKey("finalSamplingHz")) property.setProperty("finalSamplingHz", "1");
+        if (!PROPERTY.containsKey("sacSamplingHz")) PROPERTY.setProperty("sacSamplingHz", "20");
+        if (!PROPERTY.containsKey("finalSamplingHz")) PROPERTY.setProperty("finalSamplingHz", "1");
     }
 
     private void set() throws NoSuchFileException {
         checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        workPath = Paths.get(PROPERTY.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         obsPath = getPath("obsPath");
         synPath = getPath("synPath");
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
         timewindowPath = getPath("timewindowPath");
-        timeCorrection = Boolean.parseBoolean(property.getProperty("timeCorrection"));
-        amplitudeCorrection = Boolean.parseBoolean(property.getProperty("amplitudeCorrection"));
+        timeCorrection = Boolean.parseBoolean(PROPERTY.getProperty("timeCorrection"));
+        amplitudeCorrection = Boolean.parseBoolean(PROPERTY.getProperty("amplitudeCorrection"));
 
         if (timeCorrection || amplitudeCorrection) {
-            if (!property.containsKey("staticCorrectionPath"))
+            if (!PROPERTY.containsKey("staticCorrectionPath"))
                 throw new RuntimeException("staticCorrectionPath is blank");
             staticCorrectionPath = getPath("staticCorrectionPath");
             if (!Files.exists(staticCorrectionPath)) throw new NoSuchFileException(staticCorrectionPath.toString());
         }
 
-        convolute = Boolean.parseBoolean(property.getProperty("convolute"));
+        convolute = Boolean.parseBoolean(PROPERTY.getProperty("convolute"));
 
         // sacSamplingHz
         // =Double.parseDouble(reader.getFirstValue("sacSamplingHz")); TODO
         sacSamplingHz = 20;
-        finalSamplingHz = Double.parseDouble(property.getProperty("finalSamplingHz"));
+        finalSamplingHz = Double.parseDouble(PROPERTY.getProperty("finalSamplingHz"));
     }
 
     private void readPeriodRanges() {
@@ -278,7 +278,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
     @Override
     public Properties getProperties() {
-        return (Properties) property.clone();
+        return (Properties) PROPERTY.clone();
     }
 
     @Override
@@ -293,20 +293,20 @@ public class ObservedSyntheticDatasetMaker implements Operation {
      */
     private class Worker implements Runnable {
 
-        private EventFolder obsEventDir;
+        private final EventFolder OBS_EVENT_DIR;
 
         private Worker(EventFolder eventDir) {
-            obsEventDir = eventDir;
+            OBS_EVENT_DIR = eventDir;
         }
 
         @Override
         public void run() {
-            Path synEventPath = synPath.resolve(obsEventDir.getGlobalCMTID().toString());
-            if (!Files.exists(synEventPath)) throw new RuntimeException(synEventPath + " does not exist.");
+            Path synEventPath = synPath.resolve(OBS_EVENT_DIR.getGlobalCMTID().toString());
+            if (!Files.exists(synEventPath)) throw new RuntimeException(synEventPath + " doesn't exist.");
 
             Set<SACFileName> obsFiles;
             try {
-                (obsFiles = obsEventDir.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
+                (obsFiles = OBS_EVENT_DIR.sacFileSet()).removeIf(sfn -> !sfn.isOBS());
             } catch (IOException e2) {
                 e2.printStackTrace();
                 return;
@@ -382,7 +382,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
                         shift = timeCorrection ? sc.getTimeshift() : 0;
                         ratio = amplitudeCorrection ? sc.getAmplitudeRatio() : 1;
                     } catch (NoSuchElementException e) {
-                        System.err.println("There is no static correction information for\\n " + window);
+                        System.err.println("No static correction information for\n " + window);
                         continue;
                     }
 

@@ -16,10 +16,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,7 +34,7 @@ import java.util.stream.Collectors;
  * window is set to integer multiple of DELTA in SAC files.
  *
  * @author Kensuke Konishi
- * @version 0.2.3.1
+ * @version 0.2.4
  */
 public class TimewindowMaker implements Operation {
 
@@ -73,7 +70,7 @@ public class TimewindowMaker implements Operation {
      */
     private Path invalidList;
 
-    public TimewindowMaker(Properties property) {
+    public TimewindowMaker(Properties property) throws IOException {
         this.property = (Properties) property.clone();
         set();
     }
@@ -212,10 +209,10 @@ public class TimewindowMaker implements Operation {
         if (!property.containsKey("usePhases")) property.setProperty("usePhases", "S");
     }
 
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         String date = Utilities.getTemporaryString();
         outputPath = workPath.resolve("timewindow" + date + ".dat");
         invalidList = workPath.resolve("invalidTimewindow" + date + ".txt");

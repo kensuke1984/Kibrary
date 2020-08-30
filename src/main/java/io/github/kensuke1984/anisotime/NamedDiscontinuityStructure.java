@@ -1,5 +1,6 @@
 package io.github.kensuke1984.anisotime;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -34,7 +35,7 @@ class NamedDiscontinuityStructure implements VelocityStructure, Serializable {
     private NamedDiscontinuityStructure() {
     }
 
-    NamedDiscontinuityStructure(Path path) throws Exception {
+    NamedDiscontinuityStructure(Path path) throws IOException {
         structure = new io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure(path);
     }
 

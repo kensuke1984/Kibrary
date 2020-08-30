@@ -7,15 +7,15 @@ import io.github.kensuke1984.kibrary.util.Location;
  * Model SH18CEX by Nozomu Takeuchi
  *
  * @author Kensuke Konishi
- * @version 0.0.1.3
+ * @version 0.0.2
  */
 public final class SH18CEX {
 
-    private static final PolynomialStructure ps = PolynomialStructure.PREM;
-    private final static double[] modelNode =
+    private static final PolynomialStructure PREM = PolynomialStructure.PREM;
+    private final static double[] MODEL_NODE =
             {3480.0, 3981.0, 4431.0, 4821.0, 5161.0, 5451.0, 5701.0, 5841.0, 5971.0, 6091.0, 6211.0, 6301.0, 6346.6,
                     6368.0};
-    private static final double[] sh18cex =
+    private static final double[] SH_18_CEX =
             {7.012836217206323E-004, -5.610791406740902E-004, 4.582577057896778E-004, 5.328429034690334E-004,
                     -4.364115262565124E-003, 1.182355013380707E-004, 4.711369037324728E-003, 7.786904048734154E-004,
                     -9.192092234253256E-003, 3.549458757898214E-004, 1.063576539457744E-003, -1.675613319956741E-004,
@@ -1195,14 +1195,14 @@ public final class SH18CEX {
     }
 
     public static void main(String args[]) {
-        if (args.length != 3) throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
+        if (args.length != 3) throw new IllegalArgumentException("radius[km] latitude[deg] longitude[deg]");
         Location loc;
         try {
             loc = new Location(Double.parseDouble(args[1]), Double.parseDouble(args[2]), Double.parseDouble(args[0]));
         } catch (Exception e) {
-            throw new RuntimeException("radius[km] latitude[deg] longitude[deg]");
+            throw new IllegalArgumentException("radius[km] latitude[deg] longitude[deg]");
         }
-        double premVs = ps.getVshAt(loc.getR());
+        double premVs = PREM.getVshAt(loc.getR());
         double perc = getV(loc);
         double take = premVs * (1 + perc / 100);
         System.out.println(loc + " " + take + " " + perc);
@@ -1276,15 +1276,15 @@ public final class SH18CEX {
             }
 
         double r = location.getR();
-        double rho = ps.getRhoAt(r);
-        double vs = ps.getVshAt(r);
-        double mu = ps.computeMu(r);
+        double rho = PREM.getRhoAt(r);
+        double vs = PREM.getVshAt(r);
+        double mu = PREM.computeMu(r);
         double pert = 0;
         for (int izpar = 0; izpar < 12; izpar++)
-            if ((modelNode[izpar] <= r && r < modelNode[izpar + 1]) ||
-                    izpar == nzpar - 1 && r == modelNode[izpar + 1]) {
-                double zz1 = (modelNode[izpar + 1] - r) / (modelNode[izpar + 1] - modelNode[izpar]) * mu;
-                double zz2 = (r - modelNode[izpar]) / (modelNode[izpar + 1] - modelNode[izpar]) * mu;
+            if ((MODEL_NODE[izpar] <= r && r < MODEL_NODE[izpar + 1]) ||
+                    izpar == nzpar - 1 && r == MODEL_NODE[izpar + 1]) {
+                double zz1 = (MODEL_NODE[izpar + 1] - r) / (MODEL_NODE[izpar + 1] - MODEL_NODE[izpar]) * mu;
+                double zz2 = (r - MODEL_NODE[izpar]) / (MODEL_NODE[izpar + 1] - MODEL_NODE[izpar]) * mu;
                 for (int par = 0; par <= fmax * (fmax + 2); par++)
                     pert += (getDM(par, izpar) * zz1 + getDM(par, izpar + 1) * zz2) * hh[par];
             }
@@ -1293,7 +1293,7 @@ public final class SH18CEX {
         return (vs1 - vs) / vs * 100;
     }
 
-    private static final double getDM(int ipar, int izpar) {
+    private static double getDM(int ipar, int izpar) {
         int fmax = 18;
         int fmin = 0;
         //
@@ -1301,7 +1301,7 @@ public final class SH18CEX {
         // double[][] dm = new double[n][nzpar];
         int i = izpar * n + ipar;
 
-        return sh18cex[i];
+        return SH_18_CEX[i];
     }
 
 }

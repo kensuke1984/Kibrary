@@ -2,12 +2,13 @@ package io.github.kensuke1984.kibrary.external;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.NoSuchFileException;
 
 /**
  * Gnuplot dialog
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.2
  */
 public class Gnuplot extends ExternalProcess {
     private PrintWriter standardInput;
@@ -19,7 +20,7 @@ public class Gnuplot extends ExternalProcess {
 
     public static Gnuplot createProcess() throws IOException {
         if (isInPath("gnuplot")) return new Gnuplot(new ProcessBuilder("gnuplot").start());
-        throw new RuntimeException("No gnuplot in PATH.");
+        throw new NoSuchFileException("No gnuplot in PATH.");
     }
 
     public void close() throws InterruptedException {
@@ -32,7 +33,7 @@ public class Gnuplot extends ExternalProcess {
     }
 
     /**
-     * Gnuplotに命令する
+     * make orders in Gnuplot
      *
      * @param line command line for SAC
      */

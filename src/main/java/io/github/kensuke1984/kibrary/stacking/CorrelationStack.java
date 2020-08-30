@@ -80,10 +80,8 @@ public class CorrelationStack implements Stack {
         // double[] compareX = compareTrace.getX(); // 合わせる波形の時間
         double[] compareY = compareTrace.getY(); // 合わせる波形
         // 基準波形の方が比較波形より短い場合 想定外
-        if (standardY.length < compareY.length) {
-            System.out.println("Base timewindow must be bigger.");
-            throw new RuntimeException();
-        }
+        if (standardY.length < compareY.length)
+            throw new RuntimeException("Base timewindow must be bigger.");
         // 相関のベストなシフト 何ポイントずらせばよいか
         int bestShift = Trace.findBestShift(standardY, compareY);
         // System.out.println(corr);
@@ -106,14 +104,12 @@ public class CorrelationStack implements Stack {
         System.out.println(stationName + " " + window.getStartTime() + " " + window.getEndTime());
         if (shiftMap.containsKey(key)) {
             shift = shiftMap.get(key);
-            // System.out.println("TAICHI KEKKK");
         } else {
             // 相関をとりたいところの切り抜き
             Trace compareTrace = trace.cutWindow(window);
             shift = search(compareTrace);
             shiftMap.put(key, shift);
         }
-        // System.out.println(shift);
         // 基準波形の相関をあわせる時刻(ここに比較波形部分のスタートを持ってこないといけない)
         double standartStarttime = standardTrace.getX()[shift];
         // 相関をあわせる比較波形部分のスタート時刻

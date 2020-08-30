@@ -4,7 +4,7 @@ package io.github.kensuke1984.kibrary.elasticparameter;
  * enum for elements in modulus
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.2
  */
 public enum IsotropicModulusEnum {
     LAMBDA, MU, LAMBDAplus2MU, ZERO;
@@ -26,13 +26,10 @@ public enum IsotropicModulusEnum {
                     case 1:
                         return LAMBDAplus2MU;
                     case 2:
-                        return LAMBDA;
                     case 3:
                         return LAMBDA;
                     case 4:
-                        return ZERO;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }
@@ -43,9 +40,7 @@ public enum IsotropicModulusEnum {
                     case 3:
                         return LAMBDA;
                     case 4:
-                        return ZERO;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }
@@ -54,9 +49,7 @@ public enum IsotropicModulusEnum {
                     case 3:
                         return LAMBDAplus2MU;
                     case 4:
-                        return ZERO;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }
@@ -65,7 +58,6 @@ public enum IsotropicModulusEnum {
                     case 4:
                         return MU;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }

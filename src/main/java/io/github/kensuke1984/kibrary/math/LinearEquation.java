@@ -12,13 +12,13 @@ import java.util.Comparator;
  * This class is <b>immutable</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.3
  */
 
 public class LinearEquation {
 
-    private PolynomialFunction pf;
-    private double[] coef;
+    private final PolynomialFunction PF;
+    private final double[] COEF;
 
     /**
      * coef[i] * x^ i (i=0,...)
@@ -35,20 +35,20 @@ public class LinearEquation {
      * @param pf polynomial functions for equations
      */
     public LinearEquation(PolynomialFunction pf) {
-        this.pf = pf;
-        coef = pf.getCoefficients();
+        PF = pf;
+        COEF = pf.getCoefficients();
     }
 
     /**
      * @return max degree
      */
     public int getDegree() {
-        return pf.degree();
+        return PF.degree();
     }
 
     @Override
     public String toString() {
-        return pf.toString();
+        return PF.toString();
     }
 
     /**
@@ -56,7 +56,7 @@ public class LinearEquation {
      * @throws RuntimeException if cannot be solved
      */
     public Complex[] compute() {
-        switch (pf.degree()) {
+        switch (PF.degree()) {
             case 1:
                 return OneDimensionEquation();
             case 2:
@@ -64,12 +64,12 @@ public class LinearEquation {
             case 3:
                 return ThreeDimensionEquation();
             default:
-                throw new RuntimeException("Only cubic equation can be soloved.");
+                throw new RuntimeException("Only cubic equation is solvable.");
         }
     }
 
     private Complex[] OneDimensionEquation() {
-        return new Complex[]{Complex.valueOf(-coef[0] / coef[1])};
+        return new Complex[]{Complex.valueOf(-COEF[0] / COEF[1])};
     }
 
     /**
@@ -77,8 +77,8 @@ public class LinearEquation {
      */
     private Complex[] TwoDimensionEquation() {
         // double a = 1;
-        double b = coef[1] / coef[2];
-        double c = coef[0] / coef[2];
+        double b = COEF[1] / COEF[2];
+        double c = COEF[0] / COEF[2];
         // System.out.println("Calculating "+a+"x^2 + "+b+"x + "+c+" =0");
         double D = b * b - 4 * c;
         if (D == 0) {
@@ -97,9 +97,9 @@ public class LinearEquation {
      */
     private Complex[] ThreeDimensionEquation() {
         // double a = 1;
-        double b = coef[2] / coef[3];
-        double c = coef[1] / coef[3];
-        double d = coef[0] / coef[3];
+        double b = COEF[2] / COEF[3];
+        double c = COEF[1] / COEF[3];
+        double d = COEF[0] / COEF[3];
         // System.out.println("Calculating "+a+"x^3 + "+b+"x^2 + "+c+"x + "+d+"
         // =0");
         Complex omega = new Complex(-0.5, Math.sqrt(3) / 2);
@@ -134,7 +134,7 @@ public class LinearEquation {
      * 30: Triple root, 31: three Reals
      */
     public int Discriminant() {
-        switch (pf.degree()) {
+        switch (PF.degree()) {
             case 1:
                 return 1;
             case 2:
@@ -150,10 +150,10 @@ public class LinearEquation {
      * @return type of answers 19: two Imaginary, 20: Double root, 21: two Reals
      */
     private int Discriminant2() {
-        if (pf.degree() != 2) throw new RuntimeException(pf + "is not a 2nd order equation.");
-        double a = coef[2];
-        double b = coef[1];
-        double c = coef[0];
+        if (PF.degree() != 2) throw new RuntimeException(PF + " is not a 2nd order equation.");
+        double a = COEF[2];
+        double b = COEF[1];
+        double c = COEF[0];
         double D = b * b - 4 * a * c;
         if (D < 0) return 19;
         else if (D == 0) return 20;
@@ -165,11 +165,11 @@ public class LinearEquation {
      * & one Real, 30: Triple root, 31: three Reals
      */
     private int Discriminant3() {
-        if (pf.degree() != 3) throw new RuntimeException(pf + "is not a cubic equation.");
-        double a = coef[3];
-        double b = coef[2];
-        double c = coef[1];
-        double d = coef[0];
+        if (PF.degree() != 3) throw new RuntimeException(PF + " is not a cubic equation.");
+        double a = COEF[3];
+        double b = COEF[2];
+        double c = COEF[1];
+        double d = COEF[0];
         // System.out.println("What kind of answers is that of "+a+"x^3 +
         // "+b+"x^2 + "+c+"x + "+d+" =0");
         double D = b * b * c * c + 18 * a * b * c * d - 4 * a * c * c * c - 4 * b * b * b * d - 27 * a * a * d * d;

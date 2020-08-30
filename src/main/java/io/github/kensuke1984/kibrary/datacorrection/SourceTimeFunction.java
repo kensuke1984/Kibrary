@@ -28,7 +28,7 @@ import java.util.stream.IntStream;
  * {@link #convolve(Complex[])}
  *
  * @author Kensuke Konishi
- * @version 0.0.6.4
+ * @version 0.0.7
  */
 public class SourceTimeFunction {
 
@@ -54,7 +54,8 @@ public class SourceTimeFunction {
      * @param samplingHz 20 preferred (now must)
      */
     protected SourceTimeFunction(int np, double tlen, double samplingHz) {
-        if (!checkValues(np, tlen, samplingHz)) throw new RuntimeException();
+        if (!checkValues(np, tlen, samplingHz))
+            throw new IllegalArgumentException("np: " + np + ", tlen: " + tlen + ", samplingHz: " + samplingHz);
         this.np = np;
         this.tlen = tlen;
         this.samplingHz = samplingHz;
@@ -101,14 +102,13 @@ public class SourceTimeFunction {
      * The width is determined by the half duration &tau;. <br>
      * f(t) = 1/(2&times;&tau;) (-&tau; &le; t &le; &tau;), 0 (t &lt; -&tau;,
      * &tau; &lt; t) <br>
-     * Source time function F(&omega;) =
-     * sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
+     * Source time function F(&omega;) = sin(2&pi;&omega;&tau;)/(2&pi;&omega;&tau;);
      *
      * @param np           the number of steps in frequency domain
      * @param tlen         [s] time length
      * @param samplingHz   [Hz]
      * @param halfDuration [s] of the source
-     *                     @return SourceTimeFunction
+     * @return SourceTimeFunction
      */
     public static SourceTimeFunction boxcarSourceTimeFunction(int np, double tlen, double samplingHz,
                                                               double halfDuration) {

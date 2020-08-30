@@ -101,7 +101,7 @@ public class ExternalProcess {
             standardOutput.join();
             return process;
         } catch (Exception e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 

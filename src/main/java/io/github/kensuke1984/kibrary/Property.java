@@ -11,12 +11,12 @@ import java.util.Properties;
  * This class will create a default property for a procedure in Kibrary.
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @version 0.0.5
  */
 public class Property {
 
     public static void main(String[] args) throws Exception {
-        if (1 < args.length) throw new RuntimeException("Too many arguments. You can specify only one Manhattan.");
+        if (1 < args.length) throw new IllegalArgumentException("Too many arguments. You can specify only one Manhattan.");
         if (args.length == 1) try {
             Manhattan.valueOf(args[0]).writeDefaultPropertiesFile();
             return;

@@ -118,7 +118,7 @@ public class InformationFileMaker implements Operation {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
 
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
 
         locationsPath = getPath("locationsPath");
 
@@ -191,7 +191,6 @@ public class InformationFileMaker implements Operation {
 
     @Override
     public void run() throws Exception {
-        // ///
         if (!Files.exists(workPath)) throw new NoSuchFileException(workPath.toString());
         if (!Files.exists(stationInformationPath)) throw new NoSuchFileException(stationInformationPath.toString());
         readParameterPointInformation();

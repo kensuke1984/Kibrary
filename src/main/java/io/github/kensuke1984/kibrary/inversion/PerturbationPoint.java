@@ -23,7 +23,7 @@ import java.util.concurrent.Executors;
  * TODO 名前のチェック validity
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.3
  */
 public class PerturbationPoint extends HorizontalPoint {
 
@@ -35,23 +35,23 @@ public class PerturbationPoint extends HorizontalPoint {
 
     private Map<Location, Double> volumeMap;
     /**
-     * （インバージョンに使う）摂動点の情報（中枢） 順番も保持
+     * locations of points perturbationLocation[i] = the location of the i th point
      */
     private Location[] perturbationLocation;
     /**
-     * ポイント数
+     * number of points
      */
     private int pointN;
     /**
-     * i番目の摂動点の名前 （
+     * names of points pointName[i] = name of the i th point
      */
     private String[] pointName;
     /**
      * perturbation point file <br>
      * <p>
-     * ex) XY??? r
+     * e.g. XY??? r
      */
-    private File perturbationPointFile;
+    private final File PERTURBATION_POINT_FILE;
 
     /**
      * @param horizontalPointFile   {@link File} for {@link HorizontalPoint}
@@ -60,7 +60,7 @@ public class PerturbationPoint extends HorizontalPoint {
      */
     public PerturbationPoint(File horizontalPointFile, File perturbationPointFile) throws NoSuchFileException {
         super(horizontalPointFile);
-        this.perturbationPointFile = perturbationPointFile;
+        PERTURBATION_POINT_FILE = perturbationPointFile;
         readPerturbationPointFile();
     }
 
@@ -70,10 +70,8 @@ public class PerturbationPoint extends HorizontalPoint {
      * @throws NoSuchFileException        if any
      */
     public static void main(String[] args) throws FileAlreadyExistsException, NoSuchFileException {
-        if (args.length != 4) {
-            System.out.println("dir dR dLatitude dLongitude");
-            return;
-        }
+        if (args.length != 4)
+            throw new IllegalArgumentException("dir dR dLatitude dLongitude");
         File dir = new File(args[0]);
         PerturbationPoint pp =
                 new PerturbationPoint(new File(dir, "horizontalPoint.inf"), new File(dir, "perturbationPoint.inf"));
@@ -81,7 +79,6 @@ public class PerturbationPoint extends HorizontalPoint {
         pp.dLatitude = Double.parseDouble(args[2]);
         pp.dLongitude = Double.parseDouble(args[3]);
         pp.createUnknownParameterSetFile(new File(dir, "unknown.inf"));
-        // System.out.println(pp.perturbationLocation[0]);
     }
 
     /**
@@ -111,7 +108,7 @@ public class PerturbationPoint extends HorizontalPoint {
     }
 
     /**
-     * 各点の体積を計算する
+     * compute volumes for points
      */
     public void computeVolumes() {
         volumeMap = new HashMap<>();
@@ -127,7 +124,6 @@ public class PerturbationPoint extends HorizontalPoint {
                 e.printStackTrace();
             }
         }
-
     }
 
     // TODO
@@ -137,9 +133,8 @@ public class PerturbationPoint extends HorizontalPoint {
         computeVolumes();
 
         try (PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(outFile)))) {
-            for (int i = 0; i < perturbationLocation.length; i++) {
-                Location loc = perturbationLocation[i];
-                System.out.println(loc);
+            for (Location loc : perturbationLocation) {
+                System.err.println(loc);
                 double volume = volumeMap.get(loc);
                 pw.println("MU " + loc + " " + volume);
             }
@@ -168,8 +163,8 @@ public class PerturbationPoint extends HorizontalPoint {
         return pointName;
     }
 
-    public File getPerturbationPointFile() {
-        return perturbationPointFile;
+    public File getFile() {
+        return PERTURBATION_POINT_FILE;
     }
 
     /**
@@ -181,19 +176,19 @@ public class PerturbationPoint extends HorizontalPoint {
 
     /**
      * @param i index
-     * @return i番目の深さ
+     * @return radius [km] of the i th point
      */
     public double getR(int i) {
         return perturbationLocation[i].getR();
     }
 
     /**
-     * perturbation point file を読み込む<br>
+     * read a perturbation point file<br>
      * XY??? r1 XY??? r2 .....
      */
     private void readPerturbationPointFile() {
         try {
-            List<String> lines = FileUtils.readLines(perturbationPointFile, Charset.defaultCharset());
+            List<String> lines = FileUtils.readLines(PERTURBATION_POINT_FILE, Charset.defaultCharset());
             lines.removeIf(line -> line.trim().isEmpty() || line.trim().startsWith("#"));
 
             pointN = lines.size();
@@ -223,7 +218,7 @@ public class PerturbationPoint extends HorizontalPoint {
 
     /**
      * @param location {@link Location} for target
-     * @return location に近い順でポイントのLocationを返す
+     * @return Location[] in order of the distance from an input location from the closest
      */
     public Location[] getNearestLocation(Location location) {
         Location[] locations = Arrays.copyOf(perturbationLocation, perturbationLocation.length);
@@ -233,16 +228,16 @@ public class PerturbationPoint extends HorizontalPoint {
 
     private class VolumeCalculator implements Runnable {
 
-        private Location loc;
+        private final Location LOC;
 
         private VolumeCalculator(Location loc) {
-            this.loc = loc;
+            LOC = loc;
         }
 
         @Override
         public void run() {
-            volumeMap.put(loc, Earth.getVolume(loc, dR, dLatitude, dLongitude));
-            System.out.println(loc);
+            volumeMap.put(LOC, Earth.getVolume(LOC, dR, dLatitude, dLongitude));
+            System.err.println(LOC);
         }
 
     }

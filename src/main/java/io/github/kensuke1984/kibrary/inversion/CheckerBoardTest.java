@@ -23,7 +23,7 @@ import java.util.*;
  * Creates born-waveforms for checkerboard tests
  *
  * @author Kensuke Konishi
- * @version 0.2.1.2
+ * @version 0.2.2
  */
 public class CheckerBoardTest implements Operation {
 
@@ -121,14 +121,14 @@ public class CheckerBoardTest implements Operation {
         if (!property.containsKey("psvsh")) property.setProperty("psvsh", "0");
         if (!property.containsKey("modelName")) property.setProperty("modelName", "");
         if (!property.containsKey("noise")) property.setProperty("noise", "false");
-        if (property.getProperty("noise").equals("true") && ! property.containsKey("noisePower"))
+        if (property.getProperty("noise").equals("true") && !property.containsKey("noisePower"))
             throw new RuntimeException("There is no information about 'noisePower'");
     }
 
     private void set() throws NoSuchFileException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         waveIDPath = getPath("waveIDPath");
         waveformPath = getPath("waveformPath");
         partialIDPath = getPath("partialIDPath");

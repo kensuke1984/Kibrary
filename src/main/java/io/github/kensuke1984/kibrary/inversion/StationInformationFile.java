@@ -134,7 +134,6 @@ public final class StationInformationFile {
                 }
                 if (path == null || path.isEmpty()) return;
                 workPath = Paths.get(path);
-                // System.out.println(tmp.getAbsolutePath());
             } while (!Files.exists(workPath) || !Files.isDirectory(workPath));
             createStationInformationFile(workPath);
         }

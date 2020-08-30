@@ -20,21 +20,21 @@ import java.util.regex.Pattern;
  * Seed file utility rdseed must be in PATH.
  *
  * @author Kensuke Konishi
- * @version 0.0.8.2
+ * @version 0.0.9
  * @see <a href=http://ds.iris.edu/ds/nodes/dmc/forms/rdseed/>download</a>
  * @see <a href=https://ds.iris.edu/ds/nodes/dmc/manuals/rdseed/>manual</a>
  */
 public class SEEDFile {
 
     /**
-     * rdseedから出力される 日付のフォーマット 例） 1993,052,07:01:12.4000
+     * date format made by rdseed e.g. 1993,052,07:01:12.4000
      */
-    private static final Pattern datePattern =
+    private static final Pattern DATE_PATTERN =
             Pattern.compile("(\\d\\d\\d\\d),(\\d\\d\\d),(\\d\\d):(\\d\\d):(\\d\\d).(\\d\\d\\d\\d)");
-    private static DateTimeFormatter headerFormat = DateTimeFormatter.ofPattern("yyyy,DDD,HH:mm:ss.SSSS");
+    private static final DateTimeFormatter HEADER_FORMAT = DateTimeFormatter.ofPattern("yyyy,DDD,HH:mm:ss.SSSS");
 
     static {
-        if (!ExternalProcess.isInPath("rdseed")) throw new RuntimeException("rdseed is not in PATH.");
+        if (!ExternalProcess.isInPath("rdseed")) throw new RuntimeException("No rdseed in PATH.");
     }
 
     /**
@@ -83,7 +83,7 @@ public class SEEDFile {
      * @throws IOException if an I/O error occurs
      */
     public static void main(String[] args) throws IOException {
-        if (args.length != 1) throw new RuntimeException("Usage: [seed file name]");
+        if (args.length != 1) throw new IllegalArgumentException("Usage: [seed file name]");
         SEEDFile seed = new SEEDFile(Paths.get(args[0]));
         GlobalCMTSearch sc = new GlobalCMTSearch(seed.startingDate, seed.endingDate);
         sc.search().forEach(System.out::println);
@@ -94,7 +94,7 @@ public class SEEDFile {
      * @return time for the dateString
      */
     private static LocalDateTime toLocalDateTime(String dateString) {
-        return LocalDateTime.parse(dateString, headerFormat);
+        return LocalDateTime.parse(dateString, HEADER_FORMAT);
     }
 
     @Override
@@ -139,17 +139,17 @@ public class SEEDFile {
         String[] lines = readSeed("-cf");
         for (String line : lines) {
             if (line.contains("Starting date of this volume")) {
-                Matcher m = datePattern.matcher(line);
+                Matcher m = DATE_PATTERN.matcher(line);
                 m.find();
                 String dateString = m.group();
                 startingDate = toLocalDateTime(dateString);
             } else if (line.contains("Ending date of this volume")) {
-                Matcher m = datePattern.matcher(line);
+                Matcher m = DATE_PATTERN.matcher(line);
                 m.find();
                 String dateString = m.group();
                 endingDate = toLocalDateTime(dateString);
             } else if (line.contains("Creation Date of this volume")) {
-                Matcher m = datePattern.matcher(line);
+                Matcher m = DATE_PATTERN.matcher(line);
                 m.find();
                 String dateString = m.group();
                 creationDate = toLocalDateTime(dateString);

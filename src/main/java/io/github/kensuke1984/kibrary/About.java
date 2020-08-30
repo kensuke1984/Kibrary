@@ -1,17 +1,7 @@
 package io.github.kensuke1984.kibrary;
 
-import io.github.kensuke1984.kibrary.util.Utilities;
-
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,12 +16,12 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke1984@gmail.com";
     public static final String CODENAME = "Shiva";
-    public static final String VERSION = "0.4.9.24";
+    public static final String VERSION = "0.4.9.25";
     private static final String LINE = "Kibrary " + VERSION + " (" + CODENAME + ")\n" +
             "Copyright \u00a9 2015-2020 Kensuke Konishi and Anselme F.E. Borgeaud.\n\n" +
             "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
 
-    //kibrary.jar
+    // kibrary.jar
     private static final String KIBRARY_JAR_URL = "https://bit.ly/31FkTrh";
 
     private About() {
@@ -76,20 +66,4 @@ public final class About extends javax.swing.JFrame {
         SwingUtilities.invokeLater(() -> jScrollPane1.getVerticalScrollBar().setValue(0));
     }
 
-    private static void downloadKibrary() throws IOException, NoSuchAlgorithmException, URISyntaxException {
-        Path localPath = Paths.get(About.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-        if (Files.isDirectory(localPath) || localPath.toString().contains("anisotime")) return;
-        String localSum = Utilities.checksum(localPath, "SHA-256");
-        Path path = Utilities.download(new URL(KIBRARY_JAR_URL));
-        String cloudSum = Utilities.checksum(path, "SHA-256");
-        if (localSum.equals(cloudSum)) return;
-        Path latest = localPath.resolveSibling("latest_kibrary");
-        Files.move(path, latest, StandardCopyOption.REPLACE_EXISTING);
-        try {
-            JOptionPane.showMessageDialog(null, "Software update is found. The latest version is " + latest);
-        } catch (HeadlessException e) {
-            System.err.println("Software update is found. The latest version is " + latest);
-        }
-        System.exit(55);
-    }
 }

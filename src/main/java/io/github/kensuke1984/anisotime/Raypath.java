@@ -49,7 +49,7 @@ import static io.github.kensuke1984.kibrary.math.Integrand.jeffreysMethod1;
  * TODO cache eventR phase    Tau
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.7.5b
+ * @version 0.7.6b
  * @see "Woodhouse, 1981"
  */
 public class Raypath implements Serializable, Comparable<Raypath> {
@@ -177,7 +177,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
      */
     Raypath(double rayParameter, Woodhouse1981 woodhouse, ComputationalMesh mesh) {
         if (rayParameter < 0)
-            throw new RuntimeException("Input ray parameter must be a non-negative number. " + rayParameter);
+            throw new IllegalArgumentException("Input ray parameter must be a non-negative number. " + rayParameter);
         RAY_PARAMETER = rayParameter;
         WOODHOUSE = woodhouse;
         MESH = mesh == null ? ComputationalMesh.simple(woodhouse.getStructure()) : mesh;
@@ -699,7 +699,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
             throw new IllegalArgumentException("Event radius (" + eventR + ") must be in the mantle.");
         //TODO because of computeSourceSideDelta
         if (eventR < getStructure().earthRadius() - 700)
-            throw new RuntimeException("Not super deep earthquakes yet. The event depth must be shallwer than 700");
+            throw new RuntimeException("Not super deep earthquakes yet. The event depth must be shallower than 700");
         PathPart[] parts = phase.getPassParts();
         double delta = 0;
         for (PathPart part : parts)
@@ -811,7 +811,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 } else if (part instanceof Located) {
                     Located l = (Located) part;
                     r = getStructure().getROf(l.getPassPoint());
-                } else throw new RuntimeException("wow its not expected.");
+                } else throw new RuntimeException("wow unexpected.");
                 double time = computeTAlongBoundary(pp, r, angle, d.isShallower());
                 double lastTime = tList.getLast() + time;
                 double lastAngle = thetaList.getLast() + angle;
@@ -1429,7 +1429,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 ComputationalMesh.EPS < Math.abs(getStructure().innerCoreBoundary() - boundaryR) &&
                 Arrays.stream(getStructure().velocityBoundaries())
                         .allMatch(b -> ComputationalMesh.EPS < Math.abs(b - boundaryR)))
-            throw new RuntimeException("The input radius " + boundaryR + " is not a boundary.");
+            throw new IllegalArgumentException("Input radius " + boundaryR + " is not a boundary.");
         double r = boundaryR + (shallower ? ComputationalMesh.EPS : -ComputationalMesh.EPS);
         double s = boundaryR * deltaOnBoundary;
         double numerator;

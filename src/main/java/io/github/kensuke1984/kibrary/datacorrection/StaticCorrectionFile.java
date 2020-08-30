@@ -33,7 +33,7 @@ import java.util.stream.IntStream;
  * - see in {@link #read(Path)}<br>
  *
  * @author Kensuke Konishi
- * @version 0.2.1
+ * @version 0.2.2
  */
 public final class StaticCorrectionFile {
     /**
@@ -56,7 +56,7 @@ public final class StaticCorrectionFile {
             GlobalCMTID[] cmtIDs = new GlobalCMTID[dis.readShort()];
             int headerBytes = 2 * 2 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length;
             long infoParts = fileSize - headerBytes;
-            if (infoParts % oneCorrectionByte != 0) throw new RuntimeException(infoPath + " is not valid..");
+            if (infoParts % oneCorrectionByte != 0) throw new RuntimeException(infoPath + " is invalid..");
             // name(8),network(8),position(4*2)
             byte[] stationBytes = new byte[24];
             for (int i = 0; i < stations.length; i++) {

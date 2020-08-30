@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Earth utility.
  *
  * @author Kensuke Konishi
- * @version 0.1.1.3
+ * @version 0.1.2
  */
 public final class Earth {
     /**
@@ -275,7 +275,7 @@ public final class Earth {
      */
     public static double getVolume(Location point, double dr, double dLatitude, double dLongitude) {
         double r = point.getR();
-        if (r <= 0) throw new RuntimeException("location has an invalid R: " + r);
+        if (r <= 0) throw new IllegalArgumentException("location has an invalid R: " + r);
 
         double latitude = point.getLatitude();
         double longitude = point.getLongitude();

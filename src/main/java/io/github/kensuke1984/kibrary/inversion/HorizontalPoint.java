@@ -17,23 +17,20 @@ import java.util.TreeMap;
  * TODO DSM informationとして書き出す
  *
  * @author Kensuke Konishi
- * @version 0.1.2.2
+ * @version 0.1.3
  */
 public class HorizontalPoint {
 
     /**
-     * 各ポイントの実際の位置
+     * map of point name and position
      */
     private Map<String, HorizontalPosition> perPointMap;
 
-    /**
-     * ファイル名
-     */
-    private File infoFile;
+    private final File INFOFILE;
 
     public HorizontalPoint(File infoFile) throws NoSuchFileException {
         if (!infoFile.exists()) throw new NoSuchFileException(infoFile.getPath());
-        this.infoFile = infoFile;
+        INFOFILE = infoFile;
         readFile();
     }
 
@@ -46,16 +43,15 @@ public class HorizontalPoint {
     }
 
     /**
-     * @return ポイントファイル名
+     * @return name of file
      */
-    public File getInfoFile() {
-        return infoFile;
+    public File getINFOFILE() {
+        return INFOFILE;
     }
 
     private void readFile() {
-        // Set<String> perPoint = new TreeSet<String>();
         Map<String, HorizontalPosition> perPointMap = new TreeMap<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(infoFile))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(INFOFILE))) {
             String line;
             while (null != (line = br.readLine())) {
                 line = line.trim();
@@ -67,28 +63,26 @@ public class HorizontalPoint {
                 perPointMap.put(line.trim().split("\\s+")[0], loc);
             }
         } catch (Exception e) {
-            throw new RuntimeException(infoFile + " is not valid");
-
+            throw new RuntimeException(INFOFILE + " is not valid");
         }
-        // horizontalPointNameSet = perPoint;
         this.perPointMap = perPointMap;
     }
 
     /**
      * @param horizontalPointName (ex. XY???)
-     * @return 位置
+     * @return HorizontalPosition of an input name
      */
     public HorizontalPosition getHorizontalPosition(String horizontalPointName) {
         return perPointMap.get(horizontalPointName);
     }
 
     /**
-     * @param loc for searching the name
-     * @return locationに対するポイントの名前
+     * @param pos for searching the name
+     * @return the point name for an input HorizontalPosition
      */
-    public String toString(HorizontalPosition loc) {
+    public String toString(HorizontalPosition pos) {
         for (String str : perPointMap.keySet())
-            if (loc.equals(perPointMap.get(str))) return str;
+            if (pos.equals(perPointMap.get(str))) return str;
         System.err.println("could not find the point");
         return null;
     }

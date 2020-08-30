@@ -15,10 +15,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,7 +30,7 @@ import java.util.stream.Stream;
  * networks in an event</b>
  *
  * @author Kensuke Konishi
- * @version 0.1.1.1
+ * @version 0.1.2
  */
 public class RaypathDistribution implements Operation {
 
@@ -99,14 +96,11 @@ public class RaypathDistribution implements Operation {
                 Utilities.toTimeString(System.nanoTime() - start));
     }
 
-    /**
-     * parameterのセット
-     */
     private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
 
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
 

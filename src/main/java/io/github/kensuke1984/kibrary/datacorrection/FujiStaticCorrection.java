@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 
 /**
  * This class computes values of Static correction after Fuji <i>et al</i>.,
- * (2010) <br>
- * dataselectionした後のフォルダでやる<br>
+ * (2010)
+ * This procedure is after DataSelection
  * <p>
  * The time shift value <i>t</i> for the ray path is for the observed
  * timewindow.<br>
@@ -42,10 +42,10 @@ import java.util.stream.Collectors;
  * <p>
  * If something happens, move the sac file to Trash
  * <p>
- * timeshift fileを一つに統一
+ * unified timeshift files
  *
  * @author Kensuke Konishi
- * @version 0.2.1.6
+ * @version 0.2.2
  */
 public class FujiStaticCorrection implements Operation {
 
@@ -58,7 +58,7 @@ public class FujiStaticCorrection implements Operation {
      */
     private boolean convolute;
     /**
-     * range for searching [s] ±searchRange秒の中でコリレーション最大値探す
+     * range for search [s] ±searchRange
      */
     private double searchRange;
     /**
@@ -146,22 +146,17 @@ public class FujiStaticCorrection implements Operation {
     }
 
     /**
-     * ピーク位置を探す (f[a] - f[a-1]) * (f[a+1] - f[a]) < 0 の点
+     * search peaks (f[a] - f[a-1]) * (f[a+1] - f[a]) < 0
      *
      * @param u u[i]
-     * @return ピーク位置 a where (f[a] - f[a-1]) * (f[a+1] - f[a]) < 0
+     * @return array of a, where (f[a] - f[a-1]) * (f[a+1] - f[a]) < 0
      */
     private static int[] findPeaks(double[] u) {
         List<Integer> peakI = new ArrayList<>();
-        for (int i = 1; i < u.length - 1; i++) {
-            double du1 = u[i] - u[i - 1];
-            double du2 = u[i + 1] - u[i];
-            if (du1 * du2 < 0) peakI.add(i);
-        }
+        for (int i = 1; i < u.length - 1; i++) if ((u[i] - u[i - 1]) * (u[i + 1] - u[i]) < 0) peakI.add(i);
         int[] peaks = new int[peakI.size()];
         for (int i = 0; i < peaks.length; i++)
             peaks[i] = peakI.get(i);
-        // System.out.println(peaks.length+" peaks are found");
         return peaks;
     }
 
@@ -182,10 +177,10 @@ public class FujiStaticCorrection implements Operation {
         if (!property.containsKey("sacSamplingHz")) property.setProperty("sacSamplingHz", "20");
     }
 
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
         String date = Utilities.getTemporaryString();
@@ -203,8 +198,6 @@ public class FujiStaticCorrection implements Operation {
         StaticCorrectionFile.write(outPath, staticCorrectionSet);
     }
 
-    //
-
     /**
      * Search the max point of synthetic in the time window for a pair. and then
      * search the max value within the search range and same positive and
@@ -219,7 +212,6 @@ public class FujiStaticCorrection implements Operation {
     private double computeMaxRatio(SACData obsSac, SACData synSac, double shift, Timewindow window) {
         double delta = 1 / sacSamplingHz;
 
-        // マーカーが何秒か
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
@@ -238,7 +230,7 @@ public class FujiStaticCorrection implements Operation {
     }
 
     /**
-     * synthetic のウインドウが[t1, t2], observed [t1-t(returning value), t2-t]を用いる
+     * synthetic ->[t1, t2], observed ->[t1-t(returning value), t2-t]
      *
      * @param obsSac observed sac data
      * @param synSac synthetic sac data
@@ -248,7 +240,6 @@ public class FujiStaticCorrection implements Operation {
     private double computeTimeshiftForBestCorrelation(SACData obsSac, SACData synSac, Timewindow window) {
         double delta = 1 / sacSamplingHz;
 
-        // マーカーが何秒か
         double startSec = window.getStartTime();
         double endSec = window.getEndTime();
 
@@ -316,19 +307,17 @@ public class FujiStaticCorrection implements Operation {
     }
 
     /**
-     * 一番早い時刻にthresholdを超える点を返す
+     * search the earliest time when |u| > threshold*max
      *
      * @param u        u[x]
      * @param maxPoint u[maxPoint] is maximum
-     * @return コリレーションを考える領域のおわり
+     * @return the end time for a time window used in calculation of correlation
      */
     private int getEndPoint(double[] u, int maxPoint) {
         double max = u[maxPoint];
-        // int endPoint = maxPoint;
-        // ピークを探す
+        // search peaks
         int[] iPeaks = findPeaks(u);
         double minLimit = Math.abs(threshold * max);
-        // System.out.println("Threshold is " + minLimit);
         for (int ipeak : iPeaks)
             if (minLimit < Math.abs(u[ipeak])) return ipeak;
         return maxPoint;
@@ -380,11 +369,11 @@ public class FujiStaticCorrection implements Operation {
         @Override
         public void run() {
             if (!Files.exists(synEventPath)) {
-                new NoSuchFileException(synEventPath.toString()).printStackTrace();
+                System.err.println(synEventPath + " doesn't exist.");
                 return;
             }
 
-            // observed fileを拾ってくる
+            // collect observed files
             Set<SACFileName> obsFiles;
             try {
                 (obsFiles = obsEventDir.sacFileSet()).removeIf(s -> !s.isOBS());
@@ -405,7 +394,7 @@ public class FujiStaticCorrection implements Operation {
                 // System.out.println(obsFile.getName() + " " +
                 // synFile.getName());
                 if (!synName.exists()) {
-                    System.err.println(synName + " does not exist.");
+                    System.err.println(synName + " doesn't exist.");
                     continue;
                 }
                 SACData obsSac;

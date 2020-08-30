@@ -8,10 +8,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
@@ -22,11 +19,11 @@ import java.util.stream.Collectors;
  * Make DSM information files for event folders under a work folder.
  *
  * @author Kensuke Konishi
- * @version 0.2.2.2
+ * @version 0.2.3
  */
 public class SyntheticDSMInformationFileMaker implements Operation {
 
-    private Properties property;
+    private final Properties PROPERTY;
     /**
      * work folder
      */
@@ -42,7 +39,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
      */
     private double tlen;
     /**
-     * 観測波形を選択する成分
+     * components to be used
      */
     private Set<SACComponent> components;
     /**
@@ -54,8 +51,8 @@ public class SyntheticDSMInformationFileMaker implements Operation {
      */
     private Path structurePath;
 
-    private SyntheticDSMInformationFileMaker(Properties property) {
-        this.property = (Properties) property.clone();
+    private SyntheticDSMInformationFileMaker(Properties property) throws IOException {
+        this.PROPERTY = (Properties) property.clone();
         set();
     }
 
@@ -98,29 +95,29 @@ public class SyntheticDSMInformationFileMaker implements Operation {
     }
 
     private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("TLEN")) property.setProperty("TLEN", "3276.8");
-        if (!property.containsKey("NP")) property.setProperty("NP", "1024");
-        if (!property.containsKey("header")) property.setProperty("header", "PREM");
+        if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
+        if (!PROPERTY.containsKey("components")) PROPERTY.setProperty("components", "Z R T");
+        if (!PROPERTY.containsKey("TLEN")) PROPERTY.setProperty("TLEN", "3276.8");
+        if (!PROPERTY.containsKey("NP")) PROPERTY.setProperty("NP", "1024");
+        if (!PROPERTY.containsKey("header")) PROPERTY.setProperty("header", "PREM");
     }
 
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+        workPath = Paths.get(PROPERTY.getProperty("workPath"));
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
+        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
-        np = Integer.parseInt(property.getProperty("NP"));
-        tlen = Double.parseDouble(property.getProperty("TLEN"));
-        header = property.getProperty("header");
-        if (property.containsKey("structurePath"))
-            structurePath = workPath.resolve(property.getProperty("structurePath"));
+        np = Integer.parseInt(PROPERTY.getProperty("NP"));
+        tlen = Double.parseDouble(PROPERTY.getProperty("TLEN"));
+        header = PROPERTY.getProperty("header");
+        if (PROPERTY.containsKey("structurePath"))
+            structurePath = workPath.resolve(PROPERTY.getProperty("structurePath"));
     }
 
     @Override
     public Properties getProperties() {
-        return (Properties) property.clone();
+        return (Properties) PROPERTY.clone();
     }
 
     @Override

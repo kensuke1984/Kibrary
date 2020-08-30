@@ -148,7 +148,7 @@ public final class BasicIDFile {
             int headerBytes =
                     2 * 3 + (8 + 8 + 4 * 2) * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length;
             long idParts = fileSize - headerBytes;
-            if (idParts % oneIDByte != 0) throw new RuntimeException(idPath + " is not valid..");
+            if (idParts % oneIDByte != 0) throw new RuntimeException(idPath + " is invalid..");
             // name(8),network(8),position(4*2)
             byte[] stationBytes = new byte[24];
             for (int i = 0; i < stations.length; i++) {

@@ -220,7 +220,7 @@ public class Partial1DDatasetMaker implements Operation {
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
 
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist.");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         timewindowPath = getPath("timewindowPath");
         components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
@@ -262,7 +262,7 @@ public class Partial1DDatasetMaker implements Operation {
         writeLog("Set lsmooth " + this.lsmooth);
     }
 
-    private void readSourceTimeFunctions() throws IOException {
+    private void readSourceTimeFunctions() {
         Set<GlobalCMTID> ids = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
                 .collect(Collectors.toSet());
         userSourceTimeFunctions = ids.stream().collect(Collectors.toMap(id -> id, id -> {
@@ -377,34 +377,34 @@ public class Partial1DDatasetMaker implements Operation {
         return (Properties) property.clone();
     }
 
-    private AtomicInteger numberOfFinishedEvents = new AtomicInteger();
-    private Map<GlobalCMTID, Integer> processMap = Collections.synchronizedMap(new HashMap<>());
+    private final AtomicInteger numberOfFinishedEvents = new AtomicInteger();
+    private final Map<GlobalCMTID, Integer> processMap = Collections.synchronizedMap(new HashMap<>());
 
     private class Worker implements Runnable {
 
         private SourceTimeFunction sourceTimeFunction;
-        private GlobalCMTID id;
-        private EventFolder eventDir;
+        private final GlobalCMTID ID;
+        private final EventFolder EVENT_DIR;
 
         private Worker(EventFolder eventDir) {
-            this.eventDir = eventDir;
-            id = eventDir.getGlobalCMTID();
+            EVENT_DIR = eventDir;
+            ID = eventDir.getGlobalCMTID();
         }
 
         @Override
         public void run() {
             try {
-                writeLog("Running on " + id);
+                writeLog("Running on " + ID);
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            Path spcFolder = eventDir.toPath().resolve(modelName);
+            Path spcFolder = EVENT_DIR.toPath().resolve(modelName);
 
             if (!Files.exists(spcFolder)) {
                 System.err.println(spcFolder + " does not exist...");
                 return;
             }
-            processMap.put(id, 0);
+            processMap.put(ID, 0);
 
             Set<SPCFile> spcFileNameSet;
             try {
@@ -423,7 +423,7 @@ public class Partial1DDatasetMaker implements Operation {
                 // ignore syn.
                 if (spcFileName.isSynthetic()) continue;
 
-                if (!spcFileName.getSourceID().equals(id.toString())) {
+                if (!spcFileName.getSourceID().equals(ID.toString())) {
                     try {
                         writeLog(spcFileName + " has an invalid global CMT ID.");
                         continue;
@@ -456,14 +456,14 @@ public class Partial1DDatasetMaker implements Operation {
                     }
                 }
                 int percent = finished++ * 100 / spcFileNameSet.size();
-                processMap.put(id, percent);
+                processMap.put(ID, percent);
             }
-            processMap.remove(id);
+            processMap.remove(ID);
             numberOfFinishedEvents.incrementAndGet();
         }
 
         private SourceTimeFunction computeSourceTimeFunction() {
-            GlobalCMTID id = eventDir.getGlobalCMTID();
+            GlobalCMTID id = EVENT_DIR.getGlobalCMTID();
             double halfDuration = id.getEvent().getHalfDuration();
             switch (Partial1DDatasetMaker.this.sourceTimeFunction) {
                 case -1:
@@ -484,7 +484,7 @@ public class Partial1DDatasetMaker implements Operation {
 
             double[] cutU = sampleOutput(filteredUt, t);
 
-            PartialID pid = new PartialID(station, id, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
+            PartialID pid = new PartialID(station, ID, t.getComponent(), finalSamplingHz, t.getStartTime(), cutU.length,
                     1 / maxFreq, 1 / minFreq, 0, sourceTimeFunction != null, new Location(0, 0, bodyR), partialType,
                     cutU);
             try {
@@ -512,7 +512,7 @@ public class Partial1DDatasetMaker implements Operation {
                                    SACComponent component) {
             Set<TimewindowInformation> tw = timewindowInformationSet.stream()
                     .filter(info -> info.getStation().getName().equals(station.getName()))
-                    .filter(info -> info.getGlobalCMTID().equals(id)).filter(info -> info.getComponent() == component)
+                    .filter(info -> info.getGlobalCMTID().equals(ID)).filter(info -> info.getComponent() == component)
                     .collect(Collectors.toSet());
             if (tw.isEmpty()) return;
             for (int k = 0; k < spectrum.nbody(); k++) {

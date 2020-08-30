@@ -12,10 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,7 +24,7 @@ import java.util.stream.Collectors;
  * できたファイルはoutDir下にイベントフォルダを作りそこにつくる sacのUSER0とUSER1に最短周期、最長周期の情報を書き込む
  *
  * @author Kensuke Konishi
- * @version 0.2.3
+ * @version 0.2.4
  */
 public class FilterDivider implements Operation {
 
@@ -35,7 +32,7 @@ public class FilterDivider implements Operation {
      * Path for the work folder
      */
     private Path workPath;
-    private Properties property;
+    private final Properties PROPERTY;
     private ButterworthFilter filter;
     private Path outPath;
     /**
@@ -79,8 +76,8 @@ public class FilterDivider implements Operation {
      */
     private int npts;
 
-    public FilterDivider(Properties property) {
-        this.property = (Properties) property.clone();
+    public FilterDivider(Properties property) throws IOException {
+        this.PROPERTY = (Properties) property.clone();
         set();
     }
 
@@ -135,36 +132,36 @@ public class FilterDivider implements Operation {
     }
 
     private void checkAndPutDefaults() {
-        if (!property.containsKey("workPath")) property.setProperty("workPath", "");
-        if (!property.containsKey("components")) property.setProperty("components", "Z R T");
-        if (!property.containsKey("obsPath")) property.setProperty("obsPath", "");
-        if (!property.containsKey("synPath")) property.setProperty("synPath", "");
-        if (!property.containsKey("delta")) property.setProperty("delta", "0.05");
-        if (!property.containsKey("highFreq")) property.setProperty("highFreq", "0.08");
-        if (!property.containsKey("lowFreq")) property.setProperty("lowFreq", "0.005");
-        if (!property.containsKey("backward")) property.setProperty("backward", "true");
-        if (!property.containsKey("np")) property.setProperty("np", "4");
-        if (!property.containsKey("filter")) property.setProperty("filter", "bandpass");
-        if (!property.containsKey("npts")) property.setProperty("npts", String.valueOf(Integer.MAX_VALUE));
+        if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
+        if (!PROPERTY.containsKey("components")) PROPERTY.setProperty("components", "Z R T");
+        if (!PROPERTY.containsKey("obsPath")) PROPERTY.setProperty("obsPath", "");
+        if (!PROPERTY.containsKey("synPath")) PROPERTY.setProperty("synPath", "");
+        if (!PROPERTY.containsKey("delta")) PROPERTY.setProperty("delta", "0.05");
+        if (!PROPERTY.containsKey("highFreq")) PROPERTY.setProperty("highFreq", "0.08");
+        if (!PROPERTY.containsKey("lowFreq")) PROPERTY.setProperty("lowFreq", "0.005");
+        if (!PROPERTY.containsKey("backward")) PROPERTY.setProperty("backward", "true");
+        if (!PROPERTY.containsKey("np")) PROPERTY.setProperty("np", "4");
+        if (!PROPERTY.containsKey("filter")) PROPERTY.setProperty("filter", "bandpass");
+        if (!PROPERTY.containsKey("npts")) PROPERTY.setProperty("npts", String.valueOf(Integer.MAX_VALUE));
     }
 
-    private void set() {
+    private void set() throws IOException {
         checkAndPutDefaults();
-        workPath = Paths.get(property.getProperty("workPath"));
+        workPath = Paths.get(PROPERTY.getProperty("workPath"));
 
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
 
-        components = Arrays.stream(property.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
+        components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
                 .collect(Collectors.toSet());
 
         obsPath = getPath("obsPath");
         synPath = getPath("synPath");
-        delta = Double.parseDouble(property.getProperty("delta"));
-        highFreq = Double.parseDouble(property.getProperty("highFreq"));
-        lowFreq = Double.parseDouble(property.getProperty("lowFreq"));
-        backward = Boolean.parseBoolean(property.getProperty("backward"));
-        np = Integer.parseInt(property.getProperty("np"));
-        npts = Integer.parseInt(property.getProperty("npts"));
+        delta = Double.parseDouble(PROPERTY.getProperty("delta"));
+        highFreq = Double.parseDouble(PROPERTY.getProperty("highFreq"));
+        lowFreq = Double.parseDouble(PROPERTY.getProperty("lowFreq"));
+        backward = Boolean.parseBoolean(PROPERTY.getProperty("backward"));
+        np = Integer.parseInt(PROPERTY.getProperty("np"));
+        npts = Integer.parseInt(PROPERTY.getProperty("npts"));
     }
 
     private AtomicInteger processedFolders = new AtomicInteger(); // already processed
@@ -219,7 +216,7 @@ public class FilterDivider implements Operation {
     private void setFilter(double fMin, double fMax, int n) {
         double omegaH = fMax * 2 * Math.PI * delta;
         double omegaL = fMin * 2 * Math.PI * delta;
-        switch (property.getProperty("filter")) {
+        switch (PROPERTY.getProperty("filter")) {
             case "lowpass":
                 filter = new LowPassFilter(omegaL, n);
                 break;
@@ -240,7 +237,7 @@ public class FilterDivider implements Operation {
 
     @Override
     public Properties getProperties() {
-        return (Properties) property.clone();
+        return (Properties) PROPERTY.clone();
     }
 
     @Override

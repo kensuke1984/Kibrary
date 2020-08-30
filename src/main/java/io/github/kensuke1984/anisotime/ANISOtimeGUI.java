@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  * TODO relative absolute small p, s do not show up
  *
  * @author Kensuke Konishi
- * @version 0.5.9b
+ * @version 0.5.10b
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
 
@@ -276,9 +276,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     raypathList.get(i).outputDat(outDataFile, phaseList.get(i), eventR);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 SwingUtilities
-                        .invokeLater(() -> JOptionPane.showMessageDialog(null, "Cannot write files about the path"));
+                        .invokeLater(() -> JOptionPane.showMessageDialog(null, "Can't write files about the path"));
             }
         };
         new Thread(output).start();
@@ -301,8 +300,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 throw new RuntimeException("ANIKUSUPEkuted");
         }
         t.setUncaughtExceptionHandler((thread, error) -> {
-            error.printStackTrace();
-            System.err.println("\nSorry, this machine does not have enough memory to run ANISOtime.\n" +
+            System.err.println("\nSorry, this machine doesn't have enough memory to run ANISOtime.\n" +
                     "Please try again on a more modern machine with more memory.");
             System.exit(71);
         });

@@ -14,10 +14,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -123,10 +120,10 @@ public class TakeuchiStaticCorrection implements Operation {
             throw new IllegalArgumentException("There is no information about timewindowInformationPath");
     }
 
-    private void set() {
+    private void set() throws IOException{
         checkAndPutDefaults();
         workPath = Paths.get(property.getProperty("workPath"));
-        if (!Files.exists(workPath)) throw new RuntimeException("The workPath: " + workPath + " does not exist");
+        if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
         synPath = getPath("synPath");
         obsPath = getPath("obsPath");
         timewindowInformationPath = getPath("timeWindowInformationPath");

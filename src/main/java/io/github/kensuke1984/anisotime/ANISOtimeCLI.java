@@ -9,10 +9,7 @@ import org.apache.commons.math3.util.Precision;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,14 +19,9 @@ import java.util.stream.IntStream;
 
 /**
  * This class is only for CLI use of ANISOtime.
- * <p>
- * TODO customize for catalog ddelta dR
- * <p>
- * <p>
- * java io.github.kensuke1984.anisotime.ANISOtime -rc iprem85.cat -h 571 -ph P -dec 5 --time -deg 88.7
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.25
+ * @version 0.3.26
  */
 final class ANISOtimeCLI {
 
@@ -56,7 +48,7 @@ final class ANISOtimeCLI {
     private final CommandLine cmd;
     private RaypathCatalog catalog;
     /**
-     * [rad]
+     * [rad] &Delta;
      */
     private double targetDelta;
     private VelocityStructure structure;
@@ -157,7 +149,7 @@ final class ANISOtimeCLI {
     /**
      * Sets parameters according to the input arguments.
      */
-    private void setParameters() {
+    private void setParameters() throws Exception {
 
         decimalPlaces = Integer.parseInt(cmd.getOptionValue("dec", "2"));
         if (decimalPlaces < 0)
@@ -171,14 +163,10 @@ final class ANISOtimeCLI {
         relativeAngleMode = cmd.hasOption("relative");
 
         if (cmd.hasOption("rc")) {
-            try {
-                Path catalogPath = Paths.get(cmd.getOptionValue("rc"));
-                catalog = RaypathCatalog.read(catalogPath);
-                structure = catalog.getStructure();
-                eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            Path catalogPath = Paths.get(cmd.getOptionValue("rc"));
+            catalog = RaypathCatalog.read(catalogPath);
+            structure = catalog.getStructure();
+            eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
         } else {
             structure = createVelocityStructure();
             eventR = structure.earthRadius() - Double.parseDouble(cmd.getOptionValue("h", "0"));
@@ -202,9 +190,9 @@ final class ANISOtimeCLI {
 
         targetDelta = Math.toRadians(Double.parseDouble(cmd.getOptionValue("deg", "NaN")));
 
-        if (targetDelta < 0) throw new RuntimeException("A value for the option -deg must be non-negative.");
+        if (targetDelta < 0) throw new IllegalArgumentException("A value for the option -deg must be non-negative.");
         if (relativeAngleMode && Math.PI < targetDelta)
-            throw new RuntimeException("In the relative angle mode, a value for the option -deg must be 180 or less.");
+            throw new IllegalArgumentException("In the relative angle mode, a value for the option -deg must be 180 or less.");
 
         double rayParameterDegree = Double.parseDouble(cmd.getOptionValue("p", "NaN"));
         rayParameter = Math.toDegrees(rayParameterDegree);
@@ -235,7 +223,7 @@ final class ANISOtimeCLI {
         Path outfile = Paths.get(cmd.getOptionValue("o", "anisotime.rcs"));
 
         if (Files.exists(outfile))
-            throw new RuntimeException(outfile + " already exists. Option '-o' allows changing the output file name.");
+            throw new FileAlreadyExistsException(outfile + " already exists. Option '-o' allows changing the output file name.");
 
         double[] ranges = Arrays.stream(cmd.getOptionValue("rs").split(",")).mapToDouble(Double::parseDouble).toArray();
         double min = ranges[0];
@@ -275,19 +263,19 @@ final class ANISOtimeCLI {
     /**
      * @param out          Path for a file
      * @param phase        to be shown
-     * @param rayparameter p
+     * @param rayParameter p
      * @param delta        [deg] to be shown.
      * @param time         [s] to be printed
      * @param eventR       radius of the event [km]
      */
-    void createEPS(RaypathPanel panel, Path out, Phase phase, double rayparameter, double delta, double time,
+    void createEPS(RaypathPanel panel, Path out, Phase phase, double rayParameter, double delta, double time,
                    double eventR) {
         try (BufferedOutputStream bos = new BufferedOutputStream(
                 Files.newOutputStream(out, StandardOpenOption.CREATE_NEW))) {
             EpsGraphics epsGraphics = new EpsGraphics(phase.toString(), bos, 0, 0, panel.getWidth(), panel.getHeight(),
                     ColorMode.COLOR_RGB);
             panel.paintComponent(epsGraphics);
-            String rayp = Utilities.fixDecimalPlaces(decimalPlaces, rayparameter);
+            String rayp = Utilities.fixDecimalPlaces(decimalPlaces, rayParameter);
             String delt = Utilities.fixDecimalPlaces(decimalPlaces, delta);
             String tra = Utilities.fixDecimalPlaces(decimalPlaces, time);
             String depth = Utilities.fixDecimalPlaces(decimalPlaces, structure.earthRadius() - eventR);
@@ -302,7 +290,7 @@ final class ANISOtimeCLI {
 
     private void run() {
         try {
-            if (checkArgumentOption()) throw new RuntimeException("Input arguments have problems.");
+            if (checkArgumentOption()) throw new IllegalArgumentException("Input arguments have problems.");
             hasConflict();
 
             setParameters();
@@ -314,7 +302,7 @@ final class ANISOtimeCLI {
             // only create a catalog
             if (!cmd.hasOption("p") && !cmd.hasOption("deg")) {
                 if (cmd.hasOption("mod")) return;
-                throw new RuntimeException(
+                throw new IllegalArgumentException(
                         "You must specify a ray parameter (e.g. -p 10) or epicentral distance [deg] (e.g. -deg 60)");
             }
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
@@ -381,7 +369,7 @@ final class ANISOtimeCLI {
         } catch (Exception e) {
             if (!cmd.hasOption("s")) {
                 System.err.println(
-                        "improper usage or some other problems. If you have no idea about this, you try the same order with '-s' option to send me the situation.");
+                        "Improper usage or some other problems. If you have no idea about this, you try the same order with '-s' option to send me the situation.");
                 System.err.println(e.getMessage());
             }
         } finally {
@@ -448,7 +436,7 @@ final class ANISOtimeCLI {
      *
      * @return velocity structure according to the input. Default: PREM
      */
-    private VelocityStructure createVelocityStructure() {
+    private VelocityStructure createVelocityStructure() throws IOException {
         Path modelPath;
         if (cmd.hasOption("mod")) switch (cmd.getOptionValue("mod")) {
             case "ak135":
@@ -465,18 +453,16 @@ final class ANISOtimeCLI {
         }
         else return PolynomialStructure.PREM;
 
-        if (Files.exists(modelPath)) {
-            try {
-                return new PolynomialStructure(modelPath);
-            } catch (Exception e) {
-            }
+        if (Files.exists(modelPath)) try {
+            return new PolynomialStructure(modelPath);
+        } catch (Exception e) {
             try {
                 return new NamedDiscontinuityStructure(modelPath);
-            } catch (Exception e) {
+            } catch (Exception e1) {
+                throw new RuntimeException("Input model file is invalid.");
             }
-            throw new RuntimeException("Input model file is invalid.");
         }
-        throw new RuntimeException(modelPath + " (input model) is not found.");
+        throw new NoSuchFileException(modelPath + " (input model)");
     }
 
     /**

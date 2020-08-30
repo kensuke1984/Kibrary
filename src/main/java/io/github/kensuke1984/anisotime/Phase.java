@@ -9,23 +9,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * <p>
- * Phase name.
- * </p>
- * <p>
- * This class is <b>immutable</b>.
- * <p>
+ * Phase name. This class is <b>immutable</b>.
  * Waveform is now digitalized. Waveform is divided into parts. each part has up
  * or downgoing, P or S and the partition in which waveform exists.
  * <p>
  * ???PdiffXX and ???SdiffXX can be used. XX is positive double XX is
  * diffractionAngle diff must be the last part.
  * HOGEdiff is actually a bouncing wave at &plusmn; &epsilon; of a boundary
- * <p>
+ *
  * Diffraction can only happen at the final part.  TODO arbitrary
- * <p>
+ *
  * Numbers in a name.
- * </p>
+ *
  * <dl>
  * <dt>redundancy</dt>
  * <dd>A number in parentheses indicates repetition of
@@ -40,13 +35,21 @@ import java.util.regex.Pattern;
  * <dd>under construction</dd>
  * </dl>
  * P and S after transmission strictly are downward, and p and s are upward.
+ * TODO P2PPcP no exist but exist
  *
  * @author Kensuke Konishi
- * @version 0.1.11
- * <p>
- * TODO P2PPcP no exist but exist
+ * @version 0.1.12
  */
 public class Phase implements Serializable {
+
+    private static void throwException(String phase) {
+        throw new IllegalArgumentException("Invalid expression around " + phase);
+    }
+
+    private static void throwException(char p) {
+        throwException(String.valueOf(p));
+    }
+
 
     // no use letters
     private static final Pattern others = Pattern.compile("[a-zA-Z&&[^cdfipsvIJKPS]]|[\\W&&[^.^]]");
@@ -406,7 +409,8 @@ public class Phase implements Serializable {
      */
     private String readAngle(int dStart) {
         int index = dStart + 4;
-        if (!EXPANDED_NAME.substring(dStart, index).equals("diff")) throw new RuntimeException("Problem around diff??");
+        if (!EXPANDED_NAME.substring(dStart, index).equals("diff"))
+            throwException("diff??");
         while (index < EXPANDED_NAME.length() &&
                 (Character.isDigit(EXPANDED_NAME.charAt(index)) || EXPANDED_NAME.charAt(index) == '.')) index++;
         return EXPANDED_NAME.substring(dStart + 4, index);
@@ -453,7 +457,7 @@ public class Phase implements Serializable {
                         innerPoint = beforePart.isEmission() ? PassPoint.SEISMIC_SOURCE : PassPoint.OTHER;
                         if (!beforePart.isEmission()) innerDepth =
                                 beforePart.isTransmission() ? secondLast.getOuterDepth() : secondLast.getInnerDepth();
-                        if (vFlag) throw new RuntimeException("Problem around " + currentChar);
+                        if (vFlag) throwException(currentChar);
                         else if (hatFlag || !Double.isNaN(nextDepth)) {
                             partList.add(
                                     new GeneralPart(ps, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
@@ -461,7 +465,7 @@ public class Phase implements Serializable {
                             else partList.add(Arbitrary.createTransmission(nextDepth));
                             continue;
                         }
-                        //under here, no interactions.
+                        // under here, no interactions.
                         switch (nextChar) {
                             case 10:
                             case 'P':
@@ -471,10 +475,10 @@ public class Phase implements Serializable {
                                 if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around p");
+                                throwException("p");
                         }
-                    } else throw new RuntimeException("Problem around \"p\"");
-//switching current char
+                    } else throwException("p");
+// switching current char
                 case 'S':
                 case 'P':
                     PhasePart PS = currentChar == 'P' ? PhasePart.P : (PSV ? PhasePart.SV : PhasePart.SH);
@@ -484,7 +488,7 @@ public class Phase implements Serializable {
                         double outerDepth = 0;
 
                         if (beforePart.isTransmission() && !secondLast.isDownward())
-                            throw new RuntimeException("Problem around " + currentChar);
+                            throwException(currentChar);
 
                         if (!beforePart.isEmission()) outerDepth =
                                 secondLast.isDownward() ? secondLast.getInnerDepth() : secondLast.getOuterDepth();
@@ -500,7 +504,7 @@ public class Phase implements Serializable {
                             partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                             continue;
                         } else if (!Double.isNaN(nextDepth)) {
-                            if (nextDepth < outerDepth) throw new RuntimeException("Problem around " + currentChar);
+                            if (nextDepth < outerDepth) throwException(currentChar);
                             switch (nextChar) {
                                 case 'p':
                                 case 's':
@@ -518,7 +522,7 @@ public class Phase implements Serializable {
                                     partList.add(Arbitrary.createTransmission(nextDepth));
                                     continue;
                                 default:
-                                    throw new RuntimeException("Problem around P");
+                                    throwException("P");
                             }
                         }
                         //under here, no interactions
@@ -559,13 +563,13 @@ public class Phase implements Serializable {
                                         PassPoint.EARTH_SURFACE));
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around P");
+                                throwException("P");
                         }
                     } else if (beforePart.isTopsideReflection() || beforePart.isPenetration()) {
                         innerPoint = ((Located) beforePart).getPassPoint();
                         double innerDepth = secondLast.getInnerDepth();
                         if (vFlag) {
-                            throw new RuntimeException("Problem around Pv");
+                            throwException("Pv");
                         } else if (hatFlag) {
                             partList.add(
                                     new GeneralPart(PS, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
@@ -586,7 +590,7 @@ public class Phase implements Serializable {
                                 if (nextChar != 10) partList.add(Located.SURFACE_REFLECTION);
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around P");
+                                throwException("P");
                         }
                     } else throw new RuntimeException("unexpected");
 //switching current char
@@ -609,7 +613,7 @@ public class Phase implements Serializable {
                             partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                             continue;
                         } else if (!Double.isNaN(nextDepth))
-                            throw new RuntimeException("Transmission of I is prohibited.");
+                            throw new IllegalArgumentException("Transmission of I is prohibited.");
                         switch (nextChar) {
                             case 'K':
                                 partList.add(
@@ -629,19 +633,19 @@ public class Phase implements Serializable {
                                 partList.add(Located.INNERCORE_SIDE_REFLECTION);
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around I");
+                                throwException("I");
                         }
                     } else if (beforePart.isTopsideReflection()) {
                         innerPoint = ((Located) beforePart).getPassPoint();
                         double innerDepth = secondLast.getInnerDepth();
-                        if (vFlag) throw new RuntimeException("Problem around I");
+                        if (vFlag) throwException("I");
                         else if (hatFlag) {
                             partList.add(
                                     new GeneralPart(ij, false, innerDepth, nextDepth, innerPoint, PassPoint.OTHER));
                             partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                             continue;
                         } else if (!Double.isNaN(nextDepth))
-                            throw new RuntimeException("Transmission of I is prohibited.");
+                            throw new IllegalArgumentException("Transmission of I is prohibited.");
                         switch (nextChar) {
                             case 'I':
                             case 'J':
@@ -651,9 +655,9 @@ public class Phase implements Serializable {
                                         nextChar == 'K' ? Located.ICB_PENETRATION : Located.INNERCORE_SIDE_REFLECTION);
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around I");
+                                throwException("I");
                         }
-                    } else throw new RuntimeException("Problem around I");
+                    } else throwException("I");
 // switching current char
                 case 'K':
                     if (beforePart.isPenetration()) {
@@ -675,7 +679,7 @@ public class Phase implements Serializable {
                                     partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                                     continue;
                                 } else if (!Double.isNaN(nextDepth))
-                                    throw new RuntimeException("Transmission of K is prohibited.");
+                                    throw new IllegalArgumentException("Transmission of K is prohibited.");
                                 //under here, no interactions. in other words, penetrating or bouncing.
                                 switch (nextChar) {
                                     case 'K':
@@ -697,21 +701,21 @@ public class Phase implements Serializable {
                                                 Located.ICB_PENETRATION);
                                         continue;
                                     default:
-                                        throw new RuntimeException("Problem around K");
+                                        throwException("K");
                                 }
-                                //switching before char
+                                // switching before char
                             case 'I':
                             case 'J':
                                 if (vFlag) {
-                                    throw new RuntimeException("Problem around K");
+                                    throwException("K");
                                 } else if (hatFlag) {
                                     partList.add(new GeneralPart(PhasePart.K, false, 0, nextDepth, PassPoint.ICB,
                                             PassPoint.OTHER));
                                     partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                                     continue;
                                 } else if (!Double.isNaN(nextDepth))
-                                    throw new RuntimeException("Transmission of K is prohibited.");
-                                //under here, no interactions. in other words, penetrating or bouncing.
+                                    throw new IllegalArgumentException("Transmission of K is prohibited.");
+                                // under here, no interactions. in other words, penetrating or bouncing.
                                 switch (nextChar) {
                                     case 'K':
                                     case 'P':
@@ -721,10 +725,10 @@ public class Phase implements Serializable {
                                         partList.add(nextChar == 'K' ? Located.REFLECTION_K : Located.CMB_PENETRATION);
                                         continue;
                                     default:
-                                        throw new RuntimeException("Problem around K");
+                                        throwException("K");
                                 }
                             default:
-                                throw new RuntimeException("Problem around K");
+                                throwException("K");
                         }
                     } else if (beforePart.isBottomsideReflection()) {
                         outerPoint = ((Located) beforePart).getPassPoint();
@@ -743,8 +747,8 @@ public class Phase implements Serializable {
                             partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                             continue;
                         } else if (!Double.isNaN(nextDepth))
-                            throw new RuntimeException("Transmission of K is prohibited.");
-                        //under here, no interactions. in other words, penetrating or bouncing.
+                            throw new IllegalArgumentException("Transmission of K is prohibited.");
+                        // under here, no interactions. in other words, penetrating or bouncing.
                         switch (nextChar) {
                             case 'K':
                             case 'P':
@@ -765,20 +769,19 @@ public class Phase implements Serializable {
                                         nextChar == 'i' ? Located.OUTERCORE_SIDE_REFLECTION : Located.ICB_PENETRATION);
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around K");
+                                throwException("K");
                         }
                     } else if (beforePart.isTopsideReflection()) {
                         innerPoint = ((Located) beforePart).getPassPoint();
                         double innerDepth = secondLast.getInnerDepth();
-                        if (vFlag) {
-                            throw new RuntimeException("Problem around K");
-                        } else if (hatFlag) {
+                        if (vFlag) throwException("K");
+                        else if (hatFlag) {
                             partList.add(new GeneralPart(PhasePart.K, false, innerDepth, nextDepth, innerPoint,
                                     PassPoint.OTHER));
                             partList.add(Arbitrary.createBottomsideReflection(nextDepth));
                             continue;
                         } else if (!Double.isNaN(nextDepth))
-                            throw new RuntimeException("Transmission of K is prohibited.");
+                            throw new IllegalArgumentException("Transmission of K is prohibited.");
                         switch (nextChar) {
                             case 'P':
                             case 'S':
@@ -792,12 +795,12 @@ public class Phase implements Serializable {
                                 partList.add(Located.REFLECTION_K);
                                 continue;
                             default:
-                                throw new RuntimeException("Problem around K");
+                                throwException("K");
                         }
-                        //when the letter means whole path of P.
-                    } else throw new RuntimeException("Problem around K");
+                        // when the letter means whole path of P.
+                    } else throwException("K");
                 default:
-                    throw new RuntimeException("unexpected character " + currentChar);
+                    throw new IllegalArgumentException("unexpected character " + currentChar);
             }
         }
         passParts = partList.toArray(new PathPart[partList.size()]);

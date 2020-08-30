@@ -43,7 +43,7 @@ import java.util.stream.IntStream;
  * READing has problem. TODO
  *
  * @author Kensuke Konishi
- * @version 0.3.1.1.1
+ * @version 0.3.2
  */
 public final class PartialIDFile {
 
@@ -61,7 +61,7 @@ public final class PartialIDFile {
         long dataSize = Files.size(dataPath);
         PartialID lastID = ids[ids.length - 1];
         if (dataSize != lastID.START_BYTE + lastID.NPTS * 8)
-            throw new RuntimeException(dataPath + " is not invalid for " + idPath);
+            throw new RuntimeException(dataPath + " is invalid for " + idPath);
         try (DataInputStream dis = new DataInputStream(new BufferedInputStream(Files.newInputStream(dataPath)))) {
             for (int i = 0; i < ids.length; i++) {
                 if (!chooser.test(ids[i])) {
@@ -99,7 +99,7 @@ public final class PartialIDFile {
             int headerBytes = 4 * 2 + 24 * stations.length + 15 * cmtIDs.length + 4 * 2 * periodRanges.length +
                     4 * 3 * perturbationLocations.length;
             long idParts = fileSize - headerBytes;
-            if (idParts % oneIDByte != 0) throw new RuntimeException(idPath + " is not valid..");
+            if (idParts % oneIDByte != 0) throw new RuntimeException(idPath + " is invalid..");
             // name(8),network(8),position(4*2)
             byte[] stationBytes = new byte[24];
             for (int i = 0; i < stations.length; i++) {
@@ -151,7 +151,7 @@ public final class PartialIDFile {
             PartialID[] ids = read(Paths.get(args[1]));
             Arrays.stream(ids).forEach(System.out::println);
         } else {
-            System.out.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
+            System.err.println("usage:[-a] [id file name]\n if \"-a\", show all IDs");
         }
     }
 
@@ -171,7 +171,7 @@ public final class PartialIDFile {
         List<String> lines = Arrays.stream(ids).parallel().map(id -> id.STATION).distinct()
                 .map(s -> s.getName() + " " + s.getNetwork() + " " + s.getPosition()).collect(Collectors.toList());
         Files.write(outPath, lines);
-        System.out.println(outPath + " is created as a list of stations.");
+        System.err.println(outPath + " is created as a list of stations.");
     }
 
     /**

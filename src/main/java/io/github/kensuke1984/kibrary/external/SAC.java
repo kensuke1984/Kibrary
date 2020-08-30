@@ -3,23 +3,24 @@ package io.github.kensuke1984.kibrary.external;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.NoSuchFileException;
 
 /**
  * Sac process made by SACLauncher
  *
  * @author Kensuke Konishi
- * @version 0.1.0.1
+ * @version 0.1.1
  */
 public class SAC extends ExternalProcess implements Closeable {
 
     /**
      * Input for SAC
      */
-    private PrintWriter standardInput;
+    private final PrintWriter STANDARD_INPUT;
 
     private SAC(Process process) {
         super(process);
-        standardInput = new PrintWriter(super.standardInput);
+        STANDARD_INPUT = new PrintWriter(super.standardInput);
     }
 
     /**
@@ -28,26 +29,27 @@ public class SAC extends ExternalProcess implements Closeable {
      */
     public static SAC createProcess() throws IOException {
         if (System.getenv("SACAUX") != null && isInPath("sac")) return new SAC(new ProcessBuilder("sac").start());
-        throw new RuntimeException("No sac in PATH or No SACAUX is set.");
+        throw new NoSuchFileException("No sac in PATH or SACAUX is not set.");
     }
 
     /**
      * Make an order to SAC
+     *
      * @param line command line for SAC
      */
     public void inputCMD(String line) {
         synchronized (super.standardInput) {
-            standardInput.println(line);
-            standardInput.flush();
+            STANDARD_INPUT.println(line);
+            STANDARD_INPUT.flush();
         }
     }
 
     @Override
     public void close() {
         try {
-            standardInput.println("q");
-            standardInput.flush();
-            standardInput.close();
+            STANDARD_INPUT.println("q");
+            STANDARD_INPUT.flush();
+            STANDARD_INPUT.close();
             process.waitFor();
             standardOutput.join();
             standardError.join();

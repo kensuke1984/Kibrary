@@ -48,9 +48,9 @@ public final class DSMMPI {
      * @return Callable&lt;Integer&gt; for tipsv returning value is exit code.
      */
     public static Callable<Integer> tipsv(int np, Path information) {
-        if (!psvExists) throw new RuntimeException("mpi-psv does not exist in PATH");
+        if (!psvExists) throw new RuntimeException("mpi-psv doesn't exist in PATH");
         if (np <= 0) throw new IllegalArgumentException("NP must be positive...");
-        if (!Files.exists(information)) throw new RuntimeException(information + " does not exist");
+        if (!Files.exists(information)) throw new RuntimeException(information + " doesn't exist");
 
         return () -> {
             System.err.println("mpi-tipsv is going on " + information);

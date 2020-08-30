@@ -109,7 +109,7 @@ final class GlobalCMTCatalog {
      */
     static NDK getNDK(GlobalCMTID id) {
         return NDKs.parallelStream().filter(ndk -> ndk.getGlobalCMTID().equals(id)).findAny()
-                .orElseThrow(() -> new RuntimeException("There is no information for " + id));
+                .orElseThrow(() -> new RuntimeException("No information for " + id));
     }
 
     /**

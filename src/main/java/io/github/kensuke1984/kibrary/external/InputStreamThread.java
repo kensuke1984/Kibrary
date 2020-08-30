@@ -23,11 +23,11 @@ public class InputStreamThread extends Thread {
      * if the stream is closed
      */
     private boolean closed;
-    private List<String> list = new ArrayList<>();
-    private InputStreamReader inputStreamReader;
+    private final List<String> LIST = new ArrayList<>();
+    private final InputStreamReader INPUT_STREAM_READER;
 
     public InputStreamThread(InputStream is) {
-        inputStreamReader = new InputStreamReader(is);
+        INPUT_STREAM_READER = new InputStreamReader(is);
     }
 
     /**
@@ -41,16 +41,16 @@ public class InputStreamThread extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return list.toArray(new String[0]);
+        return LIST.toArray(new String[0]);
     }
 
     @Override
     public void run() {
-        try (BufferedReader br = new BufferedReader(inputStreamReader)) {
+        try (BufferedReader br = new BufferedReader(INPUT_STREAM_READER)) {
             for (; ; ) {
                 String line = br.readLine();
                 if (line == null) break;
-                list.add(line);
+                LIST.add(line);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -65,7 +65,7 @@ public class InputStreamThread extends Thread {
      * @return {@link List} of {@link String} from the {@link InputStream}
      */
     public List<String> getStringList() {
-        return new ArrayList<>(list);
+        return new ArrayList<>(LIST);
     }
 
 }

@@ -11,12 +11,10 @@ import java.util.Arrays;
 
 /**
  * Radius interval for integration.
- * <p>
  * This class is <b>IMMUTABLE</b>.
- * <p>
  *
  * @author Kensuke Konishi
- * @version 0.0.4.1
+ * @version 0.0.5
  */
 public class ComputationalMesh implements Serializable {
 
@@ -65,7 +63,7 @@ public class ComputationalMesh implements Serializable {
     public ComputationalMesh(VelocityStructure structure, double innerCoreInterval, double outerCoreInterval,
                              double mantleInterval) {
         if (innerCoreInterval < EPS || outerCoreInterval < EPS || mantleInterval < EPS)
-            throw new RuntimeException("Intervals are too small.");
+            throw new IllegalArgumentException("Intervals are too small.");
         createSimpleMesh(structure, innerCoreInterval, outerCoreInterval, mantleInterval);
     }
 
@@ -77,7 +75,7 @@ public class ComputationalMesh implements Serializable {
      */
     private static double[] remesh(int i, int n, double[] original) {
         if (original.length < 2 || i < 0 || n < 2 || original.length - 2 < i)
-            throw new RuntimeException("Something wrong.");
+            throw new IllegalArgumentException("Something wrong.");
         double[] remeshed = new double[original.length + n - 1];
         System.arraycopy(original, 0, remeshed, 0, i + 1);
         System.arraycopy(original, i + 1, remeshed, i + n, original.length - i - 1);
@@ -94,7 +92,7 @@ public class ComputationalMesh implements Serializable {
      * @return remeshed array
      */
     private static double[] considerEdges(double[] points) {
-        if (points.length < 2) throw new RuntimeException();
+        if (points.length < 2) throw new IllegalArgumentException();
         double[] remeshed = remesh(0, 10, points);
         return points.length == 2 ? remeshed : remesh(remeshed.length - 2, 10, remeshed);
     }

@@ -4,7 +4,7 @@ package io.github.kensuke1984.kibrary.elasticparameter;
  * Enum for elements in modulus
  *
  * @author Kensuke Konishi
- * @version 0.0.1.1
+ * @version 0.0.2
  */
 public enum TIModulusEnum {
     A, C, F, L, N, A_2N, ZERO;
@@ -19,7 +19,7 @@ public enum TIModulusEnum {
             m = mn.getM();
             n = mn.getN();
         }
-        // System.out.println(m+"  "+n);
+
         switch (m) {
             case 1:
                 switch (n) {
@@ -30,9 +30,7 @@ public enum TIModulusEnum {
                     case 3:
                         return F;
                     case 4:
-                        return ZERO;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }
@@ -43,9 +41,7 @@ public enum TIModulusEnum {
                     case 3:
                         return F;
                     case 4:
-                        return ZERO;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }
@@ -54,9 +50,7 @@ public enum TIModulusEnum {
                     case 3:
                         return C;
                     case 4:
-                        return ZERO;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }
@@ -65,7 +59,6 @@ public enum TIModulusEnum {
                     case 4:
                         return L;
                     case 5:
-                        return ZERO;
                     case 6:
                         return ZERO;
                 }

@@ -15,7 +15,7 @@ import java.util.*;
  * Xgbm Davis and Henson, 1993
  *
  * @author Kensuke Konishi
- * @version 0.1.2
+ * @version 0.1.3
  */
 public class NamedDiscontinuityStructure implements Serializable {
 
@@ -144,7 +144,7 @@ public class NamedDiscontinuityStructure implements Serializable {
     /**
      * @param path model file written by nd format.
      */
-    public NamedDiscontinuityStructure(Path path) throws Exception {
+    public NamedDiscontinuityStructure(Path path) throws IOException {
         if (!Files.exists(path)) throw new NoSuchFileException(path + " does not exist.");
         readInfFile(path);
     }
@@ -339,7 +339,7 @@ public class NamedDiscontinuityStructure implements Serializable {
 
     /**
      * @param r radius [km]
-     * @return rho at r
+     * @return &rho; at r
      */
     public double getRho(double r) {
         int izone = rToZone(r);
@@ -348,7 +348,7 @@ public class NamedDiscontinuityStructure implements Serializable {
 
     /**
      * @param r radius [km]
-     * @return Vpv at r
+     * @return V<sub>pv</sub> at r
      */
     public double getVpv(double r) {
         int izone = rToZone(r);
@@ -357,7 +357,7 @@ public class NamedDiscontinuityStructure implements Serializable {
 
     /**
      * @param r radius [km]
-     * @return Vph at r
+     * @return V<sub>ph</sub> at r
      */
     public double getVph(double r) {
         int izone = rToZone(r);
@@ -366,7 +366,7 @@ public class NamedDiscontinuityStructure implements Serializable {
 
     /**
      * @param r radius [km]
-     * @return Vsv at r
+     * @return V<sub>sv</sub> at r
      */
     public double getVsv(double r) {
         int izone = rToZone(r);
@@ -375,7 +375,7 @@ public class NamedDiscontinuityStructure implements Serializable {
 
     /**
      * @param r radius [km]
-     * @return Vsh at r
+     * @return V<sub>sh</sub> at r
      */
     public double getVsh(double r) {
         int izone = rToZone(r);

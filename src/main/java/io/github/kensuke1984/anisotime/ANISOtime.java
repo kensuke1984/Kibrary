@@ -30,7 +30,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Tokoname";
 
-    static final String VERSION = "1.3.8.24b";
+    static final String VERSION = "1.3.8.25b";
 
     private ANISOtime() {
     }
@@ -48,34 +48,32 @@ final class ANISOtime {
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws Exception {
         try {
             downloadManual();
             downloadANISOtime();
         } catch (IOException e) {
             System.err.println("Can't check for updates, could be due to Off-Line.");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+
         if (!EULA.isAccepted())
             System.exit(71);
+
         if (args.length != 0) try {
             ANISOtimeCLI.main(args);
             return;
         } catch (UnrecognizedOptionException e) {
-            System.err.println("The command line arguments are invalid.");
+            System.err.println("The command line has invalid options.");
             ANISOtimeCLI.printHelp();
             return;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         } catch (OutOfMemoryError oe) {
             System.err.println("Sorry, this machine does not have enough memory to run ANISOtime.\n" +
                     "Please try again on a more modern machine with more memory.");
             return;
         }
-        else if (GraphicsEnvironment.isHeadless()) {
+
+        if (GraphicsEnvironment.isHeadless()) {
             System.err.println("No graphical environment.. please use CLI.");
-            ANISOtimeCLI.printHelp();
             return;
         }
 
@@ -113,13 +111,14 @@ final class ANISOtime {
         String cloudSum = Utilities.checksum(path, "SHA-256");
         if (localSum.equals(cloudSum)) return;
         Files.move(path, localPath.resolveSibling("latest_anisotime"), StandardCopyOption.REPLACE_EXISTING);
+        String updateMsg = "ANISOtime update in progress. Program will relaunch automatically.";
         try {
             Object[] choices = {"Close"};
             Object defaultChoice = choices[0];
-            JOptionPane.showOptionDialog(null, "ANISOtime update in progress. Program will relaunch automatically.",
+            JOptionPane.showOptionDialog(null, updateMsg,
                     null, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, defaultChoice);
         } catch (HeadlessException e) {
-            System.err.println("ANISOtime update in progress. Program will relaunch automatically.");
+            System.err.println(updateMsg);
         }
         System.exit(55);
     }
