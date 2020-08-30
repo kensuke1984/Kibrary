@@ -30,17 +30,17 @@ final class ANISOtime {
 
     static final String CODENAME = "Tokoname";
 
-    static final String VERSION = "1.3.8.22b";
+    static final String VERSION = "1.3.8.23b";
 
     private ANISOtime() {
     }
 
-    //anisotime (shell script)
-    private static final String UNIX_SCRIPT_URL = "https://bit.ly/2YM8qjH";
-    //anisotime.bat
-    private static final String WINDOWS_SCRIPT_URL = "https://bit.ly/2EAgVra";
+    //anisotime (shell script with jar)
+    private static final String UNIX_SCRIPT_URL = "https://bit.ly/2DbS5NH";
+    //anisotime.bat (Windows batch script with jar)
+    private static final String WINDOWS_SCRIPT_URL = "https://bit.ly/31CXCX5";
     //user guide pdf
-    private static final String USER_GUIDE_URL = "https://bit.ly/32A4rIi";
+    private static final String USER_GUIDE_URL = "https://bit.ly/3hFNUZH";
 
     static final Path AGREEMENT_PATH =
             Environment.KIBRARY_HOME.resolve(".anisotime_agreed");

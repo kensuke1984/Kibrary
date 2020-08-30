@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
  * TODO add the latest catalogs
  *
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.8
  */
 final class GlobalCMTCatalog {
 
@@ -82,7 +82,7 @@ final class GlobalCMTCatalog {
     }
 
     private static void downloadCatalog() throws IOException {
-        Utilities.download(new URL("https://bit.ly/3gGHGr8"), CATALOG_PATH, false);
+        Utilities.download(new URL("https://bit.ly/3bl0Ly9"), CATALOG_PATH, false);
     }
 
     /**
