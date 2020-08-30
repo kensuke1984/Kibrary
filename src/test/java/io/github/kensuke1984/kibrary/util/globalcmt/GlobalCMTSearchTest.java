@@ -4,11 +4,8 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -21,7 +18,7 @@ class GlobalCMTSearchTest {
 
     public static void main(String[] args) throws IOException {
         System.out.println(eventList().size());
-        findGlobalCMTID();
+//        findGlobalCMTID();
     }
 
     private static HorizontalPosition usCenter = new HorizontalPosition(40, -100);
@@ -76,26 +73,6 @@ class GlobalCMTSearchTest {
 
     }
 
-    private static void findGlobalCMTID() throws IOException {
-        List<String> lines = Files.readAllLines(Paths.get("/home/kensuke/workspace/anselme/event.inf"));
-        for (String line : lines) {
-            if (line.startsWith("Y")) continue;
-            if (!line.contains("us2000cmy3")) continue;
-//            System.out.println(line);
-            LocalDateTime time = toTime(line);
-            Location location = toLocation(line);
-            GlobalCMTID globalCMTID = findGlobalCMTID(time, location);
-            if (globalCMTID == null) {
-                System.out.println(line + "jjjj");
-                continue;
-            }
-            GlobalCMTData event = globalCMTID.getEvent();
-            System.out.println(line);
-//            System.out.println(event.getCmtLocation());
-        }
-
-
-    }
 
 
 }
