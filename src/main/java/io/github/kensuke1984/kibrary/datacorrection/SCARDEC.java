@@ -33,7 +33,7 @@ import java.util.zip.ZipInputStream;
  * The database is as of 20161115.
  *
  * @author Kensuke Konishi
- * @version 0.1.3
+ * @version 0.1.4
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  * <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
  */
@@ -44,7 +44,7 @@ public class SCARDEC {
     private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
     private static void downloadCatalog() throws IOException {
-        Utilities.download(new URL("https://bit.ly/2ECbtUS"), SCARDEC_ROOT_PATH, false);
+        Utilities.download(new URL("https://bit.ly/3baFtTF"), SCARDEC_ROOT_PATH, false);
     }
 
     static {
