@@ -33,14 +33,14 @@ import java.util.zip.ZipInputStream;
  * The database is as of 20161115.
  *
  * @author Kensuke Konishi
- * @version 0.1.4
+ * @version 0.1.5
  * @see <a href="http://scardec.projects.sismo.ipgp.fr/">SCARDEC</a>,
  * <a href="http://earthquake.usgs.gov/contactus/golden/neic.php">NEIC</a>
  */
 public class SCARDEC {
 
     public static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy MM dd HH mm ss");
-    private static final Path SCARDEC_ROOT_PATH = Environment.KIBRARY_HOME.resolve("share/scardec.zip");
+    private static final Path SCARDEC_ROOT_PATH = Environment.KIBRARY_SHARE.resolve("scardec.zip");
     private static final Set<SCARDEC_ID> EXISTING_ID = Collections.synchronizedSet(new HashSet<>());
 
     private static void downloadCatalog() throws IOException {
