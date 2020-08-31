@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Kensuke Konishi
- * @version 0.1.7
+ * @version 0.1.8
  */
 class EULA extends JDialog {
 
@@ -187,6 +187,7 @@ class EULA extends JDialog {
         jFrame.setLocationRelativeTo(null);
         jFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         jTextArea1.setLineWrap(true);
+        jTextArea1.setWrapStyleWord(true);
         jTextArea1.setEditable(false);
         GroupLayout layout = new GroupLayout(jFrame.getContentPane());
         jFrame.getContentPane().setLayout(layout);
