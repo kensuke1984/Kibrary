@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke1984@gmail.com";
     public static final String CODENAME = "Shiva";
-    public static final String VERSION = "0.4.9.27";
+    public static final String VERSION = "0.4.9.28";
     private static final String LINE = "Kibrary " + VERSION + " (" + CODENAME + ")\n" +
             "Copyright \u00a9 2015-2020 Kensuke Konishi and Anselme F.E. Borgeaud.\n\n" +
             "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";
@@ -53,6 +53,7 @@ public final class About extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         jTextArea1.setLineWrap(true);
+        jTextArea1.setWrapStyleWord(true);
         jTextArea1.setEditable(false);
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

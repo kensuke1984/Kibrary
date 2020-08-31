@@ -12,7 +12,7 @@ import static javax.swing.UIManager.*;
  * Information about ANISOtime package.
  *
  * @author Kensuke Konishi
- * @version 0.0.6.1
+ * @version 0.0.7
  * @see <a href=https://github.com/UT-GlobalSeismology/anisotime>web</a>
  */
 final class About extends javax.swing.JFrame {
@@ -40,7 +40,7 @@ final class About extends javax.swing.JFrame {
             Logger.getLogger(About.class.getName()).log(Level.SEVERE, null, ex);
         }
         if (!GraphicsEnvironment.isHeadless()) SwingUtilities.invokeLater(() -> new About().setVisible(true));
-        else System.out.println(line);
+        else System.err.println(line);
     }
 
     private void initComponents() {
@@ -49,6 +49,7 @@ final class About extends javax.swing.JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         jTextArea1.setLineWrap(true);
+        jTextArea1.setWrapStyleWord(true);
         jTextArea1.setEditable(false);
         GroupLayout layout = new GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
