@@ -10,7 +10,7 @@ class ANISOtimeCLITest {
     private ANISOtimeCLITest(){}
 
     public static void main(String[] args) throws ParseException {
-        String line = "-h 50 -mod /Users/kensuke/workspace/kibrary/anisotime/install/anisotime.rcs -deg 150";
+        String line = "-help -k -o";
         ANISOtimeCLI.main(line.split("\\s+"));
     }
 }

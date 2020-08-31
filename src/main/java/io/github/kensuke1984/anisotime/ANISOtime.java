@@ -14,7 +14,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,7 +35,7 @@ final class ANISOtime {
 
     static final String CODENAME = "Tokoname";
 
-    static final String VERSION = "1.3.8.27b";
+    static final String VERSION = "1.3.8.28b";
 
     private ANISOtime() {
     }
@@ -45,21 +50,27 @@ final class ANISOtime {
     static final Path AGREEMENT_PATH =
             Environment.KIBRARY_HOME.resolve(".anisotime_agreed");
 
+    private static final Path LAST_ACTIVATION_PATH = Environment.KIBRARY_HOME.resolve(".anisotime_last_activation");
+
+
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws Exception {
-        try {
-            downloadManual();
-            downloadANISOtime();
-        } catch (IOException e) {
-            System.err.println("Can't check for updates, could be due to Off-Line.");
-        }
+        if (0 <= Arrays.binarySearch(args, "-U") || shouldCheckUpdate())
+            try {
+                downloadManual();
+                downloadANISOtime();
+                Files.setLastModifiedTime(LAST_ACTIVATION_PATH, FileTime.from(Instant.now()));
+            } catch (IOException e) {
+                System.err.println("Can't check for updates, could be due to Off-Line.");
+            }
+
 
         if (!EULA.isAccepted())
             System.exit(71);
 
-        if (args.length != 0) try {
+        if (args.length != 0 && (!args[0].equals("-U") || 2 < args.length)) try {
             ANISOtimeCLI.main(args);
             return;
         } catch (UnrecognizedOptionException e) {
@@ -72,10 +83,8 @@ final class ANISOtime {
             return;
         }
 
-        if (GraphicsEnvironment.isHeadless()) {
-            System.err.println("No graphical environment.. please use CLI.");
-            return;
-        }
+        if (GraphicsEnvironment.isHeadless())
+            throw new HeadlessException("No graphical environment.. please use CLI.");
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
@@ -99,6 +108,16 @@ final class ANISOtime {
         }
         Files.createDirectories(localPath.getParent());
         Files.move(path, localPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    private static boolean shouldCheckUpdate() throws IOException {
+        if (!Files.exists(LAST_ACTIVATION_PATH)) {
+            Files.createFile(LAST_ACTIVATION_PATH);
+            return true;
+        }
+        FileTime lastModifiedTime = Files.getLastModifiedTime(LAST_ACTIVATION_PATH);
+        LocalDate localDate = Instant.ofEpochMilli(lastModifiedTime.toMillis()).atZone(ZoneId.systemDefault()).toLocalDate();
+        return !LocalDate.now().equals(localDate);
     }
 
 
