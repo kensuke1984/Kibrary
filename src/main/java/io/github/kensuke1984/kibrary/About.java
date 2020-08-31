@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 public final class About extends javax.swing.JFrame {
     public static final String EMAIL_ADDRESS = "kensuke1984@gmail.com";
     public static final String CODENAME = "Shiva";
-    public static final String VERSION = "0.4.9.29";
+    public static final String VERSION = "0.4.9.30";
     private static final String LINE = "Kibrary " + VERSION + " (" + CODENAME + ")\n" +
             "Copyright \u00a9 2015-2020 Kensuke Konishi and Anselme F.E. Borgeaud.\n\n" +
             "This software is licensed under the GNU General Public License Version 3, 29 June 2007 (https://www.gnu.org/licenses/).\n";

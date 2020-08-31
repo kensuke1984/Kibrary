@@ -20,7 +20,7 @@ import java.util.TimerTask;
  * Panel for inputting parameters
  *
  * @author Kensuke Konishi
- * @version 0.3.3
+ * @version 0.3.4
  */
 class ParameterInputPanel extends JPanel {
 
@@ -202,6 +202,10 @@ class ParameterInputPanel extends JPanel {
         }
     }
 
+    /**
+     * @param key key of value
+     * @param value to be saved
+     */
     private void setLast(String key, String value) {
         PARAMETERS.setProperty(key, value);
         try {
@@ -219,12 +223,15 @@ class ParameterInputPanel extends JPanel {
                 if (PARAMETERS.containsKey("structure")) switch (PARAMETERS.get("structure").toString()) {
                     case "prem":
                         SwingUtilities.invokeLater(() -> jComboBoxModel.setSelectedIndex(0));
+                        GUI.setStructure(PolynomialStructure.PREM);
                         break;
                     case "iprem":
                         SwingUtilities.invokeLater(() -> jComboBoxModel.setSelectedIndex(1));
+                        GUI.setStructure(PolynomialStructure.ISO_PREM);
                         break;
                     case "ak135":
                         SwingUtilities.invokeLater(() -> jComboBoxModel.setSelectedIndex(2));
+                        GUI.setStructure(PolynomialStructure.AK135);
                         break;
                 }
                 // depth
