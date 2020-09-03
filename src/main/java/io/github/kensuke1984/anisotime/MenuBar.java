@@ -1,16 +1,12 @@
 package io.github.kensuke1984.anisotime;
 
-import io.github.kensuke1984.kibrary.Environment;
-
 import javax.swing.*;
-import java.awt.*;
-import java.nio.file.Path;
 
 /**
  * Menu bar for GUI
  *
  * @author Kensuke Konishi
- * @version 0.1.10
+ * @version 0.1.11
  */
 final class MenuBar extends JMenuBar {
 
@@ -92,21 +88,7 @@ final class MenuBar extends JMenuBar {
         jMenuItemAbout.addActionListener(e -> About.main(null));
         jMenuItemMail.addActionListener(e -> JOptionPane.showMessageDialog(null,
                 "<html>Please send an Email to <a href>" + ANISOtime.EMAIL_ADDRESS + "</a>."));
-        jMenuItemGuide.addActionListener(e -> {
-            Path manual = Environment.KIBRARY_SHARE.resolve("user_guide.pdf");
-            if (Desktop.isDesktopSupported()) {
-                try {
-                    Desktop.getDesktop().open(manual.toFile());
-                    return;
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            }
-            JOptionPane
-                    .showMessageDialog(null, "Can't open the manual file. Look at " + manual + ".");
-        });
-        jMenuItemLicense.addActionListener(e->{
-            EULA.showInWindow();
-        });
+        jMenuItemGuide.addActionListener(e -> ANISOtime.showUserGuide());
+        jMenuItemLicense.addActionListener(e -> EULA.showInWindow());
     }
 }

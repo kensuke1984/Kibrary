@@ -33,9 +33,9 @@ final class ANISOtime {
 
     public static final String EMAIL_ADDRESS = "ut-globalseis@googlegroups.com";
 
-    static final String CODENAME = "Tokoname";
+    static final String CODENAME = "Haneda";
 
-    static final String VERSION = "1.3.8.29b";
+    static final String VERSION = "1.3.8.30b";
 
     private ANISOtime() {
     }
@@ -46,6 +46,8 @@ final class ANISOtime {
     private static final String WINDOWS_SCRIPT_URL = "https://bit.ly/31CXCX5";
     //user guide pdf
     private static final String USER_GUIDE_URL = "https://bit.ly/3hFNUZH";
+    private static final Path USER_GUIDE_PATH = Environment.KIBRARY_SHARE.resolve("user_guide.pdf");
+
 
     static final Path AGREEMENT_PATH =
             Environment.KIBRARY_HOME.resolve(".anisotime_agreed");
@@ -84,7 +86,7 @@ final class ANISOtime {
         }
 
         if (GraphicsEnvironment.isHeadless())
-            throw new HeadlessException("No graphical environment.. please use CLI.");
+            throw new HeadlessException("No graphical environment. Please use CLI.");
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels())
@@ -130,7 +132,7 @@ final class ANISOtime {
         String cloudSum = Utilities.checksum(path, "SHA-256");
         if (localSum.equals(cloudSum)) return;
         Files.move(path, localPath.resolveSibling("latest_anisotime"), StandardCopyOption.REPLACE_EXISTING);
-        String updateMsg = "ANISOtime update in progress. Program will relaunch automatically.";
+        String updateMsg = "ANISOtime update in progress.  Please relaunch ANISOtime if it doesn't restart automatically.";
         try {
             Object[] choices = {"Close"};
             Object defaultChoice = choices[0];
@@ -142,4 +144,16 @@ final class ANISOtime {
         System.exit(55);
     }
 
+    static void showUserGuide() {
+        if (Desktop.isDesktopSupported()) {
+            try {
+                Desktop.getDesktop().open(USER_GUIDE_PATH.toFile());
+                return;
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        JOptionPane
+                .showMessageDialog(null, "Can't open the manual file. Look at " + USER_GUIDE_PATH + ".");
+    }
 }

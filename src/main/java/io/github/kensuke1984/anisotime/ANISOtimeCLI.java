@@ -21,7 +21,7 @@ import java.util.stream.IntStream;
  * This class is only for CLI use of ANISOtime.
  *
  * @author Kensuke Konishi, Anselme Borgeaud
- * @version 0.3.27
+ * @version 0.3.28
  */
 final class ANISOtimeCLI {
 
@@ -101,6 +101,11 @@ final class ANISOtimeCLI {
             return;
         }
 
+        if (0 <= Arrays.binarySearch(args, "-u")) {
+            ANISOtime.showUserGuide();
+            return;
+        }
+
         try {
             new ANISOtimeCLI(args).run();
         } catch (MissingArgumentException pe) {
@@ -128,6 +133,7 @@ final class ANISOtimeCLI {
         options.addOption(null, "relative", false, "Relative angle mode. (default:absolute)");
         options.addOption(null, "absolute", false, "Absolute angle mode. (default:absolute)");
         options.addOption("U", false, "Checks update even if the last activation is within a day.");
+        options.addOption("u", false, "Opens a user guide. This option has the 3rd highest priority.");
     }
 
     private static void setArgumentOptions() {

@@ -10,7 +10,7 @@ class ANISOtimeCLITest {
     private ANISOtimeCLITest(){}
 
     public static void main(String[] args) throws ParseException {
-        String line = "-help -k -o";
+        String line = "-u";
         ANISOtimeCLI.main(line.split("\\s+"));
     }
 }
