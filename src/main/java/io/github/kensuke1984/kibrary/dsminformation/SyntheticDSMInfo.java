@@ -142,5 +142,5 @@ public class SyntheticDSMInfo extends DSMheader {
     public GlobalCMTData getGlobalCMTData() {
         return EVENT;
     }
-
+    
 }

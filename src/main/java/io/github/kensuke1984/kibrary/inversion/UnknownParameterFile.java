@@ -10,9 +10,13 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.IntStream;
+
+import io.github.kensuke1984.kibrary.inversion.addons.TimeReceiverSideParameter;
+import io.github.kensuke1984.kibrary.inversion.addons.TimeSourceSideParameter;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 
 /**
  * m in Am=d
@@ -35,55 +39,73 @@ public class UnknownParameterFile {
     private UnknownParameterFile() {
     }
 
-    /**
-     * @param path of an unknown parameter file.
-     * @return <b>unmodifiable</b> List of unknown parameters in the path
-     * @throws IOException if an I/O error occurs.
-     */
-    public static List<UnknownParameter> read(Path path) throws IOException {
-        List<UnknownParameter> pars = new ArrayList<>();
-        try (BufferedReader br = Files.newBufferedReader(path)) {
-            String line;
-            while (null != (line = br.readLine())) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith("#")) continue;
-                String[] parts = line.split("\\s+");
-                PartialType type = PartialType.valueOf(parts[0]);
-                UnknownParameter unknown;
-                switch (type) {
-                    case TIME:
-                        throw new RuntimeException("time  madamuripo");
-                    case PARA:
-                    case PARC:
-                    case PARF:
-                    case PARL:
-                    case PARN:
-                    case PARQ:
-                    case PAR2:
-                        unknown = new Physical1DParameter(type, Double.parseDouble(parts[1]),
-                                Double.parseDouble(parts[2]));
-                        pars.add(unknown);
-                        break;
-                    case A:
-                    case C:
-                    case F:
-                    case L:
-                    case N:
-                    case Q:
-                    default:
-                        unknown = new Physical3DParameter(type,
-                                new Location(Double.parseDouble(parts[1]), Double.parseDouble(parts[2]),
-                                        Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));
-                        pars.add(unknown);
-                }
-            }
-        }
-        IntStream.range(0, pars.size() - 1).parallel().forEach(i -> {
-            for (int j = i + 1; j < pars.size(); j++)
-                if (pars.get(i).equals(pars.get(j))) System.err.println("!Caution there is duplication in " + path);
-        });
-        return Collections.unmodifiableList(pars);
-    }
+	/**
+	 * @param path of an unknown parameter file.
+	 * @return <b>unmodifiable</b> List of unknown parameters in the path
+	 * @throws IOException if an I/O error occurs.
+	 */
+	public static List<UnknownParameter> read(Path path) throws IOException {
+		List<UnknownParameter> pars = new ArrayList<>();
+		try (BufferedReader br = Files.newBufferedReader(path)) {
+			String line;
+			while (null != (line = br.readLine())) {
+				line = line.trim();
+				if (line.length() == 0 || line.startsWith("#"))
+					continue;
+				String[] parts = line.split("\\s+");
+				PartialType type = PartialType.valueOf(parts[0]);
+				UnknownParameter unknown;
+				switch (type) {
+				case TIME_SOURCE:
+					unknown = new TimeSourceSideParameter(new GlobalCMTID(parts[1]));
+					pars.add(unknown);
+					break;
+				case TIME_RECEIVER:
+					unknown = new TimeReceiverSideParameter(new Station(parts[1],
+							new HorizontalPosition(Double.parseDouble(parts[3]), Double.parseDouble(parts[4])),
+							parts[2]), Integer.parseInt(parts[5]));
+					pars.add(unknown);
+					break;
+				case PARA:
+				case PARC:
+				case PARF:
+				case PARL:
+				case PARN:
+				case PARQ:
+				case PAR2:
+				case PARVS:
+				case PARVP:
+				case PARG:
+				case PARM:
+				case PAR00:
+				case PAR1:
+					unknown = new Physical1DParameter(type, Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+					pars.add(unknown);
+					break;
+				case A:
+				case C:
+				case F:
+				case L:
+				case N:
+				case Q:
+				case MU:
+				case LAMBDA:
+				case Vs:
+				case LAMBDA2MU:
+				default:
+					unknown = new Physical3DParameter(type, new Location(Double.parseDouble(parts[1]),
+							Double.parseDouble(parts[2]), Double.parseDouble(parts[3])), Double.parseDouble(parts[4]));
+					pars.add(unknown);
+				}
+			}
+		}
+		for (int i = 0; i < pars.size() - 1; i++)
+			for (int j = i + 1; j < pars.size(); j++)
+				if (pars.get(i).equals(pars.get(j)))
+					System.err.println("!Caution there is duplication in " + path);
+//		return Collections.unmodifiableList(pars);
+		return pars;
+	}
 
     /**
      * @param outPath       for write

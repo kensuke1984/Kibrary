@@ -17,6 +17,7 @@ import java.util.Arrays;
  *
  * @author Kensuke Konishi
  * @version 0.0.6
+ * @author anselme add information files for psv/sh bpcat (catalog)
  */
 public class BPinfo extends DSMheader {
 
@@ -46,6 +47,16 @@ public class BPinfo extends DSMheader {
         RADII = perturbationPointR.clone();
         POSITIONS = perturbationPosition.clone();
     }
+    
+	public BPinfo(String outputDir, PolynomialStructure structure, double tlen, int np,
+			double[] perturbationPointR, HorizontalPosition[] perturbationPosition) {
+		super(tlen, np);
+		STATION = null;
+		OUTPUT = outputDir;
+		STRUCTURE = structure;
+		RADII = perturbationPointR.clone();
+		POSITIONS = perturbationPosition.clone();
+	}
 
     /**
      * @return name of the write folder
@@ -106,6 +117,46 @@ public class BPinfo extends DSMheader {
             pw.println("end");
         }
     }
+    
+    /**
+     * write the information file for psvbpcat (psvbp catalog)
+     * @param outPath
+     * @param thetamin
+     * @param thetamax
+     * @param dtheta
+     * @param options
+     * @throws IOException
+     * @author anselme
+     */
+    public void writePSVBPCat(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) 
+    		throws IOException {
+
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+			// header
+			String[] header = outputDSMHeader();
+			Arrays.stream(header).forEach(pw::println);
+
+			// structure
+			Arrays.stream(STRUCTURE.toPSVlines()).forEach(pw::println);
+
+			// source
+			pw.println("0. 0. 0.");
+
+			// output info
+			pw.println("c output directory");
+			pw.println(OUTPUT + "/");
+			pw.println("340A_TA");
+			pw.println("c events and stations");
+
+			// catalogue epicentral distance sampling
+			pw.println(thetamin + " " + thetamax + " " + dtheta);
+
+			// radii for perturbation points
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
+			pw.println("end");
+		}
+	}
 
     /**
      * Write an information file for shbp
@@ -144,5 +195,44 @@ public class BPinfo extends DSMheader {
             pw.println("end");
         }
     }
+    
+    /**
+     * write the information file for shbpcat (shbp catalog)
+     * @param outPath
+     * @param thetamin
+     * @param thetamax
+     * @param dtheta
+     * @param options
+     * @throws IOException
+     * @author anselme
+     */
+    public void writeSHBPCat(Path outPath, double thetamin, double thetamax, double dtheta, OpenOption... options) throws IOException {
+
+		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
+			// header
+			String[] header = outputDSMHeader();
+			Arrays.stream(header).forEach(pw::println);
+
+			// structure
+			Arrays.stream(STRUCTURE.toSHlines()).forEach(pw::println);
+
+			// source
+			pw.println("0. 0. 0.");
+
+			// output info
+			pw.println("c output directory");
+			pw.println(OUTPUT + "/");
+			pw.println("340A_TA");
+			pw.println("c events and stations");
+
+			// catalogue epicentral distance sampling
+			pw.println(thetamin + " " + thetamax + " " + dtheta);
+
+			// radii for perturbation points
+			pw.println(RADII.length + " nr");
+			Arrays.stream(RADII).forEach(pw::println);
+			pw.println("end");
+		}
+	}
 
 }

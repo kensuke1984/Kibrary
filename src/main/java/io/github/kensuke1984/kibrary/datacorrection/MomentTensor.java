@@ -60,6 +60,10 @@ public class MomentTensor {
         return Precision.round(mw, 1);
     }
 
+	public static final double toM0(double mw) {
+		return FastMath.pow(10, 1.5 * mw + 9.1);
+	}
+    
     public double getMrr() {
         return mrr;
     }
@@ -114,6 +118,31 @@ public class MomentTensor {
         dsmMT[5] = Precision.round(mpp * factor, 5);
         return dsmMT;
     }
+    
+	public double getComponent(int i) {
+		double mi = 0.;
+		switch (i) {
+		case 0:
+			mi = mrr;
+			break;
+		case 1:
+			mi = mtt;
+			break;
+		case 2:
+			mi = mpp;
+			break;
+		case 3:
+			mi = mrt;
+			break;
+		case 4:
+			mi = mrp;
+			break;
+		case 5:
+			mi = mtp;
+			break;
+		}
+		return mi;
+	}
 
     @Override
     public String toString() {

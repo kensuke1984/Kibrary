@@ -28,10 +28,10 @@ import java.util.stream.IntStream;
  * @author Kensuke Konishi
  * @version 0.1.8
  */
-final class GlobalCMTCatalog {
+public final class GlobalCMTCatalog {
 
     private final static Set<NDK> NDKs;
-    private final static Path CATALOG_PATH = Environment.KIBRARY_HOME.resolve("share/globalcmt.catalog");
+    private final static Path CATALOG_PATH = Environment.KIBRARY_HOME.resolve("share/globalcmt.catalog"); //globalcmt.catalog linacmt.catalog synthetics.catalog NDK_no_rm200503211243A NDK_CMT_20170807.catalog
 
     static {
         Set<NDK> readSet = readCatalog();
@@ -117,6 +117,10 @@ final class GlobalCMTCatalog {
      */
     static Set<NDK> allNDK() {
         return NDKs;
+    }
+    
+    public static Path getCatalogPath() {
+    	return CATALOG_PATH;
     }
 
 }

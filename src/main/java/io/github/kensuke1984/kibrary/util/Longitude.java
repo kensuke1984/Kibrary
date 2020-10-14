@@ -27,6 +27,10 @@ class Longitude implements Comparable<Longitude> {
      * [0, 2*&pi;) &phi; in spherical coordinates [rad]
      */
     private double phi;
+	/**
+	 * epsilon to test equality within a range for this.longitude 
+	 */
+	private final double eps = 1e-4;
 
     /**
      * @param longitude [deg] [-180, 360)
@@ -56,23 +60,29 @@ class Longitude implements Comparable<Longitude> {
         return -180 <= longitude && longitude < 360;
     }
 
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(longitude);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+//		long temp;
+//		temp = Double.doubleToLongBits(longitude);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+		int temp = (int) longitude;
+		result = prime * result + temp;
+		return result;
+	}
 
+    /**
+     *@author anselme equals within epsilon
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Longitude other = (Longitude) obj;
-        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
+//        return Double.doubleToLongBits(longitude) == Double.doubleToLongBits(other.longitude);
+        return Utilities.equalWithinEpsilon(longitude, other.longitude, eps);
     }
 
     /**

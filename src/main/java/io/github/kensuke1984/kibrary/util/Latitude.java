@@ -10,6 +10,7 @@ import org.apache.commons.math3.util.Precision;
  *
  * @author Kensuke Konishi
  * @version 0.0.6.3
+ * @author anselme modify equals within epsilon
  */
 class Latitude implements Comparable<Latitude> {
 
@@ -26,6 +27,10 @@ class Latitude implements Comparable<Latitude> {
      */
     private double theta;
     private double inGeographicLatitude;
+	/**
+	 * epsilon to test equality within a range for this.latitude 
+	 */
+	private final double eps = 1e-4;
 
     /**
      * @param geographicLatitude [deg] [-90, 90]
@@ -67,23 +72,29 @@ class Latitude implements Comparable<Latitude> {
         return Double.compare(geographicLatitude, o.geographicLatitude);
     }
 
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        long temp;
-        temp = Double.doubleToLongBits(geographicLatitude);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+//		long temp;
+//		temp = Double.doubleToLongBits(geographicLatitude);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+		int temp = (int) (geographicLatitude);
+		result = prime * result + temp;
+		return result;
+	}
 
+    /**
+     *@author anselme compare within eps
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Latitude other = (Latitude) obj;
-        return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
+        // return Double.doubleToLongBits(geographicLatitude) == Double.doubleToLongBits(other.geographicLatitude);
+        return Utilities.equalWithinEpsilon(geographicLatitude, other.geographicLatitude, eps);
     }
 
     public double getInGeographicLatitude() {
@@ -110,5 +121,5 @@ class Latitude implements Comparable<Latitude> {
     public double getTheta() {
         return theta;
     }
-
+	
 }

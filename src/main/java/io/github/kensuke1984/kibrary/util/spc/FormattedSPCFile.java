@@ -19,6 +19,7 @@ import java.nio.file.Path;
  *
  * @author Kensuke Konishi
  * @version 0.0.1.1
+ * @author anselme add network
  */
 public class FormattedSPCFile extends SPCFile {
 
@@ -34,6 +35,7 @@ public class FormattedSPCFile extends SPCFile {
     private SPCType fileType;
     private String x, y;
     private String observerID;
+    private String observerNetwork;
     private String sourceID;
 
     /**
@@ -133,9 +135,15 @@ public class FormattedSPCFile extends SPCFile {
         return sourceID;
     }
 
+    /**
+     * @param fileName
+     * @author anselme add network
+     */
     private void readName(String fileName) {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
-        observerID = fileName.split("\\.")[0];
+//        observerID = fileName.split("\\.")[0];
+        observerID = fileName.split("\\.")[0].split("_")[0];
+        observerNetwork = fileName.split("\\.")[0].split("_")[1];
         sourceID = getEventID(fileName);
         fileType = getFileType(fileName);
         mode = getMode(fileName);

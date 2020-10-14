@@ -31,11 +31,17 @@ class InformationFileReader {
      */
     private int linesNum;
 
-    InformationFileReader(Path informationPath) throws IOException {
-        this.informationPath = informationPath;
-        read();
-    }
-
+	InformationFileReader(Path informationPath) throws IOException {
+		this.informationPath = informationPath;
+		read();
+	}
+	
+	InformationFileReader(List<String> lines) {
+		this.informationPath = null;
+		this.lines = lines;
+		linesNum = lines.size();
+	}
+	
     /**
      * blank line will be also considered to be a comment line
      *
@@ -48,7 +54,7 @@ class InformationFileReader {
             if (line.charAt(0) == flag) return true;
         return false;
     }
-
+	
     /**
      * @param args [information file name]
      * @throws IOException if any

@@ -6,6 +6,8 @@ import org.apache.commons.math3.util.Precision;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -20,6 +22,7 @@ import java.util.Comparator;
  *
  * @author Kensuke Konishi
  * @version 0.1.1.3
+ * @author anselme add methods used for BP/FP catalog
  */
 public class Location extends HorizontalPosition {
 
@@ -27,6 +30,10 @@ public class Location extends HorizontalPosition {
      * [km] radius rounded off to the 3 decimal places.
      */
     private final double R;
+    /**
+     * equals within epsilon
+     */
+    private double eps = 1e-4;
 
     /**
      * @param latitude  [deg] geographical latitude
@@ -35,7 +42,8 @@ public class Location extends HorizontalPosition {
      */
     public Location(double latitude, double longitude, double r) {
         super(latitude, longitude);
-        R = Precision.round(r, 3);
+//        R = Precision.round(r, 3);
+        R = r;
     }
 
     public static double toLatitude(double theta) {
@@ -74,6 +82,24 @@ public class Location extends HorizontalPosition {
     public XYZ toXYZ() {
         return RThetaPhi.toCartesian(R, getTheta(), getPhi());
     }
+    
+	/**
+	 * used for FP/BP catalog
+	 * @return
+	 * @author anselme
+	 */
+	public XYZ toXYZGeographical() {
+		double theta = Math.toRadians(90. - getLatitude());
+		return RThetaPhi.toCartesian(R, theta, getPhi());
+	}
+	
+	/**
+	 * @return
+	 * @author anselme
+	 */
+	public HorizontalPosition toHorizontalPosition() {
+		return new HorizontalPosition(getLatitude(), getLongitude());
+	}
 
     /**
      * @param location {@link Location} to compute distance with
@@ -82,24 +108,40 @@ public class Location extends HorizontalPosition {
     public double getDistance(Location location) {
         return location.toXYZ().getDistance(toXYZ());
     }
+    
+	/**
+	 * @param location
+	 * @return
+	 * @author anselme
+	 */
+	public double getDistanceGeographical(Location location) {
+		return location.toXYZGeographical().getDistance(toXYZGeographical());
+	}
 
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = super.hashCode();
-        long temp;
-        temp = Double.doubleToLongBits(R);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+//		long temp;
+//		temp = Double.doubleToLongBits(R);
+//		result = prime * result + (int) (temp ^ (temp >>> 32));
+//		int temp = (int) (R / eps / 10);
+		int temp = (int) R;
+		result = prime * result + temp; 
+		return result;
+	}
 
+    /**
+     *@author anselme equals within epsilon
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!super.equals(obj)) return false;
         if (getClass() != obj.getClass()) return false;
         Location other = (Location) obj;
-        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
+//        return Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R);
+        return Utilities.equalWithinEpsilon(R, other.R, eps);
     }
 
     /**
@@ -108,12 +150,43 @@ public class Location extends HorizontalPosition {
      */
     public Location[] getNearestLocation(Location[] locations) {
         Location[] newLocations = locations.clone();
-        Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
+        Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::getDistance));
         return newLocations;
     }
+
+	/**
+	 * @param locations
+	 * @param maxSearchRange
+	 * @return
+	 * @author anselme
+	 */
+	public Location[] getNearestLocation(Location[] locations, double maxSearchRange) {
+		Location[] newLocations = Arrays.stream(locations).parallel().filter(loc -> {
+	//		System.out.println(loc + " " + this.toString() + " " + this.getDistance(loc));
+			return Math.abs(this.R - loc.getR()) < maxSearchRange;
+		}).collect(Collectors.toList()).toArray(new Location[0]);
+	//	System.out.println(newLocations.length);
+		Arrays.parallelSort(newLocations, Comparator.comparingDouble(this::getDistance));
+		return newLocations;
+	}
+	
+	/**
+	 * @param locations
+	 * @return
+	 * @author anselme
+	 */
+	public Location[] getNearestHorizontalLocation(Location[] locations) {
+		Location[] newLocations = Arrays.stream(locations)
+				.filter(loc -> loc.getR() == this.getR())
+				.collect(Collectors.toList())
+				.toArray(new Location[0]);
+		Arrays.sort(newLocations, Comparator.comparingDouble(this::getDistance));
+		return newLocations;
+	}
 
     @Override
     public String toString() {
         return super.toString() + ' ' + R;
     }
+    
 }

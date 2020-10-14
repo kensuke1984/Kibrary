@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
  * @author Kensuke Konishi
  * @version 0.0.2.1
  */
-class MatrixComputation {
+public class MatrixComputation {
 
     public static Matrix computeAtA(RealMatrix a) {
         long start = System.nanoTime();

@@ -1,13 +1,15 @@
 package io.github.kensuke1984.kibrary.waveformdata;
 
+import java.util.Arrays;
+
+import org.apache.commons.math3.util.Precision;
+
+import io.github.kensuke1984.anisotime.Phase;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Trace;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import org.apache.commons.math3.util.Precision;
-
-import java.util.Arrays;
 
 /**
  * <p>
@@ -34,6 +36,7 @@ import java.util.Arrays;
  *
  * @author Kensuke Konishi
  * @version 0.3.1.2
+ * @author anselme add phase information
  */
 public class BasicID {
 
@@ -44,6 +47,7 @@ public class BasicID {
     protected final Station STATION;
     protected final GlobalCMTID ID;
     protected final SACComponent COMPONENT;
+	protected final Phase[] PHASES;
     /**
      * [s] if the data has not been applied a filter, 0
      */
@@ -72,176 +76,192 @@ public class BasicID {
      * @param sacComponent Component of the data.
      * @param minPeriod    [s] minimum period of the applied filter if none, 0
      * @param maxPeriod    [s] minimum period of the applied filter if none, {@link Double#POSITIVE_INFINITY}
+     * @param phases	   Array of phases
      * @param startByte    [byte] where the waveform data for this ID starts in the file
      * @param convolute    If the data is convolute.
      * @param waveformData the waveform data for this ID.
      */
-    public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Station station,
-                   GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod,
-                   long startByte, boolean convolute, double... waveformData) {
-        TYPE = waveFormType;
-        SAMPLINGHZ = Precision.round(samplingHz, 3);
-        START_TIME = Precision.round(startTime, 3);
-        NPTS = npts;
-        STATION = station;
-        ID = globalCMTID;
-        COMPONENT = sacComponent;
-        MIN_PERIOD = Precision.round(minPeriod, 3);
-        MAX_PERIOD = Precision.round(maxPeriod, 3);
-        START_BYTE = startByte;
-        CONVOLUTE = convolute;
-        if (waveformData.length != 0 && waveformData.length != npts)
-            throw new IllegalArgumentException("Input waveform data length is invalid");
-        DATA = waveformData.clone();
-    }
+	public BasicID(WaveformType waveFormType, double samplingHz, double startTime, int npts, Station station,
+			GlobalCMTID globalCMTID, SACComponent sacComponent, double minPeriod, double maxPeriod, Phase[] phases, long startByte,
+			boolean convolute, double... waveformData) {
+		TYPE = waveFormType;
+		SAMPLINGHZ = Precision.round(samplingHz, 3);
+		START_TIME = Precision.round(startTime, 3);
+		NPTS = npts;
+		STATION = station;
+		ID = globalCMTID;
+		COMPONENT = sacComponent;
+		PHASES = phases;
+		MIN_PERIOD = Precision.round(minPeriod, 3);
+		MAX_PERIOD = Precision.round(maxPeriod, 3);
+		START_BYTE = startByte;
+		CONVOLUTE = convolute;
+		if (waveformData.length != 0 && waveformData.length != npts)
+			throw new IllegalArgumentException("Input waveform data length is invalid");
+		DATA = waveformData.clone();
+	}
 
-    public boolean containsData() {
-        return DATA != null;
-    }
+	public boolean containsData() {
+		return DATA != null;
+	}
 
-    /**
-     * @return Arrays of waveform data
-     */
-    public double[] getData() {
-        return DATA.clone();
-    }
-
-    /**
+	/**
+	 * @return Arrays of waveform data
+	 */
+	public double[] getData() {
+		return DATA.clone();
+	}
+	
+	 /**
      * A new BasicID with the input data will be returned.
      *
      * @param data Waveform data to be replaced
      * @return BasicID with the input data
      */
-    public BasicID setData(double[] data) {
-        return new BasicID(TYPE, SAMPLINGHZ, START_TIME, NPTS, STATION, ID, COMPONENT, MIN_PERIOD, MAX_PERIOD,
-                START_BYTE, CONVOLUTE, data);
-    }
+	public BasicID setData(double[] data) {
+		return new BasicID(TYPE, SAMPLINGHZ, START_TIME, NPTS, STATION, ID, COMPONENT, MIN_PERIOD,
+				MAX_PERIOD, PHASES, START_BYTE, CONVOLUTE, data);
+	}
 
-    @Override
-    public String toString() {
-        return STATION + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " " + COMPONENT + " " +
-                TYPE + " " + +START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD + " " + MAX_PERIOD + " " +
-                START_BYTE + " " + CONVOLUTE;
-    }
+	@Override
+	public String toString() {
+		String basicString = STATION.getStationName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
+				+ COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
+				+ " " + MAX_PERIOD + " ";
+		if (PHASES == null)
+			basicString += "null" + " ";
+		else if (PHASES.length == 1)
+			basicString += PHASES[PHASES.length - 1] + " ";
+		else if (PHASES.length > 1) {
+			for (int i = 0; i < PHASES.length - 1; i++)
+				basicString += PHASES[i] + ",";
+			basicString += PHASES[PHASES.length - 1] + " ";
+		}
+		basicString += START_BYTE + " " + CONVOLUTE;
+		return basicString;
+	}
 
-    @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        result = prime * result + ((ID == null) ? 0 : ID.hashCode());
-        result = prime * result + (CONVOLUTE ? 1231 : 1237);
-        long temp;
-        temp = Double.doubleToLongBits(MAX_PERIOD);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(MIN_PERIOD);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + NPTS;
-        result = prime * result + ((COMPONENT == null) ? 0 : COMPONENT.hashCode());
-        result = prime * result + ((TYPE == null) ? 0 : TYPE.hashCode());
-        temp = Double.doubleToLongBits(SAMPLINGHZ);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        temp = Double.doubleToLongBits(START_TIME);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + ((STATION == null) ? 0 : STATION.hashCode());
-        return result;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((ID == null) ? 0 : ID.hashCode());
+		result = prime * result + (CONVOLUTE ? 1231 : 1237);
+		long temp;
+		temp = Double.doubleToLongBits(MAX_PERIOD);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(MIN_PERIOD);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + NPTS;
+		result = prime * result + ((COMPONENT == null) ? 0 : COMPONENT.hashCode());
+		result = prime * result + ((TYPE == null) ? 0 : TYPE.hashCode());
+		temp = Double.doubleToLongBits(SAMPLINGHZ);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		temp = Double.doubleToLongBits(START_TIME);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + ((STATION == null) ? 0 : STATION.hashCode());
+		return result;
+	}
 
-    /**
-     * The startPoint is ignored.
-     *
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        BasicID other = (BasicID) obj;
-        if (ID == null) {
-            if (other.ID != null) return false;
-        } else if (!ID.equals(other.ID)) return false;
-        if (CONVOLUTE != other.CONVOLUTE) return false;
-        if (Double.doubleToLongBits(MAX_PERIOD) != Double.doubleToLongBits(other.MAX_PERIOD)) return false;
-        if (Double.doubleToLongBits(MIN_PERIOD) != Double.doubleToLongBits(other.MIN_PERIOD)) return false;
-        if (NPTS != other.NPTS) return false;
-        if (COMPONENT != other.COMPONENT) return false;
-        if (TYPE != other.TYPE) return false;
-        if (Double.doubleToLongBits(SAMPLINGHZ) != Double.doubleToLongBits(other.SAMPLINGHZ)) return false;
-        if (Double.doubleToLongBits(START_TIME) != Double.doubleToLongBits(other.START_TIME)) return false;
-        if (STATION == null) {
-            if (other.STATION != null) return false;
-        } else if (!STATION.equals(other.STATION)) return false;
-        return true;
-    }
+	/**
+	 * The startPoint is ignored.
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) return true;
+		if (obj == null) return false;
+		if (getClass() != obj.getClass()) return false;
+		BasicID other = (BasicID) obj;
+		if (ID == null) {
+			if (other.ID != null) return false;
+		} else if (!ID.equals(other.ID)) return false;
+		if (CONVOLUTE != other.CONVOLUTE) return false;
+		if (Double.doubleToLongBits(MAX_PERIOD) != Double.doubleToLongBits(other.MAX_PERIOD)) return false;
+		if (Double.doubleToLongBits(MIN_PERIOD) != Double.doubleToLongBits(other.MIN_PERIOD)) return false;
+		if (NPTS != other.NPTS) return false;
+		if (COMPONENT != other.COMPONENT) return false;
+		if (TYPE != other.TYPE) return false;
+		if (Double.doubleToLongBits(SAMPLINGHZ) != Double.doubleToLongBits(other.SAMPLINGHZ)) return false;
+		if (Double.doubleToLongBits(START_TIME) != Double.doubleToLongBits(other.START_TIME)) return false;
+		if (STATION == null) {
+			if (other.STATION != null) return false;
+		} else if (!STATION.equals(other.STATION)) return false;
+		return true;
+	}
 
-    public WaveformType getWaveformType() {
-        return TYPE;
-    }
 
-    /**
-     * @return Sampling Hz [hz]
-     */
-    public double getSamplingHz() {
-        return SAMPLINGHZ;
-    }
+	public WaveformType getWaveformType() {
+		return TYPE;
+	}
 
-    /**
-     * @return [s]
-     */
-    public double getStartTime() {
-        return START_TIME;
-    }
+	/**
+	 * @return Sampling Hz [hz]
+	 */
+	public double getSamplingHz() {
+		return SAMPLINGHZ;
+	}
 
-    /**
-     * @return Number of data points
-     */
-    public int getNpts() {
-        return NPTS;
-    }
+	/**
+	 * @return [s]
+	 */
+	public double getStartTime() {
+		return START_TIME;
+	}
 
-    public Station getStation() {
-        return STATION;
-    }
+	/**
+	 * @return Number of data points
+	 */
+	public int getNpts() {
+		return NPTS;
+	}
 
-    public GlobalCMTID getGlobalCMTID() {
-        return ID;
-    }
+	public Station getStation() {
+		return STATION;
+	}
 
-    public SACComponent getSacComponent() {
-        return COMPONENT;
-    }
+	public GlobalCMTID getGlobalCMTID() {
+		return ID;
+	}
 
-    public double getMinPeriod() {
-        return MIN_PERIOD;
-    }
+	public SACComponent getSacComponent() {
+		return COMPONENT;
+	}
 
-    public double getMaxPeriod() {
-        return MAX_PERIOD;
-    }
+	public double getMinPeriod() {
+		return MIN_PERIOD;
+	}
 
-    /**
-     * If this is 100, then the data for this ID starts from 100 th byte  in the file.
-     *
-     * @return [byte]
-     */
-    public long getStartByte() {
-        return START_BYTE;
-    }
+	public double getMaxPeriod() {
+		return MAX_PERIOD;
+	}
+	
+	public Phase[] getPhases() {
+		return PHASES;
+	}
 
-    /**
-     * @return If this ID is convolute.
-     */
-    public boolean isConvolute() {
-        return CONVOLUTE;
-    }
+	/**
+	 * If this is 100, then the data for this ID starts from 100th byte in the file.
+	 * @return [byte] 
+	 */
+	public long getStartByte() {
+		return START_BYTE;
+	}
 
-    /**
-     * @return Trace of the waveform for this ID.
-     */
-    public Trace getTrace() {
-        double[] x = new double[DATA.length];
-        Arrays.setAll(x, i -> START_TIME + i / SAMPLINGHZ);
-        return new Trace(x, DATA);
-    }
+	/**
+	 * @return If this ID is convolute.
+	 */
+	public boolean isConvolute() {
+		return CONVOLUTE;
+	}
+
+	/**
+	 * @return Trace of the waveform for this ID.
+	 */
+	public Trace getTrace() {
+		double[] x = new double[DATA.length];
+		Arrays.setAll(x, i -> START_TIME + i / SAMPLINGHZ);
+		return new Trace(x, DATA);
+	}
 
 }

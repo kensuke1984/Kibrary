@@ -30,5 +30,5 @@ public interface GlobalCMTData {
     LocalDateTime getPDETime();
 
     GlobalCMTID getGlobalCMTID();
-
+    
 }

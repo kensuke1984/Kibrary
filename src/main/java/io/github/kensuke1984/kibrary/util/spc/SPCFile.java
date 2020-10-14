@@ -17,6 +17,7 @@ import java.nio.file.Path;
  *
  * @author Kensuke Konishi
  * @version 0.2.0
+ * @author anselme add network
  */
 public abstract class SPCFile extends File {
 
@@ -88,6 +89,12 @@ public abstract class SPCFile extends File {
      * @return ID for the observer (station)
      */
     public abstract String getObserverID();
+    
+    /**
+     * @return NETWORK for the observer
+     * @author anselme
+     */
+    public abstract String getObserverNetwork();
 
     /**
      * @return if this is synthetic (not partial)

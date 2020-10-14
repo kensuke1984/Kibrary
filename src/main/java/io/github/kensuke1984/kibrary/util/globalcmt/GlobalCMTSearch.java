@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 /**
  * Query for search of Global CMT
  *
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
  * TODO thread safe (immutable)
  */
 public class GlobalCMTSearch {
-
+	
     private static DateTimeFormatter outputFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
     /**
      * Added predicate set.
@@ -467,5 +466,5 @@ public class GlobalCMTSearch {
         this.upperTensionAxisPlunge = upperTensionAxisPlunge;
         return this;
     }
-
+    
 }

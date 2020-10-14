@@ -1,5 +1,8 @@
 package io.github.kensuke1984.kibrary.math.geometry;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
+
 import io.github.kensuke1984.kibrary.util.Location;
 
 /**
@@ -99,8 +102,21 @@ public class XYZ extends XY {
         return new Location(Location.toLatitude(rtp.getTheta()), Math.toDegrees(rtp.getPhi()), rtp.getR());
     }
 
-    public RThetaPhi toSphericalCoordinate() {
-        return toSphericalCoordinate(x, y, z);
-    }
-
+	public RThetaPhi toSphericalCoordinate() {
+		return toSphericalCoordinate(x, y, z);
+	}
+	
+	public XYZ add(XYZ other) {
+		return new XYZ(x + other.x, y + other.y, z + other.z);
+	}
+	
+	public XYZ getMidPoint(XYZ other) {
+		return new XYZ((x + other.x)/2., (y + other.y)/2., (z + other.z)/2.);
+	}
+	
+	public RealVector toRealVector() {
+		return new ArrayRealVector(new double[] {x, y, z});
+	}
+	
+	
 }

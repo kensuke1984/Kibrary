@@ -234,5 +234,37 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
     public Point2D toPoint2D() {
         return new Point2D(getLongitude(), getLatitude());
     }
+	
+	/**
+	 * @param azimuth
+	 * @param distance
+	 * @return HorizontalPosition located at distance from self along azimuth
+	 * @author anselme
+	 */
+	public HorizontalPosition fromAzimuth(double azimuth, double distance) {
+		double alpha = azimuth * Math.PI / 180;
+		double GCARC = distance * Math.PI / 180;
+		
+		double costheta = Math.cos(GCARC) * Math.cos(getTheta())
+				+ Math.sin(GCARC) * Math.sin(getTheta()) * Math.cos(alpha);
+		double sintheta = Math.sqrt(1 - costheta * costheta);
+		
+		double theta = Math.acos(costheta);
+		
+		double tmpCos = Math.min( (Math.cos(GCARC) - Math.cos(getTheta()) * costheta)
+					/ (Math.sin(getTheta()) * sintheta)
+				, 1.);
+		tmpCos = Math.max(tmpCos, -1.);
+		
+		double phi = getPhi() - Math.acos( tmpCos );
+		
+		double lat = 90 - theta * 180 / Math.PI;
+		double lon = phi * 180 / Math.PI;
+		
+		if (lon < -180)
+			lon = lon + 360;
+		
+		return new HorizontalPosition(lat, lon);
+	}
 
 }

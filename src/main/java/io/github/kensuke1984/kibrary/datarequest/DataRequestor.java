@@ -15,8 +15,10 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * It makes a data requesting mail.

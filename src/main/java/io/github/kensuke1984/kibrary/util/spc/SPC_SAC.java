@@ -12,6 +12,7 @@ import io.github.kensuke1984.kibrary.util.sac.SACData;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,6 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import org.apache.commons.io.IOUtils;
 
 /**
  * SPC_SAC Converter from {@link Spectrum} to {@link SACData} file. According
@@ -69,6 +72,9 @@ public final class SPC_SAC implements Operation {
     private Set<SPCFile> psvSPCs;
     private Set<SPCFile> shSPCs;
     private Path outPath;
+    
+    private final List<String> stfcat = 
+    		readSTFCatalogue("astf_cc_ampratio_ca.catalog"); //LSTF1 ASTF1 ASTF2 CATZ_STF.stfcat
 
     public SPC_SAC(Properties properties) throws IOException {
         property = (Properties) properties.clone();
@@ -176,21 +182,101 @@ public final class SPC_SAC implements Operation {
                     .put(id, SourceTimeFunction.readSourceTimeFunction(sourceTimeFunctionPath.resolve(id + ".stf")));
     }
 
+    /**
+     * @param np
+     * @param tlen
+     * @param samplingHz
+     * @param id
+     * @return
+     * @author anselme add more options for source time function catalogs
+     */
     private SourceTimeFunction getSourceTimeFunction(int np, double tlen, double samplingHz, GlobalCMTID id) {
-        double halfDuration = id.getEvent().getHalfDuration();
-        switch (sourceTimeFunction) {
-            case -1:
-                return userSourceTimeFunctions.get(id);
-            case 0:
-                return null;
-            case 1:
-                return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-            case 2:
-                return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
-            default:
-                throw new RuntimeException("Integer for source time function is invalid.");
-        }
-    }
+		double halfDuration = id.getEvent().getHalfDuration();
+		switch (sourceTimeFunction) {
+			case -1:
+				SourceTimeFunction tmp = userSourceTimeFunctions.get(id);
+				if (tmp == null)
+					tmp = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+				return tmp;
+			case 0:
+				return null;
+			case 1:
+				return SourceTimeFunction.boxcarSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+			case 2:
+				return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration);
+			case 3:
+				if (stfcat.contains("LSTF")) {
+		        	double halfDuration1 = id.getEvent().getHalfDuration();
+		        	double halfDuration2 = id.getEvent().getHalfDuration();
+		        	boolean found = false;
+			      	for (String str : stfcat) {
+			      		String[] stflist = str.split("\\s+");
+			      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0]);
+			      	    if(id.equals(eventID)) {
+			      	    	if(Integer.valueOf(stflist[3]) >= 5.) {
+			      	    		halfDuration1 = Double.valueOf(stflist[1]);
+			      	    		halfDuration2 = Double.valueOf(stflist[2]);
+			      	    		found = true;
+			      	    	}
+			      	    }
+			      	}
+			      	SourceTimeFunction stf = null;
+			      	if (found) {
+			      		stf = SourceTimeFunction.asymmetrictriangleSourceTimeFunction(np, tlen, samplingHz, halfDuration1, halfDuration2);
+			      	}
+			      	else
+			      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+			      	return stf;
+				}
+				else {
+					boolean found = false;
+					double ampCorr = 1.;
+					for (String str : stfcat) {
+			      		String[] ss = str.split("\\s+");
+			      	    GlobalCMTID eventID = new GlobalCMTID(ss[0]);
+			      	    if (id.equals(eventID)) {
+			      	    	halfDuration = Double.parseDouble(ss[1]);
+			      	    	ampCorr = Double.parseDouble(ss[2]);
+			      	    	found = true;
+			      	    	break;
+			      	    }
+			      	}
+					if (found)
+						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, ampCorr);
+					else
+						return SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+				}
+			case 4:
+				throw new RuntimeException("Case 4 not implemented yet");
+			case 5:
+				halfDuration = 0.;
+				double amplitudeCorrection = 1.;
+				boolean found = false;
+		      	for (String str : stfcat) {
+		      		String[] stflist = str.split("\\s+");
+		      	    GlobalCMTID eventID = new GlobalCMTID(stflist[0].trim());
+		      	    if(id.equals(eventID)) {
+		      	    	halfDuration = Double.valueOf(stflist[1].trim());
+		      	    	amplitudeCorrection = Double.valueOf(stflist[2].trim());
+		      	    	found = true;
+		      	    }
+		      	}
+		      	SourceTimeFunction stf = null;
+		      	if (found)
+		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, halfDuration, 1. / amplitudeCorrection);
+		      	else
+		      		stf = SourceTimeFunction.triangleSourceTimeFunction(np, tlen, samplingHz, id.getEvent().getHalfDuration());
+		      	return stf;
+			default:
+				throw new RuntimeException("Integer for source time function is invalid.");
+		}
+	}
+    
+	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
+		System.out.println("STF catalogue: " +  STFcatalogue);
+		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
+					, Charset.defaultCharset());
+	}
 
     private void setModelName() throws IOException {
         Set<EventFolder> eventFolders = new HashSet<>();

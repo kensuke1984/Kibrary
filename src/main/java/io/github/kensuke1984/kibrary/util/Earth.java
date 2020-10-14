@@ -311,4 +311,5 @@ public final class Earth {
         double s1 = el1.getS(theta0, theta1);
         return s1 - s0;
     }
+    
 }

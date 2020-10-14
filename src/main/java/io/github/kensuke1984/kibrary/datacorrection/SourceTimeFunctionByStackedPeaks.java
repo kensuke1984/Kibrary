@@ -146,5 +146,5 @@ public final class SourceTimeFunctionByStackedPeaks extends SourceTimeFunction {
         }
         return sourceTimeFunction;
     }
-
+	
 }

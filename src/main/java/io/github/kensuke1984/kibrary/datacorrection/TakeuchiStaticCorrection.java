@@ -197,5 +197,4 @@ public class TakeuchiStaticCorrection implements Operation {
     public Properties getProperties() {
         return (Properties) property.clone();
     }
-
 }

@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -11,19 +12,24 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  *
  * @author Kensuke Konishi
  * @version 0.0.2.1.1
+ * @author anselme add methods
  */
 public interface UnknownParameter {
 
-    /**
-     * Weighting may be a width of a layer of volume of voxel and so on...
-     *
-     * @return weighting for this parameter
-     */
-    double getWeighting();
-
-    /**
-     * @return {@link PartialType} of a parameter
-     */
-    PartialType getPartialType();
+	/**
+	 * Weighting may be a width of a layer or volume of voxel and so on...
+	 * 
+	 * @return weighting for this parameter
+	 */
+	public double getWeighting();
+	
+	/**
+	 * @return {@link PartialType} of a parameter
+	 */
+	public PartialType getPartialType();
+	
+	public Location getLocation();
+	
+	public byte[] getBytes();
 
 }

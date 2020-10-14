@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -62,9 +63,19 @@ public class Physical1DParameter implements UnknownParameter {
         return weighting;
     }
 
-    @Override
-    public PartialType getPartialType() {
-        return partialType;
-    }
-
+	@Override
+	public PartialType getPartialType() {
+		return partialType;
+	}
+	
+	@Override
+	public Location getLocation() {
+		return new Location(0., 0., perturbationR);
+	}
+	
+	@Override
+	public byte[] getBytes() {
+		return new byte[0];
+		// TODO
+	}
 }

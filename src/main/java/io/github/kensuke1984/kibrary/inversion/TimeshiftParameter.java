@@ -1,5 +1,6 @@
 package io.github.kensuke1984.kibrary.inversion;
 
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 /**
@@ -21,7 +22,7 @@ public class TimeshiftParameter implements UnknownParameter {
 
     @Override
     public String toString() {
-        return PartialType.TIME + " " + side;
+        return PartialType.TIME_SOURCE + " " + side;
     }
 
     @Override
@@ -51,7 +52,19 @@ public class TimeshiftParameter implements UnknownParameter {
 
     @Override
     public PartialType getPartialType() {
-        return PartialType.TIME;
+        return PartialType.TIME_SOURCE; // TODO re-write it is PartialType.TIME
+    }
+    
+    @Override
+    public Location getLocation() {
+    	// TODO Auto-generated method stub
+    	return null;
+    }
+    
+    @Override
+    public byte[] getBytes() {
+    	// TODO Auto-generated method stub
+    	return null;
     }
 
 }

@@ -13,6 +13,7 @@ import java.util.List;
  *
  * @author Kensuke Konishi
  * @version 0.0.1
+ * @author anselme add network
  */
 public interface DSMOutput {
 
@@ -25,6 +26,8 @@ public interface DSMOutput {
      * @return list of spc bodies
      */
     List<SPCBody> getSpcBodyList();
+	
+	void setSpcBody(int i, SPCBody body);
 
     /**
      * @return array of body Rs
@@ -42,9 +45,15 @@ public interface DSMOutput {
     String getSourceID();
 
     /**
-     * @return ID of an observer
+     * @return ID of an observer (Station)
      */
     String getObserverID();
+	
+	/**
+	 * @return Network of an observer
+	 * @author anselme
+	 */
+	String getObserverNetwork();
 
     /**
      * @return HorizontalPosition of an observer.
@@ -71,4 +80,6 @@ public interface DSMOutput {
      */
     SPCType getSpcFileType();
 
+	
+	SPCFile getSpcFileName();
 }

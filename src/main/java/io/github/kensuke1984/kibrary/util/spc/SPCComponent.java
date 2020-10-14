@@ -14,6 +14,7 @@ import java.util.Arrays;
  *
  * @author Kensuke Konishi
  * @version 0.1.6
+ * @author anselme add methods for interpolation for BP/FP catalog
  */
 public class SPCComponent {
 
@@ -124,6 +125,16 @@ public class SPCComponent {
             uFreq[i] = new Complex(uFreq[i].getImaginary() * c, -uFreq[i].getReal() * c);
         }
     }
+    
+	/**
+	 * Multiply self by double
+	 * @param factor
+	 * @author anselme
+	 */
+	public void mapMultiply(double factor) {
+		for (int i = 0; i < NP + 1; i++)
+			uFreq[i] = uFreq[i].multiply(factor);
+	}
 
     /**
      * @return 周波数領域のデータ

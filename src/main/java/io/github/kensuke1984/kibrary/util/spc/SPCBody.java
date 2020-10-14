@@ -59,6 +59,102 @@ public class SPCBody {
         for (int i = 0; i < N_COMPONENT; i++)
             spcComponents[i].set(ip, u[i]);
     }
+    
+    /**
+     * Interpolation for catalog
+     * @param anotherBody
+     * @param unitDistance
+     * @return
+     * @author anselme
+     */
+    public SPCBody interpolate(SPCBody anotherBody, double unitDistance) {
+		if (unitDistance < 0 || unitDistance > 1) 
+			throw new RuntimeException("Error: unit distance should be between 0-1 " + unitDistance);
+		SPCBody s = this.copy();
+		if (N_COMPONENT != anotherBody.getNp())
+			throw new RuntimeException("Error: Size of body is not equal!");
+		else if (N_COMPONENT != anotherBody.getNumberOfComponent())
+			throw new RuntimeException("Error: The numbers of each component are different.");
+
+		for (int j = 0; j < N_COMPONENT; j++) {
+			SPCComponent comp1 = s.spcComponents[j];
+			SPCComponent comp2 = anotherBody.spcComponents[j];
+			comp1.mapMultiply(1. - unitDistance);
+			comp2.mapMultiply(unitDistance);
+			comp1.addComponent(comp2);
+			s.spcComponents[j] = comp1;
+		}
+		
+		return s;
+	}
+	
+	/**
+	 * @param body1
+	 * @param body2
+	 * @param body3
+	 * @param dh
+	 * @return
+	 * @author anselme
+	 */
+	public static SPCBody interpolate(SPCBody body1, SPCBody body2, SPCBody body3, double[] dh) {
+		SPCBody s = body1.copy();
+//		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
+//		double c2 = dh[0] - dh[0]*dh[1];
+//		double c3 = dh[0]*dh[1]/2.;
+		double c1 = dh[1]*dh[2] / 2.;
+		double c2 = -dh[0]*dh[2];
+		double c3 = dh[0]*dh[1] / 2.;
+		
+		for (int j = 0; j < body1.N_COMPONENT; j++) {
+			SPCComponent comp1 = body1.spcComponents[j].copy();
+			SPCComponent comp2 = body2.spcComponents[j].copy();
+			SPCComponent comp3 = body3.spcComponents[j].copy();
+			
+			comp1.mapMultiply(c1);
+			comp2.mapMultiply(c2);
+			comp3.mapMultiply(c3);
+			comp1.addComponent(comp2);
+			comp1.addComponent(comp3);
+			
+			s.spcComponents[j] = comp1;
+		}
+		
+		return s;
+	}
+	
+	/**
+	 * @param body1
+	 * @param body2
+	 * @param body3
+	 * @param dh
+	 * @return
+	 * @author anselme
+	 */
+	public static SPCBody interpolate_backward(SPCBody body1, SPCBody body2, SPCBody body3, double[] dh) {
+		SPCBody s = body1.copy();
+//		double c1 = 1 - dh[0] + dh[0]*dh[1]/2.;
+//		double c2 = dh[0] - dh[0]*dh[1];
+//		double c3 = dh[0]*dh[1]/2.;
+		double c1 = -dh[1]*dh[2];
+		double c2 = dh[0]*dh[2] / 2.;
+		double c3 = dh[0]*dh[1] / 2.;
+		
+		for (int j = 0; j < body1.N_COMPONENT; j++) {
+			SPCComponent comp1 = body1.spcComponents[j];
+			SPCComponent comp2 = body2.spcComponents[j];
+			SPCComponent comp3 = body3.spcComponents[j];
+			
+			comp1.mapMultiply(c1);
+			comp2.mapMultiply(c2);
+			comp3.mapMultiply(c3);
+			comp1.addComponent(comp2);
+			comp1.addComponent(comp3);
+			
+			s.spcComponents[j] = comp1;
+		}
+		
+		return s;
+	}
 
     /**
      * @return SPCComponent[] all the {@link SPCComponent} in this

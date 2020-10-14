@@ -31,7 +31,7 @@ enum SPCTensorComponent {
     SPCTensorComponent(int n) {
         value = n;
     }
-
+    
     /**
      * back propagate のETAri,sのコンポーネントを返す it returns rtp when i=1 r=2 s=3
      *
@@ -66,5 +66,32 @@ enum SPCTensorComponent {
     public int valueOf() {
         return value;
     }
+    
+	/**
+	 * @param n
+	 * @return
+	 * @author anselme
+	 */
+	public static boolean isBPSHCATzero(int n) {
+		if (n < 1 || n > 27)
+			throw new IndexOutOfBoundsException("Error: index of component for BP should be between 1-27");
+		if (n >= 10 && n <= 27)
+			return false;
+		else
+			return true;
+	}
+	
+	/**
+	 * @param n
+	 * @return
+	 * @author anselme
+	 */
+	public static boolean isFPSHzero(int n) {
+		if (n < 1 || n > 9)
+			throw new IndexOutOfBoundsException("Error: index of component for FP should be between 1-9");
+		if (n == 1)
+			return true;
+		else return false;
+	}
 
 }

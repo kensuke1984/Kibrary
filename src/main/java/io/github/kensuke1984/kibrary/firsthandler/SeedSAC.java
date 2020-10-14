@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
  * @version 0.1.9
  */
 class SeedSAC implements Runnable {
-
+	
     /**
      * [s] delta for SAC files. SAC files with different delta will be interpolated
      * or downsampled.
@@ -575,6 +575,7 @@ class SeedSAC implements Runnable {
 
     /**
      * Remove files with suffixes other than [BH][HL][ENZ12]
+     * @author anselme BH1 BH2 also kept
      */
     private void selectChannels() throws IOException {
         // System.out.println("Selecting Channels");
@@ -586,7 +587,8 @@ class SeedSAC implements Runnable {
                 if (channel.equals("BHZ") || channel.equals("BLZ") || channel.equals("BHN") || channel.equals("BHE") ||
                         channel.equals("BLN") || channel.equals("BLE") || channel.equals("HHZ") ||
                         channel.equals("HLZ") || channel.equals("HHN") || channel.equals("HHE") ||
-                        channel.equals("HLN") || channel.equals("HLE")) continue;
+                        channel.equals("HLN") || channel.equals("HLE") ||
+                        channel.equals("BH1") || channel.equals("BH2")) continue;
                 Utilities.moveToDirectory(modPath, trashBox, true);
             }
         }

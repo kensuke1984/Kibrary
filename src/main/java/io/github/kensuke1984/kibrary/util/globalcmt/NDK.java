@@ -56,7 +56,7 @@ import java.time.format.DateTimeFormatter;
  * http://www.ldeo.columbia.edu/~gcmt/projects/CMT/catalog/allorder.ndk_explained>official
  * guide</a>
  */
-final class NDK implements GlobalCMTData {
+final public class NDK implements GlobalCMTData {
 
     private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss.S");
     /**

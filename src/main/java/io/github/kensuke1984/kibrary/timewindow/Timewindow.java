@@ -90,12 +90,16 @@ public class Timewindow implements Comparable<Timewindow> {
         return new Timewindow(newStart, newEnd);
     }
 
-    public double getStartTime() {
-        return startTime;
-    }
+	public double getStartTime() {
+		return startTime;
+	}
 
-    public double getEndTime() {
-        return endTime;
-    }
+	public double getEndTime() {
+		return endTime;
+	}
+	
+	public double getLength() {
+		return endTime - startTime;
+	}
 
 }

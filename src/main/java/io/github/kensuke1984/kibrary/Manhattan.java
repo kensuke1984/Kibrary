@@ -4,12 +4,14 @@ import io.github.kensuke1984.kibrary.datacorrection.FujiStaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.datarequest.DataRequestor;
 import io.github.kensuke1984.kibrary.dsminformation.InformationFileMaker;
+import io.github.kensuke1984.kibrary.axiSEM.Result;
 import io.github.kensuke1984.kibrary.dsminformation.SshDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.dsminformation.SyntheticDSMInformationFileMaker;
 import io.github.kensuke1984.kibrary.external.gmt.RaypathDistribution;
 import io.github.kensuke1984.kibrary.firsthandler.FirstHandler;
 import io.github.kensuke1984.kibrary.inversion.CheckerBoardTest;
 import io.github.kensuke1984.kibrary.inversion.LetMeInvert;
+import io.github.kensuke1984.kibrary.inversion.addons.LetMeInvert_fromAtA;
 import io.github.kensuke1984.kibrary.selection.DataSelection;
 import io.github.kensuke1984.kibrary.selection.FilterDivider;
 import io.github.kensuke1984.kibrary.selection.SecondHandler;
@@ -17,7 +19,15 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowMaker;
 import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.waveformdata.ObservedSyntheticDatasetMaker;
 import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker;
+import io.github.kensuke1984.kibrary.waveformdata.Partial1DDatasetMaker_v2;
 import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker;
+import io.github.kensuke1984.kibrary.waveformdata.PartialDatasetMaker_v2;
+import io.github.kensuke1984.kibrary.waveformdata.addons.ObservedSyntheticDatasetMaker_SpcTest;
+import io.github.kensuke1984.kibrary.waveformdata.addons.Partial1DEnvelopeMaker;
+import io.github.kensuke1984.kibrary.waveformdata.addons.Partial1DSpcMaker;
+import io.github.kensuke1984.kibrary.datacorrection.SourceTimeFunctionByGridSearch;
+import io.github.kensuke1984.kibrary.selection.PhaseEnvelope;
+import io.github.kensuke1984.kibrary.waveformdata.addons.AtAMaker;
 
 import java.util.Arrays;
 
@@ -28,25 +38,33 @@ import java.util.Arrays;
  * @version 0.0.5.3
  */
 public enum Manhattan {
-    CheckerBoardTest(1, CheckerBoardTest.class), //
-    DataRequestor(2, DataRequestor.class), //
-    DataSelection(3, DataSelection.class), //
-    FilterDivider(4, FilterDivider.class), //
-    FirstHandler(5, FirstHandler.class), //
-    FujiStaticCorrection(6, FujiStaticCorrection.class), //
-    InformationFileMaker(7, InformationFileMaker.class), //
-    LetMeInvert(8, LetMeInvert.class), //
-    ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
-    Partial1DDatasetMaker(10, Partial1DDatasetMaker.class), //
-    PartialDatasetMaker(11, PartialDatasetMaker.class), //
-    RaypathDistribution(12, RaypathDistribution.class), //
-    SecondHandler(13, SecondHandler.class), //
-    SPC_SAC(14, SPC_SAC.class), //
-    SshDSMInformationFileMaker(15, SshDSMInformationFileMaker.class), //
-    SyntheticDSMInformationFileMaker(16, SyntheticDSMInformationFileMaker.class), //
-    TakeuchiStaticCorrection(17, TakeuchiStaticCorrection.class), //
-    TimewindowMaker(18, TimewindowMaker.class),//
-    ;
+	CheckerBoardTest(1, CheckerBoardTest.class), //
+	DataRequestor(2, DataRequestor.class), //
+	DataSelection(3, DataSelection.class), //
+	FilterDivider(4, FilterDivider.class), //
+	FirstHandler(5, FirstHandler.class), //
+	FujiStaticCorrection(6, FujiStaticCorrection.class), //
+	InformationFileMaker(7, InformationFileMaker.class), //
+	LetMeInvert(8, LetMeInvert.class), //
+	ObservedSyntheticDatasetMaker(9, ObservedSyntheticDatasetMaker.class), //
+	Partial1DDatasetMaker(10, Partial1DDatasetMaker_v2.class), //
+	PartialDatasetMaker(11, PartialDatasetMaker_v2.class), //
+	PhaseEnvelope(12, PhaseEnvelope.class), //
+	RaypathDistribution(13, RaypathDistribution.class), //
+	Result(14, Result.class), //
+	SecondHandler(15, SecondHandler.class), //
+	SourceTimeFunctionByGridSearch(16, SourceTimeFunctionByGridSearch.class), //
+	SPC_SAC(17, SPC_SAC.class), //
+	SshDSMInformationFileMaker(18, SshDSMInformationFileMaker.class), //
+	SyntheticDSMInformationFileMaker(19, SyntheticDSMInformationFileMaker.class), //
+	TakeuchiStaticCorrection(20, TakeuchiStaticCorrection.class), //
+	TimewindowMaker(21, TimewindowMaker.class),//
+	AtAMaker(22, AtAMaker.class),//
+	LetMeInvert_fromAtA(23, LetMeInvert_fromAtA.class),//
+	Partial1DEnvelopeMaker(24, Partial1DEnvelopeMaker.class),//
+	Partial1DSpcMaker(25, Partial1DSpcMaker.class),//
+	ObservedSyntheticDatasetMaker_SpcTest(26, ObservedSyntheticDatasetMaker_SpcTest.class), //
+	;
 
     private Class<? extends Operation> c;
     private int value;
