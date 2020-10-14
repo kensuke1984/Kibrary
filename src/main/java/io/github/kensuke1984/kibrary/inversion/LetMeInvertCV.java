@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.inversion;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -68,13 +68,11 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InverseProblem;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
-import io.github.kensuke1984.kibrary.inversion.StationInformationFile;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.inversion.addons.CombinationType;
+import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
+import io.github.kensuke1984.kibrary.inversion.addons.RadialSecondOrderDifferentialOperator;
+import io.github.kensuke1984.kibrary.inversion.addons.UnknownParameterWeightType;
+import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
@@ -269,7 +267,7 @@ public class LetMeInvertCV implements Operation {
 			property.setProperty("correct3DFocusing", "false");
 		
 		// additional unused info
-		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
+		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
 //		property.setProperty("STF catalogue", GlobalCMTCatalog.);
 	}
 
@@ -631,11 +629,11 @@ public class LetMeInvertCV implements Operation {
 	
 	private void readIDs() {
 		try {
-			ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+			ids = BasicIDFile.read(waveformIDPath, waveformPath);
 			
 			spcIds = null;
 			if (spcAmpIDPath != null)
-				spcIds = BasicIDFile.readBasicIDandDataFile(spcAmpIDPath, spcAmpPath);
+				spcIds = BasicIDFile.read(spcAmpIDPath, spcAmpPath);
 			
 			if (eventClusterPath != null)
 				clusters = EventCluster.readClusterFile(eventClusterPath);
@@ -647,11 +645,11 @@ public class LetMeInvertCV implements Operation {
 			parameterList = UnknownParameterFile.read(unknownParameterListPath);
 			
 			// read all partial IDs
-			partialIDs = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+			partialIDs = PartialIDFile.read(partialIDPath, partialPath);
 			
 			partialSpcIDs = null;
 			if (spcIds != null)
-				partialSpcIDs = PartialIDFile.readPartialIDandDataFile(partialSpcIDPath, partialSpcPath);
+				partialSpcIDs = PartialIDFile.read(partialSpcIDPath, partialSpcPath);
 			
 			
 		} catch (IOException e) {
@@ -782,109 +780,109 @@ public class LetMeInvertCV implements Operation {
 				}
 				
 				//TODO
-				if (id.getStation().getStationName().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-					|| id.getStation().getStationName().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
+				if (id.getStation().getName().equals("Y14A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getStation().getName().equals("216A") && id.getGlobalCMTID().equals(new GlobalCMTID("200704180108A"))
 					|| id.getGlobalCMTID().equals(new GlobalCMTID("201608041415A"))
 					|| id.getGlobalCMTID().equals(new GlobalCMTID("201702181210A"))
-					|| id.getStation().getStationName().equals("MONP2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("RRX") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("BC3") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("TPNV") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("VOG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("TPFO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("E39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStationName().equals("F43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStationName().equals("E47A") && id.getGlobalCMTID().equals(new GlobalCMTID("201404180746A"))
-					|| id.getStation().getStationName().equals("G42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStationName().equals("E45A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStationName().equals("COWI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("SFIN") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStationName().equals("P43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStationName().equals("SUSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("KSCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("ECSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("LBNH") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("PKME") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("GLMI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("LONY") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("M50A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
-					|| id.getStation().getStationName().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStationName().equals("Q44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStationName().equals("K35A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-					|| id.getStation().getStationName().equals("SS67") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStationName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getName().equals("MONP2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("RRX") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("BC3") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("TPNV") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("VOG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("TPFO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("AGMN") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("E39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getName().equals("F43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getName().equals("E47A") && id.getGlobalCMTID().equals(new GlobalCMTID("201404180746A"))
+					|| id.getStation().getName().equals("G42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getName().equals("E45A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getName().equals("COWI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("SFIN") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getName().equals("P43A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getName().equals("SUSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("KSCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("ECSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("LBNH") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("PKME") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("GLMI") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("LONY") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("M50A") && id.getGlobalCMTID().equals(new GlobalCMTID("201306081225A"))
+					|| id.getStation().getName().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getName().equals("Q44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getName().equals("K35A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+					|| id.getStation().getName().equals("SS67") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
 					
-					|| id.getStation().getStationName().equals("SM28") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getName().equals("SM28") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
 					
-					|| id.getStation().getStationName().equals("RSSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("MDND") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("BOZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("BW06") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("K22A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
-					|| id.getStation().getStationName().equals("WUAZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("SRU") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("R11A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("DUG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("CMB") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("NEE2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("GSC") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
-					|| id.getStation().getStationName().equals("GMR") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("RSSD") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("MDND") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("BOZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("BW06") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("K22A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("ISCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
+					|| id.getStation().getName().equals("WUAZ") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("SRU") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("R11A") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("DUG") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("CMB") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("NEE2") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("GSC") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
+					|| id.getStation().getName().equals("GMR") && id.getGlobalCMTID().equals(new GlobalCMTID("201604132001A"))
 					
-					|| id.getStation().getStationName().equals("SS77") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-					|| id.getStation().getStationName().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-					|| id.getStation().getStationName().equals("J38A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
-					|| id.getStation().getStationName().equals("K36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+					|| id.getStation().getName().equals("SS77") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+					|| id.getStation().getName().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+					|| id.getStation().getName().equals("J38A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+					|| id.getStation().getName().equals("K36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
 					
-					|| id.getStation().getStationName().equals("V03C") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
-					|| id.getStation().getStationName().equals("H17A") && id.getGlobalCMTID().equals(new GlobalCMTID("201405140338A"))
+					|| id.getStation().getName().equals("V03C") && id.getGlobalCMTID().equals(new GlobalCMTID("200610232100A"))
+					|| id.getStation().getName().equals("H17A") && id.getGlobalCMTID().equals(new GlobalCMTID("201405140338A"))
 					
-					|| id.getStation().getStationName().equals("EYMN") && id.getGlobalCMTID().equals(new GlobalCMTID("200503211243A"))
+					|| id.getStation().getName().equals("EYMN") && id.getGlobalCMTID().equals(new GlobalCMTID("200503211243A"))
 					
-					|| id.getStation().getStationName().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-					|| id.getStation().getStationName().equals("T19A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
-					|| id.getStation().getStationName().equals("S21A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getStation().getName().equals("MVCO") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getStation().getName().equals("T19A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
+					|| id.getStation().getName().equals("S21A") && id.getGlobalCMTID().equals(new GlobalCMTID("200809031125A"))
 //					
-//					|| id.getStation().getStationName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
-//					|| id.getStation().getStationName().equals("SM17") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("SS78") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-//					|| id.getStation().getStationName().equals("SN62") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-//					|| id.getStation().getStationName().equals("SS65") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("L40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("R42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("M37A") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
-//					|| id.getStation().getStationName().equals("LB18") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("MG05") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("Q40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
-//					|| id.getStation().getStationName().equals("SS68") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+//					|| id.getStation().getName().equals("SM17") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("SS78") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getName().equals("SN62") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("SS65") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("L40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("R42A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("M37A") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
+//					|| id.getStation().getName().equals("LB18") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("MG05") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("Q40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
+//					|| id.getStation().getName().equals("SS68") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
 //					
-//					|| id.getStation().getStationName().equals("N40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("Q46A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("MG03") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("K40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("R41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-//					|| id.getStation().getStationName().equals("S41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("SCIA") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-//					|| id.getStation().getStationName().equals("CCM") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-//					|| id.getStation().getStationName().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
-//					|| id.getStation().getStationName().equals("P39B") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-//					|| id.getStation().getStationName().equals("L36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
-//					|| id.getStation().getStationName().equals("R44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("SM41") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
-//					|| id.getStation().getStationName().equals("SS76") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-//					|| id.getStation().getStationName().equals("SS78") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
-//					|| id.getStation().getStationName().equals("H39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-//					|| id.getStation().getStationName().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("MG07") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
-//					|| id.getStation().getStationName().equals("LD18") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
-//					|| id.getStation().getStationName().equals("I40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
-//					|| id.getStation().getStationName().equals("K41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("N40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("Q46A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("MG03") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("K40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("R41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("S41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("SCIA") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("CCM") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getName().equals("SM38") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("JFWS") && id.getGlobalCMTID().equals(new GlobalCMTID("201104170158A"))
+//					|| id.getStation().getName().equals("P39B") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getName().equals("L36A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+//					|| id.getStation().getName().equals("R44A") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("SM41") && id.getGlobalCMTID().equals(new GlobalCMTID("201205281150A"))
+//					|| id.getStation().getName().equals("SS76") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("MG15") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("SS78") && id.getGlobalCMTID().equals(new GlobalCMTID("201203050746A"))
+//					|| id.getStation().getName().equals("H39A") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("SS80") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("MG07") && id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+//					|| id.getStation().getName().equals("LD18") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
+//					|| id.getStation().getName().equals("I40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
+//					|| id.getStation().getName().equals("K41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
 
 					
 //					|| id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
@@ -1736,8 +1734,8 @@ public class LetMeInvertCV implements Operation {
 			dVector.outOrder(outPath);
 			dVector.outPhases(outPath);
 			outEachTrace(outPath.resolve("trace"));
-			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
-			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
+			UnknownParameterFile.write(outPath.resolve("unknownParameterOrder.inf"), eq.getParameterList());
+			UnknownParameterFile.write(outPath.resolve("originalUnknownParameterOrder.inf"), eq.getOriginalParameterList());
 			eq.outputA(outPath.resolve("partial"));
 //			eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
@@ -1762,8 +1760,8 @@ public class LetMeInvertCV implements Operation {
 			dVector.outOrder(outPath);
 			dVector.outPhases(outPath);
 			outEachTrace(outPath.resolve("trace"));
-			UnknownParameterFile.write(eq.getParameterList(), outPath.resolve("unknownParameterOrder.inf"));
-			UnknownParameterFile.write(eq.getOriginalParameterList(), outPath.resolve("originalUnknownParameterOrder.inf"));
+			UnknownParameterFile.write(outPath.resolve("unknownParameterOrder.inf"), eq.getParameterList());
+			UnknownParameterFile.write(outPath.resolve("originalUnknownParameterOrder.inf"), eq.getOriginalParameterList());
 			eq.outputA(outPath.resolve("partial"));
 	//		eq.outputAtA(outPath.resolve("lmi_AtA.inf"));
 			eq.outputUnkownParameterWeigths(outPath.resolve("unknownParameterWeigths.inf"));
@@ -2552,7 +2550,6 @@ public class LetMeInvertCV implements Operation {
 			System.out.println("a is null, cannot output variance per event");
 			return;
 		}
-		Set<NDK> gcmtCat = GlobalCMTCatalog.readJar("globalcmt.catalog");
 		
 		Set<GlobalCMTID> eventSet = eq.getDVector().getUsedGlobalCMTIDset();
 		Path out = outPath.resolve("eventVariance.txt");
@@ -2584,9 +2581,7 @@ public class LetMeInvertCV implements Operation {
 		
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out, StandardOpenOption.CREATE_NEW))) {
 			for (GlobalCMTID id : eventSet) {
-				NDK idGCMTndk = gcmtCat.stream().filter(ndk -> ndk.getGlobalCMTID().equals(id))
-						.findFirst().get();
-				double GCMTMw = idGCMTndk.getCmt().getMw();
+				double GCMTMw = id.getEvent().getCmt().getMw();
 				
 				String s = id.toString() + " " + String.format("%.2f", GCMTMw);
 				double[] variance = varianceMap.get(id);

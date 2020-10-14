@@ -18,12 +18,12 @@ public class AtAFromPartial {
 		Path partialPath = Paths.get(args[1]);
 		
 		try {
-			PartialID[] partialsNoData = PartialIDFile.readPartialIDFile(partialIDPath);
+			PartialID[] partialsNoData = PartialIDFile.read(partialIDPath);
 			Set<GlobalCMTID> eventSet = Stream.of(partialsNoData).map(par -> par.getGlobalCMTID()).collect(Collectors.toSet());
 			
 			eventSet.stream().forEach(event -> {
 				try {
-					PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath, id -> id.getGlobalCMTID().equals(event));
+					PartialIDFile.read(partialIDPath, partialPath, id -> id.getGlobalCMTID().equals(event));
 					
 				} catch (IOException e) {
 					e.printStackTrace();

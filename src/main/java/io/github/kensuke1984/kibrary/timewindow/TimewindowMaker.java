@@ -6,6 +6,7 @@ import io.github.kensuke1984.anisotime.Phase;
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.external.TauPPhase;
+import io.github.kensuke1984.kibrary.external.TauPTimeReader;
 import io.github.kensuke1984.kibrary.external.TauP_Time;
 import io.github.kensuke1984.kibrary.util.Station;
 import io.github.kensuke1984.kibrary.util.Utilities;
@@ -21,6 +22,7 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformation;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -322,6 +324,10 @@ public class TimewindowMaker implements Operation {
      * @return travel times in {@link TauPPhase}
      */
 	private static double[] toTravelTime(Set<TauPPhase> phases) {
+		return phases.stream().mapToDouble(TauPPhase::getTravelTime).toArray();
+	}
+	
+	private static double[] toTravelTime(List<TauPPhase> phases) {
 		return phases.stream().mapToDouble(TauPPhase::getTravelTime).toArray();
 	}
 	

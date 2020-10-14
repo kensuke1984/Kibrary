@@ -45,7 +45,7 @@ public class SecondHandler implements Consumer<EventFolder>, Operation {
 	private Predicate<SACData> predicate;
 	private String trashName;
 	
-	public SecondHandler(Properties property) {
+	public SecondHandler(Properties property) throws IOException {
 		this.property = (Properties) property.clone();
 		set();
 		String date = Utilities.getTemporaryString();

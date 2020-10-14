@@ -94,7 +94,7 @@ public class HistogramAzimuth {
 		if (args.length == 2)
 			phases_ = new Phases(args[1]);
 		final Phases phases = phases_;
-		BasicID[] basicIDs = BasicIDFile.readBasicIDFile(srcID);
+		BasicID[] basicIDs = BasicIDFile.read(srcID);
 		Path outPath = root.resolve("azimuthHistogram.txt");
 		Path scriptPath = root.resolve("azimuthHistogram.plt");
 		

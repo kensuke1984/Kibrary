@@ -844,7 +844,7 @@ public class PhaseEnvelope implements Operation {
 	 	      Rectangle2D.Double rect = new Rectangle2D.Double(timewindows[i][0], -h, timewindows[i][1]-timewindows[i][0], 2*h);
 	 	      subplot1.addAnnotation(new XYShapeAnnotation(rect, new BasicStroke(1.0f), Color.BLUE));
 	 	      for (int j = 0; j < phases[i].length; j++) {
-	 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().getExpandedName(), timewindows[i][0], h*1.05 + j*h/6.);
+	 	    	  XYTextAnnotation annotation = new XYTextAnnotation(phases[i][j].getPhaseName().getEXPANDED_NAME(), timewindows[i][0], h*1.05 + j*h/6.);
 	 	    	  annotation.setPaint(colors[j % colors.length]);
 	 	    	  annotation.setFont(helvetica12);
 	 	    	  annotation.setTextAnchor(TextAnchor.BOTTOM_LEFT);

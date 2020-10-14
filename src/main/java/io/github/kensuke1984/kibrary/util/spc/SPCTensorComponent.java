@@ -20,7 +20,7 @@ import java.util.Arrays;
  * @author Kensuke Konishi
  * @version 0.1.1.1 TODO
  */
-enum SPCTensorComponent {
+public enum SPCTensorComponent {
     RR(1), RT(2), RP(3), TR(4), TT(5), TP(6), PR(7), PT(8), PP(9), //
     RRR(1), RRT(2), RRP(3), RTR(4), RTT(5), rtp(6), rpr(7), RPT(8), RPP(9), //
     TRR(10), TRT(11), TRP(12), TTR(13), TTT(14), TTP(15), TPR(16), TPT(17), TPP(18), //

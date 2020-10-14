@@ -1,13 +1,10 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.inversion;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InverseProblem;
 
 /**
  * Conjugate gradient method

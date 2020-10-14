@@ -29,7 +29,7 @@ public class SelectSpcAmp {
 		Path outIDPath = Paths.get("spcAmpID" + ".dat");
 		Path outPath = Paths.get("spcAmp" + ".dat");
 		try {
-			List<BasicID> ids = Arrays.stream(BasicIDFile.readBasicIDandDataFile(spcAmpIDPath, spcAmpPath)).collect(Collectors.toList());
+			List<BasicID> ids = Arrays.stream(BasicIDFile.read(spcAmpIDPath, spcAmpPath)).collect(Collectors.toList());
 			Dvector dVector = new Dvector(ids.toArray(new BasicID[ids.size()]));
 			Set<GlobalCMTID> events = ids.stream().map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 			Set<Station> stations = ids.stream().map(id -> id.getStation()).collect(Collectors.toSet());

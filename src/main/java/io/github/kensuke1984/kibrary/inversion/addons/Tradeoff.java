@@ -59,8 +59,8 @@ public class Tradeoff {
 		Set<GlobalCMTID> eventSet = new HashSet<>();
 		
 		try {
-			PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
-			BasicID[] waveforms = BasicIDFile.readBasicIDandDataFile(basicIDPath, basicPath);
+			PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
+			BasicID[] waveforms = BasicIDFile.read(basicIDPath, basicPath);
 			
 			List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownPath);
 			

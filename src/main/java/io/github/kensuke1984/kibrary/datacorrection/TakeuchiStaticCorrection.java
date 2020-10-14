@@ -144,7 +144,7 @@ public class TakeuchiStaticCorrection implements Operation {
             throw new RuntimeException(obsPath + " may have problems");
         }
         nameSet.parallelStream().filter(name -> components.contains(name.getComponent())).forEach(this::compare);
-        StaticCorrectionFile.write(outStaticCorrectionPath, outStaticCorrectionSet);
+        StaticCorrectionFile.write(outStaticCorrectionSet, outStaticCorrectionPath);
     }
 
     private void compare(SACFileName obsName, SACFileName synName) throws IOException {
@@ -169,7 +169,8 @@ public class TakeuchiStaticCorrection implements Operation {
         double synAmp = (synTrace.getMaxValue() - synTrace.getMinValue()) / 2;
         double amplitudeRatio = obsAmp / synAmp;
         StaticCorrection sc =
-                new StaticCorrection(station, id, component, timeWindow.getStartTime(), timeShift, amplitudeRatio);
+                new StaticCorrection(station, id, component, timeWindow.getStartTime(),
+                		timeShift, amplitudeRatio, timeWindow.getPhases());
         outStaticCorrectionSet.add(sc);
     }
 

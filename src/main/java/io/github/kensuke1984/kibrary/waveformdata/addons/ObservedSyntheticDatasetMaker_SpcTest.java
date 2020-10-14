@@ -560,7 +560,7 @@ public class ObservedSyntheticDatasetMaker_SpcTest implements Operation {
 					continue;
 
 				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
-						.filter(info -> info.getStation().getStationName().equals(stationName))
+						.filter(info -> info.getStation().getName().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 

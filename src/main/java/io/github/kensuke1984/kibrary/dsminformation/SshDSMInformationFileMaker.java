@@ -182,7 +182,7 @@ public class SshDSMInformationFileMaker implements Operation {
 			
 			if (stations.isEmpty())
 				continue;
-			int numberOfStation = (int) stations.stream().map(Station::getStationName).count();
+			int numberOfStation = (int) stations.stream().map(Station::getName).count();
 			if (numberOfStation != stations.size())
 				System.err.println("!Caution there are stations with the same name and different positions in "
 						+ eventDir.getGlobalCMTID());

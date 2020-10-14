@@ -86,7 +86,7 @@ public class MakeRunFolder {
 					try (BufferedWriter writer = Files.newBufferedWriter(stationFile)) {
 						for (Station sta : stationSet) {
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
-								, sta.getStationName()
+								, sta.getName()
 								, sta.getNetwork()
 								, sta.getPosition().getLatitude()
 								, sta.getPosition().getLongitude())

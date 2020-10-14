@@ -30,8 +30,8 @@ public class DuplicateDataset {
 		Path dataOutPath = Paths.get("waveform" + temporaryString + ".dat");
 		
 		try {
-			BasicID[] ids0 = BasicIDFile.readBasicIDandDataFile(idPath0, dataPath0);
-			BasicID[] ids1 = BasicIDFile.readBasicIDandDataFile(idPath1, dataPath1);
+			BasicID[] ids0 = BasicIDFile.read(idPath0, dataPath0);
+			BasicID[] ids1 = BasicIDFile.read(idPath1, dataPath1);
 			Set<Station> stationSet = new HashSet<>();
 			Set<GlobalCMTID> globalCMTIDSet = new HashSet<>();
 			Set<Phase> phaseSet = new HashSet<>();

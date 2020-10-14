@@ -9,19 +9,20 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
 
 public class LookAt1DPartialspc {
 
 	public static void main(String[] args) throws IOException {
-		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
+		SPCFile spcName = new FormattedSPCFile(Paths.get(args[0]));
 		DSMOutput dsmOutput = spcName.read();
 		print(dsmOutput);
 	}
 	
 	public static void print(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverName();
+		String obsName = dsmOutput.getObserverID();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
@@ -48,7 +49,7 @@ public class LookAt1DPartialspc {
 	
 	//TODO maybe
 	public static void printHeader(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverName();
+		String obsName = dsmOutput.getObserverID();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();

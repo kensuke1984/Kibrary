@@ -31,4 +31,12 @@ public interface GlobalCMTData {
 
     GlobalCMTID getGlobalCMTID();
     
+    void setCMT(MomentTensor mt);
+    
+    double getTimeDifference();
+
+	String getHypocenterReferenceCatalog();
+	
+	String getGeographicalLocationName();
+    
 }

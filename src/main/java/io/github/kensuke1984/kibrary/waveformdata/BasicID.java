@@ -125,7 +125,7 @@ public class BasicID {
 
 	@Override
 	public String toString() {
-		String basicString = STATION.getStationName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
+		String basicString = STATION.getName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID + " "
 				+ COMPONENT + " " + TYPE + " " + START_TIME + " " + NPTS + " " + SAMPLINGHZ + " " + MIN_PERIOD
 				+ " " + MAX_PERIOD + " ";
 		if (PHASES == null)

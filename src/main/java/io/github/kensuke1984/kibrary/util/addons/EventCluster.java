@@ -66,7 +66,7 @@ public class EventCluster {
 		writeAzimuthSeparation(clusters, outpath);
 		
 		Path waveformIDPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/waveformID_ScS_ext_70deg_semucbCorr_ampCorr_4hz.dat");
-		BasicID[] waveformIDs = BasicIDFile.readBasicIDFile(waveformIDPath);
+		BasicID[] waveformIDs = BasicIDFile.read(waveformIDPath);
 		Map<Station, Set<Integer>> stationClusterMap = new HashMap<>();
 		Arrays.stream(waveformIDs).forEach(id -> stationClusterMap.put(id.getStation(), new HashSet<>()));
 		Arrays.stream(waveformIDs).forEach(id -> {
@@ -81,7 +81,7 @@ public class EventCluster {
 			String istring = "";
 			for (int i : stationClusterMap.get(sta))
 				istring += i + " ";
-			pw.println(sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
+			pw.println(sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + istring);
 		}
 		pw.close();
 	}

@@ -170,6 +170,11 @@ public class FormattedSPCFile extends SPCFile {
     public String getObserverID() {
         return observerID;
     }
+    
+    @Override
+    public String getObserverNetwork() {
+    	return observerNetwork;
+    }
 
     public String getX() {
         return x;

@@ -154,7 +154,7 @@ public final class StaticCorrectionFile {
 			dos.writeShort(ids.length);
 			dos.writeShort(phases.length);
 			for (int i = 0; i < stations.length; i++) {
-				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
+				dos.writeBytes(StringUtils.rightPad(stations[i].getName(), 8));
 				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
 				HorizontalPosition pos = stations[i].getPosition();
 				dos.writeDouble(pos.getLatitude());

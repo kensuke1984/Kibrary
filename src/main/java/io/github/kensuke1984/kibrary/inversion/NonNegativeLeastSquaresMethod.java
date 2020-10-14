@@ -1,8 +1,5 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.inversion;
 
-import io.github.kensuke1984.kibrary.inversion.ConjugateGradientMethod;
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InverseProblem;
 import io.github.kensuke1984.kibrary.math.Matrix;
 
 import java.util.ArrayList;

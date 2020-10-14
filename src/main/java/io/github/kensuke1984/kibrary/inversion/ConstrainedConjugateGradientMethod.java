@@ -1,13 +1,10 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.inversion;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
-
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InverseProblem;
 
 /**
  * Conjugate gradient method
@@ -20,7 +17,7 @@ import io.github.kensuke1984.kibrary.inversion.InverseProblem;
  *      href=https://en.wikipedia.org/wiki/Conjugate_gradient_method>English
  *      wiki</a>
  */
-public class BiConjugateGradientStabilizedMethod extends InverseProblem {
+public class ConstrainedConjugateGradientMethod extends InverseProblem {
 
 	public RealMatrix getP() {
 		return p;
@@ -35,6 +32,8 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 	 * P = (p1, p2,....)
 	 */
 	private RealMatrix p;
+	
+	private RealMatrix h;
 
 	/**
 	 * AtAδm= AtD を解く
@@ -44,13 +43,14 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 	 * @param atd
 	 *            AtD
 	 */
-	public BiConjugateGradientStabilizedMethod(RealMatrix ata, RealVector atd) {
+	public ConstrainedConjugateGradientMethod(RealMatrix ata, RealVector atd, RealMatrix h) {
 		this.ata = ata;
 		this.atd = atd;
 		int column = ata.getColumnDimension();
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
+		this.h = h;
 	}
 
 
@@ -59,50 +59,46 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 		p = MatrixUtils.createRealMatrix(column, column);
 		ans = MatrixUtils.createRealMatrix(column, column);
 		a = new ArrayRealVector(column);
-		System.err.println("Solving by BiCGSTAB method.");
-		p.setColumnVector(0, new ArrayRealVector(column));
-		double rho_p = 1;
-		double alpha = 1;
-		double omega_p = 1;
-		double rho, omega, beta;
+		System.err.println("Solving by Constrained CG method.");
 		
-		RealVector v = new ArrayRealVector(column);
-		RealVector h = new ArrayRealVector(column);
-		RealVector s = new ArrayRealVector(column);
-		RealVector t = new ArrayRealVector(column);
+		RealVector r0 = atd.mapMultiply(-1); // r_k = Atd -AtAm_k (A35)
 		
-		RealVector r0 = atd; // r_k = Atd -AtAm_k (A35)
-		RealVector r = r0;
+		RealVector z0 = h.operate(r0);
 		
-		rho  = r0.dotProduct(r);
+		p.setColumnVector(0, z0.mapMultiply(-1));
 		
-//		RealVector atap = ata.operate(p.getColumnVector(0));
+		RealVector atap = ata.operate(p.getColumnVector(0));
 		
-//		a.setEntry(0, r.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
+		a.setEntry(0, -r0.dotProduct(p.getColumnVector(0)) / atap.dotProduct(p.getColumnVector(0))); // a0
 
-		ans.setColumnVector(0, new ArrayRealVector(column));
+		ans.setColumnVector(0, p.getColumnVector(0).mapMultiply(a.getEntry(0)));
+		
+		RealVector z;
+		RealVector r;
 		
 		// ///////
-		
 		for (int i = 1; i < ata.getColumnDimension(); i++) {
-//			rho = r.dotProduct(r0);
-			beta = rho / rho_p * (alpha / omega_p);
-			p.setColumnVector(i, p.getColumnVector(i - 1).subtract(v.mapMultiply(omega_p)).mapMultiply(beta).add(r) );
-			v = ata.operate(p.getColumnVector(i));
-			alpha = rho / r0.dotProduct(v);
-			h = ans.getColumnVector(i-1).add(p.getColumnVector(i).mapMultiply(alpha));
-			s = r.subtract(v.mapMultiply(alpha));
-			t = ata.operate(s);
-			omega = t.dotProduct(s) / t.dotProduct(t);
-			rho_p = rho;
-			rho = -omega * r0.dotProduct(t);
-			ans.setColumnVector(i, h.add(s.mapMultiply(omega)));
-			r = s.subtract(t.mapMultiply(omega));
+			r = r0.add(atap.mapMultiply(a.getEntry(i - 1)));
 			
-			System.out.println(i + " " + beta + " " + alpha + " " + omega + " " + rho + " " + r0.dotProduct(v) + " " + s.getNorm()); // beta very large for some i
+			z = h.operate(r);
+
+//			double atapr = atap.dotProduct(r); // p AtA r
+//			double patap = p.getColumnVector(i - 1).dotProduct(atap); // ptatap
 			
-			omega_p = omega;
-//			rho_p = rho;
+			double b = r.dotProduct(z) / r0.dotProduct(z0);
+			
+			p.setColumnVector(i, z.mapMultiply(-1).add(p.getColumnVector(i - 1).mapMultiply(b)));
+
+			atap = ata.operate(p.getColumnVector(i));
+			double paap = p.getColumnVector(i).dotProduct(atap);
+			double rp = r.dotProduct(p.getColumnVector(i));
+
+			a.setEntry(i, -rp / paap);
+
+			ans.setColumnVector(i, p.getColumnVector(i).mapMultiply(a.getEntry(i)).add(ans.getColumnVector(i - 1)));
+			
+			r0 = r;
+			z0 = z;
 		}
 	}
 
@@ -155,6 +151,23 @@ public class BiConjugateGradientStabilizedMethod extends InverseProblem {
 
 	@Override
 	InverseMethodEnum getEnum() {
-		return InverseMethodEnum.BICONJUGATE_GRADIENT_STABILIZED_METHOD;
+		return InverseMethodEnum.CONJUGATE_GRADIENT;
+	}
+	
+	public static RealMatrix projectorRectangle(int nUnknown, int nCombine) {
+		RealMatrix h = MatrixUtils.createRealMatrix(nUnknown, nUnknown);
+		
+		int n = nUnknown / nCombine;
+		
+		for (int i = 0; i < n - 1; i++) {
+			int itmp = i * nCombine;
+			for (int j = 0; j < nCombine; j++) {
+				for (int k = 0; k < nCombine; k++) {
+					h.setEntry(itmp + j, itmp + k, 1. / nCombine);
+				}
+			}
+		}
+		
+		return h;
 	}
 }

@@ -466,7 +466,7 @@ public class Profile_v2 {
 				try {
 				double bornVariance = stationBornVariance.get(sta) / stationObsNorm.get(sta);
 				double synVariance = stationSynVariance.get(sta) / stationObsNorm.get(sta);
-				pw1.println(sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() 
+				pw1.println(sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() 
 						+ " " + synVariance + " " + bornVariance + " " + (synVariance - bornVariance));
 				} catch (NullPointerException e) {
 					System.err.println(sta + " " + sta.getPosition());

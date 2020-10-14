@@ -1,4 +1,4 @@
-package io.github.kensuke1984.kibrary.inversion.addons;
+package io.github.kensuke1984.kibrary.inversion;
 
 import java.awt.color.CMMException;
 import java.io.BufferedReader;
@@ -39,12 +39,10 @@ import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
-import io.github.kensuke1984.kibrary.inversion.Dvector;
-import io.github.kensuke1984.kibrary.inversion.InverseMethodEnum;
-import io.github.kensuke1984.kibrary.inversion.InverseProblem;
-import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
-import io.github.kensuke1984.kibrary.inversion.UnknownParameterFile;
+import io.github.kensuke1984.kibrary.inversion.addons.DampingType;
+import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
+import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D;
+import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
@@ -169,7 +167,7 @@ public class LetMeInvert_fromAtA implements Operation {
 			property.setProperty("applyRadialWeight", "false");
 		
 		// additional unused info
-		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
+		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
 //		property.setProperty("STF catalogue", GlobalCMTCatalog.);
 	}
 
@@ -637,10 +635,10 @@ public class LetMeInvert_fromAtA implements Operation {
 //			dVector.outOrder(outPath);
 //			dVector.outPhases(outPath);
 //			outEachTrace(outPath.resolve("trace"));
-			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getParameterList()
-					, outPaths[iweight][ifreq][iphase][icorr].resolve("unknownParameterOrder.inf"));
-			UnknownParameterFile.write(eq[iweight][ifreq][iphase][icorr].getOriginalParameterList()
-					, outPaths[iweight][ifreq][iphase][icorr].resolve("originalUnknownParameterOrder.inf"));
+			UnknownParameterFile.write(outPaths[iweight][ifreq][iphase][icorr].resolve("unknownParameterOrder.inf"),
+					eq[iweight][ifreq][iphase][icorr].getParameterList());
+			UnknownParameterFile.write(outPaths[iweight][ifreq][iphase][icorr].resolve("originalUnknownParameterOrder.inf"),
+					eq[iweight][ifreq][iphase][icorr].getOriginalParameterList());
 			if (applyParameterWeight) {
 				PrintWriter pw = new PrintWriter(outPaths[iweight][ifreq][iphase][icorr].resolve("parameterWeight.inf").toFile());
 				for (double pWeight : parameterWeights)
@@ -976,7 +974,6 @@ public class LetMeInvert_fromAtA implements Operation {
 	}
 	
 	private void outVariancePerEvents(Path outPath, InverseProblem inverse, int iweight, int ifreq, int iphase, int icorr) throws IOException {
-		Set<NDK> gcmtCat = GlobalCMTCatalog.readJar("globalcmt.catalog");
 		
 		Set<GlobalCMTID> eventSet = eq[iweight][ifreq][iphase][icorr].getDVector().getUsedGlobalCMTIDset();
 		Path out = outPath.resolve("eventVariance.txt");
@@ -1008,9 +1005,7 @@ public class LetMeInvert_fromAtA implements Operation {
 		
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(out, StandardOpenOption.CREATE_NEW))) {
 			for (GlobalCMTID id : eventSet) {
-				NDK idGCMTndk = gcmtCat.stream().filter(ndk -> ndk.getGlobalCMTID().equals(id))
-						.findFirst().get();
-				double GCMTMw = idGCMTndk.getCmt().getMw();
+				double GCMTMw = id.getEvent().getCmt().getMw();
 				
 				String s = id.toString() + " " + String.format("%.2f", GCMTMw);
 				double[] variance = varianceMap.get(id);

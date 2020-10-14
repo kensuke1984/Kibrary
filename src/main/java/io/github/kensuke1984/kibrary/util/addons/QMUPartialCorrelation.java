@@ -32,9 +32,9 @@ public class QMUPartialCorrelation {
 		Path basicDataPath = Paths.get(args[3]);
 		Path basicIDPath = Paths.get(args[2]);
 		
-		PartialID[] partialIDs = PartialIDFile.readPartialIDandDataFile(idPath, dataPath);
+		PartialID[] partialIDs = PartialIDFile.read(idPath, dataPath);
 		List<UnknownParameter> unknowns = UnknownParameterFile.read(unknownsPath);
-		BasicID[] basicIDs = BasicIDFile.readBasicIDandDataFile(basicIDPath, basicDataPath);
+		BasicID[] basicIDs = BasicIDFile.read(basicIDPath, basicDataPath);
 		Dvector dVector = new Dvector(basicIDs);
 		
 		ObservationEquation equation = new ObservationEquation(partialIDs, unknowns, dVector, false, false, null, null, null, null);

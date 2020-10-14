@@ -9,14 +9,15 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
 import io.github.kensuke1984.kibrary.util.spc.Spectrum;
 
 public class LookAtBPspc {
 
 	public static void main(String[] args) throws IOException {
-		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
+		SPCFile spcName = new FormattedSPCFile(Paths.get(args[0]));
 		
 		DSMOutput dsmOutput = null;
 		if (args.length == 1)
@@ -31,7 +32,7 @@ public class LookAtBPspc {
 	}
 	
 	public static void print(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverName();
+		String obsName = dsmOutput.getObserverID();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
@@ -42,15 +43,15 @@ public class LookAtBPspc {
 		System.out.println("Epicentral distance = " + distance);
 		System.out.println("#Observer: " + obsName + " " + netwkName + " " + observerPosition + " Source: " + sourceID + " " + sourceLocation);
 		
-		SpcTensorComponent c1 = SpcTensorComponent.valueOfBP(1, 1, 2);
-		SpcTensorComponent c2 = SpcTensorComponent.valueOfBP(1, 2, 2);
-		SpcTensorComponent c3 = SpcTensorComponent.valueOfBP(1, 3, 2);
-		SpcTensorComponent c4 = SpcTensorComponent.valueOfBP(2, 1, 2);
-		SpcTensorComponent c5 = SpcTensorComponent.valueOfBP(2, 2, 2);
-		SpcTensorComponent c6 = SpcTensorComponent.valueOfBP(2, 3, 2);
-		SpcTensorComponent c7 = SpcTensorComponent.valueOfBP(3, 1, 2);
-		SpcTensorComponent c8 = SpcTensorComponent.valueOfBP(3, 2, 2);
-		SpcTensorComponent c9 = SpcTensorComponent.valueOfBP(3, 3, 2);
+		SPCTensorComponent c1 = SPCTensorComponent.valueOfBP(1, 1, 2);
+		SPCTensorComponent c2 = SPCTensorComponent.valueOfBP(1, 2, 2);
+		SPCTensorComponent c3 = SPCTensorComponent.valueOfBP(1, 3, 2);
+		SPCTensorComponent c4 = SPCTensorComponent.valueOfBP(2, 1, 2);
+		SPCTensorComponent c5 = SPCTensorComponent.valueOfBP(2, 2, 2);
+		SPCTensorComponent c6 = SPCTensorComponent.valueOfBP(2, 3, 2);
+		SPCTensorComponent c7 = SPCTensorComponent.valueOfBP(3, 1, 2);
+		SPCTensorComponent c8 = SPCTensorComponent.valueOfBP(3, 2, 2);
+		SPCTensorComponent c9 = SPCTensorComponent.valueOfBP(3, 3, 2);
 		
 //		SpcTensorComponent c1 = SpcTensorComponent.valueOfBP(1, 1, 3);
 //		SpcTensorComponent c2 = SpcTensorComponent.valueOfBP(1, 2, 3);
@@ -82,7 +83,7 @@ public class LookAtBPspc {
 	}
 	
 	public static void printHeader(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverName();
+		String obsName = dsmOutput.getObserverID();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();

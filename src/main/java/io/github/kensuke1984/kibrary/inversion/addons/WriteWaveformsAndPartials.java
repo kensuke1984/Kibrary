@@ -36,8 +36,8 @@ public class WriteWaveformsAndPartials {
 		
 		Path unknownsPath = Paths.get(args[4]);
 		
-		BasicID[] waveforms = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
-		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		BasicID[] waveforms = BasicIDFile.read(waveformIDPath, waveformPath);
+		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
 		List<UnknownParameter> parameterList = UnknownParameterFile.read(unknownsPath);
 		

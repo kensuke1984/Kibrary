@@ -143,7 +143,7 @@ public class InformationFileMaker implements Operation {
 			property.setProperty("catalogue", "false");
 		
 		// additional info
-		property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogID());
+		property.setProperty("CMTcatalogue=", GlobalCMTCatalog.getCatalogPath().toString());
 	}
 	
 	private void set() throws IOException {
@@ -280,7 +280,7 @@ public class InformationFileMaker implements Operation {
 			GlobalCMTData ev;
 			try {
 				ev = ed.getGlobalCMTID().getEvent();
-			
+				
 				// joint CMT inversion
 				if (jointCMT) {
 					int mtEXP = 25;
@@ -294,7 +294,7 @@ public class InformationFileMaker implements Operation {
 					mts[5] = new MomentTensor(0., 0., 0., 0., 0., 1., mtEXP, mw);
 					
 					for (int i = 0; i < 6; i++) {
-						ev.setCmt(mts[i]);
+						ev.setCMT(mts[i]);
 						FPinfo fp = new FPinfo(ev, header, ps, tlen, np, perturbationR, perturbationPointPositions);
 						Path infPath = fpPath.resolve(ev.toString() + "_mt" + i);
 						Files.createDirectories(infPath.resolve(header));

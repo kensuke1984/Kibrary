@@ -108,8 +108,8 @@ class DrawDisplacement_rmNoisyWaveform{
 						Station station = timewindow.getStation();
 						double sttime = correctionTw.getStartTime() - 5.;
 						double entime = sttime + windowLength;
-						String path = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getStationName() + "." + eventID + "." + component;
-						String synpath = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getStationName() + "." + eventID + "." + component + "s";
+						String path = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getName() + "." + eventID + "." + component;
+						String synpath = "/mnt/doremi/anpan/inversion/upper_mantle/CA/NEW/SOURCE/USED/CA_EVENTS/syntheticAK135_np2048/filtered_unconvolved_2-100s/" + eventID + "/" + station.getName() + "." + eventID + "." + component + "s";
 						double[] tmpDisp = getDisplacementAmplitude2Average(eventID, path, synpath, pwfile, sttime, entime);
 						System.out.println("FIRST" + tmpDisp[0]);
 					if(tmpDisp[0] < 999999.){

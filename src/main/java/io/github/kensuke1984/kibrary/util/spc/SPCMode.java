@@ -6,6 +6,6 @@ package io.github.kensuke1984.kibrary.util.spc;
  * @author Kensuke Konishi
  * @version 0.0.3
  */
-enum SPCMode {
+public enum SPCMode {
     PSV, SH
 }

@@ -368,7 +368,7 @@ public class ExcludeTimewindow {
 		}
 		
 		public boolean isPair(TimewindowInformation tw) {
-			if (!tw.getStation().getStationName().equals(stationName))
+			if (!tw.getStation().getName().equals(stationName))
 				return false;
 			else if (!tw.getGlobalCMTID().equals(id))
 				return false;

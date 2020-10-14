@@ -103,7 +103,7 @@ public class MakeWindowScS {
 			for (SACFileName obsName : obsNames) {
 				if (timewindowsForSelection != null) {
 					if (timewindowsForSelection.parallelStream().filter(tw -> tw.getGlobalCMTID().equals(obsName.getGlobalCMTID())
-							&& tw.getStation().getStationName().equals(obsName.getStationName()) && tw.getComponent().equals(obsName.getComponent()))
+							&& tw.getStation().getName().equals(obsName.getStationName()) && tw.getComponent().equals(obsName.getComponent()))
 							.count() == 0)
 						continue;
 				}

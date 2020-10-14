@@ -12,7 +12,6 @@ import ucar.ma2.InvalidRangeException;
 import ucar.nc2.NetcdfFile;
 import ucar.nc2.Variable;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
 
 public class USSL14 {
 	
@@ -223,7 +222,7 @@ public class USSL14 {
 	}
 	
 	private void readCrust() throws IOException {
-		String fileName = SpcSAC.class.getClassLoader().getResource("US-CrustVs-2015_kmps.nc").toString();
+		String fileName = USSL14.class.getClassLoader().getResource("US-CrustVs-2015_kmps.nc").toString();
 		NetcdfFile ncfile = NetcdfFile.open(fileName);
 		
 		Variable depth = ncfile.findVariable("depth");
@@ -275,7 +274,7 @@ public class USSL14 {
 	}
 	
 	private void readMantleAndInterpolate(double dL, double dH, double rmin) throws IOException {
-		String fileName = SpcSAC.class.getClassLoader().getResource("US-SL-2014.nc").toString();
+		String fileName = USSL14.class.getClassLoader().getResource("US-SL-2014.nc").toString();
 		NetcdfFile ncfile = NetcdfFile.open(fileName);
 		
 		Variable depth = ncfile.findVariable("depth");

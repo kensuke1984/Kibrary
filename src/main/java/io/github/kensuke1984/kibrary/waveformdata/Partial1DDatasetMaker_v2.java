@@ -44,12 +44,13 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.FujiConversion;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
 import io.github.kensuke1984.kibrary.util.spc.SACMaker;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.util.spc.VSConversion;
 
 /**
@@ -323,7 +324,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				return;
 			}
 
-			Set<SpcFileName> spcFileNames;
+			Set<SPCFile> spcFileNames;
 			try {
 				if (shPath != null && psvPath == null) {
 					spcFileNames = collectSHSPCs(spcFolder);
@@ -354,7 +355,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			}
 			
 			// すべてのspcファイルに対しての処理
-			for (SpcFileName spcFileName : spcFileNames) {
+			for (SPCFile spcFileName : spcFileNames) {
 				// 理論波形（非偏微分係数波形）ならスキップ
 				if (spcFileName.isSynthetic())
 					continue;
@@ -368,28 +369,28 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 					}
 				}
 
-				SpcFileType spcFileType = spcFileName.getFileType();
+				SPCType spcFileType = spcFileName.getFileType();
 				
 				// 3次元用のスペクトルなら省く
-				if (spcFileType == SpcFileType.PB || spcFileType == SpcFileType.PF)
+				if (spcFileType == SPCType.PB || spcFileType == SPCType.PF)
 					continue;
 
 				// check if the partialtype is included in computing list.
 				PartialType partialType = PartialType.valueOf(spcFileType.toString());
 
 				if (!(partialTypes.contains(partialType)
-						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SpcFileType.PAR2)))
+						|| (partialTypes.contains(PartialType.PARQ) && spcFileType == SPCType.PAR2)))
 					continue;
 				
-				SpcFileName shspcname = null;
+				SPCFile shspcname = null;
 				if (psvPath != null && shPath != null) {
-					if (spcFileType.equals(SpcFileType.PARN)
-					|| spcFileType.equals(SpcFileType.PARL)
-					|| spcFileType.equals(SpcFileType.PAR0)
-					|| spcFileType.equals(SpcFileType.PAR2)) {
+					if (spcFileType.equals(SPCType.PARN)
+					|| spcFileType.equals(SPCType.PARL)
+					|| spcFileType.equals(SPCType.PAR0)
+					|| spcFileType.equals(SPCType.PAR2)) {
 						String shname = shPath.resolve(spcFileName.getSourceID() + "/" + modelName + "/"
 							+ spcFileName.getName().replace("PSV.spc", "SH.spc")).toFile().toString();
-						shspcname = new SpcFileName(shname);
+						shspcname = new FormattedSPCFile(shname);
 //						shspcname = new SpcFileName(spcFileName.getPath().replace("PSV.spc", "SH.spc"));
 					}
 				}
@@ -513,9 +514,10 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 						});
 		}
 
-		private void addPartialSpectrum(SpcFileName spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+		private void addPartialSpectrum(SPCFile spcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().toString().equals(spcname.getObserverString()))
+					.filter(info -> info.getStation().getName().equals(spcname.getObserverID()) 
+							&& info.getStation().getNetwork().equals(spcname.getObserverNetwork()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 //				System.err.println(spcname + " " + "No timewindow found");
@@ -531,12 +533,12 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				return;
 			}
 			
-			String stationName = spcname.getObserverName();
+			String stationName = spcname.getObserverID();
 			String network = spcname.getObserverNetwork();
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
-			if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+			if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum = fujiConversion.convert(spectrum);
 				process(qSpectrum);
 			}
@@ -598,9 +600,10 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 			}
 		}
 		
-		private void addPartialSpectrum(SpcFileName spcname, SpcFileName shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
+		private void addPartialSpectrum(SPCFile spcname, SPCFile shspcname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().toString().equals(spcname.getObserverString()))
+					.filter(info -> info.getStation().getName().equals(spcname.getObserverID()) 
+							&& info.getStation().getNetwork().equals(spcname.getObserverNetwork()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 //				System.out.println("No timewindow found");	
@@ -623,17 +626,18 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 				return;
 			}
 			
-			if (!SACMaker.check2(spectrum, shspectrum)) {
+			// TODO before: check2
+			if (!SACMaker.check(spectrum, shspectrum)) { 
 				System.err.println("SH and PSV spc files are not a pair " + spectrum + " " + shspectrum);
 				return;
 			}
 
-			String stationName = spcname.getObserverName();
+			String stationName = spcname.getObserverID();
 			String network = spcname.getObserverNetwork();
 			Station station = new Station(stationName, spectrum.getObserverPosition(), network);
 			PartialType partialType = PartialType.valueOf(spcname.getFileType().toString());
 			DSMOutput qSpectrum = null;
-			if (spcname.getFileType() == SpcFileType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
+			if (spcname.getFileType() == SPCType.PAR2 && partialTypes.contains(PartialType.PARQ)) {
 				qSpectrum = fujiConversion.convert(spectrum);
 				process(qSpectrum);
 			}
@@ -807,7 +811,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getStationName().equals(sacname.getStationName()))
+					.filter(info -> info.getStation().getName().equals(sacname.getStationName()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;
@@ -1076,7 +1080,7 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		
 		// computing PAR00
 		if (par00) {
-			PartialID[] partials = PartialIDFile.readPartialIDandDataFile(idPath, datasetPath);
+			PartialID[] partials = PartialIDFile.read(idPath, datasetPath);
 			List<PartialID> par0list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR0)).collect(Collectors.toList());
 			List<PartialID> par1list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR1)).collect(Collectors.toList());
 			List<PartialID> par2list = Stream.of(partials).filter(par -> par.getPartialType().equals(PartialType.PAR2)).collect(Collectors.toList());
@@ -1232,15 +1236,15 @@ public class Partial1DDatasetMaker_v2 implements Operation {
 		return (Properties) property.clone();
 	}
 	
-	private Set<SpcFileName> collectSHSPCs(Path spcFolder) throws IOException {
-		Set<SpcFileName> shSet = new HashSet<>();
+	private Set<SPCFile> collectSHSPCs(Path spcFolder) throws IOException {
+		Set<SPCFile> shSet = new HashSet<>();
 		Utilities.collectSpcFileName(spcFolder).stream()
 				.filter(f -> f.getName().contains("PAR") && f.getName().endsWith("SH.spc")).forEach(shSet::add);
 		return shSet;
 	}
 
-	private Set<SpcFileName> collectPSVSPCs(Path spcFolder) throws IOException {
-		Set<SpcFileName> psvSet = new HashSet<>();
+	private Set<SPCFile> collectPSVSPCs(Path spcFolder) throws IOException {
+		Set<SPCFile> psvSet = new HashSet<>();
 		Utilities.collectSpcFileName(spcFolder).stream()
 				.filter(f -> f.getName().contains("PAR") && f.getName().endsWith("PSV.spc")).forEach(psvSet::add);
 		return psvSet;

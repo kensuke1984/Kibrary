@@ -22,7 +22,7 @@ public class PartialVisual {
 	public static void main(String[] args) throws IOException {
 		Path partialIDPath = Paths.get(args[0]);
 		Path dataPath = Paths.get(args[1]);
-		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, dataPath);
+		PartialID[] partials = PartialIDFile.read(partialIDPath, dataPath);
 		
 		Set<double[]> periodRanges = Stream.of(partials).map(id -> new double[] {id.getMinPeriod(), id.getMaxPeriod()})
 			.collect(Collectors.toSet());
@@ -46,7 +46,7 @@ public class PartialVisual {
 			Phases phases = new Phases(partial.getPhases());
 			
 			Path dir = Paths.get(String.format("%.1f-%.1f", partial.getMinPeriod(), partial.getMaxPeriod()));
-			Path outpath =  dir.resolve(partial.getStation().getStationName() + "." 
+			Path outpath =  dir.resolve(partial.getStation().getName() + "." 
 					+ partial.getGlobalCMTID() + "." + partial.getSacComponent() + "."
 					+ (int) (loc.getLatitude()*100) + "."
 					+ (int) (loc.getLongitude()*100) + "." + (int) (loc.getR()*100) + "." + partial.getPartialType() + "."

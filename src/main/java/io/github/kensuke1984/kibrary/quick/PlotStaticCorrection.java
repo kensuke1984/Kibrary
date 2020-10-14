@@ -15,7 +15,7 @@ public class PlotStaticCorrection {
 	public static void main(String[] args) throws IOException {
 		Path waveformIDPath = Paths.get(args[0]);
 		Path waveformPath = Paths.get(args[1]);
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
 		Path outpath = Paths.get("timeshift_" + args[0]);
 		
 		Dvector dVector = new Dvector(ids);

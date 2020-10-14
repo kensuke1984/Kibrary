@@ -29,11 +29,12 @@ import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.util.spc.SpcBody;
-import io.github.kensuke1984.kibrary.util.spc.SpcComponent;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
+import io.github.kensuke1984.kibrary.util.spc.SPCBody;
+import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
 import io.github.kensuke1984.kibrary.waveformdata.BasicID;
 import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
@@ -190,12 +191,12 @@ public class AtAMaker implements Operation {
 	private int progressStep;
 	private int progressStep1D;
 	
-	private final SpcFileName[] bpnames;
-	private final SpcFileName[] bpnames_PSV;
-	private List<SpcFileName> fpnames;
-	private Map<GlobalCMTID, List<SpcFileName>> fpnameMap;
-	private List<SpcFileName> fpnames_PSV;
-	private Map<GlobalCMTID, List<SpcFileName>> fpnameMap_PSV;
+	private final SPCFile[] bpnames;
+	private final SPCFile[] bpnames_PSV;
+	private List<SPCFile> fpnames;
+	private Map<GlobalCMTID, List<SPCFile>> fpnameMap;
+	private List<SPCFile> fpnames_PSV;
+	private Map<GlobalCMTID, List<SPCFile>> fpnameMap_PSV;
 	
 	private double[][][][][] partials;
 	
@@ -290,9 +291,9 @@ public class AtAMaker implements Operation {
 		
 		//bpnames
 		bpPath = getPath("bpPath");
-		bpnames = Utilities.collectOrderedSHSpcFileName(bpPath).toArray(new SpcFileName[0]);
+		bpnames = Utilities.collectOrderedSHSpcFileName(bpPath).toArray(new FormattedSPCFile[0]);
 		if (mode.equals("PSV") || mode.equals("BOTH"))
-			bpnames_PSV = Utilities.collectOrderedPSVSpcFileName(bpPath).toArray(new SpcFileName[0]);
+			bpnames_PSV = Utilities.collectOrderedPSVSpcFileName(bpPath).toArray(new FormattedSPCFile[0]);
 		else
 			bpnames_PSV = null;
 		
@@ -327,7 +328,7 @@ public class AtAMaker implements Operation {
 			
 			basicIDArray = new BasicID[waveformIDPath.length][];
 			for (int i = 0; i < waveformIDPath.length; i++) {
-				basicIDArray[i] = BasicIDFile.readBasicIDandDataFile(waveformIDPath[i], waveformPath[i]);
+				basicIDArray[i] = BasicIDFile.read(waveformIDPath[i], waveformPath[i]);
 			}
 		}
 		else {
@@ -719,7 +720,7 @@ public class AtAMaker implements Operation {
 	
 	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
 //		System.out.println("STF catalogue: " +  STFcatalogue);
-		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
+		return IOUtils.readLines(AtAMaker.class.getClassLoader().getResourceAsStream(STFcatalogue)
 					, Charset.defaultCharset());
 	}
 	
@@ -943,7 +944,7 @@ public class AtAMaker implements Operation {
 			}
 			
 			Path fpEventPath = fpPath.resolve(event.toString()).resolve(modelName);
-//			List<SpcFileName> fpnames = Utilities.collectOrderedSpcFileName(fpEventPath);
+//			List<SPCFile> fpnames = Utilities.collectOrderedSpcFileName(fpEventPath);
 			fpnames = Utilities.collectOrderedSHSpcFileName(fpEventPath);
 			if (mode.equals("PSV") || mode.equals("BOTH")) {
 				fpnames_PSV = Utilities.collectOrderedPSVSpcFileName(fpEventPath);
@@ -1225,8 +1226,8 @@ public class AtAMaker implements Operation {
 					Station stationI = timewindowOrder[ista].getStation();
 					for (int jsta = 0; jsta < nsta; jsta++) {
 						Station stationJ = timewindowOrder[jsta].getStation();
-						Path outpath = dir1.resolve("partial_"  + stationI.getStationName() 
-							+ "_" + stationJ.getStationName() + ".txt");
+						Path outpath = dir1.resolve("partial_"  + stationI.getName() 
+							+ "_" + stationJ.getName() + ".txt");
 						PrintWriter pw = new PrintWriter(outpath.toFile());
 						for (int i = 0; i < nOriginalUnknown; i++) {
 							double[] partialCorr = partialCorrs[i][iweight][ifreq][ista][jsta];
@@ -1654,8 +1655,8 @@ public class AtAMaker implements Operation {
 	
 	public class FPWorker implements Runnable {
 		
-		SpcFileName fpname;
-		SpcFileName fpname_PSV;
+		SPCFile fpname;
+		SPCFile fpname_PSV;
 		HorizontalPosition voxelPosition;
 		Station station;
 		GlobalCMTID event;
@@ -1663,7 +1664,7 @@ public class AtAMaker implements Operation {
 		private final List<TimewindowInformation> orderedRecordTimewindows;
 		private int windowCounter;
 		
-		public FPWorker(SpcFileName fpname, Station station, GlobalCMTID event,
+		public FPWorker(SPCFile fpname, Station station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			if (mode.equals("SH")) {
 				this.fpname = fpname;
@@ -1680,7 +1681,7 @@ public class AtAMaker implements Operation {
 			this.windowCounter = windowCounter;
 		}
 		
-		public FPWorker(SpcFileName fpname, SpcFileName fpname_PSV, Station station, GlobalCMTID event,
+		public FPWorker(SPCFile fpname, SPCFile fpname_PSV, Station station, GlobalCMTID event,
 				List<List<Integer>> IndicesRecordBasicID, List<TimewindowInformation> orderedRecordTimewindows,  int windowCounter) {
 			this.fpname = fpname;
 			this.fpname_PSV = fpname_PSV;
@@ -1723,20 +1724,20 @@ public class AtAMaker implements Operation {
 					fpSpc = fpname.read();
 					obsPos = fpSpc.getObserverPosition();
 					bodyR = fpSpc.getBodyR();
-					obsName = fpname.getObserverName();
+					obsName = fpname.getObserverID();
 				}
 				else if (mode.equals("PSV")) {
 					fpSpc_PSV = fpname_PSV.read();
 					obsPos = fpSpc_PSV.getObserverPosition();
 					bodyR = fpSpc_PSV.getBodyR();
-					obsName = fpname_PSV.getObserverName();
+					obsName = fpname_PSV.getObserverID();
 				}
 				else if (mode.equals("BOTH")) {
 					fpSpc = fpname.read();
 					fpSpc_PSV = fpname_PSV.read();
 					obsPos = fpSpc.getObserverPosition();
 					bodyR = fpSpc.getBodyR();
-					obsName = fpname.getObserverName();
+					obsName = fpname.getObserverID();
 				}
 			}
 			
@@ -1785,12 +1786,12 @@ public class AtAMaker implements Operation {
 				throw new RuntimeException("Error: cannot interpolate FP at epicentral distance " + distanceFP + "(deg)");
 			int ipointFP = (int) ((distanceFP - thetamin) / dtheta);
 			
-			SpcFileName bpname1 = null;
-			SpcFileName bpname2 = null;
-			SpcFileName bpname3 = null;
-			SpcFileName bpname1_PSV = null;
-			SpcFileName bpname2_PSV = null;
-			SpcFileName bpname3_PSV = null;
+			SPCFile bpname1 = null;
+			SPCFile bpname2 = null;
+			SPCFile bpname3 = null;
+			SPCFile bpname1_PSV = null;
+			SPCFile bpname2_PSV = null;
+			SPCFile bpname3_PSV = null;
 			
 			if (mode.equals("SH") || mode.equals("BOTH"))
 				bpname1 = bpnames[ipointBP];
@@ -1807,12 +1808,12 @@ public class AtAMaker implements Operation {
 				}
 			}
 			
-			SpcFileName fpname1 = null;
-			SpcFileName fpname2 = null;
-			SpcFileName fpname3 = null;
-			SpcFileName fpname1_PSV = null;
-			SpcFileName fpname2_PSV = null;
-			SpcFileName fpname3_PSV = null;
+			SPCFile fpname1 = null;
+			SPCFile fpname2 = null;
+			SPCFile fpname3 = null;
+			SPCFile fpname1_PSV = null;
+			SPCFile fpname2_PSV = null;
+			SPCFile fpname3_PSV = null;
 			if (catalogueFP) {
 				if (mode.equals("SH") || mode.equals("BOTH")) {
 					fpname1 = fpnameMap.get(event).get(ipointFP);
@@ -1925,20 +1926,20 @@ public class AtAMaker implements Operation {
 					if (!originalUnkownRadii.contains(bodyR[i]))
 						continue;
 					
-					SpcBody body1 = bpSpc1.getSpcBodyList().get(i);
-					SpcBody body2 = bpSpc2.getSpcBodyList().get(i);
-					SpcBody body3 = bpSpc3.getSpcBodyList().get(i);
+					SPCBody body1 = bpSpc1.getSpcBodyList().get(i);
+					SPCBody body2 = bpSpc2.getSpcBodyList().get(i);
+					SPCBody body3 = bpSpc3.getSpcBodyList().get(i);
 					
-					SpcBody body = SpcBody.interpolate(body1, body2, body3, dhBP);
+					SPCBody body = SPCBody.interpolate(body1, body2, body3, dhBP);
 					
 //					System.out.println("DEBUG BP test: " +  body.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
 					
-//					SpcBody body = bpSpc.getSpcBodyList().get(i);
+//					SPCBody body = bpSpc.getSpcBodyList().get(i);
 					
 					int lsmooth = body.findLsmooth(tlen, partialSamplingHz);
 					body.toTimeDomain(lsmooth);
 					
-					SpcComponent[] spcComponents = body.getSpcComponents();
+					SPCComponent[] spcComponents = body.getSpcComponents();
 					for (int j = 0; j < spcComponents.length; j++) {
 						double[] bpserie = spcComponents[j].getTimeseries();
 						Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
@@ -1952,7 +1953,7 @@ public class AtAMaker implements Operation {
 										 1./frequencyRanges[ifreq].getMaxFreq());
 								
 								Phases phases = new Phases(info.getPhases());
-								Path outpath = dirBP.resolve(station.getStationName() + "." 
+								Path outpath = dirBP.resolve(station.getName() + "." 
 										+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".txt");
@@ -1963,7 +1964,7 @@ public class AtAMaker implements Operation {
 										pw.println(String.format("%.16e", y));
 								}
 								
-								Path outpath2 = dirBP.resolve(station.getStationName() + "." 
+								Path outpath2 = dirBP.resolve(station.getName() + "." 
 										+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".spectrum.txt");
@@ -1988,20 +1989,20 @@ public class AtAMaker implements Operation {
 					if (!originalUnkownRadii.contains(bodyR[i]))
 						continue;
 					
-					SpcBody body1 = fpSpc1.getSpcBodyList().get(i);
-					SpcBody body2 = fpSpc2.getSpcBodyList().get(i);
-					SpcBody body3 = fpSpc3.getSpcBodyList().get(i);
+					SPCBody body1 = fpSpc1.getSpcBodyList().get(i);
+					SPCBody body2 = fpSpc2.getSpcBodyList().get(i);
+					SPCBody body3 = fpSpc3.getSpcBodyList().get(i);
 					
-					SpcBody body = SpcBody.interpolate(body1, body2, body3, dhFP);
+					SPCBody body = SPCBody.interpolate(body1, body2, body3, dhFP);
 					
 //					System.out.println("DEBUG BP test: " +  body.getSpcComponents()[20].getValueInFrequencyDomain()[10]);
 					
-//					SpcBody body = bpSpc.getSpcBodyList().get(i);
+//					SPCBody body = bpSpc.getSpcBodyList().get(i);
 					
 					int lsmooth = body.findLsmooth(tlen, partialSamplingHz);
 					body.toTimeDomain(lsmooth);
 					
-					SpcComponent[] spcComponents = body.getSpcComponents();
+					SPCComponent[] spcComponents = body.getSpcComponents();
 					for (int j = 0; j < spcComponents.length; j++) {
 						double[] fpserie = spcComponents[j].getTimeseries();
 						Complex[] fpspectrum = spcComponents[j].getValueInFrequencyDomain();
@@ -2015,7 +2016,7 @@ public class AtAMaker implements Operation {
 										 1./frequencyRanges[ifreq].getMaxFreq());
 								
 								Phases phases = new Phases(info.getPhases());
-								Path outpath = dirFP.resolve(station.getStationName() + "." 
+								Path outpath = dirFP.resolve(station.getName() + "." 
 										+ event + "." + "FP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".txt");
@@ -2026,7 +2027,7 @@ public class AtAMaker implements Operation {
 										pw.println(String.format("%.16e", y));
 								}
 								
-								Path outpath2 = dirFP.resolve(station.getStationName() + "." 
+								Path outpath2 = dirFP.resolve(station.getName() + "." 
 										+ event + "." + "FP" + "." + (int) obsPos.getLatitude()
 										+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + info.getComponent() 
 										+ "." + freqString + "." + phases + "." + j + ".spectrum.txt");
@@ -2182,7 +2183,7 @@ public class AtAMaker implements Operation {
 										if (outPartial) {
 											String freqString = String.format("%.0f-%.0f", 1./frequencyRanges[ifreq].getMinFreq(),
 													 1./frequencyRanges[ifreq].getMaxFreq());
-											Path outpath = outpartialDir.resolve(station.getStationName() + "." 
+											Path outpath = outpartialDir.resolve(station.getName() + "." 
 													+ event + "." + info.getComponent() + "." + (int) obsPos.getLatitude()
 													+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[ibody] + "." + type + "."
 													+ weightingTypes[iweight] + "." + freqString + "."

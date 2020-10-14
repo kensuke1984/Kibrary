@@ -44,20 +44,19 @@ public final class VSConversion {
 	}
 
 	public DSMOutput convert(DSMOutput spectrum) {
-		if (spectrum.getSpcFileType() != SpcFileType.PAR2)
+		if (spectrum.getSpcFileType() != SPCType.PAR2)
 			throw new RuntimeException();
 
 		final int nbody = spectrum.nbody();
 		final int np = spectrum.np();
 		final double tlen = spectrum.tlen();
-		List<SpcBody> spcBodyList = new ArrayList<>(nbody);
-		SpcFileName spcFileName = spectrum.getSpcFileName();
+		List<SPCBody> spcBodyList = new ArrayList<>(nbody);
+		SPCFile spcFileName = spectrum.getSpcFileName();
 
 		// data part
 		double omegai = spectrum.omegai();
 		HorizontalPosition observerPosition = spectrum.getObserverPosition();
 		String observerID = spectrum.getObserverID();
-		String observerName = spectrum.getObserverName();
 		String observerNetwork = spectrum.getObserverNetwork();
 		Location sourceLocation = spectrum.getSourceLocation();
 		String sourceID = spectrum.getSourceID();
@@ -65,8 +64,8 @@ public final class VSConversion {
 		for (int i = 0; i < spectrum.nbody(); i++) {
 			double r = bodyR[i];
 			double fact = 2. * structure.getRhoAt(r) * structure.getVshAt(r);
-			SpcBody body = spectrum.getSpcBodyList().get(i);
-			SpcBody newBody = new SpcBody(3, np);
+			SPCBody body = spectrum.getSpcBodyList().get(i);
+			SPCBody newBody = new SPCBody(3, np);
 			for (int ip = 0; ip < np + 1; ip++) {
 				Complex[] uIm = new Complex[body.getNumberOfComponent()];
 				for (int iComponent = 0; iComponent < body.getNumberOfComponent(); iComponent++) {
@@ -101,12 +100,12 @@ public final class VSConversion {
 			}
 
 			@Override
-			public SpcFileType getSpcFileType() {
-				return SpcFileType.PARVS;
+			public SPCType getSpcFileType() {
+				return SPCType.PARVS;
 			}
 
 			@Override
-			public List<SpcBody> getSpcBodyList() {
+			public List<SPCBody> getSpcBodyList() {
 				return spcBodyList;
 			}
 
@@ -131,11 +130,6 @@ public final class VSConversion {
 			}
 			
 			@Override
-			public String getObserverName() {
-				return observerName;
-			}
-			
-			@Override
 			public String getObserverNetwork() {
 				return observerNetwork;
 			}
@@ -146,12 +140,12 @@ public final class VSConversion {
 			}
 			
 			@Override
-			public SpcFileName getSpcFileName() {
+			public SPCFile getSpcFileName() {
 				return spcFileName;
 			}
 			
 			@Override
-			public void setSpcBody(int i, SpcBody body) {
+			public void setSpcBody(int i, SPCBody body) {
 //				spcBody.set(i, body); //TODO
 			}
 		};

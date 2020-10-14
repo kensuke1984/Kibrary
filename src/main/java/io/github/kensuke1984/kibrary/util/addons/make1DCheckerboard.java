@@ -55,7 +55,7 @@ public class make1DCheckerboard {
 			for (int j = 0; j < 20; j++) {
 				oldizone = izone;
 				double r = r0 + dlm / 20. * j;
-				izone = structure.getiZoneOf(r);
+				izone = structure.zoneOf(r);
 				if (oldizone != izone)
 					izones.add(izone);
 			}
@@ -114,7 +114,7 @@ public class make1DCheckerboard {
 			for (int j = 0; j < 20; j++) {
 				oldizone = izone;
 				double r = r0 + dtz / 20. * j;
-				izone = structure.getiZoneOf(r);
+				izone = structure.zoneOf(r);
 				if (oldizone != izone)
 					izones.add(izone);
 			}
@@ -173,7 +173,7 @@ public class make1DCheckerboard {
 			for (int j = 0; j < 20; j++) {
 				oldizone = izone;
 				double r = r0 + dum / 20. * j;
-				izone = structure.getiZoneOf(r);
+				izone = structure.zoneOf(r);
 				if (oldizone != izone)
 					izones.add(izone);
 			}

@@ -40,7 +40,7 @@ public class SeisTomoPy {
 	}
 	
 	private static void writeRaypathFile(Path outpath, Path waveformIDPath) throws IOException {
-		BasicID[] ids = BasicIDFile.readBasicIDFile(waveformIDPath);
+		BasicID[] ids = BasicIDFile.read(waveformIDPath);
 		BufferedWriter br = new BufferedWriter(new FileWriter(outpath.toFile()));
 		for (BasicID id : ids) {
 			if (!id.getWaveformType().equals(WaveformType.SYN))
@@ -51,7 +51,7 @@ public class SeisTomoPy {
 			if (id.getSacComponent().equals(SACComponent.Z))
 				phaseString = "P";
 			br.write(id.getGlobalCMTID() + " " + evtloc.getLatitude() + " " + evtloc.getLongitude() + " " + (Earth.EARTH_RADIUS - evtloc.getR())
-					+ " " + station.getStationName() + " " + station.getNetwork() + " " 
+					+ " " + station.getName() + " " + station.getNetwork() + " " 
 					+ station.getPosition().getLatitude() + " " + station.getPosition().getLongitude()
 					+ " " + id.getSacComponent() + " " + id.getStartTime() + " " + phaseString + "\n");
 		}

@@ -10,9 +10,9 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.SpcBody;
-import io.github.kensuke1984.kibrary.util.spc.SpcComponent;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
+import io.github.kensuke1984.kibrary.util.spc.SPCBody;
+import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -67,19 +67,19 @@ public class BPVisual {
 		// sacdataを何ポイントおきに取り出すか
 		step = (int) (partialSamplingHz / finalSamplingHz);
 		
-		for (SpcFileName spcName : Utilities.collectSpcFileName(Paths.get("."))) {
+		for (SPCFile spcName : Utilities.collectSpcFileName(Paths.get("."))) {
 			DSMOutput bpSpc = spcName.read();
 			
 			HorizontalPosition obsPos = bpSpc.getObserverPosition();
 			double[] bodyR = bpSpc.getBodyR();
 			
 			for (int i = 0; i < bpSpc.nbody(); i++) {
-				SpcBody body = bpSpc.getSpcBodyList().get(i);
+				SPCBody body = bpSpc.getSpcBodyList().get(i);
 				
 				int lsmooth = body.findLsmooth(bpSpc.tlen(), samplingHz);
 				body.toTimeDomain(lsmooth);
 				
-				SpcComponent[] spcComponents = body.getSpcComponents();
+				SPCComponent[] spcComponents = body.getSpcComponents();
 				for (int j = 0; j < spcComponents.length; j++) {
 					double[] bpserie = spcComponents[j].getTimeseries();
 					Complex[] bpspectrum = spcComponents[j].getValueInFrequencyDomain();
@@ -92,7 +92,7 @@ public class BPVisual {
 						double[] cutU = sampleOutput(u, info);
 						
 						Phases phases = new Phases(info.getPhases());
-						Path outpath = workingDir.resolve(station.getStationName() + "." 
+						Path outpath = workingDir.resolve(station.getName() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".txt");
 //						Files.deleteIfExists(outpath);
@@ -102,7 +102,7 @@ public class BPVisual {
 								pw.println(String.format("%.16e", y));
 						}
 						
-						Path outpath2 = workingDir.resolve(station.getStationName() + "." 
+						Path outpath2 = workingDir.resolve(station.getName() + "." 
 								+ event + "." + "BP" + "." + (int) obsPos.getLatitude()
 								+ "." + (int) obsPos.getLongitude() + "." + (int) bodyR[i] + "." + phases + "." + j + ".spectrum.txt");
 						try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outpath2, StandardOpenOption.CREATE_NEW))) {

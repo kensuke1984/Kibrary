@@ -11,13 +11,14 @@ import io.github.kensuke1984.kibrary.timewindow.TimewindowInformationFile;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.io.File;
 import java.nio.charset.Charset;
 
@@ -103,7 +104,7 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		if (args.length == 0) property.load(Files.newBufferedReader(Operation.findPath()));
 		else if (args.length == 1) property.load(Files.newBufferedReader(Paths.get(args[0])));
 		else throw new IllegalArgumentException("too many arguments. It should be 0 or 1(property file name)");
-		ong start = System.nanoTime();
+		long start = System.nanoTime();
         System.err.println(SyntheticDSMInformationFileMaker.class.getName() + " is going.");
 		SyntheticDSMInformationFileMaker sdif = new SyntheticDSMInformationFileMaker(property);
 		sdif.run();
@@ -121,13 +122,13 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 		if (!PROPERTY.containsKey("specfemDataset")) PROPERTY.setProperty("specfemDataset", "false");
 		if (!PROPERTY.containsKey("timewindowPath")) PROPERTY.setProperty("timewindowPath", "");
 		// write additional info
-		PROPERTY.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogID());
+		PROPERTY.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
 	}
 	
 	private void set() throws IOException {
 		checkAndPutDefaults();
 		workPath = Paths.get(PROPERTY.getProperty("workPath"));
-		if (!Files.exists(workPath)) throw new NoSuchFieldException("The workPath: " + workPath + " does not exist");
+		if (!Files.exists(workPath)) throw new NoSuchFileException("The workPath: " + workPath + " does not exist");
 		components = Arrays.stream(PROPERTY.getProperty("components").split("\\s+")).map(SACComponent::valueOf)
 				.collect(Collectors.toSet());
 		np = Integer.parseInt(PROPERTY.getProperty("np").split("\\s+")[0]);

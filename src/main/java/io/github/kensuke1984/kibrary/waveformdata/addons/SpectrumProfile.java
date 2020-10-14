@@ -26,7 +26,7 @@ public class SpectrumProfile {
 	public static void main(String[] args) throws IOException {
 		Path idPath = Paths.get(args[0]);
 		Path dataPath = Paths.get(args[1]);
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
+		BasicID[] ids = BasicIDFile.read(idPath, dataPath);
 		
 		Path root = Paths.get("spc_traces");
 		Files.createDirectories(root);

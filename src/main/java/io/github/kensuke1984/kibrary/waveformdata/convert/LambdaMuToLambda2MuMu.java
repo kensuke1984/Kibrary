@@ -29,7 +29,7 @@ public class LambdaMuToLambda2MuMu {
 		Path partialIDPath = Paths.get(args[0]);
 		Path partialPath = Paths.get(args[1]);
 		
-		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
 		List<PartialID> partialsLambda = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.LAMBDA)).collect(Collectors.toList());
 		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU)).collect(Collectors.toList());

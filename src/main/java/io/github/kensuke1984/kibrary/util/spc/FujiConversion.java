@@ -36,7 +36,7 @@ public final class FujiConversion {
 		int np = spectrum.np();
 		double tlen = spectrum.tlen();
 		List<SPCBody> spcBodyList = new ArrayList<>(nbody);
-		SpcFileName spcFileName = spectrum.getSpcFileName();
+		SPCFile spcFileName = spectrum.getSpcFileName();
 
 		// data part
 		double omegai = spectrum.omegai();
@@ -51,8 +51,8 @@ public final class FujiConversion {
 //		double omega0 = spectrum.tlen(); // TODO
 		for (int i = 0; i < spectrum.nbody(); i++) {
 			double r = bodyR[i];
-			double q = 1 / structure.getQmuAt(r);
-			double mu0 = structure.computeMu(r);
+			double q = 1 / STRUCTURE.getQmuAt(r);
+			double mu0 = STRUCTURE.computeMu(r);
 			SPCBody body = spectrum.getSpcBodyList().get(i);
 			SPCBody newBody = new SPCBody(3, np);
 			for (int ip = 0; ip < np + 1; ip++) {
@@ -150,12 +150,12 @@ public final class FujiConversion {
 			}
 			
 			@Override
-			public SpcFileName getSpcFileName() {
+			public SPCFile getSpcFileName() {
 				return spcFileName;
 			}
 			
 			@Override
-			public void setSpcBody(int i, SpcBody body) {
+			public void setSpcBody(int i, SPCBody body) {
 //				spcBody.set(i, body); //TODO
 			}
 		};

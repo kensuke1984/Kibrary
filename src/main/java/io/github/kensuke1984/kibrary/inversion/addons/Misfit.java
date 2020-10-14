@@ -19,7 +19,7 @@ public class Misfit {
 	public static void main(String[] args) throws IOException {
 		Path waveformIDPath = Paths.get(args[0]);
 		Path waveformPath = Paths.get(args[1]);
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
 		
 		Dvector dVector = new Dvector(ids, id -> true, WeightingType.IDENTITY);
 		RealVector obs = dVector.getObs();

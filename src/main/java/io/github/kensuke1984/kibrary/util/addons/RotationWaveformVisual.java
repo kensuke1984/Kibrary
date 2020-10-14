@@ -33,7 +33,7 @@ public class RotationWaveformVisual {
 		Path waveformPath = Paths.get(args[0]);
 		Path waveformIDPath = Paths.get(args[1]);
 		
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
 		
 		Set<GlobalCMTID> events = Stream.of(ids).map(id -> id.getGlobalCMTID()).collect(Collectors.toSet());
 		

@@ -125,7 +125,7 @@ public class MakeRunFolders {
 							Location rotatedStation 
 								= rotateLocation(sta.getPosition().toLocation(Earth.EARTH_RADIUS), axis, angle);
 							writer.write(String.format("%s %s %.3f %.3f 0.0 0.0%n"
-								, sta.getStationName()
+								, sta.getName()
 								, sta.getNetwork()
 								, rotatedStation.getLatitude()
 								, rotatedStation.getLongitude())

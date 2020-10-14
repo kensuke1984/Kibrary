@@ -2,6 +2,7 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 
 import io.github.kensuke1984.kibrary.inversion.ConjugateGradientMethod;
 import io.github.kensuke1984.kibrary.inversion.Dvector;
+import io.github.kensuke1984.kibrary.inversion.NonNegativeLeastSquaresMethod;
 import io.github.kensuke1984.kibrary.inversion.ObservationEquation;
 import io.github.kensuke1984.kibrary.inversion.UnknownParameter;
 import io.github.kensuke1984.kibrary.math.Matrix;
@@ -364,7 +365,7 @@ public class Weighting {
 		
 		if (station.getPosition().getLatitude() < 25.)
 			weight = 2.;
-		if (station.getStationName().equals("BBSR"))
+		if (station.getName().equals("BBSR"))
 			weight = 2.;
 		
 		return weight;

@@ -274,7 +274,7 @@ public final class SPC_SAC implements Operation {
     
 	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
 		System.out.println("STF catalogue: " +  STFcatalogue);
-		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
+		return IOUtils.readLines(SPC_SAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
 					, Charset.defaultCharset());
 	}
 

@@ -79,9 +79,9 @@ public class CCPartialMaker {
 	
 	private void set() {
 		try {
-			waveforms = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+			waveforms = BasicIDFile.read(waveformIDPath, waveformPath);
 			waveforms = Arrays.stream(waveforms).filter(bid -> bid.getWaveformType().equals(WaveformType.SYN)).collect(Collectors.toList()).toArray(new BasicID[0]);
-			partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+			partials = PartialIDFile.read(partialIDPath, partialPath);
 			
 			ccPartials = new ArrayList<>();
 		} catch (IOException e) {
@@ -168,8 +168,8 @@ public class CCPartialMaker {
 				Station staJ = stations.get(jsta);
 				List<CCPartial> ccParIJ = ccParI.parallelStream().filter(ccpar -> ccpar.staJ.equals(staJ)).collect(Collectors.toList());
 				
-				Path outpath = dir.resolve("partial_"  + staI.getStationName()
-				+ "_" + staJ.getStationName() + ".txt");
+				Path outpath = dir.resolve("partial_"  + staI.getName()
+				+ "_" + staJ.getName() + ".txt");
 				PrintWriter pw;
 				try {
 					pw = new PrintWriter(outpath.toFile());

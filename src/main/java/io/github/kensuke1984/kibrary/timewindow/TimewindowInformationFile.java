@@ -91,7 +91,7 @@ public final class TimewindowInformationFile {
 		Files.createFile(stationFile);
 		try {
 			for (Station s : stations)
-				Files.write(stationFile, (s.getStationName() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
+				Files.write(stationFile, (s.getName() + " " + s.getNetwork() + " " + s.getPosition() + "\n").getBytes()
 						, StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -129,7 +129,7 @@ public final class TimewindowInformationFile {
 			dos.writeShort(phases.length);
 			for (int i = 0; i < stations.length; i++) {
 				stationMap.put(stations[i], i);
-				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
+				dos.writeBytes(StringUtils.rightPad(stations[i].getName(), 8));
 				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
 				HorizontalPosition pos = stations[i].getPosition();
 				dos.writeDouble(pos.getLatitude());

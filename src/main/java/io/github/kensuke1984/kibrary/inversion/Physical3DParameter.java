@@ -21,14 +21,14 @@ import io.github.kensuke1984.kibrary.util.spc.PartialType;
  */
 public class Physical3DParameter implements UnknownParameter {
 
-<<<<<<< HEAD
     private final PartialType partialType;
     private final double weighting;
     /**
      * location of the perturbation
      */
     private final Location pointLocation;
-=======
+    public final static int oneUnknownByte = 42;
+    
 	public static void main(String[] args) {
 		UnknownParameter p = new Physical3DParameter(PartialType.MU, new Location(0, 0, Earth.EARTH_RADIUS), 1.);
 		byte[] bytes = p.getBytes();
@@ -36,16 +36,6 @@ public class Physical3DParameter implements UnknownParameter {
 		System.out.println(create(bytes));
 	}
 	
-	public Location getPointLocation() {
-		return pointLocation;
-	}
-
-	@Override
-	public String toString() {
-		return partialType + " " + pointLocation + " " + weighting;
-	}
->>>>>>> 50ea74949682915dfaa8a6dae270c10a3d15bf8f
-
     public Physical3DParameter(PartialType partialType, Location pointLocation, double weighting) {
         this.partialType = partialType;
         this.weighting = weighting;
@@ -91,12 +81,6 @@ public class Physical3DParameter implements UnknownParameter {
         return weighting;
     }
 
-<<<<<<< HEAD
-    @Override
-    public PartialType getPartialType() {
-        return partialType;
-    }
-=======
 	@Override
 	public PartialType getPartialType() {
 		return partialType;
@@ -106,8 +90,6 @@ public class Physical3DParameter implements UnknownParameter {
 	public Location getLocation() {
 		return pointLocation;
 	}
-	
-	public final static int oneUnknownByte = 42;
 	
 	public byte[] getBytes() {
 		byte[] part1 = StringUtils.rightPad(partialType.name(), 10).getBytes();
@@ -150,6 +132,5 @@ public class Physical3DParameter implements UnknownParameter {
 		
 		return new Physical3DParameter(partialType, new Location(latitude, longitude, r), weight);
 	}
->>>>>>> 50ea74949682915dfaa8a6dae270c10a3d15bf8f
 
 }

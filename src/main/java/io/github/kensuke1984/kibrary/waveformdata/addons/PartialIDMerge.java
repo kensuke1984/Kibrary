@@ -35,8 +35,8 @@ class PartialIDMerge {
 		Path src1ID = Paths.get(args[2]);
 		Path src1Data = Paths.get(args[3]);
 		
-		PartialID[] src0 = PartialIDFile.readPartialIDandDataFile(src0ID, src0Data);
-		PartialID[] src1 = PartialIDFile.readPartialIDandDataFile(src1ID, src1Data);
+		PartialID[] src0 = PartialIDFile.read(src0ID, src0Data);
+		PartialID[] src1 = PartialIDFile.read(src1ID, src1Data);
 		String tmpstr = Utilities.getTemporaryString();
 		Path idPath = workingDir.resolve("partialID" + tmpstr + ".dat");
 		Path dataPath = workingDir.resolve("partial" + tmpstr + ".dat");

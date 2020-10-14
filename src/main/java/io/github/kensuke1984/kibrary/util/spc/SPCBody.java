@@ -155,6 +155,24 @@ public class SPCBody {
 		
 		return s;
 	}
+	
+	/**
+	 * frequency domain をsamplingFrequencyでtime-domain tlen(s)にもってくるスムージング値を探す
+	 * 
+	 */
+	public int findLsmooth(double tlen, double samplingFrequency) {
+		int tmpNp = Integer.highestOneBit(NP);
+		if (tmpNp < NP)
+			tmpNp *= 2;
+
+		int lsmooth = (int) (0.5 * tlen * samplingFrequency / NP);
+		int i = Integer.highestOneBit(lsmooth);
+		if (i < lsmooth)
+			i *= 2;
+		lsmooth = i;
+		
+		return lsmooth;
+	}
 
     /**
      * @return SPCComponent[] all the {@link SPCComponent} in this

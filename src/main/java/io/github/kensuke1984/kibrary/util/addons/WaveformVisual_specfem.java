@@ -35,8 +35,8 @@ public class WaveformVisual_specfem {
 		Path waveformID3DPath = Paths.get(args[2]);
 		Path waveform3DPath = Paths.get(args[3]);
 		
-		Dvector dvectorInit = new Dvector(BasicIDFile.readBasicIDandDataFile(waveformIDinitPath, waveforminitPath), id -> true, WeightingType.RECIPROCAL);
-		Dvector dvector3D = new Dvector(BasicIDFile.readBasicIDandDataFile(waveformID3DPath, waveform3DPath), id -> true, WeightingType.RECIPROCAL);
+		Dvector dvectorInit = new Dvector(BasicIDFile.read(waveformIDinitPath, waveforminitPath), id -> true, WeightingType.RECIPROCAL);
+		Dvector dvector3D = new Dvector(BasicIDFile.read(waveformID3DPath, waveform3DPath), id -> true, WeightingType.RECIPROCAL);
 		
 		List<BasicID> initSynListtmp = Arrays.stream(dvectorInit.getSynIDs()).collect(Collectors.toList());
 		List<BasicID> specfemSynList = Arrays.stream(dvector3D.getSynIDs()).collect(Collectors.toList());
@@ -186,7 +186,7 @@ public class WaveformVisual_specfem {
 					double bornCorr = specfemVector.dotProduct(obsVector) / (specfemVector.getNorm() * obsVector.getNorm());
 					double synRatio = synVector.getLInfNorm() / obsVector.getLInfNorm();
 					double bornRatio = specfemVector.getLInfNorm() / obsVector.getLInfNorm();
-					eachMisfitString += id.getStation().getStationName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
+					eachMisfitString += id.getStation().getName() + " " + id.getStation().getNetwork() + " " + id.getStation().getPosition() + " "
 							+ id.getGlobalCMTID() + " " + id.getSacComponent() + " " + (new Phases(id.getPhases())) + " " + synRatio + " " + bornRatio + " "
 							+ tmpSyn + " " + tmpSpecfem + " " + synCorr + " " + bornCorr + "\n";
 				}

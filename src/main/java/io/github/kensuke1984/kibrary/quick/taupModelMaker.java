@@ -281,9 +281,9 @@ public class taupModelMaker {
 			double dr = Earth.EARTH_RADIUS / nR;
 			double r = Earth.EARTH_RADIUS - i * dr;
 			double depth = Earth.EARTH_RADIUS - r;
-			int izone = model.getiZoneOf(r);
+			int izone = model.zoneOf(r);
 			if (r > 0) {
-				if (izone != model.getiZoneOf(r - dr)) {
+				if (izone != model.zoneOf(r - dr)) {
 					if (Math.abs(model.getVshAt(r) - model.getVshAt(r - dr)) > 0.05) {
 						double rZone = model.getRMinOf(izone);
 						System.out.print(TauPline(model, r));
@@ -307,9 +307,9 @@ public class taupModelMaker {
 				double dr = Earth.EARTH_RADIUS / nR;
 				double r = Earth.EARTH_RADIUS - i * dr;
 				double depth = Earth.EARTH_RADIUS - r;
-				int izone = model.getiZoneOf(r);
+				int izone = model.zoneOf(r);
 				if (r > 0) {
-					if (izone != model.getiZoneOf(r - dr)) {
+					if (izone != model.zoneOf(r - dr)) {
 						if (Math.abs(model.getVshAt(r) - model.getVshAt(r - dr)) > 0.05) {
 							double rZone = model.getRMinOf(izone);
 							pw.print(stdline(model, r));
@@ -366,9 +366,9 @@ public class taupModelMaker {
 		for (int i = 0; i <= nR; i++) {
 			double dr = Earth.EARTH_RADIUS / nR;
 			double r = Earth.EARTH_RADIUS - i * dr;
-			int izone = model.getiZoneOf(r);
+			int izone = model.zoneOf(r);
 			if (r > 0) {
-				if (izone != model.getiZoneOf(r - dr)) {
+				if (izone != model.zoneOf(r - dr)) {
 					if (isDiscontinous(model, r, r - dr)) {
 						double rZone = model.getRMinOf(izone);
 						System.out.print(AxiSEMline(model, r));

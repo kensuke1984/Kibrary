@@ -560,7 +560,7 @@ public class InversionResult {
      * @return txt file name of the id including "eventID/" at head. e.g., if
      * its partial "partial/(txt file name)" is fine.
      */
-	protected String getTxtName(BasicID id) {
+	public String getTxtName(BasicID id) {
 		return id.getGlobalCMTID() + "/" + id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent()
 				+ "." + basicIDList.indexOf(id) + ".txt";
 	}

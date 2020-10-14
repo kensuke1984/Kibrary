@@ -32,7 +32,7 @@ public class ProfileWaveform {
 		Path waveformIDPath = Paths.get(args[0]);
 		Path waveformPath = Paths.get(args[1]);
 		try {
-			BasicID[] waveforms = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+			BasicID[] waveforms = BasicIDFile.read(waveformIDPath, waveformPath);
 			
 			Path profilePath = WorkingDir.resolve("profile");
 			Path stackPath = WorkingDir.resolve("stack");
@@ -92,7 +92,7 @@ public class ProfileWaveform {
 						double[] synData = synID.getData();
 						RealVector obsDataVector = new ArrayRealVector(obsData);
 						RealVector synDataVector = new ArrayRealVector(synData);
-						String filename = obsID.getStation().getStationName() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
+						String filename = obsID.getStation().getName() + "." + obsID.getGlobalCMTID() + "." + obsID.getSacComponent() + ".txt";
 						Path tracePath = eventProfilePath.resolve(filename);
 						
 						PrintWriter pwTrace = new PrintWriter(Files.newBufferedWriter(tracePath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));

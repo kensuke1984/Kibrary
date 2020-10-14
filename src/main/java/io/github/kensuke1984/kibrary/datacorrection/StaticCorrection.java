@@ -144,7 +144,7 @@ public class StaticCorrection implements Comparable<StaticCorrection> {
 	public String toString() {
 		List<String> phaseStrings = 
 				Stream.of(PHASES).filter(phase -> phase != null).map(Phase::toString).collect(Collectors.toList());
-		return STATION.getStationName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID 
+		return STATION.getName() + " " + STATION.getNetwork() + " " + STATION.getPosition() + " " + ID 
 				+ " " + COMPONENT + " " + SYNTHETIC_TIME + " " + TIME + " " + AMPLITUDE + " " + String.join(",", phaseStrings);
 	}
 

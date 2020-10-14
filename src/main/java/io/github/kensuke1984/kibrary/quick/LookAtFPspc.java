@@ -9,14 +9,15 @@ import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcTensorComponent;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCTensorComponent;
 import io.github.kensuke1984.kibrary.util.spc.Spectrum;
 
 public class LookAtFPspc {
 
 	public static void main(String[] args) throws IOException {
-		SpcFileName spcName = new SpcFileName(Paths.get(args[0]));
+		SPCFile spcName = new FormattedSPCFile(Paths.get(args[0]));
 		
 		DSMOutput dsmOutput = null;
 		if (args.length == 1)
@@ -31,7 +32,7 @@ public class LookAtFPspc {
 	}
 	
 	public static void print(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverName();
+		String obsName = dsmOutput.getObserverID();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();
@@ -44,7 +45,7 @@ public class LookAtFPspc {
 		Complex[][] spcs = new Complex[9][];
 		for(int i = 1; i <= 3; i++) {
 			for(int j = 1; j <= 3; j++) {
-				SpcTensorComponent comp = SpcTensorComponent.valueOfFP(i, j);
+				SPCTensorComponent comp = SPCTensorComponent.valueOfFP(i, j);
 				spcs[3*(i-1)+j-1] = dsmOutput.getSpcBodyList().get(0).getSpcComponent(comp).getValueInFrequencyDomain();
 			}
 		}
@@ -62,7 +63,7 @@ public class LookAtFPspc {
 	}
 	
 	public static void printHeader(DSMOutput dsmOutput) {
-		String obsName = dsmOutput.getObserverName();
+		String obsName = dsmOutput.getObserverID();
 		String netwkName = dsmOutput.getObserverNetwork();
 		String sourceID = dsmOutput.getSourceID();
 		HorizontalPosition observerPosition = dsmOutput.getObserverPosition();

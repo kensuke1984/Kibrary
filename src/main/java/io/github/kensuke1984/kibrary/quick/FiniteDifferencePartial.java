@@ -36,7 +36,7 @@ public class FiniteDifferencePartial {
 			if (!Files.exists(dir0))
 				Files.createDirectory(dir0);
 			
-			BasicID[] ids = BasicIDFile.readBasicIDandDataFile(idPath, dataPath);
+			BasicID[] ids = BasicIDFile.read(idPath, dataPath);
 			Predicate<BasicID> chooser = id -> true;
 			Dvector dVector = new Dvector(ids, chooser, WeightingType.IDENTITY);
 			

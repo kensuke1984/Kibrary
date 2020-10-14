@@ -24,8 +24,8 @@ class BasicIDMerge {
 		Path src0Data = Paths.get(args[1]);
 		Path src1ID = Paths.get(args[2]);
 		Path src1Data = Paths.get(args[3]);
-		BasicID[] src0 = BasicIDFile.readBasicIDandDataFile(src0ID, src0Data);
-		BasicID[] src1 = BasicIDFile.readBasicIDandDataFile(src1ID, src1Data);
+		BasicID[] src0 = BasicIDFile.read(src0ID, src0Data);
+		BasicID[] src1 = BasicIDFile.read(src1ID, src1Data);
 		String tmpstr = Utilities.getTemporaryString();
 		Path idPath = workingDir.resolve("waveformID" + tmpstr + ".dat");
 		Path dataPath = workingDir.resolve("waveform" + tmpstr + ".dat");

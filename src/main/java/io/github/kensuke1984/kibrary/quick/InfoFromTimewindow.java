@@ -49,7 +49,7 @@ public class InfoFromTimewindow {
 		}
 		
 		for (Station sta : usedStation)
-			Files.write(stationFile, (sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition()+"\n").getBytes(), StandardOpenOption.APPEND);
+			Files.write(stationFile, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition()+"\n").getBytes(), StandardOpenOption.APPEND);
 		
 		for (GlobalCMTID id : nTransverseMap.keySet()) {
 			System.out.println(id + " " + nTransverseMap.get(id));

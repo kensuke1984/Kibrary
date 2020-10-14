@@ -6,11 +6,6 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import io.github.kensuke1984.kibrary.inversion.addons.BiConjugateGradientStabilizedMethod;
-import io.github.kensuke1984.kibrary.inversion.addons.ConstrainedConjugateGradientMethod;
-import io.github.kensuke1984.kibrary.inversion.addons.FastConjugateGradientMethod;
-import io.github.kensuke1984.kibrary.inversion.addons.NonlinearConjugateGradientMethod;
-
 /**
  * Names of methods for inversion. such as conjugate gradient method, singular
  * value decomposition.. etc

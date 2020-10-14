@@ -55,13 +55,15 @@ import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.spc.DSMOutput;
+import io.github.kensuke1984.kibrary.util.spc.FormattedSPCFile;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.util.spc.SpcBody;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileComponent;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileName;
-import io.github.kensuke1984.kibrary.util.spc.SpcFileType;
-import io.github.kensuke1984.kibrary.util.spc.SpcSAC;
+import io.github.kensuke1984.kibrary.util.spc.SPCBody;
+import io.github.kensuke1984.kibrary.util.spc.SPCComponent;
+import io.github.kensuke1984.kibrary.util.spc.SPCFile;
+import io.github.kensuke1984.kibrary.util.spc.SPCType;
+import io.github.kensuke1984.kibrary.util.spc.SPC_SAC;
 import io.github.kensuke1984.kibrary.util.spc.ThreeDPartialMaker;
+import io.github.kensuke1984.kibrary.util.spc.SPCMode;
 
 /**
  * 
@@ -199,25 +201,25 @@ public class PartialDatasetMaker_v2 implements Operation {
 
 		private DSMOutput bp;
 		private DSMOutput bp_other;
-		private SpcFileName fpname;
-		private SpcFileName fpname_other;
+		private SPCFile fpname;
+		private SPCFile fpname_other;
 		private DSMOutput fp;
 		private DSMOutput fp_other;
 		private Station station;
 		private GlobalCMTID id;
 		private String mode;
 		
-		private void checkMode(DSMOutput bp, SpcFileName fpFile) {
-			if (bp.getSpcFileName().getMode().equals(SpcFileComponent.SH) 
-					&& fpFile.getMode().equals(SpcFileComponent.SH)) {
+		private void checkMode(DSMOutput bp, SPCFile fpFile) {
+			if (bp.getSpcFileName().getMode().equals(SPCMode.SH) 
+					&& fpFile.getMode().equals(SPCMode.SH)) {
 				this.bp = bp;
 				fpname = fpFile;
 				bp_other = null;
 				fpname_other = null;
 				mode = "SH";
 			}
-			else if (bp.getSpcFileName().getMode().equals(SpcFileComponent.PSV) 
-					&& fpFile.getMode().equals(SpcFileComponent.PSV)) {
+			else if (bp.getSpcFileName().getMode().equals(SPCMode.PSV) 
+					&& fpFile.getMode().equals(SPCMode.PSV)) {
 				this.bp = bp;
 				fpname = fpFile;
 				bp_other = null;
@@ -232,14 +234,14 @@ public class PartialDatasetMaker_v2 implements Operation {
 		 * @param fp
 		 * @param bpFile
 		 */
-		private PartialComputation(DSMOutput bp, Station station, SpcFileName fpFile) {
+		private PartialComputation(DSMOutput bp, Station station, SPCFile fpFile) {
 			checkMode(bp, fpFile);
 			this.station = station;
 //			fpname = fpFile;
 			id = new GlobalCMTID(fpFile.getSourceID());
 		}
 		
-		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Station station, SpcFileName fpFile_SH, SpcFileName fpFile_PSV) {
+		private PartialComputation(DSMOutput bp_SH, DSMOutput bp_PSV, Station station, SPCFile fpFile_SH, SPCFile fpFile_PSV) {
 			this.bp = bp_PSV;
 			fpname = fpFile_PSV;
 			bp_other = bp_SH;
@@ -528,7 +530,7 @@ private class WorkerTimePartial implements Runnable {
 		
 		private void addTemporalPartial(SACFileName sacname, Set<TimewindowInformation> timewindowCurrentEvent) throws IOException {
 			Set<TimewindowInformation> tmpTws = timewindowCurrentEvent.stream()
-					.filter(info -> info.getStation().getStationName().equals(sacname.getStationName()))
+					.filter(info -> info.getStation().getName().equals(sacname.getStationName()))
 					.collect(Collectors.toSet());
 			if (tmpTws.size() == 0) {
 				return;
@@ -883,7 +885,7 @@ private class WorkerTimePartial implements Runnable {
 		final int N_THREADS = Runtime.getRuntime().availableProcessors();
 //		final int N_THREADS = 1;
 		writeLog("Running " + N_THREADS + " threads");
-		writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogID());
+		writeLog("CMTcatalogue: " + GlobalCMTCatalog.getCatalogPath().toString());
 		writeLog("SourceTimeFunction=" + sourceTimeFunction);
 		if (sourceTimeFunction == 3 || sourceTimeFunction == 5)
 			writeLog("STFcatalogue: " + stfcatName);
@@ -936,8 +938,8 @@ private class WorkerTimePartial implements Runnable {
 				continue;
 
 			// bpModelFolder内 spectorfile
-			List<SpcFileName> bpFiles = null;
-			List<SpcFileName> bpFiles_PSV = null;
+			List<SPCFile> bpFiles = null;
+			List<SPCFile> bpFiles_PSV = null;
 			if (mode.equals("SH"))
 				bpFiles = Utilities.collectOrderedSHSpcFileName(bpModelPath);
 			else if (mode.equals("PSV"))
@@ -964,8 +966,8 @@ private class WorkerTimePartial implements Runnable {
 			// create ThreadPool
 			ExecutorService execs = Executors.newFixedThreadPool(N_THREADS);
 			for (int i = 0; i < bpFiles.size(); i++) {
-				SpcFileName bpname = bpFiles.get(i);
-				SpcFileName bpname_PSV = null;
+				SPCFile bpname = bpFiles.get(i);
+				SPCFile bpname_PSV = null;
 				if (mode.equals("BOTH"))
 					bpname_PSV = bpFiles_PSV.get(i);
 				
@@ -977,7 +979,7 @@ private class WorkerTimePartial implements Runnable {
 				DSMOutput bp_PSV = null;
 				if (mode.equals("BOTH"))
 					bp_PSV = bpname_PSV.read();
-				String pointName = bp.getObserverName();
+				String pointName = bp.getObserverID();
 
 				// timewindowの存在するfpdirに対して
 				// ｂｐファイルに対する全てのfpファイルを
@@ -985,11 +987,11 @@ private class WorkerTimePartial implements Runnable {
 //				{
 					for (Path fpEventPath : fpEventPaths) {
 						String eventName = fpEventPath.getParent().getFileName().toString();
-						SpcFileName fpfile = new SpcFileName(
+						SPCFile fpfile = new FormattedSPCFile(
 								fpEventPath.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-						SpcFileName fpfile_PSV = null;
+						SPCFile fpfile_PSV = null;
 						if (mode.equals("BOTH")) {
-							fpfile_PSV = new SpcFileName(
+							fpfile_PSV = new FormattedSPCFile(
 									fpEventPath.resolve(pointName + "." + eventName + ".PF..." + "PSV" + ".spc"));
 							if (!fpfile_PSV.exists()) {
 								System.err.println("Fp file not found " + fpfile_PSV);
@@ -1009,23 +1011,6 @@ private class WorkerTimePartial implements Runnable {
 						
 						execs.execute(pc);
 					}
-//				}
-//				else {
-//					for (Path[] fpEventGreenPath : fpPathList) {
-//						String eventName = fpEventGreenPath[0].getParent().getFileName().toString().split("_")[0];
-//						System.out.println(eventName);
-//						SpcFileName[] fpfiles = new SpcFileName[6];
-//						for (int i = 0; i < 6; i++) {
-//							fpfiles[i] = new SpcFileName(fpEventGreenPath[i]
-//									.resolve(pointName + "." + eventName + ".PF..." + bpname.getMode() + ".spc"));
-//						}
-//						SpcFileName fpfile = computeFP(SpcFileName[] fpGreenFiles);
-////						if (!fpfile.exists())
-////							continue;
-//						PartialComputation pc = new PartialComputation(bp, station, fpfile);
-//						execs.execute(pc);
-//					}
-//				}
 			}
 			execs.shutdown();
 			while (!execs.isTerminated()) {
@@ -1055,21 +1040,6 @@ private class WorkerTimePartial implements Runnable {
 		return paths;
 	}
 	
-//	private DSMOutput computeFP(SpcFileName[] fpGreenFiles) {
-//		DSMOutput fp = fpGreenFiles[0];
-//		MomentTensor mt = new GlobalCMTID(fpGreenFiles[0].getSourceID())
-//			.getEvent().getCmt();
-//		
-//		if (fpGreenFiles.length != 6)
-//			System.err.println("FP green functions must have 6 components");
-//		
-//		for (int i = 0; i < 6; i++) {
-//			
-//		}
-//		
-//		return fp;
-//	}
-
 	private Map<GlobalCMTID, SourceTimeFunction> userSourceTimeFunctions;
 	
 	private final String stfcatName = "astf_cc_ampratio_ca.catalog"; //LSTF1 ASTF1 ASTF2
@@ -1172,7 +1142,7 @@ private class WorkerTimePartial implements Runnable {
 	
 	private List<String> readSTFCatalogue(String STFcatalogue) throws IOException {
 //		System.out.println("STF catalogue: " +  STFcatalogue);
-		return IOUtils.readLines(SpcSAC.class.getClassLoader().getResourceAsStream(STFcatalogue)
+		return IOUtils.readLines(PartialDatasetMaker_v2.class.getClassLoader().getResourceAsStream(STFcatalogue)
 					, Charset.defaultCharset());
 	}
 

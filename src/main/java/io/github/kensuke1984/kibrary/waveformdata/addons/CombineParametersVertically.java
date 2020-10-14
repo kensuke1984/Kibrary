@@ -42,7 +42,7 @@ public class CombineParametersVertically {
 		Path outPath = Paths.get("partial" + tmpString + ".dat");
 		
 		try {
-			PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+			PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 			UnknownParameter[] originalUnknowns = UnknownParameterFile.read(unknownPath).toArray(new UnknownParameter[0]);
 			
 			ParameterMapping mapping = new ParameterMapping(originalUnknowns, verticalMappingPath);

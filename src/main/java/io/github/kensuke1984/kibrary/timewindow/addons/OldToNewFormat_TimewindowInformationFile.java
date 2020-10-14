@@ -63,7 +63,7 @@ public class OldToNewFormat_TimewindowInformationFile {
 			dos.writeShort(ids.length);
 			for (int i = 0; i < stations.length; i++) {
 				stationMap.put(stations[i], i);
-				dos.writeBytes(StringUtils.rightPad(stations[i].getStationName(), 8));
+				dos.writeBytes(StringUtils.rightPad(stations[i].getName(), 8));
 				dos.writeBytes(StringUtils.rightPad(stations[i].getNetwork(), 8));
 				HorizontalPosition pos = stations[i].getPosition();
 				dos.writeFloat((float) pos.getLatitude());
@@ -77,8 +77,8 @@ public class OldToNewFormat_TimewindowInformationFile {
 				dos.writeShort(stationMap.get(info.getStation()));
 				dos.writeShort(idMap.get(info.getGlobalCMTID()));
 				dos.writeByte(info.getComponent().valueOf());
-				float startTime = (float) Precision.round(info.startTime, 3);
-				float endTime = (float) Precision.round(info.endTime, 3);
+				float startTime = (float) Precision.round(info.getStartTime(), 3);
+				float endTime = (float) Precision.round(info.getEndTime(), 3);
 				dos.writeFloat(startTime);
 				dos.writeFloat(endTime);
 			}

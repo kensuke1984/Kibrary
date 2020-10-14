@@ -133,9 +133,9 @@ public class StationAverageTimeshift {
 		for (Station sta : stationCount.keySet()) {
 			double shift = stationAverages.get(sta) / stationCount.get(sta);
 			if (shift >= 0)
-				Files.write(outpathP, (sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathP, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
 			else
-				Files.write(outpathM, (sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathM, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + shift + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 		
 		Path outpathHistogramAverage = Paths.get("histogramStationAverageShift.inf");

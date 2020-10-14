@@ -32,7 +32,7 @@ public class Vespagram {
 		double tbefore = 15;
 		
 		try {
-			BasicID[] waveforms = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+			BasicID[] waveforms = BasicIDFile.read(waveformIDPath, waveformPath);
 			Set<GlobalCMTID> events = Stream.of(waveforms).map(BasicID::getGlobalCMTID).collect(Collectors.toSet());
 			
 			for (GlobalCMTID event : events) {

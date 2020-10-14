@@ -759,7 +759,7 @@ public class SourceTimeFunctionByGridSearch implements Operation {
 							timewindow.getStation().getPosition()) * 180. / Math.PI;
 					if (distance < minDistance || distance > maxDistance)
 						continue;
-					Path sacObsPath = eventFolder.toPath().resolve(timewindow.getStation().getStationName() + "." +
+					Path sacObsPath = eventFolder.toPath().resolve(timewindow.getStation().getName() + "." +
 							timewindow.getGlobalCMTID().toString() + "." +
 							timewindow.getComponent());
 					SACFileName obsfile = new SACFileName(sacObsPath);

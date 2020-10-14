@@ -299,9 +299,9 @@ public class TimewindowVisual {
 					{
 						usedStations.add(timewindow.getStation());
 						
-						Path synPath = root.resolve(id.toString() + "/" + timewindow.getStation().getStationName() + "." + id.toString() + "." + "Tsc");
+						Path synPath = root.resolve(id.toString() + "/" + timewindow.getStation().getName() + "." + id.toString() + "." + "Tsc");
 						SACFileName synName = new SACFileName(synPath);
-						Path obsPath = root.resolve(id.toString() + "/" + timewindow.getStation().getStationName() + "." + id.toString() + "." + "T");
+						Path obsPath = root.resolve(id.toString() + "/" + timewindow.getStation().getName() + "." + id.toString() + "." + "T");
 						
 						boolean isObs = true;
 						if (!Files.exists(obsPath))

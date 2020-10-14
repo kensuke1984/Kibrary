@@ -52,7 +52,7 @@ public class PartialID extends BasicID {
 
 	@Override
 	public String toString() {
-		String partialString = STATION.getStationName() + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " "
+		String partialString = STATION.getName() + " " + STATION.getNetwork() + " " + ID + " " + COMPONENT + " " + SAMPLINGHZ + " "
 				+ START_TIME + " " + NPTS + " " + MIN_PERIOD + " " + MAX_PERIOD + " ";
 		for (int i = 0; i < PHASES.length - 1; i++)
 			partialString += PHASES[i] + ",";

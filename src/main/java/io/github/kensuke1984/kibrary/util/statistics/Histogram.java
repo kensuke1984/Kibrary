@@ -98,7 +98,7 @@ public class Histogram {
 		if (args.length == 2)
 			phases_ = new Phases(args[1]);
 		final Phases phases = phases_;
-		BasicID[] basicIDs = BasicIDFile.readBasicIDFile(srcID);
+		BasicID[] basicIDs = BasicIDFile.read(srcID);
 		
 		Path dir = root.resolve("histogram");
 		Files.createDirectory(dir);

@@ -57,8 +57,8 @@ import javax.management.RuntimeErrorException;
 public class ObservationEquation {
 	
 	//TODO update this part of the code (not yet used)
-    private final DataGenerator<RealVector, RealVector[]> BORN_GENERATOR;
-    private final DataGenerator<RealVector, Double> VARIANCE_GENERATOR;
+//    private final DataGenerator<RealVector, RealVector[]> BORN_GENERATOR;
+//    private final DataGenerator<RealVector, Double> VARIANCE_GENERATOR;
 
 	private List<UnknownParameter> PARAMETER_LIST;
 	private List<UnknownParameter> ORIGINAL_PARAMETER_LIST;
@@ -118,14 +118,8 @@ public class ObservationEquation {
 		ORIGINAL_PARAMETER_LIST = parameterList;
 		List<Integer> bouncingOrders = null;
 		if (time_receiver) {
-			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
-					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
-			Collections.sort(bouncingOrders);
-			System.out.print("Bouncing orders (at Earth's surface): ");
-			for (Integer i : bouncingOrders) {
-				System.out.print(i + " ");
-			}
-			System.out.println();
+			bouncingOrders = new ArrayList<Integer>();
+			bouncingOrders.add(1);
 		}
 		System.out.println("Using combination type " + combinationType);
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
@@ -162,14 +156,8 @@ public class ObservationEquation {
 		ORIGINAL_PARAMETER_LIST = parameterList;
 		List<Integer> bouncingOrders = null;
 		if (time_receiver) {
-			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
-					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
-			Collections.sort(bouncingOrders);
-			System.out.print("Bouncing orders (at Earth's surface): ");
-			for (Integer i : bouncingOrders) {
-				System.out.print(i + " ");
-			}
-			System.out.println();
+			bouncingOrders = new ArrayList<Integer>();
+			bouncingOrders.add(1);
 		}
 		System.out.println("Using combination type " + combinationType);
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns,
@@ -209,14 +197,9 @@ public class ObservationEquation {
 		ORIGINAL_PARAMETER_LIST = parameterList;
 		List<Integer> bouncingOrders = null;
 		if (time_receiver) {
-			bouncingOrders = Stream.of(dVector.getObsIDs()).map(id -> id.getPhases()).flatMap(Arrays::stream).distinct()
-					.map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
-			Collections.sort(bouncingOrders);
-			System.out.print("Bouncing orders (at Earth's surface): ");
-			for (Integer i : bouncingOrders) {
-				System.out.print(i + " ");
-			}
-			System.out.println();
+			//TODO remove the use of bouncingOrders
+			bouncingOrders = new ArrayList<Integer>();
+			bouncingOrders.add(1);
 		}
 		readA(partialIDs, time_receiver, time_source, bouncingOrders, combinationType, nUnknowns, null);
 		
@@ -774,7 +757,9 @@ public class ObservationEquation {
 					return i;
 				break;
 			case TIME_RECEIVER:
-				List<Integer> bouncingOrders = Arrays.stream(phases).map(phase -> phase.nOfBouncingAtSurface()).distinct().collect(Collectors.toList());
+				//TODO
+				List<Integer> bouncingOrders = new ArrayList<Integer>();
+				bouncingOrders.add(1);
 				Collections.sort(bouncingOrders);
 				int lowestBouncingOrder = bouncingOrders.get(0);
 				if (station.equals( ((TimeReceiverSideParameter) PARAMETER_LIST.get(i)).getStation() ) &&
@@ -886,7 +871,7 @@ public class ObservationEquation {
      *
      * @param outputPath {@link Path} for an write folder
      */
-	void outputA(Path outputPath) throws IOException {
+	public void outputA(Path outputPath) throws IOException {
 		if (a == null) {
 			System.out.println("no more A");
 			return;
@@ -1061,13 +1046,13 @@ public class ObservationEquation {
     /**
      * @return generator of born waveforms
      */
-    public DataGenerator<RealVector, RealVector[]> getBornGenerator() {
-        return BORN_GENERATOR;
-    }
-
-    public DataGenerator<RealVector, Double> getVarianceGenerator() {
-        return VARIANCE_GENERATOR;
-    }
+//    public DataGenerator<RealVector, RealVector[]> getBornGenerator() {
+//        return BORN_GENERATOR;
+//    }
+//
+//    public DataGenerator<RealVector, Double> getVarianceGenerator() {
+//        return VARIANCE_GENERATOR;
+//    }
     
     public void setAtdForCheckerboard(RealVector checkeboardPerturbationVector) {
 		if (ata == null)

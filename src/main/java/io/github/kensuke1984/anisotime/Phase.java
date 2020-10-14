@@ -906,6 +906,10 @@ public class Phase implements Serializable {
     String getDISPLAY_NAME() {
         return DISPLAY_NAME;
     }
+    
+	public String getEXPANDED_NAME() {
+		return EXPANDED_NAME;
+	}
 
     @Override
     public String toString() {

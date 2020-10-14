@@ -229,7 +229,7 @@ public class RaypathDistribution implements Operation {
 				: timeWindowInformationFile.stream()
 						.anyMatch(tw -> tw.getComponent() == name.getComponent()
 								&& tw.getGlobalCMTID().equals(name.getGlobalCMTID())
-								&& tw.getStation().getStationName().equals(name.getStationName()));
+								&& tw.getStation().getName().equals(name.getStationName()));
 	}
 
 	private void outputRaypath() throws IOException {

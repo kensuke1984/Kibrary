@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 理論波形と観測波形の比較から使えるものを選択する。<br>
@@ -196,7 +197,7 @@ public class DataSelection implements Operation {
 	private void set() throws IOException {
 		checkAndPutDefaults();
 		workPath = Paths.get(property.getProperty("workPath"));
-		if (!Files.exists(workPath)) throw new NoSuchFieldException(workPath + " (workPath)");
+		if (!Files.exists(workPath)) throw new NoSuchFileException(workPath + " (workPath)");
 
 		obsPath = getPath("obsPath");
 		synPath = getPath("synPath");
@@ -473,7 +474,7 @@ public class DataSelection implements Operation {
 					SACData obsSac = obsName.read();
 					SACData synSac = synName.read();
 					
-					stationName = obsSac.getStation().getStationName() + "_" + obsSac.getStation().getNetwork();
+					stationName = obsSac.getStation().getName() + "_" + obsSac.getStation().getNetwork();
 
 					Station station = obsSac.getStation();
 					//

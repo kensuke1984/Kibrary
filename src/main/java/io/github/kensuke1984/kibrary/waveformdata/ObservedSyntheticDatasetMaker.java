@@ -5,6 +5,7 @@ import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 
 import io.github.kensuke1984.anisotime.Phase;
+import io.github.kensuke1984.anisotime.PhasePart;
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.butterworth.BandPassFilter;
 import io.github.kensuke1984.kibrary.butterworth.ButterworthFilter;
@@ -385,7 +386,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				.collect(Collectors.toSet());
 		idSet = timewindowInformationSet.stream().map(TimewindowInformation::getGlobalCMTID)
 				.collect(Collectors.toSet());
-		phases = timewindowInformationSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Stream.of(p))
+		phases = timewindowInformationSet.stream().map(TimewindowInformation::getPhases).flatMap(p -> Arrays.stream(p))
 				.distinct().toArray(Phase[]::new);
 		
 		readPeriodRanges();
@@ -689,7 +690,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 				if (!synFileName.exists()) continue;
 
 				Set<TimewindowInformation> windows = timewindowInformationSet.stream()
-						.filter(info -> info.getStation().getStationName().equals(stationName))
+						.filter(info -> info.getStation().getName().equals(stationName))
 						.filter(info -> info.getGlobalCMTID().equals(id))
 						.filter(info -> info.getComponent() == component).collect(Collectors.toSet());
 

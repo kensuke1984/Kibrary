@@ -29,7 +29,7 @@ public class KernelVisual {
 		Path partialIDPath = Paths.get(args[0]);
 		Path partialPath = Paths.get(args[1]);
 		
-		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
 		Set<GlobalCMTID> idSet = new HashSet<>();
 		Set<String> stationnameSet = new HashSet<>();
@@ -50,7 +50,7 @@ public class KernelVisual {
 				Path dir1 = dir0.resolve(partial.getGlobalCMTID().toString());
 				if (!Files.exists(dir1))
 					Files.createDirectories(dir1);
-				Path dir2 = dir1.resolve(partial.getStation().getStationName());
+				Path dir2 = dir1.resolve(partial.getStation().getName());
 				if (!Files.exists(dir2))
 					Files.createDirectories(dir2);
 				Path dir3 = dir2.resolve(new Phases(partial.getPhases()).toString());

@@ -75,9 +75,9 @@ public class StationAverageRatio {
 		for (Station sta : stationCount.keySet()) {
 			double ratio = stationAverages.get(sta) / stationCount.get(sta);
 			if (ratio >= 1)
-				Files.write(outpathP, (sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathP, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
 			else
-				Files.write(outpathM, (sta.getStationName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
+				Files.write(outpathM, (sta.getName() + " " + sta.getNetwork() + " " + sta.getPosition() + " " + ratio + "\n").getBytes(), StandardOpenOption.APPEND);
 		}
 	}
 

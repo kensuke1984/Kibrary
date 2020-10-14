@@ -23,7 +23,7 @@ public class Kernel1DVisual {
 		Path partialIDPath = Paths.get(args[0]);
 		Path partialPath = Paths.get(args[1]);
 		
-		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
 		List<PartialID> par0list = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.PAR0)).collect(Collectors.toList());
 		

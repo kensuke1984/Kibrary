@@ -112,7 +112,7 @@ public class ComputeTimediffSScS {
 			obsNames.removeIf(sfn -> !sfn.isOBS());
 			obsNames.removeIf(obsName -> 
 				thisWindows.stream().filter(tw -> tw.getGlobalCMTID().equals(obsName.getGlobalCMTID())
-						&& tw.getStation().getStationName().equals(obsName.getStationName())
+						&& tw.getStation().getName().equals(obsName.getStationName())
 						&& tw.getComponent().equals(obsName.getComponent()))
 				.count() != 1
 			);

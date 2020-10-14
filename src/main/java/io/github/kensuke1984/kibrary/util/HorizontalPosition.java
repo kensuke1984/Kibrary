@@ -266,5 +266,13 @@ public class HorizontalPosition implements Comparable<HorizontalPosition> {
 		
 		return new HorizontalPosition(lat, lon);
 	}
+	
+	public double getGeographicalAzimuth(HorizontalPosition position) {
+		return Earth.getGeographicalAzimuth(this, position);
+	}
+	
+	public double getGeographicalDistance(HorizontalPosition horizontalPosition) {
+		return Earth.getGeographicalDistance(horizontalPosition, this);
+	}
 
 }

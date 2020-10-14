@@ -23,7 +23,7 @@ public class Rose {
 	public static void main(String[] args) throws IOException {
 		Path waveformIDPath = Paths.get(args[0]);
 		
-		BasicID[] ids = BasicIDFile.readBasicIDFile(waveformIDPath);
+		BasicID[] ids = BasicIDFile.read(waveformIDPath);
 		
 		double deltaThetaRad = Math.toRadians(0.2);
 		double dL = 2.;

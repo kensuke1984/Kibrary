@@ -265,7 +265,7 @@ public class Result implements Operation {
 					String thisNetwork = file.getName().split("_")[1];
 					Station station = null;
 					for (Station sta : stationSet) {
-						if (sta.getStationName().equals(thisStationName) 
+						if (sta.getName().equals(thisStationName) 
 								&& sta.getNetwork().equals(thisNetwork)) {
 							station = new Station(sta);
 							break;

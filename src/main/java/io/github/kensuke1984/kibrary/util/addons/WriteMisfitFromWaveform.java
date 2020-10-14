@@ -17,7 +17,7 @@ public class WriteMisfitFromWaveform {
 	public static void main(String[] args) throws IOException {
 		Path waveformIDPath = Paths.get(args[0]);
 		Path waveformPath = Paths.get(args[1]);
-		BasicID[] ids = BasicIDFile.readBasicIDandDataFile(waveformIDPath, waveformPath);
+		BasicID[] ids = BasicIDFile.read(waveformIDPath, waveformPath);
 		
 		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
 		List<EventCluster> clusters = EventCluster.readClusterFile(clusterPath);
@@ -53,7 +53,7 @@ public class WriteMisfitFromWaveform {
 				if (region == null)
 					continue;
 				
-				pw.println(ids[i].getStation().getStationName() + " " + ids[i].getStation().getNetwork() + " " + ids[i].getStation().getPosition()
+				pw.println(ids[i].getStation().getName() + " " + ids[i].getStation().getNetwork() + " " + ids[i].getStation().getPosition()
 						+ " " + ids[i].getGlobalCMTID() + " " + ids[i].getSacComponent() + " " + new Phases(ids[i].getPhases()) + " " + region
 						+ " " + ratio + " " + var + " " + cc);
 			}

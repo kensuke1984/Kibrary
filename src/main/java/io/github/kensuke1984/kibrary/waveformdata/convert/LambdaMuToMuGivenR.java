@@ -64,7 +64,7 @@ public class LambdaMuToMuGivenR {
 		rKK01ahae.put(2741., 2.6);
 		rKK01ahae.put(2841., 2.7);
 		
-		PartialID[] partials = PartialIDFile.readPartialIDandDataFile(partialIDPath, partialPath);
+		PartialID[] partials = PartialIDFile.read(partialIDPath, partialPath);
 		
 		List<PartialID> partialsLambda = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.LAMBDA)).collect(Collectors.toList());
 		List<PartialID> partialsMU = Stream.of(partials).filter(p -> p.getPartialType().equals(PartialType.MU)).collect(Collectors.toList());

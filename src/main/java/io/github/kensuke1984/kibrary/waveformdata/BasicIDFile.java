@@ -5,7 +5,6 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACComponent;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
-import io.github.kensuke1984.kibrary.waveformdata.addons.OldToNewFormat_BasicIDFile;
 import io.github.kensuke1984.anisotime.Phase;
 
 import org.apache.commons.io.FilenameUtils;
@@ -158,15 +157,8 @@ public final class BasicIDFile {
 			int headerBytes = 2 * 4 + (8 + 8 + 8 * 2) * stations.length + 15 * cmtIDs.length
 					+ 16 * phases.length + 8 * 2 * periodRanges.length;
 			long idParts = fileSize - headerBytes;
-			if (idParts % oneIDByte != 0) {
-				try {
-					BasicID[] ids = OldToNewFormat_BasicIDFile.readBasicIDFile_old(idPath);
-					System.err.println("WARNING: " + idPath + " format is deprecated. Converting to new format, but loosing phase information");
-					return ids;
-				} catch (Exception e) {
-					throw new RuntimeException(idPath + " is invalid both in the old and current format");
-				}
-			}
+			if (idParts % oneIDByte != 0)
+				throw new RuntimeException(idPath + " is invalid");
 			// name(8),network(8),position(8*2)
 			byte[] stationBytes = new byte[32];
 			for (int i = 0; i < stations.length; i++) {
