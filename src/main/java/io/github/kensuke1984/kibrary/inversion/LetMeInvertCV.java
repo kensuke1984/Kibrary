@@ -113,92 +113,89 @@ public class LetMeInvertCV implements Operation {
 	 * 観測波形、理論波形の入ったファイル (BINARY)
 	 */
 	protected Path waveformPath;
-
 	/**
 	 * 求めたい未知数を羅列したファイル (ASCII)
 	 */
 	protected Path unknownParameterListPath;
-
 	/**
 	 * partialIDの入ったファイル
 	 */
 	protected Path partialIDPath;
-
 	/**
 	 * partial波形の入ったファイル
 	 */
 	protected Path partialPath;
-
 	/**
 	 * 観測、理論波形のID情報
 	 */
 	protected Path waveformIDPath;
-
 	/**
 	 * ステーション位置情報のファイル
 	 */
 	protected Path stationInformationPath;
-
 	/**
 	 * どうやって方程式を解くか。 cg svd
 	 */
 	protected Set<InverseMethodEnum> inverseMethods;
-	
 	protected WeightingType weightingType;
-	
 	protected boolean time_source, time_receiver;
-	
 	protected double gamma;
-	
 	private CombinationType combinationType;
-	
 	private Map<PartialType, Integer[]> nUnknowns;
-	
 	private ObservationEquation eq;
-	
 	private Path verticalMapping;
-	
 	private String[] phases;
-	
 	private List<DataSelectionInformation> selectionInfo;
-	
 	private boolean modelCovariance;
-	
 	private double cm0, cmH, cmV;
-	
 	private double lambdaQ, lambdaMU, gammaQ, gammaMU, lambda00, gamma00, lambdaVp, gammaVp;
-	
 	private double correlationScaling;
-	
 	private double minDistance;
-	
 	private double maxDistance;
-	
 	private double minMw;
-	
 	private double maxMw;
-	
 	private UnknownParameterWeightType unknownParameterWeightType;
-	
 	private boolean linaInversion;
-	
 	private boolean jackknife;
-	
 	private int nRealisation;
-	
 	private boolean checkerboard;
-	
 	private Path checkerboardPerturbationPath;
-	
 	Path spcAmpPath;
-	
 	Path spcAmpIDPath;
-	
 	Path partialSpcPath;
-	
 	Path partialSpcIDPath;
-	
 	private double scale_freq_ata;
+	/**
+	 * AIC計算に用いるα 独立データ数はn/αと考える
+	 */
+	protected double[] alpha;
+	private Properties property;
+	private boolean regularizationMuQ;
+	private Path outPath;
+	private boolean conditioner;
+	private boolean lowMemoryCost;
+	private int nStepsForLowMemoryMode;
+	private boolean usePrecomputedAtA;
+	private Path[] precomputedAtAPath;
+	private Path[] precomputedAtdPath;
+	private boolean trimWindow;
+	private double trimPoint;
+	private boolean keepBefore;
+	private boolean assumeRratio;
+	private List<EventCluster> clusters;
+	private Path eventClusterPath;
+	private int[] azimuthIndex;
+	private int[] clusterIndex;
+	private ObservationEquation eqA, eqB;
+	private boolean applyEventAmpCorr;
+	private boolean correct3DFocusing;
+	List<UnknownParameter> parameterList;
+	PartialID[] partialIDs;
+	PartialID[] partialSpcIDs;
+	Dvector dVectorSpc;
+	Dvector dVector;
+	BasicID[] ids;
+	BasicID[] spcIds;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -447,15 +444,6 @@ public class LetMeInvertCV implements Operation {
 		correct3DFocusing = Boolean.parseBoolean(property.getProperty("correct3DFocusing"));
 	}
 
-	/**
-	 * AIC計算に用いるα 独立データ数はn/αと考える
-	 */
-	protected double[] alpha;
-
-	private Properties property;
-	
-	private boolean regularizationMuQ;
-
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvertCV.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -577,56 +565,6 @@ public class LetMeInvertCV implements Operation {
 		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 	}
 
-	private Path outPath;
-	
-	private boolean conditioner;
-
-	private boolean lowMemoryCost;
-	
-	private int nStepsForLowMemoryMode;
-	
-	private boolean usePrecomputedAtA;
-	
-	private Path[] precomputedAtAPath;
-	
-	private Path[] precomputedAtdPath;
-	
-	private boolean trimWindow;
-	
-	private double trimPoint;
-	
-	private boolean keepBefore;
-	
-	private boolean assumeRratio;
-	
-	private List<EventCluster> clusters;
-	
-	private Path eventClusterPath;
-	
-	private int[] azimuthIndex;
-	
-	private int[] clusterIndex;
-	
-	private ObservationEquation eqA, eqB;
-	
-	private boolean applyEventAmpCorr;
-	
-	private boolean correct3DFocusing;
-	
-	List<UnknownParameter> parameterList;
-	
-	PartialID[] partialIDs;
-	
-	PartialID[] partialSpcIDs;
-	
-	Dvector dVectorSpc;
-	
-	Dvector dVector;
-	
-	BasicID[] ids;
-	
-	BasicID[] spcIds;
-	
 	private void readIDs() {
 		try {
 			ids = BasicIDFile.read(waveformIDPath, waveformPath);
