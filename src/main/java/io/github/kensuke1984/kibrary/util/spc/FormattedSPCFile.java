@@ -143,9 +143,12 @@ public class FormattedSPCFile extends SPCFile {
         if (!isFormatted(fileName)) throw new IllegalArgumentException(fileName + " is not a valid Spcfile name.");
 //        observerID = fileName.split("\\.")[0];
         observerID = fileName.split("\\.")[0].split("_")[0];
-        observerNetwork = fileName.split("\\.")[0].split("_")[1];
         sourceID = getEventID(fileName);
         fileType = getFileType(fileName);
+        if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+        	observerNetwork = null;
+        else
+        	observerNetwork = fileName.split("\\.")[0].split("_")[1];
         mode = getMode(fileName);
         x = getX(fileName);
         y = getY(fileName);
@@ -173,6 +176,8 @@ public class FormattedSPCFile extends SPCFile {
     
     @Override
     public String getObserverNetwork() {
+    	if (fileType.equals(SPCType.PB) || fileType.equals(SPCType.PF))
+			throw new RuntimeException("PB and PF waveforms have no network");
     	return observerNetwork;
     }
 

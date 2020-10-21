@@ -229,6 +229,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("#addNoise false");
 			pw.println("#correctMantle false");
 			pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
+			pw.println("#lowFreq");
+			pw.println("#highFreq");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -266,6 +268,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		if (!PROPERTY.containsKey("minDistance")) PROPERTY.setProperty("minDistance", "0.");
 		if (!PROPERTY.containsKey("addNoise")) PROPERTY.setProperty("addNoise", "false");
 		if (!PROPERTY.containsKey("correctMantle")) PROPERTY.setProperty("correctMantle", "false");
+		if (!PROPERTY.containsKey("lowFreq")) PROPERTY.setProperty("lowFreq", "0.01");
+		if (!PROPERTY.containsKey("highFreq")) PROPERTY.setProperty("highFreq", "0.08");
 	}
 
 	private void set() throws NoSuchFileException {

@@ -95,9 +95,9 @@ public class InformationFileMaker implements Operation {
 			pw.println("##header for names of information files 'header'_[PSV, SH].inf (PREM)");
 			pw.println("#header");
 			pw.println("##int np must be a power of 2, must be set");
-			pw.println("#np 1024");
+			pw.println("#np 512");
 			pw.println("##double tlen must be a power of 2/10, must be set");
-			pw.println("#tlen 6553.6");
+			pw.println("#tlen 3276.8");
 			pw.println("##polynomial structure file (can be blank)");
 			pw.println("##if so or it doesn't exist model is an initial PREM");
 			pw.println("#structureFile ");
@@ -105,6 +105,7 @@ public class InformationFileMaker implements Operation {
 			pw.println("#jointCMT ");
 			pw.println("##Boolean wavefield catalogue (false)");
 			pw.println("#catalogue");
+			pw.println("##Catalogue distance range: thetamin thetamax dtheta");
 			pw.println("#thetaRange");
 		}
 		System.err.println(outPath + " is created.");

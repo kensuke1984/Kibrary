@@ -33,10 +33,20 @@ public abstract class SPCFile extends File {
                     "station.GlobalCMTID.type(par2, PF, PB .etc).x.y.(PSV, SH).spc");
             return false;
         }
-
-        if (8 < name.split("\\.")[0].length()) {
-            System.err.println("Name of station cannot be over 8 characters.");
-            return false;
+        
+        String observerID = name.split("\\.")[0].split("_")[0];
+        if (parts.length == 3) {
+        	String observerNetwork = name.split("\\.")[0].split("_")[1];
+			// synthetics files have both station name and network name
+			if (8 < observerID.length()) System.err.println(observerID + "Name of station cannot be over 8 characters");
+			if (8 < observerNetwork.length()) System.err.println(observerNetwork + "Name of network cannot be over 8 characters");
+		}
+        else {
+        	// bp and fp files have only a station name
+        	if (8 < observerID.length()) {
+	            System.err.println("Name of station cannot be over 8 characters.");
+	            return false;
+        	}
         }
 
         return true;

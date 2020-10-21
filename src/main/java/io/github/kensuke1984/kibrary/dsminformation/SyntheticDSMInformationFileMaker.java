@@ -82,9 +82,9 @@ public class SyntheticDSMInformationFileMaker implements Operation {
 			pw.println("#header");
 			pw.println("##Path of a structure file you want to use. ()");
 			pw.println("#structureFile");
-			pw.println("##tlen must be a power of 2 over 10 (6553.6)");
+			pw.println("##tlen must be a power of 2 over 10 (3276.8)");
 			pw.println("#tlen");
-			pw.println("##np must be a power of 2 (1024)");
+			pw.println("##np must be a power of 2 (512)");
 			pw.println("#np");
 			pw.println("##Synthetic Dataset (false)");
 			pw.println("#syntheticDataset");

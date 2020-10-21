@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
  *
  * @author Kensuke Konishi
  * @version 0.1.8.1
+ * @author anselme change station string to NAME_NETWORK
  */
 public class SyntheticDSMInfo extends DSMheader {
 
@@ -58,6 +59,8 @@ public class SyntheticDSMInfo extends DSMheader {
      * @param psvPath Path of an write file
      * @param options for write
      * @throws IOException if an I/O error occurs
+     * @author Kensuke Konishi
+     * @author anselme change station string to NAME_NETWORK
      */
     public void writePSV(Path psvPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(psvPath, options))) {
@@ -88,7 +91,7 @@ public class SyntheticDSMInfo extends DSMheader {
 
             // write
             pw.println("c parameter for the write file");
-            STATIONS.stream().sorted().map(Station::getName)
+            STATIONS.stream().sorted().map(s -> s.getName() + "_" + s.getNetwork())
                     .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "PSV.spc"));
             pw.println("end");
 
@@ -101,6 +104,8 @@ public class SyntheticDSMInfo extends DSMheader {
      * @param outPath write path
      * @param options for write
      * @throws IOException if an I/O error occurs
+     * @author Kensuke Konishi
+     * @author anselme change station string to NAME_NETWORK
      */
     public void writeSH(Path outPath, OpenOption... options) throws IOException {
         try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, options))) {
@@ -129,7 +134,7 @@ public class SyntheticDSMInfo extends DSMheader {
 
             // write
             pw.println("c parameter for the write file");
-            STATIONS.stream().sorted().map(Station::getName)
+            STATIONS.stream().sorted().map(s -> s.getName() + "_" + s.getNetwork())
                     .forEach(n -> pw.println(OUTPUT + "/" + n + "." + EVENT + "SH.spc"));
             pw.println("end");
         }

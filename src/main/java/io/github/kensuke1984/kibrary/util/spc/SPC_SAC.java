@@ -146,6 +146,8 @@ public final class SPC_SAC implements Operation {
             case 0:
             case 1:
             case 2:
+            case 3:
+            case 5:
                 return;
             default:
                 throw new RuntimeException("Integer for source time function is invalid.");

@@ -79,7 +79,7 @@ public class MakeWindowPcPandScS {
 		timeAfterScS = 40;
 		timeBeforesS = 5;
 		
-		select = true;
+		select = false;
 		minCorr = -0.5;
 		maxVariance = 2.5;
 		maxRatio = 2.5;
@@ -196,6 +196,7 @@ public class MakeWindowPcPandScS {
 					synData_T = new SACFileName(Paths.get(obsName.getAbsolutePath().replace(".Z", ".Tsc"))).read();
 				} catch (IOException e) {
 					System.out.println("Error reading " + obsName.getAbsolutePath());
+					e.printStackTrace();
 					return;
 				}
 				Trace synTrace_S = synData_T.createTrace().cutWindow(timeS - 15, timeS + 40);

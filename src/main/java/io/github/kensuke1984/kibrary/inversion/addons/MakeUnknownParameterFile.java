@@ -23,6 +23,8 @@ public class MakeUnknownParameterFile {
 		// each line: perturbation depth, thickness (in the vertical direction)
 		// number of line = number of depth layers
 		Path perturbationLayerPath = Paths.get(args[1]);
+		// voxel size in degree
+		double voxelSize = Double.parseDouble(args[2]);
 		
 		try {
 			// read perturbation points lat lon r
@@ -55,7 +57,7 @@ public class MakeUnknownParameterFile {
 					System.err.format("Ignoring radius %.4f%n", perturbation.getR());
 					continue;
 				}
-				double volume = getVolume(perturbation, dR, 2., 2.);
+				double volume = getVolume(perturbation, dR, voxelSize, voxelSize);
 				Files.write(unknownPath, String.format("MU %.8f %.8f %.8f %.8f\n", perturbation.getLatitude()
 						, perturbation.getLongitude()
 						, perturbation.getR()
