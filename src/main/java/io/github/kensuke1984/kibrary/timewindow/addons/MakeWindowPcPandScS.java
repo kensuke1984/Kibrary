@@ -79,7 +79,7 @@ public class MakeWindowPcPandScS {
 		timeAfterScS = 40;
 		timeBeforesS = 5;
 		
-		select = false;
+		select = true;
 		minCorr = -0.5;
 		maxVariance = 2.5;
 		maxRatio = 2.5;

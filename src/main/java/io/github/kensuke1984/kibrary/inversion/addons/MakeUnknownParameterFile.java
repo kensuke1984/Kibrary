@@ -3,12 +3,14 @@ package io.github.kensuke1984.kibrary.inversion.addons;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.spc.PartialType;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,10 @@ public class MakeUnknownParameterFile {
 		Path perturbationLayerPath = Paths.get(args[1]);
 		// voxel size in degree
 		double voxelSize = Double.parseDouble(args[2]);
+		// partial types
+		int nType = args.length - 3;
+		PartialType[] types = new PartialType[nType];
+		for (int i = 3; i < nType; i++) types[i] = PartialType.valueOf(args[i]);
 		
 		try {
 			// read perturbation points lat lon r
@@ -48,20 +54,24 @@ public class MakeUnknownParameterFile {
 			Files.createFile(unknownPath);
 			
 //			int nDigit = (int) Math.log10(perturbations.size()) + 1;
-			for (int i = 0; i < perturbations.size(); i++) {
-				Location perturbation = perturbations.get(i);
-				double dR = 0;
-				try {
-					 dR = layerMap.get(perturbation.getR());
-				} catch (NullPointerException e) {
-					System.err.format("Ignoring radius %.4f%n", perturbation.getR());
-					continue;
+			for (PartialType type : types) {
+				for (int i = 0; i < perturbations.size(); i++) {
+					Location perturbation = perturbations.get(i);
+					double dR = 0;
+					try {
+						 dR = layerMap.get(perturbation.getR());
+					} catch (NullPointerException e) {
+						System.err.format("Ignoring radius %.4f%n", perturbation.getR());
+						continue;
+					}
+					double volume = getVolume(perturbation, dR, voxelSize, voxelSize);
+					Files.write(unknownPath, String.format("%s %.8f %.8f %.8f %.8f\n"
+							, type.toString()
+							, perturbation.getLatitude()
+							, perturbation.getLongitude()
+							, perturbation.getR()
+							, volume).getBytes(), StandardOpenOption.APPEND);
 				}
-				double volume = getVolume(perturbation, dR, voxelSize, voxelSize);
-				Files.write(unknownPath, String.format("MU %.8f %.8f %.8f %.8f\n", perturbation.getLatitude()
-						, perturbation.getLongitude()
-						, perturbation.getR()
-						, volume).getBytes(), StandardOpenOption.APPEND);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

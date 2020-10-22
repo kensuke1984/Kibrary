@@ -546,12 +546,13 @@ public class AtAMaker implements Operation {
 			pw.println("#nSample 100");
 			pw.println("#=========================================================");
 			pw.println("#===================== Debug =============================");
-			pw.println("##output the back-propagated wavefield as time series");
+			pw.println("##Output the back-propagated wavefield as time series (false)");
 			pw.println("#testBP");
-			pw.println("##output the forward-propagated wavefield as time series");
+			pw.println("##Output the forward-propagated wavefield as time series (false)");
 			pw.println("#testFP");
-			pw.println("##output the partial as time series");
+			pw.println("##Output the partial as time series (false)");
 			pw.println("#outPartial");
+			pw.println("##Compute a double difference Kernel (false)");
 			pw.println("#doubledifference");
 		}
 		System.out.println(outPath + " is created.");
@@ -587,44 +588,25 @@ public class AtAMaker implements Operation {
 			PROPERTY.setProperty("finalSamplingHz", "1");
 		if (!PROPERTY.containsKey("filterNp"))
 			PROPERTY.setProperty("filterNp", "4");
-		if (!PROPERTY.containsKey("testBP"))
-			PROPERTY.setProperty("testBP", "false");
-		if (!PROPERTY.containsKey("testFP"))
-			PROPERTY.setProperty("testFP", "false");
-		if (!PROPERTY.containsKey("outPartial"))
-			PROPERTY.setProperty("outPartial", "false");
-		if (!PROPERTY.containsKey("weightingTypes"))
-			PROPERTY.setProperty("weightingTypes", "RECIPROCAL");
-		if(!PROPERTY.containsKey("thetaInfo"))
-			PROPERTY.setProperty("thetaInfo", "1. 50. 1e-2");
-		if(!PROPERTY.containsKey("numberOfBuffers"))
-			PROPERTY.setProperty("numberOfBuffers", "1");
-		if(!PROPERTY.containsKey("nproc"))
-			PROPERTY.setProperty("nproc", "1");
-		if(!PROPERTY.containsKey("nwindowBuffer"))
-			PROPERTY.setProperty("nwindowBuffer", "100");
-		if(!PROPERTY.containsKey("backward"))
-			PROPERTY.setProperty("backward", "false");
-		if(!PROPERTY.containsKey("computationFlag"))
-			PROPERTY.setProperty("computationFlag", "3");
-		if(!PROPERTY.containsKey("correctionBootstrap"))
-			PROPERTY.setProperty("correctionBootstrap", "false");
-		if (!PROPERTY.containsKey("nSample"))
-			PROPERTY.setProperty("nSample", "100");
-		if (!PROPERTY.containsKey("catalogueFP"))
-			PROPERTY.setProperty("catalogueFP", "false");
-		if (!PROPERTY.containsKey("resamplingRate"))
-			PROPERTY.setProperty("resamplingRate", "1");
-		if (!PROPERTY.containsKey("quickAndDirty"))
-			PROPERTY.setProperty("quickAndDirty", "false");
-		if (!PROPERTY.containsKey("fastCompute"))
-			PROPERTY.setProperty("fastCompute", "false");
-		if (!PROPERTY.containsKey("mode"))
-			PROPERTY.setProperty("mode", "SH");
-		if (!PROPERTY.containsKey("threeD"))
-			PROPERTY.setProperty("threeD", "true");
-		if (!PROPERTY.containsKey("doubledifference"))
-			PROPERTY.setProperty("doubledifference", "false");
+		if (!PROPERTY.containsKey("testBP")) PROPERTY.setProperty("testBP", "false");
+		if (!PROPERTY.containsKey("testFP")) PROPERTY.setProperty("testFP", "false");
+		if (!PROPERTY.containsKey("outPartial")) PROPERTY.setProperty("outPartial", "false");
+		if (!PROPERTY.containsKey("weightingTypes")) PROPERTY.setProperty("weightingTypes", "RECIPROCAL");
+		if(!PROPERTY.containsKey("thetaInfo")) PROPERTY.setProperty("thetaInfo", "1. 50. 1e-2");
+		if(!PROPERTY.containsKey("numberOfBuffers")) PROPERTY.setProperty("numberOfBuffers", "1");
+		if(!PROPERTY.containsKey("nproc")) PROPERTY.setProperty("nproc", "1");
+		if(!PROPERTY.containsKey("nwindowBuffer")) PROPERTY.setProperty("nwindowBuffer", "100");
+		if(!PROPERTY.containsKey("backward")) PROPERTY.setProperty("backward", "false");
+		if(!PROPERTY.containsKey("computationFlag")) PROPERTY.setProperty("computationFlag", "3");
+		if(!PROPERTY.containsKey("correctionBootstrap")) PROPERTY.setProperty("correctionBootstrap", "false");
+		if (!PROPERTY.containsKey("nSample")) PROPERTY.setProperty("nSample", "100");
+		if (!PROPERTY.containsKey("catalogueFP")) PROPERTY.setProperty("catalogueFP", "false");
+		if (!PROPERTY.containsKey("resamplingRate")) PROPERTY.setProperty("resamplingRate", "1");
+		if (!PROPERTY.containsKey("quickAndDirty")) PROPERTY.setProperty("quickAndDirty", "false");
+		if (!PROPERTY.containsKey("fastCompute")) PROPERTY.setProperty("fastCompute", "false");
+		if (!PROPERTY.containsKey("mode")) PROPERTY.setProperty("mode", "SH");
+		if (!PROPERTY.containsKey("threeD")) PROPERTY.setProperty("threeD", "true");
+		if (!PROPERTY.containsKey("doubledifference")) PROPERTY.setProperty("doubledifference", "false");
 		if (!PROPERTY.containsKey("tlen")) PROPERTY.setProperty("tlen", "3276.8");
 		if (!PROPERTY.containsKey("np")) PROPERTY.setProperty("np", "512");
 	}
