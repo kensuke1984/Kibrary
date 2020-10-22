@@ -6,11 +6,16 @@ import subprocess
 import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
+import re
 
 mpl.rcParams.update({'font.size': 10})
 
-input_file = 'ScS_MU_T_kernelTemporal_snapshots_t01172.txt'
+# input_file = 'KernelTemporalVisual_PcP/031704A/LMQ/PcP/' \
+#     + 'PcP_LAMBDA_Z_kernelTemporal_snapshots_t0644.txt'
+input_file = 'KernelTemporalVisual_ScS/031704A/LMQ/ScS/' \
+    + 'ScS_MU_T_kernelTemporal_snapshots_t01171.txt'
 kernel = np.loadtxt(input_file)
+t0 = float(re.search('t[0-9]{5}', input_file).group(0)[1:])
 
 lat = kernel[:, 0]
 lon = kernel[:, 1]
@@ -76,7 +81,7 @@ for it in range(0, nt, 1):
         gl.xformatter = LONGITUDE_FORMATTER
         gl.yformatter = LATITUDE_FORMATTER
         ax.set_title(
-            'r={} km; t={} s'.format(r_comp[ia], 1172+it))
+            'r={} km; t={} s'.format(r_comp[ia], t0+it))
     fname = '_tmp{:03d}.png'.format(it)
     plt.savefig(fname, bbox_inches='tight')
     files.append(fname)
