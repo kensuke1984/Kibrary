@@ -101,7 +101,7 @@ public class LetMeInvert implements Operation {
      */
 	protected double[] alpha;
 	private ObservationEquation eq;
-	private Properties property;
+	private Properties PROPERTY;
 	private Path workPath;
 	private Path outPath;
 	private Set<Station> stationSet;
@@ -156,82 +156,66 @@ public class LetMeInvert implements Operation {
 	private Map<PartialType, Double> dataErrorMap;
 
 	private void checkAndPutDefaults() {
-		if (!property.containsKey("workPath"))
-			property.setProperty("workPath", "");
-		if (!property.containsKey("stationInformationPath"))
+		if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", "");
+		if (!PROPERTY.containsKey("stationInformationPath"))
 			throw new IllegalArgumentException("There is no information about stationInformationPath.");
-		if (!property.containsKey("waveformIDPath"))
+		if (!PROPERTY.containsKey("waveformIDPath"))
 			throw new IllegalArgumentException("There is no information about 'waveformIDPath'.");
-		if (!property.containsKey("waveformPath"))
+		if (!PROPERTY.containsKey("waveformPath"))
 			throw new IllegalArgumentException("There is no information about 'waveformPath'.");
-		if (!property.containsKey("partialIDPath"))
+		if (!PROPERTY.containsKey("partialIDPath"))
 			throw new IllegalArgumentException("There is no information about 'partialIDPath'.");
-		if (!property.containsKey("partialPath"))
+		if (!PROPERTY.containsKey("partialPath"))
 			throw new IllegalArgumentException("There is no information about 'partialPath'.");
-		if (!property.containsKey("inverseMethods"))
-			property.setProperty("inverseMethods", "CG SVD");
-		if (!property.containsKey("weighting"))
-			property.setProperty("weighting", "RECIPROCAL");
-		if (!property.containsKey("time_source"))
-			property.setProperty("time_source", "false");
-		if (!property.containsKey("time_receiver"))
-			property.setProperty("time_receiver", "false");
-		if (!property.containsKey("modelCovariance"))
-			property.setProperty("modelCovariance", "false");
-		if (!property.containsKey("lambdaQ"))
-			property.setProperty("lambdaQ", "0.3");
-		if (!property.containsKey("lambdaMU"))
-			property.setProperty("lambdaMU", "0.03");
-		if (!property.containsKey("gammaQ"))
-			property.setProperty("gammaQ", "0.3");
-		if (!property.containsKey("gammaMU"))
-			property.setProperty("gammaMU", "0.03");
-		if (!property.containsKey("correlationScaling"))
-			property.setProperty("correlationScaling", "1.");
-		if (!property.containsKey("minDistance"))
-			property.setProperty("minDistance", "0.");
-		if (!property.containsKey("maxDistance"))
-			property.setProperty("maxDistance", "360.");
-		if (!property.containsKey("minMw"))
-			property.setProperty("minMw", "0.");
-		if (!property.containsKey("maxMw"))
-			property.setProperty("maxMw", "10.");
-		if (!property.containsKey("linaInversion"))
-			property.setProperty("linaInversion", "false");
-		if (!property.containsKey("jackknife"))
-			property.setProperty("jackknife", "false");
-		if (!property.containsKey("conditioner"))
-			property.setProperty("conditioner", "false");
-		if (!property.containsKey("lowMemoryCost"))
-			property.setProperty("lowMemoryCost", "false");
-		if (!property.containsKey("nStepsForLowMemoryMode"))
-			property.setProperty("nStepsForLowMemoryMode", "10");
-		if (!property.containsKey("usePrecomputedAtA"))
-			property.setProperty("usePrecomputedAtA", "false");
-		if (!property.containsKey("checkerboard"))
-			property.setProperty("checkerboard", "false");
-		if (!property.containsKey("trimWindow"))
-			property.setProperty("trimWindow", "false");
-		if (!property.containsKey("regularizationMuQ"))
-			property.setProperty("regularizationMuQ", "false");
-		if (!property.containsKey("scale_freq_ata"))
-			property.setProperty("scale_freq_ata", "1.");
-		if (!property.containsKey("applyEventAmpCorr"))
-			property.setProperty("applyEventAmpCorr", "false");
-		if (!property.containsKey("correct3DFocusing"))
-			property.setProperty("correct3DFocusing", "false");
+		if (!PROPERTY.containsKey("inverseMethods")) PROPERTY.setProperty("inverseMethods", "CG SVD");
+		if (!PROPERTY.containsKey("weighting")) PROPERTY.setProperty("weighting", "RECIPROCAL");
+		if (!PROPERTY.containsKey("time_source")) PROPERTY.setProperty("time_source", "false");
+		if (!PROPERTY.containsKey("time_receiver")) PROPERTY.setProperty("time_receiver", "false");
+		if (!PROPERTY.containsKey("modelCovariance")) PROPERTY.setProperty("modelCovariance", "false");
+		if (!PROPERTY.containsKey("lambdaQ")) PROPERTY.setProperty("lambdaQ", "0.3");
+		if (!PROPERTY.containsKey("lambdaMU")) PROPERTY.setProperty("lambdaMU", "0.03");
+		if (!PROPERTY.containsKey("gammaQ")) PROPERTY.setProperty("gammaQ", "0.3");
+		if (!PROPERTY.containsKey("gammaMU")) PROPERTY.setProperty("gammaMU", "0.03");
+		if (!PROPERTY.containsKey("correlationScaling")) PROPERTY.setProperty("correlationScaling", "1.");
+		if (!PROPERTY.containsKey("minDistance")) PROPERTY.setProperty("minDistance", "0.");
+		if (!PROPERTY.containsKey("maxDistance")) PROPERTY.setProperty("maxDistance", "360.");
+		if (!PROPERTY.containsKey("minMw")) PROPERTY.setProperty("minMw", "0.");
+		if (!PROPERTY.containsKey("maxMw")) PROPERTY.setProperty("maxMw", "10.");
+		if (!PROPERTY.containsKey("linaInversion")) PROPERTY.setProperty("linaInversion", "false");
+		if (!PROPERTY.containsKey("jackknife"))
+			PROPERTY.setProperty("jackknife", "false");
+		if (!PROPERTY.containsKey("conditioner"))
+			PROPERTY.setProperty("conditioner", "false");
+		if (!PROPERTY.containsKey("lowMemoryCost"))
+			PROPERTY.setProperty("lowMemoryCost", "false");
+		if (!PROPERTY.containsKey("nStepsForLowMemoryMode"))
+			PROPERTY.setProperty("nStepsForLowMemoryMode", "10");
+		if (!PROPERTY.containsKey("usePrecomputedAtA"))
+			PROPERTY.setProperty("usePrecomputedAtA", "false");
+		if (!PROPERTY.containsKey("checkerboard"))
+			PROPERTY.setProperty("checkerboard", "false");
+		if (!PROPERTY.containsKey("trimWindow"))
+			PROPERTY.setProperty("trimWindow", "false");
+		if (!PROPERTY.containsKey("regularizationMuQ"))
+			PROPERTY.setProperty("regularizationMuQ", "false");
+		if (!PROPERTY.containsKey("scale_freq_ata"))
+			PROPERTY.setProperty("scale_freq_ata", "1.");
+		if (!PROPERTY.containsKey("applyEventAmpCorr"))
+			PROPERTY.setProperty("applyEventAmpCorr", "false");
+		if (!PROPERTY.containsKey("correct3DFocusing"))
+			PROPERTY.setProperty("correct3DFocusing", "false");
 		
 		// additional unused info
-		property.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
-//		property.setProperty("STF catalogue", GlobalCMTCatalog.);
+		PROPERTY.setProperty("CMTcatalogue", GlobalCMTCatalog.getCatalogPath().toString());
+//		PROPERTY.setProperty("STF catalogue", GlobalCMTCatalog.);
 	}
 
 	private void set() {
 		checkAndPutDefaults();
-		workPath = Paths.get(property.getProperty("workPath"));
+		workPath = Paths.get(PROPERTY.getProperty("workPath"));
 		if (!Files.exists(workPath))
 			throw new RuntimeException("The workPath: " + workPath + " does not exist");
-		if (property.containsKey("outPath"))
+		if (PROPERTY.containsKey("outPath"))
 			outPath = getPath("outPath");
 		else
 			outPath = workPath.resolve(Paths.get("lmi" + Utilities.getTemporaryString()));
@@ -241,31 +225,31 @@ public class LetMeInvert implements Operation {
 		partialPath = getPath("partialPath");
 		partialIDPath = getPath("partialIDPath");
 		unknownParameterListPath = getPath("unknownParameterListPath");
-		if (property.containsKey("alpha"))
-			alpha = Arrays.stream(property.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
+		if (PROPERTY.containsKey("alpha"))
+			alpha = Arrays.stream(PROPERTY.getProperty("alpha").split("\\s+")).mapToDouble(Double::parseDouble)
 					.toArray();
-		inverseMethods = Arrays.stream(property.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
+		inverseMethods = Arrays.stream(PROPERTY.getProperty("inverseMethods").split("\\s+")).map(InverseMethodEnum::of)
 				.collect(Collectors.toSet());
 		inverseMethods.stream().forEach(method -> System.out.println(method));
-		weightingType = WeightingType.valueOf(property.getProperty("weighting"));
-		time_source = Boolean.parseBoolean(property.getProperty("time_source"));
-		time_receiver = Boolean.parseBoolean(property.getProperty("time_receiver"));
+		weightingType = WeightingType.valueOf(PROPERTY.getProperty("weighting"));
+		time_source = Boolean.parseBoolean(PROPERTY.getProperty("time_source"));
+		time_receiver = Boolean.parseBoolean(PROPERTY.getProperty("time_receiver"));
 		if (weightingType.equals(WeightingType.TAKEUCHIKOBAYASHI) || weightingType.equals(WeightingType.FINAL)) {
-			if (!property.containsKey("gamma"))
+			if (!PROPERTY.containsKey("gamma"))
 				throw new RuntimeException("gamma must be set in oreder to use TAKEUCHIKOBAYASHI or FINAL weighting scheme");
-			gamma = Double.parseDouble(property.getProperty("gamma"));
+			gamma = Double.parseDouble(PROPERTY.getProperty("gamma"));
 		}
-		if (!property.containsKey("phases"))
+		if (!PROPERTY.containsKey("phases"))
 			phases = null;
 		else
-			phases = Arrays.stream(property.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
+			phases = Arrays.stream(PROPERTY.getProperty("phases").trim().split("\\s+")).toArray(String[]::new);
 		//
-		if (!property.containsKey("combinationType"))
+		if (!PROPERTY.containsKey("combinationType"))
 			combinationType = null;
 		else
-			combinationType = CombinationType.valueOf(property.getProperty("combinationType"));
+			combinationType = CombinationType.valueOf(PROPERTY.getProperty("combinationType"));
 		//
-		if (!property.containsKey("nUnknowns"))
+		if (!PROPERTY.containsKey("nUnknowns"))
 			nUnknowns = null;
 		else if (combinationType == null) {
 			throw new RuntimeException("Error: a combinationType "
@@ -273,7 +257,7 @@ public class LetMeInvert implements Operation {
 		}
 		else {
 			nUnknowns = new HashMap<>();
-			String[] args = property.getProperty("nUnknowns").trim().split("\\s+");
+			String[] args = PROPERTY.getProperty("nUnknowns").trim().split("\\s+");
 			if (combinationType.equals(CombinationType.CORRIDOR_TRIANGLE)
 					|| combinationType.equals(CombinationType.CORRIDOR_BOXCAR)) {
 				if (args.length % 3 != 0)
@@ -299,10 +283,10 @@ public class LetMeInvert implements Operation {
 				throw new IllegalArgumentException("Error: unknown combinationType " + combinationType);
 			}
 		}
-		if (property.containsKey("DataSelectionInformationFile")) {
-			System.out.println("Using dataSelectionInformationFile " + property.getProperty("DataSelectionInformationFile"));
+		if (PROPERTY.containsKey("DataSelectionInformationFile")) {
+			System.out.println("Using dataSelectionInformationFile " + PROPERTY.getProperty("DataSelectionInformationFile"));
 			try {
-				selectionInfo = DataSelectionInformationFile.read(Paths.get(property.getProperty("DataSelectionInformationFile")));
+				selectionInfo = DataSelectionInformationFile.read(Paths.get(PROPERTY.getProperty("DataSelectionInformationFile")));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -310,76 +294,79 @@ public class LetMeInvert implements Operation {
 		else
 			selectionInfo = null;
 		
-		modelCovariance = Boolean.valueOf(property.getProperty("modelCovariance"));
+		modelCovariance = Boolean.valueOf(PROPERTY.getProperty("modelCovariance"));
 		
 		if (modelCovariance) {
-			if (!property.containsKey("cm0"))
+			if (!PROPERTY.containsKey("cm0"))
 				throw new RuntimeException("cm0 must be set when modelCovariance=true");
-			if (!property.containsKey("cmH"))
+			if (!PROPERTY.containsKey("cmH"))
 				throw new RuntimeException("cmH must be set when modelCovariance=true");
-			if (!property.containsKey("cmV"))
+			if (!PROPERTY.containsKey("cmV"))
 				throw new RuntimeException("cmV must be set when modelCovariance=true");
 			
-			cm0 = Double.parseDouble(property.getProperty("cm0"));
-			cmH = Double.parseDouble(property.getProperty("cmH"));
-			cmV = Double.parseDouble(property.getProperty("cmV"));
+			cm0 = Double.parseDouble(PROPERTY.getProperty("cm0"));
+			cmH = Double.parseDouble(PROPERTY.getProperty("cmH"));
+			cmV = Double.parseDouble(PROPERTY.getProperty("cmV"));
 		}
 		
-		regularizationMuQ = Boolean.parseBoolean(property.getProperty("regularizationMuQ"));
-		lambdaQ = Double.valueOf(property.getProperty("lambdaQ"));
-		lambdaMU = Double.valueOf(property.getProperty("lambdaMU"));
-		lambda00 = Double.valueOf(property.getProperty("lambda00"));
-		lambdaVp = Double.valueOf(property.getProperty("lambdaVp"));
-		gammaQ = Double.valueOf(property.getProperty("gammaQ"));
-		gammaMU = Double.valueOf(property.getProperty("gammaMU"));
-		gamma00 = Double.valueOf(property.getProperty("gamma00"));
-		gammaVp = Double.valueOf(property.getProperty("gammaVp"));
-		correlationScaling = Double.valueOf(property.getProperty("correlationScaling"));
-		minDistance = Double.parseDouble(property.getProperty("minDistance"));
-		maxDistance = Double.parseDouble(property.getProperty("maxDistance"));
-		if (property.getProperty("unknownParameterWeightType") == null)
+		regularizationMuQ = Boolean.parseBoolean(PROPERTY.getProperty("regularizationMuQ"));
+		if (regularizationMuQ) {
+			lambdaQ = Double.valueOf(PROPERTY.getProperty("lambdaQ"));
+			lambdaMU = Double.valueOf(PROPERTY.getProperty("lambdaMU"));
+			lambda00 = Double.valueOf(PROPERTY.getProperty("lambda00"));
+			lambdaVp = Double.valueOf(PROPERTY.getProperty("lambdaVp"));
+			gammaQ = Double.valueOf(PROPERTY.getProperty("gammaQ"));
+			gammaMU = Double.valueOf(PROPERTY.getProperty("gammaMU"));
+			gamma00 = Double.valueOf(PROPERTY.getProperty("gamma00"));
+			gammaVp = Double.valueOf(PROPERTY.getProperty("gammaVp"));
+		}
+		
+		correlationScaling = Double.valueOf(PROPERTY.getProperty("correlationScaling"));
+		minDistance = Double.parseDouble(PROPERTY.getProperty("minDistance"));
+		maxDistance = Double.parseDouble(PROPERTY.getProperty("maxDistance"));
+		if (PROPERTY.getProperty("unknownParameterWeightType") == null)
 			unknownParameterWeightType = null;
 		else {
-			unknownParameterWeightType = UnknownParameterWeightType.valueOf(property.getProperty("unknownParameterWeightType"));
+			unknownParameterWeightType = UnknownParameterWeightType.valueOf(PROPERTY.getProperty("unknownParameterWeightType"));
 			System.out.println("--->Weighting unkown parameters using type " + unknownParameterWeightType);
 		}
-		minMw = Double.parseDouble(property.getProperty("minMw"));
-		maxMw = Double.parseDouble(property.getProperty("maxMw"));
+		minMw = Double.parseDouble(PROPERTY.getProperty("minMw"));
+		maxMw = Double.parseDouble(PROPERTY.getProperty("maxMw"));
 		
-		linaInversion = Boolean.parseBoolean(property.getProperty("linaInversion"));
+		linaInversion = Boolean.parseBoolean(PROPERTY.getProperty("linaInversion"));
 		
-		verticalMapping = property.containsKey("verticalMapping") ? Paths.get(property.getProperty("verticalMapping")) : null;
+		verticalMapping = PROPERTY.containsKey("verticalMapping") ? Paths.get(PROPERTY.getProperty("verticalMapping")) : null;
 		
-		jackknife = Boolean.parseBoolean(property.getProperty("jackknife"));
+		jackknife = Boolean.parseBoolean(PROPERTY.getProperty("jackknife"));
 		if (jackknife)
-			nRealisation = Integer.parseInt(property.getProperty("nRealisation"));
+			nRealisation = Integer.parseInt(PROPERTY.getProperty("nRealisation"));
 		
-		conditioner = Boolean.parseBoolean(property.getProperty("conditioner"));
+		conditioner = Boolean.parseBoolean(PROPERTY.getProperty("conditioner"));
 		
-		lowMemoryCost = Boolean.parseBoolean(property.getProperty("lowMemoryCost"));
+		lowMemoryCost = Boolean.parseBoolean(PROPERTY.getProperty("lowMemoryCost"));
 		
-		nStepsForLowMemoryMode = Integer.parseInt(property.getProperty("nStepsForLowMemoryMode"));
+		nStepsForLowMemoryMode = Integer.parseInt(PROPERTY.getProperty("nStepsForLowMemoryMode"));
 		
-		usePrecomputedAtA = Boolean.parseBoolean(property.getProperty("usePrecomputedAtA"));
+		usePrecomputedAtA = Boolean.parseBoolean(PROPERTY.getProperty("usePrecomputedAtA"));
 		if (usePrecomputedAtA) {
-			precomputedAtdPath = Stream.of(property.getProperty("precomputedAtdPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
-			precomputedAtAPath = Stream.of(property.getProperty("precomputedAtAPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
+			precomputedAtdPath = Stream.of(PROPERTY.getProperty("precomputedAtdPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
+			precomputedAtAPath = Stream.of(PROPERTY.getProperty("precomputedAtAPath").split("\\s+")).map(p -> Paths.get(p.trim())).collect(Collectors.toList()).toArray(new Path[0]);
 		}
 		
-		checkerboard = Boolean.parseBoolean(property.getProperty("checkerboard"));
+		checkerboard = Boolean.parseBoolean(PROPERTY.getProperty("checkerboard"));
 		if (checkerboard)
-			checkerboardPerturbationPath = Paths.get(property.getProperty("checkerboardPerturbationPath"));
+			checkerboardPerturbationPath = Paths.get(PROPERTY.getProperty("checkerboardPerturbationPath"));
 		
-		trimWindow = Boolean.parseBoolean(property.getProperty("trimWindow"));
+		trimWindow = Boolean.parseBoolean(PROPERTY.getProperty("trimWindow"));
 		if (trimWindow) {
-			trimPoint = Double.parseDouble(property.getProperty("trimPoint"));
-			keepBefore = Boolean.parseBoolean(property.getProperty("keepBefore"));
+			trimPoint = Double.parseDouble(PROPERTY.getProperty("trimPoint"));
+			keepBefore = Boolean.parseBoolean(PROPERTY.getProperty("keepBefore"));
 		}
 		
-		if (property.containsKey("eventClusterPath")) {
-			eventClusterPath = Paths.get(property.getProperty("eventClusterPath"));
-			clusterIndex = Arrays.stream(property.getProperty("clusterIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
-			azimuthIndex = Arrays.stream(property.getProperty("azimuthIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
+		if (PROPERTY.containsKey("eventClusterPath")) {
+			eventClusterPath = Paths.get(PROPERTY.getProperty("eventClusterPath"));
+			clusterIndex = Arrays.stream(PROPERTY.getProperty("clusterIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
+			azimuthIndex = Arrays.stream(PROPERTY.getProperty("azimuthIndex").trim().split(" ")).mapToInt(Integer::parseInt).toArray();
 			System.out.println("Using cluster file with clusterIndex=" + clusterIndex[0] + " and azimuthIndex=" + azimuthIndex[0]);
 		}
 		
@@ -393,13 +380,13 @@ public class LetMeInvert implements Operation {
 			
 		}
 		
-		scale_freq_ata = Double.parseDouble(property.getProperty("scale_freq_ata"));
+		scale_freq_ata = Double.parseDouble(PROPERTY.getProperty("scale_freq_ata"));
 		
 		dataErrorMap = null;
 		
-		applyEventAmpCorr = Boolean.parseBoolean(property.getProperty("applyEventAmpCorr"));
+		applyEventAmpCorr = Boolean.parseBoolean(PROPERTY.getProperty("applyEventAmpCorr"));
 		
-		correct3DFocusing = Boolean.parseBoolean(property.getProperty("correct3DFocusing"));
+		correct3DFocusing = Boolean.parseBoolean(PROPERTY.getProperty("correct3DFocusing"));
 	}
 
 	public static void writeDefaultPropertiesFile() throws IOException {
@@ -440,9 +427,9 @@ public class LetMeInvert implements Operation {
 			pw.println("##double gamma. Must be set only if TAKEUCHIKOBAYASHI weigthing is used");
 			pw.println("#gamma 30.");
 			pw.println("##boolean time_source (false). Time partial for the source");
-			pw.println("time_source false");
+			pw.println("#time_source");
 			pw.println("##boolean time_receiver (false). Time partial for the receiver");
-			pw.println("time_receiver false");
+			pw.println("#time_receiver");
 			pw.println("##Use phases (blank = all phases)");
 			pw.println("#phases");
 			pw.println("#verticalMapping");
@@ -508,7 +495,7 @@ public class LetMeInvert implements Operation {
 	}
 
 	public LetMeInvert(Properties property) throws IOException {
-		this.property = (Properties) property.clone();
+		this.PROPERTY = (Properties) property.clone();
 		set();
 		if (!canGO())
 			throw new RuntimeException();
@@ -785,7 +772,6 @@ public class LetMeInvert implements Operation {
 			}
 		}
 		
-		//
 		if (correct3DFocusing) {
 			System.out.println("Correcting for 3D focusing");
 			for (int i = 0; i < ids.length; i++) {
@@ -1607,7 +1593,7 @@ public class LetMeInvert implements Operation {
 		try {
 			System.err.println("The output folder: " + outPath);
 			Files.createDirectory(outPath);
-			if (property != null)
+			if (PROPERTY != null)
 				writeProperties(outPath.resolve("lmi.properties"));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -2315,7 +2301,7 @@ public class LetMeInvert implements Operation {
 
 	@Override
 	public Properties getProperties() {
-		return (Properties) property.clone();
+		return (Properties) PROPERTY.clone();
 	}
 	
 }

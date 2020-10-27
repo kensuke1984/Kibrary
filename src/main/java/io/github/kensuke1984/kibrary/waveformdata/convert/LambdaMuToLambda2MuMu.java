@@ -23,8 +23,16 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+/**
+ * Convert partial derivatives for LAMBDA and MU to derivatives for P- and S-velocity moduli, M and G
+ * @author anselme
+ */
 public class LambdaMuToLambda2MuMu {
 	
+	/**
+	 * @param args: args[0]: path of partialID file; args[1]: path of partial file
+	 * @throws IOException
+	 */
 	public static void main(String[] args) throws IOException {
 		Path partialIDPath = Paths.get(args[0]);
 		Path partialPath = Paths.get(args[1]);

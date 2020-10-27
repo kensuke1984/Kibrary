@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,25 +21,36 @@ import edu.sc.seis.TauP.SphericalCoords;
 public class StaticCorrectionMap {
 
 	public static void main(String[] args) throws IOException {
-//		Path fujiStaticPath = Paths.get(args[0]);
+		Path fujiStaticPath = Paths.get(args[0]);
+		double dl = 1;
+		boolean from1D = false;
+		Path fujiStaticPath2 = null;
+		if (args.length == 2)
+			fujiStaticPath2 = Paths.get(args[1]);
+		Path clusterPath = null;
+		int cluster_index = 4;
+		Path rootPath = Paths.get(".");
+		Path outpath = rootPath.resolve("corrections_map_S-v2.txt");
+		
+//		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+//		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg_forSpecfemCorrections.inf");
+		
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_FAR_SLAB/filtered_12.5-200s/fujiStaticCorrection_S_60deg.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_astfCCAmpcorr_12.5-200s/fujiStaticCorrection_S_60deg.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_DPP/filtered_12.5-200s/fujiStaticCorrection_ScS.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_HLH/filtered_12.5-200s/fujiStaticCorrection_ScS_70deg.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_MANTLE_NODPP/filtered_12.5-200s/fujiStaticCorrection_ScS.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_UPPER_MANTLE/filtered_stf_12.5-200s/fujiStaticCorrection_S.dat");
-		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_SOURCE_SIDE/filtered_12.5-200s/fujiStaticCorrection_S.dat");
+//		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_SOURCE_SIDE/filtered_12.5-200s/fujiStaticCorrection_S.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/filtered_12.5-200s/fujiStaticCorrection_ScS.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/filtered_12.5-200s/fujiStaticCorrection_ScS_median.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/synthetic_cl3s0_it2/filtered_nostf_12.5-200s/fujiStaticCorrection_ScS_with_prem.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/SIMPLE/filtered_12.5-200s/fujiStaticCorrection_ScS_longer.dat");
 //		Path fujiStaticPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/SIMPLE/filtered_12.5-200s/fujiStaticCorrection_ScS_longer.dat");
 		
-		boolean from1D = false;
 		Path fujiStaticPath_low = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/SIMPLE/synthetic_cl4_low/filtered_triangle_12.5-200s/fujiStaticCorrection_ScS.dat");
 		Path fujiStaticPath_high = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/SIMPLE/synthetic_cl4_high/filtered_triangle_12.5-200s/fujiStaticCorrection_ScS_longer.dat");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/SIMPLE/synthetic_PREM_Q165");
-		
 		
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_FAR_SLAB/filtered_12.5-200s/map");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_astfCCAmpcorr_12.5-200s/corrections");
@@ -46,33 +58,24 @@ public class StaticCorrectionMap {
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_HLH/filtered_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_MANTLE_NODPP/filtered_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_UPPER_MANTLE/filtered_stf_12.5-200s");
-		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_SOURCE_SIDE/filtered_12.5-200s");
+//		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/EFFECT_OF_SOURCE_SIDE/filtered_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/filtered_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/filtered_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/cluster3/synthetic_cl3s0_it2/filtered_nostf_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL3/SIMPLE/filtered_12.5-200s");
 //		Path rootPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/SPECFEM_MODELS/CL4/SIMPLE/filtered_12.5-200s");
 		
-		Path fujiStaticPath2 = null;
-		if (args.length == 2)
-			fujiStaticPath2 = Paths.get(args[1]);
-		
-//		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg_forSpecfemCorrections.inf");
-		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
-		List<EventCluster> clusters = EventCluster.readClusterFile(clusterPath);
+		List<EventCluster> clusters = new ArrayList<>();
 		Set<Integer> clusterIndexSet = new HashSet<Integer>();
+		if (clusterPath != null) clusters = EventCluster.readClusterFile(clusterPath);
 		
 //		EventCluster.writeAzimuthSeparation(clusters, Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/azimuthSeparation_cluster-6deg_forSpecfemCorrections.inf"));
-		
-		int cluster_index = 4;
 		
 		clusterIndexSet.add(cluster_index);
 //		clusterIndexSet.add(4);
 //		clusterIndexSet.add(5);
 		Set<GlobalCMTID> usedIdSet = clusters.stream().filter(c -> clusterIndexSet.contains(c.getIndex())).map(c -> c.getID())
 				.collect(Collectors.toSet());
-		
-		System.out.println(usedIdSet.size());
 		
 //		double distance = 71;
 //		Path distanceLinePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/distance_line_cl4_71deg.txt");
@@ -110,9 +113,8 @@ public class StaticCorrectionMap {
 					fujiCorrections.add(corr);
 			}
 		}
-		else {
-			fujiCorrections = StaticCorrectionFile.read(fujiStaticPath);
-		}
+		else fujiCorrections = StaticCorrectionFile.read(fujiStaticPath);
+		
 		Set<StaticCorrection> corrSet = new HashSet<>();
 		
 		if (fujiStaticPath2 != null) {
@@ -132,7 +134,7 @@ public class StaticCorrectionMap {
 		
 		fujiCorrections = fujiCorrections.stream().filter(c -> usedIdSet.contains(c.getGlobalCMTID())).collect(Collectors.toSet());
 		
-		double dl = 1;
+		
 		double[][] mapCorr = null;
 		if (from1D)
 			mapCorr = averageMap(fujiCorrections, dl);
@@ -140,10 +142,10 @@ public class StaticCorrectionMap {
 			mapCorr = averageMap(fujiCorrections, dl, cluster);
 //		double[][] mapCorr = averageMapAtStation(fujiCorrections);
 		
-//		Path outpath3 = Paths.get("corrections_map.txt");
-//		Path outpath3 = rootPath.resolve("corrections_map_ScS_longer_65.txt");
-		Path outpath3 = rootPath.resolve("corrections_map_S-v2.txt");
-		PrintWriter pw3 = new PrintWriter(outpath3.toFile());
+//		Path outpath = Paths.get("corrections_map.txt");
+//		Path outpath = rootPath.resolve("corrections_map_ScS_longer_65.txt");
+//		Path outpath = rootPath.resolve("corrections_map_S-v2.txt");
+		PrintWriter pw3 = new PrintWriter(outpath.toFile());
 		for (int i = 0; i < mapCorr.length; i++) {
 			double lon = i * dl + dl/2.;
 			lon = Math.round(lon * 1e3) / 1e3;
@@ -155,16 +157,18 @@ public class StaticCorrectionMap {
 		}
 		pw3.close();
 		
-		//
-//		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == cluster_index).findFirst().get();
-		double[] averageCorridor = averageInCorridor(fujiCorrections, cluster.getAzimuthSlices(), cluster.getCenterPosition());
-		Path outpath4 = rootPath.resolve("corrections_corridor.txt");
-		PrintWriter pw4 = new PrintWriter(outpath4.toFile());
-		for (int i = 0; i < averageCorridor.length; i++) {
-			pw4.println(i + " " + averageCorridor[i]);
+		if (clusterPath != null) {
+	//		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == cluster_index).findFirst().get();
+			double[] averageCorridor = averageInCorridor(fujiCorrections, cluster.getAzimuthSlices(), cluster.getCenterPosition());
+			Path outpath2 = rootPath.resolve("corrections_corridor.txt");
+			PrintWriter pw4 = new PrintWriter(outpath2.toFile());
+			for (int i = 0; i < averageCorridor.length; i++) {
+				pw4.println(i + " " + averageCorridor[i]);
+			}
+			pw4.close();
 		}
-		pw4.close();
 	}
+	
 	
 	public static double[][] averageMap(Set<StaticCorrection> ratios, double dl) {
 		int nlat = (int) (180 / dl);

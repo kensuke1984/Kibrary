@@ -301,6 +301,7 @@ public class ModelCovarianceMatrix {
 	
 	private void computeMatrix() {
 		int n = parameters.size();
+		System.out.println("Computing model covariance matrix with " + n + " parameters");
 		cm = new Array2DRowRealMatrix(n, n);
 		
 		List<List<Integer>> tmpIndexes = new ArrayList<>();
@@ -375,6 +376,7 @@ public class ModelCovarianceMatrix {
 	}
 	
 	public void computeCholeskyDecomposition() {
+		System.out.println("Computing Cholesky decomposition");
 		CholeskyDecomposition cholesky = new CholeskyDecomposition(cm);
 		l = cholesky.getL();
 		lt = cholesky.getLT();
