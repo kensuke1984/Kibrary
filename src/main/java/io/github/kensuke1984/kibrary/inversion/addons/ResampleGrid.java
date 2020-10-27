@@ -84,7 +84,11 @@ public class ResampleGrid {
 		try {
 			List<UnknownParameter> parameterstmp = UnknownParameterFile.read(parameterPath);
 			double r0 = parameterstmp.stream().map(u -> u.getLocation().getR()).findFirst().get();
-			List<UnknownParameter> parameters = parameterstmp.stream().filter(u -> u.getLocation().getR() == r0).collect(Collectors.toList());
+			PartialType type = parameterstmp.stream().map(UnknownParameter::getPartialType).findFirst().get();
+			List<UnknownParameter> parameters = parameterstmp.stream()
+					.filter(u -> u.getLocation().getR() == r0
+							&& u.getPartialType().equals(type))
+					.collect(Collectors.toList());
 //			List<UnknownParameter> parameters = parameterstmp;
 			
 			double dl = parameterstmp.stream().mapToDouble(p -> Math.abs(p.getLocation().getLatitude() - parameterstmp.get(0).getLocation().getLatitude())).distinct().sorted().toArray()[1];
@@ -112,21 +116,22 @@ public class ResampleGrid {
 			List<HorizontalPosition> horizontalPositions32 = sampler32.getResampledPositions();
 			int[] iResampledToTarget32 = sampler32.getiResampledToTarget();
 			
-			String tmpString = Utilities.getTemporaryString();
-			Path parameters2Path = Paths.get("newParamaters_sampled2_" + tmpString + ".inf");
-			Path parameters3Path = Paths.get("newParamaters_sampled3_" + tmpString + ".inf");
-			Path parameters32Path = Paths.get("newParamaters_sampled32_" + tmpString + ".inf");
-			Path mapping2Path = Paths.get("horizontalMapping_sampled2_" + tmpString + ".inf");
-			Path mapping3Path = Paths.get("horizontalMapping_sampled3_" + tmpString + ".inf");
-			Path mapping32Path = Paths.get("horizontalMapping_sampled32_" + tmpString + ".inf");
+//			String tmpString = "_" + Utilities.getTemporaryString();
+			String tmpString = "";
+			Path parameters2Path = Paths.get("newParamaters_sampled2" + tmpString + ".inf");
+			Path parameters3Path = Paths.get("newParamaters_sampled3" + tmpString + ".inf");
+//			Path parameters32Path = Paths.get("newParamaters_sampled32" + tmpString + ".inf");
+			Path mapping2Path = Paths.get("horizontalMapping_sampled2" + tmpString + ".inf");
+			Path mapping3Path = Paths.get("horizontalMapping_sampled3" + tmpString + ".inf");
+			Path mapping32Path = Paths.get("horizontalMapping_sampled32" + tmpString + ".inf");
 			
 			PrintWriter pw2 = new PrintWriter(mapping2Path.toFile());
 			PrintWriter pw3 = new PrintWriter(mapping3Path.toFile());
 			PrintWriter pw32 = new PrintWriter(mapping32Path.toFile());
 			
-//			UnknownParameterFile.write(parameters2, parameters2Path);
-//			UnknownParameterFile.write(parameters3, parameters3Path);
-//			UnknownParameterFile.write(parameters32, parameters32Path);
+			UnknownParameterFile.write(parameters2Path, parameters2);
+			UnknownParameterFile.write(parameters3Path, parameters3);
+//			UnknownParameterFile.write(parameters32Path, parameters32);
 			
 			for (int i = 0; i < iResampledToTarget2.length; i++)
 				pw2.println(horizontalPositions2.get(i).getLatitude() + " " + horizontalPositions2.get(i).getLongitude() + " " + "0." + " " + iResampledToTarget2[i]);

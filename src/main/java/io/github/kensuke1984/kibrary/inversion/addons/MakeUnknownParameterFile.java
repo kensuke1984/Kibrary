@@ -30,7 +30,7 @@ public class MakeUnknownParameterFile {
 		// partial types
 		int nType = args.length - 3;
 		PartialType[] types = new PartialType[nType];
-		for (int i = 3; i < nType; i++) types[i] = PartialType.valueOf(args[i]);
+		for (int i = 0; i < nType; i++) types[i] = PartialType.valueOf(args[i+3]);
 		
 		try {
 			// read perturbation points lat lon r
