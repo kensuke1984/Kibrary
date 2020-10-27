@@ -7,24 +7,23 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/tomoTool.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/log4j-1.2.17.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/slf4j-api-1.7.21.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/slf4j-log4j12-1.7.21.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/seedCodec-1.0.11.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/activation-1.1.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/seisFile-1.8.0.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/javax.mail-1.5.6.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/TauP-2.4.5.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/epsgraphics-1.2.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/commons-cli-1.4.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/commons-net-3.6.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/commons-io-2.6.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/commons-email-1.5.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/commons-lang3-3.9.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/commons-math3-3.6.1.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/netcdfAll-4.6.4.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/jcommon-1.0.23.jar"/>
-	<classpathentry kind="lib" path="/home/anselme/git/lib/jfreechart-1.0.19.jar"/>
+	<classpathentry kind="lib" path="lib/activation-1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-email-1.5.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.6.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.9.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-net-3.6.jar"/>
+	<classpathentry kind="lib" path="lib/epsgraphics-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/javax.mail.jar"/>
+	<classpathentry kind="lib" path="lib/jcommon-1.0.23.jar"/>
+	<classpathentry kind="lib" path="lib/jfreechart-1.0.19.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.17.jar"/>
+	<classpathentry kind="lib" path="lib/netcdfAll-4.6.4.jar"/>
+	<classpathentry kind="lib" path="lib/seedCodec-1.0.11.jar"/>
+	<classpathentry kind="lib" path="lib/seisFile-1.8.0.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-api-1.7.21.jar"/>
+	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.7.21.jar"/>
+	<classpathentry kind="lib" path="lib/TauP-2.4.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
