@@ -143,7 +143,7 @@ public class DataSelection implements Operation {
 			pw.println("##double minSNratio (0)");
 			pw.println("#minSNratio");
 			pw.println("#boolean SnScSnPair (false). Impose (s)ScSn in time window set if and only if (s)Sn is in the dataset");
-			pw.println("SnScSnPair false");
+			pw.println("#SnScSnPair false");
 			pw.println("##exclude surface wave (false)");
 			pw.println("#excludeSurfaceWave");
 			pw.println("#minDistance");

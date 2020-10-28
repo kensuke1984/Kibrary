@@ -194,7 +194,7 @@ public class HorizontalParameterMapping {
 		int nNewUnknownSingleType = radii.size() * nNewPoints;
 		int nNewUnknownAllTypes = nNewUnknownSingleType * typeIndexMap.size();
 		
-		System.out.println(nNewUnknownSingleType + " " + nNewUnknownAllTypes);
+//		System.out.println(nNewUnknownSingleType + " " + nNewUnknownAllTypes);
 		
 		for (int i = 0; i < radii.size(); i++) {
 			double r = radii.get(i);
@@ -260,12 +260,11 @@ public class HorizontalParameterMapping {
 //		for (int i = 0; i < originalUnknowns.length; i++) {
 //			System.out.println(i + " " + iOriginalToNew[i]);
 //		}
-//		for (int i = 0; i < nNewUnknown; i++) {
+//		for (int i = 0; i < nNewUnknownAllTypes; i++) {
 //			System.out.println(i);
 //			for (int j = 0; j < iNewToOriginal[i].length; j++)
 //				System.out.println("---> " + iNewToOriginal[i][j]);
 //		}
-		//---
 		
 		unknowns = new UnknownParameter[nNewUnknownAllTypes];
 	}

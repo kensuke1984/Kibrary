@@ -118,30 +118,33 @@ public class ResampleGrid {
 			
 //			String tmpString = "_" + Utilities.getTemporaryString();
 			String tmpString = "";
-			Path parameters2Path = Paths.get("newParamaters_sampled2" + tmpString + ".inf");
-			Path parameters3Path = Paths.get("newParamaters_sampled3" + tmpString + ".inf");
+			Path parameters2Path = Paths.get("newHorizontalPoints_sampled2" + tmpString + ".inf");
+			Path parameters3Path = Paths.get("newHorizontalPoints_sampled3" + tmpString + ".inf");
 //			Path parameters32Path = Paths.get("newParamaters_sampled32" + tmpString + ".inf");
 			Path mapping2Path = Paths.get("horizontalMapping_sampled2" + tmpString + ".inf");
 			Path mapping3Path = Paths.get("horizontalMapping_sampled3" + tmpString + ".inf");
 			Path mapping32Path = Paths.get("horizontalMapping_sampled32" + tmpString + ".inf");
 			
+			PrintWriter pw_hp2 = new PrintWriter(parameters2Path.toFile());
+			PrintWriter pw_hp3 = new PrintWriter(parameters3Path.toFile());
+			
 			PrintWriter pw2 = new PrintWriter(mapping2Path.toFile());
 			PrintWriter pw3 = new PrintWriter(mapping3Path.toFile());
 			PrintWriter pw32 = new PrintWriter(mapping32Path.toFile());
 			
-			UnknownParameterFile.write(parameters2Path, parameters2);
-			UnknownParameterFile.write(parameters3Path, parameters3);
-//			UnknownParameterFile.write(parameters32Path, parameters32);
-			
-			for (int i = 0; i < iResampledToTarget2.length; i++)
+			for (int i = 0; i < horizontalPositions2.size(); i++) {
+				pw_hp2.println(horizontalPositions2.get(i));
 				pw2.println(horizontalPositions2.get(i).getLatitude() + " " + horizontalPositions2.get(i).getLongitude() + " " + "0." + " " + iResampledToTarget2[i]);
-//			
-			for (int i = 0; i < iResampledToTarget3.length; i++)
+			}
+			for (int i = 0; i < horizontalPositions3.size(); i++) {
+				pw_hp3.println(horizontalPositions3.get(i));
 				pw3.println(horizontalPositions3.get(i).getLatitude() + " " + horizontalPositions3.get(i).getLongitude() + " " + "0." + " " + iResampledToTarget3[i]);
-//			
-			for (int i = 0; i < iResampledToTarget32.length; i++)
+			}
+			for (int i = 0; i < horizontalPositions32.size(); i++)
 				pw32.println(horizontalPositions32.get(i).getLatitude() + " " + horizontalPositions32.get(i).getLongitude() + " " + "0." + " " + iResampledToTarget32[i]);
-//			
+			
+			pw_hp2.close();
+			pw_hp3.close();
 			pw2.close();
 			pw3.close();
 			pw32.close();

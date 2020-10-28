@@ -48,7 +48,6 @@ public class CombineParameters {
 			
 			UnknownParameter[] newUnknowns = mapping.getUnknowns();
 			
-			int nOriginal = mapping.getNoriginal();
 			int nNew = mapping.getNnew();
 			
 			Set<Station> stationSet = Stream.of(partials).parallel().map(par -> par.getStation()).collect(Collectors.toSet());
@@ -75,26 +74,30 @@ public class CombineParameters {
 			
 			globalCMTIDSet.stream().forEach(event -> {
 				List<PartialID> eventPartials = Stream.of(partials).filter(par -> par.getGlobalCMTID().equals(event)).collect(Collectors.toList());
-				stationSet.stream().parallel().forEach(station -> {
+				stationSet.stream().forEach(station -> {
 					List<PartialID> stationPartials = eventPartials.stream().filter(par -> par.getStation().equals(station)).collect(Collectors.toList());
 					if (stationPartials.size() > 0) {
-						IntStream.range(0, nNew).parallel().forEach(inew -> {
+						IntStream.range(0, nNew).forEach(inew -> {
 							int[] iOriginals = mapping.getiNewToOriginal(inew);
 							PartialID refID = stationPartials.get(0);
 							RealVector dataVector = new ArrayRealVector(refID.getNpts());
 							
+							System.out.println("---> " + newUnknowns[inew]);
+							
 							for (int iOriginal : iOriginals) {
 								UnknownParameter unknown = originalUnknowns[iOriginal];
+								System.out.println(unknown);
 								
 //								double weight = unknown.getWeighting();
 								
 								double weight = 1.;
 								
-	//							System.out.println("------\n" + unknown.getLocation());
-	//							stationPartials.stream().forEach(par -> System.out.println(par.getPerturbationLocation()));
+								List<PartialID> tmpIDList = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getLocation())
+										&& par.getPartialType().equals(unknown.getPartialType())).collect(Collectors.toList());
+								if (tmpIDList.size() != 1)
+									throw new RuntimeException("Found more than one partialID " + tmpIDList.size());
+								PartialID tmpID = tmpIDList.get(0);
 								
-								PartialID tmpID = stationPartials.stream().parallel().filter(par -> par.getPerturbationLocation().equals(unknown.getLocation())
-										&& par.getPartialType().equals(unknown.getPartialType())).findFirst().get();
 								dataVector = dataVector.add(new ArrayRealVector(tmpID.getData()).mapMultiply(weight));
 								
 //								System.out.println(unknown.getWeighting() + " "  + dataVector.getNorm());

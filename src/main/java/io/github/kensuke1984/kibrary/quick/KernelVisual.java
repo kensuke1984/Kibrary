@@ -62,7 +62,7 @@ public class KernelVisual {
 				
 				Path filePath = dir3.resolve(new Phases(partial.getPhases()).toString()
 						+ "_" + partial.getPartialType() + "_" + partial.getSacComponent()
-						+ String.format("_kernelTemporal_snapshots_t0%d.txt", (int) t0));
+						+ String.format("_kernelTemporal_snapshots_t%05d.txt", (int) t0));
 				
 //				Path filePath_sensitivity = dir3.resolve(new Phases(partial.getPhases()).toString()
 //						+ "_" + partial.getPartialType() + "_" + partial.getSacComponent()
