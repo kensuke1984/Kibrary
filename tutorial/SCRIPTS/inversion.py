@@ -7,10 +7,11 @@ import cartopy.crs as ccrs
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
 import matplotlib.ticker as mticker
 import re
+import sys
 
 mpl.rcParams.update({'font.size': 10})
 
-n_cg = int(args[0])
+n_cg = int(sys.argv[1])
 input_file = 'lmi_ScS/CG/velocityCG{}.txt'.format(n_cg)
 inv_model = np.loadtxt(input_file)
 
@@ -81,6 +82,6 @@ for itype in range(ntype):
         gl.yformatter = LATITUDE_FORMATTER
         ax.set_title(
             'r={} km'.format(r_comp[ia]))
-    fname = 'inversion_model_{}.pdf'.format(itype)
+    fname = 'inversion_model_cg{}_{}.pdf'.format(n_cg, itype)
     plt.savefig(fname, bbox_inches='tight')
     plt.close(fig)
