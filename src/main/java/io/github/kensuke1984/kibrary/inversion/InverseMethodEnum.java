@@ -71,14 +71,15 @@ public enum InverseMethodEnum {
 			return "NNLS";
 		case BICONJUGATE_GRADIENT_STABILIZED_METHOD:
 			return "BCGS";
+		// TODO: implements FCG FCGD NLCG and CCG to work with the workflow. Now works only if CG
 		case FAST_CONJUGATE_GRADIENT:
-			return "CG";
+			return "FCG";
 		case FAST_CONJUGATE_GRADIENT_DAMPED:
-			return "CG";
+			return "FCGD";
 		case NONLINEAR_CONJUGATE_GRADIENT:
-			return "CG";
+			return "NLCG";
 		case CONSTRAINED_CONJUGATE_GRADIENT:
-			return "CG";
+			return "CCG";
 		default:
 			throw new RuntimeException("Unexpected");
 		}

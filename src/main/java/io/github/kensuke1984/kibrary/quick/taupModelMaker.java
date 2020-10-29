@@ -9,7 +9,7 @@ import java.nio.file.StandardOpenOption;
 
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure;
-import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D;
+import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D_deprec;
 import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.HorizontalPosition;
 

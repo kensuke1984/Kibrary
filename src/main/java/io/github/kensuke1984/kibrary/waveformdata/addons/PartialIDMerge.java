@@ -47,7 +47,7 @@ class PartialIDMerge {
 		Set<double[]> periodSet = new HashSet<>();
 		Set<Phase> phaseSet = new HashSet<>();
 		
-		Stream.concat(Stream.of(src0).filter(id -> id.getPartialType().equals(PartialType.PARVS)), Stream.of(src1)).forEach(id -> {
+		Stream.concat(Stream.of(src0), Stream.of(src1)).forEach(id -> {
 			globalCMTIDSet.add(id.getGlobalCMTID());
 			stationSet.add(id.getStation());
 			perturbationPoints.add(id.getPerturbationLocation());

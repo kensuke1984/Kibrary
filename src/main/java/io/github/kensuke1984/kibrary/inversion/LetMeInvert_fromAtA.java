@@ -41,7 +41,7 @@ import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionType;
 import io.github.kensuke1984.kibrary.datacorrection.TakeuchiStaticCorrection;
 import io.github.kensuke1984.kibrary.inversion.addons.DampingType;
 import io.github.kensuke1984.kibrary.inversion.addons.ModelCovarianceMatrix;
-import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D;
+import io.github.kensuke1984.kibrary.inversion.addons.VelocityField3D_deprec;
 import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
@@ -697,7 +697,7 @@ public class LetMeInvert_fromAtA implements Operation {
 							if (model != null) {
 								System.out.println("Outputting " + maxNumVector + " velocity perturbation vectors...");
 								Path inversionResultPath = outPaths[iweight][ifreq][iphase][icorr];
-								VelocityField3D.outputVelocity(model, perturbationLayerFile, maxNumVector, deltaDegree, inversionResultPath);
+								VelocityField3D_deprec.outputVelocity(model, perturbationLayerFile, maxNumVector, deltaDegree, inversionResultPath);
 							}
 						} catch (IOException e) {
 							e.printStackTrace();

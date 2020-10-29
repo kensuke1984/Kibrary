@@ -523,7 +523,7 @@ public class ObservationEquation {
 			RealVector weightingVector = DVECTOR.getWeightingVector(k);
 			
 			//only for 1D!!! TO CHANGE
-			weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getWeighting());
+//			weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getWeighting());
 
 			double[] partial = id.getData();
 			
