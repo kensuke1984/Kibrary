@@ -71,7 +71,7 @@ public class RadialSecondOrderDifferentialOperator {
 				D2.setEntry(c, c, 0.);
 				continue;
 			}
-
+			
 			indexNonZeroElements[c] = new int[] {c, c+1, c+2};
 			valueNonZeroElements[c] = new double[] {dr2*coeff, -2*dr2*coeff, dr2*coeff};
 //			D2.setEntry(c, c, dr2 * coeff);
@@ -81,11 +81,12 @@ public class RadialSecondOrderDifferentialOperator {
 //			D2.setEntry(c, c, -2*dr2 * coeff);
 //			D2.setEntry(c, c+1, dr2 * coeff);
 			
-//			D2.setEntry(c, c, 0.);
-//			D2.setEntry(c, c+1, 0.);
+			D2.setEntry(c, c, 0.);
+			D2.setEntry(c, c+1, 0.);
 			
-			D2.setEntry(c, c, -dr2 * coeff);
-			D2.setEntry(c, c+1, dr2 * coeff);
+			D2.setEntry(c, c, -2*dr2 * coeff);
+			D2.setEntry(c, c+1, 1*dr2 * coeff);
+//			D2.setEntry(c, c+2, dr2 * coeff);
 			
 			for (int i = 1; i < m-1; i++) {
 				indexNonZeroElements[i + c] = new int[] {i+c-1, i+c, i+c+1};
@@ -109,7 +110,8 @@ public class RadialSecondOrderDifferentialOperator {
 //			D2.setEntry(c+m-1, c+m-2, -1*dr2*coeff*5);
 //			D2.setEntry(c+m-1, c+m-1, 1*dr2*coeff*5);
 			
-			D2.setEntry(c+m-1, c+m-2, 1*dr2*coeff);
+//			D2.setEntry(c+m-1, c+m-2, 1*dr2*coeff);
+			D2.setEntry(c+m-2, c+m-1, 1*dr2*coeff);
 			D2.setEntry(c+m-1, c+m-1, -1*dr2*coeff);
 			
 			c += m;

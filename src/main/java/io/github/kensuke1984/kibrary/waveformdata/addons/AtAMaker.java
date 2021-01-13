@@ -1740,6 +1740,8 @@ public class AtAMaker implements Operation {
 			if (Double.isNaN(phiFP))
 				throw new RuntimeException("PhiFP is NaN " + fpname + " " + station);
 //			System.out.println("phi= " + phi);
+			
+			System.out.println(fpSourceLoc + " " + obsPos);
 		
 //			System.out.println("geographic, geodetic distance = " + geocentricDistance + " " + distance);
 			

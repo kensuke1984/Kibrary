@@ -31,22 +31,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -55,14 +39,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Precision;
 
-
-
-
-
-
-
 import org.jfree.util.ArrayUtilities;
-
 
 import io.github.kensuke1984.kibrary.Operation;
 import io.github.kensuke1984.kibrary.Property;
@@ -76,27 +53,27 @@ import io.github.kensuke1984.kibrary.inversion.addons.WeightingType;
 import io.github.kensuke1984.kibrary.math.Matrix;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformation;
 import io.github.kensuke1984.kibrary.selection.DataSelectionInformationFile;
-import io.github.kensuke1984.kibrary.util.HorizontalPosition;
-import io.github.kensuke1984.kibrary.util.Location;
-import io.github.kensuke1984.kibrary.util.Station;
-import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.addons.FrequencyRange;
+import io.github.kensuke1984.kibrary.util.HorizontalPosition;
+import io.github.kensuke1984.kibrary.util.Location;
 import io.github.kensuke1984.kibrary.util.addons.Phases;
+import io.github.kensuke1984.kibrary.util.Station;
+import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTCatalog;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTData;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.globalcmt.NDK;
 import io.github.kensuke1984.kibrary.util.sac.WaveformType;
 import io.github.kensuke1984.kibrary.util.spc.PartialType;
-import io.github.kensuke1984.kibrary.waveformdata.BasicID;
-import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
-import io.github.kensuke1984.kibrary.waveformdata.PartialID;
-import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 import io.github.kensuke1984.kibrary.waveformdata.addons.AtAEntry;
 import io.github.kensuke1984.kibrary.waveformdata.addons.AtAFile;
 import io.github.kensuke1984.kibrary.waveformdata.addons.AtdEntry;
 import io.github.kensuke1984.kibrary.waveformdata.addons.AtdFile;
+import io.github.kensuke1984.kibrary.waveformdata.BasicID;
+import io.github.kensuke1984.kibrary.waveformdata.BasicIDFile;
+import io.github.kensuke1984.kibrary.waveformdata.PartialID;
+import io.github.kensuke1984.kibrary.waveformdata.PartialIDFile;
 import opendap.servlet.GetAsciiHandler;
 
 /**
@@ -113,89 +90,92 @@ public class LetMeInvertCV implements Operation {
 	 * 観測波形、理論波形の入ったファイル (BINARY)
 	 */
 	protected Path waveformPath;
+
 	/**
 	 * 求めたい未知数を羅列したファイル (ASCII)
 	 */
 	protected Path unknownParameterListPath;
+
 	/**
 	 * partialIDの入ったファイル
 	 */
 	protected Path partialIDPath;
+
 	/**
 	 * partial波形の入ったファイル
 	 */
 	protected Path partialPath;
+
 	/**
 	 * 観測、理論波形のID情報
 	 */
 	protected Path waveformIDPath;
+
 	/**
 	 * ステーション位置情報のファイル
 	 */
 	protected Path stationInformationPath;
+
 	/**
 	 * どうやって方程式を解くか。 cg svd
 	 */
 	protected Set<InverseMethodEnum> inverseMethods;
+	
 	protected WeightingType weightingType;
+	
 	protected boolean time_source, time_receiver;
+	
 	protected double gamma;
+	
 	private CombinationType combinationType;
+	
 	private Map<PartialType, Integer[]> nUnknowns;
+	
 	private ObservationEquation eq;
+	
 	private Path verticalMapping;
+	
 	private String[] phases;
+	
 	private List<DataSelectionInformation> selectionInfo;
+	
 	private boolean modelCovariance;
+	
 	private double cm0, cmH, cmV;
+	
 	private double lambdaQ, lambdaMU, gammaQ, gammaMU, lambda00, gamma00, lambdaVp, gammaVp;
+	
 	private double correlationScaling;
+	
 	private double minDistance;
+	
 	private double maxDistance;
+	
 	private double minMw;
+	
 	private double maxMw;
+	
 	private UnknownParameterWeightType unknownParameterWeightType;
+	
 	private boolean linaInversion;
+	
 	private boolean jackknife;
+	
 	private int nRealisation;
+	
 	private boolean checkerboard;
+	
 	private Path checkerboardPerturbationPath;
+	
 	Path spcAmpPath;
+	
 	Path spcAmpIDPath;
+	
 	Path partialSpcPath;
+	
 	Path partialSpcIDPath;
+	
 	private double scale_freq_ata;
-	/**
-	 * AIC計算に用いるα 独立データ数はn/αと考える
-	 */
-	protected double[] alpha;
-	private Properties property;
-	private boolean regularizationMuQ;
-	private Path outPath;
-	private boolean conditioner;
-	private boolean lowMemoryCost;
-	private int nStepsForLowMemoryMode;
-	private boolean usePrecomputedAtA;
-	private Path[] precomputedAtAPath;
-	private Path[] precomputedAtdPath;
-	private boolean trimWindow;
-	private double trimPoint;
-	private boolean keepBefore;
-	private boolean assumeRratio;
-	private List<EventCluster> clusters;
-	private Path eventClusterPath;
-	private int[] azimuthIndex;
-	private int[] clusterIndex;
-	private ObservationEquation eqA, eqB;
-	private boolean applyEventAmpCorr;
-	private boolean correct3DFocusing;
-	List<UnknownParameter> parameterList;
-	PartialID[] partialIDs;
-	PartialID[] partialSpcIDs;
-	Dvector dVectorSpc;
-	Dvector dVector;
-	BasicID[] ids;
-	BasicID[] spcIds;
 
 	private void checkAndPutDefaults() {
 		if (!property.containsKey("workPath"))
@@ -444,6 +424,15 @@ public class LetMeInvertCV implements Operation {
 		correct3DFocusing = Boolean.parseBoolean(property.getProperty("correct3DFocusing"));
 	}
 
+	/**
+	 * AIC計算に用いるα 独立データ数はn/αと考える
+	 */
+	protected double[] alpha;
+
+	private Properties property;
+	
+	private boolean regularizationMuQ;
+
 	public static void writeDefaultPropertiesFile() throws IOException {
 		Path outPath = Paths.get(LetMeInvertCV.class.getName() + Utilities.getTemporaryString() + ".properties");
 		try (PrintWriter pw = new PrintWriter(Files.newBufferedWriter(outPath, StandardOpenOption.CREATE_NEW))) {
@@ -565,6 +554,56 @@ public class LetMeInvertCV implements Operation {
 		inverseMethods = new HashSet<>(Arrays.asList(InverseMethodEnum.values()));
 	}
 
+	private Path outPath;
+	
+	private boolean conditioner;
+
+	private boolean lowMemoryCost;
+	
+	private int nStepsForLowMemoryMode;
+	
+	private boolean usePrecomputedAtA;
+	
+	private Path[] precomputedAtAPath;
+	
+	private Path[] precomputedAtdPath;
+	
+	private boolean trimWindow;
+	
+	private double trimPoint;
+	
+	private boolean keepBefore;
+	
+	private boolean assumeRratio;
+	
+	private List<EventCluster> clusters;
+	
+	private Path eventClusterPath;
+	
+	private int[] azimuthIndex;
+	
+	private int[] clusterIndex;
+	
+	private ObservationEquation eqA, eqB;
+	
+	private boolean applyEventAmpCorr;
+	
+	private boolean correct3DFocusing;
+	
+	List<UnknownParameter> parameterList;
+	
+	PartialID[] partialIDs;
+	
+	PartialID[] partialSpcIDs;
+	
+	Dvector dVectorSpc;
+	
+	Dvector dVector;
+	
+	BasicID[] ids;
+	
+	BasicID[] spcIds;
+	
 	private void readIDs() {
 		try {
 			ids = BasicIDFile.read(waveformIDPath, waveformPath);
@@ -822,8 +861,7 @@ public class LetMeInvertCV implements Operation {
 //					|| id.getStation().getName().equals("I40A") && id.getGlobalCMTID().equals(new GlobalCMTID("201109021347A"))
 //					|| id.getStation().getName().equals("K41A") && id.getGlobalCMTID().equals(new GlobalCMTID("201302221201A"))
 
-					
-//					|| id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
+					|| id.getGlobalCMTID().equals(new GlobalCMTID("201205280507A"))
 				)
 					return false;
 				
@@ -850,7 +888,8 @@ public class LetMeInvertCV implements Operation {
 		
 		//
 		if (applyEventAmpCorr) {
-			Path path = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_nostf_8-200s/corrections/df_evt_amp_ratio.csv");
+//			Path path = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_nostf_8-200s/corrections/df_evt_amp_ratio.csv");
+			Path path = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/STF/syntheticPREM_Q165/filtered_stf_6-200s/amp_corr_inv.txt");
 			System.out.println("Using event amplitude corrections from " + path);
 			HashMap<GlobalCMTID, Double> eventAmpCorr = new HashMap<GlobalCMTID, Double>();
 			try {
@@ -891,8 +930,9 @@ public class LetMeInvertCV implements Operation {
 		}
 		
 		//
+		boolean subtract1D = false;
 		if (correct3DFocusing) {
-			double alpha = 1.15;
+			double alpha = 1.15; // 1.15
 			System.out.println("Correcting for 3D focusing alpha=" + alpha);
 			for (int i = 0; i < ids.length; i++) {
 				BasicID id = ids[i];
@@ -904,31 +944,61 @@ public class LetMeInvertCV implements Operation {
 					if (azimuth < 180) azimuth += 360;
 					double tmpw = 1.;
 					
-					if (icluster == 4) {
-						if (azimuth < 323) tmpw = 0.96;
-						else if (azimuth < 329) tmpw = 0.93;
-						else if (azimuth < 336) tmpw = 0.89;
-						else if (azimuth < 341) tmpw = 1.15 * alpha/1.15;
-						else if (azimuth < 347) tmpw = 0.88;
-						else tmpw = 0.88;
+					if (subtract1D) {
+						if (icluster == 4) {
+							if (azimuth < 323) tmpw = 1.03; //1.03
+							else if (azimuth < 329) tmpw = 1.; //1.
+							else if (azimuth < 336) tmpw = 0.96; // 0.89 measured on synthetics, but most likely too low //0.96
+							else if (azimuth < 341) tmpw = 1.16 * alpha/1.15;
+							else if (azimuth < 347) tmpw = 0.95; // 0.88 measured on synthetics, but most likely too low //0.95
+							else tmpw = 0.95; // 0.88 measured on synthetics, but most likely to low //0.95
+						}
+						else if (icluster == 3) {
+							if (azimuth < 321) tmpw = 1.08; //1.08
+							else if (azimuth < 327) tmpw = 1.08; //1.08
+							else if (azimuth < 333) tmpw = 1.08; //1.08
+							else if (azimuth < 339) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+							else if (azimuth < 345) tmpw = 1.22;
+							else if (azimuth < 351.6) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+							else tmpw = 0.99; //0.99
+						}
+						else if (icluster == 5) {
+							if (azimuth < 317.6) tmpw = 1.08;
+							else if (azimuth < 323.3) tmpw = 1.08;
+							else if (azimuth < 329.1) tmpw = 1.08;
+							else if (azimuth < 334.9) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+							else if (azimuth < 340.7) tmpw = 1.22;
+							else if (azimuth < 347.2) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+							else tmpw = 0.99;
+						}
 					}
-					else if (icluster == 3) {
-						if (azimuth < 321) tmpw = 1.00;
-						else if (azimuth < 327) tmpw = 1.00;
-						else if (azimuth < 333) tmpw = 1.01;
-						else if (azimuth < 339) tmpw = 0.86;
-						else if (azimuth < 345) tmpw = 1.24;
-						else if (azimuth < 351.6) tmpw = 0.86;
-						else tmpw = 0.92;
-					}
-					else if (icluster == 5) {
-						if (azimuth < 317.6) tmpw = 1.00;
-						else if (azimuth < 323.3) tmpw = 1.00;
-						else if (azimuth < 329.1) tmpw = 1.01;
-						else if (azimuth < 334.9) tmpw = 0.86;
-						else if (azimuth < 340.7) tmpw = 1.24;
-						else if (azimuth < 347.2) tmpw = 0.86;
-						else tmpw = 0.92;
+					else {
+						if (icluster == 4) {
+							if (azimuth < 323) tmpw = 0.96; //1.03
+							else if (azimuth < 329) tmpw = 0.93; //1.
+							else if (azimuth < 336) tmpw = 0.93; // 0.89 measured on synthetics, but most likely too low //0.96
+							else if (azimuth < 341) tmpw = 1.15 * alpha/1.15;
+							else if (azimuth < 347) tmpw = 0.93; // 0.88 measured on synthetics, but most likely too low //0.95
+							else tmpw = 0.93; // 0.88 measured on synthetics, but most likely to low //0.95
+						}
+						else if (icluster == 3) {
+							if (azimuth < 321) tmpw = 1.00; //1.08
+							else if (azimuth < 327) tmpw = 1.00; //1.08
+							else if (azimuth < 333) tmpw = 1.01; //1.08
+							else if (azimuth < 339) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+							else if (azimuth < 345) tmpw = 1.24;
+							else if (azimuth < 351.6) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+							else tmpw = 0.92; //0.99
+						}
+						else if (icluster == 5) {
+							if (azimuth < 317.6) tmpw = 1.00;
+							else if (azimuth < 323.3) tmpw = 1.00;
+							else if (azimuth < 329.1) tmpw = 1.01;
+							else if (azimuth < 334.9) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+							else if (azimuth < 340.7) tmpw = 1.24;
+							else if (azimuth < 347.2) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+							else tmpw = 0.92;
+						}
 					}
 					
 					double w = tmpw;
@@ -948,31 +1018,61 @@ public class LetMeInvertCV implements Operation {
 						if (azimuth < 180) azimuth += 360;
 						double tmpw = 1.;
 						
-						if (icluster == 4) {
-							if (azimuth < 323) tmpw = 0.96;
-							else if (azimuth < 329) tmpw = 0.93;
-							else if (azimuth < 336) tmpw = 0.89;
-							else if (azimuth < 341) tmpw = 1.15 * alpha/1.15;
-							else if (azimuth < 347) tmpw = 0.88;
-							else tmpw = 0.88;
+						if (subtract1D) {
+							if (icluster == 4) {
+								if (azimuth < 323) tmpw = 1.03; //1.03
+								else if (azimuth < 329) tmpw = 1.; //1.
+								else if (azimuth < 336) tmpw = 0.96; // 0.89 measured on synthetics, but most likely too low //0.96
+								else if (azimuth < 341) tmpw = 1.16 * alpha/1.15;
+								else if (azimuth < 347) tmpw = 0.95; // 0.88 measured on synthetics, but most likely too low //0.95
+								else tmpw = 0.95; // 0.88 measured on synthetics, but most likely to low //0.95
+							}
+							else if (icluster == 3) {
+								if (azimuth < 321) tmpw = 1.08; //1.08
+								else if (azimuth < 327) tmpw = 1.08; //1.08
+								else if (azimuth < 333) tmpw = 1.08; //1.08
+								else if (azimuth < 339) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+								else if (azimuth < 345) tmpw = 1.22;
+								else if (azimuth < 351.6) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+								else tmpw = 0.99; //0.99
+							}
+							else if (icluster == 5) {
+								if (azimuth < 317.6) tmpw = 1.08;
+								else if (azimuth < 323.3) tmpw = 1.08;
+								else if (azimuth < 329.1) tmpw = 1.08;
+								else if (azimuth < 334.9) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+								else if (azimuth < 340.7) tmpw = 1.22;
+								else if (azimuth < 347.2) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+								else tmpw = 0.99;
+							}
 						}
-						else if (icluster == 3) {
-							if (azimuth < 321) tmpw = 1.00;
-							else if (azimuth < 327) tmpw = 1.00;
-							else if (azimuth < 333) tmpw = 1.01;
-							else if (azimuth < 339) tmpw = 0.86;
-							else if (azimuth < 345) tmpw = 1.24;
-							else if (azimuth < 351.6) tmpw = 0.86;
-							else tmpw = 0.92;
-						}
-						else if (icluster == 5) {
-							if (azimuth < 317.6) tmpw = 1.00;
-							else if (azimuth < 323.3) tmpw = 1.00;
-							else if (azimuth < 329.1) tmpw = 1.01;
-							else if (azimuth < 334.9) tmpw = 0.86;
-							else if (azimuth < 340.7) tmpw = 1.24;
-							else if (azimuth < 347.2) tmpw = 0.86;
-							else tmpw = 0.92;
+						else {
+							if (icluster == 4) {
+								if (azimuth < 323) tmpw = 0.96; //1.03
+								else if (azimuth < 329) tmpw = 0.93; //1.
+								else if (azimuth < 336) tmpw = 0.93; // 0.89 measured on synthetics, but most likely too low //0.96
+								else if (azimuth < 341) tmpw = 1.15 * alpha/1.15;
+								else if (azimuth < 347) tmpw = 0.93; // 0.88 measured on synthetics, but most likely too low //0.95
+								else tmpw = 0.93; // 0.88 measured on synthetics, but most likely to low //0.95
+							}
+							else if (icluster == 3) {
+								if (azimuth < 321) tmpw = 1.00; //1.08
+								else if (azimuth < 327) tmpw = 1.00; //1.08
+								else if (azimuth < 333) tmpw = 1.01; //1.08
+								else if (azimuth < 339) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+								else if (azimuth < 345) tmpw = 1.24;
+								else if (azimuth < 351.6) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low //0.92
+								else tmpw = 0.92; //0.99
+							}
+							else if (icluster == 5) {
+								if (azimuth < 317.6) tmpw = 1.00;
+								else if (azimuth < 323.3) tmpw = 1.00;
+								else if (azimuth < 329.1) tmpw = 1.01;
+								else if (azimuth < 334.9) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+								else if (azimuth < 340.7) tmpw = 1.24;
+								else if (azimuth < 347.2) tmpw = 0.93; // 0.86 measured on synthetics, but most likely too low
+								else tmpw = 0.92;
+							}
 						}
 						
 						double w = tmpw;
@@ -1426,22 +1526,41 @@ public class LetMeInvertCV implements Operation {
 			count++;
 		}
 		
-		double normMU = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+		double normMU_A = new ArrayRealVector(IntStream.range(0, eqA.getMlength())
 				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PARVS))
-				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PARVS)).count();
-		double normQ = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		double normQ_A = new ArrayRealVector(IntStream.range(0, eqA.getMlength())
 				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
-				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PARQ)).count();
-		double norm00 = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		double norm00_A = new ArrayRealVector(IntStream.range(0, eqA.getMlength())
 				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PAR00))
-				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PAR00)).count();
-		double normVP = Math.sqrt(new ArrayRealVector(IntStream.range(0, eqA.getMlength())
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		double normVP_A = new ArrayRealVector(IntStream.range(0, eqA.getMlength())
 				.filter(i -> eqA.getParameterList().get(i).getPartialType().equals(PartialType.PARVP))
-				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm());
-//				 / eqA.getParameterList().stream().filter(p -> p.getPartialType().equals(PartialType.PARVP)).count();
+				.mapToDouble(i -> eqA.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		
+		double normMU_B = new ArrayRealVector(IntStream.range(0, eqB.getMlength())
+				.filter(i -> eqB.getParameterList().get(i).getPartialType().equals(PartialType.PARVS))
+				.mapToDouble(i -> eqB.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		double normQ_B = new ArrayRealVector(IntStream.range(0, eqB.getMlength())
+				.filter(i -> eqB.getParameterList().get(i).getPartialType().equals(PartialType.PARQ))
+				.mapToDouble(i -> eqB.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		double norm00_B = new ArrayRealVector(IntStream.range(0, eqB.getMlength())
+				.filter(i -> eqB.getParameterList().get(i).getPartialType().equals(PartialType.PAR00))
+				.mapToDouble(i -> eqB.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		double normVP_B = new ArrayRealVector(IntStream.range(0, eqB.getMlength())
+				.filter(i -> eqB.getParameterList().get(i).getPartialType().equals(PartialType.PARVP))
+				.mapToDouble(i -> eqB.getDiagonalOfAtA().getEntry(i)).toArray()).getLInfNorm();
+		
+		double normMU = Math.sqrt(normMU_A + normMU_B); // before: Math.sqrt(normMU_A)
+		double normQ = Math.sqrt(normQ_A + normQ_B);
+		double norm00 = Math.sqrt(norm00_A + norm00_B);
+		double normVP = Math.sqrt(normVP_A + normVP_B);
+		
+//		double normMU = Math.sqrt(normMU_A); // before: Math.sqrt(normMU_A)
+//		double normQ = Math.sqrt(normQ_A);
+//		double norm00 = Math.sqrt(norm00_A);
+//		double normVP = Math.sqrt(normVP_A);
 		
 		System.out.printf("Regularization: norm_vs=%.3e, norm_q=%.3e\n", normMU, normQ);
 		
@@ -1510,15 +1629,17 @@ public class LetMeInvertCV implements Operation {
 			}
 		}
 		
+		double anchorFactor = 8*8; // 8*8
+		
 		PartialType tmptype = eq.getParameterList().get(0).getPartialType();
 		for (int i = 1; i < eq.getMlength(); i++) {
 			if (!tmptype.equals(eq.getParameterList().get(i).getPartialType())) {
-				D.multiplyEntry(i - 1, i - 1, 8*8); // 9
+				D.multiplyEntry(i - 1, i - 1, anchorFactor); // 9
 				System.out.println(i + " " + tmptype + " " + eq.getParameterList().get(i).getPartialType());
 				tmptype = eq.getParameterList().get(i).getPartialType();
 			}
 		}
-		D.multiplyEntry(eq.getMlength()-1, eq.getMlength()-1, 8*8);
+		D.multiplyEntry(eq.getMlength()-1, eq.getMlength()-1, anchorFactor);
 		
 		RealMatrix Dout = D2tD2.add(D);
 		
@@ -1758,7 +1879,14 @@ public class LetMeInvertCV implements Operation {
 		boolean lambda = false;
 		
 		final double[] values = new double[] {0.1, 0.2, 0.4, 0.6, 0.8, 1., 1.2, 1.5, 2., 3.};
-		final double[] values_for_plot_Q = new double[] {0.6, 0.9, 1.2, 1.5};
+		final double[] values_MU_normal = new double[] {0.1, 0.2, 0.4, 0.6, 0.8, 1.};
+		final double[] values_MU_sparse = new double[] {0.2, 1.};
+		final double[] values_Q_strong = new double[] {1.5, 2., 3., 5., 10.};
+		final double[] values_Q_normal = new double[] {0.8, 1.2, 1.5, 3., 5};
+//		final double[] values_Q = new double[] {0.8, 1., 1.2, 1.4, 1.6, 1.8, 2., 2.2, 2.4, 2.6, 2.8, 3., 4., 5, 8., 10., 15., 20.};
+		final double[] values_Q = new double[] {0.45,0.55,0.63,0.71,0.77,0.84,0.89,0.95,1.0,1.05,1.1,1.26,1.41,1.55,1.67,1.79,1.9,2.0,2.45,2.83,3.16,3.46,3.74,4.0,4.24,4.47,4.69,4.9};
+		//		final double[] values_for_plot_Q = new double[] {0.6, 0.9, 1.2, 1.5};
+		final double[] values_for_plot_Q = new double[] {0.9, 1.2, 1.5};
 		final double[] values_for_plot_MU = new double[] {0.1, 0.2};
 		final double[] values_for_plot_MU_strong = new double[] {0.2, 0.4};
 		
@@ -1773,22 +1901,57 @@ public class LetMeInvertCV implements Operation {
 		}
 		else {
 			if (plot) {
-//				lambdaMUs = new double[] {0.2};
-				lambdaMUs = new double[] {0.4};
-//				gammaMUs = values_for_plot_MU;
-				gammaMUs = values_for_plot_MU_strong;
-				lambdaQs = new double[] {0.6};
-				gammaQs = values_for_plot_Q;
+				lambdaMUs = new double[] {0.2};
+				gammaMUs = new double[] {0.2};
+				lambdaQs = new double[] {0.8};
+				gammaQs = null;
+				if (clusterIndex[0] == 3) {
+					lambdaQs = new double[] {1.};
+					if (azimuthIndex[0] == 0)
+//						gammaQs = new double[] {1.935, 2.5, 2.956};
+						gammaQs = new double[] {1.26, 1.41, 1.54};
+					else if (azimuthIndex[0] == 3)
+						gammaQs = new double[] {1.39,1.55,1.7};
+					else if (azimuthIndex[0] == 5) {
+						gammaMUs = new double[] {0.4};
+						lambdaMUs = new double[] {0.2};
+						lambdaQs = new double[] {1.6};
+						gammaQs = new double[] {0.8, 0.89, 0.97};
+					}
+					else
+						gammaQs = new double[] {0.89,1,1.1};
+				}
+				else if (clusterIndex[0] == 4) {
+					if (azimuthIndex[0] == 3) {
+						gammaQs = new double[] {0.8, 0.89, 0.97};
+//						gammaQs = new double[] {0.894, 1, 1.095};
+					}
+					else {
+						gammaQs = new double[] {0.8, 0.89, 0.97};
+					}
+				}
+				else
+					throw new RuntimeException("Cluster not expected " + clusterIndex[0]);
 				cv = 1;
 			}
 			else {
 				lambdaMUs = new double[] {0.2};
-	//			lambdaMUs = new double[] {0.4};
-				gammaMUs = values;
+				gammaMUs = values_MU_sparse;
 				lambdaQs = new double[] {0.6};
-				gammaQs = values;
+//				gammaQs = values_Q;
+				gammaQs = new double[] {1.26, 500.};
 			}
 		}
+		
+		// to be consistent with the new normalization of coefficients
+		for (int i = 0; i < gammaMUs.length; i++)
+			gammaMUs[i] /= 2;
+		for (int i = 0; i < lambdaMUs.length; i++)
+			lambdaMUs[i] /= 2;
+//		for (int i = 0; i < gammaQs.length; i++)
+//			gammaQs[i] /= 2;
+		for (int i = 0; i < lambdaQs.length; i++)
+			lambdaQs[i] /= 2;
 		
 //		double[] gammaMUs = new double[] {0.};
 //		double[] lambdaMUs = new double[] {0.};
@@ -1804,7 +1967,7 @@ public class LetMeInvertCV implements Operation {
 		int randomSeed = 42;
 		
 		final Dvector dVector_final = dVector.clone();
-		final Dvector dVectorSpc_final = dVectorSpc.clone();
+		final Dvector dVectorSpc_final = dVectorSpc != null ? dVectorSpc.clone() : null;
 		
 		setEquation(dVector, dVectorSpc);
 		outputNow();
@@ -1831,7 +1994,9 @@ public class LetMeInvertCV implements Operation {
 					for (double gammaMU : gammaMUs) {
 						for (double lambdaQ : lambdaQs) {
 							for (double gammaQ : gammaQs) {
-								
+//								double f = Math.sqrt(scale_freq_ata);
+//								if (f != 1)
+//									System.out.println("WARNING: using scale_freq_ata to normalize regularization parameters " + f); 
 								RealMatrix D = regularizationVSQ(lambdaMU, gammaMU, lambdaQ, gammaQ);
 								
 								// 逆問題
@@ -1862,12 +2027,12 @@ public class LetMeInvertCV implements Operation {
 								ArrayRealVector q = new ArrayRealVector(ansM.getDimension() / 2);
 								int count_v = 0;
 								int count_q = 0;
+								double partial_q_amp_factor = 1.3;
 								for (int k = 0; k < vq.length; k++) {
 									if (parameterList.get(k).getPartialType().equals(PartialType.PARQ)) {
-										double dQ = -312 * 312 * ansM.getEntry(k);
-										double Q = 312 + dQ;
-//										vq[k] = (312 + dQ) / 312. * 100;
-//										vq[k] = (Math.exp(-dQ/ 50.) - 1) / (Math.exp(1.) - 1);
+//										double dQ = -312 * 312 * ansM.getEntry(k);
+										double dQ = -312 * 312 * ansM.getEntry(k) * partial_q_amp_factor
+												/ (1 + 312*ansM.getEntry(k) * partial_q_amp_factor);
 										vq[k] = dQ / 50. * 100;
 										q.setEntry(count_q++, dQ / 50 * 100);
 									}

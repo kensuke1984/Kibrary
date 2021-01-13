@@ -523,7 +523,7 @@ public class ObservationEquation {
 			RealVector weightingVector = DVECTOR.getWeightingVector(k);
 			
 			//only for 1D!!! TO CHANGE
-//			weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getWeighting());
+			weightingVector = weightingVector.mapMultiply(PARAMETER_LIST.get(column).getWeighting());
 
 			double[] partial = id.getData();
 			
@@ -646,9 +646,11 @@ public class ObservationEquation {
 						continue;
 					if (ntmp == 0 || ntmpQ == 0)
 						continue;
-					a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+//					a.setColumnVector(j, a.getColumnVector(j).mapMultiply(empiricalFactor * meanAColumnNorm / meanAQNorm));
+					a.setColumnVector(j, a.getColumnVector(j).mapMultiply(1.3)); // 1.3 TODO change this terrible way of doing it
 				}
 				System.out.println("PARVS / PARQ = " + empiricalFactor * meanAColumnNorm / meanAQNorm);
+//				System.out.println("PARVS / PARQ = 1.3");
 			}
 		}
 			
