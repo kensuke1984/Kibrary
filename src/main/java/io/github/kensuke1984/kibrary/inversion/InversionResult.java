@@ -344,6 +344,42 @@ public class InversionResult {
 	}
 	
 	/**
+     * @param id        ID of the partial
+     * @param parameter index of a partial in unknown parameters
+     * @return {@link Trace} of parN in nth time window. time axis is Synthetic
+     * one
+     * @throws IOException if an I/O error occurs
+     * @author anselme
+     */
+	public Trace partialOf_noorder(BasicID id, UnknownParameter parameter) throws IOException {
+		int parN = unknownParameterList.indexOf(parameter);
+		
+		List<Path> tmplist;
+		try (Stream<Path> stream = Files.list(rootPath.resolve("partial/" + id.getGlobalCMTID()))) {
+			tmplist = stream.filter(p -> {
+				String name = p.getFileName().toString();
+				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+			}).collect(Collectors.toList());
+		}
+		if (tmplist.size() != 1) {
+			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
+			return null;
+		}
+		Path txtPath = tmplist.get(0);
+
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[parN + 1]);
+		});
+		return new Trace(x, y);
+	}
+		
+	/**
 	 * @param id
 	 * @param parameter
 	 * @return
@@ -353,6 +389,41 @@ public class InversionResult {
 	public Trace partialOf_spc(BasicID id, UnknownParameter parameter) throws IOException {
 		int parN = unknownParameterList.indexOf(parameter);
 		Path txtPath = rootPath.resolve("partial_spc/" + getTxtName(id));
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[parN + 1]);
+		});
+		return new Trace(x, y).multiply(mul);
+	}
+	
+	/**
+	 * @param id
+	 * @param parameter
+	 * @return
+	 * @throws IOException
+	 * @author anselme
+	 */
+	public Trace partialOf_noorder_spc(BasicID id, UnknownParameter parameter) throws IOException {
+		int parN = unknownParameterList.indexOf(parameter);
+		
+		List<Path> tmplist;
+		try (Stream<Path> stream = Files.list(rootPath.resolve("partial_spc/" + id.getGlobalCMTID()))) {
+			tmplist = stream.filter(p -> {
+				String name = p.getFileName().toString();
+				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+			}).collect(Collectors.toList());
+		}
+		if (tmplist.size() != 1) {
+			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
+			return null;
+		}
+		Path txtPath = tmplist.get(0);
+		
 		List<String> lines = Files.readAllLines(txtPath);
 		int npts = lines.size() - 1;
 		double[] x = new double[npts];
@@ -552,6 +623,38 @@ public class InversionResult {
 		});
 		return new Trace(x, y).multiply(mul);
 	}
+	
+	/**
+	 * @param id
+	 * @return
+	 * @throws IOException
+	 * @author anselme
+	 */
+	public Trace observedOf_noorder_spc(BasicID id) throws IOException {
+		List<Path> tmplist;
+		try (Stream<Path> stream = Files.list(rootPath.resolve("trace_spc/" + id.getGlobalCMTID()))) {
+			tmplist = stream.filter(p -> {
+				String name = p.getFileName().toString();
+				return name.startsWith(id.getStation() + "." + id.getGlobalCMTID() + "." + id.getSacComponent());
+			}).collect(Collectors.toList());
+		}
+		if (tmplist.size() != 1) {
+			System.err.println("Found no or more than 1 trace for " + getTxtName(id));
+			return null;
+		}
+		Path txtPath = tmplist.get(0);
+		
+		List<String> lines = Files.readAllLines(txtPath);
+		int npts = lines.size() - 1;
+		double[] x = new double[npts];
+		double[] y = new double[npts];
+		IntStream.range(0, npts).forEach(j -> {
+			String[] parts = lines.get(j + 1).split("\\s+");
+			x[j] = Double.parseDouble(parts[0]);
+			y[j] = Double.parseDouble(parts[2]);
+		});
+		return new Trace(x, y).multiply(mul);
+	}
 
     /**
      * Text filename for accessing the related file will return.
@@ -719,7 +822,8 @@ public class InversionResult {
 			return readBORNTrace(id, method, n);
 
 		Files.createDirectories(bornPath.getParent());
-		Trace syn = syntheticOf(id);
+		Trace syn = syntheticOf_noorder(id); // TODO check the use of noorder
+		if (syn == null) return null;
 		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
 		Trace born = syn;
 
@@ -774,12 +878,13 @@ public class InversionResult {
 			return readBORNTrace_spc(id, method, n);
 
 		Files.createDirectories(bornPath.getParent());
-		Trace syn = syntheticOf_spc(id);
+		Trace syn = syntheticOf_noorder_spc(id); // TODO check the use of noorder
+		if (syn == null) return null;
 		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
 		Trace born = syn;
 
 		for (UnknownParameter par : unknownParameterList)
-			born = born.add(partialOf_spc(id, par).multiply(answer.get(par)));
+			born = born.add(partialOf_noorder_spc(id, par).multiply(answer.get(par))); // TODO check noorder
 		writeBorn(bornPath, born);
 		
 		return born;
@@ -801,13 +906,14 @@ public class InversionResult {
 			return readBORNTrace_spc(id, method, n, type);
 
 		Files.createDirectories(bornPath.getParent());
-		Trace syn = syntheticOf_spc(id);
+		Trace syn = syntheticOf_noorder_spc(id);
+		if (syn == null) return null;
 		Map<UnknownParameter, Double> answer = answerMapOfX(method, n);
 		Trace born = syn;
 		
 		for (UnknownParameter par : unknownParameterList) {
 			if (par.getPartialType().equals(type)) {
-				born = born.add(partialOf_spc(id, par).multiply(answer.get(par)));
+				born = born.add(partialOf_noorder_spc(id, par).multiply(answer.get(par)));
 			}
 		}
 		writeBorn(bornPath, born);

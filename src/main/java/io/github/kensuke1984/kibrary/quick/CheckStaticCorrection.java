@@ -3,6 +3,7 @@ package io.github.kensuke1984.kibrary.quick;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrection;
 import io.github.kensuke1984.kibrary.datacorrection.StaticCorrectionFile;
 import io.github.kensuke1984.kibrary.util.Utilities;
+import io.github.kensuke1984.kibrary.util.addons.Phases;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -31,7 +32,8 @@ public class CheckStaticCorrection {
 				semCorr = semCorrections.stream().filter(c -> corr.getGlobalCMTID().equals(c.getGlobalCMTID())
 					&& corr.getStation().equals(c.getStation())
 					&& corr.getComponent().equals(c.getComponent())
-					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
+					&& new Phases(corr.getPhases()).equals(new Phases(c.getPhases()))).findFirst().get();
+//					&& corr.getSynStartTime() == c.getSynStartTime()).findFirst().get();
 			} catch (NoSuchElementException e) {
 				continue;
 			}
@@ -53,6 +55,12 @@ public class CheckStaticCorrection {
 		Path outmix = Paths.get("staticCorrection" + Utilities.getTemporaryString() + ".dat");
 		StaticCorrectionFile.write(mixed, outmix);
 		
+		Path outpath0 = Paths.get("corrections_each_record_difference.txt");
+		PrintWriter pw0 = new PrintWriter(outpath0.toFile());
+		for (StaticCorrection corr : differences)
+			pw0.println(corr);
+		pw0.close();
+		
 		double[][] map = averageMap(ratios);
 		double[][] map2 = averageMap(differences);
 		double[][] mapCorr = averageMap(fujiCorrections);
@@ -60,6 +68,7 @@ public class CheckStaticCorrection {
 		Path outpath = Paths.get("corrections_ratio.txt");
 		Path outpath2 = Paths.get("corrections_difference.txt");
 		Path outpath3 = Paths.get("corrections_map.txt");
+		
 		PrintWriter pw = new PrintWriter(outpath.toFile());
 		PrintWriter pw2 = new PrintWriter(outpath2.toFile());
 		PrintWriter pw3 = new PrintWriter(outpath3.toFile());

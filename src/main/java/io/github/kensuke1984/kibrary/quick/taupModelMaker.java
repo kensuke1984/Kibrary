@@ -32,8 +32,8 @@ public class taupModelMaker {
 		
 //		model = PolynomialStructure.ISO_PREM;
 		
-		System.out.println(prem.getVshAt(6371-2360)*1);
-//		System.exit(0);
+		System.out.println(prem.getRhoAt(3780));
+		System.exit(0);
 		
 		double f = 1.03;
 		

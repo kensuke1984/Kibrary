@@ -41,7 +41,7 @@ public class VelocityField {
 		Path inversionResultPath = null;
 		Path polynomialStructurePath = null;
 		String partialCombination = null;
-		double amplifyPerturbation = 1.;
+		double amplifyPerturbation = 1.3; // 1.3 WARNING!! SHOULD BE SAME VALUE AS IN OBSEVERVATIONEQUATION.READA()
 		int nmod = 1;
 		if (args.length == 1) {
 			amplifyPerturbation = Double.parseDouble(args[0]);
@@ -547,7 +547,7 @@ public class VelocityField {
 		return res / vol;
 	}
 	
-	public static double getSimpsonQ (double r1, double r2, PolynomialStructure structure, double dq, double amplifyPerturbation) {
+	public static double getSimpsonQ(double r1, double r2, PolynomialStructure structure, double dq, double amplifyPerturbation) {
 		double res = 0;
 		double dr = (r2 - r1) / 40.;
 		double vol = r2 - r1;
@@ -555,9 +555,15 @@ public class VelocityField {
 			double a = r1 + i * dr;
 			double b = r1 + (i + 1) * dr;
 			double ab = (a + b) / 2.;
-			double Q_a = structure.getQmuAt(a) -1 * structure.getQmuAt(a) * structure.getQmuAt(a) * dq * amplifyPerturbation;
-			double Q_ab = structure.getQmuAt(ab) -1 * structure.getQmuAt(ab) * structure.getQmuAt(ab) * dq * amplifyPerturbation;
-			double Q_b = structure.getQmuAt(b) -1 * structure.getQmuAt(b) * structure.getQmuAt(b) * dq * amplifyPerturbation;
+//			double Q_a = structure.getQmuAt(a) -1 * structure.getQmuAt(a) * structure.getQmuAt(a) * dq * amplifyPerturbation;
+//			double Q_ab = structure.getQmuAt(ab) -1 * structure.getQmuAt(ab) * structure.getQmuAt(ab) * dq * amplifyPerturbation;
+//			double Q_b = structure.getQmuAt(b) -1 * structure.getQmuAt(b) * structure.getQmuAt(b) * dq * amplifyPerturbation;
+			double Q_a = structure.getQmuAt(a) -1 * structure.getQmuAt(a) * structure.getQmuAt(a) * dq * amplifyPerturbation
+					/ (1 + structure.getQmuAt(a) * dq * amplifyPerturbation);
+			double Q_ab = structure.getQmuAt(ab) -1 * structure.getQmuAt(ab) * structure.getQmuAt(ab) * dq * amplifyPerturbation
+					/ (1 + structure.getQmuAt(ab) * dq * amplifyPerturbation);
+			double Q_b = structure.getQmuAt(b) -1 * structure.getQmuAt(b) * structure.getQmuAt(b) * dq * amplifyPerturbation
+					/ (1 + structure.getQmuAt(b) * dq * amplifyPerturbation);
 			res += (b - a) / 6. * (Q_a + 4 * Q_ab + Q_b);
 		}
 		

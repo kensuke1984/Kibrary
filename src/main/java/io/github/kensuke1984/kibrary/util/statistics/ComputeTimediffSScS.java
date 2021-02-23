@@ -28,24 +28,25 @@ import io.github.kensuke1984.kibrary.util.Utilities;
 import io.github.kensuke1984.kibrary.util.addons.EventCluster;
 import io.github.kensuke1984.kibrary.util.globalcmt.GlobalCMTID;
 import io.github.kensuke1984.kibrary.util.sac.SACData;
+import io.github.kensuke1984.kibrary.util.sac.SACExtension;
 import io.github.kensuke1984.kibrary.util.sac.SACFileName;
 import io.github.kensuke1984.kibrary.util.sac.SACHeaderEnum;
 
 public class ComputeTimediffSScS {
 
 	public static void main(String[] args) throws IOException, TauModelException {
-		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s");
-		Path timewindowPath = workdir.resolve("selectedTimewindow_ScS_60deg.dat");
+		Path workdir = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s");
+		Path timewindowPath = workdir.resolve("selectedTimewindow_ScS_70deg.dat");
 		
 		Path clusterfilePath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
 		
 		List<EventCluster> clusters = EventCluster.readClusterFile(clusterfilePath);
 		
-		Path mantleCorrectionFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_8-200s/mantleCorrection_S-ScS_semucb.dat");
+		Path mantleCorrectionFile = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/mantleCorrection_S-ScS_semucb.dat");
 		
 		Set<StaticCorrection> mantleCorrections = StaticCorrectionFile.read(mantleCorrectionFile);
 		
-		mantleCorrections = null;
+//		mantleCorrections = null;
 		
 //		workdir = Paths.get("/work/anselme/CA_ANEL_NEW/synthetic_s0/filtered_stf_12.5-200s");
 //		timewindowPath = workdir.resolve("selectedTimewindow_ScScutS_cc05.dat");
@@ -90,7 +91,8 @@ public class ComputeTimediffSScS {
 		for (EventFolder eventFolder : eventFolderSet) {
 			System.out.println(eventFolder.getGlobalCMTID());
 			
-			int index = clusters.stream().filter(c -> c.getID().equals(eventFolder.getGlobalCMTID())).findFirst().get().getIndex();
+			EventCluster cluster = clusters.stream().filter(c -> c.getID().equals(eventFolder.getGlobalCMTID())).findFirst().get();
+			int index = cluster.getIndex();
 			
 			Path eventPath = outdir.resolve(eventFolder.getGlobalCMTID().toString());
 			if (!Files.exists(eventPath))
@@ -123,6 +125,7 @@ public class ComputeTimediffSScS {
 			double[] timeS = new double[obsNames.size()];
 			double[] timeScS = new double[obsNames.size()];
 			double[] pierceDists = new double[obsNames.size()];
+			int[] az_cluster_index = new int[obsNames.size()]; 
 			
 			int count = 0;
 			for (SACFileName obsName : obsNamesArray) {
@@ -147,6 +150,12 @@ public class ComputeTimediffSScS {
 						pierceDists[count] = p.getDistDeg();
 						break;
 					}
+				}
+				
+				double azimuth = obsSacs[count].getValue(SACHeaderEnum.AZ);
+				for (int iaz = 0; iaz < cluster.getNAzimuthSlices(); iaz++) {
+					double[] bounds = cluster.getAzimuthBound(iaz);
+					if (bounds[0] <= azimuth && bounds[1] > azimuth) az_cluster_index[count] = iaz;
 				}
 				
 				count++;
@@ -320,7 +329,9 @@ public class ComputeTimediffSScS {
 				
 				if (correlation > minCorrScS && var < maxVarScS)
 					pw.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getStation() + " " + 
-						midPoint.getLatitude() + " " + midPoint.getLongitude() + " " + deltaTSScS + " " + deltaTSScSCorr + " " + ratioSScS + " " + widthSratio + " " + "index_" + index);
+						midPoint.getLatitude() + " " + midPoint.getLongitude() + " " + deltaTSScS + " " 
+							+ deltaTSScSCorr + " " + ratioSScS + " " + widthSratio + " " 
+							+ "index_" + index + " " + "az_" + az_cluster_index[i] + " " + obsSacs[i].getValue(SACHeaderEnum.GCARC));
 //				System.out.println(obsSacs[i].getGlobalCMTID() + " " + obsSacs[i].getStation() + " " + deltaTSScS + " " + correlation + " " + var);
 			}
 			pw.flush();

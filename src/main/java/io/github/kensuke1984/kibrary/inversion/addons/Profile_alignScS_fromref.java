@@ -58,7 +58,7 @@ public class Profile_alignScS_fromref {
 //			oneEvent = new GlobalCMTID(args[1]);
 		InverseMethodEnum method = InverseMethodEnum.CONJUGATE_GRADIENT;
 		
-		Path inversionResultPath = Paths.get(".");
+		Path inversionResultPath = Paths.get(".").toAbsolutePath();
 
 		Phase phase = Phase.ScS;
 		
@@ -84,6 +84,7 @@ public class Profile_alignScS_fromref {
 			pwSpc2.println("# BasicID synVariance bornVariance varanceReduction;(syn - born)");
 			
 			Path outpathEachMisfit = profilePath.resolve("eachMisfit.inf");
+			Path outpathEachMisfitSpc = profilePathSpc.resolve("eachMisfit.inf");
 			
 			Path stackRoot = inversionResultPath.resolve("stack/" + method + methodOrder +  "/" + phase);
 			Files.createDirectories(stackRoot);
@@ -436,7 +437,7 @@ public class Profile_alignScS_fromref {
 			pwEachMisfit.print(outputString.eachMisfitString);
 			pwEachMisfit.close();
 			
-			PrintWriter pwEachMisfitSpc = new PrintWriter(Files.newBufferedWriter(outpathEachMisfit, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+			PrintWriter pwEachMisfitSpc = new PrintWriter(Files.newBufferedWriter(outpathEachMisfitSpc, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
 			pwEachMisfitSpc.println("station, network, lat, lon, event, component, phase, synRatio, bornRatio, synVar, bornVar, synCC, bornCC");
 			pwEachMisfitSpc.print(outputStringSpc.eachMisfitString);
 			pwEachMisfitSpc.close();
@@ -597,10 +598,16 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		RealVector bornVector_PARVS = null;
 		RealVector obsVector = null;
 		if (spc) {
-			bornVector = ir.bornOf_spc(id, method, methodOrder).getYVector();
-			bornVector_PARQ = ir.bornOf_spc(id, method, methodOrder, PartialType.PARQ).getYVector();
-			bornVector_PARVS = ir.bornOf_spc(id, method, methodOrder, PartialType.PARVS).getYVector();
-			obsVector = ir.observedOf_spc(id).getYVector();
+			Trace bornTrace = ir.bornOf_spc(id, method, methodOrder);
+			Trace bornTrace_PARQ = ir.bornOf_spc(id, method, methodOrder, PartialType.PARQ);
+			Trace bornTrace_PARVS = ir.bornOf_spc(id, method, methodOrder, PartialType.PARVS);
+			if (bornTrace == null || bornTrace_PARQ == null || bornTrace_PARVS == null) return;
+			bornVector = bornTrace.getYVector();
+			bornVector_PARQ = bornTrace_PARQ.getYVector();
+			bornVector_PARVS = bornTrace_PARVS.getYVector();
+			Trace tmp = ir.observedOf_noorder_spc(id);
+			if (tmp != null) obsVector = tmp.getYVector();
+			else return;
 		}
 		else {
 			bornVector = ir.bornOf(id, method, methodOrder).getYVector();
@@ -636,14 +643,14 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 				tmpTrace = irRef.syntheticOf_noorder(id);
 			if (tmpTrace == null) return;
 			synVector = tmpTrace.getYVector();
-			if (synVector.getDimension() - obsVector.getDimension() == 1)
-				synVector = synVector.getSubVector(0, obsVector.getDimension());
-			else if (synVector.getDimension() - obsVector.getDimension() == -1)
-				synVector = new ArrayRealVector(Arrays.copyOf(synVector.toArray(), obsVector.getDimension()));
-			else if (Math.abs(synVector.getDimension() - obsVector.getDimension()) > 1) {
-				System.err.println(name);
+			if (Math.abs(synVector.getDimension() - obsVector.getDimension()) > 2) {
+				System.err.println(Math.abs(synVector.getDimension() - obsVector.getDimension()) + " " + name);
 				return;
 			}
+			if (synVector.getDimension() - obsVector.getDimension() > 0)
+				synVector = synVector.getSubVector(0, obsVector.getDimension());
+			else if (synVector.getDimension() - obsVector.getDimension() < 0)
+				synVector = new ArrayRealVector(Arrays.copyOf(synVector.toArray(), obsVector.getDimension()));
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 			System.out.println("File not found: " + id);
@@ -652,7 +659,7 @@ private static Trace addAndPadd(Trace trace1, Trace trace2) {
 		
 		// 
 		if (spc) {
-			bornVector_PARQ = bornVector_PARQ.subtract(ir.syntheticOf_spc(id).getYVector()).add(synVector);
+			bornVector_PARQ = bornVector_PARQ.subtract(ir.syntheticOf_noorder_spc(id).getYVector()).add(synVector);
 		}
 		else {
 			bornVector_PARQ = bornVector_PARQ.subtract(ir.syntheticOf(id).getYVector()).add(synVector);

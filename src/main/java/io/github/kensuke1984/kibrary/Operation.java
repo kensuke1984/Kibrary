@@ -89,7 +89,7 @@ public interface Operation {
     }
 
     default Path getPath(String key) {
-        String path = getProperties().getProperty(key);
+        String path = getProperties().getProperty(key).trim();
         if (path.startsWith("/")) return Paths.get(path);
         return getWorkPath().resolve(path);
     }

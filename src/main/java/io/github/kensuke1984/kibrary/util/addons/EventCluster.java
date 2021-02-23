@@ -223,6 +223,16 @@ public class EventCluster {
 		return azs;
 	}
 	
+	public int getAzimuthIndex(HorizontalPosition pos) {
+		int iaz = -1;
+		double azimuth = Math.toDegrees(centerPosition.getAzimuth(pos));
+		for (int i = 0; i < getNAzimuthSlices(); i++) {
+			double[] bounds = getAzimuthBound(i);
+			if (bounds[0] <= azimuth && bounds[1] > azimuth) iaz = i;
+		}
+		return iaz;
+	}
+	
 	public HorizontalPosition getCenterPosition() {
 		return centerPosition;
 	}

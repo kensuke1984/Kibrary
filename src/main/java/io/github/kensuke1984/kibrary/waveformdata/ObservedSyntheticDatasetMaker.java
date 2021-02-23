@@ -231,6 +231,9 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 			pw.println("#mantleCorrectionPath mantleCorrectionPath.dat");
 			pw.println("#lowFreq");
 			pw.println("#highFreq");
+			pw.println("##Add noise for synthetic test");
+			pw.println("#addNoise");
+			pw.println("#noisePower");
 		}
 		System.err.println(outPath + " is created.");
 	}
@@ -255,8 +258,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 
 	private void checkAndPutDefaults() {
 		if (!PROPERTY.containsKey("workPath")) PROPERTY.setProperty("workPath", ".");
-		if (!PROPERTY.containsKey("obsPath")) PROPERTY.setProperty("obsPath", ".");
-		if (!PROPERTY.containsKey("synPath")) PROPERTY.setProperty("synPath", ".");
+		if (!PROPERTY.containsKey("obsPath")) PROPERTY.setProperty("obsPath", "");
+		if (!PROPERTY.containsKey("synPath")) PROPERTY.setProperty("synPath", "");
 		if (!PROPERTY.containsKey("components")) PROPERTY.setProperty("components", "Z R T");
 		if (!PROPERTY.containsKey("convolute")) PROPERTY.setProperty("convolute", "true");
 		if (!PROPERTY.containsKey("amplitudeCorrection")) PROPERTY.setProperty("amplitudeCorrection", "false");
@@ -270,6 +273,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		if (!PROPERTY.containsKey("correctMantle")) PROPERTY.setProperty("correctMantle", "false");
 		if (!PROPERTY.containsKey("lowFreq")) PROPERTY.setProperty("lowFreq", "0.01");
 		if (!PROPERTY.containsKey("highFreq")) PROPERTY.setProperty("highFreq", "0.08");
+		if (!PROPERTY.containsKey("noisePower")) PROPERTY.setProperty("noisePower", "1");
 	}
 
 	private void set() throws NoSuchFileException {
@@ -311,7 +315,8 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		lowFreq = Double.parseDouble(PROPERTY.getProperty("lowFreq"));
 		highFreq = Double.parseDouble(PROPERTY.getProperty("highFreq"));
 		
-		noisePower = 1.;
+		noisePower = Double.parseDouble(PROPERTY.getProperty("noisePower"));
+		System.out.println("Noise power: " + noisePower);
 		finalFreqSamplingHz = 8;
 	}
 
@@ -625,6 +630,12 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 		Trace tmp = createNoiseTrace(vector.getLInfNorm());
 		Trace noiseTrace = new Trace(trace.getX(), Arrays.copyOf(tmp.getY(), trace.getLength()));
 		trace = trace.add(noiseTrace);
+		
+		double signal = trace.getYVector().getNorm() / trace.getLength();
+		double noise = noiseTrace.getYVector().getNorm() / noiseTrace.getLength();
+		double snratio = signal / noise;
+		System.out.println("snratio " + snratio + " noise " + noise);
+		
 		double[] waveDataNoise = trace.getY();
 		return IntStream.range(0, npts).parallel().mapToDouble(i -> waveDataNoise[i * step + startPoint]).toArray();
 	}
@@ -635,7 +646,7 @@ public class ObservedSyntheticDatasetMaker implements Operation {
 	 * @return
 	 */
 	private Trace createNoiseTrace(double normalize) {
-		double maxFreq = 0.08;
+		double maxFreq = 0.125;
 		double minFreq = 0.005;
 		int np = 4;
 		ButterworthFilter bpf = new BandPassFilter(2 * Math.PI * 0.05 * maxFreq, 2 * Math.PI * 0.05 * minFreq, np);

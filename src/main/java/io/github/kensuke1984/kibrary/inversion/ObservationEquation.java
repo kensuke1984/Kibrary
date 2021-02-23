@@ -530,8 +530,10 @@ public class ObservationEquation {
 			double max = new ArrayRealVector(partial).getLInfNorm();
 			if (Double.isNaN(max)) System.out.println("NaN " + id);
 			
-			if (partial.length != DVECTOR.getWindowNPTS(k))
+			if (partial.length != DVECTOR.getWindowNPTS(k)) {
+				System.err.println(id + " " + partial.length + " " + DVECTOR.getWindowNPTS(k));
 				throw new RuntimeException("Partial length does not match window length");
+			}
 			for (int j = 0; j < DVECTOR.getWindowNPTS(k); j++) {
 //				a.setEntry(row + j, column, partial[j] * weighting);
 				a.setEntry(row + j, column, partial[j] * weightingVector.getEntry(j));

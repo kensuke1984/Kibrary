@@ -58,7 +58,8 @@ public class ExcludeTimewindow {
 				.map(GlobalCMTID::new)
 				.collect(Collectors.toSet());
 		
-		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+//		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg.inf");
+		Path clusterPath = Paths.get("/work/anselme/CA_ANEL_NEW/VERTICAL/syntheticPREM_Q165/filtered_stf_12.5-200s/map/cluster-6deg_forSpecfemCorrections.inf");
 		List<EventCluster> clusters = null;
 		try {
 			clusters = EventCluster.readClusterFile(clusterPath);
@@ -68,6 +69,8 @@ public class ExcludeTimewindow {
 		int clusterIndex = 4;
 		Set<GlobalCMTID> clusterIDs = clusters.stream().filter(c -> c.getIndex() == clusterIndex).map(EventCluster::getID)
 			.collect(Collectors.toSet());
+		
+		EventCluster cluster = clusters.stream().filter(c -> c.getIndex() == clusterIndex).findFirst().get(); 
 		
 //		Path eachVarianceFile = Paths.get("eachVariance.txt");
 //		List<String> stationNames = new ArrayList<>();
@@ -114,6 +117,7 @@ public class ExcludeTimewindow {
 			else {
 				Set<TimewindowInformation> newTimewindows = timewindows.parallelStream()
 						.filter(tw ->  {
+							System.out.println(cluster.getAzimuthIndex(tw.getStation().getPosition()));
 							double distance = Math.toDegrees(tw.getGlobalCMTID().getEvent().getCmtLocation().getEpicentralDistance(tw.getStation().getPosition()));
 //							if (distance > 30. || distance < 17.)
 //								return false;
@@ -139,6 +143,7 @@ public class ExcludeTimewindow {
 //								return false;
 							if (!clusterIDs.contains(tw.getGlobalCMTID()))
 								return false;
+							if (cluster.getAzimuthIndex(tw.getStation().getPosition()) != 3) return false;
 							else 
 								return true;
 						})
