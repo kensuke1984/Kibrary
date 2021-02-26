@@ -1458,4 +1458,16 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     public int compareTo(Raypath o) {
         return Double.compare(RAY_PARAMETER, o.RAY_PARAMETER);
     }
+    
+    /**
+     * Compute the angle (in radian) between the raypath and the local vertical.
+     * @param pp
+     * @param rayParameter
+     * @param r
+     * @return angle in radian
+     */
+    public double computeIncidentAngle(PhasePart pp, double rayParameter, double r) {
+    	double qDelta = WOODHOUSE.computeQDelta(pp, rayParameter, r);
+    	return Math.atan(r * qDelta);
+    }
 }
