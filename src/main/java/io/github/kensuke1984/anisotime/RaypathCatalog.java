@@ -1344,9 +1344,9 @@ public class RaypathCatalog implements Serializable {
      */
     double travelTimeByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
                                              boolean relativeAngle, Raypath raypath0) {
-        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (targetDelta < 0) throw new IllegalArgumentException("targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
-                "When you search paths for a relative angle, a targetDelta must be pi or less.");
+                "When you search paths for a relative angle, targetDelta must be pi or less.");
 
         double delta0 = raypath0.computeDelta(targetPhase, eventR);
         Raypath lower = raypathList.lower(raypath0);
@@ -1362,7 +1362,7 @@ public class RaypathCatalog implements Serializable {
         pTime.add(delta0, raypath0.computeT(targetPhase, eventR));
         pTime.add(lowerDelta, lower.computeT(targetPhase, eventR));
         pTime.add(higherDelta, higher.computeT(targetPhase, eventR));
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1); //TODO shouldn't it be 3 instead of 1?
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(pTime.toList()));
         return pf.value(targetDelta);
     }

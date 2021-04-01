@@ -1448,7 +1448,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 numerator = getStructure().getL(r);
                 break;
             default:
-                throw new RuntimeException("unikuspected");
+                throw new RuntimeException("UNEXPECTED");
         }
         double velocity = Math.sqrt(numerator / getStructure().getRho(r));
         return s / velocity;

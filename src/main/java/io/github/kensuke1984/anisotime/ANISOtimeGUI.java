@@ -258,7 +258,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                         raypathList.add(raypath);
                     break;
                 default:
-                    throw new RuntimeException("unekuspekudte");
+                    throw new RuntimeException("UNEXPECTED");
             }
 
             try {
@@ -301,7 +301,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 t = new Thread(this::runRayParameterMode);
                 break;
             default:
-                throw new RuntimeException("ANIKUSUPEkuted");
+                throw new RuntimeException("UNEXPECTED");
         }
         t.setUncaughtExceptionHandler((thread, error) -> {
             System.err.println("\nSorry, this machine doesn't have enough memory to run ANISOtime.\n" +
@@ -375,7 +375,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             Raypath raypath = raypathList.get(i);
             Phase phase = Objects.isNull(delta) ? phaseList.get(i) : RaypathCatalog
                     .getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
-            double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
+            double epicentralDistance = raypath.computeDelta(phase, eventR);
+            double epicentralDistanceDegree = Math.toDegrees(epicentralDistance);
             double travelTime = raypath.computeT(phase, eventR);
             if (Double.isNaN(epicentralDistance)) continue;
             String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
@@ -385,7 +386,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     Objects.isNull(delta) ? epicentralDistance : delta[i], false, raypath);
             if (!Double.isNaN(time)) {
                 added = true;
-                resultWindow.addRow(epicentralDistance, depth, title, time, raypath.getRayParameter());
+                double rayParameterDegree = Math.toRadians(raypath.getRayParameter());
+                resultWindow.addRow(epicentralDistanceDegree, depth, title, time, rayParameterDegree);
                 showRayPath(raypath, phase);
             }
         }
