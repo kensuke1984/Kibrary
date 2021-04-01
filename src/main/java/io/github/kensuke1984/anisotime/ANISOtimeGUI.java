@@ -24,6 +24,9 @@ import java.util.logging.Logger;
  *
  * @author Kensuke Konishi
  * @version 0.5.10b
+ * 
+ * 2021.3.31 Anselme Borgeaud
+ *  - change units of ray parameter to [s/deg]
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
 
@@ -32,7 +35,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     private volatile double eventR;
     /**
      * Epicentral Distance mode: epicentral distance[deg]<br>
-     * Ray parameter mode: ray parameter<br>
+     * Ray parameter mode: ray parameter [s/deg]<br>
      */
     private volatile double mostImportant;
     private volatile ComputationMode mode;
@@ -96,7 +99,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
     /**
      * @param d Epicentral Distance mode: epicentral distance[deg]<br>
-     *          Ray parameter mode: ray parameter<br>
+     *          Ray parameter mode: ray parameter [s/deg]<br>
      */
     void setMostImportant(double d) {
         mostImportant = d;
@@ -249,7 +252,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 case RAY_PARAMETER:
                     raypathList = new ArrayList<>();
                     phaseList = new ArrayList<>(phaseSet);
-                    Raypath raypath = new Raypath(mostImportant, structure);
+                    double rayParameterRad = Math.toDegrees(mostImportant);
+                    Raypath raypath = new Raypath(rayParameterRad, structure);
                     for (int i = 0; i < phaseList.size(); i++)
                         raypathList.add(raypath);
                     break;
@@ -308,7 +312,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private void runRayParameterMode() {
-        Raypath raypath = new Raypath(mostImportant, structure);
+    	double rayParameterRad = Math.toDegrees(mostImportant);
+        Raypath raypath = new Raypath(rayParameterRad, structure);
         List<Raypath> raypaths = new ArrayList<>();
         List<Phase> phases = new ArrayList<>(phaseSet);
 
