@@ -589,7 +589,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 break;
             case EARTH_SURFACE:
             default:
-                throw new RuntimeException("soteigai");
+                throw new RuntimeException("Unexpected");
         }
         double outerR;
         switch (outer) {
@@ -612,7 +612,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 outerR = getStructure().innerCoreBoundary();
                 break;
             default:
-                throw new RuntimeException("soteigai");
+                throw new RuntimeException("Unexpected");
         }
         return new double[]{innerR, outerR};
     }

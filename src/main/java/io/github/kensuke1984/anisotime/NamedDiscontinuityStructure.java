@@ -57,19 +57,19 @@ class NamedDiscontinuityStructure implements VelocityStructure, Serializable {
      */
     private boolean checkStructure() {
     	if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
-    		.mapToDouble(structure::getVsh).anyMatch(v -> v <= 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r >= innerCoreBoundary())
-    		.mapToDouble(structure::getVsh).anyMatch(v -> v != 0 )) return false;
-    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r >= innerCoreBoundary())
-        		.mapToDouble(structure::getVsv).anyMatch(v -> v != 0 )) return false;
+    			.mapToDouble(structure::getVsh).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+    				.mapToDouble(structure::getVsh).anyMatch(v -> v != 0 )) return false;
     	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
-        		.mapToDouble(structure::getVsv).anyMatch(v -> v <= 0 )) return false;
+        			.mapToDouble(structure::getVsv).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+    			.mapToDouble(structure::getVsv).anyMatch(v -> v != 0 )) return false;
     	else if (IntStream.range(0, (int) earthRadius())
         			.mapToDouble(structure::getVph).anyMatch(v -> v <= 0 )) return false;
     	else if (IntStream.range(0, (int) earthRadius())
-    			.mapToDouble(structure::getVpv).anyMatch(v -> v <= 0 )) return false;
+    				.mapToDouble(structure::getVpv).anyMatch(v -> v <= 0 )) return false;
     	else if (IntStream.range(0, (int) earthRadius())
-    			.mapToDouble(structure::getRho).anyMatch(v -> v <= 0 )) return false;
+    				.mapToDouble(structure::getRho).anyMatch(v -> v <= 0 )) return false;
     	return true;
     }
 
