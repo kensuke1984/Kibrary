@@ -1,9 +1,11 @@
 package io.github.kensuke1984.anisotime;
 
+import io.github.kensuke1984.kibrary.util.Earth;
 import io.github.kensuke1984.kibrary.util.Utilities;
 import net.sf.epsgraphics.ColorMode;
 import net.sf.epsgraphics.EpsGraphics;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Precision;
 
 import java.io.BufferedOutputStream;
@@ -34,6 +36,11 @@ final class ANISOtimeCLI {
      * Help Formatter
      */
     private final static HelpFormatter helpFormatter = new HelpFormatter();
+    
+    /**
+     * TauP output format
+     */
+    private final String TAUP_FORMAT = "%8s%8s%8s%12s%12s%10s%10s%10s%10s";
 
     static {
         // add options
@@ -134,6 +141,7 @@ final class ANISOtimeCLI {
         options.addOption(null, "absolute", false, "Absolute angle mode. (default:absolute)");
         options.addOption("U", false, "Checks update even if the last activation is within a day.");
         options.addOption("u", false, "Opens a user guide. This option has the 3rd highest priority.");
+        options.addOption("taup", false, "Use a TauP-compatible output.");
     }
 
     private static void setArgumentOptions() {
@@ -312,6 +320,10 @@ final class ANISOtimeCLI {
             }
             Path outDir = Paths.get(cmd.getOptionValue("o", ""));
             Files.createDirectories(outDir);
+            
+            // TauP compatible output
+            if (cmd.hasOption("taup"))
+            	printTaupHeader();
 
             // When the ray parameter is given
             if (cmd.hasOption("p")) {
@@ -324,7 +336,10 @@ final class ANISOtimeCLI {
                         continue;
                     }
                     double rayParameterDegree = Math.toRadians(rayParameter);
-                    printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
+                    if (cmd.hasOption("taup"))
+                    	printLineTauP(targetPhase, System.out, decimalPlaces, raypath, rayParameterDegree, delta, delta, time);
+                    else
+                    	printLine(targetPhase, System.out, decimalPlaces, rayParameterDegree, delta, time);
                     if (cmd.hasOption("eps")) createEPS(raypath.createPanel(targetPhase, eventR),
                             outDir.resolve(targetPhase + "." + tmpStr + ".eps"), targetPhase, rayParameterDegree, delta,
                             time, eventR);
@@ -401,6 +416,37 @@ final class ANISOtimeCLI {
                         .mapToObj(i -> Utilities.fixDecimalPlaces(decimalPlace, values[i]))
                         .collect(Collectors.joining(" ")));
     }
+    
+    /**
+     * @param phase
+     * @param out
+     * @param decimalPlace
+     * @param raypath
+     * @param p
+     * @param distance distance in degree
+     * @param targetDistance target distance in degree
+     * @param time
+     */
+    private void printLineTauP(Phase phase, PrintStream out, int decimalPlace, Raypath raypath,
+    		double p, double distance, double targetDistance, double time) {
+    	double depth = Earth.EARTH_RADIUS - eventR;
+    	
+    	PhasePart ppSource = ((GeneralPart) (phase.getPassParts()[1])).getPhase();
+    	PhasePart ppReceiver = ((GeneralPart) (phase.getPassParts()[phase.getPassParts().length - 1])).getPhase();
+    	double takeoff = Math.toDegrees(raypath.computeIncidentAngle(ppSource, Math.toDegrees(p), eventR));
+    	double incident = Math.toDegrees(raypath.computeIncidentAngle(ppReceiver, Math.toDegrees(p), Earth.EARTH_RADIUS));
+    	
+    	out.printf(TAUP_FORMAT + "\n",
+    			Utilities.fixDecimalPlaces(decimalPlace, distance),
+    			Utilities.fixDecimalPlaces(decimalPlace, depth),
+    			phase.getDISPLAY_NAME(),
+    			Utilities.fixDecimalPlaces(decimalPlace, time),
+    			Utilities.fixDecimalPlaces(decimalPlace, p),
+    			Utilities.fixDecimalPlaces(decimalPlace, takeoff),
+    			Utilities.fixDecimalPlaces(decimalPlace, incident),
+    			Utilities.fixDecimalPlaces(decimalPlace, targetDistance),
+    			phase.getPHASENAME());
+    }
 
     /**
      * @param targetDelta [deg] a target &Delta; for the interpolation. If it is 0, the interpolation will not be done.
@@ -431,7 +477,10 @@ final class ANISOtimeCLI {
             }
         }
         double p0Degree = Math.toRadians(p0);
-        printLine(targetPhase, out, decimalPlaces, p0Degree, delta0, time0);
+        if (cmd.hasOption("taup"))
+        	printLineTauP(targetPhase, out, decimalPlaces, raypath, p0Degree, delta0, targetDelta, time0);
+        else
+        	printLine(targetPhase, out, decimalPlaces, p0Degree, delta0, time0);
         return new double[]{delta0, time0};
     }
 
@@ -507,5 +556,34 @@ final class ANISOtimeCLI {
         if (cmd.hasOption("rc") && cmd.hasOption("mod"))
             throw new IllegalArgumentException("When you read a catalog, you cannot specify a velocity model.");
 
+    }
+    
+    /**
+     * Print Taup output header
+     */
+    private void printTaupHeader() {
+    	System.out.println();
+    	System.out.println("Model: " + cmd.getOptionValue("mod"));
+    	System.out.printf(TAUP_FORMAT + "\n",
+    			"Distance",
+    			"Depth",
+    			"Phase",
+    			"Travel",
+    			"Ray Param",
+    			"Takeoff",
+    			"Incident",
+    			"Purist",
+    			"Purist");
+    	System.out.printf(TAUP_FORMAT + "\n",
+    			"(deg)",
+    			"(km)",
+    			"Name",
+    			"Time (s)",
+    			"p (s/deg)",
+    			"(deg)",
+    			"(deg)",
+    			"Distance",
+    			"Name");
+    	System.out.println(StringUtils.leftPad("", 88, "-"));
     }
 }

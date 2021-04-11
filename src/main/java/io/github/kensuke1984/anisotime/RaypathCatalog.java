@@ -569,6 +569,8 @@ public class RaypathCatalog implements Serializable {
         /**
          * TODO
          *
+         * Anselme 21.04.05 Fixed bug when targetPhase="PcS"
+         *
          * @param targetPhase target phase
          * @return if a search should skip the input targetPhase.
          */
@@ -579,7 +581,10 @@ public class RaypathCatalog implements Serializable {
             if (PP == PhasePart.SV && !targetPhase.isPSV()) return true;
             if (PP == PhasePart.SV && target.contains("s")) return false;
             if (PP == PhasePart.SH && target.contains("s")) return false;
-            if (target.contains("P") && target.contains("S")) return false;
+            // TODO Anselme 21.04.05 Fixed bug when targetPhase="PcS". Check against other phase.
+//            if (target.contains("P") && target.contains("S")) return false;
+            if (target.contains("P") && target.contains("S") && !target.contains("c")) return false;
+            // TODO
             if (PP == PhasePart.P && !target.contains("P")) return true;
             if ((PP == PhasePart.SH || PP == PhasePart.SV) && !target.contains("S")) return true;
             if (getStructure().innerCoreBoundary() <= BOUNDARY_R == (target.contains("I") || target.contains("J")))
@@ -1075,7 +1080,7 @@ public class RaypathCatalog implements Serializable {
         if (targetDelta == Math.PI && phase.contains("I")) return new Raypath[]{raypathList.first()};
         if (targetPhase.isDiffracted()) return new Raypath[]{
                 phase.contains("Pdiff") ? getPdiff() : (targetPhase.isPSV() ? getSVdiff() : getSHdiff())};
-        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (targetDelta < 0) throw new IllegalArgumentException("targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
                 "When you search paths for a relative angle, a targetDelta must be pi or less.");
         Set<Raypath> candidates = new HashSet<>();
@@ -1344,9 +1349,9 @@ public class RaypathCatalog implements Serializable {
      */
     double travelTimeByThreePointInterpolate(Phase targetPhase, double eventR, double targetDelta,
                                              boolean relativeAngle, Raypath raypath0) {
-        if (targetDelta < 0) throw new IllegalArgumentException("A targetDelta must be non-negative.");
+        if (targetDelta < 0) throw new IllegalArgumentException("targetDelta must be non-negative.");
         if (relativeAngle && Math.PI < targetDelta) throw new IllegalArgumentException(
-                "When you search paths for a relative angle, a targetDelta must be pi or less.");
+                "When you search paths for a relative angle, targetDelta must be pi or less.");
 
         double delta0 = raypath0.computeDelta(targetPhase, eventR);
         Raypath lower = raypathList.lower(raypath0);
@@ -1362,7 +1367,7 @@ public class RaypathCatalog implements Serializable {
         pTime.add(delta0, raypath0.computeT(targetPhase, eventR));
         pTime.add(lowerDelta, lower.computeT(targetPhase, eventR));
         pTime.add(higherDelta, higher.computeT(targetPhase, eventR));
-        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1);
+        PolynomialCurveFitter fitter = PolynomialCurveFitter.create(1); //TODO shouldn't it be 3 instead of 1?
         PolynomialFunction pf = new PolynomialFunction(fitter.fit(pTime.toList()));
         return pf.value(targetDelta);
     }

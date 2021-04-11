@@ -589,7 +589,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 break;
             case EARTH_SURFACE:
             default:
-                throw new RuntimeException("soteigai");
+                throw new RuntimeException("Unexpected");
         }
         double outerR;
         switch (outer) {
@@ -612,7 +612,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 outerR = getStructure().innerCoreBoundary();
                 break;
             default:
-                throw new RuntimeException("soteigai");
+                throw new RuntimeException("Unexpected");
         }
         return new double[]{innerR, outerR};
     }
@@ -1448,7 +1448,7 @@ public class Raypath implements Serializable, Comparable<Raypath> {
                 numerator = getStructure().getL(r);
                 break;
             default:
-                throw new RuntimeException("unikuspected");
+                throw new RuntimeException("UNEXPECTED");
         }
         double velocity = Math.sqrt(numerator / getStructure().getRho(r));
         return s / velocity;
@@ -1457,5 +1457,17 @@ public class Raypath implements Serializable, Comparable<Raypath> {
     @Override
     public int compareTo(Raypath o) {
         return Double.compare(RAY_PARAMETER, o.RAY_PARAMETER);
+    }
+    
+    /**
+     * Compute the angle (in radian) between the raypath and the local vertical.
+     * @param pp
+     * @param rayParameter
+     * @param r
+     * @return angle in radian
+     */
+    public double computeIncidentAngle(PhasePart pp, double rayParameter, double r) {
+    	double qDelta = WOODHOUSE.computeQDelta(pp, rayParameter, r);
+    	return Math.atan(r * qDelta);
     }
 }

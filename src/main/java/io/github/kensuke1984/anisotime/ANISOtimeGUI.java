@@ -24,6 +24,9 @@ import java.util.logging.Logger;
  *
  * @author Kensuke Konishi
  * @version 0.5.10b
+ * 
+ * 2021.3.31 Anselme Borgeaud
+ *  - change units of ray parameter to [s/deg]
  */
 class ANISOtimeGUI extends javax.swing.JFrame {
 
@@ -32,7 +35,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     private volatile double eventR;
     /**
      * Epicentral Distance mode: epicentral distance[deg]<br>
-     * Ray parameter mode: ray parameter<br>
+     * Ray parameter mode: ray parameter [s/deg]<br>
      */
     private volatile double mostImportant;
     private volatile ComputationMode mode;
@@ -96,7 +99,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
 
     /**
      * @param d Epicentral Distance mode: epicentral distance[deg]<br>
-     *          Ray parameter mode: ray parameter<br>
+     *          Ray parameter mode: ray parameter [s/deg]<br>
      */
     void setMostImportant(double d) {
         mostImportant = d;
@@ -249,12 +252,13 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 case RAY_PARAMETER:
                     raypathList = new ArrayList<>();
                     phaseList = new ArrayList<>(phaseSet);
-                    Raypath raypath = new Raypath(mostImportant, structure);
+                    double rayParameterRad = Math.toDegrees(mostImportant);
+                    Raypath raypath = new Raypath(rayParameterRad, structure);
                     for (int i = 0; i < phaseList.size(); i++)
                         raypathList.add(raypath);
                     break;
                 default:
-                    throw new RuntimeException("unekuspekudte");
+                    throw new RuntimeException("UNEXPECTED");
             }
 
             try {
@@ -297,7 +301,7 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                 t = new Thread(this::runRayParameterMode);
                 break;
             default:
-                throw new RuntimeException("ANIKUSUPEkuted");
+                throw new RuntimeException("UNEXPECTED");
         }
         t.setUncaughtExceptionHandler((thread, error) -> {
             System.err.println("\nSorry, this machine doesn't have enough memory to run ANISOtime.\n" +
@@ -308,7 +312,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
     }
 
     private void runRayParameterMode() {
-        Raypath raypath = new Raypath(mostImportant, structure);
+    	double rayParameterRad = Math.toDegrees(mostImportant);
+        Raypath raypath = new Raypath(rayParameterRad, structure);
         List<Raypath> raypaths = new ArrayList<>();
         List<Phase> phases = new ArrayList<>(phaseSet);
 
@@ -370,7 +375,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
             Raypath raypath = raypathList.get(i);
             Phase phase = Objects.isNull(delta) ? phaseList.get(i) : RaypathCatalog
                     .getActualTargetPhase(raypath, phaseList.get(i), eventR, delta[i], false); //TODO relative angle
-            double epicentralDistance = Math.toDegrees(raypath.computeDelta(phase, eventR));
+            double epicentralDistance = raypath.computeDelta(phase, eventR);
+            double epicentralDistanceDegree = Math.toDegrees(epicentralDistance);
             double travelTime = raypath.computeT(phase, eventR);
             if (Double.isNaN(epicentralDistance)) continue;
             String title = phase.isPSV() ? phase.getDISPLAY_NAME() + " (P-SV)" : phase.getDISPLAY_NAME() + " (SH)";
@@ -380,7 +386,8 @@ class ANISOtimeGUI extends javax.swing.JFrame {
                     Objects.isNull(delta) ? epicentralDistance : delta[i], false, raypath);
             if (!Double.isNaN(time)) {
                 added = true;
-                resultWindow.addRow(epicentralDistance, depth, title, time, raypath.getRayParameter());
+                double rayParameterDegree = Math.toRadians(raypath.getRayParameter());
+                resultWindow.addRow(epicentralDistanceDegree, depth, title, time, rayParameterDegree);
                 showRayPath(raypath, phase);
             }
         }

@@ -57,6 +57,10 @@ public class PolynomialStructure implements VelocityStructure {
 
     public PolynomialStructure(io.github.kensuke1984.kibrary.dsminformation.PolynomialStructure structure) {
         STRUCTURE = checkBoundaries(structure);
+        if (!STRUCTURE.isDefault() && !checkStructure())
+        	throw new RuntimeException(
+        			"The structure must have strictly positive velocity and density,"
+        			+ "except for vsh=vsv=0 in the outer-core.");
         RADIUS_SUBTRACTION = new PolynomialFunction(new double[]{0, -earthRadius()});
     }
 
@@ -92,6 +96,29 @@ public class PolynomialStructure implements VelocityStructure {
                             newStructure.getVshOf(izone + 1)));
         }
         return newStructure;
+    }
+    
+    /**
+     * Check if vpv, vph, vsv, vsh, and rho are strictly positive over all depths,
+     * excepts for the outer core for vsh and vsv, where it checks if vsh=vsv=0
+     * @return true if check passed, else false
+     */
+    private boolean checkStructure() {
+    	if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
+    			.mapToDouble(STRUCTURE::getVshAt).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+    				.mapToDouble(STRUCTURE::getVshAt).anyMatch(v -> v != 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
+        			.mapToDouble(STRUCTURE::getVsvAt).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+    			.mapToDouble(STRUCTURE::getVsvAt).anyMatch(v -> v != 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius())
+        			.mapToDouble(STRUCTURE::getVphAt).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius())
+    				.mapToDouble(STRUCTURE::getVpvAt).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius())
+    				.mapToDouble(STRUCTURE::getRhoAt).anyMatch(v -> v <= 0 )) return false;
+    	return true;
     }
 
     /**

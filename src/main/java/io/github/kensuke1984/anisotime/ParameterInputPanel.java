@@ -83,8 +83,8 @@ class ParameterInputPanel extends JPanel {
                 jTextFieldMostImportant.grabFocus();
                 break;
             case RAY_PARAMETER:
-                jLabelMostImportant.setText("Ray parameter p:");
-                jTextFieldMostImportant.setText("680.0");
+                jLabelMostImportant.setText("Ray parameter p [s/deg]:");
+                jTextFieldMostImportant.setText("10.0");
                 jTextFieldMostImportant.grabFocus();
                 break;
         }

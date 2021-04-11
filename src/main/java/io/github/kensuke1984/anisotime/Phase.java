@@ -308,7 +308,7 @@ public class Phase implements Serializable {
         List<Integer> iPlace = new ArrayList<>();
         List<Integer> jPlace = new ArrayList<>();
         //TODO
-        if (name.contains("v") || name.contains("c")) throw new RuntimeException("NOTEKUSUPEKUTED");
+        if (name.contains("v") || name.contains("c")) throw new RuntimeException("Unexpected");
         for (int i = 0; i < name.length(); i++) {
             char c = name.charAt(i);
             if (c == 'P') pPlace.add(i);

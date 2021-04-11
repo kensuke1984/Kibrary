@@ -55,6 +55,12 @@ public class PolynomialStructure implements Serializable {
                     getQmuAt(r1), getQkappaAt(r1));
         }
     }
+    
+    
+    /**
+     * true if default structure. False if user-defined structure
+     */
+    private boolean isDefault = true;
 
     /**
      * transversely isotropic (TI) PREM by Dziewonski &amp; Anderson 1981
@@ -224,14 +230,16 @@ public class PolynomialStructure implements Serializable {
      * Homogeneous earth structure used for test purposes
      */
     private static PolynomialStructure homogeneous() {
+    	double eps = 1e-10;
         int nzone = 3;
         double[] rmin = new double[]{0, 1221.5, 3480.0};
         double[] rmax = new double[]{1221.5, 3480.0, 6371};
         double[][] rho = new double[][]{{10.0, 0.0, 0.0, 0.0}, {10.0, 0.0, 0.0, 0.0}, {10.0, 0.0, 0.0, 0.0}};
-        double[][] vpv = new double[][]{{0, 17., 0.0, 0.0}, {0, 17., 0.0, 0.0}, {0, 17., 0.0, 0.0}};
-        double[][] vph = new double[][]{{0, 17.51, 0.0, 0.0}, {0, 17.51, 0.0, 0.0}, {0, 17.51, 0.0, 0.0}};
-        double[][] vsv = new double[][]{{0, 10., 0.0, 0.0}, {0, 10., 0.0, 0.0}, {0, 10., 0.0, 0.0}};
-        double[][] vsh = new double[][]{{0, 10.3, 0.0, 0.0}, {0, 10.3, 0.0, 0.0}, {0, 10.3, 0.0, 0.0}};
+        double[][] vpv = new double[][]{{eps, 17., 0.0, 0.0}, {0., 17., 0.0, 0.0}, {0., 17., 0.0, 0.0}};
+        double[][] vph = new double[][]{{eps, 17.51, 0.0, 0.0}, {0., 17.51, 0.0, 0.0}, {0., 17.51, 0.0, 0.0}};
+        // TODO 2021.4.5 changed to vsh=vsv=0 in outer-core. Check if comparison still good
+        double[][] vsv = new double[][]{{eps, 10., 0.0, 0.0}, {0., 0.0, 0.0, 0.0}, {0., 10., 0.0, 0.0}};
+        double[][] vsh = new double[][]{{eps, 10.3, 0.0, 0.0}, {0., 0.0, 0.0, 0.0}, {0., 10.3, 0.0, 0.0}};
         double[][] eta = new double[][]{{1, 0, 0, 0}, {1, 0, 0, 0}, {1, 0, 0, 0}}; // ok
         double[] qMu = new double[]{84.6, -1, 600}; // ok
         double[] qKappa = new double[]{1327.7, 57823, 57823}; // OK
@@ -836,6 +844,7 @@ public class PolynomialStructure implements Serializable {
     private void readStructureFile(Path structurePath) throws IOException {
         InformationFileReader reader = new InformationFileReader(structurePath);
         readLines(reader.getNonCommentLines());
+        isDefault = false;
     }
 
     public String[] toSHlines() {
@@ -921,5 +930,12 @@ public class PolynomialStructure implements Serializable {
      */
     public PolynomialFunction getVshOf(int izone) {
         return vsh[izone];
+    }
+    
+    /**
+     * @return true if default structure (already implemented), false if user-defined structure
+     */
+    public boolean isDefault() {
+    	return isDefault;
     }
 }

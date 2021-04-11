@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 /**
  * Named discontinuity structure
@@ -37,12 +38,39 @@ class NamedDiscontinuityStructure implements VelocityStructure, Serializable {
 
     NamedDiscontinuityStructure(Path path) throws IOException {
         structure = new io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure(path);
+        if (!checkStructure())
+        	throw new RuntimeException(
+        			"The structure must have strictly positive velocity and density,"
+        			+ "except for vsh=vsv=0 in the outer-core.");
     }
 
     public static NamedDiscontinuityStructure prem() {
         NamedDiscontinuityStructure nd = new NamedDiscontinuityStructure();
         nd.structure = io.github.kensuke1984.kibrary.util.NamedDiscontinuityStructure.prem();
         return nd;
+    }
+    
+    /**
+     * Check if vpv, vph, vsv, vsh, and rho are strictly positive over all depths,
+     * excepts for the outer core for vsh and vsv, where it checks if vsh=vsv=0
+     * @return true if check passed, else false
+     */
+    private boolean checkStructure() {
+    	if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
+    			.mapToDouble(structure::getVsh).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+    				.mapToDouble(structure::getVsh).anyMatch(v -> v != 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r >= coreMantleBoundary() && r < innerCoreBoundary())
+        			.mapToDouble(structure::getVsv).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius()).filter(r -> r < coreMantleBoundary() && r > innerCoreBoundary())
+    			.mapToDouble(structure::getVsv).anyMatch(v -> v != 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius())
+        			.mapToDouble(structure::getVph).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius())
+    				.mapToDouble(structure::getVpv).anyMatch(v -> v <= 0 )) return false;
+    	else if (IntStream.range(0, (int) earthRadius())
+    				.mapToDouble(structure::getRho).anyMatch(v -> v <= 0 )) return false;
+    	return true;
     }
 
     @Override
