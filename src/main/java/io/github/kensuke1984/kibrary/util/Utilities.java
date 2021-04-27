@@ -124,7 +124,7 @@ public final class Utilities {
      */
     public static void download(URL url, Path outPath, boolean overwrite) throws IOException {
         if (!overwrite && Files.exists(outPath)) throw new FileAlreadyExistsException(outPath + " already exists.");
-        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
+        HttpURLConnection httpConnection = (HttpURLConnection) url.openConnection();
         long fileSize = httpConnection.getContentLength();
         JProgressBar bar = null;
         JFrame frame = null;
@@ -148,7 +148,7 @@ public final class Utilities {
                 if (Objects.nonNull(bar)) bar.setValue((downloaded += x));
             }
         } finally {
-            if (frame != null) frame.dispose();
+            if (Objects.nonNull(frame)) frame.dispose();
         }
     }
 
