@@ -33,9 +33,9 @@ final class ANISOtime {
 
     public static final String EMAIL_ADDRESS = "ut-globalseis@googlegroups.com";
 
-    static final String CODENAME = "Haneda";
+    static final String CODENAME = "Kushiro";
 
-    static final String VERSION = "1.3.8.30b";
+    static final String VERSION = "1.3.8.31b";
 
     private ANISOtime() {
     }
